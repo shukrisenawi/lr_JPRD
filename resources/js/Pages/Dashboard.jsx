@@ -18,7 +18,7 @@ function StatCard({ label, value, tone = 'slate' }) {
 }
 
 export default function Dashboard({ sheet }) {
-    const telegramBotUrl = 'https://t.me/SSDP_Kedah_Bot';
+    const telegramBotUsername = 'SSDP_Kedah_Bot';
     const [selectedRow, setSelectedRow] = useState(null);
     const [copyError, setCopyError] = useState('');
     const [copiedRows, setCopiedRows] = useState(
@@ -45,6 +45,9 @@ export default function Dashboard({ sheet }) {
 
     const handleCopy = async (row) => {
         const telegramWindow = window.open('about:blank', '_blank');
+        const encodedText = encodeURIComponent(row.copy_text);
+        const telegramDeepLink = `tg://resolve?domain=${telegramBotUsername}&text=${encodedText}`;
+        const telegramWebLink = `https://t.me/${telegramBotUsername}?text=${encodedText}`;
 
         setCopyingRow(row.id);
         setCopyError('');
@@ -75,7 +78,13 @@ export default function Dashboard({ sheet }) {
 
             setCopiedRows((previous) => new Set(previous).add(row.id));
             setSelectedRow(row.id);
-            telegramWindow?.location.replace(telegramBotUrl);
+            telegramWindow?.location.replace(telegramDeepLink);
+
+            window.setTimeout(() => {
+                if (telegramWindow && !telegramWindow.closed) {
+                    telegramWindow.location.replace(telegramWebLink);
+                }
+            }, 1200);
         } catch (error) {
             telegramWindow?.close();
             setCopyError('Salinan tidak berjaya. Sila cuba semula.');
