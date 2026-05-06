@@ -162,7 +162,7 @@ export default function Dashboard({ sheet }) {
                                             ? 'border-amber-300 bg-amber-100 text-amber-900'
                                             : isCopied
                                               ? 'border-emerald-200 bg-emerald-50'
-                                              : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/60'
+                                              : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/70'
                                     }`}
                                 >
                                     <div className="flex items-start justify-between gap-3">
@@ -260,7 +260,7 @@ export default function Dashboard({ sheet }) {
                                                         ? 'bg-amber-100 text-amber-900 hover:bg-amber-200/80'
                                                         : isCopied
                                                           ? 'bg-emerald-50 hover:bg-emerald-100/80'
-                                                          : 'hover:bg-amber-50/60'
+                                                          : 'hover:bg-emerald-50/70'
                                                 }`}
                                             >
                                                 <td className="whitespace-nowrap px-4 py-4">
