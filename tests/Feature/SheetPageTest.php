@@ -1,0 +1,128 @@
+<?php
+
+use App\Models\SheetPage;
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Support\Facades\Http;
+
+it('creates the first page from unique sheet rows only', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        '*' => Http::response(
+            "no_kp,nama_pemilih\n123,Ali\n123,Ali\n456,Abu\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->post('/sheet-pages')
+        ->assertRedirect(route('dashboard'));
+
+    $page = SheetPage::query()->with('rows')->first();
+
+    expect($page)->not->toBeNull();
+    expect($page->page_number)->toBe(1);
+    expect($page->rows)->toHaveCount(2);
+    expect($page->rows->pluck('no_kp')->all())
+        ->toBe(['000000000123', '000000000456']);
+});
+
+it('creates the next page with new rows only', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fakeSequence()
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        )
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n789,Siti\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        );
+
+    $this->actingAs($user)->post('/sheet-pages');
+
+    $this->actingAs($user)
+        ->post('/sheet-pages')
+        ->assertRedirect(route('dashboard'));
+
+    $pages = SheetPage::query()
+        ->with('rows')
+        ->orderBy('page_number')
+        ->get();
+
+    expect($pages)->toHaveCount(2);
+    expect($pages[1]->page_number)->toBe(2);
+    expect($pages[1]->rows)->toHaveCount(1);
+    expect($pages[1]->rows[0]->no_kp)->toBe('000000000789');
+});
+
+it('does not reimport rows from a page that has been deleted', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fakeSequence()
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        )
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        );
+
+    $this->actingAs($user)->post('/sheet-pages');
+
+    $page = SheetPage::query()->firstOrFail();
+
+    $this->actingAs($user)
+        ->delete("/sheet-pages/{$page->id}")
+        ->assertRedirect(route('dashboard'));
+
+    $this->actingAs($user)
+        ->post('/sheet-pages')
+        ->assertRedirect(route('dashboard'));
+
+    expect(SheetPage::withTrashed()->count())->toBe(1);
+    expect(SheetPage::query()->whereNull('deleted_at')->count())->toBe(0);
+});
+
+it('shows active pages and pending new unique rows on dashboard', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fakeSequence()
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        )
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n789,Siti\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        );
+
+    $this->actingAs($user)->post('/sheet-pages');
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard')
+            ->where('pages.0.page_number', 1)
+            ->where('pages.0.rows.0.values.nama_pemilih', 'Ali')
+            ->where('sheet.new_rows_available', 1));
+});

@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 function StatCard({ label, value, tone = 'slate' }) {
@@ -17,38 +17,209 @@ function StatCard({ label, value, tone = 'slate' }) {
     );
 }
 
-export default function Dashboard({ sheet }) {
-    const telegramBotUsername = 'SSDP_Kedah_Bot';
-    const [selectedRow, setSelectedRow] = useState(null);
-    const [copyError, setCopyError] = useState('');
-    const [copiedRows, setCopiedRows] = useState(
-        () =>
-            new Set(
-                sheet.rows
-                    .filter((row) => row.is_copied)
-                    .map((row) => row.id),
-            ),
+function TrashIcon(props) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 11v6" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M14 11v6" />
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"
+            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 7V4h6v3" />
+        </svg>
     );
-    const [copyingRow, setCopyingRow] = useState(null);
+}
 
-    const copiedCount = copiedRows.size;
-    const remainingCount = Math.max(sheet.rows.length - copiedCount, 0);
-
+function PageSection({
+    page,
+    copyingRow,
+    deletingPage,
+    onCopy,
+    onDelete,
+}) {
     const normalizedHeaders = useMemo(
         () =>
-            sheet.headers.map((header) => ({
+            page.headers.map((header) => ({
                 key: header,
                 label: header.replaceAll('_', ' '),
             })),
-        [sheet.headers],
+        [page.headers],
     );
+
+    const copiedCount = page.rows.filter((row) => row.is_copied).length;
+
+    return (
+        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
+            <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                        Page {page.page_number}
+                    </p>
+                    <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                        {page.row_count} rekod unik
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {copiedCount} sudah copy, {page.row_count - copiedCount} belum copy.
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    onClick={() => onDelete(page.id)}
+                    disabled={deletingPage === page.id}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    <TrashIcon className="h-4 w-4" />
+                    {deletingPage === page.id ? 'Memadam...' : 'Padam page'}
+                </button>
+            </div>
+
+            <div className="mt-6 space-y-4 lg:hidden">
+                {page.rows.map((row) => (
+                    <div
+                        key={row.row_key}
+                        className={`rounded-3xl border p-4 ${
+                            row.is_copied
+                                ? 'border-emerald-200 bg-emerald-50'
+                                : 'border-slate-200 bg-white'
+                        }`}
+                    >
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                    Rekod #{row.position}
+                                </p>
+                                <h4 className="mt-2 text-base font-bold text-slate-900">
+                                    {row.values.nama_pemilih || 'Tiada nama'}
+                                </h4>
+                                <p className="mt-1 text-sm text-slate-500">
+                                    No KP: {row.values.no_kp || '-'}
+                                </p>
+                            </div>
+                            <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    row.is_copied
+                                        ? 'bg-emerald-100 text-emerald-700'
+                                        : 'bg-slate-100 text-slate-600'
+                                }`}
+                            >
+                                {row.is_copied ? 'Sudah copy' : 'Belum copy'}
+                            </span>
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                            {normalizedHeaders.map((header) => (
+                                <div key={header.key} className="rounded-2xl bg-slate-50 px-3 py-2">
+                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                        {header.label}
+                                    </p>
+                                    <p className="mt-1 break-words text-sm text-slate-700">
+                                        {row.values[header.key] || '-'}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-slate-900 px-4 py-3 text-white">
+                            <span className="truncate text-sm font-medium">{row.copy_text}</span>
+                            <button
+                                type="button"
+                                onClick={() => void onCopy(row)}
+                                className={`rounded-xl px-3 py-2 text-sm font-semibold ${
+                                    row.is_copied ? 'bg-emerald-600' : 'bg-cyan-500'
+                                }`}
+                            >
+                                {copyingRow === row.row_key
+                                    ? 'Menyalin...'
+                                    : row.is_copied
+                                      ? 'Copy semula'
+                                      : 'Copy'}
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-6 hidden overflow-hidden rounded-3xl border border-slate-200 lg:block">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-200">
+                        <thead className="bg-slate-900 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                            <tr>
+                                <th className="px-3 py-3">Tindakan</th>
+                                {normalizedHeaders.map((header) => (
+                                    <th key={header.key} className="px-3 py-3">
+                                        {header.label}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white text-[13px] text-slate-700">
+                            {page.rows.map((row) => (
+                                <tr
+                                    key={row.row_key}
+                                    className={
+                                        row.is_copied
+                                            ? 'bg-emerald-50 hover:bg-emerald-100/80'
+                                            : 'hover:bg-cyan-50/70'
+                                    }
+                                >
+                                    <td className="whitespace-nowrap px-3 py-2.5 align-middle">
+                                        <button
+                                            type="button"
+                                            onClick={() => void onCopy(row)}
+                                            className={`rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition ${
+                                                row.is_copied
+                                                    ? 'bg-emerald-600'
+                                                    : 'bg-slate-900 hover:bg-cyan-700'
+                                            }`}
+                                        >
+                                            {copyingRow === row.row_key
+                                                ? 'Menyalin...'
+                                                : row.is_copied
+                                                  ? 'Copy semula'
+                                                  : 'Copy'}
+                                        </button>
+                                    </td>
+                                    {normalizedHeaders.map((header) => (
+                                        <td key={header.key} className="px-3 py-2.5 align-top leading-5">
+                                            <div className="max-w-[12rem] break-words">
+                                                {row.values[header.key] || '-'}
+                                            </div>
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+export default function Dashboard({ sheet, pages }) {
+    const telegramBotUsername = 'SSDP_Kedah_Bot';
+    const [copyError, setCopyError] = useState('');
+    const [copyingRow, setCopyingRow] = useState(null);
+    const [syncingPage, setSyncingPage] = useState(false);
+    const [deletingPage, setDeletingPage] = useState(null);
+
+    const totalRows = pages.reduce((sum, page) => sum + page.row_count, 0);
+    const copiedCount = pages.reduce(
+        (sum, page) => sum + page.rows.filter((row) => row.is_copied).length,
+        0,
+    );
+    const pendingCount = Math.max(totalRows - copiedCount, 0);
 
     const handleCopy = async (row) => {
         const telegramWindow = window.open('about:blank', '_blank');
         const encodedText = encodeURIComponent(row.copy_text);
         const telegramDeepLink = `tg://resolve?domain=${telegramBotUsername}&text=${encodedText}`;
 
-        setCopyingRow(row.id);
+        setCopyingRow(row.row_key);
         setCopyError('');
 
         try {
@@ -64,7 +235,7 @@ export default function Dashboard({ sheet }) {
                     Accept: 'application/json',
                 },
                 body: JSON.stringify({
-                    row_key: row.id,
+                    row_key: row.row_key,
                     no_kp: row.values.no_kp ?? '',
                 }),
             });
@@ -73,15 +244,32 @@ export default function Dashboard({ sheet }) {
                 throw new Error('Gagal merekod status salinan.');
             }
 
-            setCopiedRows((previous) => new Set(previous).add(row.id));
-            setSelectedRow(row.id);
             telegramWindow?.location.replace(telegramDeepLink);
+            router.reload({ only: ['pages'] });
         } catch (error) {
             telegramWindow?.close();
             setCopyError('Salinan tidak berjaya. Sila cuba semula.');
         } finally {
             setCopyingRow(null);
         }
+    };
+
+    const handleSync = () => {
+        setSyncingPage(true);
+
+        router.post(route('sheet-pages.store'), {}, {
+            preserveScroll: true,
+            onFinish: () => setSyncingPage(false),
+        });
+    };
+
+    const handleDeletePage = (pageId) => {
+        setDeletingPage(pageId);
+
+        router.delete(route('sheet-pages.destroy', pageId), {
+            preserveScroll: true,
+            onFinish: () => setDeletingPage(null),
+        });
     };
 
     return (
@@ -93,14 +281,22 @@ export default function Dashboard({ sheet }) {
                             Dashboard
                         </p>
                         <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                            Semakan data cula daripada Google Sheet
+                            Pengurusan page data Google Sheet
                         </h2>
                         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-                            Klik mana-mana baris untuk pilih, kemudian salin arahan Telegram secara terus. Baris yang sudah disalin akan ditandakan dengan warna berbeza.
+                            Sistem hanya ambil data unik yang belum pernah masuk mana-mana page. Jika ada data baharu, sistem akan bina page seterusnya secara berasingan.
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
+                        <button
+                            type="button"
+                            onClick={handleSync}
+                            disabled={syncingPage || !!sheet.error}
+                            className="inline-flex items-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {syncingPage ? 'Mengambil data...' : 'Ambil data baharu'}
+                        </button>
                         <a
                             href={sheet.csv_url}
                             target="_blank"
@@ -122,14 +318,15 @@ export default function Dashboard({ sheet }) {
             <Head title="Dashboard" />
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <section className="grid gap-4 sm:grid-cols-3">
-                    <StatCard label="Jumlah rekod" value={sheet.rows.length} tone="slate" />
+                <section className="grid gap-4 sm:grid-cols-4">
+                    <StatCard label="Jumlah page aktif" value={pages.length} tone="slate" />
+                    <StatCard label="Jumlah rekod page" value={totalRows} tone="slate" />
                     <StatCard label="Sudah disalin" value={copiedCount} tone="emerald" />
-                    <StatCard label="Belum disalin" value={remainingCount} tone="cyan" />
+                    <StatCard label="Belum disalin" value={pendingCount} tone="cyan" />
                 </section>
 
                 <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
-                    <div className="flex flex-col gap-3 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                             <h3 className="text-lg font-bold text-slate-900">Sumber data aktif</h3>
                             <p className="mt-1 break-all text-sm leading-6 text-slate-500">
@@ -137,7 +334,9 @@ export default function Dashboard({ sheet }) {
                             </p>
                         </div>
                         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                            Pilih baris untuk fokus kerja semasa.
+                            {sheet.new_rows_available > 0
+                                ? `${sheet.new_rows_available} data unik baharu sedia untuk dijadikan page seterusnya.`
+                                : 'Tiada data baharu unik buat masa ini.'}
                         </div>
                     </div>
 
@@ -152,157 +351,27 @@ export default function Dashboard({ sheet }) {
                             {copyError}
                         </div>
                     )}
-
-                    <div className="mt-6 space-y-4 lg:hidden">
-                        {sheet.rows.map((row) => {
-                            const isSelected = selectedRow === row.id;
-                            const isCopied = copiedRows.has(row.id);
-
-                            return (
-                                <div
-                                    key={row.id}
-                                    onClick={() => setSelectedRow(row.id)}
-                                    className={`w-full rounded-3xl border p-4 text-left transition ${
-                                        isSelected
-                                            ? 'border-amber-300 bg-amber-100 text-amber-900'
-                                            : isCopied
-                                              ? 'border-emerald-200 bg-emerald-50'
-                                              : 'border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/70'
-                                    }`}
-                                >
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                            <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-                                                isSelected ? 'text-amber-700' : 'text-slate-400'
-                                            }`}>
-                                                Rekod #{row.position}
-                                            </p>
-                                            <h4 className={`mt-2 text-base font-bold ${
-                                                isSelected ? 'text-amber-950' : 'text-slate-900'
-                                            }`}>
-                                                {row.values.nama_pemilih || 'Tiada nama'}
-                                            </h4>
-                                            <p className={`mt-1 text-sm ${
-                                                isSelected ? 'text-amber-800' : 'text-slate-500'
-                                            }`}>
-                                                No KP: {row.values.no_kp || '-'}
-                                            </p>
-                                        </div>
-                                        <span
-                                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                                isSelected
-                                                    ? 'bg-amber-200 text-amber-900'
-                                                    : isCopied
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'bg-slate-100 text-slate-600'
-                                            }`}
-                                        >
-                                            {isCopied ? 'Sudah copy' : 'Belum copy'}
-                                        </span>
-                                    </div>
-
-                                    <div className="mt-4 space-y-2">
-                                        {normalizedHeaders.map((header) => (
-                                            <div key={header.key} className={`rounded-2xl px-3 py-2 ${
-                                                isSelected ? 'bg-amber-50' : 'bg-white/80'
-                                            }`}>
-                                                <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                                                    isSelected ? 'text-amber-700' : 'text-slate-400'
-                                                }`}>
-                                                    {header.label}
-                                                </p>
-                                                <p className={`mt-1 break-words text-sm ${
-                                                    isSelected ? 'text-amber-900' : 'text-slate-700'
-                                                }`}>
-                                                    {row.values[header.key] || '-'}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-900 px-4 py-3 text-white">
-                                        <span className="text-sm font-medium">{row.copy_text}</span>
-                                        <button
-                                            type="button"
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                void handleCopy(row);
-                                            }}
-                                            className="rounded-xl bg-cyan-500 px-3 py-2 text-sm font-semibold"
-                                        >
-                                            {copyingRow === row.id ? 'Menyalin...' : 'Copy'}
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="mt-6 hidden overflow-hidden rounded-3xl border border-slate-200 lg:block">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200">
-                                <thead className="bg-slate-900 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                                    <tr>
-                                        <th className="px-3 py-3">Tindakan</th>
-                                        {normalizedHeaders.map((header) => (
-                                            <th key={header.key} className="px-3 py-3">
-                                                {header.label}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white text-[13px] text-slate-700">
-                                    {sheet.rows.map((row) => {
-                                        const isSelected = selectedRow === row.id;
-                                        const isCopied = copiedRows.has(row.id);
-
-                                        return (
-                                            <tr
-                                                key={row.id}
-                                                onClick={() => setSelectedRow(row.id)}
-                                                className={`cursor-pointer transition ${
-                                                    isSelected
-                                                        ? 'bg-amber-100 text-amber-900 hover:bg-amber-200/80'
-                                                        : isCopied
-                                                          ? 'bg-emerald-50 hover:bg-emerald-100/80'
-                                                          : 'hover:bg-emerald-50/70'
-                                                }`}
-                                            >
-                                                <td className="whitespace-nowrap px-3 py-2.5 align-middle">
-                                                    <button
-                                                        type="button"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            void handleCopy(row);
-                                                        }}
-                                                        className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                                                            isCopied
-                                                                ? 'bg-emerald-600 text-white'
-                                                                : 'bg-slate-900 text-white hover:bg-cyan-700'
-                                                        }`}
-                                                    >
-                                                        {copyingRow === row.id
-                                                            ? 'Menyalin...'
-                                                            : isCopied
-                                                              ? 'Copy semula'
-                                                              : 'Copy'}
-                                                    </button>
-                                                </td>
-                                                {normalizedHeaders.map((header) => (
-                                                    <td key={header.key} className="px-3 py-2.5 align-top leading-5">
-                                                        <div className="max-w-[12rem] break-words">
-                                                            {row.values[header.key] || '-'}
-                                                        </div>
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
                 </section>
+
+                {pages.length === 0 ? (
+                    <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white/70 p-10 text-center shadow-sm">
+                        <h3 className="text-xl font-bold text-slate-900">Belum ada page aktif</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                            Tekan butang "Ambil data baharu" untuk cipta page pertama dengan data unik daripada Google Sheet.
+                        </p>
+                    </section>
+                ) : (
+                    pages.map((page) => (
+                        <PageSection
+                            key={page.id}
+                            page={page}
+                            copyingRow={copyingRow}
+                            deletingPage={deletingPage}
+                            onCopy={handleCopy}
+                            onDelete={handleDeletePage}
+                        />
+                    ))
+                )}
             </div>
         </AuthenticatedLayout>
     );

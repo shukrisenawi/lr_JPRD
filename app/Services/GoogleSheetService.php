@@ -3,7 +3,11 @@
 namespace App\Services;
 
 use App\Models\CopiedRecord;
+use App\Models\SheetPage;
+use App\Models\SheetPageRow;
 use App\Models\Setting;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -23,6 +27,78 @@ class GoogleSheetService
     }
 
     public function fetchSheetData(?string $url = null): array
+    {
+        $sheet = $this->fetchPreparedSheetData($url);
+        $copiedRows = CopiedRecord::query()
+            ->where('sheet_key', $sheet['sheet_key'])
+            ->get()
+            ->keyBy('row_key');
+
+        $rows = collect($sheet['rows'])
+            ->map(function (array $row) use ($copiedRows) {
+                $copied = $copiedRows->get($row['row_key']);
+
+                return [
+                    'id' => $row['row_key'],
+                    'row_key' => $row['row_key'],
+                    'row_fingerprint' => $row['row_fingerprint'],
+                    'position' => $row['position'],
+                    'copy_text' => $row['copy_text'],
+                    'is_copied' => $copied !== null,
+                    'copied_at' => $copied?->copied_at?->toDateTimeString(),
+                    'values' => $row['values'],
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'headers' => $sheet['headers'],
+            'rows' => $rows,
+            'sheet_key' => $sheet['sheet_key'],
+            'sheet_url' => $sheet['sheet_url'],
+            'csv_url' => $sheet['csv_url'],
+        ];
+    }
+
+    public function createNextPage(): ?SheetPage
+    {
+        $sheet = $this->fetchPreparedSheetData();
+        $newRows = $this->extractUniqueNewRows($sheet);
+
+        if ($newRows->isEmpty()) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($sheet, $newRows) {
+            $page = SheetPage::query()->create([
+                'sheet_key' => $sheet['sheet_key'],
+                'page_number' => $this->nextPageNumber($sheet['sheet_key']),
+                'headers' => $sheet['headers'],
+                'source_total_rows' => count($sheet['rows']),
+            ]);
+
+            $page->rows()->createMany(
+                $newRows->map(fn (array $row) => [
+                    'sheet_key' => $sheet['sheet_key'],
+                    'row_key' => $row['row_key'],
+                    'row_fingerprint' => $row['row_fingerprint'],
+                    'position' => $row['position'],
+                    'payload' => $row['values'],
+                    'no_kp' => $row['values']['no_kp'] ?? null,
+                ])->all(),
+            );
+
+            return $page->load('rows');
+        });
+    }
+
+    public function countPendingNewRows(array $sheet): int
+    {
+        return $this->extractUniqueNewRows($sheet)->count();
+    }
+
+    private function fetchPreparedSheetData(?string $url = null): array
     {
         $sheetUrl = $url ?: $this->getSheetUrl();
         $csvUrl = $this->toCsvExportUrl($sheetUrl);
@@ -55,47 +131,59 @@ class GoogleSheetService
             str_getcsv(array_shift($lines)),
         );
 
-        $sheetKey = md5($sheetUrl);
-        $copiedRows = CopiedRecord::query()
-            ->where('sheet_key', $sheetKey)
-            ->get()
-            ->keyBy('row_key');
-
-        $rows = collect($lines)
-            ->map(function (string $line, int $index) use ($headers, $copiedRows) {
-                $values = str_getcsv($line);
-                $row = [];
-
-                foreach ($headers as $headerIndex => $header) {
-                    $row[$header] = trim((string) ($values[$headerIndex] ?? ''));
-                }
-
-                if (array_key_exists('no_kp', $row)) {
-                    $row['no_kp'] = $this->normalizeNoKp($row['no_kp']);
-                }
-
-                $rowKey = sha1(json_encode($row, JSON_UNESCAPED_UNICODE) . '|' . $index);
-                $copied = $copiedRows->get($rowKey);
-
-                return [
-                    'id' => $rowKey,
-                    'position' => $index + 1,
-                    'copy_text' => '/kemascula ' . ($row['no_kp'] ?? ''),
-                    'is_copied' => $copied !== null,
-                    'copied_at' => $copied?->copied_at?->toDateTimeString(),
-                    'values' => $row,
-                ];
-            })
-            ->values()
-            ->all();
-
         return [
             'headers' => $headers,
-            'rows' => $rows,
-            'sheet_key' => $sheetKey,
+            'rows' => collect($lines)
+                ->map(function (string $line, int $index) use ($headers) {
+                    $values = str_getcsv($line);
+                    $row = [];
+
+                    foreach ($headers as $headerIndex => $header) {
+                        $row[$header] = trim((string) ($values[$headerIndex] ?? ''));
+                    }
+
+                    if (array_key_exists('no_kp', $row)) {
+                        $row['no_kp'] = $this->normalizeNoKp($row['no_kp']);
+                    }
+
+                    $fingerprint = sha1(json_encode($row, JSON_UNESCAPED_UNICODE));
+
+                    return [
+                        'row_key' => $fingerprint,
+                        'row_fingerprint' => $fingerprint,
+                        'position' => $index + 1,
+                        'copy_text' => '/kemascula ' . ($row['no_kp'] ?? ''),
+                        'values' => $row,
+                    ];
+                })
+                ->values()
+                ->all(),
+            'sheet_key' => md5($sheetUrl),
             'sheet_url' => $sheetUrl,
             'csv_url' => $csvUrl,
         ];
+    }
+
+    private function extractUniqueNewRows(array $sheet): Collection
+    {
+        $existingFingerprints = array_flip(
+            SheetPageRow::query()
+                ->where('sheet_key', $sheet['sheet_key'])
+                ->pluck('row_fingerprint')
+                ->all(),
+        );
+
+        return collect($sheet['rows'])
+            ->unique('row_fingerprint')
+            ->reject(fn (array $row) => isset($existingFingerprints[$row['row_fingerprint']]))
+            ->values();
+    }
+
+    private function nextPageNumber(string $sheetKey): int
+    {
+        return (int) SheetPage::withTrashed()
+            ->where('sheet_key', $sheetKey)
+            ->max('page_number') + 1;
     }
 
     public function toCsvExportUrl(string $sheetUrl): string
@@ -120,7 +208,7 @@ class GoogleSheetService
 
         $baseUrl = 'https://docs.google.com/spreadsheets/d/' . $matches[1] . '/export?format=csv';
 
-        return $gid ? $baseUrl . '&gid=' . $gid : $baseUrl;
+        return $gid !== null ? $baseUrl . '&gid=' . $gid : $baseUrl;
     }
 
     private function normalizeNoKp(string $noKp): string

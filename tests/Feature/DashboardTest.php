@@ -35,6 +35,9 @@ it('renders dashboard data for authenticated admin', function () {
             'sheet_url' => 'https://docs.google.com/spreadsheets/d/example/edit',
             'csv_url' => 'https://docs.google.com/spreadsheets/d/example/export?format=csv',
         ]);
+    $service->shouldReceive('countPendingNewRows')
+        ->once()
+        ->andReturn(1);
 
     $this->app->instance(GoogleSheetService::class, $service);
 
