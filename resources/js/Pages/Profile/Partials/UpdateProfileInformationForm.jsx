@@ -14,11 +14,12 @@ export default function UpdateProfileInformation({
     const user = usePage().props.auth.user;
     const [previewUrl, setPreviewUrl] = useState(user.avatar_url);
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
+    const { data, setData, post, errors, processing, recentlySuccessful } =
         useForm({
             name: user.name,
             email: user.email,
             avatar: null,
+            _method: 'patch',
         });
 
     useEffect(() => {
@@ -38,7 +39,7 @@ export default function UpdateProfileInformation({
     const submit = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'), {
+        post(route('profile.update'), {
             forceFormData: true,
         });
     };

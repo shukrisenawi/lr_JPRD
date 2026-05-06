@@ -104,6 +104,30 @@ test('replacing profile avatar removes the old file', function () {
     Storage::disk('public')->assertExists($user->avatar);
 });
 
+test('profile avatar can be uploaded using method spoofing for multipart form data', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->post('/profile', [
+            '_method' => 'patch',
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => UploadedFile::fake()->create('avatar.jpg', 100, 'image/jpeg'),
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/profile');
+
+    $user->refresh();
+
+    expect($user->avatar)->not->toBeNull();
+    Storage::disk('public')->assertExists($user->avatar);
+});
+
 test('user can delete their account', function () {
     $user = User::factory()->create();
 
