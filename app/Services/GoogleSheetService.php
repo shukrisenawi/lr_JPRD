@@ -70,6 +70,10 @@ class GoogleSheetService
                     $row[$header] = trim((string) ($values[$headerIndex] ?? ''));
                 }
 
+                if (array_key_exists('no_kp', $row)) {
+                    $row['no_kp'] = $this->normalizeNoKp($row['no_kp']);
+                }
+
                 $rowKey = sha1(json_encode($row, JSON_UNESCAPED_UNICODE) . '|' . $index);
                 $copied = $copiedRows->get($rowKey);
 
@@ -117,5 +121,14 @@ class GoogleSheetService
         $baseUrl = 'https://docs.google.com/spreadsheets/d/' . $matches[1] . '/export?format=csv';
 
         return $gid ? $baseUrl . '&gid=' . $gid : $baseUrl;
+    }
+
+    private function normalizeNoKp(string $noKp): string
+    {
+        if ($noKp === '' || ! ctype_digit($noKp) || strlen($noKp) >= 12) {
+            return $noKp;
+        }
+
+        return str_pad($noKp, 12, '0', STR_PAD_LEFT);
     }
 }

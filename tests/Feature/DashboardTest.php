@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\GoogleSheetService;
+use Illuminate\Support\Facades\Http;
 
 it('redirects guests from dashboard to login', function () {
     $this->get('/dashboard')
@@ -42,5 +44,28 @@ it('renders dashboard data for authenticated admin', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Dashboard')
             ->where('sheet.rows.0.copy_text', '/kemascula 123')
+            ->where('sheet.rows.0.values.nama_pemilih', 'Ali'));
+});
+
+it('pads no kp with leading zeroes until 12 digits on dashboard data', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        '*' => Http::response(
+            "no_kp,nama_pemilih\n123,Ali\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard')
+            ->where('sheet.rows.0.copy_text', '/kemascula 000000000123')
+            ->where('sheet.rows.0.values.no_kp', '000000000123')
             ->where('sheet.rows.0.values.nama_pemilih', 'Ali'));
 });
