@@ -56,6 +56,7 @@ class SheetPageController extends Controller
 
     public function destroy(SheetPage $sheetPage): RedirectResponse
     {
+        $sheetPage->rows()->delete();
         $sheetPage->delete();
 
         return redirect()

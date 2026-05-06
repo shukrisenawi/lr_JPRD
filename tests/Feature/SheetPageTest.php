@@ -65,7 +65,7 @@ it('creates the next page with new rows only', function () {
     expect($pages[1]->rows[0]->no_kp)->toBe('000000000789');
 });
 
-it('does not reimport rows from a page that has been deleted', function () {
+it('reimports the same rows after a page has been deleted', function () {
     $user = User::factory()->create();
 
     Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
@@ -94,8 +94,17 @@ it('does not reimport rows from a page that has been deleted', function () {
         ->post('/sheet-pages')
         ->assertRedirect(route('dashboard'));
 
-    expect(SheetPage::withTrashed()->count())->toBe(1);
-    expect(SheetPage::query()->whereNull('deleted_at')->count())->toBe(0);
+    $pages = SheetPage::withTrashed()
+        ->with('rows')
+        ->orderBy('page_number')
+        ->get();
+
+    expect($pages)->toHaveCount(2);
+    expect($pages[0]->deleted_at)->not->toBeNull();
+    expect($pages[1]->page_number)->toBe(2);
+    expect($pages[1]->rows)->toHaveCount(2);
+    expect($pages[1]->rows->pluck('no_kp')->all())
+        ->toBe(['000000000123', '000000000456']);
 });
 
 it('shows active pages and pending new unique rows on dashboard', function () {
