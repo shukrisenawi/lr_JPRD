@@ -18,6 +18,7 @@ function StatCard({ label, value, tone = 'slate' }) {
 }
 
 export default function Dashboard({ sheet }) {
+    const telegramBotUrl = 'https://t.me/SSDP_Kedah_Bot';
     const [selectedRow, setSelectedRow] = useState(null);
     const [copyError, setCopyError] = useState('');
     const [copiedRows, setCopiedRows] = useState(
@@ -43,6 +44,8 @@ export default function Dashboard({ sheet }) {
     );
 
     const handleCopy = async (row) => {
+        const telegramWindow = window.open('about:blank', '_blank');
+
         setCopyingRow(row.id);
         setCopyError('');
 
@@ -72,7 +75,9 @@ export default function Dashboard({ sheet }) {
 
             setCopiedRows((previous) => new Set(previous).add(row.id));
             setSelectedRow(row.id);
+            telegramWindow?.location.replace(telegramBotUrl);
         } catch (error) {
+            telegramWindow?.close();
             setCopyError('Salinan tidak berjaya. Sila cuba semula.');
         } finally {
             setCopyingRow(null);
