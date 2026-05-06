@@ -158,28 +158,36 @@ export default function Dashboard({ sheet }) {
                                     key={row.id}
                                     onClick={() => setSelectedRow(row.id)}
                                     className={`w-full rounded-3xl border p-4 text-left transition ${
-                                        isCopied
-                                            ? 'border-emerald-200 bg-emerald-50'
-                                            : isSelected
-                                              ? 'border-cyan-300 bg-cyan-50'
-                                            : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/40'
+                                        isSelected
+                                            ? 'border-amber-300 bg-amber-100 text-amber-900'
+                                            : isCopied
+                                              ? 'border-emerald-200 bg-emerald-50'
+                                              : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/60'
                                     }`}
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                            <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+                                                isSelected ? 'text-amber-700' : 'text-slate-400'
+                                            }`}>
                                                 Rekod #{row.position}
                                             </p>
-                                            <h4 className="mt-2 text-base font-bold text-slate-900">
+                                            <h4 className={`mt-2 text-base font-bold ${
+                                                isSelected ? 'text-amber-950' : 'text-slate-900'
+                                            }`}>
                                                 {row.values.nama_pemilih || 'Tiada nama'}
                                             </h4>
-                                            <p className="mt-1 text-sm text-slate-500">
+                                            <p className={`mt-1 text-sm ${
+                                                isSelected ? 'text-amber-800' : 'text-slate-500'
+                                            }`}>
                                                 No KP: {row.values.no_kp || '-'}
                                             </p>
                                         </div>
                                         <span
                                             className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                                isCopied
+                                                isSelected
+                                                    ? 'bg-amber-200 text-amber-900'
+                                                    : isCopied
                                                     ? 'bg-emerald-100 text-emerald-700'
                                                     : 'bg-slate-100 text-slate-600'
                                             }`}
@@ -190,11 +198,17 @@ export default function Dashboard({ sheet }) {
 
                                     <div className="mt-4 space-y-2">
                                         {normalizedHeaders.map((header) => (
-                                            <div key={header.key} className="rounded-2xl bg-white/80 px-3 py-2">
-                                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                            <div key={header.key} className={`rounded-2xl px-3 py-2 ${
+                                                isSelected ? 'bg-amber-50' : 'bg-white/80'
+                                            }`}>
+                                                <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                                                    isSelected ? 'text-amber-700' : 'text-slate-400'
+                                                }`}>
                                                     {header.label}
                                                 </p>
-                                                <p className="mt-1 break-words text-sm text-slate-700">
+                                                <p className={`mt-1 break-words text-sm ${
+                                                    isSelected ? 'text-amber-900' : 'text-slate-700'
+                                                }`}>
                                                     {row.values[header.key] || '-'}
                                                 </p>
                                             </div>
@@ -242,11 +256,11 @@ export default function Dashboard({ sheet }) {
                                                 key={row.id}
                                                 onClick={() => setSelectedRow(row.id)}
                                                 className={`cursor-pointer transition ${
-                                                    isCopied
-                                                        ? 'bg-emerald-50 hover:bg-emerald-100/80'
-                                                        : isSelected
-                                                          ? 'bg-cyan-50 hover:bg-cyan-100/80'
-                                                          : 'hover:bg-slate-50'
+                                                    isSelected
+                                                        ? 'bg-amber-100 text-amber-900 hover:bg-amber-200/80'
+                                                        : isCopied
+                                                          ? 'bg-emerald-50 hover:bg-emerald-100/80'
+                                                          : 'hover:bg-amber-50/60'
                                                 }`}
                                             >
                                                 <td className="whitespace-nowrap px-4 py-4">
