@@ -6,10 +6,14 @@ import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Login({ status, canResetPassword }) {
+export default function Login({
+    status,
+    canResetPassword,
+    defaultCredentials,
+}) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: '',
-        password: '',
+        email: defaultCredentials?.email ?? '',
+        password: defaultCredentials?.password ?? '',
         remember: false,
     });
 
@@ -54,7 +58,7 @@ export default function Login({ status, canResetPassword }) {
                         value={data.email}
                         className="mt-1 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                         autoComplete="username"
-                        placeholder="admin@lrjprd.local"
+                        placeholder="admin@jprd"
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
                     />
@@ -72,7 +76,7 @@ export default function Login({ status, canResetPassword }) {
                         value={data.password}
                         className="mt-1 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                         autoComplete="current-password"
-                        placeholder="password"
+                        placeholder="123"
                         onChange={(e) => setData('password', e.target.value)}
                     />
 
@@ -96,9 +100,9 @@ export default function Login({ status, canResetPassword }) {
 
                 <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                     Akaun awal admin:
-                    <span className="ml-2 font-semibold text-slate-900">admin@lrjprd.local</span>
+                    <span className="ml-2 font-semibold text-slate-900">admin@jprd</span>
                     <span className="mx-2 text-slate-300">|</span>
-                    <span className="font-semibold text-slate-900">password</span>
+                    <span className="font-semibold text-slate-900">123</span>
                 </div>
 
                 <div className="mt-6 flex items-center justify-between gap-4">

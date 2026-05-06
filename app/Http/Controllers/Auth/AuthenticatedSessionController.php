@@ -18,8 +18,17 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
+        $dbUsername = config('database.connections.mysql.username');
+        $shouldPrefillAdmin = config('app.env') === 'local' && $dbUsername === 'root';
+
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
+            'defaultCredentials' => $shouldPrefillAdmin
+                ? [
+                    'email' => 'admin@jprd',
+                    'password' => '123',
+                ]
+                : null,
             'status' => session('status'),
         ]);
     }

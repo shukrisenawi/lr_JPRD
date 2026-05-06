@@ -3,9 +3,16 @@
 use App\Models\User;
 
 test('login screen can be rendered', function () {
+    config()->set('app.env', 'local');
+    config()->set('database.connections.mysql.username', 'root');
+
     $response = $this->get('/login');
 
-    $response->assertStatus(200);
+    $response->assertStatus(200)
+        ->assertInertia(fn ($page) => $page
+            ->component('Auth/Login')
+            ->where('defaultCredentials.email', 'admin@jprd')
+            ->where('defaultCredentials.password', '123'));
 });
 
 test('users can authenticate using the login screen', function () {
