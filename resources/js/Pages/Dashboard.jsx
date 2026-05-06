@@ -203,7 +203,9 @@ function PageSection({
 export default function Dashboard({ sheet, pages }) {
     const telegramBotUsername = 'SSDP_Kedah_Bot';
     const autoSyncIntervalMs = 60000;
+    const autoSyncDurationMs = 7200000;
     const autoSyncStorageKey = 'dashboard-auto-sync-enabled';
+    const autoSyncStartedAtStorageKey = 'dashboard-auto-sync-started-at';
     const [copyError, setCopyError] = useState('');
     const [copyingRow, setCopyingRow] = useState(null);
     const [syncingPage, setSyncingPage] = useState(false);
@@ -215,6 +217,15 @@ export default function Dashboard({ sheet, pages }) {
         }
 
         return window.localStorage.getItem(autoSyncStorageKey) === 'true';
+    });
+    const [autoSyncStartedAt, setAutoSyncStartedAt] = useState(() => {
+        if (typeof window === 'undefined') {
+            return null;
+        }
+
+        const value = window.localStorage.getItem(autoSyncStartedAtStorageKey);
+
+        return value ? Number(value) : null;
     });
     const [autoSyncMessage, setAutoSyncMessage] = useState('');
 
@@ -240,16 +251,36 @@ export default function Dashboard({ sheet, pages }) {
     }, [activePageId, pages]);
 
     useEffect(() => {
+        const isExpired = autoSyncStartedAt !== null
+            && Date.now() - autoSyncStartedAt >= autoSyncDurationMs;
+
+        if (autoSyncEnabled && isExpired) {
+            setAutoSyncEnabled(false);
+            setAutoSyncStartedAt(null);
+            setAutoSyncMessage('Auto ambil data dimatikan automatik selepas 2 jam.');
+
+            return undefined;
+        }
+
         if (!autoSyncEnabled) {
             return undefined;
         }
 
         const intervalId = window.setInterval(() => {
+            if (autoSyncStartedAt !== null && Date.now() - autoSyncStartedAt >= autoSyncDurationMs) {
+                setAutoSyncEnabled(false);
+                setAutoSyncStartedAt(null);
+                setAutoSyncMessage('Auto ambil data dimatikan automatik selepas 2 jam.');
+                window.clearInterval(intervalId);
+
+                return;
+            }
+
             void runSync({ silent: true });
         }, autoSyncIntervalMs);
 
         return () => window.clearInterval(intervalId);
-    }, [autoSyncEnabled]);
+    }, [autoSyncEnabled, autoSyncStartedAt]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -261,6 +292,22 @@ export default function Dashboard({ sheet, pages }) {
             autoSyncEnabled ? 'true' : 'false',
         );
     }, [autoSyncEnabled]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        if (autoSyncStartedAt === null) {
+            window.localStorage.removeItem(autoSyncStartedAtStorageKey);
+            return;
+        }
+
+        window.localStorage.setItem(
+            autoSyncStartedAtStorageKey,
+            String(autoSyncStartedAt),
+        );
+    }, [autoSyncStartedAt]);
 
     const handleCopy = async (row) => {
         const telegramWindow = window.open('about:blank', '_blank');
@@ -372,10 +419,13 @@ export default function Dashboard({ sheet, pages }) {
     const handleToggleAutoSync = () => {
         setAutoSyncEnabled((previous) => {
             const nextState = !previous;
+            const startedAt = nextState ? Date.now() : null;
+
+            setAutoSyncStartedAt(startedAt);
 
             setAutoSyncMessage(
                 nextState
-                    ? 'Auto ambil data aktif. Sistem akan semak data baharu setiap 1 minit.'
+                    ? 'Auto ambil data aktif. Sistem akan semak data baharu setiap 1 minit dan berhenti automatik selepas 2 jam.'
                     : 'Auto ambil data dimatikan.'
             );
 
