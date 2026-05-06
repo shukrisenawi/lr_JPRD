@@ -202,11 +202,14 @@ function PageSection({
 
 export default function Dashboard({ sheet, pages }) {
     const telegramBotUsername = 'SSDP_Kedah_Bot';
+    const autoSyncIntervalMs = 180000;
     const [copyError, setCopyError] = useState('');
     const [copyingRow, setCopyingRow] = useState(null);
     const [syncingPage, setSyncingPage] = useState(false);
     const [deletingPage, setDeletingPage] = useState(null);
     const [activePageId, setActivePageId] = useState(() => pages[0]?.id ?? null);
+    const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+    const [autoSyncMessage, setAutoSyncMessage] = useState('');
 
     const totalRows = pages.reduce((sum, page) => sum + page.row_count, 0);
     const copiedCount = pages.reduce(
@@ -228,6 +231,18 @@ export default function Dashboard({ sheet, pages }) {
             setActivePageId(pages[0].id);
         }
     }, [activePageId, pages]);
+
+    useEffect(() => {
+        if (!autoSyncEnabled) {
+            return undefined;
+        }
+
+        const intervalId = window.setInterval(() => {
+            void runSync({ silent: true });
+        }, autoSyncIntervalMs);
+
+        return () => window.clearInterval(intervalId);
+    }, [autoSyncEnabled]);
 
     const handleCopy = async (row) => {
         const telegramWindow = window.open('about:blank', '_blank');
@@ -269,13 +284,62 @@ export default function Dashboard({ sheet, pages }) {
         }
     };
 
-    const handleSync = () => {
-        setSyncingPage(true);
+    const runSync = async ({ silent = false } = {}) => {
+        const token = document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute('content');
 
-        router.post(route('sheet-pages.store'), {}, {
-            preserveScroll: true,
-            onFinish: () => setSyncingPage(false),
-        });
+        if (!silent) {
+            setSyncingPage(true);
+        }
+
+        try {
+            const response = await fetch(route('sheet-pages.store'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                    silent,
+                }),
+            });
+
+            const payload = await response.json();
+
+            if (!response.ok) {
+                throw new Error(payload.message || 'Gagal mengambil data baharu.');
+            }
+
+            if (silent) {
+                if (payload.status === 'created') {
+                    setAutoSyncMessage(`Auto aktif: page ${payload.page_number} berjaya ditambah.`);
+                } else {
+                    setAutoSyncMessage('Auto aktif: tiada data baharu yang unik.');
+                }
+            } else {
+                setAutoSyncMessage('');
+            }
+
+            router.reload({ only: ['pages', 'sheet', 'flash'] });
+        } catch (error) {
+            const message = error instanceof Error
+                ? error.message
+                : 'Gagal mengambil data baharu.';
+
+            if (silent) {
+                setAutoSyncMessage(`Auto aktif: ${message}`);
+            }
+        } finally {
+            if (!silent) {
+                setSyncingPage(false);
+            }
+        }
+    };
+
+    const handleSync = () => {
+        void runSync();
     };
 
     const handleDeletePage = (pageId) => {
@@ -284,6 +348,24 @@ export default function Dashboard({ sheet, pages }) {
         router.delete(route('sheet-pages.destroy', pageId), {
             preserveScroll: true,
             onFinish: () => setDeletingPage(null),
+        });
+    };
+
+    const handleToggleAutoSync = () => {
+        setAutoSyncEnabled((previous) => {
+            const nextState = !previous;
+
+            setAutoSyncMessage(
+                nextState
+                    ? 'Auto ambil data aktif. Sistem akan semak data baharu setiap 3 minit.'
+                    : 'Auto ambil data dimatikan.'
+            );
+
+            if (nextState) {
+                void runSync({ silent: true });
+            }
+
+            return nextState;
         });
     };
 
@@ -304,6 +386,17 @@ export default function Dashboard({ sheet, pages }) {
                     </div>
 
                     <div className="flex flex-wrap gap-3">
+                        <button
+                            type="button"
+                            onClick={handleToggleAutoSync}
+                            className={`inline-flex items-center rounded-2xl px-4 py-3 text-sm font-semibold text-white shadow-lg transition ${
+                                autoSyncEnabled
+                                    ? 'bg-slate-900 shadow-slate-900/20 hover:bg-slate-800'
+                                    : 'bg-amber-500 shadow-amber-500/30 hover:bg-amber-600'
+                            }`}
+                        >
+                            {autoSyncEnabled ? 'Auto Ambil Data: ON' : 'Auto Ambil Data: OFF'}
+                        </button>
                         <button
                             type="button"
                             onClick={handleSync}
@@ -364,6 +457,12 @@ export default function Dashboard({ sheet, pages }) {
                     {copyError && (
                         <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
                             {copyError}
+                        </div>
+                    )}
+
+                    {autoSyncMessage && (
+                        <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm font-medium text-cyan-800">
+                            {autoSyncMessage}
                         </div>
                     )}
                 </section>

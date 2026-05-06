@@ -126,3 +126,27 @@ it('shows active pages and pending new unique rows on dashboard', function () {
             ->where('pages.0.rows.0.values.nama_pemilih', 'Ali')
             ->where('sheet.new_rows_available', 1));
 });
+
+it('returns json status for silent auto sync requests', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        '*' => Http::response(
+            "no_kp,nama_pemilih\n123,Ali\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson('/sheet-pages', [
+            'silent' => true,
+        ])
+        ->assertOk()
+        ->assertJson([
+            'status' => 'created',
+            'page_number' => 1,
+        ]);
+});
