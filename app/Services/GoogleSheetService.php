@@ -194,9 +194,17 @@ class GoogleSheetService
             throw new RuntimeException('Gagal mendapatkan nilai daripada tab ON/OFF.');
         }
 
-        $value = trim((string) str_getcsv(trim($response->body()))[0] ?? '');
+        $lines = preg_split("/\r\n|\n|\r/", trim($response->body())) ?: [];
+        $value = collect($lines)
+            ->flatMap(function (string $line) {
+                return array_map(
+                    fn ($cell) => trim((string) $cell),
+                    str_getcsv($line),
+                );
+            })
+            ->first(fn (string $cell) => preg_match('/^-?\d+$/', $cell) === 1);
 
-        return $value === '0';
+        return (string) $value === '0';
     }
 
     private function nextPageNumber(string $sheetKey): int

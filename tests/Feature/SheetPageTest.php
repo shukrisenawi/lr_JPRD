@@ -200,6 +200,35 @@ it('auto sync only creates page for rows with on off value zero', function () {
         ->toBe(['000000000123', '000000000456', '000000000789']);
 });
 
+it('auto sync ignores status text in on off tab and reads numeric value', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        'https://docs.google.com/spreadsheets/d/abc123/export?format=csv&gid=0' => Http::response(
+            "no_kp,nama_pemilih\n123,Ali\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+        'https://docs.google.com/spreadsheets/d/abc123/gviz/tq?tqx=out:csv&sheet=ON%2FOFF' => Http::response(
+            "STATUS\n0\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson('/sheet-pages', [
+            'silent' => true,
+        ])
+        ->assertOk()
+        ->assertJson([
+            'status' => 'created',
+            'page_number' => 1,
+        ]);
+});
+
 it('manual sync still allows unique rows regardless of on off value', function () {
     $user = User::factory()->create();
 
