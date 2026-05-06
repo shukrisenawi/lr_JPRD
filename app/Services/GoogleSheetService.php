@@ -61,10 +61,15 @@ class GoogleSheetService
         ];
     }
 
-    public function createNextPage(bool $onlyOnOffZero = false): ?SheetPage
+    public function createNextPage(bool $requiresOnOffZero = false): ?SheetPage
     {
         $sheet = $this->fetchPreparedSheetData();
-        $newRows = $this->extractUniqueNewRows($sheet, $onlyOnOffZero);
+
+        if ($requiresOnOffZero && ! $this->isOnOffSheetEnabledForAuto($sheet['sheet_url'])) {
+            return null;
+        }
+
+        $newRows = $this->extractUniqueNewRows($sheet);
 
         if ($newRows->isEmpty()) {
             return null;
@@ -93,9 +98,9 @@ class GoogleSheetService
         });
     }
 
-    public function countPendingNewRows(array $sheet, bool $onlyOnOffZero = false): int
+    public function countPendingNewRows(array $sheet): int
     {
-        return $this->extractUniqueNewRows($sheet, $onlyOnOffZero)->count();
+        return $this->extractUniqueNewRows($sheet)->count();
     }
 
     private function fetchPreparedSheetData(?string $url = null): array
@@ -164,7 +169,7 @@ class GoogleSheetService
         ];
     }
 
-    private function extractUniqueNewRows(array $sheet, bool $onlyOnOffZero = false): Collection
+    private function extractUniqueNewRows(array $sheet): Collection
     {
         $existingFingerprints = array_flip(
             SheetPageRow::query()
@@ -174,26 +179,24 @@ class GoogleSheetService
         );
 
         return collect($sheet['rows'])
-            ->when(
-                $onlyOnOffZero,
-                fn (Collection $rows) => $rows->filter(
-                    fn (array $row) => $this->isOnOffZeroRow($row['values'])
-                ),
-            )
             ->unique('row_fingerprint')
             ->reject(fn (array $row) => isset($existingFingerprints[$row['row_fingerprint']]))
             ->values();
     }
 
-    private function isOnOffZeroRow(array $values): bool
+    private function isOnOffSheetEnabledForAuto(string $sheetUrl): bool
     {
-        foreach ($values as $header => $value) {
-            if (Str::of((string) $header)->lower()->replace(' ', '')->toString() === 'on/off') {
-                return trim((string) $value) === '0';
-            }
+        $response = Http::timeout(20)
+            ->accept('text/csv')
+            ->get($this->toSheetTabCsvUrl($sheetUrl, 'ON/OFF'));
+
+        if ($response->failed()) {
+            throw new RuntimeException('Gagal mendapatkan nilai daripada tab ON/OFF.');
         }
 
-        return false;
+        $value = trim((string) str_getcsv(trim($response->body()))[0] ?? '');
+
+        return $value === '0';
     }
 
     private function nextPageNumber(string $sheetKey): int
@@ -226,6 +229,20 @@ class GoogleSheetService
         $baseUrl = 'https://docs.google.com/spreadsheets/d/' . $matches[1] . '/export?format=csv';
 
         return $gid !== null ? $baseUrl . '&gid=' . $gid : $baseUrl;
+    }
+
+    public function toSheetTabCsvUrl(string $sheetUrl, string $sheetName): string
+    {
+        preg_match('/\/d\/([a-zA-Z0-9-_]+)/', $sheetUrl, $matches);
+
+        if (! isset($matches[1])) {
+            throw new RuntimeException('URL Google Sheet tidak sah.');
+        }
+
+        return 'https://docs.google.com/spreadsheets/d/'
+            . $matches[1]
+            . '/gviz/tq?tqx=out:csv&sheet='
+            . rawurlencode($sheetName);
     }
 
     private function normalizeNoKp(string $noKp): string

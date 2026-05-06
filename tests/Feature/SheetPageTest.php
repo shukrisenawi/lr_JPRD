@@ -136,14 +136,19 @@ it('shows active pages and pending new unique rows on dashboard', function () {
             ->where('sheet.new_rows_available', 1));
 });
 
-it('returns no changes for silent auto sync requests without on off zero rows', function () {
+it('returns no changes for silent auto sync requests when on off tab is not zero', function () {
     $user = User::factory()->create();
 
     Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
 
     Http::fake([
-        '*' => Http::response(
+        'https://docs.google.com/spreadsheets/d/abc123/export?format=csv&gid=0' => Http::response(
             "no_kp,nama_pemilih\n123,Ali\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+        'https://docs.google.com/spreadsheets/d/abc123/gviz/tq?tqx=out:csv&sheet=ON%2FOFF' => Http::response(
+            "1\n",
             200,
             ['Content-Type' => 'text/csv']
         ),
@@ -165,8 +170,13 @@ it('auto sync only creates page for rows with on off value zero', function () {
     Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
 
     Http::fake([
-        '*' => Http::response(
-            "no_kp,nama_pemilih,ON/OFF\n123,Ali,1\n456,Abu,0\n789,Siti,2\n",
+        'https://docs.google.com/spreadsheets/d/abc123/export?format=csv&gid=0' => Http::response(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n789,Siti\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+        'https://docs.google.com/spreadsheets/d/abc123/gviz/tq?tqx=out:csv&sheet=ON%2FOFF' => Http::response(
+            "0\n",
             200,
             ['Content-Type' => 'text/csv']
         ),
@@ -185,8 +195,9 @@ it('auto sync only creates page for rows with on off value zero', function () {
     $page = SheetPage::query()->with('rows')->first();
 
     expect($page)->not->toBeNull();
-    expect($page->rows)->toHaveCount(1);
-    expect($page->rows[0]->no_kp)->toBe('000000000456');
+    expect($page->rows)->toHaveCount(3);
+    expect($page->rows->pluck('no_kp')->all())
+        ->toBe(['000000000123', '000000000456', '000000000789']);
 });
 
 it('manual sync still allows unique rows regardless of on off value', function () {
@@ -196,7 +207,7 @@ it('manual sync still allows unique rows regardless of on off value', function (
 
     Http::fake([
         '*' => Http::response(
-            "no_kp,nama_pemilih,ON/OFF\n123,Ali,1\n456,Abu,0\n",
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n",
             200,
             ['Content-Type' => 'text/csv']
         ),
