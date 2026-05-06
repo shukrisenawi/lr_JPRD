@@ -544,8 +544,8 @@ export default function Dashboard({ sheet, pages }) {
                     </section>
                 ) : (
                     <>
-                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-4 shadow-panel backdrop-blur sm:p-5">
-                            <div className="flex gap-3 overflow-x-auto pb-1">
+                        <section className="rounded-[1.75rem] border border-slate-200 bg-white/90 p-3 shadow-panel backdrop-blur sm:p-4">
+                            <div className="flex flex-wrap gap-2">
                                 {pages.map((page) => {
                                     const isActive = page.id === activePage?.id;
                                     const pageCopiedCount = page.rows.filter((row) => row.is_copied).length;
@@ -555,7 +555,7 @@ export default function Dashboard({ sheet, pages }) {
                                             key={page.id}
                                             type="button"
                                             onClick={() => setActivePageId(page.id)}
-                                            className={`min-w-[180px] rounded-3xl border px-4 py-4 text-left transition ${
+                                            className={`rounded-2xl border px-3 py-2.5 text-left transition ${
                                                 isActive
                                                     ? 'border-cyan-300 bg-cyan-50 shadow-sm'
                                                     : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
@@ -564,10 +564,10 @@ export default function Dashboard({ sheet, pages }) {
                                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
                                                 Page {page.page_number}
                                             </p>
-                                            <p className="mt-2 text-lg font-bold text-slate-900">
+                                            <p className="mt-1.5 text-sm font-bold text-slate-900 sm:text-base">
                                                 {page.row_count} rekod
                                             </p>
-                                            <p className="mt-1 text-sm text-slate-500">
+                                            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
                                                 {pageCopiedCount} selesai copy
                                             </p>
                                         </button>
