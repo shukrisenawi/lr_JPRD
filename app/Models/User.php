@@ -39,6 +39,8 @@ class User extends Authenticatable
             return null;
         }
 
-        return Storage::disk('public')->url($this->avatar);
+        return route('profile.avatar', [
+            't' => $this->updated_at?->timestamp,
+        ]);
     }
 }

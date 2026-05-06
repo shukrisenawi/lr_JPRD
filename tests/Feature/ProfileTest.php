@@ -75,6 +75,21 @@ test('profile avatar can be uploaded', function () {
     Storage::disk('public')->assertExists($user->avatar);
 });
 
+test('authenticated user can view their uploaded avatar', function () {
+    Storage::fake('public');
+
+    $avatarPath = UploadedFile::fake()->create('avatar.jpg', 100, 'image/jpeg')
+        ->store('avatars', 'public');
+
+    $user = User::factory()->create([
+        'avatar' => $avatarPath,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/profile/avatar')
+        ->assertOk();
+});
+
 test('replacing profile avatar removes the old file', function () {
     Storage::fake('public');
 

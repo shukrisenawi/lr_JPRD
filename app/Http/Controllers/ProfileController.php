@@ -26,6 +26,24 @@ class ProfileController extends Controller
     }
 
     /**
+     * Display the authenticated user's avatar.
+     */
+    public function avatar(Request $request)
+    {
+        $user = $request->user();
+
+        abort_unless($user?->avatar, 404);
+        abort_unless(Storage::disk('public')->exists($user->avatar), 404);
+
+        return response()->file(
+            Storage::disk('public')->path($user->avatar),
+            [
+                'Cache-Control' => 'private, max-age=3600',
+            ],
+        );
+    }
+
+    /**
      * Update the user's profile information.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
