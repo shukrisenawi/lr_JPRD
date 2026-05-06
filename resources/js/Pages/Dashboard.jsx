@@ -53,8 +53,6 @@ export default function Dashboard({ sheet }) {
         setCopyError('');
 
         try {
-            await navigator.clipboard.writeText(row.copy_text);
-
             const token = document
                 .querySelector('meta[name="csrf-token"]')
                 ?.getAttribute('content');
