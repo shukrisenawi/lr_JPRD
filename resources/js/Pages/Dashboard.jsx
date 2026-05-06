@@ -202,7 +202,7 @@ function PageSection({
 
 export default function Dashboard({ sheet, pages }) {
     const telegramBotUsername = 'SSDP_Kedah_Bot';
-    const autoSyncIntervalMs = 180000;
+    const autoSyncIntervalMs = 60000;
     const [copyError, setCopyError] = useState('');
     const [copyingRow, setCopyingRow] = useState(null);
     const [syncingPage, setSyncingPage] = useState(false);
@@ -357,7 +357,7 @@ export default function Dashboard({ sheet, pages }) {
 
             setAutoSyncMessage(
                 nextState
-                    ? 'Auto ambil data aktif. Sistem akan semak data baharu setiap 3 minit.'
+                    ? 'Auto ambil data aktif. Sistem akan semak data baharu setiap 1 minit.'
                     : 'Auto ambil data dimatikan.'
             );
 
