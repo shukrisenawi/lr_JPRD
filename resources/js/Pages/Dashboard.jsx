@@ -203,12 +203,19 @@ function PageSection({
 export default function Dashboard({ sheet, pages }) {
     const telegramBotUsername = 'SSDP_Kedah_Bot';
     const autoSyncIntervalMs = 60000;
+    const autoSyncStorageKey = 'dashboard-auto-sync-enabled';
     const [copyError, setCopyError] = useState('');
     const [copyingRow, setCopyingRow] = useState(null);
     const [syncingPage, setSyncingPage] = useState(false);
     const [deletingPage, setDeletingPage] = useState(null);
     const [activePageId, setActivePageId] = useState(() => pages[0]?.id ?? null);
-    const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+    const [autoSyncEnabled, setAutoSyncEnabled] = useState(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        return window.localStorage.getItem(autoSyncStorageKey) === 'true';
+    });
     const [autoSyncMessage, setAutoSyncMessage] = useState('');
 
     const totalRows = pages.reduce((sum, page) => sum + page.row_count, 0);
@@ -242,6 +249,17 @@ export default function Dashboard({ sheet, pages }) {
         }, autoSyncIntervalMs);
 
         return () => window.clearInterval(intervalId);
+    }, [autoSyncEnabled]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.localStorage.setItem(
+            autoSyncStorageKey,
+            autoSyncEnabled ? 'true' : 'false',
+        );
     }, [autoSyncEnabled]);
 
     const handleCopy = async (row) => {
