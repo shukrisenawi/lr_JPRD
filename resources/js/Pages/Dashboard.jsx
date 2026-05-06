@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function StatCard({ label, value, tone = 'slate' }) {
     const tones = {
@@ -206,6 +206,7 @@ export default function Dashboard({ sheet, pages }) {
     const [copyingRow, setCopyingRow] = useState(null);
     const [syncingPage, setSyncingPage] = useState(false);
     const [deletingPage, setDeletingPage] = useState(null);
+    const [activePageId, setActivePageId] = useState(() => pages[0]?.id ?? null);
 
     const totalRows = pages.reduce((sum, page) => sum + page.row_count, 0);
     const copiedCount = pages.reduce(
@@ -213,6 +214,20 @@ export default function Dashboard({ sheet, pages }) {
         0,
     );
     const pendingCount = Math.max(totalRows - copiedCount, 0);
+    const activePage = pages.find((page) => page.id === activePageId) ?? pages[0] ?? null;
+
+    useEffect(() => {
+        if (pages.length === 0) {
+            setActivePageId(null);
+            return;
+        }
+
+        const hasActivePage = pages.some((page) => page.id === activePageId);
+
+        if (!hasActivePage) {
+            setActivePageId(pages[0].id);
+        }
+    }, [activePageId, pages]);
 
     const handleCopy = async (row) => {
         const telegramWindow = window.open('about:blank', '_blank');
@@ -361,16 +376,50 @@ export default function Dashboard({ sheet, pages }) {
                         </p>
                     </section>
                 ) : (
-                    pages.map((page) => (
-                        <PageSection
-                            key={page.id}
-                            page={page}
-                            copyingRow={copyingRow}
-                            deletingPage={deletingPage}
-                            onCopy={handleCopy}
-                            onDelete={handleDeletePage}
-                        />
-                    ))
+                    <>
+                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-4 shadow-panel backdrop-blur sm:p-5">
+                            <div className="flex gap-3 overflow-x-auto pb-1">
+                                {pages.map((page) => {
+                                    const isActive = page.id === activePage?.id;
+                                    const pageCopiedCount = page.rows.filter((row) => row.is_copied).length;
+
+                                    return (
+                                        <button
+                                            key={page.id}
+                                            type="button"
+                                            onClick={() => setActivePageId(page.id)}
+                                            className={`min-w-[180px] rounded-3xl border px-4 py-4 text-left transition ${
+                                                isActive
+                                                    ? 'border-cyan-300 bg-cyan-50 shadow-sm'
+                                                    : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
+                                            }`}
+                                        >
+                                            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                                                Page {page.page_number}
+                                            </p>
+                                            <p className="mt-2 text-lg font-bold text-slate-900">
+                                                {page.row_count} rekod
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-500">
+                                                {pageCopiedCount} selesai copy
+                                            </p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </section>
+
+                        {activePage && (
+                            <PageSection
+                                key={activePage.id}
+                                page={activePage}
+                                copyingRow={copyingRow}
+                                deletingPage={deletingPage}
+                                onCopy={handleCopy}
+                                onDelete={handleDeletePage}
+                            />
+                        )}
+                    </>
                 )}
             </div>
         </AuthenticatedLayout>
