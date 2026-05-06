@@ -47,7 +47,6 @@ export default function Dashboard({ sheet }) {
         const telegramWindow = window.open('about:blank', '_blank');
         const encodedText = encodeURIComponent(row.copy_text);
         const telegramDeepLink = `tg://resolve?domain=${telegramBotUsername}&text=${encodedText}`;
-        const telegramWebLink = `https://t.me/${telegramBotUsername}?text=${encodedText}`;
 
         setCopyingRow(row.id);
         setCopyError('');
@@ -77,12 +76,6 @@ export default function Dashboard({ sheet }) {
             setCopiedRows((previous) => new Set(previous).add(row.id));
             setSelectedRow(row.id);
             telegramWindow?.location.replace(telegramDeepLink);
-
-            window.setTimeout(() => {
-                if (telegramWindow && !telegramWindow.closed) {
-                    telegramWindow.location.replace(telegramWebLink);
-                }
-            }, 1200);
         } catch (error) {
             telegramWindow?.close();
             setCopyError('Salinan tidak berjaya. Sila cuba semula.');
