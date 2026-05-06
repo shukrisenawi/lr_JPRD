@@ -13,8 +13,10 @@ class SheetPageController extends Controller
 {
     public function store(Request $request, GoogleSheetService $googleSheetService): RedirectResponse|JsonResponse
     {
+        $isAutoSync = $request->boolean('silent');
+
         try {
-            $page = $googleSheetService->createNextPage();
+            $page = $googleSheetService->createNextPage($isAutoSync);
         } catch (RuntimeException $exception) {
             if ($this->wantsJson($request)) {
                 return response()->json([
@@ -32,13 +34,20 @@ class SheetPageController extends Controller
             if ($this->wantsJson($request)) {
                 return response()->json([
                     'status' => 'no_changes',
-                    'message' => 'Tiada data baharu yang unik untuk dijadikan page baharu.',
+                    'message' => $isAutoSync
+                        ? 'Tiada data baharu unik dengan nilai ON/OFF = 0 untuk dijadikan page baharu.'
+                        : 'Tiada data baharu yang unik untuk dijadikan page baharu.',
                 ]);
             }
 
             return redirect()
                 ->route('dashboard')
-                ->with('success', 'Tiada data baharu yang unik untuk dijadikan page baharu.');
+                ->with(
+                    'success',
+                    $isAutoSync
+                        ? 'Tiada data baharu unik dengan nilai ON/OFF = 0 untuk dijadikan page baharu.'
+                        : 'Tiada data baharu yang unik untuk dijadikan page baharu.'
+                );
         }
 
         if ($this->wantsJson($request)) {

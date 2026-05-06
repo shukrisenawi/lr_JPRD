@@ -61,10 +61,10 @@ class GoogleSheetService
         ];
     }
 
-    public function createNextPage(): ?SheetPage
+    public function createNextPage(bool $onlyOnOffZero = false): ?SheetPage
     {
         $sheet = $this->fetchPreparedSheetData();
-        $newRows = $this->extractUniqueNewRows($sheet);
+        $newRows = $this->extractUniqueNewRows($sheet, $onlyOnOffZero);
 
         if ($newRows->isEmpty()) {
             return null;
@@ -93,9 +93,9 @@ class GoogleSheetService
         });
     }
 
-    public function countPendingNewRows(array $sheet): int
+    public function countPendingNewRows(array $sheet, bool $onlyOnOffZero = false): int
     {
-        return $this->extractUniqueNewRows($sheet)->count();
+        return $this->extractUniqueNewRows($sheet, $onlyOnOffZero)->count();
     }
 
     private function fetchPreparedSheetData(?string $url = null): array
@@ -164,7 +164,7 @@ class GoogleSheetService
         ];
     }
 
-    private function extractUniqueNewRows(array $sheet): Collection
+    private function extractUniqueNewRows(array $sheet, bool $onlyOnOffZero = false): Collection
     {
         $existingFingerprints = array_flip(
             SheetPageRow::query()
@@ -174,9 +174,26 @@ class GoogleSheetService
         );
 
         return collect($sheet['rows'])
+            ->when(
+                $onlyOnOffZero,
+                fn (Collection $rows) => $rows->filter(
+                    fn (array $row) => $this->isOnOffZeroRow($row['values'])
+                ),
+            )
             ->unique('row_fingerprint')
             ->reject(fn (array $row) => isset($existingFingerprints[$row['row_fingerprint']]))
             ->values();
+    }
+
+    private function isOnOffZeroRow(array $values): bool
+    {
+        foreach ($values as $header => $value) {
+            if (Str::of((string) $header)->lower()->replace(' ', '')->toString() === 'on/off') {
+                return trim((string) $value) === '0';
+            }
+        }
+
+        return false;
     }
 
     private function nextPageNumber(string $sheetKey): int

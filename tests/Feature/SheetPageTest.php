@@ -136,7 +136,7 @@ it('shows active pages and pending new unique rows on dashboard', function () {
             ->where('sheet.new_rows_available', 1));
 });
 
-it('returns json status for silent auto sync requests', function () {
+it('returns no changes for silent auto sync requests without on off zero rows', function () {
     $user = User::factory()->create();
 
     Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
@@ -155,7 +155,59 @@ it('returns json status for silent auto sync requests', function () {
         ])
         ->assertOk()
         ->assertJson([
+            'status' => 'no_changes',
+        ]);
+});
+
+it('auto sync only creates page for rows with on off value zero', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        '*' => Http::response(
+            "no_kp,nama_pemilih,ON/OFF\n123,Ali,1\n456,Abu,0\n789,Siti,2\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->postJson('/sheet-pages', [
+            'silent' => true,
+        ])
+        ->assertOk()
+        ->assertJson([
             'status' => 'created',
             'page_number' => 1,
         ]);
+
+    $page = SheetPage::query()->with('rows')->first();
+
+    expect($page)->not->toBeNull();
+    expect($page->rows)->toHaveCount(1);
+    expect($page->rows[0]->no_kp)->toBe('000000000456');
+});
+
+it('manual sync still allows unique rows regardless of on off value', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        '*' => Http::response(
+            "no_kp,nama_pemilih,ON/OFF\n123,Ali,1\n456,Abu,0\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->post('/sheet-pages')
+        ->assertRedirect(route('dashboard'));
+
+    $page = SheetPage::query()->with('rows')->first();
+
+    expect($page)->not->toBeNull();
+    expect($page->rows)->toHaveCount(2);
 });
