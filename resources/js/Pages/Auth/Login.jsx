@@ -98,13 +98,6 @@ export default function Login({
                     </label>
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                    Akaun awal admin:
-                    <span className="ml-2 font-semibold text-slate-900">admin@jprd</span>
-                    <span className="mx-2 text-slate-300">|</span>
-                    <span className="font-semibold text-slate-900">123</span>
-                </div>
-
                 <div className="mt-6 flex items-center justify-between gap-4">
                     {canResetPassword && (
                         <Link
