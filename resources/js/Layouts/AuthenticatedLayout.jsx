@@ -8,6 +8,7 @@ import { useState } from 'react';
 export default function AuthenticatedLayout({ header, children }) {
     const { auth, flash } = usePage().props;
     const user = auth.user;
+    const userInitial = user.name.charAt(0).toUpperCase();
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -53,8 +54,20 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <span className="inline-flex rounded-md">
                                             <button
                                                 type="button"
-                                                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium leading-4 text-slate-600 transition hover:border-cyan-200 hover:text-slate-900 focus:outline-none"
+                                                className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium leading-4 text-slate-600 transition hover:border-cyan-200 hover:text-slate-900 focus:outline-none"
                                             >
+                                                {user.avatar_url ? (
+                                                    <img
+                                                        src={user.avatar_url}
+                                                        alt={user.name}
+                                                        className="h-9 w-9 rounded-xl object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-600 text-sm font-semibold text-white">
+                                                        {userInitial}
+                                                    </div>
+                                                )}
+
                                                 {user.name}
 
                                                 <svg
@@ -156,12 +169,26 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-gray-800">
-                                {user.name}
-                            </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                {user.email}
+                        <div className="flex items-center gap-3 px-4">
+                            {user.avatar_url ? (
+                                <img
+                                    src={user.avatar_url}
+                                    alt={user.name}
+                                    className="h-12 w-12 rounded-2xl object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-600 text-base font-semibold text-white">
+                                    {userInitial}
+                                </div>
+                            )}
+
+                            <div>
+                                <div className="text-base font-medium text-gray-800">
+                                    {user.name}
+                                </div>
+                                <div className="text-sm font-medium text-gray-500">
+                                    {user.email}
+                                </div>
                             </div>
                         </div>
 
