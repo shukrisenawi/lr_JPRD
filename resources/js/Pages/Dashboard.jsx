@@ -152,6 +152,7 @@ function PageSection({
                                 type="button"
                                 onClick={(event) => {
                                     event.stopPropagation();
+                                    onSelectRow(row.row_key);
                                     void onCopy(row);
                                 }}
                                 className={`rounded-xl px-3 py-2 text-sm font-semibold ${
@@ -205,6 +206,7 @@ function PageSection({
                                             type="button"
                                             onClick={(event) => {
                                                 event.stopPropagation();
+                                                onSelectRow(row.row_key);
                                                 void onCopy(row);
                                             }}
                                             className={`rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition ${
