@@ -236,17 +236,17 @@ export default function Dashboard({ sheet }) {
                     <div className="mt-6 hidden overflow-hidden rounded-3xl border border-slate-200 lg:block">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-slate-200">
-                                <thead className="bg-slate-900 text-left text-xs font-semibold uppercase tracking-[0.2em] text-slate-200">
+                                <thead className="bg-slate-900 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-200">
                                     <tr>
-                                        <th className="px-4 py-4">Tindakan</th>
+                                        <th className="px-3 py-3">Tindakan</th>
                                         {normalizedHeaders.map((header) => (
-                                            <th key={header.key} className="px-4 py-4">
+                                            <th key={header.key} className="px-3 py-3">
                                                 {header.label}
                                             </th>
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white text-sm text-slate-700">
+                                <tbody className="divide-y divide-slate-100 bg-white text-[13px] text-slate-700">
                                     {sheet.rows.map((row) => {
                                         const isSelected = selectedRow === row.id;
                                         const isCopied = copiedRows.has(row.id);
@@ -263,14 +263,14 @@ export default function Dashboard({ sheet }) {
                                                           : 'hover:bg-emerald-50/70'
                                                 }`}
                                             >
-                                                <td className="whitespace-nowrap px-4 py-4">
+                                                <td className="whitespace-nowrap px-3 py-2.5 align-middle">
                                                     <button
                                                         type="button"
                                                         onClick={(event) => {
                                                             event.stopPropagation();
                                                             void handleCopy(row);
                                                         }}
-                                                        className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${
+                                                        className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
                                                             isCopied
                                                                 ? 'bg-emerald-600 text-white'
                                                                 : 'bg-slate-900 text-white hover:bg-cyan-700'
@@ -284,8 +284,8 @@ export default function Dashboard({ sheet }) {
                                                     </button>
                                                 </td>
                                                 {normalizedHeaders.map((header) => (
-                                                    <td key={header.key} className="px-4 py-4 align-top">
-                                                        <div className="max-w-xs break-words">
+                                                    <td key={header.key} className="px-3 py-2.5 align-top leading-5">
+                                                        <div className="max-w-[12rem] break-words">
                                                             {row.values[header.key] || '-'}
                                                         </div>
                                                     </td>
