@@ -518,8 +518,8 @@ export default function Laporan({ report }) {
                                     </ChartPanel>
                                 </section>
 
-                                <ChartPanel title="Jadual lokaliti dalam UDM">
-                                    <div className="h-full overflow-auto">
+                                <ChartPanel title="Jadual lokaliti dalam UDM" compact>
+                                    <div className="overflow-auto">
                                         <DataTable rows={selectedUdmTopLocalityTableRows} columns={dmLocalityColumns} />
                                     </div>
                                 </ChartPanel>
