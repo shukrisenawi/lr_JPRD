@@ -527,7 +527,19 @@ class PemilihReportService
         $contents = File::get($cachePath);
         $decoded = json_decode($contents, true);
 
-        return is_array($decoded) ? $decoded : null;
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        if (! array_key_exists('report', $decoded) || ! is_array($decoded['report'])) {
+            return null;
+        }
+
+        if (! array_key_exists('search_index', $decoded) || ! is_array($decoded['search_index'])) {
+            return null;
+        }
+
+        return $decoded;
     }
 
     private function writeCachedSnapshot(string $path, array $snapshot): void

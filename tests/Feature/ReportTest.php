@@ -123,3 +123,52 @@ it('rebuilds cached laporan data when source file changes', function () {
     expect($first['by_cula'][0]['code'])->toBe('2')
         ->and(collect($second['by_cula'])->contains(fn (array $row) => $row['code'] === '10' && $row['total'] === 1))->toBeTrue();
 });
+
+it('rebuilds legacy laporan cache with old structure automatically', function () {
+    $path = storage_path('app/testing-pemilih-legacy-cache.xls');
+    file_put_contents($path, pemilihReportFixture());
+
+    $legacyReport = [
+        'source' => [
+            'name' => basename($path),
+            'exists' => true,
+        ],
+        'summary' => [
+            'total_voters' => 999,
+            'total_dm' => 1,
+            'total_localities' => 1,
+            'male' => 0,
+            'female' => 0,
+            'other_gender' => 0,
+            'with_cula' => 0,
+        ],
+        'gender' => [],
+        'by_dm' => [],
+        'cula_by_dm' => [],
+        'dm_details' => [],
+        'by_locality' => [],
+        'by_cula' => [],
+    ];
+
+    $cacheSignature = sha1(implode('|', [
+        $path,
+        (string) filemtime($path),
+        (string) filesize($path),
+    ]));
+    $cachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
+
+    if (! is_dir(dirname($cachePath))) {
+        mkdir(dirname($cachePath), 0777, true);
+    }
+
+    file_put_contents($cachePath, json_encode($legacyReport, JSON_UNESCAPED_UNICODE));
+
+    $report = app(PemilihReportService::class)->buildFromPath($path);
+    $rebuiltCache = json_decode(file_get_contents($cachePath), true);
+
+    expect($report['summary']['total_voters'])->toBe(4)
+        ->and($rebuiltCache)->toBeArray()
+        ->and($rebuiltCache)->toHaveKeys(['report', 'search_index'])
+        ->and($rebuiltCache['report']['summary']['total_voters'])->toBe(4)
+        ->and($rebuiltCache['search_index'])->toBeArray();
+});
