@@ -353,7 +353,7 @@ class PemilihReportService
         ];
         $summary['coverage_percent'] = $this->coveragePercent($summary['with_cula'], $summary['total_voters']);
 
-        $dmRows = $this->sortGroups($dm, 'name');
+        $dmRows = $this->sortUdmGroups($dm);
         $dmCulaRows = $this->sortDmCulaGroups($dmCula);
         $dmDetailRows = $this->sortDmDetailGroups($dmDetails);
         $localityRows = $this->sortGroups($localities, 'name');
@@ -435,7 +435,7 @@ class PemilihReportService
 
     private function sortDmCulaGroups(array $groups): array
     {
-        $rows = array_values($groups);
+        $rows = array_map(fn (array $row) => $this->finalizeMetrics($row), array_values($groups));
 
         foreach ($rows as &$row) {
             $row['cula_breakdown'] = $this->sortGroups($row['cula_breakdown'], 'code');
@@ -443,10 +443,7 @@ class PemilihReportService
 
         unset($row);
 
-        usort($rows, function (array $first, array $second) {
-            return $second['total'] <=> $first['total']
-                ?: strnatcasecmp((string) $first['name'], (string) $second['name']);
-        });
+        usort($rows, fn (array $first, array $second) => $this->compareByCodeThenName($first, $second));
 
         return $rows;
     }
@@ -467,10 +464,7 @@ class PemilihReportService
 
         unset($row);
 
-        usort($rows, function (array $first, array $second) {
-            return $second['summary']['total_voters'] <=> $first['summary']['total_voters']
-                ?: strnatcasecmp((string) $first['name'], (string) $second['name']);
-        });
+        usort($rows, fn (array $first, array $second) => $this->compareByCodeThenName($first, $second));
 
         return $rows;
     }
@@ -759,6 +753,21 @@ class PemilihReportService
         $label = $this->culaLabel($code);
 
         return $label === $code ? $code : $code . ' - ' . $label;
+    }
+
+    private function sortUdmGroups(array $groups): array
+    {
+        $rows = array_map(fn (array $row) => $this->finalizeMetrics($row), array_values($groups));
+
+        usort($rows, fn (array $first, array $second) => $this->compareByCodeThenName($first, $second));
+
+        return $rows;
+    }
+
+    private function compareByCodeThenName(array $first, array $second): int
+    {
+        return strnatcasecmp((string) ($first['code'] ?? ''), (string) ($second['code'] ?? ''))
+            ?: strnatcasecmp((string) ($first['name'] ?? ''), (string) ($second['name'] ?? ''));
     }
 
     private function finalizeMetrics(array $row, string $totalKey = 'total'): array

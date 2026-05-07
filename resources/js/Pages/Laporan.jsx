@@ -192,7 +192,13 @@ export default function Laporan({ report }) {
         ));
     }, [report.by_locality, search]);
 
-    const dmChartRows = report.by_dm.slice(0, 12);
+    const dmChartRows = useMemo(
+        () => [...report.by_dm].sort((first, second) => (
+            (second.total ?? 0) - (first.total ?? 0)
+            || (first.name ?? '').localeCompare(second.name ?? '')
+        )).slice(0, 12),
+        [report.by_dm],
+    );
     const dmCulaRows = report.cula_by_dm ?? [];
     const dmDetails = report.dm_details ?? [];
     const localityRows = filteredLocalities.slice(0, 20);
