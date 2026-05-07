@@ -107,6 +107,43 @@ it('reimports the same rows after a page has been deleted', function () {
         ->toBe(['000000000123', '000000000456']);
 });
 
+it('numbers dashboard tabs from one based on current active pages', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fakeSequence()
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        )
+        ->push(
+            "no_kp,nama_pemilih\n123,Ali\n456,Abu\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        );
+
+    $this->actingAs($user)->post('/sheet-pages');
+    $this->actingAs($user)->post('/sheet-pages');
+
+    $firstPage = SheetPage::query()
+        ->orderBy('page_number')
+        ->firstOrFail();
+
+    $this->actingAs($user)
+        ->delete("/sheet-pages/{$firstPage->id}")
+        ->assertRedirect(route('dashboard'));
+
+    $this->actingAs($user)
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Dashboard')
+            ->where('pages.0.page_number', 2)
+            ->where('pages.0.tab_number', 1));
+});
+
 it('shows active pages and pending new unique rows on dashboard', function () {
     $user = User::factory()->create();
 

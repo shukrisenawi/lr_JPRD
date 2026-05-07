@@ -616,7 +616,7 @@ export default function Dashboard({ sheet, pages }) {
                                             }`}
                                         >
                                             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                                Page {page.page_number}
+                                                Page {page.tab_number}
                                             </p>
                                             <p className="mt-1.5 text-sm font-bold text-slate-900 sm:text-base">
                                                 {page.row_count} rekod

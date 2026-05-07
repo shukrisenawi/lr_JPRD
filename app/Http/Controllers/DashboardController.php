@@ -50,11 +50,12 @@ class DashboardController extends Controller
             ->whereNull('deleted_at')
             ->orderBy('page_number')
             ->get()
-            ->map(fn (SheetPage $page) => $this->formatPage($page, $copiedRows))
+            ->values()
+            ->map(fn (SheetPage $page, int $index) => $this->formatPage($page, $copiedRows, $index + 1))
             ->all();
     }
 
-    private function formatPage(SheetPage $page, Collection $copiedRows): array
+    private function formatPage(SheetPage $page, Collection $copiedRows, int $tabNumber): array
     {
         $rows = $page->rows
             ->map(function ($row) use ($copiedRows) {
@@ -76,6 +77,7 @@ class DashboardController extends Controller
         return [
             'id' => $page->id,
             'page_number' => $page->page_number,
+            'tab_number' => $tabNumber,
             'headers' => $page->headers ?? [],
             'rows' => $rows,
             'row_count' => count($rows),
