@@ -19,7 +19,7 @@ const numberFormatter = new Intl.NumberFormat('ms-MY');
 const chartColors = ['#0e7490', '#16a34a', '#f59e0b', '#475569', '#dc2626', '#7c3aed'];
 const panelPerformanceStyle = {
     contentVisibility: 'auto',
-    containIntrinsicSize: '24rem',
+    containIntrinsicSize: '20rem',
 };
 
 function formatNumber(value) {
@@ -39,17 +39,17 @@ function StatCard({ label, value, detail, tone = 'cyan' }) {
     };
 
     return (
-        <div className={`rounded-2xl border p-5 shadow-sm ${tones[tone]}`}>
-            <p className="text-sm font-semibold text-slate-500">{label}</p>
-            <p className="mt-3 text-3xl font-bold">{formatNumber(value)}</p>
-            {detail && <p className="mt-2 text-sm text-slate-500">{detail}</p>}
+        <div className={`rounded-xl border px-4 py-3.5 shadow-sm ${tones[tone]}`}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
+            <p className="mt-2 text-2xl font-bold leading-none">{formatNumber(value)}</p>
+            {detail && <p className="mt-1.5 text-xs leading-5 text-slate-500">{detail}</p>}
         </div>
     );
 }
 
 function EmptyState({ message }) {
     return (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 p-8 text-center text-sm font-medium text-slate-500">
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-6 text-center text-sm font-medium text-slate-500">
             {message}
         </div>
     );
@@ -58,14 +58,14 @@ function EmptyState({ message }) {
 function ChartPanel({ title, children, action }) {
     return (
         <section
-            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-panel"
+            className="rounded-xl border border-slate-200 bg-white p-4 shadow-panel"
             style={panelPerformanceStyle}
         >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="text-base font-bold leading-6 text-slate-900">{title}</h3>
                 {action}
             </div>
-            <div className="mt-5 h-[24rem] w-full">{children}</div>
+            <div className="mt-3 h-[19rem] w-full lg:h-[20rem]">{children}</div>
         </section>
     );
 }
@@ -76,7 +76,7 @@ function SummaryTooltip({ active, payload, label }) {
     }
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm shadow-lg">
+        <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs shadow-lg">
             <p className="font-semibold text-slate-900">{label}</p>
             {payload.map((item) => (
                 <p key={item.dataKey} className="mt-1 text-slate-600">
@@ -90,15 +90,15 @@ function SummaryTooltip({ active, payload, label }) {
 function DataTable({ rows, columns }) {
     return (
         <div
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            className="overflow-hidden rounded-xl border border-slate-200 bg-white"
             style={panelPerformanceStyle}
         >
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                    <thead className="bg-slate-900 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200">
+                <table className="min-w-full divide-y divide-slate-200 text-[13px]">
+                    <thead className="bg-slate-900 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-200">
                         <tr>
                             {columns.map((column) => (
-                                <th key={column.key} className="px-4 py-3">
+                                <th key={column.key} className="px-3 py-2.5">
                                     {column.label}
                                 </th>
                             ))}
@@ -108,7 +108,7 @@ function DataTable({ rows, columns }) {
                         {rows.map((row, index) => (
                             <tr key={row.key ?? `${row.name ?? row.code}-${index}`} className="hover:bg-cyan-50/60">
                                 {columns.map((column) => (
-                                    <td key={column.key} className="px-4 py-3">
+                                    <td key={column.key} className="px-3 py-2.5 align-top">
                                         {column.format
                                             ? column.format(row[column.key], row)
                                             : row[column.key]}
@@ -148,18 +148,18 @@ function UploadPanel() {
     return (
         <form
             onSubmit={handleSubmit}
-            className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm sm:flex-row sm:items-center"
+            className="flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-white/90 p-3 shadow-sm sm:flex-row sm:items-center"
         >
             <input
                 type="file"
                 accept=".xls,.xlsx,.csv,.ods,.html"
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-xl file:border-0 file:bg-cyan-600 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-white hover:file:bg-cyan-700"
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-600 file:px-3.5 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-cyan-700"
             />
             <button
                 type="submit"
                 disabled={!file || processing}
-                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
                 {processing ? 'Memuat naik...' : 'Muat Naik Fail'}
             </button>
@@ -268,17 +268,17 @@ export default function Laporan({ report }) {
             header={
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
                             Laporan
                         </p>
-                        <h2 className="mt-2 text-3xl font-bold text-slate-900">
+                        <h2 className="mt-1.5 text-2xl font-bold leading-tight text-slate-900 lg:text-[2rem]">
                             Analitik pemilih mengikut UDM, lokaliti dan status culaan
                         </h2>
-                        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                        <p className="mt-1.5 max-w-3xl text-sm leading-5 text-slate-500">
                             Paparan ini membaca fail pemilih terkini dan susun data besar kepada ringkasan yang mudah ditapis.
                         </p>
                     </div>
-                    <div className="rounded-2xl bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-sm">
+                    <div className="rounded-xl bg-white/90 px-3.5 py-2 text-xs font-medium text-slate-600 shadow-sm sm:text-sm">
                         Sumber: {report.source.exists ? report.source.name : 'Belum ada fail'}
                     </div>
                 </div>
@@ -286,14 +286,14 @@ export default function Laporan({ report }) {
         >
             <Head title="Laporan" />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
                 <UploadPanel />
 
                 {!report.source.exists ? (
                     <EmptyState message="Fail contoh tidak ditemui. Upload fail pemilih untuk mula jana laporan." />
                 ) : (
                     <>
-                        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                             <StatCard
                                 label="Jumlah pemilih"
                                 value={report.summary.total_voters}
@@ -326,20 +326,20 @@ export default function Laporan({ report }) {
                             />
                         </section>
 
-                        <section className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+                        <section className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
                             <ChartPanel title="Top UDM mengikut jumlah pemilih">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={dmChartRows} margin={{ top: 10, right: 20, bottom: 70, left: 8 }}>
+                                    <BarChart data={dmChartRows} margin={{ top: 6, right: 12, bottom: 58, left: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis
                                             dataKey="name"
                                             interval={0}
-                                            angle={-35}
+                                            angle={-28}
                                             textAnchor="end"
-                                            height={90}
-                                            tick={{ fontSize: 11 }}
+                                            height={72}
+                                            tick={{ fontSize: 10 }}
                                         />
-                                        <YAxis tickFormatter={formatNumber} width={70} />
+                                        <YAxis tickFormatter={formatNumber} width={56} tick={{ fontSize: 10 }} />
                                         <Tooltip content={<SummaryTooltip />} />
                                         <Legend />
                                         <Bar dataKey="male" name="Lelaki" stackId="total" fill="#0e7490" radius={[0, 0, 4, 4]} />
@@ -355,9 +355,9 @@ export default function Laporan({ report }) {
                                             data={genderRows}
                                             dataKey="total"
                                             nameKey="label"
-                                            innerRadius={70}
-                                            outerRadius={120}
-                                            paddingAngle={3}
+                                            innerRadius={54}
+                                            outerRadius={92}
+                                            paddingAngle={2}
                                         >
                                             {genderRows.map((entry, index) => (
                                                 <Cell
@@ -373,14 +373,14 @@ export default function Laporan({ report }) {
                             </ChartPanel>
                         </section>
 
-                        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-panel">
-                            <div className="flex flex-wrap gap-2">
+                        <section className="rounded-xl border border-slate-200 bg-white p-2 shadow-panel">
+                            <div className="flex flex-wrap gap-1.5">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.key}
                                         type="button"
                                         onClick={() => setActiveTab(tab.key)}
-                                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                                        className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                                             activeTab === tab.key
                                                 ? 'bg-slate-900 text-white shadow-sm'
                                                 : 'bg-white text-slate-600 hover:bg-cyan-50 hover:text-cyan-800'
@@ -393,14 +393,14 @@ export default function Laporan({ report }) {
                         </section>
 
                         {activeTab === 'udm' && (
-                            <section className="space-y-4">
+                            <section className="space-y-3">
                                 <ChartPanel
                                     title={`Ringkasan UDM ${selectedUdmDetail?.name ?? '-'}`}
                                     action={
                                         <select
                                             value={selectedUdmDetail?.key ?? ''}
                                             onChange={(event) => setSelectedUdmKey(event.target.value)}
-                                            className="rounded-xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                            className="rounded-lg border-slate-200 py-2 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                         >
                                             {dmDetails.map((row) => (
                                                 <option key={row.key} value={row.key}>
@@ -410,7 +410,7 @@ export default function Laporan({ report }) {
                                         </select>
                                     }
                                 >
-                                    <div className="grid h-full gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                    <div className="grid h-full gap-3 md:grid-cols-2 xl:grid-cols-4">
                                         <StatCard
                                             label="Jumlah pemilih UDM"
                                             value={selectedUdmDetail?.summary.total_voters ?? 0}
@@ -438,20 +438,20 @@ export default function Laporan({ report }) {
                                     </div>
                                 </ChartPanel>
 
-                                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)]">
+                                <section className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,1fr)]">
                                     <ChartPanel title="Pecahan status culaan dalam UDM">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={selectedUdmCulaChartRows} margin={{ top: 10, right: 20, bottom: 80, left: 8 }}>
+                                            <BarChart data={selectedUdmCulaChartRows} margin={{ top: 6, right: 12, bottom: 66, left: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                                 <XAxis
                                                     dataKey="display_label"
                                                     interval={0}
                                                     angle={-25}
                                                     textAnchor="end"
-                                                    height={90}
-                                                    tick={{ fontSize: 11 }}
+                                                    height={76}
+                                                    tick={{ fontSize: 10 }}
                                                 />
-                                                <YAxis tickFormatter={formatNumber} width={70} />
+                                                <YAxis tickFormatter={formatNumber} width={56} tick={{ fontSize: 10 }} />
                                                 <Tooltip content={<SummaryTooltip />} />
                                                 <Bar dataKey="total" name="Jumlah" fill="#dc2626" radius={[4, 4, 0, 0]} />
                                             </BarChart>
@@ -465,9 +465,9 @@ export default function Laporan({ report }) {
                                                     data={selectedUdmGenderRows}
                                                     dataKey="total"
                                                     nameKey="label"
-                                                    innerRadius={60}
-                                                    outerRadius={110}
-                                                    paddingAngle={3}
+                                                    innerRadius={50}
+                                                    outerRadius={88}
+                                                    paddingAngle={2}
                                                 >
                                                     {selectedUdmGenderRows.map((entry, index) => (
                                                         <Cell key={entry.key} fill={chartColors[index % chartColors.length]} />
@@ -480,13 +480,13 @@ export default function Laporan({ report }) {
                                     </ChartPanel>
                                 </section>
 
-                                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)]">
+                                <section className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,1fr)]">
                                     <ChartPanel title="Jumlah pemilih setiap lokaliti dalam UDM">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={selectedUdmLocalityRows} layout="vertical" margin={{ top: 10, right: 20, bottom: 10, left: 140 }}>
+                                            <BarChart data={selectedUdmLocalityRows} layout="vertical" margin={{ top: 6, right: 12, bottom: 6, left: 110 }}>
                                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                                 <XAxis type="number" tickFormatter={formatNumber} />
-                                                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                                                <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10 }} />
                                                 <Tooltip content={<SummaryTooltip />} />
                                                 <Legend />
                                                 <Bar dataKey="with_cula" name="Sudah Dicula" stackId="total" fill="#16a34a" radius={[0, 0, 4, 4]} />
@@ -502,9 +502,9 @@ export default function Laporan({ report }) {
                                                     data={selectedUdmRaceRows}
                                                     dataKey="total"
                                                     nameKey="label"
-                                                    innerRadius={60}
-                                                    outerRadius={110}
-                                                    paddingAngle={3}
+                                                    innerRadius={50}
+                                                    outerRadius={88}
+                                                    paddingAngle={2}
                                                 >
                                                     {selectedUdmRaceRows.map((entry, index) => (
                                                         <Cell key={entry.code} fill={chartColors[index % chartColors.length]} />
@@ -528,14 +528,14 @@ export default function Laporan({ report }) {
                         )}
 
                         {activeTab === 'locality' && (
-                            <section className="space-y-4">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <section className="space-y-3">
+                                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
                                     <input
                                         type="search"
                                         value={search}
                                         onChange={(event) => setSearch(event.target.value)}
                                         placeholder="Cari lokaliti, UDM atau kod..."
-                                        className="w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:max-w-md"
+                                        className="w-full rounded-lg border-slate-200 py-2 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:max-w-md"
                                     />
                                     <p className="text-sm text-slate-500">
                                         Papar {formatNumber(localityRows.length)} daripada {formatNumber(filteredLocalities.length)} lokaliti
@@ -544,10 +544,10 @@ export default function Laporan({ report }) {
 
                                 <ChartPanel title="Top lokaliti mengikut status culaan">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={localityChartRows} layout="vertical" margin={{ top: 10, right: 20, bottom: 10, left: 120 }}>
+                                        <BarChart data={localityChartRows} layout="vertical" margin={{ top: 6, right: 12, bottom: 6, left: 100 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                             <XAxis type="number" tickFormatter={formatNumber} />
-                                            <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
+                                            <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
                                             <Tooltip content={<SummaryTooltip />} />
                                             <Legend />
                                             <Bar dataKey="with_cula" name="Sudah Dicula" stackId="total" fill="#16a34a" radius={[0, 0, 4, 4]} />
@@ -561,20 +561,20 @@ export default function Laporan({ report }) {
                         )}
 
                         {activeTab === 'cula' && (
-                            <section className="space-y-4">
+                            <section className="space-y-3">
                                 <ChartPanel title="Taburan status culaan">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={culaRows} margin={{ top: 10, right: 20, bottom: 60, left: 8 }}>
+                                        <BarChart data={culaRows} margin={{ top: 6, right: 12, bottom: 54, left: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis
                                                 dataKey="display_label"
                                                 interval={0}
                                                 angle={-25}
                                                 textAnchor="end"
-                                                height={70}
-                                                tick={{ fontSize: 11 }}
+                                                height={62}
+                                                tick={{ fontSize: 10 }}
                                             />
-                                            <YAxis tickFormatter={formatNumber} width={70} />
+                                            <YAxis tickFormatter={formatNumber} width={56} tick={{ fontSize: 10 }} />
                                             <Tooltip content={<SummaryTooltip />} />
                                             <Bar dataKey="total" name="Jumlah" fill="#7c3aed" radius={[4, 4, 0, 0]} />
                                         </BarChart>
