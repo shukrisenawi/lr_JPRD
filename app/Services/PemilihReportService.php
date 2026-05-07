@@ -105,6 +105,7 @@ class PemilihReportService
     private function summarize(array $rows, string $path): array
     {
         $dm = [];
+        $dmCula = [];
         $localities = [];
         $gender = ['L' => 0, 'P' => 0, 'LAIN' => 0];
         $cula = [];
@@ -132,6 +133,20 @@ class PemilihReportService
             ];
             $this->incrementGroup($dm[$dmKey], $genderKey, $culaCode);
 
+            $dmCula[$dmKey] ??= [
+                'code' => $dmCode,
+                'name' => $dmName,
+                'total' => 0,
+                'cula_breakdown' => [],
+            ];
+            $dmCula[$dmKey]['total']++;
+            $dmCula[$dmKey]['cula_breakdown'][$culaCode] ??= [
+                'code' => $culaCode,
+                'label' => $culaCode === 'Tiada' ? 'Tiada Kod' : 'Kod ' . $culaCode,
+                'total' => 0,
+            ];
+            $dmCula[$dmKey]['cula_breakdown'][$culaCode]['total']++;
+
             $localityKey = $localityCode . '|' . $localityName . '|' . $dmName;
             $localities[$localityKey] ??= [
                 'code' => $localityCode,
@@ -154,6 +169,7 @@ class PemilihReportService
         }
 
         $dmRows = $this->sortGroups($dm, 'name');
+        $dmCulaRows = $this->sortDmCulaGroups($dmCula);
         $localityRows = $this->sortGroups($localities, 'name');
         $culaRows = $this->sortGroups($cula, 'code');
 
@@ -177,6 +193,7 @@ class PemilihReportService
                 ['key' => 'LAIN', 'label' => 'Lain-lain', 'total' => $gender['LAIN']],
             ],
             'by_dm' => $dmRows,
+            'cula_by_dm' => $dmCulaRows,
             'by_locality' => $localityRows,
             'by_cula' => $culaRows,
         ];
@@ -204,6 +221,24 @@ class PemilihReportService
         usort($rows, function (array $first, array $second) use ($secondaryKey) {
             return $second['total'] <=> $first['total']
                 ?: strnatcasecmp((string) $first[$secondaryKey], (string) $second[$secondaryKey]);
+        });
+
+        return $rows;
+    }
+
+    private function sortDmCulaGroups(array $groups): array
+    {
+        $rows = array_values($groups);
+
+        foreach ($rows as &$row) {
+            $row['cula_breakdown'] = $this->sortGroups($row['cula_breakdown'], 'code');
+        }
+
+        unset($row);
+
+        usort($rows, function (array $first, array $second) {
+            return $second['total'] <=> $first['total']
+                ?: strnatcasecmp((string) $first['name'], (string) $second['name']);
         });
 
         return $rows;
@@ -259,6 +294,7 @@ class PemilihReportService
             ],
             'gender' => [],
             'by_dm' => [],
+            'cula_by_dm' => [],
             'by_locality' => [],
             'by_cula' => [],
         ];

@@ -156,6 +156,7 @@ function UploadPanel() {
 export default function Laporan({ report }) {
     const [activeTab, setActiveTab] = useState('dm');
     const [search, setSearch] = useState('');
+    const [selectedDmName, setSelectedDmName] = useState(() => report.cula_by_dm?.[0]?.name ?? '');
 
     const tabs = [
         { key: 'dm', label: 'DM' },
@@ -178,9 +179,12 @@ export default function Laporan({ report }) {
     }, [report.by_locality, search]);
 
     const dmChartRows = report.by_dm.slice(0, 12);
+    const dmCulaRows = report.cula_by_dm ?? [];
     const localityRows = filteredLocalities.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((row) => row.total > 0);
+    const selectedDmCula = dmCulaRows.find((row) => row.name === selectedDmName) ?? dmCulaRows[0] ?? null;
+    const selectedDmCulaChartRows = selectedDmCula?.cula_breakdown.slice(0, 12) ?? [];
 
     const dmColumns = [
         { key: 'name', label: 'DM' },
@@ -328,6 +332,40 @@ export default function Laporan({ report }) {
 
                         {activeTab === 'dm' && (
                             <section className="space-y-4">
+                                <ChartPanel
+                                    title={`Kod cula untuk DM ${selectedDmCula?.name ?? '-'}`}
+                                    action={
+                                        <select
+                                            value={selectedDmCula?.name ?? ''}
+                                            onChange={(event) => setSelectedDmName(event.target.value)}
+                                            className="rounded-xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        >
+                                            {dmCulaRows.map((row) => (
+                                                <option key={row.name} value={row.name}>
+                                                    {row.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    }
+                                >
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={selectedDmCulaChartRows} margin={{ top: 10, right: 20, bottom: 60, left: 8 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis
+                                                dataKey="label"
+                                                interval={0}
+                                                angle={-25}
+                                                textAnchor="end"
+                                                height={70}
+                                                tick={{ fontSize: 11 }}
+                                            />
+                                            <YAxis tickFormatter={formatNumber} width={70} />
+                                            <Tooltip content={<SummaryTooltip />} />
+                                            <Bar dataKey="total" name="Jumlah" fill="#dc2626" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </ChartPanel>
+
                                 <DataTable rows={report.by_dm.slice(0, 25)} columns={dmColumns} />
                             </section>
                         )}

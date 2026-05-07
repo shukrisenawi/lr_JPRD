@@ -31,6 +31,9 @@ it('builds pemilih report summary from html xls data', function () {
         ->and($report['summary']['female'])->toBe(2)
         ->and($report['by_dm'][0]['name'])->toBe('KAMPUNG BETONG')
         ->and($report['by_dm'][0]['total'])->toBe(2)
+        ->and($report['cula_by_dm'][0]['name'])->toBe('KAMPUNG BETONG')
+        ->and($report['cula_by_dm'][0]['cula_breakdown'][0]['code'])->toBe('2')
+        ->and($report['cula_by_dm'][0]['cula_breakdown'][0]['total'])->toBe(1)
         ->and($report['by_cula'][0]['code'])->toBe('2')
         ->and($report['by_cula'][0]['total'])->toBe(2);
 });
@@ -47,7 +50,8 @@ it('renders laporan page with pemilih report data', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Laporan')
             ->where('report.summary.total_voters', 4)
-            ->where('report.by_dm.0.name', 'KAMPUNG BETONG'));
+            ->where('report.by_dm.0.name', 'KAMPUNG BETONG')
+            ->where('report.cula_by_dm.0.cula_breakdown.0.code', '2'));
 });
 
 it('stores uploaded pemilih file for laporan', function () {
