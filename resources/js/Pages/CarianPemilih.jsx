@@ -164,7 +164,12 @@ function SearchPanel() {
 
             <SearchResultCard
                 voter={selectedVoter}
-                onClear={() => setSelectedVoter(null)}
+                onClear={() => {
+                    setSelectedVoter(null);
+                    setQuery('');
+                    setSuggestions([]);
+                    setSearching(false);
+                }}
             />
         </>
     );
