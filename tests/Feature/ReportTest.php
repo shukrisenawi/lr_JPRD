@@ -155,20 +155,70 @@ it('rebuilds legacy laporan cache with old structure automatically', function ()
         (string) filemtime($path),
         (string) filesize($path),
     ]));
-    $cachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
+    $legacyCachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
+    $reportCachePath = storage_path('app/report-cache/' . $cacheSignature . '-report.json');
 
-    if (! is_dir(dirname($cachePath))) {
-        mkdir(dirname($cachePath), 0777, true);
+    if (! is_dir(dirname($legacyCachePath))) {
+        mkdir(dirname($legacyCachePath), 0777, true);
     }
 
-    file_put_contents($cachePath, json_encode($legacyReport, JSON_UNESCAPED_UNICODE));
+    file_put_contents($legacyCachePath, json_encode($legacyReport, JSON_UNESCAPED_UNICODE));
 
     $report = app(PemilihReportService::class)->buildFromPath($path);
-    $rebuiltCache = json_decode(file_get_contents($cachePath), true);
+    $rebuiltCache = json_decode(file_get_contents($reportCachePath), true);
 
     expect($report['summary']['total_voters'])->toBe(4)
         ->and($rebuiltCache)->toBeArray()
-        ->and($rebuiltCache)->toHaveKeys(['report', 'search_index'])
-        ->and($rebuiltCache['report']['summary']['total_voters'])->toBe(4)
-        ->and($rebuiltCache['search_index'])->toBeArray();
+        ->and($rebuiltCache['summary']['total_voters'])->toBe(4);
+});
+
+it('stores report cache separately without building search cache on laporan load', function () {
+    $path = storage_path('app/testing-pemilih-separated-cache.xls');
+    file_put_contents($path, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Tel. Bimbit</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI BIN ABU</td><td>="0123456789"</td><td>L</td><td>M</td><td>2</td></tr>
+</table></body></html>
+HTML);
+
+    $service = app(PemilihReportService::class);
+    $report = $service->buildFromPath($path);
+    $signature = sha1(implode('|', [
+        $path,
+        (string) filemtime($path),
+        (string) filesize($path),
+    ]));
+    $reportCachePath = storage_path('app/report-cache/' . $signature . '-report.json');
+    $searchCachePath = storage_path('app/report-cache/' . $signature . '-search.json');
+
+    expect($report['summary']['total_voters'])->toBe(1)
+        ->and(file_exists($reportCachePath))->toBeTrue()
+        ->and(file_exists($searchCachePath))->toBeFalse();
+});
+
+it('builds search cache only when voter search is used', function () {
+    $path = storage_path('app/testing-pemilih-search-cache.xls');
+    file_put_contents($path, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Tel. Bimbit</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI BIN ABU</td><td>="0123456789"</td><td>L</td><td>M</td><td>2</td></tr>
+</table></body></html>
+HTML);
+
+    $service = app(PemilihReportService::class);
+    $service->buildFromPath($path);
+    $signature = sha1(implode('|', [
+        $path,
+        (string) filemtime($path),
+        (string) filesize($path),
+    ]));
+    $searchCachePath = storage_path('app/report-cache/' . $signature . '-search.json');
+
+    expect(file_exists($searchCachePath))->toBeFalse();
+
+    $results = $service->searchVoters('ali', $path);
+
+    expect($results)->toHaveCount(1)
+        ->and($results[0]['name'])->toBe('ALI BIN ABU')
+        ->and(file_exists($searchCachePath))->toBeTrue();
 });

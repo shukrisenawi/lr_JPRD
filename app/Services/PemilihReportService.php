@@ -11,7 +11,38 @@ class PemilihReportService
 
     public function buildFromPath(?string $path = null): array
     {
-        return $this->snapshotForPath($path)['report'];
+        $resolvedPath = $path ?: self::DEFAULT_SAMPLE_PATH;
+
+        if (! is_string($resolvedPath) || ! file_exists($resolvedPath)) {
+            return $this->emptyReport($resolvedPath);
+        }
+
+        $cachedReport = $this->readCachedReport($resolvedPath);
+
+        if ($cachedReport !== null) {
+            return $cachedReport;
+        }
+
+        $legacySnapshot = $this->readLegacySnapshot($resolvedPath);
+        $legacyReport = $this->extractReportFromLegacySnapshot($legacySnapshot);
+
+        if ($legacyReport !== null) {
+            $this->writeCachedReport($resolvedPath, $legacyReport);
+
+            $legacySearchIndex = $this->extractSearchIndexFromLegacySnapshot($legacySnapshot);
+
+            if ($legacySearchIndex !== null) {
+                $this->writeCachedSearchIndex($resolvedPath, $legacySearchIndex);
+            }
+
+            return $legacyReport;
+        }
+
+        $rows = $this->readRows($resolvedPath);
+        $report = $this->summarize($rows, $resolvedPath);
+        $this->writeCachedReport($resolvedPath, $report);
+
+        return $report;
     }
 
     public function searchVoters(string $query, ?string $path = null, int $limit = 8): array
@@ -22,7 +53,7 @@ class PemilihReportService
             return [];
         }
 
-        $voters = $this->snapshotForPath($path)['search_index'] ?? [];
+        $voters = $this->searchIndexForPath($path);
         $matches = [];
 
         foreach ($voters as $voter) {
@@ -53,32 +84,34 @@ class PemilihReportService
         return $matches;
     }
 
-    private function snapshotForPath(?string $path = null): array
+    private function searchIndexForPath(?string $path = null): array
     {
         $resolvedPath = $path ?: self::DEFAULT_SAMPLE_PATH;
 
         if (! is_string($resolvedPath) || ! file_exists($resolvedPath)) {
-            return [
-                'report' => $this->emptyReport($resolvedPath),
-                'search_index' => [],
-            ];
+            return [];
         }
 
-        $cached = $this->readCachedSnapshot($resolvedPath);
+        $cachedSearchIndex = $this->readCachedSearchIndex($resolvedPath);
 
-        if ($cached !== null) {
-            return $cached;
+        if ($cachedSearchIndex !== null) {
+            return $cachedSearchIndex;
+        }
+
+        $legacySnapshot = $this->readLegacySnapshot($resolvedPath);
+        $legacySearchIndex = $this->extractSearchIndexFromLegacySnapshot($legacySnapshot);
+
+        if ($legacySearchIndex !== null) {
+            $this->writeCachedSearchIndex($resolvedPath, $legacySearchIndex);
+
+            return $legacySearchIndex;
         }
 
         $rows = $this->readRows($resolvedPath);
+        $searchIndex = $this->buildSearchIndex($rows);
+        $this->writeCachedSearchIndex($resolvedPath, $searchIndex);
 
-        $snapshot = [
-            'report' => $this->summarize($rows, $resolvedPath),
-            'search_index' => $this->buildSearchIndex($rows),
-        ];
-        $this->writeCachedSnapshot($resolvedPath, $snapshot);
-
-        return $snapshot;
+        return $searchIndex;
     }
 
     private function readRows(string $path): array
@@ -516,10 +549,41 @@ class PemilihReportService
         }, $rows)));
     }
 
-    private function readCachedSnapshot(string $path): ?array
+    private function readCachedReport(string $path): ?array
     {
-        $cachePath = $this->cachePath($path);
+        $decoded = $this->readJsonCache($this->reportCachePath($path));
 
+        if (! is_array($decoded) || ! array_key_exists('summary', $decoded)) {
+            return null;
+        }
+
+        return $decoded;
+    }
+
+    private function readCachedSearchIndex(string $path): ?array
+    {
+        $decoded = $this->readJsonCache($this->searchCachePath($path));
+
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        foreach ($decoded as $row) {
+            if (! is_array($row) || ! array_key_exists('search_blob', $row)) {
+                return null;
+            }
+        }
+
+        return $decoded;
+    }
+
+    private function readLegacySnapshot(string $path): ?array
+    {
+        return $this->readJsonCache($this->legacyCachePath($path));
+    }
+
+    private function readJsonCache(string $cachePath): ?array
+    {
         if (! File::exists($cachePath)) {
             return null;
         }
@@ -527,37 +591,67 @@ class PemilihReportService
         $contents = File::get($cachePath);
         $decoded = json_decode($contents, true);
 
-        if (! is_array($decoded)) {
-            return null;
-        }
-
-        if (! array_key_exists('report', $decoded) || ! is_array($decoded['report'])) {
-            return null;
-        }
-
-        if (! array_key_exists('search_index', $decoded) || ! is_array($decoded['search_index'])) {
-            return null;
-        }
-
-        return $decoded;
+        return is_array($decoded) ? $decoded : null;
     }
 
-    private function writeCachedSnapshot(string $path, array $snapshot): void
+    private function extractReportFromLegacySnapshot(?array $snapshot): ?array
     {
-        $cachePath = $this->cachePath($path);
+        if (! is_array($snapshot)) {
+            return null;
+        }
+
+        if (array_key_exists('report', $snapshot) && is_array($snapshot['report']) && array_key_exists('summary', $snapshot['report'])) {
+            return $snapshot['report'];
+        }
+
+        return null;
+    }
+
+    private function extractSearchIndexFromLegacySnapshot(?array $snapshot): ?array
+    {
+        if (! is_array($snapshot) || ! array_key_exists('search_index', $snapshot) || ! is_array($snapshot['search_index'])) {
+            return null;
+        }
+
+        return $snapshot['search_index'];
+    }
+
+    private function writeCachedReport(string $path, array $report): void
+    {
+        $cachePath = $this->reportCachePath($path);
         File::ensureDirectoryExists(dirname($cachePath));
-        File::put($cachePath, json_encode($snapshot, JSON_UNESCAPED_UNICODE));
+        File::put($cachePath, json_encode($report, JSON_UNESCAPED_UNICODE));
     }
 
-    private function cachePath(string $path): string
+    private function writeCachedSearchIndex(string $path, array $searchIndex): void
     {
-        $signature = sha1(implode('|', [
+        $cachePath = $this->searchCachePath($path);
+        File::ensureDirectoryExists(dirname($cachePath));
+        File::put($cachePath, json_encode($searchIndex, JSON_UNESCAPED_UNICODE));
+    }
+
+    private function reportCachePath(string $path): string
+    {
+        return storage_path('app/report-cache/' . $this->cacheSignature($path) . '-report.json');
+    }
+
+    private function searchCachePath(string $path): string
+    {
+        return storage_path('app/report-cache/' . $this->cacheSignature($path) . '-search.json');
+    }
+
+    private function legacyCachePath(string $path): string
+    {
+        return storage_path('app/report-cache/' . $this->cacheSignature($path) . '.json');
+    }
+
+    private function cacheSignature(string $path): string
+    {
+        return sha1(implode('|', [
             $path,
             (string) filemtime($path),
             (string) filesize($path),
         ]));
-
-        return storage_path('app/report-cache/' . $signature . '.json');
     }
 
     private function cleanDigits(string $value): string
