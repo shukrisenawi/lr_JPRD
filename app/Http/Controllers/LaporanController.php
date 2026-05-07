@@ -20,6 +20,18 @@ class LaporanController extends Controller
         ]);
     }
 
+    public function search(Request $request, PemilihReportService $reportService)
+    {
+        $path = Setting::valueOf('pemilih_report_file_path', PemilihReportService::DEFAULT_SAMPLE_PATH);
+
+        return response()->json([
+            'suggestions' => $reportService->searchVoters(
+                (string) $request->query('q', ''),
+                $path,
+            ),
+        ]);
+    }
+
     public function upload(Request $request): RedirectResponse
     {
         $validated = $request->validate([

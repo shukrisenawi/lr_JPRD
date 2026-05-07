@@ -77,6 +77,32 @@ it('stores uploaded pemilih file for laporan', function () {
         ->and(file_exists($storedPath))->toBeTrue();
 });
 
+it('returns voter suggestions by name ic and phone for laporan search', function () {
+    $user = User::factory()->create();
+    $path = storage_path('app/testing-pemilih-search.xls');
+    file_put_contents($path, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th><th>Alamat Kediaman</th><th>Tel. Rumah</th><th>Tel. Bimbit</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI BIN ABU</td><td>L</td><td>M</td><td>2</td><td>KG BARU KURA</td><td>="049999999"</td><td>="0123456789"</td></tr>
+<tr><td>2</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="002"</td><td>KG BETONG</td><td>="880808025333"</td><td>SITI AMINAH</td><td>P</td><td>M</td><td>3P</td><td>KG BETONG</td><td>="047777777"</td><td>="0198888777"</td></tr>
+</table></body></html>
+HTML);
+    Setting::setValue('pemilih_report_file_path', $path);
+    app(PemilihReportService::class)->buildFromPath($path);
+
+    $this->actingAs($user)
+        ->getJson('/laporan/search?q=ali')
+        ->assertOk()
+        ->assertJsonPath('suggestions.0.name', 'ALI BIN ABU')
+        ->assertJsonPath('suggestions.0.no_kp', '900101025555')
+        ->assertJsonPath('suggestions.0.phone_mobile', '0123456789');
+
+    $this->actingAs($user)
+        ->getJson('/laporan/search?q=0198888777')
+        ->assertOk()
+        ->assertJsonPath('suggestions.0.name', 'SITI AMINAH');
+});
+
 it('rebuilds cached laporan data when source file changes', function () {
     $path = storage_path('app/testing-pemilih-cache.xls');
     file_put_contents($path, pemilihReportFixture());

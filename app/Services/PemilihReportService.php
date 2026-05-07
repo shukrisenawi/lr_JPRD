@@ -11,13 +11,60 @@ class PemilihReportService
 
     public function buildFromPath(?string $path = null): array
     {
+        return $this->snapshotForPath($path)['report'];
+    }
+
+    public function searchVoters(string $query, ?string $path = null, int $limit = 8): array
+    {
+        $normalizedQuery = $this->normalizeSearch($query);
+
+        if ($normalizedQuery === '') {
+            return [];
+        }
+
+        $voters = $this->snapshotForPath($path)['search_index'] ?? [];
+        $matches = [];
+
+        foreach ($voters as $voter) {
+            if (! str_contains($voter['search_blob'], $normalizedQuery)) {
+                continue;
+            }
+
+            $matches[] = [
+                'id' => $voter['id'],
+                'name' => $voter['name'],
+                'no_kp' => $voter['no_kp'],
+                'old_ic' => $voter['old_ic'],
+                'phone_mobile' => $voter['phone_mobile'],
+                'phone_home' => $voter['phone_home'],
+                'dm' => $voter['dm'],
+                'locality' => $voter['locality'],
+                'gender' => $voter['gender'],
+                'race' => $voter['race'],
+                'cula_code' => $voter['cula_code'],
+                'address' => $voter['address'],
+            ];
+
+            if (count($matches) >= $limit) {
+                break;
+            }
+        }
+
+        return $matches;
+    }
+
+    private function snapshotForPath(?string $path = null): array
+    {
         $resolvedPath = $path ?: self::DEFAULT_SAMPLE_PATH;
 
         if (! is_string($resolvedPath) || ! file_exists($resolvedPath)) {
-            return $this->emptyReport($resolvedPath);
+            return [
+                'report' => $this->emptyReport($resolvedPath),
+                'search_index' => [],
+            ];
         }
 
-        $cached = $this->readCachedReport($resolvedPath);
+        $cached = $this->readCachedSnapshot($resolvedPath);
 
         if ($cached !== null) {
             return $cached;
@@ -25,10 +72,13 @@ class PemilihReportService
 
         $rows = $this->readRows($resolvedPath);
 
-        $report = $this->summarize($rows, $resolvedPath);
-        $this->writeCachedReport($resolvedPath, $report);
+        $snapshot = [
+            'report' => $this->summarize($rows, $resolvedPath),
+            'search_index' => $this->buildSearchIndex($rows),
+        ];
+        $this->writeCachedSnapshot($resolvedPath, $snapshot);
 
-        return $report;
+        return $snapshot;
     }
 
     private function readRows(string $path): array
@@ -417,7 +467,56 @@ class PemilihReportService
         ];
     }
 
-    private function readCachedReport(string $path): ?array
+    private function buildSearchIndex(array $rows): array
+    {
+        return array_values(array_filter(array_map(function (array $row) {
+            $name = $this->fallbackLabel($row['Nama Pemilih'] ?? '', '');
+            $noKp = $this->cleanDigits($row['No. K/P (Baru)'] ?? '');
+            $oldIc = $this->cleanDigits($row['No. K/P (Lama)'] ?? '');
+            $phoneHome = $this->cleanDigits($row['Tel. Rumah'] ?? '');
+            $phoneMobile = $this->cleanDigits($row['Tel. Bimbit'] ?? '');
+
+            if ($name === '' && $noKp === '' && $phoneHome === '' && $phoneMobile === '') {
+                return null;
+            }
+
+            $address = $this->fallbackLabel($row['Alamat Kediaman'] ?? ($row['Alamat K/P'] ?? ''), '-');
+
+            return [
+                'id' => sha1(json_encode([
+                    $name,
+                    $noKp,
+                    $oldIc,
+                    $phoneHome,
+                    $phoneMobile,
+                    $row['Nama DM'] ?? '',
+                    $row['Nama Lokaliti'] ?? '',
+                ], JSON_UNESCAPED_UNICODE)),
+                'name' => $name === '' ? '-' : $name,
+                'no_kp' => $noKp,
+                'old_ic' => $oldIc,
+                'phone_mobile' => $phoneMobile,
+                'phone_home' => $phoneHome,
+                'dm' => $this->fallbackLabel($row['Nama DM'] ?? '', '-'),
+                'locality' => $this->fallbackLabel($row['Nama Lokaliti'] ?? '', '-'),
+                'gender' => $this->fallbackLabel($row['Jantina'] ?? '', '-'),
+                'race' => $this->fallbackLabel($row['Bangsa'] ?? '', '-'),
+                'cula_code' => $this->fallbackLabel($row['Kod Cula'] ?? '', 'Tiada'),
+                'address' => $address,
+                'search_blob' => $this->normalizeSearch(implode(' ', [
+                    $name,
+                    $noKp,
+                    $oldIc,
+                    $phoneHome,
+                    $phoneMobile,
+                    $row['Nama DM'] ?? '',
+                    $row['Nama Lokaliti'] ?? '',
+                ])),
+            ];
+        }, $rows)));
+    }
+
+    private function readCachedSnapshot(string $path): ?array
     {
         $cachePath = $this->cachePath($path);
 
@@ -431,11 +530,11 @@ class PemilihReportService
         return is_array($decoded) ? $decoded : null;
     }
 
-    private function writeCachedReport(string $path, array $report): void
+    private function writeCachedSnapshot(string $path, array $snapshot): void
     {
         $cachePath = $this->cachePath($path);
         File::ensureDirectoryExists(dirname($cachePath));
-        File::put($cachePath, json_encode($report, JSON_UNESCAPED_UNICODE));
+        File::put($cachePath, json_encode($snapshot, JSON_UNESCAPED_UNICODE));
     }
 
     private function cachePath(string $path): string
@@ -447,5 +546,17 @@ class PemilihReportService
         ]));
 
         return storage_path('app/report-cache/' . $signature . '.json');
+    }
+
+    private function cleanDigits(string $value): string
+    {
+        return preg_replace('/\D+/', '', $value) ?? '';
+    }
+
+    private function normalizeSearch(string $value): string
+    {
+        $value = mb_strtolower(trim($value));
+
+        return preg_replace('/\s+/', ' ', $value) ?? $value;
     }
 }

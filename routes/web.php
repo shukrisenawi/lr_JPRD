@@ -13,6 +13,7 @@ Route::redirect('/', '/dashboard');
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/search', [LaporanController::class, 'search'])->name('laporan.search');
     Route::post('/laporan/upload', [LaporanController::class, 'upload'])->name('laporan.upload');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
