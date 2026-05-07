@@ -59,6 +59,16 @@ it('renders laporan page with pemilih report data', function () {
             ->where('report.dm_details.0.summary.total_localities', 2));
 });
 
+it('renders carian pemilih page', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get('/carian-pemilih')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('CarianPemilih'));
+});
+
 it('stores uploaded pemilih file for laporan', function () {
     $user = User::factory()->create();
     $path = storage_path('app/testing-upload-pemilih.xls');
@@ -91,14 +101,14 @@ HTML);
     app(PemilihReportService::class)->buildFromPath($path);
 
     $this->actingAs($user)
-        ->getJson('/laporan/search?q=ali')
+        ->getJson('/carian-pemilih/search?q=ali')
         ->assertOk()
         ->assertJsonPath('suggestions.0.name', 'ALI BIN ABU')
         ->assertJsonPath('suggestions.0.no_kp', '900101025555')
         ->assertJsonPath('suggestions.0.phone_mobile', '0123456789');
 
     $this->actingAs($user)
-        ->getJson('/laporan/search?q=0198888777')
+        ->getJson('/carian-pemilih/search?q=0198888777')
         ->assertOk()
         ->assertJsonPath('suggestions.0.name', 'SITI AMINAH');
 });

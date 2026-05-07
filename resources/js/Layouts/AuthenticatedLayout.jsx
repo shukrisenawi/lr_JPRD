@@ -45,6 +45,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Laporan
                                 </NavLink>
                                 <NavLink
+                                    href={route('carian-pemilih.index')}
+                                    active={route().current('carian-pemilih.*')}
+                                >
+                                    Carian Pemilih
+                                </NavLink>
+                                <NavLink
                                     href={route('settings.edit')}
                                     active={route().current('settings.edit')}
                                 >
@@ -171,6 +177,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('laporan.*')}
                         >
                             Laporan
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('carian-pemilih.index')}
+                            active={route().current('carian-pemilih.*')}
+                        >
+                            Carian Pemilih
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('settings.edit')}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CarianPemilihController;
 use App\Http\Controllers\CopiedRecordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
@@ -13,8 +14,9 @@ Route::redirect('/', '/dashboard');
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-    Route::get('/laporan/search', [LaporanController::class, 'search'])->name('laporan.search');
     Route::post('/laporan/upload', [LaporanController::class, 'upload'])->name('laporan.upload');
+    Route::get('/carian-pemilih', [CarianPemilihController::class, 'index'])->name('carian-pemilih.index');
+    Route::get('/carian-pemilih/search', [CarianPemilihController::class, 'search'])->name('carian-pemilih.search');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->name('copied-records.store');

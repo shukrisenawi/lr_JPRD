@@ -13,7 +13,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const numberFormatter = new Intl.NumberFormat('ms-MY');
 const chartColors = ['#0e7490', '#16a34a', '#f59e0b', '#475569', '#dc2626', '#7c3aed'];
@@ -116,173 +116,6 @@ function DataTable({ rows, columns }) {
                 </table>
             </div>
         </div>
-    );
-}
-
-function SearchModal({ voter, onClose }) {
-    if (!voter) {
-        return null;
-    }
-
-    const fields = [
-        ['Nama', voter.name],
-        ['No. IC Baru', voter.no_kp || '-'],
-        ['No. IC Lama', voter.old_ic || '-'],
-        ['Tel. Bimbit', voter.phone_mobile || '-'],
-        ['Tel. Rumah', voter.phone_home || '-'],
-        ['DM', voter.dm],
-        ['Lokaliti', voter.locality],
-        ['Jantina', voter.gender],
-        ['Bangsa', voter.race],
-        ['Kod Cula', voter.cula_code],
-        ['Alamat', voter.address],
-    ];
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8 backdrop-blur-sm">
-            <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Detail Pemilih</p>
-                        <h3 className="mt-1 text-xl font-bold text-slate-900">{voter.name}</h3>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
-                    >
-                        Tutup
-                    </button>
-                </div>
-
-                <div className="grid gap-4 px-5 py-5 sm:grid-cols-2">
-                    {fields.map(([label, value]) => (
-                        <div key={label} className="rounded-xl bg-slate-50 px-4 py-3">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-                            <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function SearchPanel() {
-    const [query, setQuery] = useState('');
-    const [searching, setSearching] = useState(false);
-    const [suggestions, setSuggestions] = useState([]);
-    const [selectedVoter, setSelectedVoter] = useState(null);
-    const abortControllerRef = useRef(null);
-    const requestIdRef = useRef(0);
-
-    useEffect(() => (
-        () => {
-            abortControllerRef.current?.abort();
-        }
-    ), []);
-
-    const handleChange = async (event) => {
-        const nextQuery = event.target.value;
-        setQuery(nextQuery);
-        setSelectedVoter(null);
-
-        abortControllerRef.current?.abort();
-
-        if (nextQuery.trim().length < 2) {
-            setSuggestions([]);
-            setSearching(false);
-            return;
-        }
-
-        const requestId = requestIdRef.current + 1;
-        requestIdRef.current = requestId;
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-        setSearching(true);
-
-        try {
-            const response = await fetch(`${route('laporan.search')}?q=${encodeURIComponent(nextQuery)}`, {
-                headers: {
-                    Accept: 'application/json',
-                },
-                signal: controller.signal,
-            });
-            const payload = await response.json();
-            if (requestIdRef.current === requestId) {
-                setSuggestions(payload.suggestions ?? []);
-            }
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                setSuggestions([]);
-            }
-        } finally {
-            if (requestIdRef.current === requestId) {
-                setSearching(false);
-            }
-        }
-    };
-
-    const handleSelectVoter = (voter) => {
-        abortControllerRef.current?.abort();
-        requestIdRef.current += 1;
-        setSearching(false);
-        setSuggestions([]);
-        setQuery(voter.name ?? '');
-        setSelectedVoter(voter);
-    };
-
-    return (
-        <>
-            <section className="relative rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                <div className="flex flex-col gap-3">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Carian Pemilih</p>
-                        <p className="mt-1 text-sm text-slate-500">Cari mengikut nama, nombor IC, atau nombor telefon.</p>
-                    </div>
-                    <input
-                        type="search"
-                        value={query}
-                        onChange={handleChange}
-                        placeholder="Contoh: Ali, 900101025555, 0123456789"
-                        className="w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                    />
-                </div>
-
-                {(searching || suggestions.length > 0) && (
-                    <div className="absolute left-4 right-4 top-[8.6rem] z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-                        {searching ? (
-                            <div className="px-4 py-3 text-sm text-slate-500">Mencari...</div>
-                        ) : (
-                            suggestions.map((voter) => (
-                                <button
-                                    key={voter.id}
-                                    type="button"
-                                    onClick={() => handleSelectVoter(voter)}
-                                    className="flex w-full items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-cyan-50 last:border-b-0"
-                                >
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">{voter.name}</p>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}
-                                        </p>
-                                    </div>
-                                    <div className="text-right text-xs text-slate-500">
-                                        <p>{voter.dm}</p>
-                                        <p className="mt-1">{voter.locality}</p>
-                                    </div>
-                                </button>
-                            ))
-                        )}
-                    </div>
-                )}
-            </section>
-
-            <SearchModal
-                voter={selectedVoter}
-                onClose={() => setSelectedVoter(null)}
-            />
-        </>
     );
 }
 
@@ -475,7 +308,6 @@ export default function Laporan({ report }) {
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                 <UploadPanel />
-                <SearchPanel />
 
                 {!report.source.exists ? (
                     <EmptyState message="Fail contoh tidak ditemui. Upload fail pemilih untuk mula jana laporan." />
