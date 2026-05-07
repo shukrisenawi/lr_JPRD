@@ -39,6 +39,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Dashboard
                                 </NavLink>
                                 <NavLink
+                                    href={route('laporan.index')}
+                                    active={route().current('laporan.*')}
+                                >
+                                    Laporan
+                                </NavLink>
+                                <NavLink
                                     href={route('settings.edit')}
                                     active={route().current('settings.edit')}
                                 >
@@ -159,6 +165,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('dashboard')}
                         >
                             Dashboard
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('laporan.index')}
+                            active={route().current('laporan.*')}
+                        >
+                            Laporan
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('settings.edit')}

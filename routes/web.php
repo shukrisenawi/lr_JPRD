@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CopiedRecordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SheetPageController;
 use App\Http\Controllers\SettingsController;
@@ -11,6 +12,8 @@ Route::redirect('/', '/dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    Route::post('/laporan/upload', [LaporanController::class, 'upload'])->name('laporan.upload');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->name('copied-records.store');
