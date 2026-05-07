@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\File;
 use RuntimeException;
 
 class PemilihReportService
@@ -16,9 +17,18 @@ class PemilihReportService
             return $this->emptyReport($resolvedPath);
         }
 
+        $cached = $this->readCachedReport($resolvedPath);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
         $rows = $this->readRows($resolvedPath);
 
-        return $this->summarize($rows, $resolvedPath);
+        $report = $this->summarize($rows, $resolvedPath);
+        $this->writeCachedReport($resolvedPath, $report);
+
+        return $report;
     }
 
     private function readRows(string $path): array
@@ -405,5 +415,37 @@ class PemilihReportService
             'by_locality' => [],
             'by_cula' => [],
         ];
+    }
+
+    private function readCachedReport(string $path): ?array
+    {
+        $cachePath = $this->cachePath($path);
+
+        if (! File::exists($cachePath)) {
+            return null;
+        }
+
+        $contents = File::get($cachePath);
+        $decoded = json_decode($contents, true);
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function writeCachedReport(string $path, array $report): void
+    {
+        $cachePath = $this->cachePath($path);
+        File::ensureDirectoryExists(dirname($cachePath));
+        File::put($cachePath, json_encode($report, JSON_UNESCAPED_UNICODE));
+    }
+
+    private function cachePath(string $path): string
+    {
+        $signature = sha1(implode('|', [
+            $path,
+            (string) filemtime($path),
+            (string) filesize($path),
+        ]));
+
+        return storage_path('app/report-cache/' . $signature . '.json');
     }
 }

@@ -37,7 +37,10 @@ class LaporanController extends Controller
 
         $file->move($directory, $filename);
 
-        Setting::setValue('pemilih_report_file_path', $directory . DIRECTORY_SEPARATOR . $filename);
+        $storedPath = $directory . DIRECTORY_SEPARATOR . $filename;
+
+        Setting::setValue('pemilih_report_file_path', $storedPath);
+        app(PemilihReportService::class)->buildFromPath($storedPath);
 
         return redirect()
             ->route('laporan.index')

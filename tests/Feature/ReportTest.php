@@ -76,3 +76,24 @@ it('stores uploaded pemilih file for laporan', function () {
     expect($storedPath)->not->toBeNull()
         ->and(file_exists($storedPath))->toBeTrue();
 });
+
+it('rebuilds cached laporan data when source file changes', function () {
+    $path = storage_path('app/testing-pemilih-cache.xls');
+    file_put_contents($path, pemilihReportFixture());
+
+    $service = app(PemilihReportService::class);
+    $first = $service->buildFromPath($path);
+
+    sleep(1);
+
+    file_put_contents($path, str_replace(
+        '<tr><td>4</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="003"</td><td>KG BATU BESAR</td><td>P</td><td>I</td><td>2</td></tr>',
+        '<tr><td>4</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="003"</td><td>KG BATU BESAR</td><td>P</td><td>I</td><td>10</td></tr>',
+        pemilihReportFixture(),
+    ));
+
+    $second = $service->buildFromPath($path);
+
+    expect($first['by_cula'][0]['code'])->toBe('2')
+        ->and(collect($second['by_cula'])->contains(fn (array $row) => $row['code'] === '10' && $row['total'] === 1))->toBeTrue();
+});
