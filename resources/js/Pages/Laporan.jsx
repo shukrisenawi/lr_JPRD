@@ -30,6 +30,20 @@ function formatPercent(value) {
     return `${formatNumber(value ?? 0)}%`;
 }
 
+function renderCulaSummary(culaBreakdown = []) {
+    if (culaBreakdown.length === 0) {
+        return '-';
+    }
+
+    return culaBreakdown.slice(0, 3).map((item, index) => (
+        <span key={`${item.code}-${index}`}>
+            <span>{item.display_label}: </span>
+            <span className="font-semibold text-slate-900">{formatNumber(item.total)}</span>
+            {index < Math.min(culaBreakdown.length, 3) - 1 ? ', ' : ''}
+        </span>
+    ));
+}
+
 function StatCard({ label, value, detail, tone = 'cyan' }) {
     const tones = {
         cyan: 'border-cyan-200 bg-cyan-50 text-cyan-950',
@@ -241,11 +255,7 @@ export default function Laporan({ report }) {
         {
             key: 'cula_breakdown',
             label: 'Ringkasan Status Culaan',
-            format: (_, row) => (
-                <span className="font-semibold text-slate-900">
-                    {row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-'}
-                </span>
-            ),
+            format: (_, row) => renderCulaSummary(row.cula_breakdown),
         },
     ];
 
@@ -263,11 +273,7 @@ export default function Laporan({ report }) {
         {
             key: 'cula_breakdown',
             label: 'Status Culaan',
-            format: (_, row) => (
-                <span className="font-semibold text-slate-900">
-                    {row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-'}
-                </span>
-            ),
+            format: (_, row) => renderCulaSummary(row.cula_breakdown),
         },
     ];
 
