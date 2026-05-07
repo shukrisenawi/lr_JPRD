@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-function SearchModal({ voter, onClose }) {
+function SearchResultCard({ voter, onClear }) {
     if (!voter) {
         return null;
     }
@@ -22,32 +22,33 @@ function SearchModal({ voter, onClose }) {
     ];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-8 backdrop-blur-sm">
-            <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
-                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Detail Pemilih</p>
-                        <h3 className="mt-1 text-xl font-bold text-slate-900">{voter.name}</h3>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
-                    >
-                        Tutup
-                    </button>
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-panel">
+            <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Detail Pemilih</p>
+                    <h3 className="mt-1 text-2xl font-bold text-slate-900">{voter.name}</h3>
+                    <p className="mt-2 text-sm text-slate-500">
+                        Maklumat penuh pemilih yang dipilih daripada cadangan carian.
+                    </p>
                 </div>
-
-                <div className="grid gap-4 px-5 py-5 sm:grid-cols-2">
-                    {fields.map(([label, value]) => (
-                        <div key={label} className="rounded-xl bg-slate-50 px-4 py-3">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-                            <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
-                        </div>
-                    ))}
-                </div>
+                <button
+                    type="button"
+                    onClick={onClear}
+                    className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
+                >
+                    Buang Pilihan
+                </button>
             </div>
-        </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {fields.map(([label, value]) => (
+                    <div key={label} className="rounded-xl bg-slate-50 px-4 py-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
+                        <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
+                    </div>
+                ))}
+            </div>
+        </section>
     );
 }
 
@@ -121,7 +122,7 @@ function SearchPanel() {
                 <div className="flex flex-col gap-3">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Carian Pemilih</p>
-                        <p className="mt-1 text-sm text-slate-500">Cari mengikut nama, nombor IC, atau nombor telefon untuk buka detail pemilih dalam popup.</p>
+                        <p className="mt-1 text-sm text-slate-500">Cari mengikut nama, nombor IC, atau nombor telefon dan paparkan detail di bawah carian.</p>
                     </div>
                     <input
                         type="search"
@@ -161,9 +162,9 @@ function SearchPanel() {
                 )}
             </section>
 
-            <SearchModal
+            <SearchResultCard
                 voter={selectedVoter}
-                onClose={() => setSelectedVoter(null)}
+                onClear={() => setSelectedVoter(null)}
             />
         </>
     );
