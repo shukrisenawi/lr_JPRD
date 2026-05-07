@@ -215,6 +215,14 @@ export default function Laporan({ report }) {
     );
     const dmCulaRows = report.cula_by_dm ?? [];
     const dmDetails = report.dm_details ?? [];
+    const udmTableRows = useMemo(
+        () => [...report.by_dm].sort((first, second) => (
+            (second.coverage_percent ?? 0) - (first.coverage_percent ?? 0)
+            || (second.with_cula ?? 0) - (first.with_cula ?? 0)
+            || (first.name ?? '').localeCompare(second.name ?? '')
+        )).slice(0, 25),
+        [report.by_dm],
+    );
     const localityRows = filteredLocalities.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((row) => row.total > 0);
@@ -538,7 +546,7 @@ export default function Laporan({ report }) {
                                     </div>
                                 </ChartPanel>
 
-                                <DataTable rows={report.by_dm.slice(0, 25)} columns={dmColumns} />
+                                <DataTable rows={udmTableRows} columns={dmColumns} />
                             </section>
                         )}
 
