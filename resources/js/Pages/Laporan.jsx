@@ -241,7 +241,11 @@ export default function Laporan({ report }) {
         {
             key: 'cula_breakdown',
             label: 'Ringkasan Status Culaan',
-            format: (_, row) => row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-',
+            format: (_, row) => (
+                <span className="font-semibold text-slate-900">
+                    {row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-'}
+                </span>
+            ),
         },
     ];
 
@@ -259,7 +263,11 @@ export default function Laporan({ report }) {
         {
             key: 'cula_breakdown',
             label: 'Status Culaan',
-            format: (_, row) => row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-',
+            format: (_, row) => (
+                <span className="font-semibold text-slate-900">
+                    {row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-'}
+                </span>
+            ),
         },
     ];
 
