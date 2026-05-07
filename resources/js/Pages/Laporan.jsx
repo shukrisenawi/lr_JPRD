@@ -55,7 +55,7 @@ function EmptyState({ message }) {
     );
 }
 
-function ChartPanel({ title, children, action }) {
+function ChartPanel({ title, children, action, compact = false }) {
     return (
         <section
             className="rounded-xl border border-slate-200 bg-white p-4 shadow-panel"
@@ -65,7 +65,7 @@ function ChartPanel({ title, children, action }) {
                 <h3 className="text-base font-bold leading-6 text-slate-900">{title}</h3>
                 {action}
             </div>
-            <div className="mt-3 h-[19rem] w-full lg:h-[20rem]">{children}</div>
+            <div className={`mt-3 w-full ${compact ? '' : 'h-[19rem] lg:h-[20rem]'}`}>{children}</div>
         </section>
     );
 }
@@ -396,6 +396,7 @@ export default function Laporan({ report }) {
                             <section className="space-y-3">
                                 <ChartPanel
                                     title={`Ringkasan UDM ${selectedUdmDetail?.name ?? '-'}`}
+                                    compact
                                     action={
                                         <select
                                             value={selectedUdmDetail?.key ?? ''}
@@ -410,7 +411,7 @@ export default function Laporan({ report }) {
                                         </select>
                                     }
                                 >
-                                    <div className="grid h-full gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                                         <StatCard
                                             label="Jumlah pemilih UDM"
                                             value={selectedUdmDetail?.summary.total_voters ?? 0}
