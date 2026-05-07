@@ -53,7 +53,30 @@ it('builds pemilih report summary from html xls data', function () {
         ->and($report['dm_details'][0]['localities'][0]['cula_breakdown'][1]['display_label'])->toBe('? - BELUM DICULA')
         ->and($report['by_cula'][0]['code'])->toBe('2')
         ->and($report['by_cula'][0]['display_label'])->toBe('2 - PAS')
-        ->and($report['by_cula'][0]['total'])->toBe(2);
+        ->and($report['by_cula'][0]['total'])->toBe(2)
+        ->and(collect($report['dm_details'][1]['localities'])->contains(
+            fn (array $locality) => collect($locality['cula_breakdown'])->contains(
+                fn (array $cula) => $cula['code'] === '3P' && $cula['display_label'] === '3P - PAS LUAR PARLIMEN'
+            )
+        ))->toBeTrue();
+});
+
+it('maps full cula labels from configured codes', function () {
+    $path = storage_path('app/testing-pemilih-cula-labels.xls');
+    file_put_contents($path, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>P</td><td>M</td><td>7</td></tr>
+<tr><td>2</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>L</td><td>C</td><td>8</td></tr>
+<tr><td>3</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>L</td><td>I</td><td>97</td></tr>
+</table></body></html>
+HTML);
+
+    $report = app(PemilihReportService::class)->buildFromPath($path);
+
+    expect(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '7' && $row['display_label'] === '7 - TIDAK DIKENALI'))->toBeTrue()
+        ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '8' && $row['display_label'] === '8 - MATI'))->toBeTrue()
+        ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '97' && $row['display_label'] === '97 - LAIN-LAIN BANGSA'))->toBeTrue();
 });
 
 it('renders laporan page with pemilih report data', function () {
