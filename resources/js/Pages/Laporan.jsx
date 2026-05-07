@@ -26,6 +26,10 @@ function formatNumber(value) {
     return numberFormatter.format(value ?? 0);
 }
 
+function formatPercent(value) {
+    return `${formatNumber(value ?? 0)}%`;
+}
+
 function StatCard({ label, value, detail, tone = 'cyan' }) {
     const tones = {
         cyan: 'border-cyan-200 bg-cyan-50 text-cyan-950',
@@ -102,7 +106,7 @@ function DataTable({ rows, columns }) {
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-700">
                         {rows.map((row, index) => (
-                            <tr key={`${row.name ?? row.code}-${index}`} className="hover:bg-cyan-50/60">
+                            <tr key={row.key ?? `${row.name ?? row.code}-${index}`} className="hover:bg-cyan-50/60">
                                 {columns.map((column) => (
                                     <td key={column.key} className="px-4 py-3">
                                         {column.format
@@ -157,21 +161,21 @@ function UploadPanel() {
                 disabled={!file || processing}
                 className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-                {processing ? 'Memuat naik...' : 'Upload fail'}
+                {processing ? 'Memuat naik...' : 'Muat Naik Fail'}
             </button>
         </form>
     );
 }
 
 export default function Laporan({ report }) {
-    const [activeTab, setActiveTab] = useState('dm');
+    const [activeTab, setActiveTab] = useState('udm');
     const [search, setSearch] = useState('');
-    const [selectedDmName, setSelectedDmName] = useState(() => report.dm_details?.[0]?.name ?? '');
+    const [selectedUdmKey, setSelectedUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
 
     const tabs = [
-        { key: 'dm', label: 'DM' },
+        { key: 'udm', label: 'UDM' },
         { key: 'locality', label: 'Lokaliti' },
-        { key: 'cula', label: 'Kod Cula' },
+        { key: 'cula', label: 'Status Culaan' },
     ];
 
     const filteredLocalities = useMemo(() => {
@@ -181,7 +185,7 @@ export default function Laporan({ report }) {
             return report.by_locality;
         }
 
-        return report.by_locality.filter((row) => (
+            return report.by_locality.filter((row) => (
             row.name.toLowerCase().includes(keyword)
             || row.dm.toLowerCase().includes(keyword)
             || row.code.toLowerCase().includes(keyword)
@@ -194,92 +198,62 @@ export default function Laporan({ report }) {
     const localityRows = filteredLocalities.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((row) => row.total > 0);
-    const selectedDmDetail = dmDetails.find((row) => row.name === selectedDmName) ?? dmDetails[0] ?? null;
-    const selectedDmCula = dmCulaRows.find((row) => row.name === selectedDmName) ?? dmCulaRows[0] ?? null;
-    const selectedDmCulaChartRows = selectedDmCula?.cula_breakdown.slice(0, 12) ?? [];
-    const selectedDmLocalityRows = selectedDmDetail?.localities.slice(0, 12) ?? [];
-    const selectedDmRaceRows = selectedDmDetail?.race_breakdown.slice(0, 8) ?? [];
-    const selectedDmTopLocalityTableRows = selectedDmDetail?.localities.slice(0, 20) ?? [];
-    const selectedDmLocalityCulaRows = useMemo(() => {
-        if (!selectedDmDetail) {
+    const selectedUdmDetail = dmDetails.find((row) => row.key === selectedUdmKey) ?? dmDetails[0] ?? null;
+    const selectedUdmCula = dmCulaRows.find((row) => row.key === selectedUdmKey) ?? dmCulaRows[0] ?? null;
+    const selectedUdmCulaChartRows = selectedUdmCula?.cula_breakdown.slice(0, 12) ?? [];
+    const selectedUdmLocalityRows = selectedUdmDetail?.localities.slice(0, 12) ?? [];
+    const selectedUdmRaceRows = selectedUdmDetail?.race_breakdown.slice(0, 8) ?? [];
+    const selectedUdmTopLocalityTableRows = selectedUdmDetail?.localities.slice(0, 20) ?? [];
+    const selectedUdmGenderRows = useMemo(() => {
+        if (!selectedUdmDetail) {
             return [];
         }
 
-        const topCulaCodes = [];
-
-        selectedDmDetail.localities.forEach((locality) => {
-            locality.cula_breakdown.forEach((cula) => {
-                if (!topCulaCodes.includes(cula.code) && topCulaCodes.length < 5) {
-                    topCulaCodes.push(cula.code);
-                }
-            });
-        });
-
-        return selectedDmDetail.localities.slice(0, 10).map((locality) => {
-            const row = {
-                name: locality.name,
-                total: locality.total,
-            };
-
-            topCulaCodes.forEach((code) => {
-                const culaRow = locality.cula_breakdown.find((item) => item.code === code);
-                row[`cula_${code}`] = culaRow?.total ?? 0;
-            });
-
-            return row;
-        });
-    }, [selectedDmDetail]);
-    const selectedDmTopCulaKeys = useMemo(() => {
-        if (!selectedDmDetail) {
-            return [];
-        }
-
-        const unique = [];
-
-        selectedDmDetail.localities.forEach((locality) => {
-            locality.cula_breakdown.forEach((cula) => {
-                if (!unique.some((item) => item.code === cula.code) && unique.length < 5) {
-                    unique.push({
-                        code: cula.code,
-                        label: cula.label,
-                    });
-                }
-            });
-        });
-
-        return unique;
-    }, [selectedDmDetail]);
+        return [
+            { key: 'L', label: 'Lelaki', total: selectedUdmDetail.summary.male ?? 0 },
+            { key: 'P', label: 'Perempuan', total: selectedUdmDetail.summary.female ?? 0 },
+            { key: 'LAIN', label: 'Lain-lain', total: selectedUdmDetail.summary.other_gender ?? 0 },
+        ].filter((row) => row.total > 0);
+    }, [selectedUdmDetail]);
+    const localityChartRows = localityRows.slice(0, 12);
 
     const dmColumns = [
-        { key: 'name', label: 'DM' },
+        { key: 'name', label: 'UDM' },
         { key: 'total', label: 'Pemilih', format: formatNumber },
-        { key: 'male', label: 'Lelaki', format: formatNumber },
-        { key: 'female', label: 'Perempuan', format: formatNumber },
-        { key: 'with_cula', label: 'Ada Kod Cula', format: formatNumber },
+        { key: 'with_cula', label: 'Sudah Dicula', format: formatNumber },
+        { key: 'belum_dicula', label: 'Belum Dicula', format: formatNumber },
+        { key: 'coverage_percent', label: 'Peratus Siap', format: formatPercent },
     ];
 
     const localityColumns = [
         { key: 'name', label: 'Lokaliti' },
-        { key: 'dm', label: 'DM' },
+        { key: 'dm', label: 'UDM' },
         { key: 'total', label: 'Pemilih', format: formatNumber },
-        { key: 'male', label: 'Lelaki', format: formatNumber },
-        { key: 'female', label: 'Perempuan', format: formatNumber },
+        { key: 'with_cula', label: 'Sudah Dicula', format: formatNumber },
+        { key: 'belum_dicula', label: 'Belum Dicula', format: formatNumber },
+        { key: 'coverage_percent', label: 'Peratus Siap', format: formatPercent },
+        {
+            key: 'cula_breakdown',
+            label: 'Ringkasan Status Culaan',
+            format: (_, row) => row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-',
+        },
     ];
 
     const culaColumns = [
-        { key: 'label', label: 'Kod Cula' },
+        { key: 'display_label', label: 'Status Culaan' },
         { key: 'total', label: 'Jumlah Pemilih', format: formatNumber },
     ];
 
     const dmLocalityColumns = [
         { key: 'name', label: 'Lokaliti' },
         { key: 'total', label: 'Pemilih', format: formatNumber },
-        { key: 'male', label: 'Lelaki', format: formatNumber },
-        { key: 'female', label: 'Perempuan', format: formatNumber },
+        { key: 'with_cula', label: 'Sudah Dicula', format: formatNumber },
+        { key: 'belum_dicula', label: 'Belum Dicula', format: formatNumber },
+        { key: 'coverage_percent', label: 'Peratus Siap', format: formatPercent },
         {
             key: 'cula_breakdown',
-            label: 'Kod Cula',
-            format: (_, row) => row.cula_breakdown.slice(0, 3).map((item) => `${item.code}: ${formatNumber(item.total)}`).join(', ') || 'Tiada',
+            label: 'Status Culaan',
+            format: (_, row) => row.cula_breakdown.slice(0, 3).map((item) => `${item.display_label}: ${formatNumber(item.total)}`).join(', ') || '-',
         },
     ];
 
@@ -292,7 +266,7 @@ export default function Laporan({ report }) {
                             Laporan
                         </p>
                         <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                            Analitik pemilih mengikut DM, lokaliti dan cula
+                            Analitik pemilih mengikut UDM, lokaliti dan status culaan
                         </h2>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
                             Paparan ini membaca fail pemilih terkini dan susun data besar kepada ringkasan yang mudah ditapis.
@@ -313,35 +287,41 @@ export default function Laporan({ report }) {
                     <EmptyState message="Fail contoh tidak ditemui. Upload fail pemilih untuk mula jana laporan." />
                 ) : (
                     <>
-                        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                             <StatCard
                                 label="Jumlah pemilih"
                                 value={report.summary.total_voters}
-                                detail={`${formatNumber(report.summary.total_dm)} DM aktif`}
+                                detail="Jumlah pemilih dalam fail semasa"
                                 tone="cyan"
                             />
                             <StatCard
-                                label="Jumlah lokaliti"
-                                value={report.summary.total_localities}
-                                detail="Mengikut kolum Nama Lokaliti"
+                                label="Jumlah UDM"
+                                value={report.summary.total_dm}
+                                detail="UDM aktif dalam laporan"
                                 tone="slate"
                             />
                             <StatCard
-                                label="Lelaki"
-                                value={report.summary.male}
-                                detail="Kod jantina L"
+                                label="Sudah dicula"
+                                value={report.summary.with_cula}
+                                detail="Pemilih dengan status culaan"
                                 tone="emerald"
                             />
                             <StatCard
-                                label="Perempuan"
-                                value={report.summary.female}
-                                detail="Kod jantina P"
+                                label="Belum dicula"
+                                value={report.summary.belum_dicula}
+                                detail="Kod kosong atau ?"
                                 tone="amber"
+                            />
+                            <StatCard
+                                label="Peratus siap culaan"
+                                value={report.summary.coverage_percent}
+                                detail={`${formatNumber(report.summary.total_localities)} lokaliti`}
+                                tone="slate"
                             />
                         </section>
 
                         <section className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
-                            <ChartPanel title="Top DM mengikut jumlah pemilih">
+                            <ChartPanel title="Top UDM mengikut jumlah pemilih">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={dmChartRows} margin={{ top: 10, right: 20, bottom: 70, left: 8 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -406,18 +386,18 @@ export default function Laporan({ report }) {
                             </div>
                         </section>
 
-                        {activeTab === 'dm' && (
+                        {activeTab === 'udm' && (
                             <section className="space-y-4">
                                 <ChartPanel
-                                    title={`Ringkasan DM ${selectedDmDetail?.name ?? '-'}`}
+                                    title={`Ringkasan UDM ${selectedUdmDetail?.name ?? '-'}`}
                                     action={
                                         <select
-                                            value={selectedDmDetail?.name ?? ''}
-                                            onChange={(event) => setSelectedDmName(event.target.value)}
+                                            value={selectedUdmDetail?.key ?? ''}
+                                            onChange={(event) => setSelectedUdmKey(event.target.value)}
                                             className="rounded-xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                         >
                                             {dmDetails.map((row) => (
-                                                <option key={row.name} value={row.name}>
+                                                <option key={row.key} value={row.key}>
                                                     {row.name}
                                                 </option>
                                             ))}
@@ -426,59 +406,101 @@ export default function Laporan({ report }) {
                                 >
                                     <div className="grid h-full gap-4 md:grid-cols-2 xl:grid-cols-4">
                                         <StatCard
-                                            label="Jumlah pemilih DM"
-                                            value={selectedDmDetail?.summary.total_voters ?? 0}
-                                            detail={`${formatNumber(selectedDmDetail?.summary.total_localities ?? 0)} lokaliti`}
+                                            label="Jumlah pemilih UDM"
+                                            value={selectedUdmDetail?.summary.total_voters ?? 0}
+                                            detail={`${formatNumber(selectedUdmDetail?.summary.total_localities ?? 0)} lokaliti`}
                                             tone="cyan"
                                         />
                                         <StatCard
-                                            label="Lelaki"
-                                            value={selectedDmDetail?.summary.male ?? 0}
-                                            detail="Dalam DM dipilih"
+                                            label="Sudah dicula"
+                                            value={selectedUdmDetail?.summary.with_cula ?? 0}
+                                            detail="Dalam UDM dipilih"
                                             tone="emerald"
                                         />
                                         <StatCard
-                                            label="Perempuan"
-                                            value={selectedDmDetail?.summary.female ?? 0}
-                                            detail="Dalam DM dipilih"
+                                            label="Belum dicula"
+                                            value={selectedUdmDetail?.summary.belum_dicula ?? 0}
+                                            detail="Dalam UDM dipilih"
                                             tone="amber"
                                         />
                                         <StatCard
-                                            label="Ada kod cula"
-                                            value={selectedDmDetail?.summary.with_cula ?? 0}
-                                            detail="Pemilih berkod"
+                                            label="Peratus siap culaan"
+                                            value={selectedUdmDetail?.summary.coverage_percent ?? 0}
+                                            detail="Liputan status culaan"
                                             tone="slate"
                                         />
                                     </div>
                                 </ChartPanel>
 
                                 <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)]">
-                                    <ChartPanel title="Jumlah pemilih setiap lokaliti dalam DM">
+                                    <ChartPanel title="Pecahan status culaan dalam UDM">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={selectedDmLocalityRows} layout="vertical" margin={{ top: 10, right: 20, bottom: 10, left: 140 }}>
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                                <XAxis type="number" tickFormatter={formatNumber} />
-                                                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                                            <BarChart data={selectedUdmCulaChartRows} margin={{ top: 10, right: 20, bottom: 80, left: 8 }}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                <XAxis
+                                                    dataKey="display_label"
+                                                    interval={0}
+                                                    angle={-25}
+                                                    textAnchor="end"
+                                                    height={90}
+                                                    tick={{ fontSize: 11 }}
+                                                />
+                                                <YAxis tickFormatter={formatNumber} width={70} />
                                                 <Tooltip content={<SummaryTooltip />} />
-                                                <Legend />
-                                                <Bar dataKey="male" name="Lelaki" stackId="total" fill="#0e7490" radius={[0, 0, 4, 4]} />
-                                                <Bar dataKey="female" name="Perempuan" stackId="total" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="total" name="Jumlah" fill="#dc2626" radius={[4, 4, 0, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </ChartPanel>
 
-                                    <ChartPanel title="Bangsa dalam DM">
+                                    <ChartPanel title="Pecahan jantina dalam UDM">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
                                                 <Pie
-                                                    data={selectedDmRaceRows}
+                                                    data={selectedUdmGenderRows}
                                                     dataKey="total"
                                                     nameKey="label"
                                                     innerRadius={60}
                                                     outerRadius={110}
                                                     paddingAngle={3}
                                                 >
-                                                    {selectedDmRaceRows.map((entry, index) => (
+                                                    {selectedUdmGenderRows.map((entry, index) => (
+                                                        <Cell key={entry.key} fill={chartColors[index % chartColors.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip content={<SummaryTooltip />} />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </ChartPanel>
+                                </section>
+
+                                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)]">
+                                    <ChartPanel title="Jumlah pemilih setiap lokaliti dalam UDM">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={selectedUdmLocalityRows} layout="vertical" margin={{ top: 10, right: 20, bottom: 10, left: 140 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                                <XAxis type="number" tickFormatter={formatNumber} />
+                                                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                                                <Tooltip content={<SummaryTooltip />} />
+                                                <Legend />
+                                                <Bar dataKey="with_cula" name="Sudah Dicula" stackId="total" fill="#16a34a" radius={[0, 0, 4, 4]} />
+                                                <Bar dataKey="belum_dicula" name="Belum Dicula" stackId="total" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </ChartPanel>
+
+                                    <ChartPanel title="Pecahan bangsa dalam UDM">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={selectedUdmRaceRows}
+                                                    dataKey="total"
+                                                    nameKey="label"
+                                                    innerRadius={60}
+                                                    outerRadius={110}
+                                                    paddingAngle={3}
+                                                >
+                                                    {selectedUdmRaceRows.map((entry, index) => (
                                                         <Cell key={entry.code} fill={chartColors[index % chartColors.length]} />
                                                     ))}
                                                 </Pie>
@@ -489,57 +511,10 @@ export default function Laporan({ report }) {
                                     </ChartPanel>
                                 </section>
 
-                                <ChartPanel title={`Kod cula setiap lokaliti bagi DM ${selectedDmDetail?.name ?? '-'}`}>
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={selectedDmLocalityCulaRows} margin={{ top: 10, right: 20, bottom: 60, left: 8 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis
-                                                dataKey="name"
-                                                interval={0}
-                                                angle={-25}
-                                                textAnchor="end"
-                                                height={70}
-                                                tick={{ fontSize: 11 }}
-                                            />
-                                            <YAxis tickFormatter={formatNumber} width={70} />
-                                            <Tooltip content={<SummaryTooltip />} />
-                                            <Legend />
-                                            {selectedDmTopCulaKeys.map((item, index) => (
-                                                <Bar
-                                                    key={item.code}
-                                                    dataKey={`cula_${item.code}`}
-                                                    name={item.label}
-                                                    stackId="total"
-                                                    fill={chartColors[index % chartColors.length]}
-                                                />
-                                            ))}
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </ChartPanel>
-
-                                <ChartPanel title="Detail lokaliti dalam DM">
+                                <ChartPanel title="Jadual lokaliti dalam UDM">
                                     <div className="h-full overflow-auto">
-                                        <DataTable rows={selectedDmTopLocalityTableRows} columns={dmLocalityColumns} />
+                                        <DataTable rows={selectedUdmTopLocalityTableRows} columns={dmLocalityColumns} />
                                     </div>
-                                </ChartPanel>
-
-                                <ChartPanel title={`Kod cula keseluruhan untuk DM ${selectedDmCula?.name ?? '-'}`}>
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={selectedDmCulaChartRows} margin={{ top: 10, right: 20, bottom: 60, left: 8 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                            <XAxis
-                                                dataKey="label"
-                                                interval={0}
-                                                angle={-25}
-                                                textAnchor="end"
-                                                height={70}
-                                                tick={{ fontSize: 11 }}
-                                            />
-                                            <YAxis tickFormatter={formatNumber} width={70} />
-                                            <Tooltip content={<SummaryTooltip />} />
-                                            <Bar dataKey="total" name="Jumlah" fill="#dc2626" radius={[4, 4, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
                                 </ChartPanel>
 
                                 <DataTable rows={report.by_dm.slice(0, 25)} columns={dmColumns} />
@@ -553,7 +528,7 @@ export default function Laporan({ report }) {
                                         type="search"
                                         value={search}
                                         onChange={(event) => setSearch(event.target.value)}
-                                        placeholder="Cari lokaliti, DM atau kod..."
+                                        placeholder="Cari lokaliti, UDM atau kod..."
                                         className="w-full rounded-xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500 sm:max-w-md"
                                     />
                                     <p className="text-sm text-slate-500">
@@ -561,15 +536,16 @@ export default function Laporan({ report }) {
                                     </p>
                                 </div>
 
-                                <ChartPanel title="Top lokaliti mengikut jumlah pemilih">
+                                <ChartPanel title="Top lokaliti mengikut status culaan">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={localityRows.slice(0, 12)} layout="vertical" margin={{ top: 10, right: 20, bottom: 10, left: 120 }}>
+                                        <BarChart data={localityChartRows} layout="vertical" margin={{ top: 10, right: 20, bottom: 10, left: 120 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                             <XAxis type="number" tickFormatter={formatNumber} />
                                             <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                                             <Tooltip content={<SummaryTooltip />} />
                                             <Legend />
-                                            <Bar dataKey="total" name="Jumlah" fill="#16a34a" radius={[0, 4, 4, 0]} />
+                                            <Bar dataKey="with_cula" name="Sudah Dicula" stackId="total" fill="#16a34a" radius={[0, 0, 4, 4]} />
+                                            <Bar dataKey="belum_dicula" name="Belum Dicula" stackId="total" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </ChartPanel>
@@ -580,12 +556,12 @@ export default function Laporan({ report }) {
 
                         {activeTab === 'cula' && (
                             <section className="space-y-4">
-                                <ChartPanel title="Taburan kod cula">
+                                <ChartPanel title="Taburan status culaan">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={culaRows} margin={{ top: 10, right: 20, bottom: 60, left: 8 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                             <XAxis
-                                                dataKey="label"
+                                                dataKey="display_label"
                                                 interval={0}
                                                 angle={-25}
                                                 textAnchor="end"

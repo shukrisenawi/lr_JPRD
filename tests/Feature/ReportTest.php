@@ -29,16 +29,28 @@ it('builds pemilih report summary from html xls data', function () {
         ->and($report['summary']['total_localities'])->toBe(3)
         ->and($report['summary']['male'])->toBe(2)
         ->and($report['summary']['female'])->toBe(2)
+        ->and($report['summary']['with_cula'])->toBe(3)
+        ->and($report['summary']['belum_dicula'])->toBe(1)
+        ->and($report['summary']['coverage_percent'])->toBe(75.0)
         ->and($report['by_dm'][0]['name'])->toBe('KAMPUNG BETONG')
+        ->and($report['by_dm'][0]['key'])->toBe('02|KAMPUNG BETONG')
         ->and($report['by_dm'][0]['total'])->toBe(2)
+        ->and($report['by_dm'][0]['belum_dicula'])->toBe(0)
+        ->and($report['by_dm'][0]['coverage_percent'])->toBe(100.0)
         ->and($report['cula_by_dm'][0]['name'])->toBe('KAMPUNG BETONG')
         ->and($report['cula_by_dm'][0]['cula_breakdown'][0]['code'])->toBe('2')
+        ->and($report['cula_by_dm'][0]['cula_breakdown'][0]['label'])->toBe('2 - PAS')
         ->and($report['cula_by_dm'][0]['cula_breakdown'][0]['total'])->toBe(1)
         ->and($report['dm_details'][0]['name'])->toBe('KAMPUNG BETONG')
+        ->and($report['dm_details'][0]['key'])->toBe('02|KAMPUNG BETONG')
         ->and($report['dm_details'][0]['summary']['total_localities'])->toBe(2)
+        ->and($report['dm_details'][0]['summary']['belum_dicula'])->toBe(0)
+        ->and($report['dm_details'][0]['summary']['coverage_percent'])->toBe(100.0)
         ->and($report['dm_details'][0]['race_breakdown'][0]['code'])->toBe('I')
         ->and($report['dm_details'][0]['localities'][0]['cula_breakdown'][0]['code'])->toBe('2')
+        ->and($report['dm_details'][1]['localities'][0]['cula_breakdown'][1]['display_label'])->toBe('? - BELUM DICULA')
         ->and($report['by_cula'][0]['code'])->toBe('2')
+        ->and($report['by_cula'][0]['display_label'])->toBe('2 - PAS')
         ->and($report['by_cula'][0]['total'])->toBe(2);
 });
 
@@ -54,8 +66,13 @@ it('renders laporan page with pemilih report data', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Laporan')
             ->where('report.summary.total_voters', 4)
+            ->where('report.summary.with_cula', 3)
+            ->where('report.summary.belum_dicula', 1)
+            ->where('report.summary.coverage_percent', 75)
             ->where('report.by_dm.0.name', 'KAMPUNG BETONG')
+            ->where('report.by_dm.0.key', '02|KAMPUNG BETONG')
             ->where('report.cula_by_dm.0.cula_breakdown.0.code', '2')
+            ->where('report.cula_by_dm.0.cula_breakdown.0.display_label', '2 - PAS')
             ->where('report.dm_details.0.summary.total_localities', 2));
 });
 

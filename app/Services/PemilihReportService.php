@@ -8,6 +8,17 @@ use RuntimeException;
 class PemilihReportService
 {
     public const DEFAULT_SAMPLE_PATH = 'F:\\OneDrive\\PAS\\pemilih.xls';
+    private const REPORT_SCHEMA_VERSION = 2;
+    private const CULA_LABELS = [
+        '1' => 'UMNO',
+        '2' => 'PAS',
+        '3K' => 'PAS LUAR KEDAH (SEMENANJUNG)',
+        '3P' => 'PAS LUAR KAWASAN',
+        '7P' => 'TIDAK DIKENALI (POLIS / TENTERA)',
+        '98' => 'INDIA',
+        '99' => 'CINA',
+        '?' => 'BELUM DICULA',
+    ];
 
     public function buildFromPath(?string $path = null): array
     {
@@ -73,6 +84,7 @@ class PemilihReportService
                 'gender' => $voter['gender'],
                 'race' => $voter['race'],
                 'cula_code' => $voter['cula_code'],
+                'cula_display_label' => $voter['cula_display_label'],
                 'address' => $voter['address'],
             ];
 
@@ -211,13 +223,15 @@ class PemilihReportService
             $localityName = $this->fallbackLabel($row['Nama Lokaliti'] ?? '', 'Tanpa Lokaliti');
             $genderCode = strtoupper(trim((string) ($row['Jantina'] ?? '')));
             $raceCode = $this->fallbackLabel($row['Bangsa'] ?? '', 'Tiada');
-            $culaCode = $this->fallbackLabel($row['Kod Cula'] ?? '', 'Tiada');
+            $culaCode = $this->normalizeCulaCode($row['Kod Cula'] ?? '');
+            $culaDetail = $this->culaDetail($culaCode);
 
             $genderKey = in_array($genderCode, ['L', 'P'], true) ? $genderCode : 'LAIN';
             $gender[$genderKey]++;
 
             $dmKey = $dmCode . '|' . $dmName;
             $dm[$dmKey] ??= [
+                'key' => $dmKey,
                 'code' => $dmCode,
                 'name' => $dmName,
                 'total' => 0,
@@ -225,10 +239,13 @@ class PemilihReportService
                 'female' => 0,
                 'other_gender' => 0,
                 'with_cula' => 0,
+                'belum_dicula' => 0,
+                'coverage_percent' => 0,
             ];
-            $this->incrementGroup($dm[$dmKey], $genderKey, $culaCode);
+            $this->incrementGroup($dm[$dmKey], $genderKey, $culaDetail['is_completed']);
 
             $dmCula[$dmKey] ??= [
+                'key' => $dmKey,
                 'code' => $dmCode,
                 'name' => $dmName,
                 'total' => 0,
@@ -236,13 +253,13 @@ class PemilihReportService
             ];
             $dmCula[$dmKey]['total']++;
             $dmCula[$dmKey]['cula_breakdown'][$culaCode] ??= [
-                'code' => $culaCode,
-                'label' => $culaCode === 'Tiada' ? 'Tiada Kod' : 'Kod ' . $culaCode,
+                ...$culaDetail,
                 'total' => 0,
             ];
             $dmCula[$dmKey]['cula_breakdown'][$culaCode]['total']++;
 
             $dmDetails[$dmKey] ??= [
+                'key' => $dmKey,
                 'code' => $dmCode,
                 'name' => $dmName,
                 'summary' => [
@@ -251,25 +268,37 @@ class PemilihReportService
                     'female' => 0,
                     'other_gender' => 0,
                     'with_cula' => 0,
+                    'belum_dicula' => 0,
+                    'coverage_percent' => 0,
                     'total_localities' => 0,
                 ],
                 'race_breakdown' => [],
                 'localities' => [],
             ];
-            $this->incrementSummary($dmDetails[$dmKey]['summary'], $genderKey, $culaCode);
+            $this->incrementSummary($dmDetails[$dmKey]['summary'], $genderKey, $culaDetail['is_completed']);
 
-            $localityKey = $localityCode . '|' . $localityName . '|' . $dmName;
+            $localityKey = $localityCode . '|' . $localityName . '|' . $dmKey;
             $localities[$localityKey] ??= [
+                'key' => $localityKey,
                 'code' => $localityCode,
                 'name' => $localityName,
                 'dm' => $dmName,
+                'dm_key' => $dmKey,
                 'total' => 0,
                 'male' => 0,
                 'female' => 0,
                 'other_gender' => 0,
                 'with_cula' => 0,
+                'belum_dicula' => 0,
+                'coverage_percent' => 0,
+                'cula_breakdown' => [],
             ];
-            $this->incrementGroup($localities[$localityKey], $genderKey, $culaCode);
+            $this->incrementGroup($localities[$localityKey], $genderKey, $culaDetail['is_completed']);
+            $localities[$localityKey]['cula_breakdown'][$culaCode] ??= [
+                ...$culaDetail,
+                'total' => 0,
+            ];
+            $localities[$localityKey]['cula_breakdown'][$culaCode]['total']++;
 
             $dmDetails[$dmKey]['race_breakdown'][$raceCode] ??= [
                 'code' => $raceCode,
@@ -279,6 +308,7 @@ class PemilihReportService
             $dmDetails[$dmKey]['race_breakdown'][$raceCode]['total']++;
 
             $dmDetails[$dmKey]['localities'][$localityKey] ??= [
+                'key' => $localityKey,
                 'code' => $localityCode,
                 'name' => $localityName,
                 'total' => 0,
@@ -286,10 +316,12 @@ class PemilihReportService
                 'female' => 0,
                 'other_gender' => 0,
                 'with_cula' => 0,
+                'belum_dicula' => 0,
+                'coverage_percent' => 0,
                 'race_breakdown' => [],
                 'cula_breakdown' => [],
             ];
-            $this->incrementGroup($dmDetails[$dmKey]['localities'][$localityKey], $genderKey, $culaCode);
+            $this->incrementGroup($dmDetails[$dmKey]['localities'][$localityKey], $genderKey, $culaDetail['is_completed']);
             $dmDetails[$dmKey]['localities'][$localityKey]['race_breakdown'][$raceCode] ??= [
                 'code' => $raceCode,
                 'label' => $raceCode,
@@ -297,19 +329,29 @@ class PemilihReportService
             ];
             $dmDetails[$dmKey]['localities'][$localityKey]['race_breakdown'][$raceCode]['total']++;
             $dmDetails[$dmKey]['localities'][$localityKey]['cula_breakdown'][$culaCode] ??= [
-                'code' => $culaCode,
-                'label' => $culaCode === 'Tiada' ? 'Tiada Kod' : 'Kod ' . $culaCode,
+                ...$culaDetail,
                 'total' => 0,
             ];
             $dmDetails[$dmKey]['localities'][$localityKey]['cula_breakdown'][$culaCode]['total']++;
 
             $cula[$culaCode] ??= [
-                'code' => $culaCode,
-                'label' => $culaCode === 'Tiada' ? 'Tiada Kod' : 'Kod ' . $culaCode,
+                ...$culaDetail,
                 'total' => 0,
             ];
             $cula[$culaCode]['total']++;
         }
+
+        $summary = [
+            'total_voters' => count($rows),
+            'total_dm' => count($dm),
+            'total_localities' => count($localities),
+            'male' => $gender['L'],
+            'female' => $gender['P'],
+            'other_gender' => $gender['LAIN'],
+            'with_cula' => array_sum(array_map(fn (array $row) => $row['with_cula'], $dm)),
+            'belum_dicula' => array_sum(array_map(fn (array $row) => $row['belum_dicula'], $dm)),
+        ];
+        $summary['coverage_percent'] = $this->coveragePercent($summary['with_cula'], $summary['total_voters']);
 
         $dmRows = $this->sortGroups($dm, 'name');
         $dmCulaRows = $this->sortDmCulaGroups($dmCula);
@@ -318,19 +360,12 @@ class PemilihReportService
         $culaRows = $this->sortGroups($cula, 'code');
 
         return [
+            '_schema_version' => self::REPORT_SCHEMA_VERSION,
             'source' => [
                 'name' => basename($path),
                 'exists' => true,
             ],
-            'summary' => [
-                'total_voters' => count($rows),
-                'total_dm' => count($dmRows),
-                'total_localities' => count($localityRows),
-                'male' => $gender['L'],
-                'female' => $gender['P'],
-                'other_gender' => $gender['LAIN'],
-                'with_cula' => count(array_filter($rows, fn (array $row) => trim((string) ($row['Kod Cula'] ?? '')) !== '')),
-            ],
+            'summary' => $summary,
             'gender' => [
                 ['key' => 'L', 'label' => 'Lelaki', 'total' => $gender['L']],
                 ['key' => 'P', 'label' => 'Perempuan', 'total' => $gender['P']],
@@ -344,7 +379,7 @@ class PemilihReportService
         ];
     }
 
-    private function incrementGroup(array &$group, string $genderKey, string $culaCode): void
+    private function incrementGroup(array &$group, string $genderKey, bool $hasCula): void
     {
         $group['total']++;
 
@@ -354,12 +389,14 @@ class PemilihReportService
             default => $group['other_gender']++,
         };
 
-        if ($culaCode !== 'Tiada') {
+        if ($hasCula) {
             $group['with_cula']++;
+        } elseif (array_key_exists('belum_dicula', $group)) {
+            $group['belum_dicula']++;
         }
     }
 
-    private function incrementSummary(array &$summary, string $genderKey, string $culaCode): void
+    private function incrementSummary(array &$summary, string $genderKey, bool $hasCula): void
     {
         $summary['total_voters']++;
 
@@ -369,14 +406,24 @@ class PemilihReportService
             default => $summary['other_gender']++,
         };
 
-        if ($culaCode !== 'Tiada') {
+        if ($hasCula) {
             $summary['with_cula']++;
+        } else {
+            $summary['belum_dicula']++;
         }
     }
 
     private function sortGroups(array $groups, string $secondaryKey): array
     {
-        $rows = array_values($groups);
+        $rows = array_map(fn (array $row) => $this->finalizeMetrics($row), array_values($groups));
+
+        foreach ($rows as &$row) {
+            if (array_key_exists('cula_breakdown', $row) && is_array($row['cula_breakdown'])) {
+                $row['cula_breakdown'] = $this->sortGroups($row['cula_breakdown'], 'code');
+            }
+        }
+
+        unset($row);
 
         usort($rows, function (array $first, array $second) use ($secondaryKey) {
             return $second['total'] <=> $first['total']
@@ -412,6 +459,10 @@ class PemilihReportService
             $row['race_breakdown'] = $this->sortGroups($row['race_breakdown'], 'code');
             $row['localities'] = $this->sortLocalityDetailGroups($row['localities']);
             $row['summary']['total_localities'] = count($row['localities']);
+            $row['summary']['coverage_percent'] = $this->coveragePercent(
+                $row['summary']['with_cula'],
+                $row['summary']['total_voters'],
+            );
         }
 
         unset($row);
@@ -478,6 +529,7 @@ class PemilihReportService
     private function emptyReport(?string $path): array
     {
         return [
+            '_schema_version' => self::REPORT_SCHEMA_VERSION,
             'source' => [
                 'name' => $path ? basename($path) : null,
                 'exists' => false,
@@ -490,6 +542,8 @@ class PemilihReportService
                 'female' => 0,
                 'other_gender' => 0,
                 'with_cula' => 0,
+                'belum_dicula' => 0,
+                'coverage_percent' => 0,
             ],
             'gender' => [],
             'by_dm' => [],
@@ -534,7 +588,8 @@ class PemilihReportService
                 'locality' => $this->fallbackLabel($row['Nama Lokaliti'] ?? '', '-'),
                 'gender' => $this->fallbackLabel($row['Jantina'] ?? '', '-'),
                 'race' => $this->fallbackLabel($row['Bangsa'] ?? '', '-'),
-                'cula_code' => $this->fallbackLabel($row['Kod Cula'] ?? '', 'Tiada'),
+                'cula_code' => $this->normalizeCulaCode($row['Kod Cula'] ?? ''),
+                'cula_display_label' => $this->displayCulaLabel($this->normalizeCulaCode($row['Kod Cula'] ?? '')),
                 'address' => $address,
                 'search_blob' => $this->normalizeSearch(implode(' ', [
                     $name,
@@ -553,7 +608,11 @@ class PemilihReportService
     {
         $decoded = $this->readJsonCache($this->reportCachePath($path));
 
-        if (! is_array($decoded) || ! array_key_exists('summary', $decoded)) {
+        if (
+            ! is_array($decoded)
+            || ! array_key_exists('summary', $decoded)
+            || ($decoded['_schema_version'] ?? null) !== self::REPORT_SCHEMA_VERSION
+        ) {
             return null;
         }
 
@@ -569,7 +628,7 @@ class PemilihReportService
         }
 
         foreach ($decoded as $row) {
-            if (! is_array($row) || ! array_key_exists('search_blob', $row)) {
+            if (! is_array($row) || ! array_key_exists('search_blob', $row) || ! array_key_exists('cula_display_label', $row)) {
                 return null;
             }
         }
@@ -600,7 +659,12 @@ class PemilihReportService
             return null;
         }
 
-        if (array_key_exists('report', $snapshot) && is_array($snapshot['report']) && array_key_exists('summary', $snapshot['report'])) {
+        if (
+            array_key_exists('report', $snapshot)
+            && is_array($snapshot['report'])
+            && array_key_exists('summary', $snapshot['report'])
+            && ($snapshot['report']['_schema_version'] ?? null) === self::REPORT_SCHEMA_VERSION
+        ) {
             return $snapshot['report'];
         }
 
@@ -664,5 +728,54 @@ class PemilihReportService
         $value = mb_strtolower(trim($value));
 
         return preg_replace('/\s+/', ' ', $value) ?? $value;
+    }
+
+    private function normalizeCulaCode(string $value): string
+    {
+        $normalized = strtoupper(trim($value));
+
+        return $normalized === '' || $normalized === '?' ? '?' : $normalized;
+    }
+
+    private function culaDetail(string $code): array
+    {
+        $displayLabel = $this->displayCulaLabel($code);
+
+        return [
+            'code' => $code,
+            'label' => $displayLabel,
+            'display_label' => $displayLabel,
+            'is_completed' => $code !== '?',
+        ];
+    }
+
+    private function culaLabel(string $code): string
+    {
+        return self::CULA_LABELS[$code] ?? $code;
+    }
+
+    private function displayCulaLabel(string $code): string
+    {
+        $label = $this->culaLabel($code);
+
+        return $label === $code ? $code : $code . ' - ' . $label;
+    }
+
+    private function finalizeMetrics(array $row, string $totalKey = 'total'): array
+    {
+        if (array_key_exists('with_cula', $row) && array_key_exists($totalKey, $row)) {
+            $row['coverage_percent'] = $this->coveragePercent($row['with_cula'], (int) $row[$totalKey]);
+        }
+
+        return $row;
+    }
+
+    private function coveragePercent(int $withCula, int $total): float
+    {
+        if ($total === 0) {
+            return 0.0;
+        }
+
+        return round(($withCula / $total) * 100, 1);
     }
 }

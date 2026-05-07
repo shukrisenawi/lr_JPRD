@@ -13,11 +13,11 @@ function SearchResultCard({ voter, onClear }) {
         ['No. IC Lama', voter.old_ic || '-'],
         ['Tel. Bimbit', voter.phone_mobile || '-'],
         ['Tel. Rumah', voter.phone_home || '-'],
-        ['DM', voter.dm],
+        ['UDM', voter.dm],
         ['Lokaliti', voter.locality],
         ['Jantina', voter.gender],
         ['Bangsa', voter.race],
-        ['Kod Cula', voter.cula_code],
+        ['Status Culaan', voter.cula_display_label || voter.cula_code],
         ['Alamat', voter.address],
     ];
 
