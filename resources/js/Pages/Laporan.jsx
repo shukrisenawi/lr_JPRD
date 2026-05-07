@@ -13,7 +13,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const numberFormatter = new Intl.NumberFormat('ms-MY');
 const chartColors = ['#0e7490', '#16a34a', '#f59e0b', '#475569', '#dc2626', '#7c3aed'];
@@ -163,16 +163,32 @@ function SearchPanel() {
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
+    const abortControllerRef = useRef(null);
+    const requestIdRef = useRef(0);
+
+    useEffect(() => (
+        () => {
+            abortControllerRef.current?.abort();
+        }
+    ), []);
 
     const handleChange = async (event) => {
         const nextQuery = event.target.value;
         setQuery(nextQuery);
+        setSelectedVoter(null);
+
+        abortControllerRef.current?.abort();
 
         if (nextQuery.trim().length < 2) {
             setSuggestions([]);
+            setSearching(false);
             return;
         }
 
+        const requestId = requestIdRef.current + 1;
+        requestIdRef.current = requestId;
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
         setSearching(true);
 
         try {
@@ -180,14 +196,29 @@ function SearchPanel() {
                 headers: {
                     Accept: 'application/json',
                 },
+                signal: controller.signal,
             });
             const payload = await response.json();
-            setSuggestions(payload.suggestions ?? []);
-        } catch {
-            setSuggestions([]);
+            if (requestIdRef.current === requestId) {
+                setSuggestions(payload.suggestions ?? []);
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                setSuggestions([]);
+            }
         } finally {
-            setSearching(false);
+            if (requestIdRef.current === requestId) {
+                setSearching(false);
+            }
         }
+    };
+
+    const handleSelectVoter = (voter) => {
+        abortControllerRef.current?.abort();
+        requestIdRef.current += 1;
+        setSearching(false);
+        setSuggestions([]);
+        setSelectedVoter(voter);
     };
 
     return (
@@ -216,10 +247,7 @@ function SearchPanel() {
                                 <button
                                     key={voter.id}
                                     type="button"
-                                    onClick={() => {
-                                        setSelectedVoter(voter);
-                                        setSuggestions([]);
-                                    }}
+                                    onClick={() => handleSelectVoter(voter)}
                                     className="flex w-full items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-cyan-50 last:border-b-0"
                                 >
                                     <div>
