@@ -17,6 +17,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 const numberFormatter = new Intl.NumberFormat('ms-MY');
 const chartColors = ['#0e7490', '#16a34a', '#f59e0b', '#475569', '#dc2626', '#7c3aed'];
+const panelPerformanceStyle = {
+    contentVisibility: 'auto',
+    containIntrinsicSize: '24rem',
+};
 
 function formatNumber(value) {
     return numberFormatter.format(value ?? 0);
@@ -49,7 +53,10 @@ function EmptyState({ message }) {
 
 function ChartPanel({ title, children, action }) {
     return (
-        <section className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur">
+        <section
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-panel"
+            style={panelPerformanceStyle}
+        >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-lg font-bold text-slate-900">{title}</h3>
                 {action}
@@ -78,7 +85,10 @@ function SummaryTooltip({ active, payload, label }) {
 
 function DataTable({ rows, columns }) {
     return (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+            style={panelPerformanceStyle}
+        >
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-sm">
                     <thead className="bg-slate-900 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-200">
@@ -545,7 +555,7 @@ export default function Laporan({ report }) {
                             </ChartPanel>
                         </section>
 
-                        <section className="rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-panel backdrop-blur">
+                        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-panel">
                             <div className="flex flex-wrap gap-2">
                                 {tabs.map((tab) => (
                                     <button
