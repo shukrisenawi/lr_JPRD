@@ -218,6 +218,7 @@ function SearchPanel() {
         requestIdRef.current += 1;
         setSearching(false);
         setSuggestions([]);
+        setQuery(voter.name ?? '');
         setSelectedVoter(voter);
     };
 
