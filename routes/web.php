@@ -15,6 +15,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->name('copied-records.store');
     Route::post('/sheet-pages', [SheetPageController::class, 'store'])->name('sheet-pages.store');
+    Route::get('/sheet-pages/on-off-status', [SheetPageController::class, 'onOffStatus'])->name('sheet-pages.on-off-status');
     Route::delete('/sheet-pages/{sheetPage}', [SheetPageController::class, 'destroy'])->name('sheet-pages.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

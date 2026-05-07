@@ -73,6 +73,24 @@ class SheetPageController extends Controller
             ->with('success', "Page {$sheetPage->page_number} berjaya dipadam.");
     }
 
+    public function onOffStatus(GoogleSheetService $googleSheetService): JsonResponse
+    {
+        try {
+            $status = $googleSheetService->getOnOffStatus();
+        } catch (RuntimeException $exception) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => 'ok',
+            'enabled' => $status['enabled'],
+            'value' => $status['value'],
+        ]);
+    }
+
     private function wantsJson(Request $request): bool
     {
         return $request->expectsJson() || $request->boolean('silent');

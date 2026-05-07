@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 function StatCard({ label, value, tone = 'slate' }) {
     const tones = {
@@ -242,10 +242,10 @@ function PageSection({
 
 export default function Dashboard({ sheet, pages }) {
     const telegramBotUsername = 'SSDP_Kedah_Bot';
-    const autoSyncIntervalMs = 5000;
-    const autoSyncDurationMs = 7200000;
+    const autoSyncIntervalMs = 3000;
+    const autoSyncZeroDurationMs = 900000;
     const autoSyncStorageKey = 'dashboard-auto-sync-enabled';
-    const autoSyncStartedAtStorageKey = 'dashboard-auto-sync-started-at';
+    const autoSyncZeroStartedAtStorageKey = 'dashboard-auto-sync-zero-started-at';
     const [copyError, setCopyError] = useState('');
     const [copyingRow, setCopyingRow] = useState(null);
     const [syncingPage, setSyncingPage] = useState(false);
@@ -259,16 +259,18 @@ export default function Dashboard({ sheet, pages }) {
 
         return window.localStorage.getItem(autoSyncStorageKey) === 'true';
     });
-    const [autoSyncStartedAt, setAutoSyncStartedAt] = useState(() => {
+    const [autoSyncZeroStartedAt, setAutoSyncZeroStartedAt] = useState(() => {
         if (typeof window === 'undefined') {
             return null;
         }
 
-        const value = window.localStorage.getItem(autoSyncStartedAtStorageKey);
+        const value = window.localStorage.getItem(autoSyncZeroStartedAtStorageKey);
 
         return value ? Number(value) : null;
     });
     const [autoSyncMessage, setAutoSyncMessage] = useState('');
+    const [onOffStatusValue, setOnOffStatusValue] = useState(null);
+    const lastOnOffStatusValueRef = useRef(null);
 
     const totalRows = pages.reduce((sum, page) => sum + page.row_count, 0);
     const copiedCount = pages.reduce(
@@ -305,36 +307,18 @@ export default function Dashboard({ sheet, pages }) {
     }, [activePage, selectedRowKey]);
 
     useEffect(() => {
-        const isExpired = autoSyncStartedAt !== null
-            && Date.now() - autoSyncStartedAt >= autoSyncDurationMs;
-
-        if (autoSyncEnabled && isExpired) {
-            setAutoSyncEnabled(false);
-            setAutoSyncStartedAt(null);
-            setAutoSyncMessage('Auto ambil data dimatikan automatik selepas 2 jam.');
-
-            return undefined;
-        }
-
         if (!autoSyncEnabled) {
             return undefined;
         }
 
         const intervalId = window.setInterval(() => {
-            if (autoSyncStartedAt !== null && Date.now() - autoSyncStartedAt >= autoSyncDurationMs) {
-                setAutoSyncEnabled(false);
-                setAutoSyncStartedAt(null);
-                setAutoSyncMessage('Auto ambil data dimatikan automatik selepas 2 jam.');
-                window.clearInterval(intervalId);
-
-                return;
-            }
-
-            void runSync({ silent: true });
+            void monitorAutoSync();
         }, autoSyncIntervalMs);
 
+        void monitorAutoSync();
+
         return () => window.clearInterval(intervalId);
-    }, [autoSyncEnabled, autoSyncStartedAt]);
+    }, [autoSyncEnabled, autoSyncZeroStartedAt]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -352,16 +336,24 @@ export default function Dashboard({ sheet, pages }) {
             return;
         }
 
-        if (autoSyncStartedAt === null) {
-            window.localStorage.removeItem(autoSyncStartedAtStorageKey);
+        if (autoSyncZeroStartedAt === null) {
+            window.localStorage.removeItem(autoSyncZeroStartedAtStorageKey);
             return;
         }
 
         window.localStorage.setItem(
-            autoSyncStartedAtStorageKey,
-            String(autoSyncStartedAt),
+            autoSyncZeroStartedAtStorageKey,
+            String(autoSyncZeroStartedAt),
         );
-    }, [autoSyncStartedAt]);
+    }, [autoSyncZeroStartedAt]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.localStorage.removeItem('dashboard-auto-sync-started-at');
+    }, []);
 
     const handleCopy = async (row) => {
         const telegramWindow = window.open('about:blank', '_blank');
@@ -457,6 +449,83 @@ export default function Dashboard({ sheet, pages }) {
         }
     };
 
+    const stopAutoSync = ({ message, showPopup = false }) => {
+        setAutoSyncEnabled(false);
+        setAutoSyncZeroStartedAt(null);
+        setAutoSyncMessage(message);
+
+        if (showPopup && typeof window !== 'undefined') {
+            window.alert(message);
+        }
+    };
+
+    const fetchOnOffStatus = async () => {
+        const response = await fetch(route('sheet-pages.on-off-status'), {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+            },
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload.message || 'Gagal mendapatkan status ON/OFF.');
+        }
+
+        return payload;
+    };
+
+    const monitorAutoSync = async () => {
+        try {
+            const payload = await fetchOnOffStatus();
+            const currentValue = String(payload.value ?? '');
+            const previousValue = lastOnOffStatusValueRef.current;
+            const isEnabled = payload.enabled === true;
+
+            setOnOffStatusValue(currentValue);
+
+            if (isEnabled) {
+                const shouldResetTimer = previousValue !== '0';
+
+                setAutoSyncZeroStartedAt((previousStartedAt) => {
+                    if (shouldResetTimer || previousStartedAt === null) {
+                        return Date.now();
+                    }
+
+                    return previousStartedAt;
+                });
+
+                lastOnOffStatusValueRef.current = currentValue;
+
+                if (autoSyncZeroStartedAt !== null
+                    && Date.now() - autoSyncZeroStartedAt >= autoSyncZeroDurationMs) {
+                    stopAutoSync({
+                        message: 'Auto ambil data telah dimatikan kerana status ON/OFF kekal 0 melebihi 15 minit.',
+                        showPopup: true,
+                    });
+
+                    return;
+                }
+
+                setAutoSyncMessage('Auto aktif: status ON/OFF = 0. Sistem semak setiap 3 saat.');
+                await runSync({ silent: true });
+
+                return;
+            }
+
+            lastOnOffStatusValueRef.current = currentValue;
+            setAutoSyncZeroStartedAt(null);
+            setAutoSyncMessage('Auto aktif: status ON/OFF = 1. Menunggu ia kembali ke 0 untuk mula semula kiraan.');
+        } catch (error) {
+            const message = error instanceof Error
+                ? error.message
+                : 'Gagal mendapatkan status ON/OFF.';
+
+            setAutoSyncMessage(`Auto aktif: ${message}`);
+        }
+    };
+
     const handleSync = () => {
         void runSync();
     };
@@ -473,18 +542,20 @@ export default function Dashboard({ sheet, pages }) {
     const handleToggleAutoSync = () => {
         setAutoSyncEnabled((previous) => {
             const nextState = !previous;
-            const startedAt = nextState ? Date.now() : null;
-
-            setAutoSyncStartedAt(startedAt);
 
             setAutoSyncMessage(
                 nextState
-                    ? 'Auto ambil data aktif. Sistem akan semak data baharu setiap 5 saat dan berhenti automatik selepas 2 jam.'
+                    ? 'Auto ambil data aktif. Sistem akan semak status ON/OFF setiap 3 saat.'
                     : 'Auto ambil data dimatikan.'
             );
 
+            if (!nextState) {
+                setAutoSyncZeroStartedAt(null);
+            }
+
             if (nextState) {
-                void runSync({ silent: true });
+                lastOnOffStatusValueRef.current = onOffStatusValue;
+                void monitorAutoSync();
             }
 
             return nextState;

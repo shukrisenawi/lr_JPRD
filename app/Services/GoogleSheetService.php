@@ -103,6 +103,17 @@ class GoogleSheetService
         return $this->extractUniqueNewRows($sheet)->count();
     }
 
+    public function getOnOffStatus(?string $sheetUrl = null): array
+    {
+        $resolvedSheetUrl = $sheetUrl ?: $this->getSheetUrl();
+        $value = $this->fetchOnOffSheetValue($resolvedSheetUrl);
+
+        return [
+            'value' => $value,
+            'enabled' => $value === '0',
+        ];
+    }
+
     private function fetchPreparedSheetData(?string $url = null): array
     {
         $sheetUrl = $url ?: $this->getSheetUrl();
@@ -186,6 +197,11 @@ class GoogleSheetService
 
     private function isOnOffSheetEnabledForAuto(string $sheetUrl): bool
     {
+        return $this->fetchOnOffSheetValue($sheetUrl) === '0';
+    }
+
+    private function fetchOnOffSheetValue(string $sheetUrl): string
+    {
         $response = Http::timeout(20)
             ->accept('text/csv')
             ->get($this->toSheetTabCsvUrl($sheetUrl, 'ON/OFF'));
@@ -204,7 +220,7 @@ class GoogleSheetService
             })
             ->first(fn (string $cell) => preg_match('/^-?\d+$/', $cell) === 1);
 
-        return (string) $value === '0';
+        return (string) $value;
     }
 
     private function nextPageNumber(string $sheetKey): int

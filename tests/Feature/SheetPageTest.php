@@ -201,6 +201,50 @@ it('returns no changes for silent auto sync requests when on off tab is not zero
         ]);
 });
 
+it('returns on off status for auto sync monitoring', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        'https://docs.google.com/spreadsheets/d/abc123/gviz/tq?tqx=out:csv&sheet=ON%2FOFF' => Http::response(
+            "0\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->getJson('/sheet-pages/on-off-status')
+        ->assertOk()
+        ->assertJson([
+            'enabled' => true,
+            'value' => '0',
+        ]);
+});
+
+it('returns first numeric on off status even with heading text', function () {
+    $user = User::factory()->create();
+
+    Setting::setValue('google_sheet_url', 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
+
+    Http::fake([
+        'https://docs.google.com/spreadsheets/d/abc123/gviz/tq?tqx=out:csv&sheet=ON%2FOFF' => Http::response(
+            "STATUS\n1\n0\n",
+            200,
+            ['Content-Type' => 'text/csv']
+        ),
+    ]);
+
+    $this->actingAs($user)
+        ->getJson('/sheet-pages/on-off-status')
+        ->assertOk()
+        ->assertJson([
+            'enabled' => false,
+            'value' => '1',
+        ]);
+});
+
 it('auto sync only creates page for rows with on off value zero', function () {
     $user = User::factory()->create();
 
