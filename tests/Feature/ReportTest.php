@@ -9,11 +9,11 @@ function pemilihReportFixture(): string
 {
     return <<<'HTML'
 <html><body><table>
-<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>Jantina</th><th>Kod Cula</th></tr>
-<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>P</td><td>2 </td></tr>
-<tr><td>2</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>L</td><td></td></tr>
-<tr><td>3</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="002"</td><td>KG BETONG</td><td>L</td><td>3P</td></tr>
-<tr><td>4</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="003"</td><td>KG BATU BESAR</td><td>P</td><td>2</td></tr>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>P</td><td>M</td><td>2 </td></tr>
+<tr><td>2</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>L</td><td>C</td><td></td></tr>
+<tr><td>3</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="002"</td><td>KG BETONG</td><td>L</td><td>M</td><td>3P</td></tr>
+<tr><td>4</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="003"</td><td>KG BATU BESAR</td><td>P</td><td>I</td><td>2</td></tr>
 </table></body></html>
 HTML;
 }
@@ -34,6 +34,10 @@ it('builds pemilih report summary from html xls data', function () {
         ->and($report['cula_by_dm'][0]['name'])->toBe('KAMPUNG BETONG')
         ->and($report['cula_by_dm'][0]['cula_breakdown'][0]['code'])->toBe('2')
         ->and($report['cula_by_dm'][0]['cula_breakdown'][0]['total'])->toBe(1)
+        ->and($report['dm_details'][0]['name'])->toBe('KAMPUNG BETONG')
+        ->and($report['dm_details'][0]['summary']['total_localities'])->toBe(2)
+        ->and($report['dm_details'][0]['race_breakdown'][0]['code'])->toBe('I')
+        ->and($report['dm_details'][0]['localities'][0]['cula_breakdown'][0]['code'])->toBe('2')
         ->and($report['by_cula'][0]['code'])->toBe('2')
         ->and($report['by_cula'][0]['total'])->toBe(2);
 });
@@ -51,7 +55,8 @@ it('renders laporan page with pemilih report data', function () {
             ->component('Laporan')
             ->where('report.summary.total_voters', 4)
             ->where('report.by_dm.0.name', 'KAMPUNG BETONG')
-            ->where('report.cula_by_dm.0.cula_breakdown.0.code', '2'));
+            ->where('report.cula_by_dm.0.cula_breakdown.0.code', '2')
+            ->where('report.dm_details.0.summary.total_localities', 2));
 });
 
 it('stores uploaded pemilih file for laporan', function () {

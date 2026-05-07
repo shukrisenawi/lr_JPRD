@@ -106,6 +106,7 @@ class PemilihReportService
     {
         $dm = [];
         $dmCula = [];
+        $dmDetails = [];
         $localities = [];
         $gender = ['L' => 0, 'P' => 0, 'LAIN' => 0];
         $cula = [];
@@ -116,6 +117,7 @@ class PemilihReportService
             $localityCode = $row['Kod Lokaliti'] ?? '';
             $localityName = $this->fallbackLabel($row['Nama Lokaliti'] ?? '', 'Tanpa Lokaliti');
             $genderCode = strtoupper(trim((string) ($row['Jantina'] ?? '')));
+            $raceCode = $this->fallbackLabel($row['Bangsa'] ?? '', 'Tiada');
             $culaCode = $this->fallbackLabel($row['Kod Cula'] ?? '', 'Tiada');
 
             $genderKey = in_array($genderCode, ['L', 'P'], true) ? $genderCode : 'LAIN';
@@ -147,6 +149,22 @@ class PemilihReportService
             ];
             $dmCula[$dmKey]['cula_breakdown'][$culaCode]['total']++;
 
+            $dmDetails[$dmKey] ??= [
+                'code' => $dmCode,
+                'name' => $dmName,
+                'summary' => [
+                    'total_voters' => 0,
+                    'male' => 0,
+                    'female' => 0,
+                    'other_gender' => 0,
+                    'with_cula' => 0,
+                    'total_localities' => 0,
+                ],
+                'race_breakdown' => [],
+                'localities' => [],
+            ];
+            $this->incrementSummary($dmDetails[$dmKey]['summary'], $genderKey, $culaCode);
+
             $localityKey = $localityCode . '|' . $localityName . '|' . $dmName;
             $localities[$localityKey] ??= [
                 'code' => $localityCode,
@@ -160,6 +178,38 @@ class PemilihReportService
             ];
             $this->incrementGroup($localities[$localityKey], $genderKey, $culaCode);
 
+            $dmDetails[$dmKey]['race_breakdown'][$raceCode] ??= [
+                'code' => $raceCode,
+                'label' => $raceCode,
+                'total' => 0,
+            ];
+            $dmDetails[$dmKey]['race_breakdown'][$raceCode]['total']++;
+
+            $dmDetails[$dmKey]['localities'][$localityKey] ??= [
+                'code' => $localityCode,
+                'name' => $localityName,
+                'total' => 0,
+                'male' => 0,
+                'female' => 0,
+                'other_gender' => 0,
+                'with_cula' => 0,
+                'race_breakdown' => [],
+                'cula_breakdown' => [],
+            ];
+            $this->incrementGroup($dmDetails[$dmKey]['localities'][$localityKey], $genderKey, $culaCode);
+            $dmDetails[$dmKey]['localities'][$localityKey]['race_breakdown'][$raceCode] ??= [
+                'code' => $raceCode,
+                'label' => $raceCode,
+                'total' => 0,
+            ];
+            $dmDetails[$dmKey]['localities'][$localityKey]['race_breakdown'][$raceCode]['total']++;
+            $dmDetails[$dmKey]['localities'][$localityKey]['cula_breakdown'][$culaCode] ??= [
+                'code' => $culaCode,
+                'label' => $culaCode === 'Tiada' ? 'Tiada Kod' : 'Kod ' . $culaCode,
+                'total' => 0,
+            ];
+            $dmDetails[$dmKey]['localities'][$localityKey]['cula_breakdown'][$culaCode]['total']++;
+
             $cula[$culaCode] ??= [
                 'code' => $culaCode,
                 'label' => $culaCode === 'Tiada' ? 'Tiada Kod' : 'Kod ' . $culaCode,
@@ -170,6 +220,7 @@ class PemilihReportService
 
         $dmRows = $this->sortGroups($dm, 'name');
         $dmCulaRows = $this->sortDmCulaGroups($dmCula);
+        $dmDetailRows = $this->sortDmDetailGroups($dmDetails);
         $localityRows = $this->sortGroups($localities, 'name');
         $culaRows = $this->sortGroups($cula, 'code');
 
@@ -194,6 +245,7 @@ class PemilihReportService
             ],
             'by_dm' => $dmRows,
             'cula_by_dm' => $dmCulaRows,
+            'dm_details' => $dmDetailRows,
             'by_locality' => $localityRows,
             'by_cula' => $culaRows,
         ];
@@ -214,6 +266,21 @@ class PemilihReportService
         }
     }
 
+    private function incrementSummary(array &$summary, string $genderKey, string $culaCode): void
+    {
+        $summary['total_voters']++;
+
+        match ($genderKey) {
+            'L' => $summary['male']++,
+            'P' => $summary['female']++,
+            default => $summary['other_gender']++,
+        };
+
+        if ($culaCode !== 'Tiada') {
+            $summary['with_cula']++;
+        }
+    }
+
     private function sortGroups(array $groups, string $secondaryKey): array
     {
         $rows = array_values($groups);
@@ -231,6 +298,45 @@ class PemilihReportService
         $rows = array_values($groups);
 
         foreach ($rows as &$row) {
+            $row['cula_breakdown'] = $this->sortGroups($row['cula_breakdown'], 'code');
+        }
+
+        unset($row);
+
+        usort($rows, function (array $first, array $second) {
+            return $second['total'] <=> $first['total']
+                ?: strnatcasecmp((string) $first['name'], (string) $second['name']);
+        });
+
+        return $rows;
+    }
+
+    private function sortDmDetailGroups(array $groups): array
+    {
+        $rows = array_values($groups);
+
+        foreach ($rows as &$row) {
+            $row['race_breakdown'] = $this->sortGroups($row['race_breakdown'], 'code');
+            $row['localities'] = $this->sortLocalityDetailGroups($row['localities']);
+            $row['summary']['total_localities'] = count($row['localities']);
+        }
+
+        unset($row);
+
+        usort($rows, function (array $first, array $second) {
+            return $second['summary']['total_voters'] <=> $first['summary']['total_voters']
+                ?: strnatcasecmp((string) $first['name'], (string) $second['name']);
+        });
+
+        return $rows;
+    }
+
+    private function sortLocalityDetailGroups(array $groups): array
+    {
+        $rows = array_values($groups);
+
+        foreach ($rows as &$row) {
+            $row['race_breakdown'] = $this->sortGroups($row['race_breakdown'], 'code');
             $row['cula_breakdown'] = $this->sortGroups($row['cula_breakdown'], 'code');
         }
 
@@ -295,6 +401,7 @@ class PemilihReportService
             'gender' => [],
             'by_dm' => [],
             'cula_by_dm' => [],
+            'dm_details' => [],
             'by_locality' => [],
             'by_cula' => [],
         ];

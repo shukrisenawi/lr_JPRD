@@ -156,7 +156,7 @@ function UploadPanel() {
 export default function Laporan({ report }) {
     const [activeTab, setActiveTab] = useState('dm');
     const [search, setSearch] = useState('');
-    const [selectedDmName, setSelectedDmName] = useState(() => report.cula_by_dm?.[0]?.name ?? '');
+    const [selectedDmName, setSelectedDmName] = useState(() => report.dm_details?.[0]?.name ?? '');
 
     const tabs = [
         { key: 'dm', label: 'DM' },
@@ -180,11 +180,65 @@ export default function Laporan({ report }) {
 
     const dmChartRows = report.by_dm.slice(0, 12);
     const dmCulaRows = report.cula_by_dm ?? [];
+    const dmDetails = report.dm_details ?? [];
     const localityRows = filteredLocalities.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((row) => row.total > 0);
+    const selectedDmDetail = dmDetails.find((row) => row.name === selectedDmName) ?? dmDetails[0] ?? null;
     const selectedDmCula = dmCulaRows.find((row) => row.name === selectedDmName) ?? dmCulaRows[0] ?? null;
     const selectedDmCulaChartRows = selectedDmCula?.cula_breakdown.slice(0, 12) ?? [];
+    const selectedDmLocalityRows = selectedDmDetail?.localities.slice(0, 12) ?? [];
+    const selectedDmRaceRows = selectedDmDetail?.race_breakdown.slice(0, 8) ?? [];
+    const selectedDmTopLocalityTableRows = selectedDmDetail?.localities.slice(0, 20) ?? [];
+    const selectedDmLocalityCulaRows = useMemo(() => {
+        if (!selectedDmDetail) {
+            return [];
+        }
+
+        const topCulaCodes = [];
+
+        selectedDmDetail.localities.forEach((locality) => {
+            locality.cula_breakdown.forEach((cula) => {
+                if (!topCulaCodes.includes(cula.code) && topCulaCodes.length < 5) {
+                    topCulaCodes.push(cula.code);
+                }
+            });
+        });
+
+        return selectedDmDetail.localities.slice(0, 10).map((locality) => {
+            const row = {
+                name: locality.name,
+                total: locality.total,
+            };
+
+            topCulaCodes.forEach((code) => {
+                const culaRow = locality.cula_breakdown.find((item) => item.code === code);
+                row[`cula_${code}`] = culaRow?.total ?? 0;
+            });
+
+            return row;
+        });
+    }, [selectedDmDetail]);
+    const selectedDmTopCulaKeys = useMemo(() => {
+        if (!selectedDmDetail) {
+            return [];
+        }
+
+        const unique = [];
+
+        selectedDmDetail.localities.forEach((locality) => {
+            locality.cula_breakdown.forEach((cula) => {
+                if (!unique.some((item) => item.code === cula.code) && unique.length < 5) {
+                    unique.push({
+                        code: cula.code,
+                        label: cula.label,
+                    });
+                }
+            });
+        });
+
+        return unique;
+    }, [selectedDmDetail]);
 
     const dmColumns = [
         { key: 'name', label: 'DM' },
@@ -205,6 +259,18 @@ export default function Laporan({ report }) {
     const culaColumns = [
         { key: 'label', label: 'Kod Cula' },
         { key: 'total', label: 'Jumlah Pemilih', format: formatNumber },
+    ];
+
+    const dmLocalityColumns = [
+        { key: 'name', label: 'Lokaliti' },
+        { key: 'total', label: 'Pemilih', format: formatNumber },
+        { key: 'male', label: 'Lelaki', format: formatNumber },
+        { key: 'female', label: 'Perempuan', format: formatNumber },
+        {
+            key: 'cula_breakdown',
+            label: 'Kod Cula',
+            format: (_, row) => row.cula_breakdown.slice(0, 3).map((item) => `${item.code}: ${formatNumber(item.total)}`).join(', ') || 'Tiada',
+        },
     ];
 
     return (
@@ -333,14 +399,14 @@ export default function Laporan({ report }) {
                         {activeTab === 'dm' && (
                             <section className="space-y-4">
                                 <ChartPanel
-                                    title={`Kod cula untuk DM ${selectedDmCula?.name ?? '-'}`}
+                                    title={`Ringkasan DM ${selectedDmDetail?.name ?? '-'}`}
                                     action={
                                         <select
-                                            value={selectedDmCula?.name ?? ''}
+                                            value={selectedDmDetail?.name ?? ''}
                                             onChange={(event) => setSelectedDmName(event.target.value)}
                                             className="rounded-xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                         >
-                                            {dmCulaRows.map((row) => (
+                                            {dmDetails.map((row) => (
                                                 <option key={row.name} value={row.name}>
                                                     {row.name}
                                                 </option>
@@ -348,6 +414,106 @@ export default function Laporan({ report }) {
                                         </select>
                                     }
                                 >
+                                    <div className="grid h-full gap-4 md:grid-cols-2 xl:grid-cols-4">
+                                        <StatCard
+                                            label="Jumlah pemilih DM"
+                                            value={selectedDmDetail?.summary.total_voters ?? 0}
+                                            detail={`${formatNumber(selectedDmDetail?.summary.total_localities ?? 0)} lokaliti`}
+                                            tone="cyan"
+                                        />
+                                        <StatCard
+                                            label="Lelaki"
+                                            value={selectedDmDetail?.summary.male ?? 0}
+                                            detail="Dalam DM dipilih"
+                                            tone="emerald"
+                                        />
+                                        <StatCard
+                                            label="Perempuan"
+                                            value={selectedDmDetail?.summary.female ?? 0}
+                                            detail="Dalam DM dipilih"
+                                            tone="amber"
+                                        />
+                                        <StatCard
+                                            label="Ada kod cula"
+                                            value={selectedDmDetail?.summary.with_cula ?? 0}
+                                            detail="Pemilih berkod"
+                                            tone="slate"
+                                        />
+                                    </div>
+                                </ChartPanel>
+
+                                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(20rem,1fr)]">
+                                    <ChartPanel title="Jumlah pemilih setiap lokaliti dalam DM">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={selectedDmLocalityRows} layout="vertical" margin={{ top: 10, right: 20, bottom: 10, left: 140 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                                <XAxis type="number" tickFormatter={formatNumber} />
+                                                <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
+                                                <Tooltip content={<SummaryTooltip />} />
+                                                <Legend />
+                                                <Bar dataKey="male" name="Lelaki" stackId="total" fill="#0e7490" radius={[0, 0, 4, 4]} />
+                                                <Bar dataKey="female" name="Perempuan" stackId="total" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </ChartPanel>
+
+                                    <ChartPanel title="Bangsa dalam DM">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={selectedDmRaceRows}
+                                                    dataKey="total"
+                                                    nameKey="label"
+                                                    innerRadius={60}
+                                                    outerRadius={110}
+                                                    paddingAngle={3}
+                                                >
+                                                    {selectedDmRaceRows.map((entry, index) => (
+                                                        <Cell key={entry.code} fill={chartColors[index % chartColors.length]} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip content={<SummaryTooltip />} />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </ChartPanel>
+                                </section>
+
+                                <ChartPanel title={`Kod cula setiap lokaliti bagi DM ${selectedDmDetail?.name ?? '-'}`}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={selectedDmLocalityCulaRows} margin={{ top: 10, right: 20, bottom: 60, left: 8 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                interval={0}
+                                                angle={-25}
+                                                textAnchor="end"
+                                                height={70}
+                                                tick={{ fontSize: 11 }}
+                                            />
+                                            <YAxis tickFormatter={formatNumber} width={70} />
+                                            <Tooltip content={<SummaryTooltip />} />
+                                            <Legend />
+                                            {selectedDmTopCulaKeys.map((item, index) => (
+                                                <Bar
+                                                    key={item.code}
+                                                    dataKey={`cula_${item.code}`}
+                                                    name={item.label}
+                                                    stackId="total"
+                                                    fill={chartColors[index % chartColors.length]}
+                                                />
+                                            ))}
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </ChartPanel>
+
+                                <ChartPanel title="Detail lokaliti dalam DM">
+                                    <div className="h-full overflow-auto">
+                                        <DataTable rows={selectedDmTopLocalityTableRows} columns={dmLocalityColumns} />
+                                    </div>
+                                </ChartPanel>
+
+                                <ChartPanel title={`Kod cula keseluruhan untuk DM ${selectedDmCula?.name ?? '-'}`}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={selectedDmCulaChartRows} margin={{ top: 10, right: 20, bottom: 60, left: 8 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
