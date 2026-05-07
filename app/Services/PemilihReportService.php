@@ -129,16 +129,17 @@ class PemilihReportService
         $cachedSearchIndex = $this->readCachedSearchIndex($resolvedPath);
 
         if ($cachedSearchIndex !== null) {
-            return $cachedSearchIndex;
+            return $this->normalizeSearchIndexRows($cachedSearchIndex);
         }
 
         $legacySnapshot = $this->readLegacySnapshot($resolvedPath);
         $legacySearchIndex = $this->extractSearchIndexFromLegacySnapshot($legacySnapshot);
 
         if ($legacySearchIndex !== null) {
-            $this->writeCachedSearchIndex($resolvedPath, $legacySearchIndex);
+            $normalizedLegacySearchIndex = $this->normalizeSearchIndexRows($legacySearchIndex);
+            $this->writeCachedSearchIndex($resolvedPath, $normalizedLegacySearchIndex);
 
-            return $legacySearchIndex;
+            return $normalizedLegacySearchIndex;
         }
 
         $rows = $this->readRows($resolvedPath);
@@ -572,7 +573,7 @@ class PemilihReportService
 
     private function buildSearchIndex(array $rows): array
     {
-        return array_values(array_filter(array_map(function (array $row) {
+        return $this->normalizeSearchIndexRows(array_values(array_filter(array_map(function (array $row) {
             $name = $this->fallbackLabel($row['Nama Pemilih'] ?? '', '');
             $noKp = $this->cleanDigits($row['No. K/P (Baru)'] ?? '');
             $oldIc = $this->cleanDigits($row['No. K/P (Lama)'] ?? '');
@@ -617,7 +618,7 @@ class PemilihReportService
                     $row['Nama Lokaliti'] ?? '',
                 ])),
             ];
-        }, $rows)));
+        }, $rows))));
     }
 
     private function readCachedReport(string $path): ?array
@@ -750,7 +751,7 @@ class PemilihReportService
     {
         $normalized = strtoupper(trim($value));
 
-        return $normalized === '' || $normalized === '?' ? '?' : $normalized;
+        return $normalized === '' || $normalized === '?' || $normalized === 'TIADA' ? '?' : $normalized;
     }
 
     private function culaDetail(string $code): array
@@ -808,5 +809,17 @@ class PemilihReportService
         }
 
         return round(($withCula / $total) * 100, 1);
+    }
+
+    private function normalizeSearchIndexRows(array $rows): array
+    {
+        return array_values(array_map(function (array $row) {
+            $culaCode = $this->normalizeCulaCode((string) ($row['cula_code'] ?? '?'));
+
+            $row['cula_code'] = $culaCode;
+            $row['cula_display_label'] = $this->displayCulaLabel($culaCode);
+
+            return $row;
+        }, $rows));
     }
 }

@@ -57,6 +57,7 @@ function SearchPanel() {
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
+    const [errorMessage, setErrorMessage] = useState('');
     const abortControllerRef = useRef(null);
     const requestIdRef = useRef(0);
 
@@ -70,12 +71,14 @@ function SearchPanel() {
         const nextQuery = event.target.value;
         setQuery(nextQuery);
         setSelectedVoter(null);
+        setErrorMessage('');
 
         abortControllerRef.current?.abort();
 
         if (nextQuery.trim().length < 2) {
             setSuggestions([]);
             setSearching(false);
+            setErrorMessage('');
             return;
         }
 
@@ -92,13 +95,21 @@ function SearchPanel() {
                 },
                 signal: controller.signal,
             });
+            const contentType = response.headers.get('content-type') ?? '';
+
+            if (response.redirected || !response.ok || !contentType.includes('application/json')) {
+                throw new Error('invalid-search-response');
+            }
+
             const payload = await response.json();
             if (requestIdRef.current === requestId) {
                 setSuggestions(payload.suggestions ?? []);
+                setErrorMessage('');
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
                 setSuggestions([]);
+                setErrorMessage('Carian tidak dapat dimuatkan. Sila pastikan anda masih log masuk dan cuba lagi.');
             }
         } finally {
             if (requestIdRef.current === requestId) {
@@ -131,6 +142,9 @@ function SearchPanel() {
                         placeholder="Contoh: Ali, 900101025555, 0123456789"
                         className="w-full rounded-2xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                     />
+                    {errorMessage && (
+                        <p className="text-sm font-medium text-red-600">{errorMessage}</p>
+                    )}
                 </div>
 
                 {(searching || suggestions.length > 0) && (

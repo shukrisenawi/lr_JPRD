@@ -274,3 +274,95 @@ HTML);
         ->and($results[0]['name'])->toBe('ALI BIN ABU')
         ->and(file_exists($searchCachePath))->toBeTrue();
 });
+
+it('rebuilds legacy search cache rows with cula display labels automatically', function () {
+    $path = storage_path('app/testing-pemilih-legacy-search-cache.xls');
+    file_put_contents($path, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Tel. Bimbit</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI BIN ABU</td><td>="0123456789"</td><td>L</td><td>M</td><td>7</td></tr>
+</table></body></html>
+HTML);
+
+    $cacheSignature = sha1(implode('|', [
+        $path,
+        (string) filemtime($path),
+        (string) filesize($path),
+    ]));
+    $legacyCachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
+    $searchCachePath = storage_path('app/report-cache/' . $cacheSignature . '-search.json');
+
+    if (! is_dir(dirname($legacyCachePath))) {
+        mkdir(dirname($legacyCachePath), 0777, true);
+    }
+
+    file_put_contents($legacyCachePath, json_encode([
+        'search_index' => [[
+            'id' => 'legacy-ali',
+            'name' => 'ALI BIN ABU',
+            'no_kp' => '900101025555',
+            'old_ic' => '',
+            'phone_mobile' => '0123456789',
+            'phone_home' => '',
+            'dm' => 'PADANG CHICHAK',
+            'locality' => 'KG BARU KURA',
+            'gender' => 'L',
+            'race' => 'M',
+            'cula_code' => '7',
+            'address' => '-',
+            'search_blob' => 'ali bin abu 900101025555 0123456789 padang chichak kg baru kura',
+        ]],
+    ], JSON_UNESCAPED_UNICODE));
+
+    $results = app(PemilihReportService::class)->searchVoters('ali', $path);
+    $rebuiltSearchCache = json_decode(file_get_contents($searchCachePath), true);
+
+    expect($results)->toHaveCount(1)
+        ->and($results[0]['cula_display_label'])->toBe('7 - TIDAK DIKENALI')
+        ->and($rebuiltSearchCache[0]['cula_display_label'])->toBe('7 - TIDAK DIKENALI');
+});
+
+it('normalizes legacy tiada cula search values to belum dicula labels', function () {
+    $path = storage_path('app/testing-pemilih-legacy-tiada-search-cache.xls');
+    file_put_contents($path, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Tel. Bimbit</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI BIN ABU</td><td>="0123456789"</td><td>L</td><td>M</td><td></td></tr>
+</table></body></html>
+HTML);
+
+    $cacheSignature = sha1(implode('|', [
+        $path,
+        (string) filemtime($path),
+        (string) filesize($path),
+    ]));
+    $legacyCachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
+
+    if (! is_dir(dirname($legacyCachePath))) {
+        mkdir(dirname($legacyCachePath), 0777, true);
+    }
+
+    file_put_contents($legacyCachePath, json_encode([
+        'search_index' => [[
+            'id' => 'legacy-ali-tiada',
+            'name' => 'ALI BIN ABU',
+            'no_kp' => '900101025555',
+            'old_ic' => '',
+            'phone_mobile' => '0123456789',
+            'phone_home' => '',
+            'dm' => 'PADANG CHICHAK',
+            'locality' => 'KG BARU KURA',
+            'gender' => 'L',
+            'race' => 'M',
+            'cula_code' => 'Tiada',
+            'address' => '-',
+            'search_blob' => 'ali bin abu 900101025555 0123456789 padang chichak kg baru kura',
+        ]],
+    ], JSON_UNESCAPED_UNICODE));
+
+    $results = app(PemilihReportService::class)->searchVoters('ali', $path);
+
+    expect($results)->toHaveCount(1)
+        ->and($results[0]['cula_code'])->toBe('?')
+        ->and($results[0]['cula_display_label'])->toBe('? - BELUM DICULA');
+});
