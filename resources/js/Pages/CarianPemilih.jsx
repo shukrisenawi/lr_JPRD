@@ -2,10 +2,18 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-function SearchResultCard({ voter, onClear }) {
+function buildKemasCulaCommand(voter) {
+    const identityNumber = voter?.no_kp || voter?.old_ic || '';
+
+    return identityNumber ? `/kemascula ${identityNumber}` : '';
+}
+
+function SearchResultCard({ voter, onClear, onOpenTelegram, telegramReady }) {
     if (!voter) {
         return null;
     }
+
+    const kemasCulaCommand = buildKemasCulaCommand(voter);
 
     const fields = [
         ['Nama', voter.name],
@@ -31,13 +39,23 @@ function SearchResultCard({ voter, onClear }) {
                         Maklumat penuh pemilih yang dipilih daripada cadangan carian.
                     </p>
                 </div>
-                <button
-                    type="button"
-                    onClick={onClear}
-                    className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
-                >
-                    Buang Pilihan
-                </button>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => onOpenTelegram(voter)}
+                        disabled={!telegramReady}
+                        className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Kemas Cula
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onClear}
+                        className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-200"
+                    >
+                        Buang Pilihan
+                    </button>
+                </div>
             </div>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -48,6 +66,14 @@ function SearchResultCard({ voter, onClear }) {
                     </div>
                 ))}
             </div>
+
+            {kemasCulaCommand && (
+                <p className="mt-4 text-sm text-slate-500">
+                    Arahan Telegram:
+                    {' '}
+                    <span className="font-semibold text-slate-900">{kemasCulaCommand}</span>
+                </p>
+            )}
         </section>
     );
 }
@@ -58,6 +84,7 @@ function SearchPanel() {
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
+    const [telegramMessage, setTelegramMessage] = useState('');
     const abortControllerRef = useRef(null);
     const requestIdRef = useRef(0);
 
@@ -127,6 +154,27 @@ function SearchPanel() {
         setSelectedVoter(voter);
     };
 
+    const handleOpenTelegram = async (voter) => {
+        const command = buildKemasCulaCommand(voter);
+
+        if (!command) {
+            setTelegramMessage('No. IC pemilih tidak tersedia untuk arahan kemas cula.');
+            return;
+        }
+
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(command);
+            }
+
+            setTelegramMessage(`Arahan disalin: ${command}`);
+        } catch (error) {
+            setTelegramMessage(`Sila salin arahan ini secara manual: ${command}`);
+        }
+
+        window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(command)}`, '_blank', 'noopener,noreferrer');
+    };
+
     return (
         <>
             <section className="relative rounded-3xl border border-slate-200 bg-white p-5 shadow-panel">
@@ -144,6 +192,9 @@ function SearchPanel() {
                     />
                     {errorMessage && (
                         <p className="text-sm font-medium text-red-600">{errorMessage}</p>
+                    )}
+                    {telegramMessage && (
+                        <p className="text-sm font-medium text-emerald-700">{telegramMessage}</p>
                     )}
                 </div>
 
@@ -178,12 +229,15 @@ function SearchPanel() {
 
             <SearchResultCard
                 voter={selectedVoter}
+                onOpenTelegram={handleOpenTelegram}
                 onClear={() => {
                     setSelectedVoter(null);
                     setQuery('');
                     setSuggestions([]);
                     setSearching(false);
+                    setTelegramMessage('');
                 }}
+                telegramReady={Boolean(buildKemasCulaCommand(selectedVoter))}
             />
         </>
     );
