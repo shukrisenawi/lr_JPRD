@@ -4,10 +4,18 @@ import { useEffect, useRef, useState } from 'react';
 
 const telegramBotUsername = 'SSDP_Kedah_Bot';
 
-function buildKemasCulaCommand(voter) {
+function buildTelegramCommand(voter, commandPrefix) {
     const identityNumber = voter?.no_kp || voter?.old_ic || '';
 
-    return identityNumber ? `/kemascula ${identityNumber}` : '';
+    return identityNumber ? `/${commandPrefix} ${identityNumber}` : '';
+}
+
+function buildKemasCulaCommand(voter) {
+    return buildTelegramCommand(voter, 'kemascula');
+}
+
+function buildKemasTelCommand(voter) {
+    return buildTelegramCommand(voter, 'kemastel');
 }
 
 function SearchResultCard({ voter, onClear, onOpenTelegram, telegramReady }) {
@@ -16,6 +24,7 @@ function SearchResultCard({ voter, onClear, onOpenTelegram, telegramReady }) {
     }
 
     const kemasCulaCommand = buildKemasCulaCommand(voter);
+    const kemasTelCommand = buildKemasTelCommand(voter);
 
     const fields = [
         ['Nama', voter.name],
@@ -44,11 +53,19 @@ function SearchResultCard({ voter, onClear, onOpenTelegram, telegramReady }) {
                 <div className="flex flex-wrap gap-2">
                     <button
                         type="button"
-                        onClick={() => onOpenTelegram(voter)}
+                        onClick={() => onOpenTelegram(voter, 'kemascula')}
                         disabled={!telegramReady}
                         className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Kemas Cula
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onOpenTelegram(voter, 'kemastel')}
+                        disabled={!telegramReady}
+                        className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Kemaskini Tel
                     </button>
                     <button
                         type="button"
@@ -70,11 +87,18 @@ function SearchResultCard({ voter, onClear, onOpenTelegram, telegramReady }) {
             </div>
 
             {kemasCulaCommand && (
-                <p className="mt-4 text-sm text-slate-500">
-                    Arahan Telegram:
-                    {' '}
-                    <span className="font-semibold text-slate-900">{kemasCulaCommand}</span>
-                </p>
+                <div className="mt-4 space-y-1 text-sm text-slate-500">
+                    <p>
+                        Arahan Kemas Cula:
+                        {' '}
+                        <span className="font-semibold text-slate-900">{kemasCulaCommand}</span>
+                    </p>
+                    <p>
+                        Arahan Kemaskini Tel:
+                        {' '}
+                        <span className="font-semibold text-slate-900">{kemasTelCommand}</span>
+                    </p>
+                </div>
             )}
         </section>
     );
@@ -156,11 +180,11 @@ function SearchPanel() {
         setSelectedVoter(voter);
     };
 
-    const handleOpenTelegram = async (voter) => {
-        const command = buildKemasCulaCommand(voter);
+    const handleOpenTelegram = async (voter, commandPrefix) => {
+        const command = buildTelegramCommand(voter, commandPrefix);
 
         if (!command) {
-            setErrorMessage('No. IC pemilih tidak tersedia untuk arahan kemas cula.');
+            setErrorMessage('No. IC pemilih tidak tersedia untuk arahan Telegram ini.');
             return;
         }
 
