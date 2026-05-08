@@ -2,6 +2,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
+const telegramBotUsername = 'SSDP_Kedah_Bot';
+
 function buildKemasCulaCommand(voter) {
     const identityNumber = voter?.no_kp || voter?.old_ic || '';
 
@@ -84,7 +86,7 @@ function SearchPanel() {
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
     const [errorMessage, setErrorMessage] = useState('');
-    const [telegramMessage, setTelegramMessage] = useState('');
+    const [openingTelegram, setOpeningTelegram] = useState(false);
     const abortControllerRef = useRef(null);
     const requestIdRef = useRef(0);
 
@@ -158,21 +160,22 @@ function SearchPanel() {
         const command = buildKemasCulaCommand(voter);
 
         if (!command) {
-            setTelegramMessage('No. IC pemilih tidak tersedia untuk arahan kemas cula.');
+            setErrorMessage('No. IC pemilih tidak tersedia untuk arahan kemas cula.');
             return;
         }
 
+        const telegramWindow = window.open('about:blank', '_blank');
+        const telegramDeepLink = `tg://resolve?domain=${telegramBotUsername}&text=${encodeURIComponent(command)}`;
+
+        setOpeningTelegram(true);
         try {
-            if (navigator?.clipboard?.writeText) {
-                await navigator.clipboard.writeText(command);
-            }
-
-            setTelegramMessage(`Arahan disalin: ${command}`);
+            telegramWindow?.location.replace(telegramDeepLink);
         } catch (error) {
-            setTelegramMessage(`Sila salin arahan ini secara manual: ${command}`);
+            telegramWindow?.close();
+            setErrorMessage('Telegram tidak dapat dibuka. Sila cuba semula.');
+        } finally {
+            setOpeningTelegram(false);
         }
-
-        window.open(`https://t.me/share/url?url=&text=${encodeURIComponent(command)}`, '_blank', 'noopener,noreferrer');
     };
 
     return (
@@ -192,9 +195,6 @@ function SearchPanel() {
                     />
                     {errorMessage && (
                         <p className="text-sm font-medium text-red-600">{errorMessage}</p>
-                    )}
-                    {telegramMessage && (
-                        <p className="text-sm font-medium text-emerald-700">{telegramMessage}</p>
                     )}
                 </div>
 
@@ -235,9 +235,9 @@ function SearchPanel() {
                     setQuery('');
                     setSuggestions([]);
                     setSearching(false);
-                    setTelegramMessage('');
+                    setOpeningTelegram(false);
                 }}
-                telegramReady={Boolean(buildKemasCulaCommand(selectedVoter))}
+                telegramReady={!openingTelegram && Boolean(buildKemasCulaCommand(selectedVoter))}
             />
         </>
     );
