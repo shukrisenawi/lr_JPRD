@@ -34,7 +34,14 @@ function formatPercent(value) {
     return `${formatNumber(value ?? 0)}%`;
 }
 
-function getUdmCulaBarColor(code, index) {
+function getUdmCulaBarColor(entry, index) {
+    const code = entry?.code;
+    const displayLabel = entry?.display_label ?? '';
+
+    if (code === '?' || displayLabel.includes('BELUM DICULA')) {
+        return '#d1d5db';
+    }
+
     if (udmCulaColorGroups.umno.has(code)) {
         return '#1d4ed8';
     }
@@ -508,7 +515,7 @@ export default function Laporan({ report }) {
                                                 <Tooltip content={<SummaryTooltip />} />
                                                 <Bar dataKey="total" name="Jumlah" radius={[4, 4, 0, 0]}>
                                                     {selectedUdmCulaChartRows.map((entry, index) => (
-                                                        <Cell key={`${entry.code}-${index}`} fill={getUdmCulaBarColor(entry.code, index)} />
+                                                        <Cell key={`${entry.code}-${index}`} fill={getUdmCulaBarColor(entry, index)} />
                                                     ))}
                                                 </Bar>
                                             </BarChart>
