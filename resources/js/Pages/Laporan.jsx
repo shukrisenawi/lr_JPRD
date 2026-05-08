@@ -17,6 +17,10 @@ import { useMemo, useState } from 'react';
 
 const numberFormatter = new Intl.NumberFormat('ms-MY');
 const chartColors = ['#0e7490', '#16a34a', '#f59e0b', '#475569', '#dc2626', '#7c3aed'];
+const udmCulaColorGroups = {
+    umno: new Set(['1', '1A', '1B', '1P']),
+    pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']),
+};
 const panelPerformanceStyle = {
     contentVisibility: 'auto',
     containIntrinsicSize: '20rem',
@@ -28,6 +32,32 @@ function formatNumber(value) {
 
 function formatPercent(value) {
     return `${formatNumber(value ?? 0)}%`;
+}
+
+function getUdmCulaBarColor(code, index) {
+    if (udmCulaColorGroups.umno.has(code)) {
+        return '#1d4ed8';
+    }
+
+    if (udmCulaColorGroups.pas.has(code)) {
+        return '#16a34a';
+    }
+
+    if (code === '10') {
+        return '#dc2626';
+    }
+
+    if (code === '5') {
+        return '#38bdf8';
+    }
+
+    if (code === '9') {
+        return '#f97316';
+    }
+
+    const fallbackColors = ['#7c3aed', '#f59e0b', '#475569', '#14b8a6', '#e11d48', '#84cc16'];
+
+    return fallbackColors[index % fallbackColors.length];
 }
 
 function renderCulaSummary(culaBreakdown = []) {
@@ -476,7 +506,11 @@ export default function Laporan({ report }) {
                                                 />
                                                 <YAxis tickFormatter={formatNumber} width={56} tick={{ fontSize: 10 }} />
                                                 <Tooltip content={<SummaryTooltip />} />
-                                                <Bar dataKey="total" name="Jumlah" fill="#dc2626" radius={[4, 4, 0, 0]} />
+                                                <Bar dataKey="total" name="Jumlah" radius={[4, 4, 0, 0]}>
+                                                    {selectedUdmCulaChartRows.map((entry, index) => (
+                                                        <Cell key={`${entry.code}-${index}`} fill={getUdmCulaBarColor(entry.code, index)} />
+                                                    ))}
+                                                </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </ChartPanel>
