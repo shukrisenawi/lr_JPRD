@@ -23,9 +23,6 @@ function SearchResultCard({ voter, onClear, onOpenTelegram, telegramReady }) {
         return null;
     }
 
-    const kemasCulaCommand = buildKemasCulaCommand(voter);
-    const kemasTelCommand = buildKemasTelCommand(voter);
-
     const fields = [
         ['Nama', voter.name],
         ['No. IC Baru', voter.no_kp || '-'],
@@ -86,20 +83,6 @@ function SearchResultCard({ voter, onClear, onOpenTelegram, telegramReady }) {
                 ))}
             </div>
 
-            {kemasCulaCommand && (
-                <div className="mt-4 space-y-1 text-sm text-slate-500">
-                    <p>
-                        Arahan Kemas Cula:
-                        {' '}
-                        <span className="font-semibold text-slate-900">{kemasCulaCommand}</span>
-                    </p>
-                    <p>
-                        Arahan Kemaskini Tel:
-                        {' '}
-                        <span className="font-semibold text-slate-900">{kemasTelCommand}</span>
-                    </p>
-                </div>
-            )}
         </section>
     );
 }
