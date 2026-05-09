@@ -53,7 +53,7 @@ function ProgramImageModal({ program, onClose }) {
     );
 }
 
-function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect }) {
+function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage }) {
     const scheduleLabel = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
 
     return (
@@ -89,13 +89,6 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
             </div>
 
             <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
-                <SecondaryButton
-                    type="button"
-                    onClick={() => onSelect(program.id)}
-                    className="rounded-xl border-cyan-300 px-3 py-1.5 text-[10px] tracking-[0.14em] text-cyan-700"
-                >
-                    {isActive ? 'Dipilih' : 'Pilih'}
-                </SecondaryButton>
                 <SecondaryButton
                     type="button"
                     onClick={() => onEdit(program)}
@@ -882,7 +875,6 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                         onDelete={deleteProgram}
                                         onEdit={startEditProgram}
                                         onPreviewImage={setSelectedProgramImage}
-                                        onSelect={selectProgram}
                                     />
                                 ))
                             )}
