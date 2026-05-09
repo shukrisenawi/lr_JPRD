@@ -408,6 +408,32 @@ it('owner can update checkbox share list and remove unchecked users', function (
     ]);
 });
 
+it('includes shared users in program list payload for share modal preselection', function () {
+    $owner = User::factory()->withModules(['dashboard', 'program'])->create();
+    $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+    $secondSharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Perkongsian',
+        'tempat' => 'Dewan Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $owner->id,
+    ]);
+
+    $program->sharedUsers()->attach([$sharedUser->id, $secondSharedUser->id]);
+
+    $this->actingAs($owner)
+        ->get(route('program.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('programs.0.id', $program->id)
+            ->where('programs.0.shared_users.0.id', $sharedUser->id)
+            ->where('programs.0.shared_users.0.name', $sharedUser->name)
+            ->where('programs.0.shared_users.1.id', $secondSharedUser->id)
+            ->where('programs.0.shared_users.1.name', $secondSharedUser->name));
+});
+
 it('shows shared program to shared user and hides program edit access', function () {
     $owner = User::factory()->withModules(['dashboard', 'program'])->create();
     $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();

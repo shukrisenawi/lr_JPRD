@@ -43,6 +43,12 @@ class ProgramController extends Controller
                     'attendees_count' => $program->attendees->count(),
                     'can_edit' => (int) $program->user_id === (int) $user->id,
                     'can_share' => (int) $program->user_id === (int) $user->id,
+                    'shared_users' => $program->sharedUsers
+                        ->map(fn (User $sharedUser) => [
+                            'id' => $sharedUser->id,
+                            'name' => $sharedUser->name,
+                        ])
+                        ->values(),
                 ])
                 ->values(),
             'selectedProgram' => $selectedProgram
