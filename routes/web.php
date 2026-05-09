@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/carian-pemilih/search', [CarianPemilihController::class, 'search'])->middleware('module:carian-pemilih')->name('carian-pemilih.search');
     Route::get('/program', [ProgramController::class, 'index'])->middleware('module:program')->name('program.index');
     Route::post('/program', [ProgramController::class, 'store'])->middleware('module:program')->name('program.store');
+    Route::put('/program/{program}', [ProgramController::class, 'update'])->middleware('module:program')->name('program.update');
+    Route::delete('/program/{program}', [ProgramController::class, 'destroy'])->middleware('module:program')->name('program.destroy');
     Route::get('/program/{program}/search', [ProgramController::class, 'search'])->middleware('module:program')->name('program.search');
     Route::post('/program/{program}/attendees', [ProgramController::class, 'storeAttendee'])->middleware('module:program')->name('program.attendees.store');
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');

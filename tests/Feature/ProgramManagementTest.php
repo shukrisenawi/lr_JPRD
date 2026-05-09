@@ -46,6 +46,76 @@ it('allows authorized user to create a new program', function () {
         ->and($program->masa?->format('H:i'))->toBe('20:30');
 });
 
+it('allows authorized user to update an existing program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Belia',
+        'tempat' => 'Padang Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->put(route('program.update', $program), [
+            'tajuk' => 'Program Belia Dikemas Kini',
+            'tempat' => 'Dewan Serbaguna',
+            'tarikh' => '2026-05-11',
+            'masa' => '10:30',
+        ])
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $program->refresh();
+
+    expect($program->tajuk)->toBe('Program Belia Dikemas Kini')
+        ->and($program->tempat)->toBe('Dewan Serbaguna')
+        ->and($program->tarikh?->format('Y-m-d'))->toBe('2026-05-11')
+        ->and($program->masa?->format('H:i'))->toBe('10:30');
+});
+
+it('allows authorized user to delete an existing program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Belia',
+        'tempat' => 'Padang Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $user->id,
+    ]);
+
+    $program->attendees()->create([
+        'voter_id' => 'sha1-ali',
+        'name' => 'ALI BIN ABU',
+        'no_kp' => '900101025555',
+        'old_ic' => '',
+        'phone_mobile' => '0123456789',
+        'phone_home' => '049999999',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'gender' => 'L',
+        'race' => 'M',
+        'cula_code' => '2',
+        'cula_display_label' => '2 - PAS',
+        'address' => 'KG BARU KURA',
+        'attended_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('program.destroy', $program))
+        ->assertRedirect(route('program.index'));
+
+    $this->assertDatabaseMissing('programs', [
+        'id' => $program->id,
+    ]);
+
+    $this->assertDatabaseMissing('program_attendees', [
+        'program_id' => $program->id,
+        'voter_id' => 'sha1-ali',
+    ]);
+});
+
 it('returns voter suggestions for selected program search', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
     $path = storage_path('app/testing-program-pemilih-search.xls');

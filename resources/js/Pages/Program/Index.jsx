@@ -1,31 +1,50 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-function ProgramCard({ program, isActive, onSelect }) {
+function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }) {
     return (
-        <button
-            type="button"
-            onClick={() => onSelect(program.id)}
-            className={`w-full rounded-3xl border px-4 py-4 text-left transition ${
+        <div
+            className={`rounded-3xl border px-4 py-4 transition ${
                 isActive
                     ? 'border-cyan-300 bg-cyan-50 shadow-sm'
                     : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
             }`}
         >
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                {program.tarikh} • {program.masa}
-            </p>
-            <h3 className="mt-2 text-lg font-bold text-slate-900">{program.tajuk}</h3>
-            <p className="mt-1 text-sm text-slate-500">{program.tempat}</p>
-            <p className="mt-3 text-xs font-medium text-slate-500">
-                {program.attendees_count} pemilih direkod hadir
-            </p>
-        </button>
+            <button type="button" onClick={() => onSelect(program.id)} className="w-full text-left">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                    {program.tarikh} • {program.masa}
+                </p>
+                <h3 className="mt-2 text-lg font-bold text-slate-900">{program.tajuk}</h3>
+                <p className="mt-1 text-sm text-slate-500">{program.tempat}</p>
+                <p className="mt-3 text-xs font-medium text-slate-500">
+                    {program.attendees_count} pemilih direkod hadir
+                </p>
+            </button>
+
+            <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
+                <SecondaryButton
+                    type="button"
+                    onClick={() => onEdit(program)}
+                    className="rounded-2xl border-slate-300 px-4 py-2 text-[11px] tracking-[0.16em]"
+                >
+                    Edit
+                </SecondaryButton>
+                <button
+                    type="button"
+                    onClick={() => onDelete(program)}
+                    disabled={deleting}
+                    className="inline-flex items-center rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    {deleting ? 'Memadam...' : 'Padam'}
+                </button>
+            </div>
+        </div>
     );
 }
 
@@ -275,6 +294,8 @@ function SearchVoterPanel({ selectedProgram }) {
 
 export default function ProgramIndex({ programs, selectedProgram }) {
     const [activeTab, setActiveTab] = useState('tambah-program');
+    const [editingProgramId, setEditingProgramId] = useState(null);
+    const [deletingProgramId, setDeletingProgramId] = useState(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
     const programForm = useForm({
         tajuk: '',
@@ -283,11 +304,19 @@ export default function ProgramIndex({ programs, selectedProgram }) {
         masa: '',
     });
 
+    const isEditing = editingProgramId !== null;
+
     const submitProgram = (event) => {
         event.preventDefault();
-        programForm.post(route('program.store'), {
+        const submitMethod = isEditing ? programForm.put : programForm.post;
+        const submitRoute = isEditing
+            ? route('program.update', editingProgramId)
+            : route('program.store');
+
+        submitMethod(submitRoute, {
             preserveScroll: true,
             onSuccess: () => {
+                setEditingProgramId(null);
                 programForm.reset('tajuk', 'tarikh', 'masa');
                 programForm.setData('tempat', defaultTempat);
             },
@@ -300,6 +329,46 @@ export default function ProgramIndex({ programs, selectedProgram }) {
             { program: programId },
             { preserveScroll: true, preserveState: true, replace: true },
         );
+    };
+
+    const startEditProgram = (program) => {
+        setEditingProgramId(program.id);
+        programForm.setData({
+            tajuk: program.tajuk ?? '',
+            tempat: program.tempat ?? defaultTempat,
+            tarikh: program.tarikh ?? '',
+            masa: program.masa ?? '',
+        });
+        setActiveTab('tambah-program');
+    };
+
+    const cancelEditProgram = () => {
+        setEditingProgramId(null);
+        programForm.reset('tajuk', 'tarikh', 'masa');
+        programForm.setData('tempat', defaultTempat);
+        programForm.clearErrors();
+    };
+
+    const deleteProgram = (program) => {
+        if (
+            !window.confirm(
+                `Padam program "${program.tajuk}"? Semua rekod kehadiran bagi program ini juga akan dipadam.`,
+            )
+        ) {
+            return;
+        }
+
+        setDeletingProgramId(program.id);
+
+        router.delete(route('program.destroy', program.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (editingProgramId === program.id) {
+                    cancelEditProgram();
+                }
+            },
+            onFinish: () => setDeletingProgramId(null),
+        });
     };
 
     const tabs = [
@@ -376,11 +445,16 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                             className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8"
                         >
                             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                Tambah Program
+                                {isEditing ? 'Edit Program' : 'Tambah Program'}
                             </p>
                             <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                Maklumat program baru
+                                {isEditing ? 'Kemaskini maklumat program' : 'Maklumat program baru'}
                             </h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                                {isEditing
+                                    ? 'Ubah maklumat program yang dipilih, kemudian simpan perubahan.'
+                                    : 'Isi maklumat program untuk mula rekod kehadiran pemilih.'}
+                            </p>
 
                             <div className="mt-6 grid gap-5">
                                 <div>
@@ -436,11 +510,24 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                             </div>
 
                             <div className="mt-6 flex justify-end">
+                                {isEditing && (
+                                    <SecondaryButton
+                                        type="button"
+                                        onClick={cancelEditProgram}
+                                        className="mr-3 rounded-2xl px-5 py-3 text-sm font-semibold normal-case tracking-normal"
+                                    >
+                                        Batal Edit
+                                    </SecondaryButton>
+                                )}
                                 <PrimaryButton
                                     className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
                                     disabled={programForm.processing}
                                 >
-                                    {programForm.processing ? 'Menyimpan...' : 'Simpan Program'}
+                                    {programForm.processing
+                                        ? 'Menyimpan...'
+                                        : isEditing
+                                          ? 'Simpan Perubahan'
+                                          : 'Simpan Program'}
                                 </PrimaryButton>
                             </div>
                         </form>
@@ -479,6 +566,9 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                         key={program.id}
                                         program={program}
                                         isActive={selectedProgram?.id === program.id}
+                                        deleting={deletingProgramId === program.id}
+                                        onDelete={deleteProgram}
+                                        onEdit={startEditProgram}
                                         onSelect={selectProgram}
                                     />
                                 ))

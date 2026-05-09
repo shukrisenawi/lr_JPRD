@@ -68,12 +68,7 @@ class ProgramController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'tajuk' => ['required', 'string', 'max:255'],
-            'tempat' => ['required', 'string', 'max:255'],
-            'tarikh' => ['required', 'date'],
-            'masa' => ['required', 'date_format:H:i'],
-        ]);
+        $validated = $this->validateProgram($request);
 
         $program = Program::query()->create([
             ...$validated,
@@ -83,6 +78,24 @@ class ProgramController extends Controller
         return redirect()
             ->route('program.index', ['program' => $program->id])
             ->with('success', 'Program baharu berjaya ditambah.');
+    }
+
+    public function update(Request $request, Program $program): RedirectResponse
+    {
+        $program->update($this->validateProgram($request));
+
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Program berjaya dikemas kini.');
+    }
+
+    public function destroy(Program $program): RedirectResponse
+    {
+        $program->delete();
+
+        return redirect()
+            ->route('program.index')
+            ->with('success', 'Program berjaya dipadam.');
     }
 
     public function search(Request $request, Program $program, PemilihReportService $reportService)
@@ -126,5 +139,15 @@ class ProgramController extends Controller
         return redirect()
             ->route('program.index', ['program' => $program->id])
             ->with('success', 'Pemilih berjaya direkodkan sebagai hadir program.');
+    }
+
+    private function validateProgram(Request $request): array
+    {
+        return $request->validate([
+            'tajuk' => ['required', 'string', 'max:255'],
+            'tempat' => ['required', 'string', 'max:255'],
+            'tarikh' => ['required', 'date'],
+            'masa' => ['required', 'date_format:H:i'],
+        ]);
     }
 }
