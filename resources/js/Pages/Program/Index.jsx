@@ -28,6 +28,13 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }
             }`}
         >
             <button type="button" onClick={() => onSelect(program.id)} className="w-full text-left">
+                {program.gambar_url && (
+                    <img
+                        src={program.gambar_url}
+                        alt={program.tajuk}
+                        className="mb-3 h-28 w-full rounded-xl object-cover"
+                    />
+                )}
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700">
                     {scheduleLabel}
                 </p>
@@ -418,29 +425,53 @@ export default function ProgramIndex({ programs, selectedProgram }) {
     const [selectedAttendee, setSelectedAttendee] = useState(null);
     const [deletingAttendeeId, setDeletingAttendeeId] = useState(null);
     const [openingTelegram, setOpeningTelegram] = useState(false);
+    const gambarInputRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
     const programForm = useForm({
         tajuk: '',
         tempat: defaultTempat,
         tarikh: '',
         masa: '',
+        gambar: null,
+        gambar_url: null,
     });
+    const [programImagePreviewUrl, setProgramImagePreviewUrl] = useState(null);
+
+    useEffect(() => {
+        if (!(programForm.data.gambar instanceof File)) {
+            setProgramImagePreviewUrl(programForm.data.gambar_url || null);
+
+            return undefined;
+        }
+
+        const objectUrl = URL.createObjectURL(programForm.data.gambar);
+        setProgramImagePreviewUrl(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [programForm.data.gambar, programForm.data.gambar_url]);
 
     const isEditing = editingProgramId !== null;
 
     const submitProgram = (event) => {
         event.preventDefault();
-        const submitMethod = isEditing ? programForm.put : programForm.post;
-        const submitRoute = isEditing
-            ? route('program.update', editingProgramId)
-            : route('program.store');
+        const submitRoute = isEditing ? route('program.update', editingProgramId) : route('program.store');
 
-        submitMethod(submitRoute, {
+        programForm
+            .transform((data) => ({
+                ...data,
+                ...(isEditing ? { _method: 'put' } : {}),
+            }))
+            .post(submitRoute, {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
                 setEditingProgramId(null);
-                programForm.reset('tajuk', 'tarikh', 'masa');
+                programForm.reset('tajuk', 'tarikh', 'masa', 'gambar', 'gambar_url');
                 programForm.setData('tempat', defaultTempat);
+                programForm.setData('gambar_url', null);
+                if (gambarInputRef.current) {
+                    gambarInputRef.current.value = '';
+                }
             },
         });
     };
@@ -460,15 +491,24 @@ export default function ProgramIndex({ programs, selectedProgram }) {
             tempat: program.tempat ?? defaultTempat,
             tarikh: program.tarikh ?? '',
             masa: program.masa ?? '',
+            gambar: null,
+            gambar_url: program.gambar_url ?? null,
         });
+        if (gambarInputRef.current) {
+            gambarInputRef.current.value = '';
+        }
         setActiveTab('tambah-program');
     };
 
     const cancelEditProgram = () => {
         setEditingProgramId(null);
-        programForm.reset('tajuk', 'tarikh', 'masa');
+        programForm.reset('tajuk', 'tarikh', 'masa', 'gambar', 'gambar_url');
         programForm.setData('tempat', defaultTempat);
+        programForm.setData('gambar_url', null);
         programForm.clearErrors();
+        if (gambarInputRef.current) {
+            gambarInputRef.current.value = '';
+        }
     };
 
     const deleteProgram = (program) => {
@@ -672,6 +712,46 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                             className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                         />
                                         <InputError className="mt-2" message={programForm.errors.masa} />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <InputLabel htmlFor="gambar" value="Gambar Program" />
+                                    <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                                            {programImagePreviewUrl ? (
+                                                <img
+                                                    src={programImagePreviewUrl}
+                                                    alt={programForm.data.tajuk || 'Preview gambar program'}
+                                                    className="h-28 w-full rounded-2xl object-cover sm:w-40"
+                                                />
+                                            ) : (
+                                                <div className="flex h-28 w-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white text-xs font-medium uppercase tracking-[0.16em] text-slate-400 sm:w-40">
+                                                    Tiada Gambar
+                                                </div>
+                                            )}
+
+                                            <div className="min-w-0 flex-1">
+                                                <input
+                                                    id="gambar"
+                                                    ref={gambarInputRef}
+                                                    type="file"
+                                                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-cyan-50 file:px-3 file:py-2 file:font-medium file:text-cyan-700 hover:file:bg-cyan-100"
+                                                    onChange={(event) =>
+                                                        programForm.setData(
+                                                            'gambar',
+                                                            event.target.files?.[0] ?? null,
+                                                        )
+                                                    }
+                                                />
+                                                <p className="mt-2 text-xs leading-5 text-slate-500">
+                                                    Muat naik PNG, JPG, atau WEBP sehingga 2MB. Jika edit program,
+                                                    pilih fail baru untuk gantikan gambar sedia ada.
+                                                </p>
+                                                <InputError className="mt-2" message={programForm.errors.gambar} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

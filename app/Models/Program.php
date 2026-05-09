@@ -13,6 +13,7 @@ class Program extends Model
         'tempat',
         'tarikh',
         'masa',
+        'gambar',
         'user_id',
     ];
 

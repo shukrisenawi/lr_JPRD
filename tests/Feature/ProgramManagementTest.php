@@ -3,6 +3,8 @@
 use App\Models\Program;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 function programPemilihFixture(): string
 {
@@ -44,6 +46,29 @@ it('allows authorized user to create a new program', function () {
         ->and($program->tempat)->toBe('Dewan Orang Ramai')
         ->and($program->tarikh?->format('Y-m-d'))->toBe('2026-05-09')
         ->and($program->masa?->format('H:i'))->toBe('20:30');
+});
+
+it('allows authorized user to create a new program with gambar', function () {
+    Storage::fake('public');
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $gambar = UploadedFile::fake()->create('program.jpg', 120, 'image/jpeg');
+
+    $this->actingAs($user)
+        ->post(route('program.store'), [
+            'tajuk' => 'Program Bergambar',
+            'tempat' => 'Dewan Orang Ramai',
+            'tarikh' => '2026-05-09',
+            'masa' => '20:30',
+            'gambar' => $gambar,
+        ])
+        ->assertRedirect(route('program.index', ['program' => 1]));
+
+    $program = Program::query()->where('tajuk', 'Program Bergambar')->first();
+
+    expect($program)->not->toBeNull()
+        ->and($program->gambar)->not->toBeNull();
+
+    Storage::disk('public')->assertExists($program->gambar);
 });
 
 it('allows authorized user to create a new program without masa', function () {
@@ -94,6 +119,40 @@ it('allows authorized user to update an existing program', function () {
         ->and($program->tempat)->toBe('Dewan Serbaguna')
         ->and($program->tarikh?->format('Y-m-d'))->toBe('2026-05-11')
         ->and($program->masa?->format('H:i'))->toBe('10:30');
+});
+
+it('allows authorized user to replace gambar for an existing program', function () {
+    Storage::fake('public');
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $oldImage = UploadedFile::fake()->create('lama.jpg', 120, 'image/jpeg');
+    $newImage = UploadedFile::fake()->create('baru.jpg', 120, 'image/jpeg');
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Belia',
+        'tempat' => 'Padang Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'gambar' => $oldImage->store('programs', 'public'),
+        'user_id' => $user->id,
+    ]);
+
+    $oldPath = $program->gambar;
+
+    $this->actingAs($user)
+        ->put(route('program.update', $program), [
+            'tajuk' => 'Program Belia',
+            'tempat' => 'Padang Awam',
+            'tarikh' => '2026-05-10',
+            'masa' => '09:00',
+            'gambar' => $newImage,
+        ])
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $program->refresh();
+
+    expect($program->gambar)->not->toBe($oldPath);
+    Storage::disk('public')->assertMissing($oldPath);
+    Storage::disk('public')->assertExists($program->gambar);
 });
 
 it('allows authorized user to delete an existing program', function () {

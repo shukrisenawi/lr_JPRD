@@ -9,6 +9,7 @@ use App\Services\PemilihReportService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,6 +35,7 @@ class ProgramController extends Controller
                     'tempat' => $program->tempat,
                     'tarikh' => $program->tarikh?->format('Y-m-d'),
                     'masa' => $program->masa?->format('H:i'),
+                    'gambar_url' => $program->gambar ? Storage::disk('public')->url($program->gambar) : null,
                     'attendees_count' => $program->attendees->count(),
                 ])
                 ->values(),
@@ -44,6 +46,7 @@ class ProgramController extends Controller
                     'tempat' => $selectedProgram->tempat,
                     'tarikh' => $selectedProgram->tarikh?->format('Y-m-d'),
                     'masa' => $selectedProgram->masa?->format('H:i'),
+                    'gambar_url' => $selectedProgram->gambar ? Storage::disk('public')->url($selectedProgram->gambar) : null,
                     'attendees' => $selectedProgram->attendees
                         ->map(fn (ProgramAttendee $attendee) => [
                             'id' => $attendee->id,
@@ -70,9 +73,13 @@ class ProgramController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateProgram($request);
+        $gambarPath = $request->hasFile('gambar')
+            ? $request->file('gambar')->store('programs', 'public')
+            : null;
 
         $program = Program::query()->create([
             ...$validated,
+            'gambar' => $gambarPath,
             'user_id' => $request->user()->id,
         ]);
 
@@ -83,7 +90,18 @@ class ProgramController extends Controller
 
     public function update(Request $request, Program $program): RedirectResponse
     {
-        $program->update($this->validateProgram($request));
+        $validated = $this->validateProgram($request);
+        $payload = [...$validated];
+
+        if ($request->hasFile('gambar')) {
+            if ($program->gambar) {
+                Storage::disk('public')->delete($program->gambar);
+            }
+
+            $payload['gambar'] = $request->file('gambar')->store('programs', 'public');
+        }
+
+        $program->update($payload);
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
@@ -92,6 +110,10 @@ class ProgramController extends Controller
 
     public function destroy(Program $program): RedirectResponse
     {
+        if ($program->gambar) {
+            Storage::disk('public')->delete($program->gambar);
+        }
+
         $program->delete();
 
         return redirect()
@@ -162,6 +184,7 @@ class ProgramController extends Controller
             'tempat' => ['required', 'string', 'max:255'],
             'tarikh' => ['required', 'date'],
             'masa' => ['nullable', 'date_format:H:i'],
+            'gambar' => ['nullable', 'image', 'max:2048'],
         ]);
     }
 }
