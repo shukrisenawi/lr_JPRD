@@ -3,7 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 function RoleCard({ role, modules }) {
@@ -105,6 +105,184 @@ function RoleCard({ role, modules }) {
                 </div>
             )}
         </form>
+    );
+}
+
+function UserCard({ user, roles }) {
+    const [isEditing, setIsEditing] = useState(false);
+    const userInitial = user.name?.charAt(0)?.toUpperCase() ?? '?';
+    const { data, setData, put, processing, errors, reset } = useForm({
+        name: user.name,
+        email: user.email,
+        role_id: user.role?.id ?? '',
+        password: '',
+        password_confirmation: '',
+    });
+
+    const submit = (event) => {
+        event.preventDefault();
+        put(route('admin.access.users.update', user.id), {
+            onSuccess: () => {
+                reset('password', 'password_confirmation');
+                setIsEditing(false);
+            },
+        });
+    };
+
+    const cancelEdit = () => {
+        setData({
+            name: user.name,
+            email: user.email,
+            role_id: user.role?.id ?? '',
+            password: '',
+            password_confirmation: '',
+        });
+        setIsEditing(false);
+    };
+
+    const deleteUser = () => {
+        if (!window.confirm(`Padam pengguna ${user.name}?`)) {
+            return;
+        }
+
+        router.delete(route('admin.access.users.destroy', user.id), {
+            preserveScroll: true,
+        });
+    };
+
+    return (
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-center gap-4">
+                    {user.avatar_url ? (
+                        <img
+                            src={user.avatar_url}
+                            alt={user.name}
+                            className="h-14 w-14 rounded-2xl object-cover"
+                        />
+                    ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-600 text-lg font-semibold text-white">
+                            {userInitial}
+                        </div>
+                    )}
+
+                    <div>
+                        <p className="font-semibold text-slate-900">{user.name}</p>
+                        <p className="text-sm text-slate-500">{user.email}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                                {user.role?.name ?? 'Tiada role'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setIsEditing((previous) => !previous)}
+                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50"
+                    >
+                        {isEditing ? 'Tutup edit' : 'Edit'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={deleteUser}
+                        className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                    >
+                        Padam
+                    </button>
+                </div>
+            </div>
+
+            {isEditing && (
+                <form onSubmit={submit} className="mt-5 border-t border-slate-200 pt-5">
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <div>
+                            <InputLabel htmlFor={`edit-name-${user.id}`} value="Nama pengguna" />
+                            <TextInput
+                                id={`edit-name-${user.id}`}
+                                value={data.name}
+                                onChange={(event) => setData('name', event.target.value)}
+                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                            />
+                            <InputError className="mt-2" message={errors.name} />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor={`edit-email-${user.id}`} value="Email login" />
+                            <TextInput
+                                id={`edit-email-${user.id}`}
+                                type="email"
+                                value={data.email}
+                                onChange={(event) => setData('email', event.target.value)}
+                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                            />
+                            <InputError className="mt-2" message={errors.email} />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor={`edit-role-${user.id}`} value="Group role" />
+                            <select
+                                id={`edit-role-${user.id}`}
+                                value={data.role_id}
+                                onChange={(event) => setData('role_id', event.target.value)}
+                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                            >
+                                {roles.map((role) => (
+                                    <option key={role.id} value={role.id}>
+                                        {role.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError className="mt-2" message={errors.role_id} />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor={`edit-password-${user.id}`} value="Kata laluan baru" />
+                            <TextInput
+                                id={`edit-password-${user.id}`}
+                                type="password"
+                                value={data.password}
+                                onChange={(event) => setData('password', event.target.value)}
+                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                            />
+                            <InputError className="mt-2" message={errors.password} />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <InputLabel
+                                htmlFor={`edit-password-confirmation-${user.id}`}
+                                value="Sahkan kata laluan baru"
+                            />
+                            <TextInput
+                                id={`edit-password-confirmation-${user.id}`}
+                                type="password"
+                                value={data.password_confirmation}
+                                onChange={(event) => setData('password_confirmation', event.target.value)}
+                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={cancelEdit}
+                            className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                            Batal
+                        </button>
+                        <PrimaryButton
+                            className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
+                            disabled={processing}
+                        >
+                            {processing ? 'Menyimpan...' : 'Simpan perubahan'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            )}
+        </div>
     );
 }
 
@@ -313,20 +491,7 @@ export default function AccessManagement({ roles, users, modules }) {
 
                             <div className="mt-6 space-y-3">
                                 {users.map((user) => (
-                                    <div
-                                        key={user.id}
-                                        className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4"
-                                    >
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                            <div>
-                                                <p className="font-semibold text-slate-900">{user.name}</p>
-                                                <p className="text-sm text-slate-500">{user.email}</p>
-                                            </div>
-                                            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                                {user.role?.name ?? 'Tiada role'}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    <UserCard key={user.id} user={user} roles={roles} />
                                 ))}
                             </div>
                         </div>

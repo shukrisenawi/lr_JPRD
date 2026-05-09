@@ -9,6 +9,7 @@ use App\Support\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -44,6 +45,7 @@ class AccessManagementController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'avatar_url' => $user->avatarUrl(),
                     'role' => $user->role
                         ? [
                             'id' => $user->role->id,
@@ -85,6 +87,55 @@ class AccessManagementController extends Controller
         return redirect()
             ->route('admin.access.index')
             ->with('success', 'Pengguna baharu berjaya dicipta.');
+    }
+
+    public function updateUser(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($request->user()?->isMasterAdmin(), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'password' => ['nullable', 'confirmed', 'min:3'],
+            'role_id' => ['required', Rule::exists('roles', 'id')],
+        ]);
+
+        $updates = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role_id' => $validated['role_id'],
+        ];
+
+        if (filled($validated['password'] ?? null)) {
+            $updates['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($updates);
+
+        return redirect()
+            ->route('admin.access.index')
+            ->with('success', 'Pengguna berjaya dikemaskini.');
+    }
+
+    public function destroyUser(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($request->user()?->isMasterAdmin(), 403);
+
+        if ($request->user()->is($user)) {
+            return redirect()
+                ->route('admin.access.index')
+                ->with('error', 'Anda tidak boleh padam akaun sendiri dari modul ini.');
+        }
+
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        $user->delete();
+
+        return redirect()
+            ->route('admin.access.index')
+            ->with('success', 'Pengguna berjaya dipadam.');
     }
 
     public function storeRole(Request $request): RedirectResponse

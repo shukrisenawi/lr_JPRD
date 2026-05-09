@@ -2,16 +2,24 @@
 
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 it('allows master admin to open access management page', function () {
     $user = User::factory()->masterAdmin()->create();
+    $managedUser = User::factory()->create([
+        'name' => 'AAA User Bergambar',
+        'avatar' => 'avatars/user-bergambar.jpg',
+    ]);
 
     $this->actingAs($user)
         ->get(route('admin.access.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Admin/AccessManagement')
-            ->where('auth.user.role.slug', 'master-admin'));
+            ->where('auth.user.role.slug', 'master-admin')
+            ->where('users.0.id', $managedUser->id)
+            ->where('users.0.avatar_url', $managedUser->avatarUrl()));
 });
 
 it('prevents non master admin from opening access management page', function () {
@@ -77,4 +85,57 @@ it('blocks access to module routes when user role does not have permission', fun
     $this->actingAs($user)
         ->get(route('laporan.index'))
         ->assertForbidden();
+});
+
+it('allows master admin to update existing user details', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->create([
+        'name' => 'Nama Lama',
+        'email' => 'lama@example.com',
+    ]);
+    $role = Role::factory()->create([
+        'name' => 'Editor',
+        'slug' => 'editor',
+    ]);
+
+    $this->actingAs($masterAdmin)
+        ->put(route('admin.access.users.update', $user), [
+            'name' => 'Nama Baru',
+            'email' => 'baru@example.com',
+            'role_id' => $role->id,
+            'password' => '',
+            'password_confirmation' => '',
+        ])
+        ->assertRedirect(route('admin.access.index'));
+
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id,
+        'name' => 'Nama Baru',
+        'email' => 'baru@example.com',
+        'role_id' => $role->id,
+    ]);
+});
+
+it('allows master admin to delete existing user and avatar file', function () {
+    Storage::fake('public');
+
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->create([
+        'avatar' => 'avatars/untuk-padam.jpg',
+    ]);
+
+    Storage::disk('public')->put(
+        'avatars/untuk-padam.jpg',
+        UploadedFile::fake()->create('untuk-padam.jpg', 10)->get()
+    );
+
+    $this->actingAs($masterAdmin)
+        ->delete(route('admin.access.users.destroy', $user))
+        ->assertRedirect(route('admin.access.index'));
+
+    $this->assertDatabaseMissing('users', [
+        'id' => $user->id,
+    ]);
+
+    Storage::disk('public')->assertMissing('avatars/untuk-padam.jpg');
 });

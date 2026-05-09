@@ -26,6 +26,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/sheet-pages/{sheetPage}', [SheetPageController::class, 'destroy'])->middleware('module:dashboard')->name('sheet-pages.destroy');
     Route::get('/admin/access', [AccessManagementController::class, 'index'])->name('admin.access.index');
     Route::post('/admin/access/users', [AccessManagementController::class, 'storeUser'])->name('admin.access.users.store');
+    Route::put('/admin/access/users/{user}', [AccessManagementController::class, 'updateUser'])->name('admin.access.users.update');
+    Route::delete('/admin/access/users/{user}', [AccessManagementController::class, 'destroyUser'])->name('admin.access.users.destroy');
     Route::post('/admin/access/roles', [AccessManagementController::class, 'storeRole'])->name('admin.access.roles.store');
     Route::put('/admin/access/roles/{role}', [AccessManagementController::class, 'updateRole'])->name('admin.access.roles.update');
 
