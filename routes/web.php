@@ -23,6 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/program', [ProgramController::class, 'store'])->middleware('module:program')->name('program.store');
     Route::put('/program/{program}', [ProgramController::class, 'update'])->middleware('module:program')->name('program.update');
     Route::delete('/program/{program}', [ProgramController::class, 'destroy'])->middleware('module:program')->name('program.destroy');
+    Route::get('/program/{program}/gambar', [ProgramController::class, 'gambar'])->middleware('module:program')->name('program.gambar');
     Route::get('/program/{program}/search', [ProgramController::class, 'search'])->middleware('module:program')->name('program.search');
     Route::post('/program/{program}/attendees', [ProgramController::class, 'storeAttendee'])->middleware('module:program')->name('program.attendees.store');
     Route::delete('/program/{program}/attendees/{attendee}', [ProgramController::class, 'destroyAttendee'])->middleware('module:program')->name('program.attendees.destroy');

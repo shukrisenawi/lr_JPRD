@@ -71,6 +71,26 @@ it('allows authorized user to create a new program with gambar', function () {
     Storage::disk('public')->assertExists($program->gambar);
 });
 
+it('allows authorized user to view uploaded gambar program', function () {
+    Storage::fake('public');
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $gambarPath = UploadedFile::fake()->create('program.jpg', 120, 'image/jpeg')
+        ->store('programs', 'public');
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Bergambar',
+        'tempat' => 'Dewan Orang Ramai',
+        'tarikh' => '2026-05-09',
+        'masa' => '20:30',
+        'gambar' => $gambarPath,
+        'user_id' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('program.gambar', $program))
+        ->assertOk();
+});
+
 it('allows authorized user to create a new program without masa', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
 

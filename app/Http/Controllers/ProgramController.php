@@ -35,7 +35,7 @@ class ProgramController extends Controller
                     'tempat' => $program->tempat,
                     'tarikh' => $program->tarikh?->format('Y-m-d'),
                     'masa' => $program->masa?->format('H:i'),
-                    'gambar_url' => $program->gambar ? Storage::disk('public')->url($program->gambar) : null,
+                    'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
                     'attendees_count' => $program->attendees->count(),
                 ])
                 ->values(),
@@ -46,7 +46,7 @@ class ProgramController extends Controller
                     'tempat' => $selectedProgram->tempat,
                     'tarikh' => $selectedProgram->tarikh?->format('Y-m-d'),
                     'masa' => $selectedProgram->masa?->format('H:i'),
-                    'gambar_url' => $selectedProgram->gambar ? Storage::disk('public')->url($selectedProgram->gambar) : null,
+                    'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
                     'attendees' => $selectedProgram->attendees
                         ->map(fn (ProgramAttendee $attendee) => [
                             'id' => $attendee->id,
@@ -119,6 +119,19 @@ class ProgramController extends Controller
         return redirect()
             ->route('program.index')
             ->with('success', 'Program berjaya dipadam.');
+    }
+
+    public function gambar(Program $program)
+    {
+        abort_unless($program->gambar, 404);
+        abort_unless(Storage::disk('public')->exists($program->gambar), 404);
+
+        return response()->file(
+            Storage::disk('public')->path($program->gambar),
+            [
+                'Cache-Control' => 'private, max-age=3600',
+            ],
+        );
     }
 
     public function search(Request $request, Program $program, PemilihReportService $reportService)
