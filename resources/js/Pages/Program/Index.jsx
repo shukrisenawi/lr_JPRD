@@ -8,6 +8,8 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
 function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }) {
+    const scheduleLabel = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
+
     return (
         <div
             className={`rounded-3xl border px-4 py-4 transition ${
@@ -18,7 +20,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }
         >
             <button type="button" onClick={() => onSelect(program.id)} className="w-full text-left">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                    {program.tarikh} • {program.masa}
+                    {scheduleLabel}
                 </p>
                 <h3 className="mt-2 text-lg font-bold text-slate-900">{program.tajuk}</h3>
                 <p className="mt-1 text-sm text-slate-500">{program.tempat}</p>

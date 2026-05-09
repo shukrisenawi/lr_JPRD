@@ -147,7 +147,7 @@ class ProgramController extends Controller
             'tajuk' => ['required', 'string', 'max:255'],
             'tempat' => ['required', 'string', 'max:255'],
             'tarikh' => ['required', 'date'],
-            'masa' => ['required', 'date_format:H:i'],
+            'masa' => ['nullable', 'date_format:H:i'],
         ]);
     }
 }

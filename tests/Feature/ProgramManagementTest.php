@@ -46,6 +46,28 @@ it('allows authorized user to create a new program', function () {
         ->and($program->masa?->format('H:i'))->toBe('20:30');
 });
 
+it('allows authorized user to create a new program without masa', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $response = $this->actingAs($user)
+        ->post(route('program.store'), [
+            'tajuk' => 'Program Tanpa Masa',
+            'tempat' => 'Dewan Komuniti',
+            'tarikh' => '2026-05-12',
+            'masa' => '',
+        ]);
+
+    $response->assertSessionDoesntHaveErrors('masa');
+    $response->assertRedirect(route('program.index', ['program' => 1]));
+
+    $program = Program::query()->where('tajuk', 'Program Tanpa Masa')->first();
+
+    expect($program)->not->toBeNull()
+        ->and($program->tempat)->toBe('Dewan Komuniti')
+        ->and($program->tarikh?->format('Y-m-d'))->toBe('2026-05-12')
+        ->and($program->masa)->toBeNull();
+});
+
 it('allows authorized user to update an existing program', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
 
