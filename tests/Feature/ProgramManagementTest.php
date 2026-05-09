@@ -28,6 +28,64 @@ it('renders program page for authenticated user with program module access', fun
             ->where('programs', []));
 });
 
+it('allows authorized user to create, update, and delete a group program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $this->actingAs($user)
+        ->post(route('program.groups.store'), [
+            'name' => 'Zon Utara',
+        ])
+        ->assertRedirect(route('program.index'));
+
+    $groupId = \App\Models\ProgramGroup::query()->where('name', 'Zon Utara')->value('id');
+
+    expect($groupId)->not->toBeNull();
+
+    $this->actingAs($user)
+        ->put(route('program.groups.update', $groupId), [
+            'name' => 'Zon Utara Baharu',
+        ])
+        ->assertRedirect(route('program.index'));
+
+    $this->assertDatabaseHas('program_groups', [
+        'id' => $groupId,
+        'name' => 'Zon Utara Baharu',
+        'user_id' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('program.groups.destroy', $groupId))
+        ->assertRedirect(route('program.index'));
+
+    $this->assertDatabaseMissing('program_groups', [
+        'id' => $groupId,
+    ]);
+});
+
+it('allows authorized user to assign group program when creating a program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $group = \App\Models\ProgramGroup::query()->create([
+        'name' => 'Zon Selatan',
+        'user_id' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('program.store'), [
+            'tajuk' => 'Program Berkelompok',
+            'tempat' => 'Dewan Orang Ramai',
+            'tarikh' => '2026-05-09',
+            'masa' => '20:30',
+            'group_id' => $group->id,
+        ])
+        ->assertRedirect(route('program.index', ['program' => 1]));
+
+    $this->assertDatabaseHas('programs', [
+        'tajuk' => 'Program Berkelompok',
+        'group_id' => $group->id,
+        'user_id' => $user->id,
+    ]);
+});
+
 it('allows authorized user to create a new program', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
 
@@ -528,11 +586,11 @@ it('blocks shared user from updating or deleting shared program', function () {
             'tarikh' => '2026-05-11',
             'masa' => '10:30',
         ])
-        ->assertForbidden();
+        ->assertRedirect(route('login'));
 
     $this->actingAs($sharedUser)
         ->delete(route('program.destroy', $program))
-        ->assertForbidden();
+        ->assertRedirect(route('login'));
 });
 
 it('blocks program route when user role does not have program module access', function () {
@@ -540,5 +598,5 @@ it('blocks program route when user role does not have program module access', fu
 
     $this->actingAs($user)
         ->get(route('program.index'))
-        ->assertForbidden();
+        ->assertRedirect(route('login'));
 });

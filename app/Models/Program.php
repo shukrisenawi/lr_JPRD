@@ -14,6 +14,7 @@ class Program extends Model
         'tempat',
         'tarikh',
         'masa',
+        'group_id',
         'gambar',
         'user_id',
     ];
@@ -26,6 +27,11 @@ class Program extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(ProgramGroup::class, 'group_id');
     }
 
     public function attendees(): HasMany

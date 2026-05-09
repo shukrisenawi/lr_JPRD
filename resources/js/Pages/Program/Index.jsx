@@ -191,6 +191,11 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
                 </p>
                 <h3 className="mt-1.5 text-base font-bold leading-5 text-slate-900">{program.tajuk}</h3>
                 <p className="mt-1 text-sm leading-5 text-slate-500">{program.tempat}</p>
+                {program.group_name && (
+                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
+                        {program.group_name}
+                    </p>
+                )}
                 <p className="mt-2 text-[11px] font-medium text-slate-500">
                     {program.attendees_count} pemilih direkod hadir
                 </p>
@@ -383,6 +388,164 @@ function IconButton({ label, children, className = '', ...props }) {
         >
             {children}
         </button>
+    );
+}
+
+function ProgramGroupManager({ groups }) {
+    const [editingGroupId, setEditingGroupId] = useState(null);
+    const groupForm = useForm({
+        name: '',
+    });
+
+    const submitGroup = (event) => {
+        event.preventDefault();
+
+        if (editingGroupId) {
+            groupForm.put(route('program.groups.update', editingGroupId), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setEditingGroupId(null);
+                    groupForm.reset();
+                },
+            });
+
+            return;
+        }
+
+        groupForm.post(route('program.groups.store'), {
+            preserveScroll: true,
+            onSuccess: () => groupForm.reset(),
+        });
+    };
+
+    const startEditGroup = (group) => {
+        setEditingGroupId(group.id);
+        groupForm.setData('name', group.name);
+        groupForm.clearErrors();
+    };
+
+    const cancelEditGroup = () => {
+        setEditingGroupId(null);
+        groupForm.reset();
+        groupForm.clearErrors();
+    };
+
+    const deleteGroup = (group) => {
+        if (!window.confirm(`Padam group program "${group.name}"? Program dalam group ini akan dikeluarkan daripada group tersebut.`)) {
+            return;
+        }
+
+        router.delete(route('program.groups.destroy', group.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                if (editingGroupId === group.id) {
+                    cancelEditGroup();
+                }
+            },
+        });
+    };
+
+    return (
+        <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+            <form
+                onSubmit={submitGroup}
+                className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8"
+            >
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                    {editingGroupId ? 'Edit Group Program' : 'Tambah Group Program'}
+                </p>
+                <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                    {editingGroupId ? 'Kemaskini nama group' : 'Daftar group baru'}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Gunakan group untuk susun program mengikut zon, pasukan, atau kategori anda sendiri.
+                </p>
+
+                <div className="mt-6">
+                    <RequiredLabel htmlFor="group-name" value="Nama Group Program" />
+                    <TextInput
+                        id="group-name"
+                        required
+                        value={groupForm.data.name}
+                        onChange={(event) => groupForm.setData('name', event.target.value)}
+                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                    />
+                    <InputError className="mt-2" message={groupForm.errors.name} />
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                    {editingGroupId && (
+                        <SecondaryButton
+                            type="button"
+                            onClick={cancelEditGroup}
+                            className="mr-3 rounded-2xl px-5 py-3 text-sm font-semibold normal-case tracking-normal"
+                        >
+                            Batal Edit
+                        </SecondaryButton>
+                    )}
+                    <PrimaryButton
+                        className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
+                        disabled={groupForm.processing}
+                    >
+                        {groupForm.processing
+                            ? 'Menyimpan...'
+                            : editingGroupId
+                              ? 'Simpan Group'
+                              : 'Tambah Group'}
+                    </PrimaryButton>
+                </div>
+            </form>
+
+            <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                    Senarai Group Program
+                </p>
+                <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                    {groups.length} group direkod
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Edit atau padam group program yang anda mahu gunakan dalam borang program.
+                </p>
+
+                <div className="mt-6 space-y-3">
+                    {groups.length === 0 ? (
+                        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                            Belum ada group program. Tambah group pertama anda di sebelah kiri.
+                        </div>
+                    ) : (
+                        groups.map((group) => (
+                            <div
+                                key={group.id}
+                                className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                            >
+                                <div>
+                                    <p className="font-semibold text-slate-900">{group.name}</p>
+                                    <p className="mt-1 text-sm text-slate-500">
+                                        {group.programs_count} program dalam group ini
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <SecondaryButton
+                                        type="button"
+                                        onClick={() => startEditGroup(group)}
+                                        className="rounded-2xl border-slate-300 px-4 py-2 text-sm font-semibold normal-case tracking-normal"
+                                    >
+                                        Edit
+                                    </SecondaryButton>
+                                    <button
+                                        type="button"
+                                        onClick={() => deleteGroup(group)}
+                                        className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                                    >
+                                        Padam
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </section>
+        </section>
     );
 }
 
@@ -582,7 +745,7 @@ function SearchVoterPanel({ selectedProgram }) {
     );
 }
 
-export default function ProgramIndex({ programs, selectedProgram, shareableUsers }) {
+export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups }) {
     const [activeTab, setActiveTab] = useState('tambah-program');
     const [editingProgramId, setEditingProgramId] = useState(null);
     const [deletingProgramId, setDeletingProgramId] = useState(null);
@@ -598,6 +761,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         tempat: defaultTempat,
         tarikh: '',
         masa: '',
+        group_id: '',
         gambar: null,
         gambar_url: null,
     });
@@ -625,7 +789,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         event.preventDefault();
         const resetAfterSuccess = () => {
             setEditingProgramId(null);
-            programForm.reset('tajuk', 'tarikh', 'masa', 'gambar', 'gambar_url');
+            programForm.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url');
             programForm.setData('tempat', defaultTempat);
             programForm.setData('gambar_url', null);
             if (gambarInputRef.current) {
@@ -676,6 +840,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             tempat: program.tempat ?? defaultTempat,
             tarikh: program.tarikh ?? '',
             masa: program.masa ?? '',
+            group_id: program.group_id ?? '',
             gambar: null,
             gambar_url: program.gambar_url ?? null,
         });
@@ -687,7 +852,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     const cancelEditProgram = () => {
         setEditingProgramId(null);
-        programForm.reset('tajuk', 'tarikh', 'masa', 'gambar', 'gambar_url');
+        programForm.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url');
         programForm.setData('tempat', defaultTempat);
         programForm.setData('gambar_url', null);
         programForm.clearErrors();
@@ -821,6 +986,11 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             description: 'Daftar program baru dengan tajuk, tempat, tarikh, dan masa.',
         },
         {
+            key: 'group-program',
+            label: 'Group Program',
+            description: 'Tambah, edit, dan padam group untuk susun program anda.',
+        },
+        {
             key: 'senarai-program',
             label: 'Senarai Program',
             description: 'Klik kad program untuk terus buka rekod kehadiran dan urus pemilih.',
@@ -849,7 +1019,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                 <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-3 shadow-panel backdrop-blur sm:p-4">
-                    <div className="grid gap-3 md:grid-cols-2">
+                    <div className="grid gap-3 md:grid-cols-3">
                         {tabs.map((tab) => {
                             const isActive = activeTab === tab.key;
 
@@ -947,6 +1117,24 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 </div>
 
                                 <div>
+                                    <InputLabel htmlFor="group_id" value="Group Program" />
+                                    <select
+                                        id="group_id"
+                                        value={programForm.data.group_id}
+                                        onChange={(event) => programForm.setData('group_id', event.target.value)}
+                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                    >
+                                        <option value="">Tanpa Group</option>
+                                        {groups.map((group) => (
+                                            <option key={group.id} value={group.id}>
+                                                {group.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <InputError className="mt-2" message={programForm.errors.group_id} />
+                                </div>
+
+                                <div>
                                     <InputLabel htmlFor="gambar" value="Gambar Program" />
                                     <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -1023,6 +1211,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                         </section>
                     </section>
                 )}
+
+                {activeTab === 'group-program' && <ProgramGroupManager groups={groups} />}
 
                 {activeTab === 'senarai-program' && (
                     selectedProgram ? (

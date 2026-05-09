@@ -21,8 +21,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/carian-pemilih/search', [CarianPemilihController::class, 'search'])->middleware('module:carian-pemilih')->name('carian-pemilih.search');
     Route::get('/program', [ProgramController::class, 'index'])->middleware('module:program')->name('program.index');
     Route::post('/program', [ProgramController::class, 'store'])->middleware('module:program')->name('program.store');
+    Route::post('/program/groups', [ProgramController::class, 'storeGroup'])->middleware('module:program')->name('program.groups.store');
     Route::put('/program/{program}', [ProgramController::class, 'update'])->middleware('module:program')->name('program.update');
+    Route::put('/program/groups/{group}', [ProgramController::class, 'updateGroup'])->middleware('module:program')->name('program.groups.update');
     Route::delete('/program/{program}', [ProgramController::class, 'destroy'])->middleware('module:program')->name('program.destroy');
+    Route::delete('/program/groups/{group}', [ProgramController::class, 'destroyGroup'])->middleware('module:program')->name('program.groups.destroy');
     Route::post('/program/{program}/share', [ProgramController::class, 'storeShare'])->middleware('module:program')->name('program.share.store');
     Route::get('/program/{program}/gambar', [ProgramController::class, 'gambar'])->middleware('module:program')->name('program.gambar');
     Route::get('/program/{program}/search', [ProgramController::class, 'search'])->middleware('module:program')->name('program.search');

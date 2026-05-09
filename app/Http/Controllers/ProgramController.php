@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Program;
 use App\Models\ProgramAttendee;
+use App\Models\ProgramGroup;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\PemilihReportService;
@@ -13,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,8 +23,12 @@ class ProgramController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $groups = ProgramGroup::query()
+            ->where('user_id', $user->id)
+            ->orderBy('name')
+            ->get();
         $programs = $this->accessibleProgramsQuery($user->id)
-            ->with(['attendees', 'sharedUsers:id,name'])
+            ->with(['attendees', 'sharedUsers:id,name', 'group'])
             ->latest('tarikh')
             ->latest('masa')
             ->latest('id')
@@ -39,6 +45,8 @@ class ProgramController extends Controller
                     'tempat' => $program->tempat,
                     'tarikh' => $program->tarikh?->format('Y-m-d'),
                     'masa' => $program->masa?->format('H:i'),
+                    'group_id' => $program->group_id,
+                    'group_name' => $program->group?->name,
                     'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
                     'attendees_count' => $program->attendees->count(),
                     'can_edit' => (int) $program->user_id === (int) $user->id,
@@ -58,6 +66,8 @@ class ProgramController extends Controller
                     'tempat' => $selectedProgram->tempat,
                     'tarikh' => $selectedProgram->tarikh?->format('Y-m-d'),
                     'masa' => $selectedProgram->masa?->format('H:i'),
+                    'group_id' => $selectedProgram->group_id,
+                    'group_name' => $selectedProgram->group?->name,
                     'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
                     'can_edit' => (int) $selectedProgram->user_id === (int) $user->id,
                     'can_share' => (int) $selectedProgram->user_id === (int) $user->id,
@@ -87,6 +97,13 @@ class ProgramController extends Controller
                         ->values(),
                 ]
                 : null,
+            'groups' => $groups
+                ->map(fn (ProgramGroup $group) => [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'programs_count' => $group->programs()->count(),
+                ])
+                ->values(),
             'shareableUsers' => User::query()
                 ->whereKeyNot($user->id)
                 ->get()
@@ -264,6 +281,49 @@ class ProgramController extends Controller
         return back()->with('success', 'Perkongsian program berjaya dikemaskini.');
     }
 
+    public function storeGroup(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        ProgramGroup::query()->create([
+            'name' => $validated['name'],
+            'user_id' => $request->user()->id,
+        ]);
+
+        return redirect()
+            ->route('program.index')
+            ->with('success', 'Group program berjaya ditambah.');
+    }
+
+    public function updateGroup(Request $request, ProgramGroup $group): RedirectResponse
+    {
+        $this->ensureGroupOwner($request->user()->id, $group);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $group->update([
+            'name' => $validated['name'],
+        ]);
+
+        return redirect()
+            ->route('program.index')
+            ->with('success', 'Group program berjaya dikemaskini.');
+    }
+
+    public function destroyGroup(ProgramGroup $group): RedirectResponse
+    {
+        $this->ensureGroupOwner(request()->user()->id, $group);
+        $group->delete();
+
+        return redirect()
+            ->route('program.index')
+            ->with('success', 'Group program berjaya dipadam.');
+    }
+
     private function validateProgram(Request $request): array
     {
         return $request->validate([
@@ -271,6 +331,13 @@ class ProgramController extends Controller
             'tempat' => ['required', 'string', 'max:255'],
             'tarikh' => ['required', 'date'],
             'masa' => ['nullable', 'date_format:H:i'],
+            'group_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('program_groups', 'id')->where(
+                    fn ($query) => $query->where('user_id', $request->user()->id),
+                ),
+            ],
             'gambar' => ['nullable', 'image', 'max:2048'],
         ]);
     }
@@ -294,5 +361,10 @@ class ProgramController extends Controller
     private function ensureOwner(int $userId, Program $program): void
     {
         abort_unless((int) $program->user_id === $userId, 403);
+    }
+
+    private function ensureGroupOwner(int $userId, ProgramGroup $group): void
+    {
+        abort_unless((int) $group->user_id === $userId, 403);
     }
 }
