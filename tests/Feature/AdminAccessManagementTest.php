@@ -139,3 +139,16 @@ it('allows master admin to delete existing user and avatar file', function () {
 
     Storage::disk('public')->assertMissing('avatars/untuk-padam.jpg');
 });
+
+it('prevents master admin from deleting own account', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+
+    $this->actingAs($masterAdmin)
+        ->delete(route('admin.access.users.destroy', $masterAdmin))
+        ->assertRedirect(route('admin.access.index'));
+
+    $this->assertDatabaseHas('users', [
+        'id' => $masterAdmin->id,
+        'email' => $masterAdmin->email,
+    ]);
+});

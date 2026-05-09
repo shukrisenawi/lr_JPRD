@@ -3,7 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 function RoleCard({ role, modules }) {
@@ -108,8 +108,9 @@ function RoleCard({ role, modules }) {
     );
 }
 
-function UserCard({ user, roles }) {
+function UserCard({ user, roles, currentUserId }) {
     const [isEditing, setIsEditing] = useState(false);
+    const isCurrentUser = currentUserId === user.id;
     const userInitial = user.name?.charAt(0)?.toUpperCase() ?? '?';
     const { data, setData, put, processing, errors, reset } = useForm({
         name: user.name,
@@ -185,13 +186,19 @@ function UserCard({ user, roles }) {
                     >
                         {isEditing ? 'Tutup edit' : 'Edit'}
                     </button>
-                    <button
-                        type="button"
-                        onClick={deleteUser}
-                        className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                    >
-                        Padam
-                    </button>
+                    {!isCurrentUser ? (
+                        <button
+                            type="button"
+                            onClick={deleteUser}
+                            className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                        >
+                            Padam
+                        </button>
+                    ) : (
+                        <span className="inline-flex items-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">
+                            Akaun semasa
+                        </span>
+                    )}
                 </div>
             </div>
 
@@ -287,6 +294,8 @@ function UserCard({ user, roles }) {
 }
 
 export default function AccessManagement({ roles, users, modules }) {
+    const { auth } = usePage().props;
+    const currentUserId = auth.user?.id ?? null;
     const [activeTab, setActiveTab] = useState('cipta-pengguna');
     const userForm = useForm({
         name: '',
@@ -491,7 +500,12 @@ export default function AccessManagement({ roles, users, modules }) {
 
                             <div className="mt-6 space-y-3">
                                 {users.map((user) => (
-                                    <UserCard key={user.id} user={user} roles={roles} />
+                                    <UserCard
+                                        key={user.id}
+                                        user={user}
+                                        roles={roles}
+                                        currentUserId={currentUserId}
+                                    />
                                 ))}
                             </div>
                         </div>
