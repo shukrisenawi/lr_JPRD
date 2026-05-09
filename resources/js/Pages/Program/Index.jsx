@@ -8,6 +8,14 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
+const telegramBotUsername = 'SSDP_Kedah_Bot';
+
+function buildTelegramCommand(voter, commandPrefix) {
+    const identityNumber = voter?.no_kp || voter?.old_ic || '';
+
+    return identityNumber ? `/${commandPrefix} ${identityNumber}` : '';
+}
+
 function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }) {
     const scheduleLabel = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
 
@@ -116,7 +124,7 @@ function VoterDetailCard({ voter, onAdd, adding }) {
     );
 }
 
-function AttendeeDetailModal({ attendee, deleting, onClose, onDelete }) {
+function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady }) {
     if (!attendee) {
         return null;
     }
@@ -151,6 +159,22 @@ function AttendeeDetailModal({ attendee, deleting, onClose, onDelete }) {
                     </div>
 
                     <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => onOpenTelegram(attendee, 'kemascula')}
+                            disabled={!telegramReady}
+                            className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            Kemas Cula
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onOpenTelegram(attendee, 'kemastel')}
+                            disabled={!telegramReady}
+                            className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            Kemaskini Tel
+                        </button>
                         <SecondaryButton
                             type="button"
                             onClick={onClose}
@@ -392,6 +416,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
     const [deletingProgramId, setDeletingProgramId] = useState(null);
     const [selectedAttendee, setSelectedAttendee] = useState(null);
     const [deletingAttendeeId, setDeletingAttendeeId] = useState(null);
+    const [openingTelegram, setOpeningTelegram] = useState(false);
     const defaultTempat = 'Kompleks PAS Sg PAU';
     const programForm = useForm({
         tajuk: '',
@@ -489,6 +514,27 @@ export default function ProgramIndex({ programs, selectedProgram }) {
             },
             onFinish: () => setDeletingAttendeeId(null),
         });
+    };
+
+    const handleOpenTelegram = async (voter, commandPrefix) => {
+        const command = buildTelegramCommand(voter, commandPrefix);
+
+        if (!command) {
+            return;
+        }
+
+        const telegramWindow = window.open('about:blank', '_blank');
+        const telegramDeepLink = `tg://resolve?domain=${telegramBotUsername}&text=${encodeURIComponent(command)}`;
+
+        setOpeningTelegram(true);
+
+        try {
+            telegramWindow?.location.replace(telegramDeepLink);
+        } catch (error) {
+            telegramWindow?.close();
+        } finally {
+            setOpeningTelegram(false);
+        }
     };
 
     const tabs = [
@@ -827,9 +873,9 @@ export default function ProgramIndex({ programs, selectedProgram }) {
 
             <AttendeeDetailModal
                 attendee={selectedAttendee}
-                deleting={deletingAttendeeId === selectedAttendee?.id}
                 onClose={closeAttendeeModal}
-                onDelete={deleteAttendee}
+                onOpenTelegram={handleOpenTelegram}
+                telegramReady={!openingTelegram && Boolean(buildTelegramCommand(selectedAttendee, 'kemascula'))}
             />
         </AuthenticatedLayout>
     );
