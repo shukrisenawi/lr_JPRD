@@ -178,7 +178,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady 
                     ))}
                 </div>
 
-                <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-5">
+                <div className="mt-6 flex flex-wrap justify-center gap-2 border-t border-slate-100 pt-5">
                     <button
                         type="button"
                         onClick={() => onOpenTelegram(attendee, 'kemascula')}
