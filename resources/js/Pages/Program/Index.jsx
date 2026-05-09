@@ -29,6 +29,15 @@ function ProgramCard({ program, isActive, onSelect }) {
     );
 }
 
+function RequiredLabel({ htmlFor, value }) {
+    return (
+        <div className="flex items-center gap-1">
+            <InputLabel htmlFor={htmlFor} value={value} />
+            <span className="text-sm font-semibold text-rose-500">*</span>
+        </div>
+    );
+}
+
 function VoterDetailCard({ voter, onAdd, adding }) {
     if (!voter) {
         return null;
@@ -375,9 +384,10 @@ export default function ProgramIndex({ programs, selectedProgram }) {
 
                             <div className="mt-6 grid gap-5">
                                 <div>
-                                    <InputLabel htmlFor="tajuk" value="Tajuk" />
+                                    <RequiredLabel htmlFor="tajuk" value="Tajuk" />
                                     <TextInput
                                         id="tajuk"
+                                        required
                                         value={programForm.data.tajuk}
                                         onChange={(event) => programForm.setData('tajuk', event.target.value)}
                                         className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
@@ -386,9 +396,10 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="tempat" value="Tempat" />
+                                    <RequiredLabel htmlFor="tempat" value="Tempat" />
                                     <TextInput
                                         id="tempat"
+                                        required
                                         value={programForm.data.tempat}
                                         onChange={(event) => programForm.setData('tempat', event.target.value)}
                                         className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
@@ -398,10 +409,11 @@ export default function ProgramIndex({ programs, selectedProgram }) {
 
                                 <div className="grid gap-5 md:grid-cols-2">
                                     <div>
-                                        <InputLabel htmlFor="tarikh" value="Tarikh" />
+                                        <RequiredLabel htmlFor="tarikh" value="Tarikh" />
                                         <TextInput
                                             id="tarikh"
                                             type="date"
+                                            required
                                             value={programForm.data.tarikh}
                                             onChange={(event) => programForm.setData('tarikh', event.target.value)}
                                             className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
