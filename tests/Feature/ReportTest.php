@@ -207,8 +207,8 @@ it('rebuilds legacy laporan cache with old structure automatically', function ()
         (string) filemtime($path),
         (string) filesize($path),
     ]));
-    $legacyCachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
-    $reportCachePath = storage_path('app/report-cache/' . $cacheSignature . '-report.json');
+    $legacyCachePath = storage_path('app/report-cache/'.$cacheSignature.'.json');
+    $reportCachePath = storage_path('app/report-cache/'.$cacheSignature.'-report.json');
 
     if (! is_dir(dirname($legacyCachePath))) {
         mkdir(dirname($legacyCachePath), 0777, true);
@@ -240,8 +240,8 @@ HTML);
         (string) filemtime($path),
         (string) filesize($path),
     ]));
-    $reportCachePath = storage_path('app/report-cache/' . $signature . '-report.json');
-    $searchCachePath = storage_path('app/report-cache/' . $signature . '-search.json');
+    $reportCachePath = storage_path('app/report-cache/'.$signature.'-report.json');
+    $searchCachePath = storage_path('app/report-cache/'.$signature.'-search.json');
 
     expect($report['summary']['total_voters'])->toBe(1)
         ->and(file_exists($reportCachePath))->toBeTrue()
@@ -264,7 +264,7 @@ HTML);
         (string) filemtime($path),
         (string) filesize($path),
     ]));
-    $searchCachePath = storage_path('app/report-cache/' . $signature . '-search.json');
+    $searchCachePath = storage_path('app/report-cache/'.$signature.'-search.json');
 
     expect(file_exists($searchCachePath))->toBeFalse();
 
@@ -289,8 +289,8 @@ HTML);
         (string) filemtime($path),
         (string) filesize($path),
     ]));
-    $legacyCachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
-    $searchCachePath = storage_path('app/report-cache/' . $cacheSignature . '-search.json');
+    $legacyCachePath = storage_path('app/report-cache/'.$cacheSignature.'.json');
+    $searchCachePath = storage_path('app/report-cache/'.$cacheSignature.'-search.json');
 
     if (! is_dir(dirname($legacyCachePath))) {
         mkdir(dirname($legacyCachePath), 0777, true);
@@ -336,7 +336,7 @@ HTML);
         (string) filemtime($path),
         (string) filesize($path),
     ]));
-    $legacyCachePath = storage_path('app/report-cache/' . $cacheSignature . '.json');
+    $legacyCachePath = storage_path('app/report-cache/'.$cacheSignature.'.json');
 
     if (! is_dir(dirname($legacyCachePath))) {
         mkdir(dirname($legacyCachePath), 0777, true);

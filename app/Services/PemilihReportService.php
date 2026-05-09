@@ -8,7 +8,9 @@ use RuntimeException;
 class PemilihReportService
 {
     public const DEFAULT_SAMPLE_PATH = 'F:\\OneDrive\\PAS\\pemilih.xls';
+
     private const REPORT_SCHEMA_VERSION = 3;
+
     private const CULA_LABELS = [
         '1' => 'UMNO',
         '10' => 'PPBM',
@@ -168,7 +170,7 @@ class PemilihReportService
     {
         libxml_use_internal_errors(true);
 
-        $dom = new \DOMDocument();
+        $dom = new \DOMDocument;
         $dom->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_COMPACT);
 
         $headers = [];
@@ -195,6 +197,7 @@ class PemilihReportService
 
             if ($headers === []) {
                 $headers = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
+
                 continue;
             }
 
@@ -221,6 +224,7 @@ class PemilihReportService
 
             if ($headers === []) {
                 $headers = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
+
                 continue;
             }
 
@@ -252,7 +256,7 @@ class PemilihReportService
             $genderKey = in_array($genderCode, ['L', 'P'], true) ? $genderCode : 'LAIN';
             $gender[$genderKey]++;
 
-            $dmKey = $dmCode . '|' . $dmName;
+            $dmKey = $dmCode.'|'.$dmName;
             $dm[$dmKey] ??= [
                 'key' => $dmKey,
                 'code' => $dmCode,
@@ -300,7 +304,7 @@ class PemilihReportService
             ];
             $this->incrementSummary($dmDetails[$dmKey]['summary'], $genderKey, $culaDetail['is_completed']);
 
-            $localityKey = $localityCode . '|' . $localityName . '|' . $dmKey;
+            $localityKey = $localityCode.'|'.$localityName.'|'.$dmKey;
             $localities[$localityKey] ??= [
                 'key' => $localityKey,
                 'code' => $localityCode,
@@ -713,17 +717,17 @@ class PemilihReportService
 
     private function reportCachePath(string $path): string
     {
-        return storage_path('app/report-cache/' . $this->cacheSignature($path) . '-report.json');
+        return storage_path('app/report-cache/'.$this->cacheSignature($path).'-report.json');
     }
 
     private function searchCachePath(string $path): string
     {
-        return storage_path('app/report-cache/' . $this->cacheSignature($path) . '-search.json');
+        return storage_path('app/report-cache/'.$this->cacheSignature($path).'-search.json');
     }
 
     private function legacyCachePath(string $path): string
     {
-        return storage_path('app/report-cache/' . $this->cacheSignature($path) . '.json');
+        return storage_path('app/report-cache/'.$this->cacheSignature($path).'.json');
     }
 
     private function cacheSignature(string $path): string
@@ -775,7 +779,7 @@ class PemilihReportService
     {
         $label = $this->culaLabel($code);
 
-        return $label === $code ? $code : $code . ' - ' . $label;
+        return $label === $code ? $code : $code.' - '.$label;
     }
 
     private function sortUdmGroups(array $groups): array

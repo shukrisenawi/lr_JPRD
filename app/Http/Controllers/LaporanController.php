@@ -28,7 +28,7 @@ class LaporanController extends Controller
 
         $file = $validated['pemilih_file'];
         $extension = strtolower($file->getClientOriginalExtension() ?: 'xls');
-        $filename = 'pemilih-latest.' . $extension;
+        $filename = 'pemilih-latest.'.$extension;
         $directory = storage_path('app/reports');
 
         if (! is_dir($directory)) {
@@ -37,7 +37,7 @@ class LaporanController extends Controller
 
         $file->move($directory, $filename);
 
-        $storedPath = $directory . DIRECTORY_SEPARATOR . $filename;
+        $storedPath = $directory.DIRECTORY_SEPARATOR.$filename;
 
         Setting::setValue('pemilih_report_file_path', $storedPath);
         app(PemilihReportService::class)->buildFromPath($storedPath);

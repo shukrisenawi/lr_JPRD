@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Attributes\Computed;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'email', 'email_verified_at', 'password', 'avatar'])]
+#[Fillable(['name', 'email', 'email_verified_at', 'password', 'avatar', 'role_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -30,6 +30,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function isMasterAdmin(): bool
+    {
+        return (bool) $this->role?->is_master_admin;
+    }
+
+    public function canAccessModule(string $module): bool
+    {
+        return $this->role?->hasModuleAccess($module) ?? false;
     }
 
     #[Computed]

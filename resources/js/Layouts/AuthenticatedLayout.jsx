@@ -9,6 +9,9 @@ export default function AuthenticatedLayout({ header, children }) {
     const { auth, flash } = usePage().props;
     const user = auth.user;
     const userInitial = user.name.charAt(0).toUpperCase();
+    const allowedModules = user.allowed_modules ?? [];
+    const canAccess = (module) => allowedModules.includes(module);
+    const isMasterAdmin = user.role?.is_master_admin === true;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -32,30 +35,46 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
 
                             <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
-                                <NavLink
-                                    href={route('laporan.index')}
-                                    active={route().current('laporan.*')}
-                                >
-                                    Laporan
-                                </NavLink>
-                                <NavLink
-                                    href={route('carian-pemilih.index')}
-                                    active={route().current('carian-pemilih.*')}
-                                >
-                                    Carian Pemilih
-                                </NavLink>
-                                <NavLink
-                                    href={route('settings.edit')}
-                                    active={route().current('settings.edit')}
-                                >
-                                    Settings
-                                </NavLink>
+                                {canAccess('dashboard') && (
+                                    <NavLink
+                                        href={route('dashboard')}
+                                        active={route().current('dashboard')}
+                                    >
+                                        Dashboard
+                                    </NavLink>
+                                )}
+                                {canAccess('laporan') && (
+                                    <NavLink
+                                        href={route('laporan.index')}
+                                        active={route().current('laporan.*')}
+                                    >
+                                        Laporan
+                                    </NavLink>
+                                )}
+                                {canAccess('carian-pemilih') && (
+                                    <NavLink
+                                        href={route('carian-pemilih.index')}
+                                        active={route().current('carian-pemilih.*')}
+                                    >
+                                        Carian Pemilih
+                                    </NavLink>
+                                )}
+                                {canAccess('settings') && (
+                                    <NavLink
+                                        href={route('settings.edit')}
+                                        active={route().current('settings.edit')}
+                                    >
+                                        Settings
+                                    </NavLink>
+                                )}
+                                {isMasterAdmin && (
+                                    <NavLink
+                                        href={route('admin.access.index')}
+                                        active={route().current('admin.access.*')}
+                                    >
+                                        Akses Pengguna
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
@@ -166,30 +185,46 @@ export default function AuthenticatedLayout({ header, children }) {
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('laporan.index')}
-                            active={route().current('laporan.*')}
-                        >
-                            Laporan
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('carian-pemilih.index')}
-                            active={route().current('carian-pemilih.*')}
-                        >
-                            Carian Pemilih
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('settings.edit')}
-                            active={route().current('settings.edit')}
-                        >
-                            Settings
-                        </ResponsiveNavLink>
+                        {canAccess('dashboard') && (
+                            <ResponsiveNavLink
+                                href={route('dashboard')}
+                                active={route().current('dashboard')}
+                            >
+                                Dashboard
+                            </ResponsiveNavLink>
+                        )}
+                        {canAccess('laporan') && (
+                            <ResponsiveNavLink
+                                href={route('laporan.index')}
+                                active={route().current('laporan.*')}
+                            >
+                                Laporan
+                            </ResponsiveNavLink>
+                        )}
+                        {canAccess('carian-pemilih') && (
+                            <ResponsiveNavLink
+                                href={route('carian-pemilih.index')}
+                                active={route().current('carian-pemilih.*')}
+                            >
+                                Carian Pemilih
+                            </ResponsiveNavLink>
+                        )}
+                        {canAccess('settings') && (
+                            <ResponsiveNavLink
+                                href={route('settings.edit')}
+                                active={route().current('settings.edit')}
+                            >
+                                Settings
+                            </ResponsiveNavLink>
+                        )}
+                        {isMasterAdmin && (
+                            <ResponsiveNavLink
+                                href={route('admin.access.index')}
+                                active={route().current('admin.access.*')}
+                            >
+                                Akses Pengguna
+                            </ResponsiveNavLink>
+                        )}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">

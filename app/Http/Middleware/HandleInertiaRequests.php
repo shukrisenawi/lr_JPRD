@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\ModuleRegistry;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,11 +40,24 @@ class HandleInertiaRequests extends Middleware
                         'email' => $request->user()->email,
                         'email_verified_at' => $request->user()->email_verified_at,
                         'avatar_url' => $request->user()->avatarUrl(),
+                        'role' => $request->user()->role
+                            ? [
+                                'id' => $request->user()->role->id,
+                                'name' => $request->user()->role->name,
+                                'slug' => $request->user()->role->slug,
+                                'is_master_admin' => $request->user()->role->is_master_admin,
+                            ]
+                            : null,
+                        'allowed_modules' => collect(ModuleRegistry::keys())
+                            ->filter(fn (string $module) => $request->user()->canAccessModule($module))
+                            ->values()
+                            ->all(),
                     ]
                     : null,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
         ];
     }

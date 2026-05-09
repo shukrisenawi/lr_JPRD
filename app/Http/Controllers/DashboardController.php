@@ -6,9 +6,9 @@ use App\Models\CopiedRecord;
 use App\Models\SheetPage;
 use App\Services\GoogleSheetService;
 use Illuminate\Support\Collection;
-use RuntimeException;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
 
 class DashboardController extends Controller
 {
@@ -65,7 +65,7 @@ class DashboardController extends Controller
                     'id' => $row->id,
                     'row_key' => $row->row_key,
                     'position' => $row->position,
-                    'copy_text' => '/kemascula ' . ($row->no_kp ?? ''),
+                    'copy_text' => '/kemascula '.($row->no_kp ?? ''),
                     'is_copied' => $copied !== null,
                     'copied_at' => $copied?->copied_at?->toDateTimeString(),
                     'values' => $row->payload,

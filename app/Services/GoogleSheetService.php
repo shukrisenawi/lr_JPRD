@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\CopiedRecord;
+use App\Models\Setting;
 use App\Models\SheetPage;
 use App\Models\SheetPageRow;
-use App\Models\Setting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -168,7 +168,7 @@ class GoogleSheetService
                         'row_key' => $fingerprint,
                         'row_fingerprint' => $fingerprint,
                         'position' => $index + 1,
-                        'copy_text' => '/kemascula ' . ($row['no_kp'] ?? ''),
+                        'copy_text' => '/kemascula '.($row['no_kp'] ?? ''),
                         'values' => $row,
                     ];
                 })
@@ -250,9 +250,9 @@ class GoogleSheetService
             $gid = $queryParams['gid'] ?? null;
         }
 
-        $baseUrl = 'https://docs.google.com/spreadsheets/d/' . $matches[1] . '/export?format=csv';
+        $baseUrl = 'https://docs.google.com/spreadsheets/d/'.$matches[1].'/export?format=csv';
 
-        return $gid !== null ? $baseUrl . '&gid=' . $gid : $baseUrl;
+        return $gid !== null ? $baseUrl.'&gid='.$gid : $baseUrl;
     }
 
     public function toSheetTabCsvUrl(string $sheetUrl, string $sheetName): string
@@ -264,9 +264,9 @@ class GoogleSheetService
         }
 
         return 'https://docs.google.com/spreadsheets/d/'
-            . $matches[1]
-            . '/gviz/tq?tqx=out:csv&sheet='
-            . rawurlencode($sheetName);
+            .$matches[1]
+            .'/gviz/tq?tqx=out:csv&sheet='
+            .rawurlencode($sheetName);
     }
 
     private function normalizeNoKp(string $noKp): string
