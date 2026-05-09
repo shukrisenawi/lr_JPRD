@@ -359,11 +359,12 @@ it('allows owner to share a program with selected authorized users', function ()
         'user_id' => $owner->id,
     ]);
 
-    $this->actingAs($owner)
+    $this->from(route('program.index'))
+        ->actingAs($owner)
         ->post(route('program.share.store', $program), [
             'shared_user_ids' => [$sharedUser->id, $secondSharedUser->id],
         ])
-        ->assertRedirect(route('program.index', ['program' => $program->id]));
+        ->assertRedirect(route('program.index'));
 
     $this->assertDatabaseHas('program_user_shares', [
         'program_id' => $program->id,
@@ -391,11 +392,12 @@ it('owner can update checkbox share list and remove unchecked users', function (
 
     $program->sharedUsers()->attach([$sharedUser->id, $secondSharedUser->id]);
 
-    $this->actingAs($owner)
+    $this->from(route('program.index'))
+        ->actingAs($owner)
         ->post(route('program.share.store', $program), [
             'shared_user_ids' => [$secondSharedUser->id],
         ])
-        ->assertRedirect(route('program.index', ['program' => $program->id]));
+        ->assertRedirect(route('program.index'));
 
     $this->assertDatabaseMissing('program_user_shares', [
         'program_id' => $program->id,

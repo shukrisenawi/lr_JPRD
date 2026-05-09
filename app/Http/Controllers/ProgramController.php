@@ -261,9 +261,7 @@ class ProgramController extends Controller
 
         $program->sharedUsers()->sync($sharedUserIds->all());
 
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Perkongsian program berjaya dikemaskini.');
+        return back()->with('success', 'Perkongsian program berjaya dikemaskini.');
     }
 
     private function validateProgram(Request $request): array
