@@ -126,24 +126,6 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
                         <InputError className="mt-2" message={shareForm.errors.shared_user_ids} />
                     </div>
 
-                    {program.shared_users?.length > 0 && (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                                Sudah Dikongsi Kepada
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                                {program.shared_users.map((user) => (
-                                    <span
-                                        key={user.id}
-                                        className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
-                                    >
-                                        {user.name}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
                     <div className="flex justify-end gap-2 pt-2">
                         <SecondaryButton
                             type="button"
