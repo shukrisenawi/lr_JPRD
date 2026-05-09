@@ -182,7 +182,7 @@ function IconButton({ label, children, className = '', ...props }) {
             type="button"
             title={label}
             aria-label={label}
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition ${className}`}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition ${className}`}
             {...props}
         >
             {children}
@@ -652,7 +652,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                             </div>
                         </form>
 
-                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
+                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
                             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
                                 Ringkasan Program
                             </p>
@@ -724,19 +724,19 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                 ) : (
                                     <div className="overflow-hidden rounded-3xl border border-slate-200">
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-slate-200 text-sm">
+                                            <table className="min-w-full divide-y divide-slate-200 text-[13px]">
                                                 <thead className="bg-slate-50/90">
                                                     <tr>
-                                                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                        <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                                             Nama
                                                         </th>
-                                                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                        <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                                             UDM
                                                         </th>
-                                                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                        <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                                             Telefon
                                                         </th>
-                                                        <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                        <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                                                             Tindakan
                                                         </th>
                                                     </tr>
@@ -751,20 +751,20 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                                                 className={
                                                                     isSelected
                                                                         ? 'bg-amber-100 text-amber-950'
-                                                                        : 'text-slate-700 hover:bg-slate-50'
+                                                                        : 'text-slate-700 hover:bg-amber-50'
                                                                 }
                                                             >
-                                                                <td className="px-4 py-3 font-semibold">
+                                                                <td className="px-3 py-2.5 font-semibold leading-5">
                                                                     {attendee.name}
                                                                 </td>
-                                                                <td className="px-4 py-3">
+                                                                <td className="px-3 py-2.5 leading-5">
                                                                     {attendee.dm || '-'}
                                                                 </td>
-                                                                <td className="px-4 py-3">
+                                                                <td className="px-3 py-2.5 leading-5">
                                                                     {attendee.phone_mobile || attendee.phone_home || '-'}
                                                                 </td>
-                                                                <td className="px-4 py-3">
-                                                                    <div className="flex justify-end gap-2">
+                                                                <td className="px-3 py-2">
+                                                                    <div className="flex justify-end gap-1.5">
                                                                         <IconButton
                                                                             label="Lihat detail"
                                                                             onClick={() => setSelectedAttendee(attendee)}
@@ -776,7 +776,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                                                         >
                                                                             <svg
                                                                                 viewBox="0 0 24 24"
-                                                                                className="h-4 w-4"
+                                                                                className="h-3.5 w-3.5"
                                                                                 fill="none"
                                                                                 stroke="currentColor"
                                                                                 strokeWidth="2"
@@ -795,7 +795,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                                                         >
                                                                             <svg
                                                                                 viewBox="0 0 24 24"
-                                                                                className="h-4 w-4"
+                                                                                className="h-3.5 w-3.5"
                                                                                 fill="none"
                                                                                 stroke="currentColor"
                                                                                 strokeWidth="2"
