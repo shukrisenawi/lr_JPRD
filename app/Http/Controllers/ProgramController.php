@@ -231,18 +231,33 @@ class ProgramController extends Controller
         $this->ensureOwner($request->user()->id, $program);
 
         $validated = $request->validate([
-            'shared_user_id' => ['required', 'integer'],
+            'shared_user_ids' => ['nullable', 'array'],
+            'shared_user_ids.*' => ['integer'],
         ]);
 
-        $sharedUser = User::query()->findOrFail($validated['shared_user_id']);
-        abort_unless($sharedUser->canAccessModule('program'), 422, 'Pengguna ini tiada akses modul program.');
-        abort_if((int) $sharedUser->id === (int) $program->user_id, 422, 'Pemilik tidak perlu dikongsi.');
+        $sharedUserIds = collect($validated['shared_user_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
 
-        $program->sharedUsers()->syncWithoutDetaching([$sharedUser->id]);
+        $shareableUserIds = User::query()
+            ->get()
+            ->filter(fn (User $candidate) => $candidate->canAccessModule('program'))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id);
+
+        abort_if($sharedUserIds->contains((int) $program->user_id), 422, 'Pemilik tidak perlu dikongsi.');
+        abort_unless(
+            $sharedUserIds->every(fn (int $id) => $shareableUserIds->contains($id)),
+            422,
+            'Terdapat pengguna dipilih yang tidak sah untuk perkongsian program.',
+        );
+
+        $program->sharedUsers()->sync($sharedUserIds->all());
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Program berjaya dikongsi kepada pengguna dipilih.');
+            ->with('success', 'Perkongsian program berjaya dikemaskini.');
     }
 
     private function validateProgram(Request $request): array

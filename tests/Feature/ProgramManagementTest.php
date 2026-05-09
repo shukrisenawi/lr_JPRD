@@ -346,9 +346,10 @@ it('allows authorized user to delete attendee from a program', function () {
     ]);
 });
 
-it('allows owner to share a program with another authorized user', function () {
+it('allows owner to share a program with selected authorized users', function () {
     $owner = User::factory()->withModules(['dashboard', 'program'])->create();
     $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+    $secondSharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
 
     $program = Program::query()->create([
         'tajuk' => 'Program Perkongsian',
@@ -360,13 +361,50 @@ it('allows owner to share a program with another authorized user', function () {
 
     $this->actingAs($owner)
         ->post(route('program.share.store', $program), [
-            'shared_user_id' => $sharedUser->id,
+            'shared_user_ids' => [$sharedUser->id, $secondSharedUser->id],
         ])
         ->assertRedirect(route('program.index', ['program' => $program->id]));
 
     $this->assertDatabaseHas('program_user_shares', [
         'program_id' => $program->id,
         'user_id' => $sharedUser->id,
+    ]);
+
+    $this->assertDatabaseHas('program_user_shares', [
+        'program_id' => $program->id,
+        'user_id' => $secondSharedUser->id,
+    ]);
+});
+
+it('owner can update checkbox share list and remove unchecked users', function () {
+    $owner = User::factory()->withModules(['dashboard', 'program'])->create();
+    $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+    $secondSharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Perkongsian',
+        'tempat' => 'Dewan Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $owner->id,
+    ]);
+
+    $program->sharedUsers()->attach([$sharedUser->id, $secondSharedUser->id]);
+
+    $this->actingAs($owner)
+        ->post(route('program.share.store', $program), [
+            'shared_user_ids' => [$secondSharedUser->id],
+        ])
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $this->assertDatabaseMissing('program_user_shares', [
+        'program_id' => $program->id,
+        'user_id' => $sharedUser->id,
+    ]);
+
+    $this->assertDatabaseHas('program_user_shares', [
+        'program_id' => $program->id,
+        'user_id' => $secondSharedUser->id,
     ]);
 });
 

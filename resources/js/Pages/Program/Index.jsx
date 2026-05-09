@@ -83,21 +83,46 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
 
                 <form onSubmit={onSubmit} className="mt-4 space-y-4">
                     <div>
-                        <InputLabel htmlFor="shared_user_id" value="Pilih Pengguna" />
-                        <select
-                            id="shared_user_id"
-                            value={shareForm.data.shared_user_id}
-                            onChange={(event) => shareForm.setData('shared_user_id', event.target.value)}
-                            className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                        >
-                            <option value="">Pilih pengguna</option>
-                            {users.map((user) => (
-                                <option key={user.id} value={user.id}>
-                                    {user.name} - {user.email}
-                                </option>
-                            ))}
-                        </select>
-                        <InputError className="mt-2" message={shareForm.errors.shared_user_id} />
+                        <InputLabel value="Pilih Pengguna Admin" />
+                        <div className="mt-2 max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                            {users.map((user) => {
+                                const checked = shareForm.data.shared_user_ids.includes(user.id);
+
+                                return (
+                                    <label
+                                        key={user.id}
+                                        className="flex cursor-pointer items-start gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-200 transition hover:bg-cyan-50"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={checked}
+                                            onChange={(event) => {
+                                                const nextIds = event.target.checked
+                                                    ? [...shareForm.data.shared_user_ids, user.id]
+                                                    : shareForm.data.shared_user_ids.filter(
+                                                          (id) => id !== user.id,
+                                                      );
+
+                                                shareForm.setData(
+                                                    'shared_user_ids',
+                                                    Array.from(new Set(nextIds)),
+                                                );
+                                            }}
+                                            className="mt-0.5 rounded border-slate-300 text-cyan-600 shadow-sm focus:ring-cyan-500"
+                                        />
+                                        <span className="min-w-0">
+                                            <span className="block text-sm font-semibold text-slate-900">
+                                                {user.name}
+                                            </span>
+                                            <span className="block text-xs text-slate-500">
+                                                {user.email}
+                                            </span>
+                                        </span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        <InputError className="mt-2" message={shareForm.errors.shared_user_ids} />
                     </div>
 
                     {program.shared_users?.length > 0 && (
@@ -594,7 +619,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         gambar_url: null,
     });
     const shareForm = useForm({
-        shared_user_id: '',
+        shared_user_ids: [],
     });
     const [programImagePreviewUrl, setProgramImagePreviewUrl] = useState(null);
 
@@ -714,13 +739,16 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     const openShareProgramModal = (program) => {
         setSelectedShareProgram(program);
-        shareForm.setData('shared_user_id', '');
+        shareForm.setData(
+            'shared_user_ids',
+            (program.shared_users ?? []).map((user) => user.id),
+        );
         shareForm.clearErrors();
     };
 
     const closeShareProgramModal = () => {
         setSelectedShareProgram(null);
-        shareForm.setData('shared_user_id', '');
+        shareForm.setData('shared_user_ids', []);
         shareForm.clearErrors();
     };
 
