@@ -465,23 +465,21 @@ export default function ProgramIndex({ programs, selectedProgram }) {
         };
 
         if (isEditing) {
-            programForm
-                .transform((data) => ({
-                    ...data,
-                    _method: 'put',
-                }))
-                .post(route('program.update', editingProgramId), {
-                    preserveScroll: true,
-                    forceFormData: true,
-                    onSuccess: resetAfterSuccess,
-                });
+            programForm.transform((data) => ({
+                ...data,
+                _method: 'put',
+            }));
+            programForm.post(route('program.update', editingProgramId), {
+                preserveScroll: true,
+                forceFormData: true,
+                onSuccess: resetAfterSuccess,
+            });
 
             return;
         }
 
-        programForm
-            .transform((data) => data)
-            .post(route('program.store'), {
+        programForm.transform((data) => data);
+        programForm.post(route('program.store'), {
             preserveScroll: true,
             forceFormData: programForm.data.gambar instanceof File,
             onSuccess: resetAfterSuccess,
