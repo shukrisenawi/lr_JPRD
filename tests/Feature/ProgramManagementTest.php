@@ -346,6 +346,129 @@ it('allows authorized user to delete attendee from a program', function () {
     ]);
 });
 
+it('allows owner to share a program with another authorized user', function () {
+    $owner = User::factory()->withModules(['dashboard', 'program'])->create();
+    $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Perkongsian',
+        'tempat' => 'Dewan Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $owner->id,
+    ]);
+
+    $this->actingAs($owner)
+        ->post(route('program.share.store', $program), [
+            'shared_user_id' => $sharedUser->id,
+        ])
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $this->assertDatabaseHas('program_user_shares', [
+        'program_id' => $program->id,
+        'user_id' => $sharedUser->id,
+    ]);
+});
+
+it('shows shared program to shared user and hides program edit access', function () {
+    $owner = User::factory()->withModules(['dashboard', 'program'])->create();
+    $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Dikongsi',
+        'tempat' => 'Dewan Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $owner->id,
+    ]);
+
+    $program->sharedUsers()->attach($sharedUser->id);
+
+    $this->actingAs($sharedUser)
+        ->get(route('program.index', ['program' => $program->id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('programs.0.id', $program->id)
+            ->where('programs.0.can_edit', false)
+            ->where('selectedProgram.id', $program->id)
+            ->where('selectedProgram.can_edit', false));
+});
+
+it('allows shared user to add and delete attendee for shared program', function () {
+    $owner = User::factory()->withModules(['dashboard', 'program'])->create();
+    $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Dikongsi',
+        'tempat' => 'Dewan Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $owner->id,
+    ]);
+
+    $program->sharedUsers()->attach($sharedUser->id);
+
+    $payload = [
+        'voter_id' => 'sha1-kongsi',
+        'name' => 'PENGUNDI KONGSI',
+        'no_kp' => '900101025555',
+        'old_ic' => '',
+        'phone_mobile' => '0123456789',
+        'phone_home' => '049999999',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'gender' => 'L',
+        'race' => 'M',
+        'cula_code' => '2',
+        'cula_display_label' => '2 - PAS',
+        'address' => 'KG BARU KURA',
+    ];
+
+    $this->actingAs($sharedUser)
+        ->post(route('program.attendees.store', $program), $payload)
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $attendee = $program->attendees()->where('voter_id', 'sha1-kongsi')->first();
+
+    expect($attendee)->not->toBeNull();
+
+    $this->actingAs($sharedUser)
+        ->delete(route('program.attendees.destroy', [$program, $attendee]))
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $this->assertDatabaseMissing('program_attendees', [
+        'id' => $attendee->id,
+    ]);
+});
+
+it('blocks shared user from updating or deleting shared program', function () {
+    $owner = User::factory()->withModules(['dashboard', 'program'])->create();
+    $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Dikongsi',
+        'tempat' => 'Dewan Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $owner->id,
+    ]);
+
+    $program->sharedUsers()->attach($sharedUser->id);
+
+    $this->actingAs($sharedUser)
+        ->put(route('program.update', $program), [
+            'tajuk' => 'Tak Sepatutnya Berjaya',
+            'tempat' => 'Dewan Serbaguna',
+            'tarikh' => '2026-05-11',
+            'masa' => '10:30',
+        ])
+        ->assertForbidden();
+
+    $this->actingAs($sharedUser)
+        ->delete(route('program.destroy', $program))
+        ->assertForbidden();
+});
+
 it('blocks program route when user role does not have program module access', function () {
     $user = User::factory()->withModules(['dashboard'])->create();
 

@@ -53,7 +53,93 @@ function ProgramImageModal({ program, onClose }) {
     );
 }
 
-function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage }) {
+function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
+    if (!program) {
+        return null;
+    }
+
+    return (
+        <Modal show={Boolean(program)} onClose={onClose} maxWidth="lg">
+            <div className="p-5 sm:p-6">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                            Share Program
+                        </p>
+                        <h3 className="mt-1 text-lg font-bold text-slate-900">{program.tajuk}</h3>
+                        <p className="mt-1 text-sm leading-5 text-slate-500">
+                            Pilih pengguna yang boleh lihat program ini dan urus kehadiran pemilih.
+                        </p>
+                    </div>
+
+                    <SecondaryButton
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
+                    >
+                        Tutup
+                    </SecondaryButton>
+                </div>
+
+                <form onSubmit={onSubmit} className="mt-4 space-y-4">
+                    <div>
+                        <InputLabel htmlFor="shared_user_id" value="Pilih Pengguna" />
+                        <select
+                            id="shared_user_id"
+                            value={shareForm.data.shared_user_id}
+                            onChange={(event) => shareForm.setData('shared_user_id', event.target.value)}
+                            className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                        >
+                            <option value="">Pilih pengguna</option>
+                            {users.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name} - {user.email}
+                                </option>
+                            ))}
+                        </select>
+                        <InputError className="mt-2" message={shareForm.errors.shared_user_id} />
+                    </div>
+
+                    {program.shared_users?.length > 0 && (
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                Sudah Dikongsi Kepada
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {program.shared_users.map((user) => (
+                                    <span
+                                        key={user.id}
+                                        className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200"
+                                    >
+                                        {user.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 pt-2">
+                        <SecondaryButton
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-xl px-4 py-2 text-[11px] tracking-[0.12em]"
+                        >
+                            Batal
+                        </SecondaryButton>
+                        <PrimaryButton
+                            className="rounded-xl bg-cyan-600 px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition hover:bg-cyan-700"
+                            disabled={shareForm.processing}
+                        >
+                            {shareForm.processing ? 'Menyimpan...' : 'Share'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </div>
+        </Modal>
+    );
+}
+
+function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare }) {
     const scheduleLabel = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
 
     return (
@@ -64,11 +150,25 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
                     : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
             }`}
         >
-            <div className="w-full text-left">
+            <div
+                role="button"
+                tabIndex={0}
+                onClick={() => onSelect(program.id)}
+                onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelect(program.id);
+                    }
+                }}
+                className="w-full text-left outline-none"
+            >
                 {program.gambar_url && (
                     <button
                         type="button"
-                        onClick={() => onPreviewImage(program)}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onPreviewImage(program);
+                        }}
                         className="mb-3 block w-full overflow-hidden rounded-xl"
                     >
                         <img
@@ -89,21 +189,34 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
             </div>
 
             <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
-                <SecondaryButton
-                    type="button"
-                    onClick={() => onEdit(program)}
-                    className="rounded-xl border-slate-300 px-3 py-1.5 text-[10px] tracking-[0.14em]"
-                >
-                    Edit
-                </SecondaryButton>
-                <button
-                    type="button"
-                    onClick={() => onDelete(program)}
-                    disabled={deleting}
-                    className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {deleting ? 'Memadam...' : 'Padam'}
-                </button>
+                {program.can_share && (
+                    <SecondaryButton
+                        type="button"
+                        onClick={() => onShare(program)}
+                        className="rounded-xl border-amber-300 px-3 py-1.5 text-[10px] tracking-[0.14em] text-amber-700"
+                    >
+                        Share
+                    </SecondaryButton>
+                )}
+                {program.can_edit && (
+                    <>
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => onEdit(program)}
+                            className="rounded-xl border-slate-300 px-3 py-1.5 text-[10px] tracking-[0.14em]"
+                        >
+                            Edit
+                        </SecondaryButton>
+                        <button
+                            type="button"
+                            onClick={() => onDelete(program)}
+                            disabled={deleting}
+                            className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {deleting ? 'Memadam...' : 'Padam'}
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -461,12 +574,13 @@ function SearchVoterPanel({ selectedProgram }) {
     );
 }
 
-export default function ProgramIndex({ programs, selectedProgram }) {
+export default function ProgramIndex({ programs, selectedProgram, shareableUsers }) {
     const [activeTab, setActiveTab] = useState('tambah-program');
     const [editingProgramId, setEditingProgramId] = useState(null);
     const [deletingProgramId, setDeletingProgramId] = useState(null);
     const [selectedAttendee, setSelectedAttendee] = useState(null);
     const [selectedProgramImage, setSelectedProgramImage] = useState(null);
+    const [selectedShareProgram, setSelectedShareProgram] = useState(null);
     const [deletingAttendeeId, setDeletingAttendeeId] = useState(null);
     const [openingTelegram, setOpeningTelegram] = useState(false);
     const gambarInputRef = useRef(null);
@@ -478,6 +592,9 @@ export default function ProgramIndex({ programs, selectedProgram }) {
         masa: '',
         gambar: null,
         gambar_url: null,
+    });
+    const shareForm = useForm({
+        shared_user_id: '',
     });
     const [programImagePreviewUrl, setProgramImagePreviewUrl] = useState(null);
 
@@ -593,6 +710,34 @@ export default function ProgramIndex({ programs, selectedProgram }) {
 
     const closeProgramImageModal = () => {
         setSelectedProgramImage(null);
+    };
+
+    const openShareProgramModal = (program) => {
+        setSelectedShareProgram(program);
+        shareForm.setData('shared_user_id', '');
+        shareForm.clearErrors();
+    };
+
+    const closeShareProgramModal = () => {
+        setSelectedShareProgram(null);
+        shareForm.setData('shared_user_id', '');
+        shareForm.clearErrors();
+    };
+
+    const submitShareProgram = (event) => {
+        event.preventDefault();
+
+        if (!selectedShareProgram) {
+            return;
+        }
+
+        shareForm.post(route('program.share.store', selectedShareProgram.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeShareProgramModal();
+                setActiveTab('senarai-program');
+            },
+        });
     };
 
     const deleteAttendee = (attendee) => {
@@ -875,6 +1020,8 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                         onDelete={deleteProgram}
                                         onEdit={startEditProgram}
                                         onPreviewImage={setSelectedProgramImage}
+                                        onShare={openShareProgramModal}
+                                        onSelect={selectProgram}
                                     />
                                 ))
                             )}
@@ -1017,6 +1164,13 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                 telegramReady={!openingTelegram && Boolean(buildTelegramCommand(selectedAttendee, 'kemascula'))}
             />
             <ProgramImageModal program={selectedProgramImage} onClose={closeProgramImageModal} />
+            <ProgramShareModal
+                program={selectedShareProgram}
+                users={shareableUsers}
+                shareForm={shareForm}
+                onClose={closeShareProgramModal}
+                onSubmit={submitShareProgram}
+            />
         </AuthenticatedLayout>
     );
 }

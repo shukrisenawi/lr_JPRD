@@ -5,8 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Program;
 use App\Models\ProgramAttendee;
 use App\Models\Setting;
+use App\Models\User;
 use App\Services\PemilihReportService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -17,8 +20,9 @@ class ProgramController extends Controller
 {
     public function index(Request $request): Response
     {
-        $programs = Program::query()
-            ->with('attendees')
+        $user = $request->user();
+        $programs = $this->accessibleProgramsQuery($user->id)
+            ->with(['attendees', 'sharedUsers:id,name'])
             ->latest('tarikh')
             ->latest('masa')
             ->latest('id')
@@ -37,6 +41,8 @@ class ProgramController extends Controller
                     'masa' => $program->masa?->format('H:i'),
                     'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
                     'attendees_count' => $program->attendees->count(),
+                    'can_edit' => (int) $program->user_id === (int) $user->id,
+                    'can_share' => (int) $program->user_id === (int) $user->id,
                 ])
                 ->values(),
             'selectedProgram' => $selectedProgram
@@ -47,6 +53,14 @@ class ProgramController extends Controller
                     'tarikh' => $selectedProgram->tarikh?->format('Y-m-d'),
                     'masa' => $selectedProgram->masa?->format('H:i'),
                     'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
+                    'can_edit' => (int) $selectedProgram->user_id === (int) $user->id,
+                    'can_share' => (int) $selectedProgram->user_id === (int) $user->id,
+                    'shared_users' => $selectedProgram->sharedUsers
+                        ->map(fn (User $sharedUser) => [
+                            'id' => $sharedUser->id,
+                            'name' => $sharedUser->name,
+                        ])
+                        ->values(),
                     'attendees' => $selectedProgram->attendees
                         ->map(fn (ProgramAttendee $attendee) => [
                             'id' => $attendee->id,
@@ -67,6 +81,16 @@ class ProgramController extends Controller
                         ->values(),
                 ]
                 : null,
+            'shareableUsers' => User::query()
+                ->whereKeyNot($user->id)
+                ->get()
+                ->filter(fn (User $candidate) => $candidate->canAccessModule('program'))
+                ->map(fn (User $candidate) => [
+                    'id' => $candidate->id,
+                    'name' => $candidate->name,
+                    'email' => $candidate->email,
+                ])
+                ->values(),
         ]);
     }
 
@@ -90,6 +114,8 @@ class ProgramController extends Controller
 
     public function update(Request $request, Program $program): RedirectResponse
     {
+        $this->ensureOwner($request->user()->id, $program);
+
         $validated = $this->validateProgram($request);
         $payload = [...$validated];
 
@@ -110,6 +136,8 @@ class ProgramController extends Controller
 
     public function destroy(Program $program): RedirectResponse
     {
+        $this->ensureOwner(request()->user()->id, $program);
+
         if ($program->gambar) {
             Storage::disk('public')->delete($program->gambar);
         }
@@ -123,6 +151,8 @@ class ProgramController extends Controller
 
     public function gambar(Program $program)
     {
+        $this->ensureAccessible(request()->user()->id, $program);
+
         abort_unless($program->gambar, 404);
         abort_unless(Storage::disk('public')->exists($program->gambar), 404);
 
@@ -136,6 +166,8 @@ class ProgramController extends Controller
 
     public function search(Request $request, Program $program, PemilihReportService $reportService)
     {
+        $this->ensureAccessible($request->user()->id, $program);
+
         $path = Setting::valueOf('pemilih_report_file_path', PemilihReportService::DEFAULT_SAMPLE_PATH);
 
         return response()->json([
@@ -148,6 +180,8 @@ class ProgramController extends Controller
 
     public function storeAttendee(Request $request, Program $program): RedirectResponse
     {
+        $this->ensureAccessible($request->user()->id, $program);
+
         $validated = $request->validate([
             'voter_id' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
@@ -179,6 +213,8 @@ class ProgramController extends Controller
 
     public function destroyAttendee(Program $program, ProgramAttendee $attendee): RedirectResponse
     {
+        $this->ensureAccessible(request()->user()->id, $program);
+
         if ($attendee->program_id !== $program->id) {
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
         }
@@ -190,6 +226,25 @@ class ProgramController extends Controller
             ->with('success', 'Kehadiran pemilih berjaya dipadam.');
     }
 
+    public function storeShare(Request $request, Program $program): RedirectResponse
+    {
+        $this->ensureOwner($request->user()->id, $program);
+
+        $validated = $request->validate([
+            'shared_user_id' => ['required', 'integer'],
+        ]);
+
+        $sharedUser = User::query()->findOrFail($validated['shared_user_id']);
+        abort_unless($sharedUser->canAccessModule('program'), 422, 'Pengguna ini tiada akses modul program.');
+        abort_if((int) $sharedUser->id === (int) $program->user_id, 422, 'Pemilik tidak perlu dikongsi.');
+
+        $program->sharedUsers()->syncWithoutDetaching([$sharedUser->id]);
+
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Program berjaya dikongsi kepada pengguna dipilih.');
+    }
+
     private function validateProgram(Request $request): array
     {
         return $request->validate([
@@ -199,5 +254,26 @@ class ProgramController extends Controller
             'masa' => ['nullable', 'date_format:H:i'],
             'gambar' => ['nullable', 'image', 'max:2048'],
         ]);
+    }
+
+    private function accessibleProgramsQuery(int $userId): Builder
+    {
+        return Program::query()->where(function (Builder $query) use ($userId) {
+            $query->where('user_id', $userId)
+                ->orWhereHas('sharedUsers', fn (Builder $sharedQuery) => $sharedQuery->whereKey($userId));
+        });
+    }
+
+    private function ensureAccessible(int $userId, Program $program): void
+    {
+        abort_unless(
+            (int) $program->user_id === $userId || $program->sharedUsers()->whereKey($userId)->exists(),
+            403,
+        );
+    }
+
+    private function ensureOwner(int $userId, Program $program): void
+    {
+        abort_unless((int) $program->user_id === $userId, 403);
     }
 }
