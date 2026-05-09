@@ -27,7 +27,9 @@ it('prevents non master admin from opening access management page', function () 
 
     $this->actingAs($user)
         ->get(route('admin.access.index'))
-        ->assertForbidden();
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
 });
 
 it('allows master admin to create a user with selected role', function () {
@@ -84,7 +86,19 @@ it('blocks access to module routes when user role does not have permission', fun
 
     $this->actingAs($user)
         ->get(route('laporan.index'))
-        ->assertForbidden();
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
+});
+
+it('logs out user and redirects to login when forbidden page is accessed', function () {
+    $user = User::factory()->withModules(['dashboard'])->create();
+
+    $this->actingAs($user)
+        ->get(route('laporan.index'))
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
 });
 
 it('allows master admin to update existing user details', function () {
