@@ -16,7 +16,44 @@ function buildTelegramCommand(voter, commandPrefix) {
     return identityNumber ? `/${commandPrefix} ${identityNumber}` : '';
 }
 
-function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }) {
+function ProgramImageModal({ program, onClose }) {
+    if (!program?.gambar_url) {
+        return null;
+    }
+
+    return (
+        <Modal show={Boolean(program?.gambar_url)} onClose={onClose} maxWidth="4xl">
+            <div className="p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div>
+                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                            Gambar Program
+                        </p>
+                        <h3 className="mt-1 text-lg font-bold text-slate-900">{program.tajuk}</h3>
+                    </div>
+
+                    <SecondaryButton
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
+                    >
+                        Tutup
+                    </SecondaryButton>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-2xl bg-slate-100">
+                    <img
+                        src={program.gambar_url}
+                        alt={program.tajuk}
+                        className="max-h-[75vh] w-full object-contain"
+                    />
+                </div>
+            </div>
+        </Modal>
+    );
+}
+
+function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect }) {
     const scheduleLabel = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
 
     return (
@@ -27,13 +64,19 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }
                     : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
             }`}
         >
-            <button type="button" onClick={() => onSelect(program.id)} className="w-full text-left">
+            <div className="w-full text-left">
                 {program.gambar_url && (
-                    <img
-                        src={program.gambar_url}
-                        alt={program.tajuk}
-                        className="mb-3 h-28 w-full rounded-xl object-cover"
-                    />
+                    <button
+                        type="button"
+                        onClick={() => onPreviewImage(program)}
+                        className="mb-3 block w-full overflow-hidden rounded-xl"
+                    >
+                        <img
+                            src={program.gambar_url}
+                            alt={program.tajuk}
+                            className="h-28 w-full cursor-pointer object-cover transition duration-200 hover:scale-[1.02]"
+                        />
+                    </button>
                 )}
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700">
                     {scheduleLabel}
@@ -43,9 +86,16 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }
                 <p className="mt-2 text-[11px] font-medium text-slate-500">
                     {program.attendees_count} pemilih direkod hadir
                 </p>
-            </button>
+            </div>
 
             <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
+                <SecondaryButton
+                    type="button"
+                    onClick={() => onSelect(program.id)}
+                    className="rounded-xl border-cyan-300 px-3 py-1.5 text-[10px] tracking-[0.14em] text-cyan-700"
+                >
+                    {isActive ? 'Dipilih' : 'Pilih'}
+                </SecondaryButton>
                 <SecondaryButton
                     type="button"
                     onClick={() => onEdit(program)}
@@ -423,6 +473,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
     const [editingProgramId, setEditingProgramId] = useState(null);
     const [deletingProgramId, setDeletingProgramId] = useState(null);
     const [selectedAttendee, setSelectedAttendee] = useState(null);
+    const [selectedProgramImage, setSelectedProgramImage] = useState(null);
     const [deletingAttendeeId, setDeletingAttendeeId] = useState(null);
     const [openingTelegram, setOpeningTelegram] = useState(false);
     const gambarInputRef = useRef(null);
@@ -545,6 +596,10 @@ export default function ProgramIndex({ programs, selectedProgram }) {
 
     const closeAttendeeModal = () => {
         setSelectedAttendee(null);
+    };
+
+    const closeProgramImageModal = () => {
+        setSelectedProgramImage(null);
     };
 
     const deleteAttendee = (attendee) => {
@@ -826,6 +881,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                         deleting={deletingProgramId === program.id}
                                         onDelete={deleteProgram}
                                         onEdit={startEditProgram}
+                                        onPreviewImage={setSelectedProgramImage}
                                         onSelect={selectProgram}
                                     />
                                 ))
@@ -968,6 +1024,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                 onOpenTelegram={handleOpenTelegram}
                 telegramReady={!openingTelegram && Boolean(buildTelegramCommand(selectedAttendee, 'kemascula'))}
             />
+            <ProgramImageModal program={selectedProgramImage} onClose={closeProgramImageModal} />
         </AuthenticatedLayout>
     );
 }
