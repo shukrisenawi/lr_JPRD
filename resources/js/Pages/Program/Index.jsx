@@ -146,14 +146,14 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady 
 
     return (
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="2xl">
-            <div className="p-6 sm:p-7">
-                <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="p-5 sm:p-6">
+                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
                             Detail Kehadiran
                         </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">{attendee.name}</h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                        <h3 className="mt-1.5 text-xl font-bold leading-6 text-slate-900">{attendee.name}</h3>
+                        <p className="mt-1.5 text-sm leading-5 text-slate-500">
                             Semak maklumat pemilih yang telah direkod hadir untuk program ini.
                         </p>
                     </div>
@@ -161,29 +161,29 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady 
                     <SecondaryButton
                         type="button"
                         onClick={onClose}
-                        className="rounded-xl px-4 py-2 text-[11px] tracking-[0.14em]"
+                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
                     >
                         Tutup
                     </SecondaryButton>
                 </div>
 
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     {fields.map(([label, value]) => (
-                        <div key={label} className="rounded-2xl bg-slate-50 px-4 py-3">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        <div key={label} className="rounded-xl bg-slate-50 px-3 py-2.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                                 {label}
                             </p>
-                            <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
+                            <p className="mt-1 text-[13px] font-medium leading-5 text-slate-800">{value}</p>
                         </div>
                     ))}
                 </div>
 
-                <div className="mt-6 flex flex-wrap justify-center gap-2 border-t border-slate-100 pt-5">
+                <div className="mt-4 flex flex-wrap justify-center gap-2 border-t border-slate-100 pt-4">
                     <button
                         type="button"
                         onClick={() => onOpenTelegram(attendee, 'kemascula')}
                         disabled={!telegramReady}
-                        className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-xl bg-cyan-600 px-3 py-1.5 text-[13px] font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Kemas Cula
                     </button>
@@ -191,7 +191,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady 
                         type="button"
                         onClick={() => onOpenTelegram(attendee, 'kemastel')}
                         disabled={!telegramReady}
-                        className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-xl bg-emerald-600 px-3 py-1.5 text-[13px] font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         Kemaskini Tel
                     </button>
