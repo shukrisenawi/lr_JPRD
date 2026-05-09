@@ -12,6 +12,7 @@ export default function AuthenticatedLayout({ header, children }) {
     const allowedModules = user.allowed_modules ?? [];
     const canAccess = (module) => allowedModules.includes(module);
     const isMasterAdmin = user.role?.is_master_admin === true;
+    const impersonation = auth.impersonation ?? { is_active: false, impersonator: null };
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -282,6 +283,25 @@ export default function AuthenticatedLayout({ header, children }) {
                     </div>
                 </div>
             </nav>
+
+            {impersonation.is_active && (
+                <div className="mx-auto mt-4 max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                        <div className="text-sm font-medium text-amber-900">
+                            Anda sedang melihat sistem sebagai <span className="font-bold">{user.name}</span>.
+                            {impersonation.impersonator?.name ? ` Akaun asal: ${impersonation.impersonator.name}.` : ''}
+                        </div>
+                        <Link
+                            href={route('admin.access.impersonation.destroy')}
+                            method="post"
+                            as="button"
+                            className="inline-flex items-center justify-center rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                        >
+                            Kembali Sebagai Master Admin
+                        </Link>
+                    </div>
+                </div>
+            )}
 
             {flash.success && (
                 <div className="mx-auto mt-4 max-w-7xl px-4 sm:px-6 lg:px-8">

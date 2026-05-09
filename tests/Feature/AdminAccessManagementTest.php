@@ -152,3 +152,29 @@ it('prevents master admin from deleting own account', function () {
         'email' => $masterAdmin->email,
     ]);
 });
+
+it('allows master admin to impersonate another user and keeps return session', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $targetUser = User::factory()->withModules(['dashboard', 'laporan'])->create();
+
+    $this->actingAs($masterAdmin)
+        ->post(route('admin.access.users.impersonate', $targetUser))
+        ->assertRedirect(route('dashboard'));
+
+    $this->assertAuthenticatedAs($targetUser);
+    expect(session('impersonator_id'))->toBe($masterAdmin->id);
+});
+
+it('allows impersonated user session to return to original master admin', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $targetUser = User::factory()->withModules(['dashboard', 'laporan'])->create();
+
+    $this->actingAs($masterAdmin)
+        ->withSession(['impersonator_id' => $masterAdmin->id])
+        ->be($targetUser)
+        ->post(route('admin.access.impersonation.destroy'))
+        ->assertRedirect(route('admin.access.index'));
+
+    $this->assertAuthenticatedAs($masterAdmin);
+    expect(session()->has('impersonator_id'))->toBeFalse();
+});

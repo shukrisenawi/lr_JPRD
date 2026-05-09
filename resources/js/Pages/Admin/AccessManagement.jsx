@@ -151,6 +151,14 @@ function UserCard({ user, roles, currentUserId }) {
         });
     };
 
+    const impersonateUser = () => {
+        if (!window.confirm(`Masuk sebagai ${user.name}? Anda boleh kembali semula sebagai master admin kemudian.`)) {
+            return;
+        }
+
+        router.post(route('admin.access.users.impersonate', user.id));
+    };
+
     return (
         <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -179,6 +187,15 @@ function UserCard({ user, roles, currentUserId }) {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
+                    {user.can_impersonate && (
+                        <button
+                            type="button"
+                            onClick={impersonateUser}
+                            className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
+                        >
+                            Masuk Sebagai User
+                        </button>
+                    )}
                     <button
                         type="button"
                         onClick={() => setIsEditing((previous) => !previous)}

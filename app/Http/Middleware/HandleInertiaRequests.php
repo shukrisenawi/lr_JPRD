@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Support\ModuleRegistry;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -54,6 +55,15 @@ class HandleInertiaRequests extends Middleware
                             ->all(),
                     ]
                     : null,
+                'impersonation' => [
+                    'is_active' => $request->session()->has('impersonator_id'),
+                    'impersonator' => $request->session()->has('impersonator_id')
+                        ? User::query()
+                            ->select(['id', 'name', 'email'])
+                            ->find($request->session()->get('impersonator_id'))
+                            ?->only(['id', 'name', 'email'])
+                        : null,
+                ],
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

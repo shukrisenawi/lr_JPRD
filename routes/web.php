@@ -38,6 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/access/users', [AccessManagementController::class, 'storeUser'])->name('admin.access.users.store');
     Route::put('/admin/access/users/{user}', [AccessManagementController::class, 'updateUser'])->name('admin.access.users.update');
     Route::delete('/admin/access/users/{user}', [AccessManagementController::class, 'destroyUser'])->name('admin.access.users.destroy');
+    Route::post('/admin/access/users/{user}/impersonate', [AccessManagementController::class, 'impersonateUser'])->name('admin.access.users.impersonate');
+    Route::post('/admin/access/impersonation/stop', [AccessManagementController::class, 'stopImpersonation'])->name('admin.access.impersonation.destroy');
     Route::post('/admin/access/roles', [AccessManagementController::class, 'storeRole'])->name('admin.access.roles.store');
     Route::put('/admin/access/roles/{role}', [AccessManagementController::class, 'updateRole'])->name('admin.access.roles.update');
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\ModuleRegistry;
+use Illuminate\Auth\AuthManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -46,6 +47,7 @@ class AccessManagementController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'avatar_url' => $user->avatarUrl(),
+                    'can_impersonate' => ! request()->user()->is($user),
                     'role' => $user->role
                         ? [
                             'id' => $user->role->id,
@@ -136,6 +138,41 @@ class AccessManagementController extends Controller
         return redirect()
             ->route('admin.access.index')
             ->with('success', 'Pengguna berjaya dipadam.');
+    }
+
+    public function impersonateUser(Request $request, User $user, AuthManager $auth): RedirectResponse
+    {
+        abort_unless($request->user()?->isMasterAdmin(), 403);
+
+        if ($request->user()->is($user)) {
+            return redirect()
+                ->route('admin.access.index')
+                ->with('error', 'Anda sudah berada pada akaun ini.');
+        }
+
+        $request->session()->put('impersonator_id', $request->user()->id);
+        $auth->guard()->login($user);
+        $request->session()->regenerate();
+
+        return redirect()
+            ->route($user->canAccessModule('dashboard') ? 'dashboard' : 'profile.edit')
+            ->with('success', "Anda kini melihat sistem sebagai {$user->name}.");
+    }
+
+    public function stopImpersonation(Request $request, AuthManager $auth): RedirectResponse
+    {
+        $impersonatorId = (int) $request->session()->get('impersonator_id', 0);
+        $impersonator = User::query()->find($impersonatorId);
+
+        abort_unless($impersonator?->isMasterAdmin(), 403);
+
+        $request->session()->forget('impersonator_id');
+        $auth->guard()->login($impersonator);
+        $request->session()->regenerate();
+
+        return redirect()
+            ->route('admin.access.index')
+            ->with('success', 'Anda kembali sebagai master admin.');
     }
 
     public function storeRole(Request $request): RedirectResponse
