@@ -557,9 +557,9 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                             Program yang telah direkod
                         </h3>
 
-                        <div className="mt-6 space-y-3">
+                        <div className="mt-6 grid gap-4 lg:grid-cols-2">
                             {programs.length === 0 ? (
-                                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 lg:col-span-2">
                                     Belum ada program. Tambah program pertama anda di tab Tambah Program.
                                 </div>
                             ) : (
