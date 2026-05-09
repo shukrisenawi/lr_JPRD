@@ -28,7 +28,7 @@ class ProgramController extends Controller
             ->latest('id')
             ->get();
 
-        $selectedProgramId = (int) ($request->query('program') ?: ($programs->first()?->id ?? 0));
+        $selectedProgramId = (int) $request->query('program', 0);
         $selectedProgram = $programs->firstWhere('id', $selectedProgramId);
 
         return Inertia::render('Program/Index', [
