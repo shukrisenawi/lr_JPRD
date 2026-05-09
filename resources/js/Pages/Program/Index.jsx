@@ -158,31 +158,13 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady 
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={() => onOpenTelegram(attendee, 'kemascula')}
-                            disabled={!telegramReady}
-                            className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            Kemas Cula
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => onOpenTelegram(attendee, 'kemastel')}
-                            disabled={!telegramReady}
-                            className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            Kemaskini Tel
-                        </button>
-                        <SecondaryButton
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-xl px-4 py-2 text-[11px] tracking-[0.14em]"
-                        >
-                            Tutup
-                        </SecondaryButton>
-                    </div>
+                    <SecondaryButton
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-xl px-4 py-2 text-[11px] tracking-[0.14em]"
+                    >
+                        Tutup
+                    </SecondaryButton>
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -194,6 +176,25 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady 
                             <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
                         </div>
                     ))}
+                </div>
+
+                <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-5">
+                    <button
+                        type="button"
+                        onClick={() => onOpenTelegram(attendee, 'kemascula')}
+                        disabled={!telegramReady}
+                        className="rounded-xl bg-cyan-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Kemas Cula
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onOpenTelegram(attendee, 'kemastel')}
+                        disabled={!telegramReady}
+                        className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Kemaskini Tel
+                    </button>
                 </div>
             </div>
         </Modal>
