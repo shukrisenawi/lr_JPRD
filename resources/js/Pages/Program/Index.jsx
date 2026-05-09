@@ -12,28 +12,28 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }
 
     return (
         <div
-            className={`rounded-3xl border px-4 py-4 transition ${
+            className={`rounded-2xl border px-3 py-3 transition ${
                 isActive
                     ? 'border-cyan-300 bg-cyan-50 shadow-sm'
                     : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
             }`}
         >
             <button type="button" onClick={() => onSelect(program.id)} className="w-full text-left">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700">
                     {scheduleLabel}
                 </p>
-                <h3 className="mt-2 text-lg font-bold text-slate-900">{program.tajuk}</h3>
-                <p className="mt-1 text-sm text-slate-500">{program.tempat}</p>
-                <p className="mt-3 text-xs font-medium text-slate-500">
+                <h3 className="mt-1.5 text-base font-bold leading-5 text-slate-900">{program.tajuk}</h3>
+                <p className="mt-1 text-sm leading-5 text-slate-500">{program.tempat}</p>
+                <p className="mt-2 text-[11px] font-medium text-slate-500">
                     {program.attendees_count} pemilih direkod hadir
                 </p>
             </button>
 
-            <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
+            <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
                 <SecondaryButton
                     type="button"
                     onClick={() => onEdit(program)}
-                    className="rounded-2xl border-slate-300 px-4 py-2 text-[11px] tracking-[0.16em]"
+                    className="rounded-xl border-slate-300 px-3 py-1.5 text-[10px] tracking-[0.14em]"
                 >
                     Edit
                 </SecondaryButton>
@@ -41,7 +41,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect }
                     type="button"
                     onClick={() => onDelete(program)}
                     disabled={deleting}
-                    className="inline-flex items-center rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     {deleting ? 'Memadam...' : 'Padam'}
                 </button>
@@ -549,7 +549,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                 )}
 
                 {activeTab === 'senarai-program' && (
-                    <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
+                    <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
                         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
                             Senarai Program
                         </p>
@@ -557,7 +557,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                             Program yang telah direkod
                         </h3>
 
-                        <div className="mt-6 grid gap-4 xl:grid-cols-3">
+                        <div className="mt-5 grid gap-3 xl:grid-cols-3">
                             {programs.length === 0 ? (
                                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 xl:col-span-3">
                                     Belum ada program. Tambah program pertama anda di tab Tambah Program.
