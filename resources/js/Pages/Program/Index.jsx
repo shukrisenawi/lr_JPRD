@@ -266,9 +266,10 @@ function SearchVoterPanel({ selectedProgram }) {
 
 export default function ProgramIndex({ programs, selectedProgram }) {
     const [activeTab, setActiveTab] = useState('tambah-program');
+    const defaultTempat = 'Kompleks PAS Sg PAU';
     const programForm = useForm({
         tajuk: '',
-        tempat: '',
+        tempat: defaultTempat,
         tarikh: '',
         masa: '',
     });
@@ -277,7 +278,10 @@ export default function ProgramIndex({ programs, selectedProgram }) {
         event.preventDefault();
         programForm.post(route('program.store'), {
             preserveScroll: true,
-            onSuccess: () => programForm.reset(),
+            onSuccess: () => {
+                programForm.reset('tajuk', 'tarikh', 'masa');
+                programForm.setData('tempat', defaultTempat);
+            },
         });
     };
 
