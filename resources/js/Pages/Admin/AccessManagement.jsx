@@ -156,7 +156,7 @@ function UserCard({ user, roles, currentUserId }) {
             return;
         }
 
-        router.post(route('admin.access.users.impersonate', user.id));
+        router.post(route('admin.access.users.impersonate', user.id), {}, { replace: true });
     };
 
     return (
