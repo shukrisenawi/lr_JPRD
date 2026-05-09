@@ -158,14 +158,6 @@ function AttendeeDetailModal({ attendee, deleting, onClose, onDelete }) {
                         >
                             Tutup
                         </SecondaryButton>
-                        <button
-                            type="button"
-                            onClick={() => onDelete(attendee)}
-                            disabled={deleting}
-                            className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {deleting ? 'Memadam...' : 'Padam'}
-                        </button>
                     </div>
                 </div>
 
@@ -181,6 +173,20 @@ function AttendeeDetailModal({ attendee, deleting, onClose, onDelete }) {
                 </div>
             </div>
         </Modal>
+    );
+}
+
+function IconButton({ label, children, className = '', ...props }) {
+    return (
+        <button
+            type="button"
+            title={label}
+            aria-label={label}
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border transition ${className}`}
+            {...props}
+        >
+            {children}
+        </button>
     );
 }
 
@@ -692,7 +698,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                 )}
 
                 {activeTab === 'kehadiran-program' && (
-                    <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                    <section className="space-y-6">
                         <SearchVoterPanel selectedProgram={selectedProgram} />
 
                         <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
@@ -706,7 +712,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                 Senarai pemilih yang telah ditandakan hadir untuk program semasa.
                             </p>
 
-                            <div className="mt-6 space-y-3">
+                            <div className="mt-6">
                                 {!selectedProgram ? (
                                     <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
                                         Pilih program pada tab Senarai Program untuk lihat dan rekod kehadiran.
@@ -716,27 +722,102 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                         Belum ada pemilih direkod hadir untuk program ini.
                                     </div>
                                 ) : (
-                                    selectedProgram.attendees.map((attendee, index) => (
-                                        <button
-                                            key={attendee.id}
-                                            type="button"
-                                            onClick={() => setSelectedAttendee(attendee)}
-                                            className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70"
-                                        >
-                                            <div className="min-w-0">
-                                                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700">
-                                                    Kehadiran #{index + 1}
-                                                </p>
-                                                <p className="mt-1 truncate text-sm font-semibold text-slate-900">
-                                                    {attendee.name}
-                                                </p>
-                                            </div>
+                                    <div className="overflow-hidden rounded-3xl border border-slate-200">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-slate-200 text-sm">
+                                                <thead className="bg-slate-50/90">
+                                                    <tr>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                            Nama
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                            UDM
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                            Telefon
+                                                        </th>
+                                                        <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                                                            Tindakan
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 bg-white">
+                                                    {selectedProgram.attendees.map((attendee) => {
+                                                        const isSelected = selectedAttendee?.id === attendee.id;
 
-                                            <div className="ml-4 shrink-0 text-xs font-medium text-slate-500">
-                                                Lihat detail
-                                            </div>
-                                        </button>
-                                    ))
+                                                        return (
+                                                            <tr
+                                                                key={attendee.id}
+                                                                className={
+                                                                    isSelected
+                                                                        ? 'bg-amber-100 text-amber-950'
+                                                                        : 'text-slate-700 hover:bg-slate-50'
+                                                                }
+                                                            >
+                                                                <td className="px-4 py-3 font-semibold">
+                                                                    {attendee.name}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    {attendee.dm || '-'}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    {attendee.phone_mobile || attendee.phone_home || '-'}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <div className="flex justify-end gap-2">
+                                                                        <IconButton
+                                                                            label="Lihat detail"
+                                                                            onClick={() => setSelectedAttendee(attendee)}
+                                                                            className={
+                                                                                isSelected
+                                                                                    ? 'border-amber-300 bg-amber-200 text-amber-950 hover:bg-amber-300'
+                                                                                    : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
+                                                                            }
+                                                                        >
+                                                                            <svg
+                                                                                viewBox="0 0 24 24"
+                                                                                className="h-4 w-4"
+                                                                                fill="none"
+                                                                                stroke="currentColor"
+                                                                                strokeWidth="2"
+                                                                                strokeLinecap="round"
+                                                                                strokeLinejoin="round"
+                                                                            >
+                                                                                <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+                                                                                <circle cx="12" cy="12" r="3" />
+                                                                            </svg>
+                                                                        </IconButton>
+                                                                        <IconButton
+                                                                            label="Padam kehadiran"
+                                                                            onClick={() => deleteAttendee(attendee)}
+                                                                            disabled={deletingAttendeeId === attendee.id}
+                                                                            className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                                                        >
+                                                                            <svg
+                                                                                viewBox="0 0 24 24"
+                                                                                className="h-4 w-4"
+                                                                                fill="none"
+                                                                                stroke="currentColor"
+                                                                                strokeWidth="2"
+                                                                                strokeLinecap="round"
+                                                                                strokeLinejoin="round"
+                                                                            >
+                                                                                <path d="M3 6h18" />
+                                                                                <path d="M8 6V4h8v2" />
+                                                                                <path d="M19 6l-1 14H6L5 6" />
+                                                                                <path d="M10 11v6" />
+                                                                                <path d="M14 11v6" />
+                                                                            </svg>
+                                                                        </IconButton>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </section>
