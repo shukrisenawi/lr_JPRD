@@ -16,7 +16,7 @@ test('login screen can be rendered', function () {
 });
 
 test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->withModules(['dashboard', 'laporan'])->create();
 
     $response = $this->post('/login', [
         'email' => $user->email,
@@ -25,6 +25,18 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('users are redirected to the first accessible menu after login', function () {
+    $user = User::factory()->withModules(['laporan', 'program'])->create();
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect(route('laporan.index', absolute: false));
 });
 
 test('users can not authenticate with invalid password', function () {

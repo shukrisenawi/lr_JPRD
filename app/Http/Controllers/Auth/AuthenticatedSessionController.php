@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Support\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -42,7 +43,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended($this->firstAccessibleRoute($request));
     }
 
     /**
@@ -57,5 +58,25 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function firstAccessibleRoute(Request $request): string
+    {
+        $user = $request->user();
+        $moduleRoutes = [
+            'dashboard' => 'dashboard',
+            'laporan' => 'laporan.index',
+            'carian-pemilih' => 'carian-pemilih.index',
+            'program' => 'program.index',
+            'settings' => 'settings.edit',
+        ];
+
+        foreach (ModuleRegistry::keys() as $module) {
+            if ($user?->canAccessModule($module) && isset($moduleRoutes[$module])) {
+                return route($moduleRoutes[$module], absolute: false);
+            }
+        }
+
+        return route('profile.edit', absolute: false);
     }
 }
