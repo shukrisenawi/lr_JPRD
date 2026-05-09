@@ -673,6 +673,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     };
 
     const selectProgram = (programId) => {
+        setActiveTab('kehadiran-program');
         router.get(
             route('program.index'),
             { program: programId },
@@ -818,12 +819,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         {
             key: 'senarai-program',
             label: 'Senarai Program',
-            description: 'Pilih program yang mahu diurus dan semak jumlah kehadiran.',
-        },
-        {
-            key: 'kehadiran-program',
-            label: 'Kehadiran Program',
-            description: 'Cari pemilih dan tandakan kehadiran untuk program dipilih.',
+            description: 'Klik kad program untuk terus buka rekod kehadiran dan urus pemilih.',
         },
     ];
 
@@ -849,7 +845,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
                 <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-3 shadow-panel backdrop-blur sm:p-4">
-                    <div className="grid gap-3 md:grid-cols-3">
+                    <div className="grid gap-3 md:grid-cols-2">
                         {tabs.map((tab) => {
                             const isActive = activeTab === tab.key;
 
