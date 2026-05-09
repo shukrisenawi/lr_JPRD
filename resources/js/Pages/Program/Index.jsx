@@ -7,6 +7,7 @@ import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 
 const telegramBotUsername = 'SSDP_Kedah_Bot';
 
@@ -765,11 +766,27 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             return;
         }
 
+        const selectedUserNames = shareableUsers
+            .filter((user) => shareForm.data.shared_user_ids.includes(user.id))
+            .map((user) => user.name);
+
         shareForm.post(route('program.share.store', selectedShareProgram.id), {
             preserveScroll: true,
+            preserveState: true,
             onSuccess: () => {
-                closeShareProgramModal();
                 setActiveTab('senarai-program');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Perkongsian berjaya',
+                    text:
+                        selectedUserNames.length > 0
+                            ? `Program ini berjaya dikongsi kepada ${selectedUserNames.join(', ')}.`
+                            : 'Perkongsian program berjaya dikemaskini.',
+                    confirmButtonText: 'Tutup',
+                    confirmButtonColor: '#0891b2',
+                }).then(() => {
+                    closeShareProgramModal();
+                });
             },
         });
     };
