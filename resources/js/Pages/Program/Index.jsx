@@ -1117,14 +1117,15 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="group_id" value="Group Program" />
+                                    <RequiredLabel htmlFor="group_id" value="Group Program" />
                                     <select
                                         id="group_id"
+                                        required
                                         value={programForm.data.group_id}
                                         onChange={(event) => programForm.setData('group_id', event.target.value)}
                                         className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                     >
-                                        <option value="">Tanpa Group</option>
+                                        <option value="">Pilih Group Program</option>
                                         {groups.map((group) => (
                                             <option key={group.id} value={group.id}>
                                                 {group.name}

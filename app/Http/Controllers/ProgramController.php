@@ -332,7 +332,7 @@ class ProgramController extends Controller
             'tarikh' => ['required', 'date'],
             'masa' => ['nullable', 'date_format:H:i'],
             'group_id' => [
-                'nullable',
+                'required',
                 'integer',
                 Rule::exists('program_groups', 'id')->where(
                     fn ($query) => $query->where('user_id', $request->user()->id),

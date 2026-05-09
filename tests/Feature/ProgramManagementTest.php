@@ -17,6 +17,14 @@ function programPemilihFixture(): string
 HTML;
 }
 
+function createProgramGroupFor(User $user, string $name = 'Zon Ujian'): \App\Models\ProgramGroup
+{
+    return \App\Models\ProgramGroup::query()->create([
+        'name' => $name,
+        'user_id' => $user->id,
+    ]);
+}
+
 it('renders program page for authenticated user with program module access', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
 
@@ -64,10 +72,7 @@ it('allows authorized user to create, update, and delete a group program', funct
 
 it('allows authorized user to assign group program when creating a program', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
-    $group = \App\Models\ProgramGroup::query()->create([
-        'name' => 'Zon Selatan',
-        'user_id' => $user->id,
-    ]);
+    $group = createProgramGroupFor($user, 'Zon Selatan');
 
     $this->actingAs($user)
         ->post(route('program.store'), [
@@ -88,6 +93,7 @@ it('allows authorized user to assign group program when creating a program', fun
 
 it('allows authorized user to create a new program', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $group = createProgramGroupFor($user);
 
     $this->actingAs($user)
         ->post(route('program.store'), [
@@ -95,6 +101,7 @@ it('allows authorized user to create a new program', function () {
             'tempat' => 'Dewan Orang Ramai',
             'tarikh' => '2026-05-09',
             'masa' => '20:30',
+            'group_id' => $group->id,
         ])
         ->assertRedirect(route('program.index', ['program' => 1]));
 
@@ -109,6 +116,7 @@ it('allows authorized user to create a new program', function () {
 it('allows authorized user to create a new program with gambar', function () {
     Storage::fake('public');
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $group = createProgramGroupFor($user);
     $gambar = UploadedFile::fake()->create('program.jpg', 120, 'image/jpeg');
 
     $this->actingAs($user)
@@ -117,6 +125,7 @@ it('allows authorized user to create a new program with gambar', function () {
             'tempat' => 'Dewan Orang Ramai',
             'tarikh' => '2026-05-09',
             'masa' => '20:30',
+            'group_id' => $group->id,
             'gambar' => $gambar,
         ])
         ->assertRedirect(route('program.index', ['program' => 1]));
@@ -149,8 +158,24 @@ it('allows authorized user to view uploaded gambar program', function () {
         ->assertOk();
 });
 
+it('requires group program when creating a new program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $response = $this->actingAs($user)
+        ->post(route('program.store'), [
+            'tajuk' => 'Program Tanpa Group',
+            'tempat' => 'Dewan Komuniti',
+            'tarikh' => '2026-05-12',
+            'masa' => '20:00',
+            'group_id' => '',
+        ]);
+
+    $response->assertSessionHasErrors('group_id');
+});
+
 it('allows authorized user to create a new program without masa', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $group = createProgramGroupFor($user);
 
     $response = $this->actingAs($user)
         ->post(route('program.store'), [
@@ -158,6 +183,7 @@ it('allows authorized user to create a new program without masa', function () {
             'tempat' => 'Dewan Komuniti',
             'tarikh' => '2026-05-12',
             'masa' => '',
+            'group_id' => $group->id,
         ]);
 
     $response->assertSessionDoesntHaveErrors('masa');
@@ -173,12 +199,15 @@ it('allows authorized user to create a new program without masa', function () {
 
 it('allows authorized user to update an existing program', function () {
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $group = createProgramGroupFor($user, 'Zon Lama');
+    $updatedGroup = createProgramGroupFor($user, 'Zon Baru');
 
     $program = Program::query()->create([
         'tajuk' => 'Program Belia',
         'tempat' => 'Padang Awam',
         'tarikh' => '2026-05-10',
         'masa' => '09:00',
+        'group_id' => $group->id,
         'user_id' => $user->id,
     ]);
 
@@ -188,6 +217,7 @@ it('allows authorized user to update an existing program', function () {
             'tempat' => 'Dewan Serbaguna',
             'tarikh' => '2026-05-11',
             'masa' => '10:30',
+            'group_id' => $updatedGroup->id,
         ])
         ->assertRedirect(route('program.index', ['program' => $program->id]));
 
@@ -202,6 +232,7 @@ it('allows authorized user to update an existing program', function () {
 it('allows authorized user to replace gambar for an existing program', function () {
     Storage::fake('public');
     $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $group = createProgramGroupFor($user);
     $oldImage = UploadedFile::fake()->create('lama.jpg', 120, 'image/jpeg');
     $newImage = UploadedFile::fake()->create('baru.jpg', 120, 'image/jpeg');
 
@@ -210,6 +241,7 @@ it('allows authorized user to replace gambar for an existing program', function 
         'tempat' => 'Padang Awam',
         'tarikh' => '2026-05-10',
         'masa' => '09:00',
+        'group_id' => $group->id,
         'gambar' => $oldImage->store('programs', 'public'),
         'user_id' => $user->id,
     ]);
@@ -222,6 +254,7 @@ it('allows authorized user to replace gambar for an existing program', function 
             'tempat' => 'Padang Awam',
             'tarikh' => '2026-05-10',
             'masa' => '09:00',
+            'group_id' => $group->id,
             'gambar' => $newImage,
         ])
         ->assertRedirect(route('program.index', ['program' => $program->id]));
