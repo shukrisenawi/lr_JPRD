@@ -98,6 +98,7 @@ class PemilihReportService
 
             $matches[] = [
                 'id' => $voter['id'],
+                'voter_id' => $voter['id'],
                 'name' => $voter['name'],
                 'no_kp' => $voter['no_kp'],
                 'old_ic' => $voter['old_ic'],

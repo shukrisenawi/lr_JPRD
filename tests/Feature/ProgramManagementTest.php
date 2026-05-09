@@ -155,6 +155,7 @@ it('returns voter suggestions for selected program search', function () {
     $this->actingAs($user)
         ->getJson(route('program.search', $program).'?q=ali')
         ->assertOk()
+        ->assertJsonPath('suggestions.0.voter_id', fn ($value) => is_string($value) && $value !== '')
         ->assertJsonPath('suggestions.0.name', 'ALI BIN ABU')
         ->assertJsonPath('suggestions.0.no_kp', '900101025555');
 });
@@ -193,6 +194,36 @@ it('allows authorized user to add voter attendance into a program', function () 
     $this->assertDatabaseHas('program_attendees', [
         'program_id' => $program->id,
         'voter_id' => 'sha1-ali',
+        'name' => 'ALI BIN ABU',
+        'no_kp' => '900101025555',
+    ]);
+});
+
+it('allows authorized user to add voter attendance using payload from program search results', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $path = storage_path('app/testing-program-pemilih-attendance-search.xls');
+    file_put_contents($path, programPemilihFixture());
+    Setting::setValue('pemilih_report_file_path', $path);
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Belia',
+        'tempat' => 'Padang Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $user->id,
+    ]);
+
+    $searchPayload = $this->actingAs($user)
+        ->getJson(route('program.search', $program).'?q=ali')
+        ->assertOk()
+        ->json('suggestions.0');
+
+    $this->actingAs($user)
+        ->post(route('program.attendees.store', $program), $searchPayload)
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $this->assertDatabaseHas('program_attendees', [
+        'program_id' => $program->id,
         'name' => 'ALI BIN ABU',
         'no_kp' => '900101025555',
     ]);

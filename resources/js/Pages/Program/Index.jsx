@@ -127,6 +127,7 @@ function SearchVoterPanel({ selectedProgram }) {
 
     useEffect(() => {
         abortControllerRef.current?.abort();
+        requestIdRef.current += 1;
         setQuery('');
         setSuggestions([]);
         setSelectedVoter(null);
@@ -135,6 +136,19 @@ function SearchVoterPanel({ selectedProgram }) {
     }, [selectedProgram?.id]);
 
     useEffect(() => () => abortControllerRef.current?.abort(), []);
+
+    const handleSelectVoter = (voter) => {
+        abortControllerRef.current?.abort();
+        requestIdRef.current += 1;
+        setSearching(false);
+        setSuggestions([]);
+        setQuery(voter.name ?? '');
+        setErrorMessage('');
+        setSelectedVoter({
+            ...voter,
+            voter_id: voter.voter_id ?? voter.id,
+        });
+    };
 
     const handleChange = async (event) => {
         const nextQuery = event.target.value;
@@ -201,7 +215,12 @@ function SearchVoterPanel({ selectedProgram }) {
 
         setAdding(true);
 
-        router.post(route('program.attendees.store', selectedProgram.id), voter, {
+        const payload = {
+            ...voter,
+            voter_id: voter.voter_id ?? voter.id,
+        };
+
+        router.post(route('program.attendees.store', selectedProgram.id), payload, {
             preserveScroll: true,
             onSuccess: () => {
                 setQuery('');
@@ -243,50 +262,48 @@ function SearchVoterPanel({ selectedProgram }) {
                         </p>
                     </div>
 
-                    <input
-                        type="search"
-                        value={query}
-                        onChange={handleChange}
-                        placeholder="Contoh: Ali, 900101025555, 0123456789"
-                        className="w-full rounded-2xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                    />
+                    <div className="relative">
+                        <input
+                            type="search"
+                            value={query}
+                            onChange={handleChange}
+                            placeholder="Contoh: Ali, 900101025555, 0123456789"
+                            className="w-full rounded-2xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                        />
+
+                        {(searching || suggestions.length > 0) && (
+                            <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+                                {searching ? (
+                                    <div className="px-4 py-3 text-sm text-slate-500">Mencari...</div>
+                                ) : (
+                                    suggestions.map((voter) => (
+                                        <button
+                                            key={voter.id}
+                                            type="button"
+                                            onClick={() => handleSelectVoter(voter)}
+                                            className="flex w-full items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-cyan-50 last:border-b-0"
+                                        >
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-900">{voter.name}</p>
+                                                <p className="mt-1 text-xs text-slate-500">
+                                                    IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}
+                                                </p>
+                                            </div>
+                                            <div className="text-right text-xs text-slate-500">
+                                                <p>{voter.dm}</p>
+                                                <p className="mt-1">{voter.locality}</p>
+                                            </div>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </div>
 
                     {errorMessage && (
                         <p className="text-sm font-medium text-rose-600">{errorMessage}</p>
                     )}
                 </div>
-
-                {(searching || suggestions.length > 0) && (
-                    <div className="absolute left-5 right-5 top-[10.5rem] z-20 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
-                        {searching ? (
-                            <div className="px-4 py-3 text-sm text-slate-500">Mencari...</div>
-                        ) : (
-                            suggestions.map((voter) => (
-                                <button
-                                    key={voter.id}
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedVoter(voter);
-                                        setSuggestions([]);
-                                        setQuery(voter.name ?? '');
-                                    }}
-                                    className="flex w-full items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-cyan-50 last:border-b-0"
-                                >
-                                    <div>
-                                        <p className="text-sm font-semibold text-slate-900">{voter.name}</p>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}
-                                        </p>
-                                    </div>
-                                    <div className="text-right text-xs text-slate-500">
-                                        <p>{voter.dm}</p>
-                                        <p className="mt-1">{voter.locality}</p>
-                                    </div>
-                                </button>
-                            ))
-                        )}
-                    </div>
-                )}
             </section>
 
             <VoterDetailCard voter={selectedVoter} onAdd={handleAddVoter} adding={adding} />
