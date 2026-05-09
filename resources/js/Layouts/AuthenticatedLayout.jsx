@@ -59,6 +59,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Carian Pemilih
                                     </NavLink>
                                 )}
+                                {canAccess('program') && (
+                                    <NavLink
+                                        href={route('program.index')}
+                                        active={route().current('program.*')}
+                                    >
+                                        Program
+                                    </NavLink>
+                                )}
                                 {canAccess('settings') && (
                                     <NavLink
                                         href={route('settings.edit')}
@@ -207,6 +215,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                 active={route().current('carian-pemilih.*')}
                             >
                                 Carian Pemilih
+                            </ResponsiveNavLink>
+                        )}
+                        {canAccess('program') && (
+                            <ResponsiveNavLink
+                                href={route('program.index')}
+                                active={route().current('program.*')}
+                            >
+                                Program
                             </ResponsiveNavLink>
                         )}
                         {canAccess('settings') && (
