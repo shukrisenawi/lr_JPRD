@@ -150,9 +150,16 @@ class AccessManagementController extends Controller
                 ->with('error', 'Anda sudah berada pada akaun ini.');
         }
 
-        $request->session()->put('impersonator_id', $request->user()->id);
-        $auth->guard()->login($user);
+        $impersonatorId = (int) $request->user()->id;
+
+        $auth->guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $auth->guard()->loginUsingId($user->id);
         $request->session()->regenerate();
+        $request->session()->put('impersonator_id', $impersonatorId);
+        $request->session()->forget('url.intended');
 
         return redirect()
             ->route($user->canAccessModule('dashboard') ? 'dashboard' : 'profile.edit')
@@ -166,9 +173,13 @@ class AccessManagementController extends Controller
 
         abort_unless($impersonator?->isMasterAdmin(), 403);
 
-        $request->session()->forget('impersonator_id');
-        $auth->guard()->login($impersonator);
+        $auth->guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $auth->guard()->loginUsingId($impersonator->id);
         $request->session()->regenerate();
+        $request->session()->forget('url.intended');
 
         return redirect()
             ->route('admin.access.index')

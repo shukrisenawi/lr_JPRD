@@ -178,3 +178,19 @@ it('allows impersonated user session to return to original master admin', functi
     $this->assertAuthenticatedAs($masterAdmin);
     expect(session()->has('impersonator_id'))->toBeFalse();
 });
+
+it('restores master admin access to module routes after stopping impersonation', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $targetUser = User::factory()->withModules(['dashboard'])->create();
+
+    $this->actingAs($masterAdmin)
+        ->post(route('admin.access.users.impersonate', $targetUser))
+        ->assertRedirect(route('dashboard'));
+
+    $this->post(route('admin.access.impersonation.destroy'))
+        ->assertRedirect(route('admin.access.index'));
+
+    $this->get(route('dashboard'))->assertOk();
+    $this->get(route('laporan.index'))->assertOk();
+    $this->get(route('program.index'))->assertOk();
+});
