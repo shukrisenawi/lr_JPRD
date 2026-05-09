@@ -454,25 +454,37 @@ export default function ProgramIndex({ programs, selectedProgram }) {
 
     const submitProgram = (event) => {
         event.preventDefault();
-        const submitRoute = isEditing ? route('program.update', editingProgramId) : route('program.store');
+        const resetAfterSuccess = () => {
+            setEditingProgramId(null);
+            programForm.reset('tajuk', 'tarikh', 'masa', 'gambar', 'gambar_url');
+            programForm.setData('tempat', defaultTempat);
+            programForm.setData('gambar_url', null);
+            if (gambarInputRef.current) {
+                gambarInputRef.current.value = '';
+            }
+        };
+
+        if (isEditing) {
+            programForm
+                .transform((data) => ({
+                    ...data,
+                    _method: 'put',
+                }))
+                .post(route('program.update', editingProgramId), {
+                    preserveScroll: true,
+                    forceFormData: true,
+                    onSuccess: resetAfterSuccess,
+                });
+
+            return;
+        }
 
         programForm
-            .transform((data) => ({
-                ...data,
-                ...(isEditing ? { _method: 'put' } : {}),
-            }))
-            .post(submitRoute, {
+            .transform((data) => data)
+            .post(route('program.store'), {
             preserveScroll: true,
-            forceFormData: true,
-            onSuccess: () => {
-                setEditingProgramId(null);
-                programForm.reset('tajuk', 'tarikh', 'masa', 'gambar', 'gambar_url');
-                programForm.setData('tempat', defaultTempat);
-                programForm.setData('gambar_url', null);
-                if (gambarInputRef.current) {
-                    gambarInputRef.current.value = '';
-                }
-            },
+            forceFormData: programForm.data.gambar instanceof File,
+            onSuccess: resetAfterSuccess,
         });
     };
 
