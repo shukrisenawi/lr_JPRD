@@ -6,6 +6,7 @@ use App\Models\Program;
 use App\Models\ProgramAttendee;
 use App\Models\Setting;
 use App\Services\PemilihReportService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -139,6 +140,19 @@ class ProgramController extends Controller
         return redirect()
             ->route('program.index', ['program' => $program->id])
             ->with('success', 'Pemilih berjaya direkodkan sebagai hadir program.');
+    }
+
+    public function destroyAttendee(Program $program, ProgramAttendee $attendee): RedirectResponse
+    {
+        if ($attendee->program_id !== $program->id) {
+            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
+        }
+
+        $attendee->delete();
+
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Kehadiran pemilih berjaya dipadam.');
     }
 
     private function validateProgram(Request $request): array

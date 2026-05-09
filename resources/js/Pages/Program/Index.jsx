@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
@@ -112,6 +113,74 @@ function VoterDetailCard({ voter, onAdd, adding }) {
                 ))}
             </div>
         </section>
+    );
+}
+
+function AttendeeDetailModal({ attendee, deleting, onClose, onDelete }) {
+    if (!attendee) {
+        return null;
+    }
+
+    const fields = [
+        ['Nama', attendee.name],
+        ['No. IC Baru', attendee.no_kp || '-'],
+        ['No. IC Lama', attendee.old_ic || '-'],
+        ['Tel. Bimbit', attendee.phone_mobile || '-'],
+        ['Tel. Rumah', attendee.phone_home || '-'],
+        ['UDM', attendee.dm || '-'],
+        ['Lokaliti', attendee.locality || '-'],
+        ['Jantina', attendee.gender || '-'],
+        ['Bangsa', attendee.race || '-'],
+        ['Status Culaan', attendee.cula_display_label || attendee.cula_code || '-'],
+        ['Alamat', attendee.address || '-'],
+        ['Direkod', attendee.attended_at || '-'],
+    ];
+
+    return (
+        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="2xl">
+            <div className="p-6 sm:p-7">
+                <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                            Detail Kehadiran
+                        </p>
+                        <h3 className="mt-2 text-2xl font-bold text-slate-900">{attendee.name}</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                            Semak maklumat pemilih yang telah direkod hadir untuk program ini.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        <SecondaryButton
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-xl px-4 py-2 text-[11px] tracking-[0.14em]"
+                        >
+                            Tutup
+                        </SecondaryButton>
+                        <button
+                            type="button"
+                            onClick={() => onDelete(attendee)}
+                            disabled={deleting}
+                            className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {deleting ? 'Memadam...' : 'Padam'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    {fields.map(([label, value]) => (
+                        <div key={label} className="rounded-2xl bg-slate-50 px-4 py-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                {label}
+                            </p>
+                            <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </Modal>
     );
 }
 
@@ -315,6 +384,8 @@ export default function ProgramIndex({ programs, selectedProgram }) {
     const [activeTab, setActiveTab] = useState('tambah-program');
     const [editingProgramId, setEditingProgramId] = useState(null);
     const [deletingProgramId, setDeletingProgramId] = useState(null);
+    const [selectedAttendee, setSelectedAttendee] = useState(null);
+    const [deletingAttendeeId, setDeletingAttendeeId] = useState(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
     const programForm = useForm({
         tajuk: '',
@@ -387,6 +458,30 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                 }
             },
             onFinish: () => setDeletingProgramId(null),
+        });
+    };
+
+    const closeAttendeeModal = () => {
+        setSelectedAttendee(null);
+    };
+
+    const deleteAttendee = (attendee) => {
+        if (!selectedProgram) {
+            return;
+        }
+
+        if (!window.confirm(`Padam kehadiran pemilih "${attendee.name}" untuk program ini?`)) {
+            return;
+        }
+
+        setDeletingAttendeeId(attendee.id);
+
+        router.delete(route('program.attendees.destroy', [selectedProgram.id, attendee.id]), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedAttendee(null);
+            },
+            onFinish: () => setDeletingAttendeeId(null),
         });
     };
 
@@ -622,31 +717,25 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                                     </div>
                                 ) : (
                                     selectedProgram.attendees.map((attendee, index) => (
-                                        <div
+                                        <button
                                             key={attendee.id}
-                                            className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4"
+                                            type="button"
+                                            onClick={() => setSelectedAttendee(attendee)}
+                                            className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:border-cyan-200 hover:bg-cyan-50/70"
                                         >
-                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                                <div>
-                                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                                        Kehadiran #{index + 1}
-                                                    </p>
-                                                    <h4 className="mt-1 text-base font-bold text-slate-900">
-                                                        {attendee.name}
-                                                    </h4>
-                                                    <p className="mt-1 text-sm text-slate-500">
-                                                        IC: {attendee.no_kp || '-'} • HP: {attendee.phone_mobile || '-'}
-                                                    </p>
-                                                    <p className="mt-1 text-sm text-slate-500">
-                                                        {attendee.dm || '-'} • {attendee.locality || '-'}
-                                                    </p>
-                                                </div>
-
-                                                <div className="rounded-2xl bg-white px-3 py-2 text-xs font-medium text-slate-500">
-                                                    Direkod: {attendee.attended_at || '-'}
-                                                </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700">
+                                                    Kehadiran #{index + 1}
+                                                </p>
+                                                <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                                                    {attendee.name}
+                                                </p>
                                             </div>
-                                        </div>
+
+                                            <div className="ml-4 shrink-0 text-xs font-medium text-slate-500">
+                                                Lihat detail
+                                            </div>
+                                        </button>
                                     ))
                                 )}
                             </div>
@@ -654,6 +743,13 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                     </section>
                 )}
             </div>
+
+            <AttendeeDetailModal
+                attendee={selectedAttendee}
+                deleting={deletingAttendeeId === selectedAttendee?.id}
+                onClose={closeAttendeeModal}
+                onDelete={deleteAttendee}
+            />
         </AuthenticatedLayout>
     );
 }

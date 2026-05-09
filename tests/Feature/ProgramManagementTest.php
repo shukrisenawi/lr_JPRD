@@ -229,6 +229,44 @@ it('allows authorized user to add voter attendance using payload from program se
     ]);
 });
 
+it('allows authorized user to delete attendee from a program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Belia',
+        'tempat' => 'Padang Awam',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'user_id' => $user->id,
+    ]);
+
+    $attendee = $program->attendees()->create([
+        'voter_id' => 'sha1-ali',
+        'name' => 'ALI BIN ABU',
+        'no_kp' => '900101025555',
+        'old_ic' => '',
+        'phone_mobile' => '0123456789',
+        'phone_home' => '049999999',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'gender' => 'L',
+        'race' => 'M',
+        'cula_code' => '2',
+        'cula_display_label' => '2 - PAS',
+        'address' => 'KG BARU KURA',
+        'attended_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('program.attendees.destroy', [$program, $attendee]))
+        ->assertRedirect(route('program.index', ['program' => $program->id]));
+
+    $this->assertDatabaseMissing('program_attendees', [
+        'id' => $attendee->id,
+        'program_id' => $program->id,
+    ]);
+});
+
 it('blocks program route when user role does not have program module access', function () {
     $user = User::factory()->withModules(['dashboard'])->create();
 
