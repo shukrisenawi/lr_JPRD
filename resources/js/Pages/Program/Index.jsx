@@ -265,6 +265,7 @@ function SearchVoterPanel({ selectedProgram }) {
 }
 
 export default function ProgramIndex({ programs, selectedProgram }) {
+    const [activeTab, setActiveTab] = useState('tambah-program');
     const programForm = useForm({
         tajuk: '',
         tempat: '',
@@ -288,6 +289,24 @@ export default function ProgramIndex({ programs, selectedProgram }) {
         );
     };
 
+    const tabs = [
+        {
+            key: 'tambah-program',
+            label: 'Tambah Program',
+            description: 'Daftar program baru dengan tajuk, tempat, tarikh, dan masa.',
+        },
+        {
+            key: 'senarai-program',
+            label: 'Senarai Program',
+            description: 'Pilih program yang mahu diurus dan semak jumlah kehadiran.',
+        },
+        {
+            key: 'kehadiran-program',
+            label: 'Kehadiran Program',
+            description: 'Cari pemilih dan tandakan kehadiran untuk program dipilih.',
+        },
+    ];
+
     return (
         <AuthenticatedLayout
             header={
@@ -309,78 +328,122 @@ export default function ProgramIndex({ programs, selectedProgram }) {
             <Head title="Program" />
 
             <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-                    <form
-                        onSubmit={submitProgram}
-                        className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8"
-                    >
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                            Tambah Program
-                        </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                            Maklumat program baru
-                        </h3>
+                <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-3 shadow-panel backdrop-blur sm:p-4">
+                    <div className="grid gap-3 md:grid-cols-3">
+                        {tabs.map((tab) => {
+                            const isActive = activeTab === tab.key;
 
-                        <div className="mt-6 grid gap-5">
-                            <div>
-                                <InputLabel htmlFor="tajuk" value="Tajuk" />
-                                <TextInput
-                                    id="tajuk"
-                                    value={programForm.data.tajuk}
-                                    onChange={(event) => programForm.setData('tajuk', event.target.value)}
-                                    className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                />
-                                <InputError className="mt-2" message={programForm.errors.tajuk} />
-                            </div>
+                            return (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={`rounded-3xl border px-5 py-4 text-left transition ${
+                                        isActive
+                                            ? 'border-cyan-300 bg-cyan-50 shadow-sm'
+                                            : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
+                                    }`}
+                                >
+                                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                                        {tab.label}
+                                    </p>
+                                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                                        {tab.description}
+                                    </p>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
 
-                            <div>
-                                <InputLabel htmlFor="tempat" value="Tempat" />
-                                <TextInput
-                                    id="tempat"
-                                    value={programForm.data.tempat}
-                                    onChange={(event) => programForm.setData('tempat', event.target.value)}
-                                    className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                />
-                                <InputError className="mt-2" message={programForm.errors.tempat} />
-                            </div>
+                {activeTab === 'tambah-program' && (
+                    <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+                        <form
+                            onSubmit={submitProgram}
+                            className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8"
+                        >
+                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                                Tambah Program
+                            </p>
+                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                                Maklumat program baru
+                            </h3>
 
-                            <div className="grid gap-5 md:grid-cols-2">
+                            <div className="mt-6 grid gap-5">
                                 <div>
-                                    <InputLabel htmlFor="tarikh" value="Tarikh" />
+                                    <InputLabel htmlFor="tajuk" value="Tajuk" />
                                     <TextInput
-                                        id="tarikh"
-                                        type="date"
-                                        value={programForm.data.tarikh}
-                                        onChange={(event) => programForm.setData('tarikh', event.target.value)}
+                                        id="tajuk"
+                                        value={programForm.data.tajuk}
+                                        onChange={(event) => programForm.setData('tajuk', event.target.value)}
                                         className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                     />
-                                    <InputError className="mt-2" message={programForm.errors.tarikh} />
+                                    <InputError className="mt-2" message={programForm.errors.tajuk} />
                                 </div>
 
                                 <div>
-                                    <InputLabel htmlFor="masa" value="Masa" />
+                                    <InputLabel htmlFor="tempat" value="Tempat" />
                                     <TextInput
-                                        id="masa"
-                                        type="time"
-                                        value={programForm.data.masa}
-                                        onChange={(event) => programForm.setData('masa', event.target.value)}
+                                        id="tempat"
+                                        value={programForm.data.tempat}
+                                        onChange={(event) => programForm.setData('tempat', event.target.value)}
                                         className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
                                     />
-                                    <InputError className="mt-2" message={programForm.errors.masa} />
+                                    <InputError className="mt-2" message={programForm.errors.tempat} />
+                                </div>
+
+                                <div className="grid gap-5 md:grid-cols-2">
+                                    <div>
+                                        <InputLabel htmlFor="tarikh" value="Tarikh" />
+                                        <TextInput
+                                            id="tarikh"
+                                            type="date"
+                                            value={programForm.data.tarikh}
+                                            onChange={(event) => programForm.setData('tarikh', event.target.value)}
+                                            className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        />
+                                        <InputError className="mt-2" message={programForm.errors.tarikh} />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel htmlFor="masa" value="Masa" />
+                                        <TextInput
+                                            id="masa"
+                                            type="time"
+                                            value={programForm.data.masa}
+                                            onChange={(event) => programForm.setData('masa', event.target.value)}
+                                            className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+                                        />
+                                        <InputError className="mt-2" message={programForm.errors.masa} />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="mt-6 flex justify-end">
-                            <PrimaryButton
-                                className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
-                                disabled={programForm.processing}
-                            >
-                                {programForm.processing ? 'Menyimpan...' : 'Simpan Program'}
-                            </PrimaryButton>
-                        </div>
-                    </form>
+                            <div className="mt-6 flex justify-end">
+                                <PrimaryButton
+                                    className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
+                                    disabled={programForm.processing}
+                                >
+                                    {programForm.processing ? 'Menyimpan...' : 'Simpan Program'}
+                                </PrimaryButton>
+                            </div>
+                        </form>
 
+                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
+                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                                Ringkasan Program
+                            </p>
+                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                                {programs.length} program telah direkod
+                            </h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                                Selepas simpan, buka tab senarai atau kehadiran untuk pilih program dan mula rekod pemilih yang hadir.
+                            </p>
+                        </section>
+                    </section>
+                )}
+
+                {activeTab === 'senarai-program' && (
                     <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
                         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
                             Senarai Program
@@ -392,7 +455,7 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                         <div className="mt-6 space-y-3">
                             {programs.length === 0 ? (
                                 <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                                    Belum ada program. Tambah program pertama anda di borang sebelah.
+                                    Belum ada program. Tambah program pertama anda di tab Tambah Program.
                                 </div>
                             ) : (
                                 programs.map((program) => (
@@ -406,63 +469,65 @@ export default function ProgramIndex({ programs, selectedProgram }) {
                             )}
                         </div>
                     </section>
-                </section>
+                )}
 
-                <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-                    <SearchVoterPanel selectedProgram={selectedProgram} />
+                {activeTab === 'kehadiran-program' && (
+                    <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+                        <SearchVoterPanel selectedProgram={selectedProgram} />
 
-                    <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                            Kehadiran Program
-                        </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                            {selectedProgram ? selectedProgram.tajuk : 'Belum dipilih'}
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                            Senarai pemilih yang telah ditandakan hadir untuk program semasa.
-                        </p>
+                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
+                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
+                                Kehadiran Program
+                            </p>
+                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
+                                {selectedProgram ? selectedProgram.tajuk : 'Belum dipilih'}
+                            </h3>
+                            <p className="mt-2 text-sm leading-6 text-slate-500">
+                                Senarai pemilih yang telah ditandakan hadir untuk program semasa.
+                            </p>
 
-                        <div className="mt-6 space-y-3">
-                            {!selectedProgram ? (
-                                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                                    Pilih program untuk lihat kehadiran.
-                                </div>
-                            ) : selectedProgram.attendees.length === 0 ? (
-                                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                                    Belum ada pemilih direkod hadir untuk program ini.
-                                </div>
-                            ) : (
-                                selectedProgram.attendees.map((attendee, index) => (
-                                    <div
-                                        key={attendee.id}
-                                        className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4"
-                                    >
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                            <div>
-                                                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                                    Kehadiran #{index + 1}
-                                                </p>
-                                                <h4 className="mt-1 text-base font-bold text-slate-900">
-                                                    {attendee.name}
-                                                </h4>
-                                                <p className="mt-1 text-sm text-slate-500">
-                                                    IC: {attendee.no_kp || '-'} • HP: {attendee.phone_mobile || '-'}
-                                                </p>
-                                                <p className="mt-1 text-sm text-slate-500">
-                                                    {attendee.dm || '-'} • {attendee.locality || '-'}
-                                                </p>
-                                            </div>
+                            <div className="mt-6 space-y-3">
+                                {!selectedProgram ? (
+                                    <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                                        Pilih program pada tab Senarai Program untuk lihat dan rekod kehadiran.
+                                    </div>
+                                ) : selectedProgram.attendees.length === 0 ? (
+                                    <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                                        Belum ada pemilih direkod hadir untuk program ini.
+                                    </div>
+                                ) : (
+                                    selectedProgram.attendees.map((attendee, index) => (
+                                        <div
+                                            key={attendee.id}
+                                            className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4"
+                                        >
+                                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                                                        Kehadiran #{index + 1}
+                                                    </p>
+                                                    <h4 className="mt-1 text-base font-bold text-slate-900">
+                                                        {attendee.name}
+                                                    </h4>
+                                                    <p className="mt-1 text-sm text-slate-500">
+                                                        IC: {attendee.no_kp || '-'} • HP: {attendee.phone_mobile || '-'}
+                                                    </p>
+                                                    <p className="mt-1 text-sm text-slate-500">
+                                                        {attendee.dm || '-'} • {attendee.locality || '-'}
+                                                    </p>
+                                                </div>
 
-                                            <div className="rounded-2xl bg-white px-3 py-2 text-xs font-medium text-slate-500">
-                                                Direkod: {attendee.attended_at || '-'}
+                                                <div className="rounded-2xl bg-white px-3 py-2 text-xs font-medium text-slate-500">
+                                                    Direkod: {attendee.attended_at || '-'}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </section>
                     </section>
-                </section>
+                )}
             </div>
         </AuthenticatedLayout>
     );
