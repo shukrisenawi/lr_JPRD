@@ -640,7 +640,11 @@ export default function Laporan({ report }) {
                                             />
                                             <YAxis tickFormatter={formatNumber} width={56} tick={{ fontSize: 10 }} />
                                             <Tooltip content={<SummaryTooltip />} />
-                                            <Bar dataKey="total" name="Jumlah" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="total" name="Jumlah" radius={[4, 4, 0, 0]}>
+                                                {culaRows.map((entry, index) => (
+                                                    <Cell key={`${entry.code}-${index}`} fill={getUdmCulaBarColor(entry, index)} />
+                                                ))}
+                                            </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </ChartPanel>
