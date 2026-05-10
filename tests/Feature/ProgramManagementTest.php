@@ -495,7 +495,8 @@ it('shows attendee group badges and participation counts on selected program', f
             ->where('selectedProgram.attendees.0.group_badges.0.name', 'Zon Alpha')
             ->where('selectedProgram.attendees.0.group_badges.0.count', 2)
             ->where('selectedProgram.attendees.0.group_badges.1.name', 'Zon Beta')
-            ->where('selectedProgram.attendees.0.group_badges.1.count', 1));
+            ->where('selectedProgram.attendees.0.group_badges.1.count', 1)
+            ->where('selectedProgram.attendees.0.joined_programs.0.tajuk', fn ($value) => is_string($value) && $value !== ''));
 });
 
 it('allows owner to share a program with selected authorized users', function () {
