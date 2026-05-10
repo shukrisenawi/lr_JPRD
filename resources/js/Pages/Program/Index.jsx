@@ -264,7 +264,7 @@ function VoterDetailCard({ voter, onAdd, adding }) {
     ];
 
     return (
-        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
+        <section className="relative z-0 rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
             <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
@@ -681,8 +681,8 @@ function SearchVoterPanel({ selectedProgram }) {
     }
 
     return (
-        <div className="space-y-6">
-            <section className="relative rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
+        <div className="relative z-20 space-y-6">
+            <section className="relative z-20 rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
                 <div className="flex flex-col gap-3">
                     <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
@@ -706,7 +706,7 @@ function SearchVoterPanel({ selectedProgram }) {
                         />
 
                         {(searching || suggestions.length > 0) && (
-                            <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+                            <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
                                 {searching ? (
                                     <div className="px-4 py-3 text-sm text-slate-500">Mencari...</div>
                                 ) : (
