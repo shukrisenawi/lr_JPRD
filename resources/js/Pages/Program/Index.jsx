@@ -445,80 +445,6 @@ function AttendeeProgramsModal({ attendee, onClose }) {
     );
 }
 
-function AttendeeGroupProgramsModal({ attendee, onClose }) {
-    if (!attendee) {
-        return null;
-    }
-
-    const programs = attendee.joined_programs ?? [];
-    const grouped = programs.reduce((acc, program) => {
-        const key = program.group_name?.trim() ? program.group_name.trim() : 'Tanpa Group';
-        if (!acc[key]) {
-            acc[key] = [];
-        }
-        acc[key].push(program);
-        return acc;
-    }, {});
-    const groupNames = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'ms'));
-
-    return (
-        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="2xl">
-            <div className="p-5 sm:p-6">
-                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                            Group Program Disertai
-                        </p>
-                        <h3 className="mt-1.5 text-xl font-bold leading-6 text-slate-900">{attendee.name}</h3>
-                        <p className="mt-1.5 text-sm leading-5 text-slate-500">
-                            Program yang pernah direkod, disusun mengikut group program.
-                        </p>
-                    </div>
-
-                    <SecondaryButton
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
-                    >
-                        Tutup
-                    </SecondaryButton>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                    {programs.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                            Tiada program direkod untuk pemilih ini.
-                        </div>
-                    ) : (
-                        groupNames.map((groupName) => (
-                            <div key={groupName} className="overflow-hidden rounded-2xl border border-slate-200">
-                                <div className="flex items-center justify-between gap-3 bg-slate-50/80 px-4 py-3">
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                                        {groupName}
-                                    </p>
-                                    <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-800 ring-1 ring-amber-200">
-                                        {grouped[groupName].length}
-                                    </span>
-                                </div>
-                                <ul className="divide-y divide-slate-100 bg-white">
-                                    {grouped[groupName].map((program) => (
-                                        <li key={program.program_id} className="px-4 py-3">
-                                            <p className="truncate text-sm font-semibold text-slate-900">{program.tajuk}</p>
-                                            <p className="mt-1 text-xs text-slate-500">
-                                                {program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh || '-'}
-                                            </p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
-        </Modal>
-    );
-}
-
 function IconButton({ label, children, className = '', ...props }) {
     return (
         <button
@@ -893,7 +819,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [deletingProgramId, setDeletingProgramId] = useState(null);
     const [selectedAttendee, setSelectedAttendee] = useState(null);
     const [selectedAttendeePrograms, setSelectedAttendeePrograms] = useState(null);
-    const [selectedAttendeeGroupPrograms, setSelectedAttendeeGroupPrograms] = useState(null);
     const [selectedProgramImage, setSelectedProgramImage] = useState(null);
     const [selectedShareProgram, setSelectedShareProgram] = useState(null);
     const [deletingAttendeeId, setDeletingAttendeeId] = useState(null);
@@ -1033,10 +958,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     const closeAttendeeProgramsModal = () => {
         setSelectedAttendeePrograms(null);
-    };
-
-    const closeAttendeeGroupProgramsModal = () => {
-        setSelectedAttendeeGroupPrograms(null);
     };
 
     const closeProgramImageModal = () => {
@@ -1513,28 +1434,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                                 </svg>
                                                                             </IconButton>
                                                                             <IconButton
-                                                                                label="Group program"
-                                                                                onClick={() => setSelectedAttendeeGroupPrograms(attendee)}
-                                                                                className="border-slate-200 bg-white text-slate-700 hover:bg-amber-50"
-                                                                            >
-                                                                                <svg
-                                                                                    viewBox="0 0 24 24"
-                                                                                    className="h-3.5 w-3.5"
-                                                                                    fill="none"
-                                                                                    stroke="currentColor"
-                                                                                    strokeWidth="2"
-                                                                                    strokeLinecap="round"
-                                                                                    strokeLinejoin="round"
-                                                                                >
-                                                                                    <path d="M7 7h10" />
-                                                                                    <path d="M7 12h10" />
-                                                                                    <path d="M7 17h10" />
-                                                                                    <path d="M4 7h.01" />
-                                                                                    <path d="M4 12h.01" />
-                                                                                    <path d="M4 17h.01" />
-                                                                                </svg>
-                                                                            </IconButton>
-                                                                            <IconButton
                                                                                 label="Padam kehadiran"
                                                                                 onClick={() => deleteAttendee(attendee)}
                                                                                 disabled={deletingAttendeeId === attendee.id}
@@ -1611,10 +1510,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 telegramReady={!openingTelegram && Boolean(buildTelegramCommand(selectedAttendee, 'kemascula'))}
             />
             <AttendeeProgramsModal attendee={selectedAttendeePrograms} onClose={closeAttendeeProgramsModal} />
-            <AttendeeGroupProgramsModal
-                attendee={selectedAttendeeGroupPrograms}
-                onClose={closeAttendeeGroupProgramsModal}
-            />
             <ProgramImageModal program={selectedProgramImage} onClose={closeProgramImageModal} />
             <ProgramShareModal
                 program={selectedShareProgram}
