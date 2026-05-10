@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PemilihRecord;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 
@@ -119,6 +120,30 @@ class PemilihReportService
         }
 
         return $matches;
+    }
+
+    public function syncUploadedVoters(string $path): void
+    {
+        $rows = $this->readRows($path);
+        $voters = $this->normalizeUploadedVoters($rows, basename($path));
+        $identityNumbers = array_values(array_filter(array_column($voters, 'identity_number')));
+
+        foreach ($voters as $voter) {
+            PemilihRecord::query()->updateOrCreate(
+                ['identity_number' => $voter['identity_number']],
+                $voter,
+            );
+        }
+
+        if ($identityNumbers === []) {
+            PemilihRecord::query()->update(['status' => 'xaktif']);
+
+            return;
+        }
+
+        PemilihRecord::query()
+            ->whereNotIn('identity_number', $identityNumbers)
+            ->update(['status' => 'xaktif']);
     }
 
     private function searchIndexForPath(?string $path = null): array
@@ -548,6 +573,13 @@ class PemilihReportService
         return $value === '' ? $fallback : $value;
     }
 
+    private function nullableLabel(string $value): ?string
+    {
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
     private function emptyReport(?string $path): array
     {
         return [
@@ -624,6 +656,43 @@ class PemilihReportService
                 ])),
             ];
         }, $rows))));
+    }
+
+    private function normalizeUploadedVoters(array $rows, string $sourceFile): array
+    {
+        $normalized = [];
+
+        foreach ($rows as $row) {
+            $name = $this->fallbackLabel($row['Nama Pemilih'] ?? '', '');
+            $noKp = $this->cleanDigits($row['No. K/P (Baru)'] ?? '');
+            $oldIc = $this->cleanDigits($row['No. K/P (Lama)'] ?? '');
+            $identityNumber = $noKp !== '' ? $noKp : $oldIc;
+
+            if ($identityNumber === '') {
+                continue;
+            }
+
+            $culaCode = $this->normalizeCulaCode($row['Kod Cula'] ?? '');
+            $normalized[$identityNumber] = [
+                'identity_number' => $identityNumber,
+                'no_kp' => $noKp !== '' ? $noKp : null,
+                'old_ic' => $oldIc !== '' ? $oldIc : null,
+                'name' => $name !== '' ? $name : null,
+                'dm' => $this->nullableLabel($row['Nama DM'] ?? ''),
+                'locality' => $this->nullableLabel($row['Nama Lokaliti'] ?? ''),
+                'gender' => $this->nullableLabel($row['Jantina'] ?? ''),
+                'race' => $this->nullableLabel($row['Bangsa'] ?? ''),
+                'cula_code' => $culaCode,
+                'cula_display_label' => $this->displayCulaLabel($culaCode),
+                'address' => $this->nullableLabel($row['Alamat Kediaman'] ?? ($row['Alamat K/P'] ?? '')),
+                'phone_home' => $this->nullableLabel($this->cleanDigits($row['Tel. Rumah'] ?? '')),
+                'phone_mobile' => $this->nullableLabel($this->cleanDigits($row['Tel. Bimbit'] ?? '')),
+                'status' => 'aktif',
+                'source_file' => $sourceFile,
+            ];
+        }
+
+        return array_values($normalized);
     }
 
     private function readCachedReport(string $path): ?array

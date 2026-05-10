@@ -2,6 +2,7 @@
 
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\PemilihRecord;
 use App\Services\PemilihReportService;
 use Illuminate\Http\UploadedFile;
 
@@ -127,6 +128,68 @@ it('stores uploaded pemilih file for laporan', function () {
 
     expect($storedPath)->not->toBeNull()
         ->and(file_exists($storedPath))->toBeTrue();
+});
+
+it('replaces matching no ic records and marks missing old records as xaktif on new upload', function () {
+    $user = User::factory()->create();
+
+    $firstPath = storage_path('app/testing-upload-sync-first.xls');
+    file_put_contents($firstPath, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th><th>Alamat Kediaman</th><th>Tel. Rumah</th><th>Tel. Bimbit</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI LAMA</td><td>L</td><td>M</td><td>2</td><td>ALAMAT LAMA</td><td>="049999999"</td><td>="0123456789"</td></tr>
+<tr><td>2</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="002"</td><td>KG BETONG</td><td>="880808025333"</td><td>SITI AKTIF</td><td>P</td><td>M</td><td>3P</td><td>KG BETONG</td><td>="047777777"</td><td>="0198888777"</td></tr>
+</table></body></html>
+HTML);
+
+    $secondPath = storage_path('app/testing-upload-sync-second.xls');
+    file_put_contents($secondPath, <<<'HTML'
+<html><body><table>
+<tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th><th>Alamat Kediaman</th><th>Tel. Rumah</th><th>Tel. Bimbit</th></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK BARU</td><td>="009"</td><td>KG BARU UPDATE</td><td>="900101025555"</td><td>ALI BARU</td><td>L</td><td>M</td><td>10</td><td>ALAMAT BARU</td><td>="041111111"</td><td>="0112222333"</td></tr>
+<tr><td>2</td><td>="03"</td><td>KAMPUNG BARU</td><td>="010"</td><td>KG TAMBAHAN</td><td>="770707015555"</td><td>ABU TAMBAH</td><td>L</td><td>M</td><td>2</td><td>KG TAMBAHAN</td><td>="046666666"</td><td>="0133333444"</td></tr>
+</table></body></html>
+HTML);
+
+    $firstFile = new UploadedFile($firstPath, 'pemilih-first.xls', 'application/vnd.ms-excel', null, true);
+    $secondFile = new UploadedFile($secondPath, 'pemilih-second.xls', 'application/vnd.ms-excel', null, true);
+
+    $this->actingAs($user)
+        ->post('/laporan/upload', [
+            'pemilih_file' => $firstFile,
+        ])
+        ->assertRedirect(route('laporan.index'));
+
+    $this->actingAs($user)
+        ->post('/laporan/upload', [
+            'pemilih_file' => $secondFile,
+        ])
+        ->assertRedirect(route('laporan.index'));
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'identity_number' => '900101025555',
+        'no_kp' => '900101025555',
+        'name' => 'ALI BARU',
+        'dm' => 'PADANG CHICHAK BARU',
+        'locality' => 'KG BARU UPDATE',
+        'status' => 'aktif',
+    ]);
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'identity_number' => '770707015555',
+        'no_kp' => '770707015555',
+        'name' => 'ABU TAMBAH',
+        'status' => 'aktif',
+    ]);
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'identity_number' => '880808025333',
+        'no_kp' => '880808025333',
+        'name' => 'SITI AKTIF',
+        'status' => 'xaktif',
+    ]);
+
+    expect(PemilihRecord::query()->count())->toBe(3);
 });
 
 it('returns voter suggestions by name ic and phone for laporan search', function () {

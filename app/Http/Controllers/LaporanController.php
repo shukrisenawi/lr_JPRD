@@ -40,7 +40,9 @@ class LaporanController extends Controller
         $storedPath = $directory.DIRECTORY_SEPARATOR.$filename;
 
         Setting::setValue('pemilih_report_file_path', $storedPath);
-        app(PemilihReportService::class)->buildFromPath($storedPath);
+        $reportService = app(PemilihReportService::class);
+        $reportService->syncUploadedVoters($storedPath);
+        $reportService->buildFromPath($storedPath);
 
         return redirect()
             ->route('laporan.index')
