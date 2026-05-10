@@ -1303,7 +1303,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                                             key={`${attendee.id}-${badge.name}`}
                                                                                             className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-800 ring-1 ring-amber-200"
                                                                                         >
-                                                                                            {badge.name} {badge.count}
+                                                                                            {badge.name} - {badge.count}
                                                                                         </span>
                                                                                     ))}
                                                                                 </div>
