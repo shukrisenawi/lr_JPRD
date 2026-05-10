@@ -33,6 +33,28 @@ class ProgramController extends Controller
             ->latest('masa')
             ->latest('id')
             ->get();
+        $attendeeGroupCounts = $programs
+            ->flatMap(function (Program $program) {
+                if (! $program->group?->name) {
+                    return [];
+                }
+
+                return $program->attendees->map(fn (ProgramAttendee $attendee) => [
+                    'voter_id' => $attendee->voter_id,
+                    'group_name' => $program->group->name,
+                ]);
+            })
+            ->groupBy('voter_id')
+            ->map(function ($entries) {
+                return collect($entries)
+                    ->groupBy('group_name')
+                    ->map(fn ($groupEntries, string $groupName) => [
+                        'name' => $groupName,
+                        'count' => count($groupEntries),
+                    ])
+                    ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+                    ->values();
+            });
 
         $selectedProgramId = (int) $request->query('program', 0);
         $selectedProgram = $programs->firstWhere('id', $selectedProgramId);
@@ -92,6 +114,7 @@ class ProgramController extends Controller
                             'cula_code' => $attendee->cula_code,
                             'cula_display_label' => $attendee->cula_display_label,
                             'address' => $attendee->address,
+                            'group_badges' => $attendeeGroupCounts->get($attendee->voter_id, collect())->all(),
                             'attended_at' => $attendee->attended_at?->format('Y-m-d H:i:s'),
                         ])
                         ->values(),

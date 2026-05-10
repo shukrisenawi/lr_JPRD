@@ -1294,7 +1294,21 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                     }
                                                                 >
                                                                     <td className="px-3 py-2.5 font-semibold leading-5">
-                                                                        {attendee.name}
+                                                                        <div>
+                                                                            <div>{attendee.name}</div>
+                                                                            {attendee.group_badges?.length > 0 && (
+                                                                                <div className="mt-1 flex flex-wrap gap-1.5">
+                                                                                    {attendee.group_badges.map((badge) => (
+                                                                                        <span
+                                                                                            key={`${attendee.id}-${badge.name}`}
+                                                                                            className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-800 ring-1 ring-amber-200"
+                                                                                        >
+                                                                                            {badge.name} {badge.count}
+                                                                                        </span>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
                                                                     </td>
                                                                     <td className="px-3 py-2.5 leading-5">
                                                                         {attendee.dm || '-'}

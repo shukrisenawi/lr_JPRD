@@ -437,6 +437,67 @@ it('allows authorized user to delete attendee from a program', function () {
     ]);
 });
 
+it('shows attendee group badges and participation counts on selected program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $groupA = createProgramGroupFor($user, 'Zon Alpha');
+    $groupB = createProgramGroupFor($user, 'Zon Beta');
+
+    $programA = Program::query()->create([
+        'tajuk' => 'Program Alpha 1',
+        'tempat' => 'Dewan A',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'group_id' => $groupA->id,
+        'user_id' => $user->id,
+    ]);
+
+    $programB = Program::query()->create([
+        'tajuk' => 'Program Alpha 2',
+        'tempat' => 'Dewan B',
+        'tarikh' => '2026-05-11',
+        'masa' => '10:00',
+        'group_id' => $groupA->id,
+        'user_id' => $user->id,
+    ]);
+
+    $programC = Program::query()->create([
+        'tajuk' => 'Program Beta 1',
+        'tempat' => 'Dewan C',
+        'tarikh' => '2026-05-12',
+        'masa' => '11:00',
+        'group_id' => $groupB->id,
+        'user_id' => $user->id,
+    ]);
+
+    foreach ([$programA, $programB, $programC] as $programItem) {
+        $programItem->attendees()->create([
+            'voter_id' => 'sha1-ali',
+            'name' => 'ALI BIN ABU',
+            'no_kp' => '900101025555',
+            'old_ic' => '',
+            'phone_mobile' => '0123456789',
+            'phone_home' => '049999999',
+            'dm' => 'PADANG CHICHAK',
+            'locality' => 'KG BARU KURA',
+            'gender' => 'L',
+            'race' => 'M',
+            'cula_code' => '2',
+            'cula_display_label' => '2 - PAS',
+            'address' => 'KG BARU KURA',
+            'attended_at' => now(),
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('program.index', ['program' => $programA->id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('selectedProgram.attendees.0.group_badges.0.name', 'Zon Alpha')
+            ->where('selectedProgram.attendees.0.group_badges.0.count', 2)
+            ->where('selectedProgram.attendees.0.group_badges.1.name', 'Zon Beta')
+            ->where('selectedProgram.attendees.0.group_badges.1.count', 1));
+});
+
 it('allows owner to share a program with selected authorized users', function () {
     $owner = User::factory()->withModules(['dashboard', 'program'])->create();
     $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
