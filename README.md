@@ -30,6 +30,8 @@ Jika paparan yang terbuka datang dari projek Laravel lain, semak dua perkara ini
 - pastikan tiada proses `php artisan serve` lain yang sedang menggunakan port `8000`
 - padam fail `public/hot` jika ia tertinggal daripada sesi `npm run dev` projek lain supaya app kembali menggunakan aset dalam `public/build`
 
+Jangan jalankan server dengan `php -S 127.0.0.1:8000 vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php` dari root repo ini kerana ia akan mencari `index.php` di root projek dan menyebabkan ralat. Gunakan `php artisan serve --host=127.0.0.1 --port=8000`.
+
 ## Learning Laravel
 
 Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
