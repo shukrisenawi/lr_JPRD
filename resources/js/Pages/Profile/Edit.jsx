@@ -6,33 +6,14 @@ import UpdateProfileInformationForm from './Partials/UpdateProfileInformationFor
 
 export default function Edit({ mustVerifyEmail, status }) {
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
+        <AuthenticatedLayout header={
+            <div><p className="label-section">Profile</p><h2 className="mt-0.5 heading-lg">Tetapan akaun</h2><p className="text-muted mt-0.5">Kemaskini profil dan kata laluan.</p></div>
+        }>
             <Head title="Profile" />
-
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdateProfileInformationForm
-                            mustVerifyEmail={mustVerifyEmail}
-                            status={status}
-                            className="max-w-xl"
-                        />
-                    </div>
-
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <UpdatePasswordForm className="max-w-xl" />
-                    </div>
-
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                        <DeleteUserForm className="max-w-xl" />
-                    </div>
-                </div>
+            <div className="mx-auto max-w-4xl space-y-4 px-3 sm:px-4 lg:px-6">
+                <div className="card p-5 sm:p-6"><UpdateProfileInformationForm mustVerifyEmail={mustVerifyEmail} status={status} /></div>
+                <div className="card p-5 sm:p-6"><UpdatePasswordForm /></div>
+                <div className="card border border-rose-600/30 p-5 sm:p-6"><DeleteUserForm /></div>
             </div>
         </AuthenticatedLayout>
     );

@@ -2,52 +2,35 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 
-const telegramBotUsername = 'SSDP_Kedah_Bot';
+const bot = 'SSDP_Kedah_Bot';
+function cmd(v, p) { const n = v?.no_kp || v?.old_ic || ''; return n ? `/${p} ${n}` : ''; }
 
-function buildTelegramCommand(voter, commandPrefix) {
-    const identityNumber = voter?.no_kp || voter?.old_ic || '';
+function RequiredLabel({ htmlFor, value }) {
+    return <div className="flex items-center gap-1"><InputLabel htmlFor={htmlFor} value={value} /><span className="text-xs font-bold text-rose-400">*</span></div>;
+}
 
-    return identityNumber ? `/${commandPrefix} ${identityNumber}` : '';
+function IconBtn({ label, children, className = '', ...props }) {
+    return <button type="button" title={label} aria-label={label}
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border transition ${className}`} {...props}>{children}</button>;
 }
 
 function ProgramImageModal({ program, onClose }) {
-    if (!program?.gambar_url) {
-        return null;
-    }
-
+    if (!program?.gambar_url) return null;
     return (
         <Modal show={Boolean(program?.gambar_url)} onClose={onClose} maxWidth="4xl">
-            <div className="p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-                    <div>
-                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                            Gambar Program
-                        </p>
-                        <h3 className="mt-1 text-lg font-bold text-slate-900">{program.tajuk}</h3>
-                    </div>
-
-                    <SecondaryButton
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
-                    >
-                        Tutup
-                    </SecondaryButton>
+            <div className="p-4">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-700/60 pb-3">
+                    <h3 className="heading-md">{program.tajuk}</h3>
+                    <button onClick={onClose} className="btn-ghost px-2.5 py-1.5 text-[10px]">Tutup</button>
                 </div>
-
-                <div className="mt-4 overflow-hidden rounded-2xl bg-slate-100">
-                    <img
-                        src={program.gambar_url}
-                        alt={program.tajuk}
-                        className="max-h-[75vh] w-full object-contain"
-                    />
+                <div className="mt-3 overflow-hidden rounded-xl bg-slate-800">
+                    <img src={program.gambar_url} alt={program.tajuk} className="max-h-[75vh] w-full object-contain" />
                 </div>
             </div>
         </Modal>
@@ -55,91 +38,35 @@ function ProgramImageModal({ program, onClose }) {
 }
 
 function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
-    if (!program) {
-        return null;
-    }
-
+    if (!program) return null;
     return (
         <Modal show={Boolean(program)} onClose={onClose} maxWidth="lg">
-            <div className="p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
-                    <div>
-                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                            Share Program
-                        </p>
-                        <h3 className="mt-1 text-lg font-bold text-slate-900">{program.tajuk}</h3>
-                        <p className="mt-1 text-sm leading-5 text-slate-500">
-                            Pilih pengguna yang boleh lihat program ini dan urus kehadiran pemilih.
-                        </p>
-                    </div>
-
-                    <SecondaryButton
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
-                    >
-                        Tutup
-                    </SecondaryButton>
+            <div className="p-5">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-700/60 pb-4">
+                    <div><p className="label-section">Share Program</p><h3 className="mt-0.5 heading-md">{program.tajuk}</h3></div>
+                    <button onClick={onClose} className="btn-ghost px-2.5 py-1.5 text-[10px]">Tutup</button>
                 </div>
-
-                <form onSubmit={onSubmit} className="mt-4 space-y-4">
+                <form onSubmit={onSubmit} className="mt-4 space-y-3">
                     <div>
                         <InputLabel value="Pilih Pengguna Admin" />
-                        <div className="mt-2 max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                        <div className="mt-2 max-h-60 space-y-1.5 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/60 p-2.5">
                             {users.map((user) => {
                                 const checked = shareForm.data.shared_user_ids.includes(user.id);
-
                                 return (
-                                    <label
-                                        key={user.id}
-                                        className="flex cursor-pointer items-start gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-slate-200 transition hover:bg-cyan-50"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={checked}
-                                            onChange={(event) => {
-                                                const nextIds = event.target.checked
-                                                    ? [...shareForm.data.shared_user_ids, user.id]
-                                                    : shareForm.data.shared_user_ids.filter(
-                                                          (id) => id !== user.id,
-                                                      );
-
-                                                shareForm.setData(
-                                                    'shared_user_ids',
-                                                    Array.from(new Set(nextIds)),
-                                                );
-                                            }}
-                                            className="mt-0.5 rounded border-slate-300 text-cyan-600 shadow-sm focus:ring-cyan-500"
-                                        />
-                                        <span className="min-w-0">
-                                            <span className="block text-sm font-semibold text-slate-900">
-                                                {user.name}
-                                            </span>
-                                            <span className="block text-xs text-slate-500">
-                                                {user.email}
-                                            </span>
-                                        </span>
+                                    <label key={user.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg bg-slate-800 px-2.5 py-2 ring-1 ring-slate-700 transition hover:bg-violet-500/10">
+                                        <input type="checkbox" checked={checked}
+                                            onChange={(e) => shareForm.setData('shared_user_ids', e.target.checked ? [...shareForm.data.shared_user_ids, user.id] : shareForm.data.shared_user_ids.filter((id) => id !== user.id))}
+                                            className="mt-0.5 rounded border-slate-600 bg-slate-700 text-violet-600 shadow-sm focus:ring-violet-500" />
+                                        <span className="min-w-0"><span className="block text-xs font-bold text-white">{user.name}</span><span className="block text-[10px] text-slate-400">{user.email}</span></span>
                                     </label>
                                 );
                             })}
                         </div>
                         <InputError className="mt-2" message={shareForm.errors.shared_user_ids} />
                     </div>
-
-                    <div className="flex justify-end gap-2 pt-2">
-                        <SecondaryButton
-                            type="button"
-                            onClick={onClose}
-                            className="rounded-xl px-4 py-2 text-[11px] tracking-[0.12em]"
-                        >
-                            Batal
-                        </SecondaryButton>
-                        <PrimaryButton
-                            className="rounded-xl bg-cyan-600 px-4 py-2 text-[11px] font-semibold text-white shadow-sm transition hover:bg-cyan-700"
-                            disabled={shareForm.processing}
-                        >
-                            {shareForm.processing ? 'Menyimpan...' : 'Share'}
-                        </PrimaryButton>
+                    <div className="flex justify-end gap-2">
+                        <button onClick={onClose} className="btn-ghost">Batal</button>
+                        <PrimaryButton disabled={shareForm.processing}>{shareForm.processing ? 'Menyimpan...' : 'Share'}</PrimaryButton>
                     </div>
                 </form>
             </div>
@@ -148,151 +75,51 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
 }
 
 function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare }) {
-    const scheduleLabel = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
-
+    const s = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
     return (
-        <div
-            className={`rounded-2xl border px-3 py-3 transition ${
-                isActive
-                    ? 'border-cyan-300 bg-cyan-50 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
-            }`}
-        >
-            <div
-                role="button"
-                tabIndex={0}
-                onClick={() => onSelect(program.id)}
-                onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        onSelect(program.id);
-                    }
-                }}
-                className="w-full text-left outline-none"
-            >
+        <div className={`rounded-lg border px-3 py-3 transition ${isActive ? 'tab-btn-active' : 'border-slate-700 bg-slate-800/50 hover:border-violet-500/30 hover:bg-violet-500/5'}`}>
+            <div role="button" tabIndex={0} onClick={() => onSelect(program.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(program.id); } }} className="w-full text-left outline-none">
                 {program.gambar_url && (
-                    <button
-                        type="button"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            onPreviewImage(program);
-                        }}
-                        className="mb-3 block w-full overflow-hidden rounded-xl"
-                    >
-                        <img
-                            src={program.gambar_url}
-                            alt={program.tajuk}
-                            className="h-28 w-full cursor-pointer object-cover transition duration-200 hover:scale-[1.02]"
-                        />
+                    <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-2 block w-full overflow-hidden rounded-lg">
+                        <img src={program.gambar_url} alt={program.tajuk} className="h-24 w-full object-cover transition hover:scale-[1.02]" />
                     </button>
                 )}
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700">
-                    {scheduleLabel}
-                </p>
-                <h3 className="mt-1.5 text-base font-bold leading-5 text-slate-900">{program.tajuk}</h3>
-                <p className="mt-1 text-sm leading-5 text-slate-500">{program.tempat}</p>
-                {program.group_name && (
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-700">
-                        {program.group_name}
-                    </p>
-                )}
-                <p className="mt-2 text-[11px] font-medium text-slate-500">
-                    {program.attendees_count} pemilih direkod hadir
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-400">{s}</p>
+                <h3 className="mt-0.5 text-sm font-bold text-white">{program.tajuk}</h3>
+                <p className="mt-0.5 text-xs text-slate-400">{program.tempat}</p>
+                {program.group_name && <p className="badge-amber mt-1.5 inline-block">{program.group_name}</p>}
+                <p className="mt-1.5 text-[10px] text-slate-500">{program.attendees_count} hadir</p>
             </div>
-
-            <div className="mt-3 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-3">
-                {program.can_share && (
-                    <SecondaryButton
-                        type="button"
-                        onClick={() => onShare(program)}
-                        className="rounded-xl border-amber-300 px-3 py-1.5 text-[10px] tracking-[0.14em] text-amber-700"
-                    >
-                        Share
-                    </SecondaryButton>
-                )}
-                {program.can_edit && (
-                    <>
-                        <SecondaryButton
-                            type="button"
-                            onClick={() => onEdit(program)}
-                            className="rounded-xl border-slate-300 px-3 py-1.5 text-[10px] tracking-[0.14em]"
-                        >
-                            Edit
-                        </SecondaryButton>
-                        <button
-                            type="button"
-                            onClick={() => onDelete(program)}
-                            disabled={deleting}
-                            className="inline-flex items-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {deleting ? 'Memadam...' : 'Padam'}
-                        </button>
-                    </>
-                )}
+            <div className="mt-2 flex flex-wrap justify-end gap-1.5 border-t border-slate-700/60 pt-2">
+                {program.can_share && <button onClick={() => onShare(program)} className="btn-amber px-2 py-1 text-[10px]">Share</button>}
+                {program.can_edit && <>
+                    <button onClick={() => onEdit(program)} className="btn-ghost px-2 py-1 text-[10px]">Edit</button>
+                    <button onClick={() => onDelete(program)} disabled={deleting} className="btn-danger px-2 py-1 text-[10px]">{deleting ? '...' : 'Padam'}</button>
+                </>}
             </div>
-        </div>
-    );
-}
-
-function RequiredLabel({ htmlFor, value }) {
-    return (
-        <div className="flex items-center gap-1">
-            <InputLabel htmlFor={htmlFor} value={value} />
-            <span className="text-sm font-semibold text-rose-500">*</span>
         </div>
     );
 }
 
 function VoterDetailCard({ voter, onAdd, adding }) {
-    if (!voter) {
-        return null;
-    }
-
+    if (!voter) return null;
     const fields = [
-        ['Nama', voter.name],
-        ['No. IC Baru', voter.no_kp || '-'],
-        ['No. IC Lama', voter.old_ic || '-'],
-        ['Tel. Bimbit', voter.phone_mobile || '-'],
-        ['Tel. Rumah', voter.phone_home || '-'],
-        ['UDM', voter.dm || '-'],
-        ['Lokaliti', voter.locality || '-'],
-        ['Jantina', voter.gender || '-'],
-        ['Bangsa', voter.race || '-'],
-        ['Status Culaan', voter.cula_display_label || voter.cula_code || '-'],
-        ['Alamat', voter.address || '-'],
+        ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
+        ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
+        ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'], ['Jantina', voter.gender || '-'],
+        ['Bangsa', voter.race || '-'], ['Status Culaan', voter.cula_display_label || voter.cula_code || '-'], ['Alamat', voter.address || '-'],
     ];
-
     return (
-        <section className="relative z-0 rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
-            <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                        Pemilih Dipilih
-                    </p>
-                    <h3 className="mt-2 text-2xl font-bold text-slate-900">{voter.name}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                        Semak maklumat pemilih dan tekan butang di bawah untuk tandakan kehadiran ke program semasa.
-                    </p>
-                </div>
-
-                <PrimaryButton
-                    type="button"
-                    onClick={() => onAdd(voter)}
-                    disabled={adding}
-                    className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-700"
-                >
-                    {adding ? 'Menyimpan...' : 'Tambah ke Program'}
-                </PrimaryButton>
+        <section className="card-accent">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-700/60 px-4 py-3">
+                <div><p className="label-section">Pemilih Dipilih</p><h3 className="mt-0.5 heading-lg">{voter.name}</h3></div>
+                <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald-lg">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
             </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {fields.map(([label, value]) => (
-                    <div key={label} className="rounded-2xl bg-slate-50 px-4 py-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            {label}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-slate-800">{value}</p>
+            <div className="grid gap-2 p-4 sm:grid-cols-2">
+                {fields.map(([l, v]) => (
+                    <div key={l} className="rounded-lg bg-slate-800/60 px-3 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{l}</p>
+                        <p className="mt-0.5 text-xs font-medium text-slate-200">{v}</p>
                     </div>
                 ))}
             </div>
@@ -300,77 +127,33 @@ function VoterDetailCard({ voter, onAdd, adding }) {
     );
 }
 
-function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady }) {
-    if (!attendee) {
-        return null;
-    }
-
+function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
+    if (!attendee) return null;
     const fields = [
-        ['Nama', attendee.name],
-        ['No. IC Baru', attendee.no_kp || '-'],
-        ['No. IC Lama', attendee.old_ic || '-'],
-        ['Tel. Bimbit', attendee.phone_mobile || '-'],
-        ['Tel. Rumah', attendee.phone_home || '-'],
-        ['UDM', attendee.dm || '-'],
-        ['Lokaliti', attendee.locality || '-'],
-        ['Jantina', attendee.gender || '-'],
-        ['Bangsa', attendee.race || '-'],
-        ['Status Culaan', attendee.cula_display_label || attendee.cula_code || '-'],
-        ['Alamat', attendee.address || '-'],
-        ['Direkod', attendee.attended_at || '-'],
+        ['Nama', attendee.name], ['No. IC Baru', attendee.no_kp || '-'], ['No. IC Lama', attendee.old_ic || '-'],
+        ['Tel. Bimbit', attendee.phone_mobile || '-'], ['Tel. Rumah', attendee.phone_home || '-'],
+        ['UDM', attendee.dm || '-'], ['Lokaliti', attendee.locality || '-'], ['Jantina', attendee.gender || '-'],
+        ['Bangsa', attendee.race || '-'], ['Status Culaan', attendee.cula_display_label || attendee.cula_code || '-'],
+        ['Alamat', attendee.address || '-'], ['Direkod', attendee.attended_at || '-'],
     ];
-
     return (
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="2xl">
-            <div className="p-5 sm:p-6">
-                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                            Detail Kehadiran
-                        </p>
-                        <h3 className="mt-1.5 text-xl font-bold leading-6 text-slate-900">{attendee.name}</h3>
-                        <p className="mt-1.5 text-sm leading-5 text-slate-500">
-                            Semak maklumat pemilih yang telah direkod hadir untuk program ini.
-                        </p>
-                    </div>
-
-                    <SecondaryButton
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
-                    >
-                        Tutup
-                    </SecondaryButton>
+            <div className="p-5">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-700/60 pb-4">
+                    <div><p className="label-section">Detail Kehadiran</p><h3 className="mt-0.5 heading-md">{attendee.name}</h3></div>
+                    <button onClick={onClose} className="btn-ghost px-2.5 py-1.5 text-[10px]">Tutup</button>
                 </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {fields.map(([label, value]) => (
-                        <div key={label} className="rounded-xl bg-slate-50 px-3 py-2.5">
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                                {label}
-                            </p>
-                            <p className="mt-1 text-[13px] font-medium leading-5 text-slate-800">{value}</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {fields.map(([l, v]) => (
+                        <div key={l} className="rounded-lg bg-slate-800/60 px-3 py-2">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{l}</p>
+                            <p className="mt-0.5 text-xs font-medium text-slate-200">{v}</p>
                         </div>
                     ))}
                 </div>
-
-                <div className="mt-4 flex flex-wrap justify-center gap-2 border-t border-slate-100 pt-4">
-                    <button
-                        type="button"
-                        onClick={() => onOpenTelegram(attendee, 'kemascula')}
-                        disabled={!telegramReady}
-                        className="rounded-xl bg-cyan-600 px-3 py-1.5 text-[13px] font-semibold text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        Kemas Cula
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onOpenTelegram(attendee, 'kemastel')}
-                        disabled={!telegramReady}
-                        className="rounded-xl bg-emerald-600 px-3 py-1.5 text-[13px] font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                        Kemaskini Tel
-                    </button>
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-slate-700/60 pt-3">
+                    <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
+                    <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
                 </div>
             </div>
         </Modal>
@@ -378,61 +161,27 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, telegramReady 
 }
 
 function AttendeeProgramsModal({ attendee, onClose }) {
-    if (!attendee) {
-        return null;
-    }
-
+    if (!attendee) return null;
     const programs = attendee.joined_programs ?? [];
-
     return (
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="2xl">
-            <div className="p-5 sm:p-6">
-                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                            Program Disertai
-                        </p>
-                        <h3 className="mt-1.5 text-xl font-bold leading-6 text-slate-900">{attendee.name}</h3>
-                        <p className="mt-1.5 text-sm leading-5 text-slate-500">
-                            Senarai program yang pernah direkod untuk pemilih ini.
-                        </p>
-                    </div>
-
-                    <SecondaryButton
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-xl px-3 py-1.5 text-[11px] tracking-[0.12em]"
-                    >
-                        Tutup
-                    </SecondaryButton>
+            <div className="p-5">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-700/60 pb-4">
+                    <div><p className="label-section">Program Disertai</p><h3 className="mt-0.5 heading-md">{attendee.name}</h3></div>
+                    <button onClick={onClose} className="btn-ghost px-2.5 py-1.5 text-[10px]">Tutup</button>
                 </div>
-
-                <div className="mt-4">
-                    {programs.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                            Tiada program direkod untuk pemilih ini.
-                        </div>
-                    ) : (
-                        <div className="overflow-hidden rounded-2xl border border-slate-200">
-                            <ul className="divide-y divide-slate-100 bg-white">
-                                {programs.map((program) => (
-                                    <li key={program.program_id} className="px-4 py-3">
-                                        <div className="flex items-start justify-between gap-3">
+                <div className="mt-3">
+                    {programs.length === 0 ? <div className="card-dashed py-6 text-xs">Tiada</div> : (
+                        <div className="card overflow-hidden">
+                            <ul className="divide-y divide-slate-700/50">
+                                {programs.map((p) => (
+                                    <li key={p.program_id} className="px-3 py-2.5">
+                                        <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0">
-                                                <p className="truncate text-sm font-semibold text-slate-900">
-                                                    {program.tajuk}
-                                                </p>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    {program.masa
-                                                        ? `${program.tarikh} • ${program.masa}`
-                                                        : program.tarikh || '-'}
-                                                </p>
+                                                <p className="truncate text-xs font-bold text-white">{p.tajuk}</p>
+                                                <p className="mt-0.5 text-[10px] text-slate-400">{p.masa ? `${p.tarikh} • ${p.masa}` : p.tarikh || '-'}</p>
                                             </div>
-                                            {program.group_name && (
-                                                <span className="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-800 ring-1 ring-amber-200">
-                                                    {program.group_name}
-                                                </span>
-                                            )}
+                                            {p.group_name && <span className="badge-amber shrink-0">{p.group_name}</span>}
                                         </div>
                                     </li>
                                 ))}
@@ -445,172 +194,45 @@ function AttendeeProgramsModal({ attendee, onClose }) {
     );
 }
 
-function IconButton({ label, children, className = '', ...props }) {
-    return (
-        <button
-            type="button"
-            title={label}
-            aria-label={label}
-            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition ${className}`}
-            {...props}
-        >
-            {children}
-        </button>
-    );
-}
-
 function ProgramGroupManager({ groups }) {
-    const [editingGroupId, setEditingGroupId] = useState(null);
-    const groupForm = useForm({
-        name: '',
-    });
-
-    const submitGroup = (event) => {
-        event.preventDefault();
-
-        if (editingGroupId) {
-            groupForm.put(route('program.groups.update', editingGroupId), {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setEditingGroupId(null);
-                    groupForm.reset();
-                },
-            });
-
-            return;
-        }
-
-        groupForm.post(route('program.groups.store'), {
-            preserveScroll: true,
-            onSuccess: () => groupForm.reset(),
-        });
+    const [editingId, setEditingId] = useState(null);
+    const f = useForm({ name: '' });
+    const submit = (e) => {
+        e.preventDefault();
+        if (editingId) { f.put(route('program.groups.update', editingId), { preserveScroll: true, onSuccess: () => { setEditingId(null); f.reset(); } }); return; }
+        f.post(route('program.groups.store'), { preserveScroll: true, onSuccess: () => f.reset() });
     };
-
-    const startEditGroup = (group) => {
-        setEditingGroupId(group.id);
-        groupForm.setData('name', group.name);
-        groupForm.clearErrors();
-    };
-
-    const cancelEditGroup = () => {
-        setEditingGroupId(null);
-        groupForm.reset();
-        groupForm.clearErrors();
-    };
-
-    const deleteGroup = (group) => {
-        if (!window.confirm(`Padam group program "${group.name}"? Program dalam group ini akan dikeluarkan daripada group tersebut.`)) {
-            return;
-        }
-
-        router.delete(route('program.groups.destroy', group.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                if (editingGroupId === group.id) {
-                    cancelEditGroup();
-                }
-            },
-        });
-    };
+    const del = (g) => { if (window.confirm(`Padam group "${g.name}"?`)) router.delete(route('program.groups.destroy', g.id), { preserveScroll: true, onSuccess: () => { if (editingId === g.id) { setEditingId(null); f.reset(); } } }); };
 
     return (
-        <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-            <form
-                onSubmit={submitGroup}
-                className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8"
-            >
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                    {editingGroupId ? 'Edit Group Program' : 'Tambah Group Program'}
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                    {editingGroupId ? 'Kemaskini nama group' : 'Daftar group baru'}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Gunakan group untuk susun program mengikut zon, pasukan, atau kategori anda sendiri.
-                </p>
-
-                <div className="mt-6">
-                    <RequiredLabel htmlFor="group-name" value="Nama Group Program" />
-                    <TextInput
-                        id="group-name"
-                        required
-                        value={groupForm.data.name}
-                        onChange={(event) => groupForm.setData('name', event.target.value)}
-                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                    />
-                    <InputError className="mt-2" message={groupForm.errors.name} />
+        <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+            <form onSubmit={submit} className="card p-5">
+                <p className="label-section">{editingId ? 'Edit Group' : 'Tambah Group'}</p>
+                <h3 className="mt-0.5 heading-md">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
+                <div className="mt-4">
+                    <RequiredLabel htmlFor="gn" value="Nama Group" />
+                    <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="input-field mt-1.5" />
+                    <InputError className="mt-2" message={f.errors.name} />
                 </div>
-
-                <div className="mt-6 flex justify-end">
-                    {editingGroupId && (
-                        <SecondaryButton
-                            type="button"
-                            onClick={cancelEditGroup}
-                            className="mr-3 rounded-2xl px-5 py-3 text-sm font-semibold normal-case tracking-normal"
-                        >
-                            Batal Edit
-                        </SecondaryButton>
-                    )}
-                    <PrimaryButton
-                        className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
-                        disabled={groupForm.processing}
-                    >
-                        {groupForm.processing
-                            ? 'Menyimpan...'
-                            : editingGroupId
-                              ? 'Simpan Group'
-                              : 'Tambah Group'}
-                    </PrimaryButton>
+                <div className="mt-4 flex justify-end">
+                    {editingId && <button onClick={() => { setEditingId(null); f.reset(); f.clearErrors(); }} className="btn-ghost mr-2">Batal</button>}
+                    <PrimaryButton disabled={f.processing}>{f.processing ? '...' : editingId ? 'Simpan' : 'Tambah'}</PrimaryButton>
                 </div>
             </form>
 
-            <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                    Senarai Group Program
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                    {groups.length} group direkod
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Edit atau padam group program yang anda mahu gunakan dalam borang program.
-                </p>
-
-                <div className="mt-6 space-y-3">
-                    {groups.length === 0 ? (
-                        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                            Belum ada group program. Tambah group pertama anda di sebelah kiri.
-                        </div>
-                    ) : (
-                        groups.map((group) => (
-                            <div
-                                key={group.id}
-                                className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <div>
-                                    <p className="font-semibold text-slate-900">{group.name}</p>
-                                    <p className="mt-1 text-sm text-slate-500">
-                                        {group.programs_count} program dalam group ini
-                                    </p>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    <SecondaryButton
-                                        type="button"
-                                        onClick={() => startEditGroup(group)}
-                                        className="rounded-2xl border-slate-300 px-4 py-2 text-sm font-semibold normal-case tracking-normal"
-                                    >
-                                        Edit
-                                    </SecondaryButton>
-                                    <button
-                                        type="button"
-                                        onClick={() => deleteGroup(group)}
-                                        className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                                    >
-                                        Padam
-                                    </button>
-                                </div>
+            <section className="card p-5">
+                <p className="label-section">Senarai Group</p>
+                <h3 className="mt-0.5 heading-md">{groups.length} group</h3>
+                <div className="mt-4 space-y-2">
+                    {groups.length === 0 ? <div className="card-dashed py-6 text-xs">Belum ada</div> : groups.map((g) => (
+                        <div key={g.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5">
+                            <div><p className="text-xs font-bold text-white">{g.name}</p><p className="text-[10px] text-slate-400">{g.programs_count} program</p></div>
+                            <div className="flex gap-1.5">
+                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="btn-ghost px-2 py-1 text-[10px]">Edit</button>
+                                <button onClick={() => del(g)} className="btn-danger px-2 py-1 text-[10px]">Padam</button>
                             </div>
-                        ))
-                    )}
+                        </div>
+                    ))}
                 </div>
             </section>
         </section>
@@ -618,906 +240,243 @@ function ProgramGroupManager({ groups }) {
 }
 
 function SearchVoterPanel({ selectedProgram }) {
-    const [query, setQuery] = useState('');
-    const [suggestions, setSuggestions] = useState([]);
-    const [searching, setSearching] = useState(false);
-    const [selectedVoter, setSelectedVoter] = useState(null);
-    const [errorMessage, setErrorMessage] = useState('');
-    const [adding, setAdding] = useState(false);
-    const abortControllerRef = useRef(null);
-    const requestIdRef = useRef(0);
+    const [q, setQ] = useState(''); const [suggestions, setSuggestions] = useState([]); const [searching, setSearching] = useState(false);
+    const [selected, setSelected] = useState(null); const [err, setErr] = useState(''); const [adding, setAdding] = useState(false);
+    const ac = useRef(null); const rid = useRef(0);
 
-    useEffect(() => {
-        abortControllerRef.current?.abort();
-        requestIdRef.current += 1;
-        setQuery('');
-        setSuggestions([]);
-        setSelectedVoter(null);
-        setSearching(false);
-        setErrorMessage('');
-    }, [selectedProgram?.id]);
+    useEffect(() => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); }, [selectedProgram?.id]);
+    useEffect(() => () => ac.current?.abort(), []);
 
-    useEffect(() => () => abortControllerRef.current?.abort(), []);
+    const pick = (voter) => { ac.current?.abort(); rid.current += 1; setSearching(false); setSuggestions([]); setQ(voter.name ?? ''); setErr(''); setSelected({ ...voter, voter_id: voter.voter_id ?? voter.id }); };
 
-    const handleSelectVoter = (voter) => {
-        abortControllerRef.current?.abort();
-        requestIdRef.current += 1;
-        setSearching(false);
-        setSuggestions([]);
-        setQuery(voter.name ?? '');
-        setErrorMessage('');
-        setSelectedVoter({
-            ...voter,
-            voter_id: voter.voter_id ?? voter.id,
-        });
-    };
-
-    const handleChange = async (event) => {
-        const nextQuery = event.target.value;
-
-        setQuery(nextQuery);
-        setSelectedVoter(null);
-        setErrorMessage('');
-        abortControllerRef.current?.abort();
-
-        if (!selectedProgram) {
-            setSuggestions([]);
-            setSearching(false);
-            return;
-        }
-
-        if (nextQuery.trim().length < 2) {
-            setSuggestions([]);
-            setSearching(false);
-            return;
-        }
-
-        const requestId = requestIdRef.current + 1;
-        requestIdRef.current = requestId;
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
-        setSearching(true);
-
+    const handleChange = async (e) => {
+        const nq = e.target.value; setQ(nq); setSelected(null); setErr(''); ac.current?.abort();
+        if (!selectedProgram || nq.trim().length < 2) { setSuggestions([]); setSearching(false); return; }
+        const reqId = ++rid.current; const c = new AbortController(); ac.current = c; setSearching(true);
         try {
-            const response = await fetch(
-                `${route('program.search', selectedProgram.id)}?q=${encodeURIComponent(nextQuery)}`,
-                {
-                    headers: {
-                        Accept: 'application/json',
-                    },
-                    signal: controller.signal,
-                },
-            );
-
-            const payload = await response.json();
-
-            if (!response.ok) {
-                throw new Error(payload.message || 'Carian program gagal dimuatkan.');
-            }
-
-            if (requestIdRef.current === requestId) {
-                setSuggestions(payload.suggestions ?? []);
-            }
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                setSuggestions([]);
-                setErrorMessage('Carian pemilih gagal dimuatkan. Sila cuba semula.');
-            }
-        } finally {
-            if (requestIdRef.current === requestId) {
-                setSearching(false);
-            }
-        }
+            const res = await fetch(`${route('program.search', selectedProgram.id)}?q=${encodeURIComponent(nq)}`, { headers: { Accept: 'application/json' }, signal: c.signal });
+            const p = await res.json(); if (!res.ok) throw new Error();
+            if (rid.current === reqId) setSuggestions(p.suggestions ?? []);
+        } catch { setSuggestions([]); setErr('Carian gagal.'); }
+        finally { if (rid.current === reqId) setSearching(false); }
     };
 
-    const handleAddVoter = async (voter) => {
-        if (!selectedProgram) {
-            return;
-        }
-
-        setAdding(true);
-
-        const payload = {
-            ...voter,
-            voter_id: voter.voter_id ?? voter.id,
-        };
-
-        router.post(route('program.attendees.store', selectedProgram.id), payload, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setQuery('');
-                setSuggestions([]);
-                setSelectedVoter(null);
-                setErrorMessage('');
-            },
-            onError: () => {
-                setErrorMessage('Pemilih tidak berjaya direkodkan. Sila cuba semula.');
-            },
-            onFinish: () => setAdding(false),
+    const add = async (voter) => {
+        if (!selectedProgram) return; setAdding(true);
+        router.post(route('program.attendees.store', selectedProgram.id), { ...voter, voter_id: voter.voter_id ?? voter.id }, {
+            preserveScroll: true, onSuccess: () => { setQ(''); setSuggestions([]); setSelected(null); setErr(''); }, onError: () => setErr('Gagal rekod.'), onFinish: () => setAdding(false),
         });
     };
 
-    if (!selectedProgram) {
-        return (
-            <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white/70 p-10 text-center shadow-sm">
-                <h3 className="text-xl font-bold text-slate-900">Belum ada program dipilih</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Tambah program baru dahulu untuk mula merekod kehadiran pemilih.
-                </p>
-            </section>
-        );
-    }
+    if (!selectedProgram) return <div className="card-dashed"><p className="text-sm font-bold text-white">Pilih program</p></div>;
 
     return (
-        <div className="relative z-20 space-y-6">
-            <section className="relative z-20 rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
-                <div className="flex flex-col gap-3">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                            Carian Pemilih Untuk Program
-                        </p>
-                        <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                            {selectedProgram.tajuk}
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                            Cari pemilih seperti menu Carian Pemilih, kemudian tambah ke program ini sebagai kehadiran.
-                        </p>
-                    </div>
-
-                    <div className="relative">
-                        <input
-                            type="search"
-                            value={query}
-                            onChange={handleChange}
-                            placeholder="Contoh: Ali, 900101025555, 0123456789"
-                            className="w-full rounded-2xl border-slate-200 text-sm shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                        />
-
+        <div className="space-y-3">
+            <section className="card">
+                <div className="px-4 py-3">
+                    <p className="label-section">Carian Pemilih</p>
+                    <h3 className="mt-0.5 heading-md">{selectedProgram.tajuk}</h3>
+                    <div className="relative mt-2">
+                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555..." className="input-field" />
                         {(searching || suggestions.length > 0) && (
-                            <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
-                                {searching ? (
-                                    <div className="px-4 py-3 text-sm text-slate-500">Mencari...</div>
-                                ) : (
-                                    suggestions.map((voter) => (
-                                        <button
-                                            key={voter.id}
-                                            type="button"
-                                            onClick={() => handleSelectVoter(voter)}
-                                            className="flex w-full items-start justify-between gap-4 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-cyan-50 last:border-b-0"
-                                        >
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-900">{voter.name}</p>
-                                                <p className="mt-1 text-xs text-slate-500">
-                                                    IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}
-                                                </p>
-                                            </div>
-                                            <div className="text-right text-xs text-slate-500">
-                                                <p>{voter.dm}</p>
-                                                <p className="mt-1">{voter.locality}</p>
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
+                            <div className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
+                                {searching ? <div className="px-3 py-2 text-xs text-slate-400">Mencari...</div> : suggestions.map((v) => (
+                                    <button key={v.id} onClick={() => pick(v)} className="flex w-full items-start justify-between gap-3 border-b border-slate-700/50 px-3 py-2.5 text-left transition hover:bg-violet-500/10 last:border-b-0">
+                                        <div className="min-w-0"><p className="text-xs font-bold text-white">{v.name}</p><p className="mt-0.5 text-[10px] text-slate-400">IC: {v.no_kp || '-'}</p></div>
+                                        <div className="shrink-0 text-right text-[10px] text-slate-500"><p>{v.dm}</p><p>{v.locality}</p></div>
+                                    </button>
+                                ))}
                             </div>
                         )}
                     </div>
-
-                    {errorMessage && (
-                        <p className="text-sm font-medium text-rose-600">{errorMessage}</p>
-                    )}
+                    {err && <p className="mt-1.5 text-xs font-bold text-rose-400">{err}</p>}
                 </div>
             </section>
-
-            <VoterDetailCard voter={selectedVoter} onAdd={handleAddVoter} adding={adding} />
+            <VoterDetailCard voter={selected} onAdd={add} adding={adding} />
         </div>
     );
 }
 
 export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups }) {
-    const [activeTab, setActiveTab] = useState('tambah-program');
-    const [editingProgramId, setEditingProgramId] = useState(null);
-    const [deletingProgramId, setDeletingProgramId] = useState(null);
-    const [selectedAttendee, setSelectedAttendee] = useState(null);
-    const [selectedAttendeePrograms, setSelectedAttendeePrograms] = useState(null);
-    const [selectedProgramImage, setSelectedProgramImage] = useState(null);
-    const [selectedShareProgram, setSelectedShareProgram] = useState(null);
-    const [deletingAttendeeId, setDeletingAttendeeId] = useState(null);
-    const [openingTelegram, setOpeningTelegram] = useState(false);
-    const gambarInputRef = useRef(null);
+    const [tab, setTab] = useState('tambah-program');
+    const [editingId, setEditingId] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
+    const [selAttendee, setSelAttendee] = useState(null);
+    const [selAttendeeProgs, setSelAttendeeProgs] = useState(null);
+    const [selImage, setSelImage] = useState(null);
+    const [selShare, setSelShare] = useState(null);
+    const [deletingAtt, setDeletingAtt] = useState(null);
+    const [openingTg, setOpeningTg] = useState(false);
+    const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
-    const programForm = useForm({
-        tajuk: '',
-        tempat: defaultTempat,
-        tarikh: '',
-        masa: '',
-        group_id: '',
-        gambar: null,
-        gambar_url: null,
-    });
-    const shareForm = useForm({
-        shared_user_ids: [],
-    });
-    const [programImagePreviewUrl, setProgramImagePreviewUrl] = useState(null);
+    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', gambar: null, gambar_url: null });
+    const sf = useForm({ shared_user_ids: [] });
+    const [previewUrl, setPreviewUrl] = useState(null);
 
     useEffect(() => {
-        if (!(programForm.data.gambar instanceof File)) {
-            setProgramImagePreviewUrl(programForm.data.gambar_url || null);
+        if (!(f.data.gambar instanceof File)) { setPreviewUrl(f.data.gambar_url || null); return; }
+        const u = URL.createObjectURL(f.data.gambar); setPreviewUrl(u); return () => URL.revokeObjectURL(u);
+    }, [f.data.gambar, f.data.gambar_url]);
 
-            return undefined;
-        }
-
-        const objectUrl = URL.createObjectURL(programForm.data.gambar);
-        setProgramImagePreviewUrl(objectUrl);
-
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [programForm.data.gambar, programForm.data.gambar_url]);
-
-    const isEditing = editingProgramId !== null;
-
-    const submitProgram = (event) => {
-        event.preventDefault();
-        const resetAfterSuccess = () => {
-            setEditingProgramId(null);
-            programForm.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url');
-            programForm.setData('tempat', defaultTempat);
-            programForm.setData('gambar_url', null);
-            if (gambarInputRef.current) {
-                gambarInputRef.current.value = '';
-            }
-        };
-
-        if (isEditing) {
-            programForm.transform((data) => ({
-                ...data,
-                _method: 'put',
-            }));
-            programForm.post(route('program.update', editingProgramId), {
-                preserveScroll: true,
-                forceFormData: true,
-                onSuccess: resetAfterSuccess,
-            });
-
-            return;
-        }
-
-        programForm.transform((data) => data);
-        programForm.post(route('program.store'), {
-            preserveScroll: true,
-            forceFormData: programForm.data.gambar instanceof File,
-            onSuccess: resetAfterSuccess,
-        });
+    const isEditing = editingId !== null;
+    const submitProgram = (e) => {
+        e.preventDefault();
+        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
+        if (isEditing) { f.transform((d) => ({ ...d, _method: 'put' })); f.post(route('program.update', editingId), { preserveScroll: true, forceFormData: true, onSuccess: reset }); return; }
+        f.post(route('program.store'), { preserveScroll: true, forceFormData: f.data.gambar instanceof File, onSuccess: reset });
     };
 
-    const selectProgram = (programId) => {
-        setActiveTab('senarai-program');
-        router.get(
-            route('program.index'),
-            { program: programId },
-            { preserveScroll: true, preserveState: true, replace: true },
-        );
-    };
-
-    const backToProgramList = () => {
-        setSelectedAttendee(null);
-        router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true });
-    };
-
-    const startEditProgram = (program) => {
-        setEditingProgramId(program.id);
-        programForm.setData({
-            tajuk: program.tajuk ?? '',
-            tempat: program.tempat ?? defaultTempat,
-            tarikh: program.tarikh ?? '',
-            masa: program.masa ?? '',
-            group_id: program.group_id ?? '',
-            gambar: null,
-            gambar_url: program.gambar_url ?? null,
-        });
-        if (gambarInputRef.current) {
-            gambarInputRef.current.value = '';
-        }
-        setActiveTab('tambah-program');
-    };
-
-    const cancelEditProgram = () => {
-        setEditingProgramId(null);
-        programForm.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url');
-        programForm.setData('tempat', defaultTempat);
-        programForm.setData('gambar_url', null);
-        programForm.clearErrors();
-        if (gambarInputRef.current) {
-            gambarInputRef.current.value = '';
-        }
-    };
-
-    const deleteProgram = (program) => {
-        if (
-            !window.confirm(
-                `Padam program "${program.tajuk}"? Semua rekod kehadiran bagi program ini juga akan dipadam.`,
-            )
-        ) {
-            return;
-        }
-
-        setDeletingProgramId(program.id);
-
-        router.delete(route('program.destroy', program.id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                if (editingProgramId === program.id) {
-                    cancelEditProgram();
-                }
-            },
-            onFinish: () => setDeletingProgramId(null),
-        });
-    };
-
-    const closeAttendeeModal = () => {
-        setSelectedAttendee(null);
-    };
-
-    const closeAttendeeProgramsModal = () => {
-        setSelectedAttendeePrograms(null);
-    };
-
-    const closeProgramImageModal = () => {
-        setSelectedProgramImage(null);
-    };
-
-    const openShareProgramModal = (program) => {
-        setSelectedShareProgram(program);
-        shareForm.setData(
-            'shared_user_ids',
-            (program.shared_users ?? []).map((user) => user.id),
-        );
-        shareForm.clearErrors();
-    };
-
-    const closeShareProgramModal = () => {
-        setSelectedShareProgram(null);
-        shareForm.setData('shared_user_ids', []);
-        shareForm.clearErrors();
-    };
-
-    const submitShareProgram = (event) => {
-        event.preventDefault();
-
-        if (!selectedShareProgram) {
-            return;
-        }
-
-        const selectedUserNames = shareableUsers
-            .filter((user) => shareForm.data.shared_user_ids.includes(user.id))
-            .map((user) => user.name);
-
-        shareForm.post(route('program.share.store', selectedShareProgram.id), {
-            preserveScroll: true,
-            preserveState: true,
-            onSuccess: () => {
-                setActiveTab('senarai-program');
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Perkongsian berjaya',
-                    text:
-                        selectedUserNames.length > 0
-                            ? `Program ini berjaya dikongsi kepada ${selectedUserNames.join(', ')}.`
-                            : 'Perkongsian program berjaya dikemaskini.',
-                    confirmButtonText: 'Tutup',
-                    confirmButtonColor: '#0891b2',
-                }).then(() => {
-                    closeShareProgramModal();
-                });
-            },
-        });
-    };
-
-    const deleteAttendee = (attendee) => {
-        if (!selectedProgram) {
-            return;
-        }
-
-        if (!window.confirm(`Padam kehadiran pemilih "${attendee.name}" untuk program ini?`)) {
-            return;
-        }
-
-        setDeletingAttendeeId(attendee.id);
-
-        router.delete(route('program.attendees.destroy', [selectedProgram.id, attendee.id]), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setSelectedAttendee(null);
-            },
-            onFinish: () => setDeletingAttendeeId(null),
-        });
-    };
-
-    const handleOpenTelegram = async (voter, commandPrefix) => {
-        const command = buildTelegramCommand(voter, commandPrefix);
-
-        if (!command) {
-            return;
-        }
-
-        const telegramWindow = window.open('about:blank', '_blank');
-        const telegramDeepLink = `tg://resolve?domain=${telegramBotUsername}&text=${encodeURIComponent(command)}`;
-
-        setOpeningTelegram(true);
-
-        try {
-            telegramWindow?.location.replace(telegramDeepLink);
-        } catch (error) {
-            telegramWindow?.close();
-        } finally {
-            setOpeningTelegram(false);
-        }
+    const selectProg = (id) => { setTab('senarai-program'); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
+    const back = () => { setSelAttendee(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
+    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: p.tarikh ?? '', masa: p.masa ?? '', group_id: p.group_id ?? '', gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
+    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
+    const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
+    const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
+    const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } };
+    const openShare = (p) => { setSelShare(p); sf.setData('shared_user_ids', (p.shared_users ?? []).map((u) => u.id)); sf.clearErrors(); };
+    const closeShare = () => { setSelShare(null); sf.setData('shared_user_ids', []); sf.clearErrors(); };
+    const submitShare = (e) => {
+        e.preventDefault(); if (!selShare) return;
+        const names = shareableUsers.filter((u) => sf.data.shared_user_ids.includes(u.id)).map((u) => u.name);
+                sf.post(route('program.share.store', selShare.id), { preserveScroll: true, preserveState: true, onSuccess: () => { setTab('senarai-program'); Swal.fire({ icon: 'success', title: 'Berjaya', text: names.length > 0 ? `Dikongsi kepada ${names.join(', ')}.` : 'Dikemaskini.', confirmButtonText: 'OK', confirmButtonColor: '#8b5cf6', background: '#1e293b', color: '#e2e8f0', iconColor: '#34d399' }).then(() => closeShare()); } });
     };
 
     const tabs = [
-        {
-            key: 'tambah-program',
-            label: 'Tambah Program',
-            description: 'Daftar program baru dengan tajuk, tempat, tarikh, dan masa.',
-        },
-        {
-            key: 'group-program',
-            label: 'Group Program',
-            description: 'Tambah, edit, dan padam group untuk susun program anda.',
-        },
-        {
-            key: 'senarai-program',
-            label: 'Senarai Program',
-            description: 'Klik kad program untuk terus buka rekod kehadiran dan urus pemilih.',
-        },
+        { key: 'tambah-program', label: 'Tambah Program' },
+        { key: 'group-program', label: 'Group Program' },
+        { key: 'senarai-program', label: 'Senarai Program' },
     ];
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                            Program
-                        </p>
-                        <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                            Pengurusan program dan kehadiran pemilih
-                        </h2>
-                        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                            Cipta program, cari pemilih seperti modul carian, dan rekodkan kehadiran mereka untuk setiap program.
-                        </p>
+        <AuthenticatedLayout header={
+            <div><p className="label-section">Program</p><h2 className="mt-0.5 heading-lg">Program</h2></div>
+        }>
+            <Head title="Program" />
+            <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
+                <div className="card p-1.5">
+                    <div className="grid gap-1.5 sm:grid-cols-3">
+                        {tabs.map((t) => (
+                            <button key={t.key} onClick={() => setTab(t.key)}
+                                className={`rounded-lg border px-3 py-2.5 text-left transition ${tab === t.key ? 'tab-btn-active' : 'tab-btn-inactive'}`}>
+                                <p className="label-section">{t.label}</p>
+                            </button>
+                        ))}
                     </div>
                 </div>
-            }
-        >
-            <Head title="Program" />
 
-            <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-3 shadow-panel backdrop-blur sm:p-4">
-                    <div className="grid gap-3 md:grid-cols-3">
-                        {tabs.map((tab) => {
-                            const isActive = activeTab === tab.key;
-
-                            return (
-                                <button
-                                    key={tab.key}
-                                    type="button"
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className={`rounded-3xl border px-5 py-4 text-left transition ${
-                                        isActive
-                                            ? 'border-cyan-300 bg-cyan-50 shadow-sm'
-                                            : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
-                                    }`}
-                                >
-                                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                        {tab.label}
-                                    </p>
-                                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                                        {tab.description}
-                                    </p>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </section>
-
-                {activeTab === 'tambah-program' && (
-                    <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-                        <form
-                            onSubmit={submitProgram}
-                            className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8"
-                        >
-                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                {isEditing ? 'Edit Program' : 'Tambah Program'}
-                            </p>
-                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                {isEditing ? 'Kemaskini maklumat program' : 'Maklumat program baru'}
-                            </h3>
-                            <p className="mt-2 text-sm leading-6 text-slate-500">
-                                {isEditing
-                                    ? 'Ubah maklumat program yang dipilih, kemudian simpan perubahan.'
-                                    : 'Isi maklumat program untuk mula rekod kehadiran pemilih.'}
-                            </p>
-
-                            <div className="mt-6 grid gap-5">
-                                <div>
-                                    <RequiredLabel htmlFor="tajuk" value="Tajuk" />
-                                    <TextInput
-                                        id="tajuk"
-                                        required
-                                        value={programForm.data.tajuk}
-                                        onChange={(event) => programForm.setData('tajuk', event.target.value)}
-                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                    />
-                                    <InputError className="mt-2" message={programForm.errors.tajuk} />
+                {tab === 'tambah-program' && (
+                    <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+                        <form onSubmit={submitProgram} className="card p-5">
+                            <p className="label-section">{isEditing ? 'Edit Program' : 'Tambah Program'}</p>
+                            <h3 className="mt-0.5 heading-md">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
+                            <div className="mt-4 grid gap-4">
+                                <div><RequiredLabel htmlFor="tajuk" value="Tajuk" /><TextInput id="tajuk" required value={f.data.tajuk} onChange={(e) => f.setData('tajuk', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.tajuk} /></div>
+                                <div><RequiredLabel htmlFor="tempat" value="Tempat" /><TextInput id="tempat" required value={f.data.tempat} onChange={(e) => f.setData('tempat', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.tempat} /></div>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <div><RequiredLabel htmlFor="tarikh" value="Tarikh" /><TextInput id="tarikh" type="date" required value={f.data.tarikh} onChange={(e) => f.setData('tarikh', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.tarikh} /></div>
+                                    <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.masa} /></div>
                                 </div>
-
+                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1.5"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1.5" message={f.errors.group_id} /></div>
                                 <div>
-                                    <RequiredLabel htmlFor="tempat" value="Tempat" />
-                                    <TextInput
-                                        id="tempat"
-                                        required
-                                        value={programForm.data.tempat}
-                                        onChange={(event) => programForm.setData('tempat', event.target.value)}
-                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                    />
-                                    <InputError className="mt-2" message={programForm.errors.tempat} />
-                                </div>
-
-                                <div className="grid gap-5 md:grid-cols-2">
-                                    <div>
-                                        <RequiredLabel htmlFor="tarikh" value="Tarikh" />
-                                        <TextInput
-                                            id="tarikh"
-                                            type="date"
-                                            required
-                                            value={programForm.data.tarikh}
-                                            onChange={(event) => programForm.setData('tarikh', event.target.value)}
-                                            className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                        />
-                                        <InputError className="mt-2" message={programForm.errors.tarikh} />
-                                    </div>
-
-                                    <div>
-                                        <InputLabel htmlFor="masa" value="Masa" />
-                                        <TextInput
-                                            id="masa"
-                                            type="time"
-                                            value={programForm.data.masa}
-                                            onChange={(event) => programForm.setData('masa', event.target.value)}
-                                            className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                        />
-                                        <InputError className="mt-2" message={programForm.errors.masa} />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <RequiredLabel htmlFor="group_id" value="Group Program" />
-                                    <select
-                                        id="group_id"
-                                        required
-                                        value={programForm.data.group_id}
-                                        onChange={(event) => programForm.setData('group_id', event.target.value)}
-                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                    >
-                                        <option value="">Pilih Group Program</option>
-                                        {groups.map((group) => (
-                                            <option key={group.id} value={group.id}>
-                                                {group.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <InputError className="mt-2" message={programForm.errors.group_id} />
-                                </div>
-
-                                <div>
-                                    <InputLabel htmlFor="gambar" value="Gambar Program" />
-                                    <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                                            {programImagePreviewUrl ? (
-                                                <img
-                                                    src={programImagePreviewUrl}
-                                                    alt={programForm.data.tajuk || 'Preview gambar program'}
-                                                    className="h-28 w-full rounded-2xl object-cover sm:w-40"
-                                                />
-                                            ) : (
-                                                <div className="flex h-28 w-full items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white text-xs font-medium uppercase tracking-[0.16em] text-slate-400 sm:w-40">
-                                                    Tiada Gambar
-                                                </div>
-                                            )}
-
+                                    <InputLabel htmlFor="gambar" value="Gambar" />
+                                    <div className="mt-1.5 rounded-lg border border-slate-700 bg-slate-800/60 p-3">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-24 w-full rounded-lg object-cover sm:w-36" /> : <div className="flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-slate-600 bg-slate-800 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 sm:w-36">Tiada</div>}
                                             <div className="min-w-0 flex-1">
-                                                <input
-                                                    id="gambar"
-                                                    ref={gambarInputRef}
-                                                    type="file"
-                                                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                                                    className="block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-cyan-50 file:px-3 file:py-2 file:font-medium file:text-cyan-700 hover:file:bg-cyan-100"
-                                                    onChange={(event) =>
-                                                        programForm.setData(
-                                                            'gambar',
-                                                            event.target.files?.[0] ?? null,
-                                                        )
-                                                    }
-                                                />
-                                                <p className="mt-2 text-xs leading-5 text-slate-500">
-                                                    Muat naik PNG, JPG, atau WEBP sehingga 2MB. Jika edit program,
-                                                    pilih fail baru untuk gantikan gambar sedia ada.
-                                                </p>
-                                                <InputError className="mt-2" message={programForm.errors.gambar} />
+                                                <input id="gambar" ref={imgRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
+                                                    className="block w-full rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-600 file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-white hover:file:bg-violet-500"
+                                                    onChange={(e) => f.setData('gambar', e.target.files?.[0] ?? null)} />
+                                                <p className="mt-1 text-[10px] text-slate-500">PNG/JPG/WEBP sehingga 2MB</p>
+                                                <InputError className="mt-1.5" message={f.errors.gambar} />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="mt-6 flex justify-end">
-                                {isEditing && (
-                                    <SecondaryButton
-                                        type="button"
-                                        onClick={cancelEditProgram}
-                                        className="mr-3 rounded-2xl px-5 py-3 text-sm font-semibold normal-case tracking-normal"
-                                    >
-                                        Batal Edit
-                                    </SecondaryButton>
-                                )}
-                                <PrimaryButton
-                                    className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
-                                    disabled={programForm.processing}
-                                >
-                                    {programForm.processing
-                                        ? 'Menyimpan...'
-                                        : isEditing
-                                          ? 'Simpan Perubahan'
-                                          : 'Simpan Program'}
-                                </PrimaryButton>
+                            <div className="mt-4 flex justify-end">
+                                {isEditing && <button onClick={cancelEdit} className="btn-ghost mr-2">Batal</button>}
+                                <PrimaryButton disabled={f.processing}>{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
                             </div>
                         </form>
-
-                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
-                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                Ringkasan Program
-                            </p>
-                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                {programs.length} program telah direkod
-                            </h3>
-                            <p className="mt-2 text-sm leading-6 text-slate-500">
-                                Selepas simpan, buka tab senarai program dan klik kad untuk mula rekod pemilih yang hadir.
-                            </p>
-                        </section>
+                        <div className="card p-5">
+                            <p className="label-section">Ringkasan</p>
+                            <h3 className="mt-0.5 heading-md">{programs.length} program</h3>
+                        </div>
                     </section>
                 )}
 
-                {activeTab === 'group-program' && <ProgramGroupManager groups={groups} />}
+                {tab === 'group-program' && <ProgramGroupManager groups={groups} />}
 
-                {activeTab === 'senarai-program' && (
-                    selectedProgram ? (
-                        <section className="space-y-6">
-                            <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
-                                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                            Senarai Program &gt; {selectedProgram.tajuk}
-                                        </p>
-                                        <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                            Kehadiran Program
-                                        </h3>
-                                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                                            Lihat dan urus kehadiran untuk program yang dipilih.
-                                        </p>
-                                    </div>
-
-                                    <SecondaryButton
-                                        type="button"
-                                        onClick={backToProgramList}
-                                        className="rounded-xl px-4 py-2 text-[11px] tracking-[0.12em]"
-                                    >
-                                        Back
-                                    </SecondaryButton>
-                                </div>
-                            </section>
-
-                            <SearchVoterPanel selectedProgram={selectedProgram} />
-
-                            <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
-                                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                    Kehadiran Program
-                                </p>
-                                <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                    {selectedProgram.tajuk}
-                                </h3>
-                                <p className="mt-2 text-sm leading-6 text-slate-500">
-                                    Senarai pemilih yang telah ditandakan hadir untuk program semasa.
-                                </p>
-
-                                <div className="mt-6">
-                                    {selectedProgram.attendees.length === 0 ? (
-                                        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
-                                            Belum ada pemilih direkod hadir untuk program ini.
-                                        </div>
-                                    ) : (
-                                        <div className="overflow-hidden rounded-3xl border border-slate-200">
-                                            <div className="overflow-x-auto">
-                                                <table className="min-w-full divide-y divide-slate-200 text-[13px]">
-                                                    <thead className="bg-slate-50/90">
-                                                        <tr>
-                                                            <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                                                Nama
-                                                            </th>
-                                                            <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                                                UDM
-                                                            </th>
-                                                            <th className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                                                Telefon
-                                                            </th>
-                                                            <th className="px-3 py-2.5 text-right text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                                                Tindakan
-                                                            </th>
+                {tab === 'senarai-program' && (selectedProgram ? (
+                    <section className="space-y-4">
+                        <div className="card px-4 py-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div><p className="label-section">{selectedProgram.tajuk}</p><h3 className="mt-0.5 heading-md">Kehadiran Program</h3></div>
+                                <button onClick={back} className="btn-ghost">Back</button>
+                            </div>
+                        </div>
+                        <SearchVoterPanel selectedProgram={selectedProgram} />
+                        <section className="card p-5">
+                            <p className="label-section">Kehadiran</p>
+                            <h3 className="mt-0.5 heading-md">{selectedProgram.tajuk}</h3>
+                            <div className="mt-4">
+                                {selectedProgram.attendees.length === 0 ? <div className="card-dashed py-6 text-xs">Tiada</div> : (
+                                    <div className="card overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-slate-700/60 text-xs">
+                                                <thead className="bg-slate-700/60"><tr>
+                                                    <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">Nama</th>
+                                                    <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">UDM</th>
+                                                    <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">Telefon</th>
+                                                    <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">Tindakan</th>
+                                                </tr></thead>
+                                                <tbody className="divide-y divide-slate-700/40 bg-slate-800/30 text-slate-300">
+                                                    {selectedProgram.attendees.map((a) => (
+                                                        <tr key={a.id} className={selAttendee?.id === a.id ? 'bg-violet-500/15' : 'hover:bg-slate-700/20'}>
+                                                            <td className="px-3 py-2.5 font-semibold">
+                                                                <div>{a.name}</div>
+                                                                {a.group_badges?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{a.group_badges.map((b) => <span key={`${a.id}-${b.name}`} className="badge-amber text-[9px]">{b.name}{b.count > 1 ? ` - ${b.count}` : ''}</span>)}</div>}
+                                                            </td>
+                                                            <td className="px-3 py-2.5">{a.dm || '-'}</td>
+                                                            <td className="px-3 py-2.5">{a.phone_mobile || a.phone_home || '-'}</td>
+                                                            <td className="px-3 py-2.5"><div className="flex justify-end gap-1">
+                                                                <IconBtn label="Detail" onClick={() => setSelAttendee(a)} className={selAttendee?.id === a.id ? 'border-violet-500/50 bg-violet-500/20 text-violet-300' : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-violet-500/50 hover:text-violet-300'}>
+                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
+                                                                </IconBtn>
+                                                                <IconBtn label="Program" onClick={() => setSelAttendeeProgs(a)} className="border-amber-600/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20">
+                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+                                                                </IconBtn>
+                                                                <IconBtn label="Padam" onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} className="border-rose-600/40 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 disabled:opacity-50">
+                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
+                                                                </IconBtn>
+                                                            </div></td>
                                                         </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-slate-100 bg-white">
-                                                        {selectedProgram.attendees.map((attendee) => {
-                                                            const isSelected = selectedAttendee?.id === attendee.id;
-
-                                                            return (
-                                                                <tr
-                                                                    key={attendee.id}
-                                                                    className={
-                                                                        isSelected
-                                                                            ? 'bg-amber-100 text-amber-950'
-                                                                            : 'text-slate-700 hover:bg-amber-50'
-                                                                    }
-                                                                >
-                                                                    <td className="px-3 py-2.5 font-semibold leading-5">
-                                                                        <div>
-                                                                            <div>{attendee.name}</div>
-                                                                            {attendee.group_badges?.length > 0 && (
-                                                                                <div className="mt-1 flex flex-wrap gap-1.5">
-                                                                                    {attendee.group_badges.map((badge) => (
-                                                                                        <span
-                                                                                            key={`${attendee.id}-${badge.name}`}
-                                                                                            className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-800 ring-1 ring-amber-200"
-                                                                                        >
-                                                                                            {badge.name}
-                                                                                            {badge.count > 1 ? ` - ${badge.count}` : ''}
-                                                                                        </span>
-                                                                                    ))}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    </td>
-                                                                    <td className="px-3 py-2.5 leading-5">
-                                                                        {attendee.dm || '-'}
-                                                                    </td>
-                                                                    <td className="px-3 py-2.5 leading-5">
-                                                                        {attendee.phone_mobile || attendee.phone_home || '-'}
-                                                                    </td>
-                                                                    <td className="px-3 py-2">
-                                                                        <div className="flex justify-end gap-1.5">
-                                                                            <IconButton
-                                                                                label="Lihat detail"
-                                                                                onClick={() => setSelectedAttendee(attendee)}
-                                                                                className={
-                                                                                    isSelected
-                                                                                        ? 'border-amber-300 bg-amber-200 text-amber-950 hover:bg-amber-300'
-                                                                                        : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
-                                                                                }
-                                                                            >
-                                                                                <svg
-                                                                                    viewBox="0 0 24 24"
-                                                                                    className="h-3.5 w-3.5"
-                                                                                    fill="none"
-                                                                                    stroke="currentColor"
-                                                                                    strokeWidth="2"
-                                                                                    strokeLinecap="round"
-                                                                                    strokeLinejoin="round"
-                                                                                >
-                                                                                    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
-                                                                                    <circle cx="12" cy="12" r="3" />
-                                                                                </svg>
-                                                                            </IconButton>
-                                                                            <IconButton
-                                                                                label="Lihat program disertai"
-                                                                                onClick={() => setSelectedAttendeePrograms(attendee)}
-                                                                                className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                                                                            >
-                                                                                <svg
-                                                                                    viewBox="0 0 24 24"
-                                                                                    className="h-3.5 w-3.5"
-                                                                                    fill="none"
-                                                                                    stroke="currentColor"
-                                                                                    strokeWidth="2"
-                                                                                    strokeLinecap="round"
-                                                                                    strokeLinejoin="round"
-                                                                                >
-                                                                                    <path d="M4 7h16" />
-                                                                                    <path d="M4 12h16" />
-                                                                                    <path d="M4 17h16" />
-                                                                                </svg>
-                                                                            </IconButton>
-                                                                            <IconButton
-                                                                                label="Padam kehadiran"
-                                                                                onClick={() => deleteAttendee(attendee)}
-                                                                                disabled={deletingAttendeeId === attendee.id}
-                                                                                className="border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                                                            >
-                                                                                <svg
-                                                                                    viewBox="0 0 24 24"
-                                                                                    className="h-3.5 w-3.5"
-                                                                                    fill="none"
-                                                                                    stroke="currentColor"
-                                                                                    strokeWidth="2"
-                                                                                    strokeLinecap="round"
-                                                                                    strokeLinejoin="round"
-                                                                                >
-                                                                                    <path d="M3 6h18" />
-                                                                                    <path d="M8 6V4h8v2" />
-                                                                                    <path d="M19 6l-1 14H6L5 6" />
-                                                                                    <path d="M10 11v6" />
-                                                                                    <path d="M14 11v6" />
-                                                                                </svg>
-                                                                            </IconButton>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                            );
-                                                        })}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
-                                    )}
-                                </div>
-                            </section>
-                        </section>
-                    ) : (
-                        <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-5 shadow-panel backdrop-blur sm:p-6">
-                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                Senarai Program
-                            </p>
-                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                Program yang telah direkod
-                            </h3>
-
-                            <div className="mt-5 grid gap-3 xl:grid-cols-3">
-                                {programs.length === 0 ? (
-                                    <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 xl:col-span-3">
-                                        Belum ada program. Tambah program pertama anda di tab Tambah Program.
                                     </div>
-                                ) : (
-                                    programs.map((program) => (
-                                        <ProgramCard
-                                            key={program.id}
-                                            program={program}
-                                            isActive={selectedProgram?.id === program.id}
-                                            deleting={deletingProgramId === program.id}
-                                            onDelete={deleteProgram}
-                                            onEdit={startEditProgram}
-                                            onPreviewImage={setSelectedProgramImage}
-                                            onShare={openShareProgramModal}
-                                            onSelect={selectProgram}
-                                        />
-                                    ))
                                 )}
                             </div>
                         </section>
-                    )
-                )}
+                    </section>
+                ) : (
+                    <div className="card p-5">
+                        <p className="label-section">Senarai Program</p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                            {programs.length === 0 ? <div className="card-dashed py-6 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
+                                <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
+                                    onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg} />
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            <AttendeeDetailModal
-                attendee={selectedAttendee}
-                onClose={closeAttendeeModal}
-                onOpenTelegram={handleOpenTelegram}
-                telegramReady={!openingTelegram && Boolean(buildTelegramCommand(selectedAttendee, 'kemascula'))}
-            />
-            <AttendeeProgramsModal attendee={selectedAttendeePrograms} onClose={closeAttendeeProgramsModal} />
-            <ProgramImageModal program={selectedProgramImage} onClose={closeProgramImageModal} />
-            <ProgramShareModal
-                program={selectedShareProgram}
-                users={shareableUsers}
-                shareForm={shareForm}
-                onClose={closeShareProgramModal}
-                onSubmit={submitShareProgram}
-            />
+            <AttendeeDetailModal attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} />
+            <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
+            <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
+            <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
         </AuthenticatedLayout>
     );
 }

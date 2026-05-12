@@ -20,8 +20,8 @@ class Program extends Model
     ];
 
     protected $casts = [
-        'tarikh' => 'date',
-        'masa' => 'datetime:H:i',
+        'tarikh' => 'date:d-m-Y',
+        'masa' => 'datetime:h:i A',
     ];
 
     public function creator(): BelongsTo

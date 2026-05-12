@@ -26,7 +26,7 @@ class ProgramAttendee extends Model
     ];
 
     protected $casts = [
-        'attended_at' => 'datetime',
+        'attended_at' => 'datetime:d-m-Y h:i A',
     ];
 
     public function program(): BelongsTo

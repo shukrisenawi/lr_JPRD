@@ -61,8 +61,8 @@ class ProgramController extends Controller
                     'voter_id' => $attendee->voter_id,
                     'program_id' => $program->id,
                     'tajuk' => $program->tajuk,
-                    'tarikh' => $program->tarikh?->format('Y-m-d'),
-                    'masa' => $program->masa?->format('H:i'),
+                    'tarikh' => $program->tarikh?->format('d-m-Y'),
+                    'masa' => $program->masa?->format('h:i A'),
                     'group_name' => $program->group?->name,
                 ]);
             })
@@ -83,8 +83,8 @@ class ProgramController extends Controller
                     'id' => $program->id,
                     'tajuk' => $program->tajuk,
                     'tempat' => $program->tempat,
-                    'tarikh' => $program->tarikh?->format('Y-m-d'),
-                    'masa' => $program->masa?->format('H:i'),
+                    'tarikh' => $program->tarikh?->format('d-m-Y'),
+                    'masa' => $program->masa?->format('h:i A'),
                     'group_id' => $program->group_id,
                     'group_name' => $program->group?->name,
                     'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
@@ -104,8 +104,8 @@ class ProgramController extends Controller
                     'id' => $selectedProgram->id,
                     'tajuk' => $selectedProgram->tajuk,
                     'tempat' => $selectedProgram->tempat,
-                    'tarikh' => $selectedProgram->tarikh?->format('Y-m-d'),
-                    'masa' => $selectedProgram->masa?->format('H:i'),
+                    'tarikh' => $selectedProgram->tarikh?->format('d-m-Y'),
+                    'masa' => $selectedProgram->masa?->format('h:i A'),
                     'group_id' => $selectedProgram->group_id,
                     'group_name' => $selectedProgram->group?->name,
                     'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
@@ -134,7 +134,7 @@ class ProgramController extends Controller
                             'address' => $attendee->address,
                             'group_badges' => $attendeeGroupCounts->get($attendee->voter_id, collect())->all(),
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),
-                            'attended_at' => $attendee->attended_at?->format('Y-m-d H:i:s'),
+                            'attended_at' => $attendee->attended_at?->format('d-m-Y h:i A'),
                         ])
                         ->values(),
                 ]

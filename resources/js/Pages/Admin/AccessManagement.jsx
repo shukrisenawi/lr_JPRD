@@ -7,303 +7,69 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 function RoleCard({ role, modules }) {
-    const { data, setData, put, processing, errors } = useForm({
-        name: role.name,
-        access_modules: role.access_modules ?? [],
-    });
-
-    const toggleModule = (moduleKey) => {
-        const nextModules = data.access_modules.includes(moduleKey)
-            ? data.access_modules.filter((item) => item !== moduleKey)
-            : [...data.access_modules, moduleKey];
-
-        setData('access_modules', nextModules);
-    };
-
-    const submit = (event) => {
-        event.preventDefault();
-        put(route('admin.access.roles.update', role.id));
-    };
+    const { data, setData, put, processing, errors } = useForm({ name: role.name, access_modules: role.access_modules ?? [] });
+    const toggle = (k) => setData('access_modules', data.access_modules.includes(k) ? data.access_modules.filter((i) => i !== k) : [...data.access_modules, k]);
+    const submit = (e) => { e.preventDefault(); put(route('admin.access.roles.update', role.id)); };
 
     return (
-        <form
-            onSubmit={submit}
-            className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur"
-        >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                        Group Role
-                    </p>
-                    <h3 className="mt-2 text-2xl font-bold text-slate-900">{role.name}</h3>
-                    <p className="mt-2 text-sm text-slate-500">
-                        {role.user_count} pengguna dalam group ini.
-                    </p>
-                </div>
-                {role.is_master_admin && (
-                    <span className="rounded-full bg-amber-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
-                        Akses penuh
-                    </span>
-                )}
+        <form onSubmit={submit} className="card p-5">
+            <div className="flex items-start justify-between gap-3">
+                <div><p className="label-section">Group Role</p><h3 className="mt-0.5 heading-md">{role.name}</h3><p className="text-xs text-slate-400">{role.user_count} pengguna</p></div>
+                {role.is_master_admin && <span className="badge-amber">Akses penuh</span>}
             </div>
-
-            <div className="mt-6">
-                <InputLabel htmlFor={`role-name-${role.id}`} value="Nama group role" />
-                <TextInput
-                    id={`role-name-${role.id}`}
-                    value={data.name}
-                    onChange={(event) => setData('name', event.target.value)}
-                    className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                    disabled={role.is_master_admin}
-                />
-                <InputError className="mt-2" message={errors.name} />
-            </div>
-
-            <div className="mt-6 grid gap-3 md:grid-cols-2">
-                {modules.map((module) => {
-                    const checked = data.access_modules.includes(module.key) || role.is_master_admin;
-
+            <div className="mt-4"><InputLabel htmlFor={`rn-${role.id}`} value="Nama" /><TextInput id={`rn-${role.id}`} value={data.name} onChange={(e) => setData('name', e.target.value)} className="input-field mt-1.5" disabled={role.is_master_admin} /><InputError className="mt-1.5" message={errors.name} /></div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {modules.map((m) => {
+                    const checked = data.access_modules.includes(m.key) || role.is_master_admin;
                     return (
-                        <label
-                            key={module.key}
-                            className={`rounded-3xl border p-4 transition ${
-                                checked
-                                    ? 'border-cyan-300 bg-cyan-50'
-                                    : 'border-slate-200 bg-slate-50'
-                            } ${role.is_master_admin ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
-                        >
-                            <div className="flex items-start gap-3">
-                                <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => toggleModule(module.key)}
-                                    disabled={role.is_master_admin}
-                                    className="mt-1 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-                                />
-                                <div>
-                                    <p className="text-sm font-semibold text-slate-900">{module.label}</p>
-                                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                                        {module.description}
-                                    </p>
-                                </div>
+                        <label key={m.key} className={`rounded-lg border p-3 transition ${checked ? 'border-violet-500/40 bg-violet-500/10' : 'border-slate-700 bg-slate-800/60'} ${role.is_master_admin ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
+                            <div className="flex items-start gap-2.5">
+                                <input type="checkbox" checked={checked} onChange={() => toggle(m.key)} disabled={role.is_master_admin} className="mt-0.5 rounded border-slate-600 bg-slate-700 text-violet-600 focus:ring-violet-500" />
+                                <div><p className="text-xs font-bold text-white">{m.label}</p><p className="text-[10px] text-slate-400">{m.description}</p></div>
                             </div>
                         </label>
                     );
                 })}
             </div>
-
             <InputError className="mt-2" message={errors.access_modules} />
-
-            {!role.is_master_admin && (
-                <div className="mt-6 flex justify-end">
-                    <PrimaryButton
-                        className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
-                        disabled={processing}
-                    >
-                        {processing ? 'Menyimpan...' : 'Simpan akses modul'}
-                    </PrimaryButton>
-                </div>
-            )}
+            {!role.is_master_admin && <div className="mt-4 flex justify-end"><PrimaryButton disabled={processing}>{processing ? '...' : 'Simpan'}</PrimaryButton></div>}
         </form>
     );
 }
 
 function UserCard({ user, roles, currentUserId }) {
-    const [isEditing, setIsEditing] = useState(false);
-    const isCurrentUser = currentUserId === user.id;
-    const userInitial = user.name?.charAt(0)?.toUpperCase() ?? '?';
-    const { data, setData, put, processing, errors, reset } = useForm({
-        name: user.name,
-        email: user.email,
-        role_id: user.role?.id ?? '',
-        password: '',
-        password_confirmation: '',
-    });
-
-    const submit = (event) => {
-        event.preventDefault();
-        put(route('admin.access.users.update', user.id), {
-            onSuccess: () => {
-                reset('password', 'password_confirmation');
-                setIsEditing(false);
-            },
-        });
-    };
-
-    const cancelEdit = () => {
-        setData({
-            name: user.name,
-            email: user.email,
-            role_id: user.role?.id ?? '',
-            password: '',
-            password_confirmation: '',
-        });
-        setIsEditing(false);
-    };
-
-    const deleteUser = () => {
-        if (!window.confirm(`Padam pengguna ${user.name}?`)) {
-            return;
-        }
-
-        router.delete(route('admin.access.users.destroy', user.id), {
-            preserveScroll: true,
-        });
-    };
-
-    const impersonateUser = () => {
-        if (!window.confirm(`Masuk sebagai ${user.name}? Anda boleh kembali semula sebagai master admin kemudian.`)) {
-            return;
-        }
-
-        router.post(route('admin.access.users.impersonate', user.id), {}, { replace: true });
-    };
+    const [editing, setEditing] = useState(false);
+    const isMe = currentUserId === user.id;
+    const init = user.name?.charAt(0)?.toUpperCase() ?? '?';
+    const { data, setData, put, processing, errors, reset } = useForm({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '' });
+    const submit = (e) => { e.preventDefault(); put(route('admin.access.users.update', user.id), { onSuccess: () => { reset('password', 'password_confirmation'); setEditing(false); } }); };
+    const cancel = () => { setData({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '' }); setEditing(false); };
+    const del = () => { if (window.confirm(`Padam ${user.name}?`)) router.delete(route('admin.access.users.destroy', user.id), { preserveScroll: true }); };
+    const imp = () => { if (window.confirm(`Masuk sebagai ${user.name}?`)) router.post(route('admin.access.users.impersonate', user.id), {}, { replace: true }); };
 
     return (
-        <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-center gap-4">
-                    {user.avatar_url ? (
-                        <img
-                            src={user.avatar_url}
-                            alt={user.name}
-                            className="h-14 w-14 rounded-2xl object-cover"
-                        />
-                    ) : (
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-600 text-lg font-semibold text-white">
-                            {userInitial}
-                        </div>
-                    )}
-
-                    <div>
-                        <p className="font-semibold text-slate-900">{user.name}</p>
-                        <p className="text-sm text-slate-500">{user.email}</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                {user.role?.name ?? 'Tiada role'}
-                            </span>
-                        </div>
-                    </div>
+        <div className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-center gap-3">
+                    {user.avatar_url ? <img src={user.avatar_url} alt={user.name} className="h-10 w-10 rounded-lg object-cover" /> : <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 text-sm font-bold text-white">{init}</div>}
+                    <div><p className="text-sm font-bold text-white">{user.name}</p><p className="text-xs text-slate-400">{user.email}</p><span className="badge-violet mt-1.5 inline-block">{user.role?.name ?? 'Tiada'}</span></div>
                 </div>
-
-                <div className="flex flex-wrap gap-2">
-                    {user.can_impersonate && (
-                        <button
-                            type="button"
-                            onClick={impersonateUser}
-                            className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-100"
-                        >
-                            Masuk Sebagai User
-                        </button>
-                    )}
-                    <button
-                        type="button"
-                        onClick={() => setIsEditing((previous) => !previous)}
-                        className="rounded-2xl border border-cyan-200 bg-white px-4 py-2 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50"
-                    >
-                        {isEditing ? 'Tutup edit' : 'Edit'}
-                    </button>
-                    {!isCurrentUser ? (
-                        <button
-                            type="button"
-                            onClick={deleteUser}
-                            className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-                        >
-                            Padam
-                        </button>
-                    ) : (
-                        <span className="inline-flex items-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">
-                            Akaun semasa
-                        </span>
-                    )}
+                <div className="flex flex-wrap gap-1.5">
+                    {user.can_impersonate && <button onClick={imp} className="btn-amber px-2.5 py-1.5 text-[10px]">Masuk Sebagai</button>}
+                    <button onClick={() => setEditing((p) => !p)} className="btn-ghost px-2.5 py-1.5 text-[10px]">{editing ? 'Tutup' : 'Edit'}</button>
+                    {!isMe ? <button onClick={del} className="btn-danger px-2.5 py-1.5 text-[10px]">Padam</button> : <span className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-400">Akaun saya</span>}
                 </div>
             </div>
-
-            {isEditing && (
-                <form onSubmit={submit} className="mt-5 border-t border-slate-200 pt-5">
-                    <div className="grid gap-5 md:grid-cols-2">
-                        <div>
-                            <InputLabel htmlFor={`edit-name-${user.id}`} value="Nama pengguna" />
-                            <TextInput
-                                id={`edit-name-${user.id}`}
-                                value={data.name}
-                                onChange={(event) => setData('name', event.target.value)}
-                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                            />
-                            <InputError className="mt-2" message={errors.name} />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor={`edit-email-${user.id}`} value="Email login" />
-                            <TextInput
-                                id={`edit-email-${user.id}`}
-                                type="email"
-                                value={data.email}
-                                onChange={(event) => setData('email', event.target.value)}
-                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                            />
-                            <InputError className="mt-2" message={errors.email} />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor={`edit-role-${user.id}`} value="Group role" />
-                            <select
-                                id={`edit-role-${user.id}`}
-                                value={data.role_id}
-                                onChange={(event) => setData('role_id', event.target.value)}
-                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                            >
-                                {roles.map((role) => (
-                                    <option key={role.id} value={role.id}>
-                                        {role.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <InputError className="mt-2" message={errors.role_id} />
-                        </div>
-
-                        <div>
-                            <InputLabel htmlFor={`edit-password-${user.id}`} value="Kata laluan baru" />
-                            <TextInput
-                                id={`edit-password-${user.id}`}
-                                type="password"
-                                value={data.password}
-                                onChange={(event) => setData('password', event.target.value)}
-                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                            />
-                            <InputError className="mt-2" message={errors.password} />
-                        </div>
-
-                        <div className="md:col-span-2">
-                            <InputLabel
-                                htmlFor={`edit-password-confirmation-${user.id}`}
-                                value="Sahkan kata laluan baru"
-                            />
-                            <TextInput
-                                id={`edit-password-confirmation-${user.id}`}
-                                type="password"
-                                value={data.password_confirmation}
-                                onChange={(event) => setData('password_confirmation', event.target.value)}
-                                className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                            />
-                        </div>
+            {editing && (
+                <form onSubmit={submit} className="divider mt-4 pt-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div><InputLabel htmlFor={`en-${user.id}`} value="Nama" /><TextInput id={`en-${user.id}`} value={data.name} onChange={(e) => setData('name', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={errors.name} /></div>
+                        <div><InputLabel htmlFor={`ee-${user.id}`} value="Email" /><TextInput id={`ee-${user.id}`} type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={errors.email} /></div>
+                        <div><InputLabel htmlFor={`er-${user.id}`} value="Role" /><select id={`er-${user.id}`} value={data.role_id} onChange={(e) => setData('role_id', e.target.value)} className="input-field mt-1.5">{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select><InputError className="mt-1.5" message={errors.role_id} /></div>
+                        <div><InputLabel htmlFor={`ep-${user.id}`} value="Password" /><TextInput id={`ep-${user.id}`} type="password" value={data.password} onChange={(e) => setData('password', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={errors.password} /></div>
+                        <div className="sm:col-span-2"><InputLabel htmlFor={`epc-${user.id}`} value="Sahkan Password" /><TextInput id={`epc-${user.id}`} type="password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} className="input-field mt-1.5" /></div>
                     </div>
-
-                    <div className="mt-6 flex flex-wrap justify-end gap-3">
-                        <button
-                            type="button"
-                            onClick={cancelEdit}
-                            className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                        >
-                            Batal
-                        </button>
-                        <PrimaryButton
-                            className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
-                            disabled={processing}
-                        >
-                            {processing ? 'Menyimpan...' : 'Simpan perubahan'}
-                        </PrimaryButton>
-                    </div>
+                    <div className="mt-4 flex justify-end gap-2"><button onClick={cancel} className="btn-ghost">Batal</button><PrimaryButton disabled={processing}>{processing ? '...' : 'Simpan'}</PrimaryButton></div>
                 </form>
             )}
         </div>
@@ -312,299 +78,84 @@ function UserCard({ user, roles, currentUserId }) {
 
 export default function AccessManagement({ roles, users, modules }) {
     const { auth } = usePage().props;
-    const currentUserId = auth.user?.id ?? null;
-    const [activeTab, setActiveTab] = useState('cipta-pengguna');
-    const userForm = useForm({
-        name: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
-        role_id: roles.find((role) => !role.is_master_admin)?.id ?? roles[0]?.id ?? '',
-    });
-
-    const roleForm = useForm({
-        name: '',
-        access_modules: [],
-    });
-
-    const submitUser = (event) => {
-        event.preventDefault();
-        userForm.post(route('admin.access.users.store'), {
-            onSuccess: () => userForm.reset('name', 'email', 'password', 'password_confirmation'),
-        });
-    };
-
-    const submitRole = (event) => {
-        event.preventDefault();
-        roleForm.post(route('admin.access.roles.store'), {
-            onSuccess: () => roleForm.reset(),
-        });
-    };
-
-    const toggleNewRoleModule = (moduleKey) => {
-        const nextModules = roleForm.data.access_modules.includes(moduleKey)
-            ? roleForm.data.access_modules.filter((item) => item !== moduleKey)
-            : [...roleForm.data.access_modules, moduleKey];
-
-        roleForm.setData('access_modules', nextModules);
-    };
+    const myId = auth.user?.id ?? null;
+    const [tab, setTab] = useState('cipta-pengguna');
+    const uf = useForm({ name: '', email: '', password: '', password_confirmation: '', role_id: roles.find((r) => !r.is_master_admin)?.id ?? roles[0]?.id ?? '' });
+    const rf = useForm({ name: '', access_modules: [] });
+    const tu = (e) => { e.preventDefault(); uf.post(route('admin.access.users.store'), { onSuccess: () => uf.reset('name', 'email', 'password', 'password_confirmation') }); };
+    const tr = (e) => { e.preventDefault(); rf.post(route('admin.access.roles.store'), { onSuccess: () => rf.reset() }); };
 
     const tabs = [
-        {
-            key: 'cipta-pengguna',
-            label: 'Cipta Pengguna',
-            description: 'Tambah user baru dan tetapkan group role.',
-        },
-        {
-            key: 'group-role-baharu',
-            label: 'Group Role Baharu',
-            description: 'Cipta role baru serta pilih akses modul awal.',
-        },
-        {
-            key: 'group-role',
-            label: 'Group Role',
-            description: 'Kemaskini akses modul untuk role sedia ada.',
-        },
+        { key: 'cipta-pengguna', label: 'Cipta Pengguna', desc: 'Tambah user baru.' },
+        { key: 'group-role-baharu', label: 'Group Role Baru', desc: 'Cipta role baru.' },
+        { key: 'group-role', label: 'Group Role', desc: 'Kemaskini akses modul.' },
     ];
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                        Master Admin
-                    </p>
-                    <h2 className="mt-2 text-3xl font-bold text-slate-900">
-                        Pengurusan pengguna dan group role
-                    </h2>
-                    <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                        Cipta pengguna baharu, tetapkan group role, dan tentukan modul yang boleh diakses oleh setiap role selain master admin.
-                    </p>
-                </div>
-            }
-        >
+        <AuthenticatedLayout header={
+            <div><p className="label-section">Master Admin</p><h2 className="mt-0.5 heading-lg">Pengurusan Pengguna & Role</h2><p className="text-muted mt-0.5">Urus akses pengguna dan modul.</p></div>
+        }>
             <Head title="Akses Pengguna" />
-
-            <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-3 shadow-panel backdrop-blur sm:p-4">
-                    <div className="grid gap-3 md:grid-cols-3">
-                        {tabs.map((tab) => {
-                            const isActive = activeTab === tab.key;
-
-                            return (
-                                <button
-                                    key={tab.key}
-                                    type="button"
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className={`rounded-3xl border px-5 py-4 text-left transition ${
-                                        isActive
-                                            ? 'border-cyan-300 bg-cyan-50 shadow-sm'
-                                            : 'border-slate-200 bg-white hover:border-cyan-200 hover:bg-cyan-50/60'
-                                    }`}
-                                >
-                                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">
-                                        {tab.label}
-                                    </p>
-                                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                                        {tab.description}
-                                    </p>
-                                </button>
-                            );
-                        })}
+            <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
+                <div className="card p-1.5">
+                    <div className="grid gap-1.5 sm:grid-cols-3">
+                        {tabs.map((t) => (
+                            <button key={t.key} onClick={() => setTab(t.key)} className={`rounded-lg border px-3 py-2.5 text-left transition ${tab === t.key ? 'tab-btn-active' : 'tab-btn-inactive'}`}>
+                                <p className="label-section">{t.label}</p>
+                                <p className="mt-0.5 text-xs text-slate-500">{t.desc}</p>
+                            </button>
+                        ))}
                     </div>
-                </section>
+                </div>
 
-                {activeTab === 'cipta-pengguna' && (
-                    <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                        <form
-                            onSubmit={submitUser}
-                            className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8"
-                        >
-                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                Cipta Pengguna
-                            </p>
-                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                Tambah user baru dan pilih group role
-                            </h3>
-
-                            <div className="mt-6 grid gap-5 md:grid-cols-2">
-                                <div>
-                                    <InputLabel htmlFor="user-name" value="Nama pengguna" />
-                                    <TextInput
-                                        id="user-name"
-                                        value={userForm.data.name}
-                                        onChange={(event) => userForm.setData('name', event.target.value)}
-                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                    />
-                                    <InputError className="mt-2" message={userForm.errors.name} />
-                                </div>
-
-                                <div>
-                                    <InputLabel htmlFor="user-email" value="Email login" />
-                                    <TextInput
-                                        id="user-email"
-                                        type="email"
-                                        value={userForm.data.email}
-                                        onChange={(event) => userForm.setData('email', event.target.value)}
-                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                    />
-                                    <InputError className="mt-2" message={userForm.errors.email} />
-                                </div>
-
-                                <div>
-                                    <InputLabel htmlFor="user-password" value="Kata laluan" />
-                                    <TextInput
-                                        id="user-password"
-                                        type="password"
-                                        value={userForm.data.password}
-                                        onChange={(event) => userForm.setData('password', event.target.value)}
-                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                    />
-                                    <InputError className="mt-2" message={userForm.errors.password} />
-                                </div>
-
-                                <div>
-                                    <InputLabel
-                                        htmlFor="user-password-confirmation"
-                                        value="Sahkan kata laluan"
-                                    />
-                                    <TextInput
-                                        id="user-password-confirmation"
-                                        type="password"
-                                        value={userForm.data.password_confirmation}
-                                        onChange={(event) =>
-                                            userForm.setData('password_confirmation', event.target.value)
-                                        }
-                                        className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                    />
-                                </div>
+                {tab === 'cipta-pengguna' && (
+                    <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+                        <form onSubmit={tu} className="card p-5">
+                            <p className="label-section">Cipta Pengguna</p>
+                            <h3 className="mt-0.5 heading-md">Tambah user baru</h3>
+                            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div><InputLabel htmlFor="un" value="Nama" /><TextInput id="un" value={uf.data.name} onChange={(e) => uf.setData('name', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={uf.errors.name} /></div>
+                                <div><InputLabel htmlFor="ue" value="Email" /><TextInput id="ue" type="email" value={uf.data.email} onChange={(e) => uf.setData('email', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={uf.errors.email} /></div>
+                                <div><InputLabel htmlFor="up" value="Password" /><TextInput id="up" type="password" value={uf.data.password} onChange={(e) => uf.setData('password', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={uf.errors.password} /></div>
+                                <div><InputLabel htmlFor="upc" value="Sahkan Password" /><TextInput id="upc" type="password" value={uf.data.password_confirmation} onChange={(e) => uf.setData('password_confirmation', e.target.value)} className="input-field mt-1.5" /></div>
                             </div>
-
-                            <div className="mt-5">
-                                <InputLabel htmlFor="user-role" value="Group role" />
-                                <select
-                                    id="user-role"
-                                    value={userForm.data.role_id}
-                                    onChange={(event) => userForm.setData('role_id', event.target.value)}
-                                    className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                >
-                                    {roles.map((role) => (
-                                        <option key={role.id} value={role.id}>
-                                            {role.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError className="mt-2" message={userForm.errors.role_id} />
-                            </div>
-
-                            <div className="mt-6 flex justify-end">
-                                <PrimaryButton
-                                    className="rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-600/30 transition hover:bg-cyan-700"
-                                    disabled={userForm.processing}
-                                >
-                                    {userForm.processing ? 'Mencipta...' : 'Cipta pengguna'}
-                                </PrimaryButton>
-                            </div>
+                            <div className="mt-4"><InputLabel htmlFor="ur" value="Role" /><select id="ur" value={uf.data.role_id} onChange={(e) => uf.setData('role_id', e.target.value)} className="input-field mt-1.5">{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select><InputError className="mt-1.5" message={uf.errors.role_id} /></div>
+                            <div className="mt-4 flex justify-end"><PrimaryButton disabled={uf.processing}>{uf.processing ? '...' : 'Cipta'}</PrimaryButton></div>
                         </form>
-
-                        <div className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
-                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                Senarai Pengguna
-                            </p>
-                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                Akaun sedia ada
-                            </h3>
-
-                            <div className="mt-6 space-y-3">
-                                {users.map((user) => (
-                                    <UserCard
-                                        key={user.id}
-                                        user={user}
-                                        roles={roles}
-                                        currentUserId={currentUserId}
-                                    />
-                                ))}
-                            </div>
+                        <div className="card p-5">
+                            <p className="label-section">Pengguna</p>
+                            <h3 className="mt-0.5 heading-md">Akaun sedia ada</h3>
+                            <div className="mt-4 space-y-2">{users.map((u) => <UserCard key={u.id} user={u} roles={roles} currentUserId={myId} />)}</div>
                         </div>
                     </section>
                 )}
 
-                {activeTab === 'group-role-baharu' && (
-                    <section className="rounded-[2rem] border border-slate-200 bg-white/90 p-6 shadow-panel backdrop-blur sm:p-8">
-                        <form onSubmit={submitRole}>
-                            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-700">
-                                Group Role Baharu
-                            </p>
-                            <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                                Cipta group role dan tetapkan modul awal
-                            </h3>
-
-                            <div className="mt-6">
-                                <InputLabel htmlFor="role-name" value="Nama group role" />
-                                <TextInput
-                                    id="role-name"
-                                    value={roleForm.data.name}
-                                    onChange={(event) => roleForm.setData('name', event.target.value)}
-                                    className="mt-2 block w-full rounded-2xl border-slate-200 px-4 py-3 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
-                                />
-                                <InputError className="mt-2" message={roleForm.errors.name} />
-                            </div>
-
-                            <div className="mt-6 grid gap-3 md:grid-cols-2">
-                                {modules.map((module) => {
-                                    const checked = roleForm.data.access_modules.includes(module.key);
-
+                {tab === 'group-role-baharu' && (
+                    <section className="card p-5 sm:p-6">
+                        <form onSubmit={tr}>
+                            <p className="label-section">Role Baru</p>
+                            <h3 className="mt-0.5 heading-md">Cipta group role</h3>
+                            <div className="mt-4"><InputLabel htmlFor="rn" value="Nama" /><TextInput id="rn" value={rf.data.name} onChange={(e) => rf.setData('name', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={rf.errors.name} /></div>
+                            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                                {modules.map((m) => {
+                                    const checked = rf.data.access_modules.includes(m.key);
                                     return (
-                                        <label
-                                            key={module.key}
-                                            className={`cursor-pointer rounded-3xl border p-4 transition ${
-                                                checked
-                                                    ? 'border-cyan-300 bg-cyan-50'
-                                                    : 'border-slate-200 bg-slate-50'
-                                            }`}
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={checked}
-                                                    onChange={() => toggleNewRoleModule(module.key)}
-                                                    className="mt-1 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-                                                />
-                                                <div>
-                                                    <p className="text-sm font-semibold text-slate-900">
-                                                        {module.label}
-                                                    </p>
-                                                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                                                        {module.description}
-                                                    </p>
-                                                </div>
+                                        <label key={m.key} className={`cursor-pointer rounded-lg border p-3 transition ${checked ? 'border-violet-500/40 bg-violet-500/10' : 'border-slate-700 bg-slate-800/60'}`}>
+                                            <div className="flex items-start gap-2.5">
+                                                <input type="checkbox" checked={checked} onChange={() => rf.setData('access_modules', rf.data.access_modules.includes(m.key) ? rf.data.access_modules.filter((i) => i !== m.key) : [...rf.data.access_modules, m.key])} className="mt-0.5 rounded border-slate-600 bg-slate-700 text-violet-600 focus:ring-violet-500" />
+                                                <div><p className="text-xs font-bold text-white">{m.label}</p><p className="text-[10px] text-slate-400">{m.description}</p></div>
                                             </div>
                                         </label>
                                     );
                                 })}
                             </div>
-
-                            <InputError className="mt-2" message={roleForm.errors.access_modules} />
-
-                            <div className="mt-6 flex justify-end">
-                                <PrimaryButton
-                                    className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
-                                    disabled={roleForm.processing}
-                                >
-                                    {roleForm.processing ? 'Mencipta...' : 'Cipta group role'}
-                                </PrimaryButton>
-                            </div>
+                            <InputError className="mt-2" message={rf.errors.access_modules} />
+                            <div className="mt-4 flex justify-end"><PrimaryButton disabled={rf.processing}>{rf.processing ? '...' : 'Cipta'}</PrimaryButton></div>
                         </form>
                     </section>
                 )}
 
-                {activeTab === 'group-role' && (
-                    <section className="space-y-4">
-                        {roles.map((role) => (
-                            <RoleCard key={role.id} role={role} modules={modules} />
-                        ))}
-                    </section>
-                )}
+                {tab === 'group-role' && <section className="space-y-4">{roles.map((r) => <RoleCard key={r.id} role={r} modules={modules} />)}</section>}
             </div>
         </AuthenticatedLayout>
     );

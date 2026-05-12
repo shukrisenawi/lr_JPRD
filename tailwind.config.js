@@ -13,10 +13,10 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
             boxShadow: {
-                panel: '0 18px 40px -20px rgba(15, 23, 42, 0.35)',
+                panel: '0 18px 40px -20px rgba(0, 0, 0, 0.5)',
             },
         },
     },

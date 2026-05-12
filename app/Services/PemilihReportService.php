@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PemilihRecord;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 
@@ -89,6 +90,10 @@ class PemilihReportService
             return [];
         }
 
+        if (PemilihRecord::query()->count() > 0) {
+            return $this->searchVotersFromDb($normalizedQuery, $query, $limit);
+        }
+
         $voters = $this->searchIndexForPath($path);
         $matches = [];
 
@@ -120,6 +125,66 @@ class PemilihReportService
         }
 
         return $matches;
+    }
+
+    private function searchVotersFromDb(string $normalizedQuery, string $rawQuery, int $limit): array
+    {
+        $keywords = preg_split('/\s+/', $normalizedQuery);
+        $keywords = array_values(array_filter($keywords));
+
+        $records = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where(function ($q) use ($keywords, $rawQuery) {
+                foreach ($keywords as $keyword) {
+                    $q->where(function ($kw) use ($keyword, $rawQuery) {
+                        $like = '%' . $keyword . '%';
+                        $kw->where(DB::raw('LOWER(name)'), 'like', $like)
+                            ->orWhere(DB::raw('LOWER(dm)'), 'like', $like)
+                            ->orWhere(DB::raw('LOWER(locality)'), 'like', $like);
+
+                        if (preg_match('/\d/', $keyword)) {
+                            $digitLike = '%' . $this->cleanDigits($keyword) . '%';
+                            $kw->orWhere('no_kp', 'like', $digitLike)
+                                ->orWhere('old_ic', 'like', $digitLike)
+                                ->orWhere('phone_home', 'like', $digitLike)
+                                ->orWhere('phone_mobile', 'like', $digitLike);
+                        }
+                    });
+                }
+            })
+            ->limit($limit)
+            ->get()
+            ->map(function (PemilihRecord $record) {
+                $id = sha1(json_encode([
+                    $record->name === '-' ? '' : ($record->name ?? ''),
+                    $record->no_kp ?? '',
+                    $record->old_ic ?? '',
+                    $record->phone_home ?? '',
+                    $record->phone_mobile ?? '',
+                    $record->dm === '-' ? '' : ($record->dm ?? ''),
+                    $record->locality === '-' ? '' : ($record->locality ?? ''),
+                ], JSON_UNESCAPED_UNICODE));
+
+                return [
+                    'id' => $id,
+                    'voter_id' => $id,
+                    'name' => $record->name,
+                    'no_kp' => $record->no_kp,
+                    'old_ic' => $record->old_ic,
+                    'phone_mobile' => $record->phone_mobile,
+                    'phone_home' => $record->phone_home,
+                    'dm' => $record->dm,
+                    'locality' => $record->locality,
+                    'gender' => $record->gender,
+                    'race' => $record->race,
+                    'cula_code' => $record->cula_code,
+                    'cula_display_label' => $record->cula_display_label,
+                    'address' => $record->address,
+                ];
+            })
+            ->all();
+
+        return $records;
     }
 
     public function syncUploadedVoters(string $path): void
