@@ -322,6 +322,16 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', gambar: null, gambar_url: null });
     const sf = useForm({ shared_user_ids: [] });
     const [previewUrl, setPreviewUrl] = useState(null);
+    const showProgramSavedAlert = (isEditingMode) => Swal.fire({
+        icon: 'success',
+        title: 'Berjaya',
+        text: isEditingMode ? 'Program berjaya dikemaskini.' : 'Program berjaya disimpan.',
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#8b5cf6',
+        background: '#1e293b',
+        color: '#e2e8f0',
+        iconColor: '#34d399',
+    });
 
     useEffect(() => {
         if (!(f.data.gambar instanceof File)) { setPreviewUrl(f.data.gambar_url || null); return; }
@@ -331,9 +341,28 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const isEditing = editingId !== null;
     const submitProgram = (e) => {
         e.preventDefault();
+        const editingMode = isEditing;
         const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
-        if (isEditing) { f.transform((d) => ({ ...d, _method: 'put' })); f.post(route('program.update', editingId), { preserveScroll: true, forceFormData: true, onSuccess: reset }); return; }
-        f.post(route('program.store'), { preserveScroll: true, forceFormData: f.data.gambar instanceof File, onSuccess: reset });
+        if (editingMode) {
+            f.transform((d) => ({ ...d, _method: 'put' }));
+            f.post(route('program.update', editingId), {
+                preserveScroll: true,
+                forceFormData: true,
+                onSuccess: () => {
+                    reset();
+                    showProgramSavedAlert(true);
+                },
+            });
+            return;
+        }
+        f.post(route('program.store'), {
+            preserveScroll: true,
+            forceFormData: f.data.gambar instanceof File,
+            onSuccess: () => {
+                reset();
+                showProgramSavedAlert(false);
+            },
+        });
     };
 
     const selectProg = (id) => { setTab('senarai-program'); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
@@ -375,7 +404,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 </div>
 
                 {tab === 'tambah-program' && (
-                    <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+                    <section>
                         <form onSubmit={submitProgram} className="card p-5">
                             <p className="label-section">{isEditing ? 'Edit Program' : 'Tambah Program'}</p>
                             <h3 className="mt-0.5 heading-md">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
@@ -408,10 +437,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 <PrimaryButton disabled={f.processing}>{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
                             </div>
                         </form>
-                        <div className="card p-5">
-                            <p className="label-section">Ringkasan</p>
-                            <h3 className="mt-0.5 heading-md">{programs.length} program</h3>
-                        </div>
                     </section>
                 )}
 
