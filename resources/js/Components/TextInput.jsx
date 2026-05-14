@@ -10,7 +10,7 @@ export default forwardRef(function TextInput({ type = 'text', className = '', is
             {...props}
             type={type}
             className={
-                'rounded-lg border border-slate-600 bg-slate-700/60 px-3.5 py-2 text-sm text-white placeholder-slate-400 shadow-sm transition focus:border-violet-500 focus:ring-1 focus:ring-violet-500 ' +
+                'rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-950 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 ' +
                 className
             }
             ref={localRef}

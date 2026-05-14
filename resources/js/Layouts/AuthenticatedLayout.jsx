@@ -9,7 +9,7 @@ function NavIcon({ children }) {
     return <span className="text-base leading-none text-emerald-700">{children}</span>;
 }
 
-export default function AuthenticatedLayout({ header, children, variant = 'dark' }) {
+export default function AuthenticatedLayout({ header, children, variant = 'light' }) {
     const { auth, flash } = usePage().props;
     const user = auth.user;
     const userInitial = user.name.charAt(0).toUpperCase();
