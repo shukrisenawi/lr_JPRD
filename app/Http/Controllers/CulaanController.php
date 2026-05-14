@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,21 +17,17 @@ class CulaanController extends Controller
     public function index(Request $request): Response
     {
         $filters = $this->resolveFilters($request);
-        $votersQuery = $this->buildEligibleVotersQuery($filters);
-        $voters = $votersQuery
-            ->orderBy('dm')
-            ->orderBy('locality')
-            ->orderBy('name')
-            ->get();
+        $voters = $this->paginateVoters($filters);
 
         return Inertia::render('Culaan/Index', [
             'filters' => $filters,
+            'requires_udm' => true,
             'summary' => [
-                'total' => $voters->count(),
+                'total' => $voters->total(),
             ],
             'udms' => $this->availableUdms(),
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
-            'voters' => $voters->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))->values(),
+            'voters' => $voters,
         ]);
     }
 
@@ -43,6 +40,11 @@ class CulaanController extends Controller
         }
 
         $filters = $this->resolveFilters($request);
+
+        if ($filters['udm'] === '') {
+            return response()->json(['suggestions' => []]);
+        }
+
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
         $suggestions = $this->buildEligibleVotersQuery($filters)
@@ -125,6 +127,29 @@ class CulaanController extends Controller
             );
     }
 
+    private function paginateVoters(array $filters): LengthAwarePaginator
+    {
+        if ($filters['udm'] === '') {
+            return new LengthAwarePaginator(
+                collect(),
+                0,
+                20,
+                LengthAwarePaginator::resolveCurrentPage(),
+                [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]
+            );
+        }
+
+        return $this->buildEligibleVotersQuery($filters)
+            ->orderBy('locality')
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
+    }
+
     private function availableUdms(): array
     {
         return PemilihRecord::query()
@@ -141,6 +166,10 @@ class CulaanController extends Controller
 
     private function availableLocalities(string $udm, string $selectedLocality = ''): array
     {
+        if ($udm === '') {
+            return [];
+        }
+
         $localities = PemilihRecord::query()
             ->where('status', 'aktif')
             ->when($udm !== '', fn (Builder $builder) => $builder->where('dm', $udm))

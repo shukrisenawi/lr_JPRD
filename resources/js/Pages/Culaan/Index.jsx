@@ -11,7 +11,51 @@ function buildTelegramLink(command, identity) {
     return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(payload)}`;
 }
 
-export default function CulaanIndex({ filters, summary, udms, localities, voters }) {
+function Pagination({ voters, onNavigate }) {
+    if (!voters || voters.last_page <= 1) {
+        return null;
+    }
+
+    return (
+        <div className="flex flex-col gap-3 border-t border-slate-700/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-400">
+                Papar {voters.from ?? 0} - {voters.to ?? 0} daripada {voters.total} rekod
+            </p>
+            <div className="flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    onClick={() => onNavigate(voters.current_page - 1)}
+                    disabled={!voters.prev_page_url}
+                    className="btn-ghost px-3 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Sebelum
+                </button>
+                {voters.links
+                    ?.filter((link) => /^\d+$/.test(String(link.label)))
+                    .map((link) => (
+                        <button
+                            key={link.label}
+                            type="button"
+                            onClick={() => onNavigate(Number(link.label))}
+                            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition ${link.active ? 'bg-violet-500/20 text-violet-300' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                        >
+                            {link.label}
+                        </button>
+                    ))}
+                <button
+                    type="button"
+                    onClick={() => onNavigate(voters.current_page + 1)}
+                    disabled={!voters.next_page_url}
+                    className="btn-ghost px-3 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Seterusnya
+                </button>
+            </div>
+        </div>
+    );
+}
+
+export default function CulaanIndex({ filters, summary, udms, localities, voters, requires_udm }) {
     const suggestionsAbort = useRef(null);
     const [search, setSearch] = useState('');
     const [searching, setSearching] = useState(false);
@@ -40,7 +84,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             return suggestions;
         }
 
-        return voters;
+        return voters.data ?? [];
     }, [search, searching, suggestions, voters]);
 
     const applyFilters = (nextState) => {
@@ -48,6 +92,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             preserveState: true,
             preserveScroll: true,
             replace: true,
+        });
+    };
+
+    const goToPage = (page) => {
+        applyFilters({
+            ...formState,
+            page,
         });
     };
 
@@ -72,6 +123,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
         suggestionsAbort.current?.abort();
 
         if (value.trim().length < 2) {
+            setSuggestions([]);
+            setSearching(false);
+            return;
+        }
+
+        if (!formState.udm) {
             setSuggestions([]);
             setSearching(false);
             return;
@@ -123,6 +180,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
     };
 
     const visibleTotal = search.trim().length >= 2 ? rows.length : summary.total;
+    const shouldPromptUdm = requires_udm && !formState.udm;
 
     return (
         <AuthenticatedLayout
@@ -148,7 +206,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     onChange={(event) => updateFilter('udm', event.target.value)}
                                     className="input-field mt-1.5"
                                 >
-                                    <option value="">Semua UDM</option>
+                                    <option value="">Pilih UDM dahulu</option>
                                     {udms.map((udm) => (
                                         <option key={udm} value={udm}>{udm}</option>
                                     ))}
@@ -162,6 +220,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     value={formState.locality}
                                     onChange={(event) => updateFilter('locality', event.target.value)}
                                     className="input-field mt-1.5"
+                                    disabled={!formState.udm}
                                 >
                                     <option value="">Semua Lokaliti</option>
                                     {localities.map((locality) => (
@@ -192,8 +251,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     onChange={handleSearchChange}
                                     className="input-field mt-1.5"
                                     placeholder="Nama, IC, telefon, UDM atau lokaliti"
+                                    disabled={!formState.udm}
                                 />
                                 {searchError && <InputError className="mt-1.5" message={searchError} />}
+                                {shouldPromptUdm && <p className="mt-1.5 text-[10px] text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
                             </div>
                             <div className="flex items-end">
                                 <div className="w-full rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-right">
@@ -223,7 +284,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                 {rows.length === 0 && (
                                     <tr>
                                         <td colSpan="7" className="px-3 py-4 text-center text-slate-400">
-                                            {searching ? 'Mencari...' : 'Tiada pemilih untuk paparan ini.'}
+                                            {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                                         </td>
                                     </tr>
                                 )}
@@ -277,6 +338,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </tbody>
                         </table>
                     </div>
+                    {!shouldPromptUdm && search.trim().length < 2 && (
+                        <Pagination voters={voters} onNavigate={goToPage} />
+                    )}
                 </section>
             </div>
         </AuthenticatedLayout>

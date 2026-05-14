@@ -14,8 +14,9 @@ it('renders culaan page for authenticated user with module access', function () 
             ->where('filters.udm', '')
             ->where('filters.locality', '')
             ->where('filters.show_marked', false)
+            ->where('requires_udm', true)
             ->where('summary.total', 0)
-            ->where('voters', []));
+            ->where('voters.data', []));
 });
 
 it('blocks culaan route when user role does not have module access', function () {
@@ -26,10 +27,10 @@ it('blocks culaan route when user role does not have module access', function ()
         ->assertRedirect(route('login'));
 });
 
-it('shows only active voters who are belum cula by default', function () {
+it('shows empty culaan list until udm is selected', function () {
     $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
 
-    $eligible = PemilihRecord::query()->create([
+    PemilihRecord::query()->create([
         'identity_number' => '900101025555',
         'no_kp' => '900101025555',
         'name' => 'ALI BELUM CULA',
@@ -66,9 +67,9 @@ it('shows only active voters who are belum cula by default', function () {
         ->get(route('culaan.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('summary.total', 1)
-            ->where('voters.0.id', $eligible->id)
-            ->where('voters.0.name', 'ALI BELUM CULA'));
+            ->where('requires_udm', true)
+            ->where('summary.total', 0)
+            ->where('voters.data', []));
 });
 
 it('filters culaan voters by udm and locality', function () {
@@ -117,7 +118,10 @@ it('filters culaan voters by udm and locality', function () {
             ->where('filters.udm', 'UDM ALPHA')
             ->where('filters.locality', 'LOKALITI SATU')
             ->where('summary.total', 1)
-            ->where('voters.0.id', $match->id)
+            ->where('voters.total', 1)
+            ->where('voters.per_page', 20)
+            ->where('summary.total', 1)
+            ->where('voters.data.0.id', $match->id)
             ->where('localities.0', 'LOKALITI SATU')
             ->where('localities.1', 'LOKALITI DUA'));
 });
@@ -150,11 +154,31 @@ it('returns search suggestions only for active belum cula voters', function () {
     ]);
 
     $this->actingAs($user)
-        ->getJson(route('culaan.search').'?q=ali')
+        ->getJson(route('culaan.search').'?q=ali&udm=UDM%20ALPHA')
         ->assertOk()
         ->assertJsonCount(1, 'suggestions')
         ->assertJsonPath('suggestions.0.id', $match->id)
         ->assertJsonPath('suggestions.0.name', 'CARI ALI');
+});
+
+it('returns empty search suggestions until udm is selected', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    PemilihRecord::query()->create([
+        'identity_number' => '900101025566',
+        'no_kp' => '900101025566',
+        'name' => 'ALI TANPA UDM',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI SATU',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('culaan.search').'?q=ali')
+        ->assertOk()
+        ->assertJsonCount(0, 'suggestions');
 });
 
 it('hides marked voters from default culaan list and can show them when requested', function () {
@@ -181,20 +205,20 @@ it('hides marked voters from default culaan list and can show them when requeste
     ]);
 
     $this->actingAs($user)
-        ->get(route('culaan.index'))
+        ->get(route('culaan.index', ['udm' => 'UDM ALPHA']))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('summary.total', 0)
-            ->where('voters', []));
+            ->where('voters.data', []));
 
     $this->actingAs($user)
-        ->get(route('culaan.index', ['show_marked' => 1]))
+        ->get(route('culaan.index', ['udm' => 'UDM ALPHA', 'show_marked' => 1]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.show_marked', true)
             ->where('summary.total', 1)
-            ->where('voters.0.id', $voter->id)
-            ->where('voters.0.is_marked', true));
+            ->where('voters.data.0.id', $voter->id)
+            ->where('voters.data.0.is_marked', true));
 });
 
 it('allows unmarking culaan checklist without changing original cula code', function () {
@@ -246,13 +270,46 @@ it('hides marked voters from default culaan search unless show marked is request
         ->assertRedirect(route('culaan.index'));
 
     $this->actingAs($user)
-        ->getJson(route('culaan.search').'?q=ali')
+        ->getJson(route('culaan.search').'?q=ali&udm=UDM%20ALPHA')
         ->assertOk()
         ->assertJsonCount(0, 'suggestions');
 
     $this->actingAs($user)
-        ->getJson(route('culaan.search').'?q=ali&show_marked=1')
+        ->getJson(route('culaan.search').'?q=ali&udm=UDM%20ALPHA&show_marked=1')
         ->assertOk()
         ->assertJsonCount(1, 'suggestions')
         ->assertJsonPath('suggestions.0.id', $voter->id);
+});
+
+it('paginates culaan voters by 20 records per page', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    foreach (range(1, 25) as $index) {
+        PemilihRecord::query()->create([
+            'identity_number' => '90010102'.str_pad((string) $index, 4, '0', STR_PAD_LEFT),
+            'no_kp' => '90010102'.str_pad((string) $index, 4, '0', STR_PAD_LEFT),
+            'name' => 'PEMILIH '.str_pad((string) $index, 2, '0', STR_PAD_LEFT),
+            'dm' => 'UDM PAGINASI',
+            'locality' => 'LOKALITI PAGINASI',
+            'status' => 'aktif',
+            'cula_code' => '?',
+            'cula_display_label' => 'BELUM DICULA',
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', ['udm' => 'UDM PAGINASI']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('summary.total', 25)
+            ->where('voters.per_page', 20)
+            ->where('voters.current_page', 1)
+            ->where('voters.data', fn ($data) => count($data) === 20));
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', ['udm' => 'UDM PAGINASI', 'page' => 2]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('voters.current_page', 2)
+            ->where('voters.data', fn ($data) => count($data) === 5));
 });
