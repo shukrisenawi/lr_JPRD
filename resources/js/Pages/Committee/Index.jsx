@@ -421,6 +421,12 @@ function MembershipManager({ positions, memberships, scopes }) {
 }
 
 export default function CommitteeIndex({ positions, memberships, scopes }) {
+    const [activeSection, setActiveSection] = useState('senarai-jawatankuasa');
+    const sectionTabs = [
+        { key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.' },
+        { key: 'jawatan', label: 'Jawatan', desc: 'Urus jenis jawatan dan susunan.' },
+    ];
+
     return (
         <AuthenticatedLayout
             header={
@@ -434,8 +440,29 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
             <Head title="Jawatankuasa" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <PositionManager positions={positions} />
-                <MembershipManager positions={positions} memberships={memberships} scopes={scopes} />
+                <div className="card p-1.5">
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                        {sectionTabs.map((tab) => (
+                            <button
+                                key={tab.key}
+                                type="button"
+                                onClick={() => setActiveSection(tab.key)}
+                                className={`rounded-lg border px-3 py-2.5 text-left transition ${activeSection === tab.key ? 'tab-btn-active' : 'tab-btn-inactive'}`}
+                            >
+                                <p className="label-section">{tab.label}</p>
+                                <p className="mt-0.5 text-xs text-slate-500">{tab.desc}</p>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {activeSection === 'senarai-jawatankuasa' && (
+                    <MembershipManager positions={positions} memberships={memberships} scopes={scopes} />
+                )}
+
+                {activeSection === 'jawatan' && (
+                    <PositionManager positions={positions} />
+                )}
             </div>
         </AuthenticatedLayout>
     );
