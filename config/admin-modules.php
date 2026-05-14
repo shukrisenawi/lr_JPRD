@@ -17,6 +17,10 @@ return [
         'label' => 'Program',
         'description' => 'Cipta program dan rekod kehadiran pemilih.',
     ],
+    'jawatankuasa' => [
+        'label' => 'Jawatankuasa',
+        'description' => 'Urus jawatan dan ahli jawatankuasa JPRD, UDM dan Cawangan.',
+    ],
     'settings' => [
         'label' => 'Settings',
         'description' => 'Tetapan URL Google Sheet sistem.',

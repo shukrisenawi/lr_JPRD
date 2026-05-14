@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PemilihRecord extends Model
 {
@@ -23,4 +24,9 @@ class PemilihRecord extends Model
         'status',
         'source_file',
     ];
+
+    public function committeeMemberships(): HasMany
+    {
+        return $this->hasMany(CommitteeMembership::class, 'pemilih_record_id');
+    }
 }

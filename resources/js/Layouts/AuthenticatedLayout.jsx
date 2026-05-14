@@ -21,6 +21,7 @@ export default function AuthenticatedLayout({ header, children }) {
         { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Laporan', icon: '▤' },
         { key: 'carian-pemilih', href: 'carian-pemilih.index', routePattern: 'carian-pemilih.*', label: 'Carian', icon: '⌕' },
         { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program', icon: '▣' },
+        { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'Jawatankuasa', icon: '◎' },
         { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings', icon: '⚙' },
     ];
 
