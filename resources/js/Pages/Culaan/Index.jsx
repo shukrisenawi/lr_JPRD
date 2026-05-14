@@ -236,7 +236,28 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const shouldPromptUdm = requires_udm && !formState.udm;
     const showLocalityColumn = formState.locality === '';
-    const tableColumnCount = showLocalityColumn ? 5 : 4;
+
+    const exportToCSV = () => {
+        const headers = ['No', 'IC', 'Nama', 'Alamat'];
+        const data = rows.map((voter, index) => [
+            search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index,
+            voter.no_kp || voter.old_ic || '-',
+            voter.name,
+            (voter.address || '-').replace(/,/g, ''),
+        ]);
+
+        const csv = [headers.join(','), ...data.map((row) => row.join(','))].join('\n');
+        const bom = '\uFEFF';
+        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <AuthenticatedLayout
@@ -324,81 +345,89 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                     </div>
                 </section>
 
-                <section className="card overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-700/60 text-xs">
-                            <thead className="table-header">
-                                <tr>
-                                    <th className="px-3 py-2 text-left">Nama</th>
-                                    <th className="px-3 py-2 text-left">IC</th>
-                                    <th className="px-3 py-2 text-left">Telefon</th>
-                                    {showLocalityColumn && <th className="px-3 py-2 text-left">Lokaliti</th>}
-                                    <th className="px-3 py-2 text-left">Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-700/40 bg-slate-800/30 text-slate-300">
-                                {rows.length === 0 && (
-                                    <tr>
-                                        <td colSpan={tableColumnCount} className="px-3 py-4 text-center text-slate-400">
-                                            {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
-                                        </td>
-                                    </tr>
-                                )}
-
-                                {rows.map((voter) => (
-                                    <tr key={voter.id} className="hover:bg-slate-700/20">
-                                        <td className="px-3 py-2.5 align-top">
-                                            <p className="font-bold text-white">{voter.name}</p>
-                                            <p className="mt-0.5 text-[10px] text-slate-500">{voter.address || '-'}</p>
-                                            {voter.is_marked && (
-                                                <span className="mt-1 inline-flex rounded-md bg-amber-500/15 px-2 py-1 text-[10px] font-bold text-amber-300">
-                                                    Dah Ditanda
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2.5 align-top">{voter.no_kp || voter.old_ic || '-'}</td>
-                                        <td className="px-3 py-2.5 align-top">{voter.phone_mobile || voter.phone_home || '-'}</td>
-                                        {showLocalityColumn && <td className="px-3 py-2.5 align-top">{voter.locality || '-'}</td>}
-                                        <td className="px-3 py-2.5 align-top">
-                                            <div className="flex flex-wrap gap-2">
-                                                <a
-                                                    href={buildTelegramLink('kemascula', voter.telegram_identity)}
-                                                    className="btn-ghost px-2.5 py-1.5 text-[10px]"
-                                                >
-                                                    Kemas Cula
-                                                </a>
-                                                <a
-                                                    href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                                    className="btn-ghost px-2.5 py-1.5 text-[10px]"
-                                                >
-                                                    Kemas Tel
-                                                </a>
-                                                {voter.is_marked ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => unmarkVoter(voter)}
-                                                        disabled={pendingIds.includes(voter.id)}
-                                                        className="btn-danger px-2.5 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
-                                                    >
-                                                        {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => markVoter(voter)}
-                                                        disabled={pendingIds.includes(voter.id)}
-                                                        className="rounded-lg bg-emerald-500/15 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-40"
-                                                    >
-                                                        {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                <section className="card p-4 sm:p-5">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                            <p className="label-section">Senarai Pemilih</p>
+                            <p className="mt-0.5 text-xs text-slate-500">Paparan kerja semasa mengikut penapis yang dipilih.</p>
+                        </div>
+                        <button type="button" onClick={exportToCSV} className="btn-ghost shrink-0 px-3 py-2 text-xs">
+                            Export Excel
+                        </button>
                     </div>
+
+                    {rows.length === 0 ? (
+                        <p className="py-4 text-center text-xs text-slate-400">
+                            {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
+                        </p>
+                    ) : (
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            {rows.map((voter, index) => (
+                                <div key={voter.id} className="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4 transition-all duration-1000 hover:border-white/50">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-bold text-white"><span className="mr-1.5 text-slate-500">{search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}.</span>{voter.name}</p>
+                                            <p className="mt-0.5 text-[10px] text-slate-500">{voter.address || '-'}</p>
+                                        </div>
+                                        {voter.is_marked && (
+                                            <span className="shrink-0 rounded-md bg-amber-500/15 px-2 py-1 text-[10px] font-bold text-amber-300">
+                                                Dah Ditanda
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+                                        <div>
+                                            <span className="text-slate-500">IC</span>
+                                            <p className="font-medium text-slate-200">{voter.no_kp || voter.old_ic || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500">Telefon</span>
+                                            <p className="font-medium text-slate-200">{voter.phone_mobile || voter.phone_home || '-'}</p>
+                                        </div>
+                                        {showLocalityColumn && (
+                                            <div>
+                                                <span className="text-slate-500">Lokaliti</span>
+                                                <p className="font-medium text-slate-200">{voter.locality || '-'}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <a
+                                            href={buildTelegramLink('kemascula', voter.telegram_identity)}
+                                            className="btn-ghost px-2.5 py-1.5 text-[10px]"
+                                        >
+                                            Kemas Cula
+                                        </a>
+                                        <a
+                                            href={buildTelegramLink('kemastel', voter.telegram_identity)}
+                                            className="btn-ghost px-2.5 py-1.5 text-[10px]"
+                                        >
+                                            Kemas Tel
+                                        </a>
+                                        {voter.is_marked ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => unmarkVoter(voter)}
+                                                disabled={pendingIds.includes(voter.id)}
+                                                className="btn-danger px-2.5 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                                            >
+                                                {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => markVoter(voter)}
+                                                disabled={pendingIds.includes(voter.id)}
+                                                className="rounded-lg bg-emerald-500/15 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                                            >
+                                                {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     {!shouldPromptUdm && search.trim().length < 2 && (
                         <Pagination voters={localVoters} onNavigate={goToPage} />
                     )}
