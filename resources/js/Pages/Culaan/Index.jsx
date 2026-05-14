@@ -235,6 +235,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const shouldPromptUdm = requires_udm && !formState.udm;
+    const showLocalityColumn = formState.locality === '';
+    const tableColumnCount = showLocalityColumn ? 5 : 4;
 
     return (
         <AuthenticatedLayout
@@ -329,15 +331,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     <th className="px-3 py-2 text-left">Nama</th>
                                     <th className="px-3 py-2 text-left">IC</th>
                                     <th className="px-3 py-2 text-left">Telefon</th>
-                                    <th className="px-3 py-2 text-left">UDM</th>
-                                    <th className="px-3 py-2 text-left">Lokaliti</th>
+                                    {showLocalityColumn && <th className="px-3 py-2 text-left">Lokaliti</th>}
                                     <th className="px-3 py-2 text-left">Tindakan</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-700/40 bg-slate-800/30 text-slate-300">
                                 {rows.length === 0 && (
                                     <tr>
-                                        <td colSpan="7" className="px-3 py-4 text-center text-slate-400">
+                                        <td colSpan={tableColumnCount} className="px-3 py-4 text-center text-slate-400">
                                             {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                                         </td>
                                     </tr>
@@ -356,8 +357,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                         </td>
                                         <td className="px-3 py-2.5 align-top">{voter.no_kp || voter.old_ic || '-'}</td>
                                         <td className="px-3 py-2.5 align-top">{voter.phone_mobile || voter.phone_home || '-'}</td>
-                                        <td className="px-3 py-2.5 align-top">{voter.dm || '-'}</td>
-                                        <td className="px-3 py-2.5 align-top">{voter.locality || '-'}</td>
+                                        {showLocalityColumn && <td className="px-3 py-2.5 align-top">{voter.locality || '-'}</td>}
                                         <td className="px-3 py-2.5 align-top">
                                             <div className="flex flex-wrap gap-2">
                                                 <a
