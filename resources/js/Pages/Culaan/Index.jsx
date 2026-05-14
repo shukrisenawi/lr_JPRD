@@ -254,7 +254,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
     const showLocalityColumn = formState.locality === '';
 
     const exportToExcel = () => {
-        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'UDM'];
+        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon'];
 
         if (showLocalityColumn) {
             headers.push('Lokaliti');
@@ -270,7 +270,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                 { value: voter.name || '-', style: '' },
                 { value: voter.address || '-', style: '' },
                 excelTextCell(voter.phone_mobile || voter.phone_home || '-'),
-                { value: voter.dm || '-', style: '' },
             ];
 
             if (showLocalityColumn) {
