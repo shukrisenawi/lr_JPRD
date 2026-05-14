@@ -289,7 +289,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                 <InputLabel htmlFor="culaan-dah-cula" value="Dah Cula" />
                                 <label
                                     htmlFor="culaan-dah-cula"
-                                    className="mt-1.5 flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-xs text-slate-300"
+                                    className="mt-1.5 inline-flex items-center rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-xs text-slate-300"
                                 >
                                     <input
                                         id="culaan-dah-cula"
