@@ -11,6 +11,15 @@ function buildTelegramLink(command, identity) {
     return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(payload)}`;
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function Pagination({ voters, onNavigate }) {
     if (!voters || voters.last_page <= 1) {
         return null;
@@ -237,35 +246,73 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
     const shouldPromptUdm = requires_udm && !formState.udm;
     const showLocalityColumn = formState.locality === '';
 
-    const exportToCSV = () => {
-        const headers = ['No', 'IC', 'Nama', 'Alamat'];
-        const data = rows.map((voter, index) => [
-            search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index,
-            voter.no_kp || voter.old_ic || '-',
-            voter.name,
-            (voter.address || '-').replace(/,/g, ''),
-        ]);
+    const exportToExcel = () => {
+        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon'];
 
-        const csv = [headers.join(','), ...data.map((row) => row.join(','))].join('\n');
-        const bom = '\uFEFF';
-        const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+        if (showLocalityColumn) {
+            headers.push('Lokaliti');
+        }
+
+        const bodyRows = rows.map((voter, index) => {
+            const cells = [
+                search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index,
+                voter.no_kp || voter.old_ic || '-',
+                voter.name || '-',
+                voter.address || '-',
+                voter.phone_mobile || voter.phone_home || '-',
+            ];
+
+            if (showLocalityColumn) {
+                cells.push(voter.locality || '-');
+            }
+
+            return `<tr>${cells.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`;
+        });
+
+        const html = `
+            <html>
+                <head>
+                    <meta charset="UTF-8" />
+                    <style>
+                        table { border-collapse: collapse; width: 100%; }
+                        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+                        th { background: #e2e8f0; font-weight: 700; }
+                    </style>
+                </head>
+                <body>
+                    <table>
+                        <thead>
+                            <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody>
+                            ${bodyRows.join('')}
+                        </tbody>
+                    </table>
+                </body>
+            </html>
+        `;
+
+        const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
     };
 
     return (
         <AuthenticatedLayout
             header={
-                <div>
-                    <p className="label-section">Culaan</p>
-                    <h2 className="mt-0.5 heading-lg">Senarai kerja pemilih belum cula</h2>
-                    <p className="text-muted mt-0.5">Tapis ikut UDM dan lokaliti, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="label-section">Culaan</p>
+                        <h2 className="mt-0.5 heading-lg">Senarai kerja pemilih belum cula</h2>
+                        <p className="text-muted mt-0.5">Tapis ikut UDM dan lokaliti, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
+                    </div>
+                    <button type="button" onClick={exportToExcel} className="btn-ghost shrink-0 px-3 py-2 text-xs">Export Excel</button>
                 </div>
             }
         >
@@ -346,16 +393,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                 </section>
 
                 <section className="card p-4 sm:p-5">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                        <div>
-                            <p className="label-section">Senarai Pemilih</p>
-                            <p className="mt-0.5 text-xs text-slate-500">Paparan kerja semasa mengikut penapis yang dipilih.</p>
-                        </div>
-                        <button type="button" onClick={exportToCSV} className="btn-ghost shrink-0 px-3 py-2 text-xs">
-                            Export Excel
-                        </button>
-                    </div>
-
                     {rows.length === 0 ? (
                         <p className="py-4 text-center text-xs text-slate-400">
                             {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
