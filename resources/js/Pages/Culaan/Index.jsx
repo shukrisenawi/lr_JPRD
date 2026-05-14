@@ -252,8 +252,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
                 <section className="card p-4 sm:p-5">
-                    <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-                        <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_12rem] xl:items-end">
+                        <div className="grid gap-4 xl:grid-cols-[12rem_12rem_9rem_minmax(0,1fr)]">
                             <div>
                                 <InputLabel htmlFor="culaan-udm" value="UDM" />
                                 <select
@@ -285,10 +285,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                 </select>
                             </div>
 
-                            <div className="flex items-end">
-                                <label className="flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-xs text-slate-300">
+                            <div>
+                                <InputLabel htmlFor="culaan-dah-cula" value="Dah Cula" />
+                                <label
+                                    htmlFor="culaan-dah-cula"
+                                    className="mt-1.5 flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-xs text-slate-300"
+                                >
                                     <span>Dah Cula</span>
                                     <input
+                                        id="culaan-dah-cula"
                                         type="checkbox"
                                         checked={formState.show_marked}
                                         onChange={(event) => updateFilter('show_marked', event.target.checked)}
@@ -296,9 +301,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     />
                                 </label>
                             </div>
-                        </div>
 
-                        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
                             <div>
                                 <InputLabel htmlFor="culaan-search" value="Cari Pemilih" />
                                 <TextInput
@@ -313,12 +316,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                 {actionError && <InputError className="mt-1.5" message={actionError} />}
                                 {shouldPromptUdm && <p className="mt-1.5 text-[10px] text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
                             </div>
-                            <div className="flex items-end">
-                                <div className="w-full rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-right">
-                                    <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-300">Jumlah Paparan</p>
-                                    <p className="mt-1 text-2xl font-black text-white">{visibleTotal}</p>
-                                </div>
-                            </div>
+                        </div>
+
+                        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-right">
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-300">Jumlah Paparan</p>
+                            <p className="mt-1 text-2xl font-black text-white">{visibleTotal}</p>
                         </div>
                     </div>
                 </section>
