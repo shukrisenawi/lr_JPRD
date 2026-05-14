@@ -100,6 +100,49 @@ it('requires unique committee position name', function () {
         ->assertSessionHasErrors('name');
 });
 
+it('rejects committee position name that only differs by surrounding spaces', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+
+    \App\Models\CommitteePosition::query()->create([
+        'name' => 'Pengerusi',
+        'slug' => 'pengerusi',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('jawatankuasa.positions.store'), [
+            'name' => '  Pengerusi  ',
+            'sort_order' => 3,
+        ])
+        ->assertSessionHasErrors('name');
+});
+
+it('prevents updating committee position to an existing name', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+
+    $first = \App\Models\CommitteePosition::query()->create([
+        'name' => 'Pengerusi',
+        'slug' => 'pengerusi',
+        'sort_order' => 1,
+    ]);
+
+    $second = \App\Models\CommitteePosition::query()->create([
+        'name' => 'Setiausaha',
+        'slug' => 'setiausaha',
+        'sort_order' => 2,
+    ]);
+
+    $this->actingAs($user)
+        ->put(route('jawatankuasa.positions.update', $second), [
+            'name' => ' Pengerusi ',
+            'sort_order' => 2,
+        ])
+        ->assertSessionHasErrors('name');
+
+    expect($first->fresh()->name)->toBe('Pengerusi')
+        ->and($second->fresh()->name)->toBe('Setiausaha');
+});
+
 it('prevents deleting committee position that is already assigned', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
     $position = \App\Models\CommitteePosition::query()->create([
