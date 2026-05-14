@@ -1,6 +1,4 @@
 import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -66,8 +64,8 @@ function Pagination({ voters, onNavigate }) {
     }
 
     return (
-        <div className="flex flex-col gap-3 border-t border-slate-700/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-slate-400">
+        <div className="mt-4 flex flex-col gap-3 border-t border-emerald-100 px-1 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-medium text-slate-500">
                 Papar {voters.from ?? 0} - {voters.to ?? 0} daripada {voters.total} rekod
             </p>
             <div className="flex flex-wrap gap-2">
@@ -75,7 +73,7 @@ function Pagination({ voters, onNavigate }) {
                     type="button"
                     onClick={() => onNavigate(voters.current_page - 1)}
                     disabled={!voters.prev_page_url}
-                    className="btn-ghost px-3 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-emerald-100 bg-white px-3 py-1.5 text-[10px] font-bold text-emerald-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Sebelum
                 </button>
@@ -86,7 +84,7 @@ function Pagination({ voters, onNavigate }) {
                             key={link.label}
                             type="button"
                             onClick={() => onNavigate(Number(link.label))}
-                            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition ${link.active ? 'bg-violet-500/20 text-violet-300' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition ${link.active ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20' : 'border border-emerald-100 bg-white text-slate-600 hover:text-emerald-700'}`}
                         >
                             {link.label}
                         </button>
@@ -95,7 +93,7 @@ function Pagination({ voters, onNavigate }) {
                     type="button"
                     onClick={() => onNavigate(voters.current_page + 1)}
                     disabled={!voters.next_page_url}
-                    className="btn-ghost px-3 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-emerald-100 bg-white px-3 py-1.5 text-[10px] font-bold text-emerald-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Seterusnya
                 </button>
@@ -444,30 +442,38 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
     return (
         <AuthenticatedLayout
+            variant="light"
             header={
-                <div className="flex items-start justify-between gap-4">
+                <div className="relative z-10 flex items-start justify-between gap-4">
                     <div>
-                        <p className="label-section">Culaan</p>
-                        <h2 className="mt-0.5 heading-lg">Senarai kerja pemilih belum cula</h2>
-                        <p className="text-muted mt-0.5">Tapis ikut UDM dan lokaliti, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600">Culaan</p>
+                        <h2 className="mt-1 max-w-4xl text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Senarai kerja pemilih belum cula</h2>
+                        <p className="mt-2 text-sm font-medium text-slate-600">Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
                     </div>
-                    <button type="button" onClick={exportToExcel} className="btn-ghost shrink-0 px-3 py-2 text-xs">Export Excel</button>
+                    <button
+                        type="button"
+                        onClick={exportToExcel}
+                        className="hidden shrink-0 items-center gap-2 rounded-lg border border-emerald-100 bg-white px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg shadow-emerald-900/10 transition hover:border-emerald-200 hover:text-emerald-700 sm:inline-flex"
+                    >
+                        <span className="rounded bg-emerald-600 px-1.5 py-1 text-xs font-black text-white">X</span>
+                        Export Excel
+                    </button>
                 </div>
             }
         >
             <Head title="Culaan" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <section className="card p-4 sm:p-5">
-                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_12rem] xl:items-end">
-                        <div className="grid gap-4 xl:grid-cols-[12rem_12rem_9rem_minmax(0,1fr)]">
+                <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_16rem] xl:items-stretch">
+                    <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-lg shadow-emerald-900/5 sm:p-5">
+                        <div className="grid gap-4 xl:grid-cols-[14rem_14rem_6rem_minmax(0,1fr)] xl:items-end">
                             <div>
-                                <InputLabel htmlFor="culaan-udm" value="UDM" />
+                                <label htmlFor="culaan-udm" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">UDM</label>
                                 <select
                                     id="culaan-udm"
                                     value={formState.udm}
                                     onChange={(event) => updateFilter('udm', event.target.value)}
-                                    className="input-field mt-1.5"
+                                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-sm transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                                 >
                                     <option value="">Pilih UDM dahulu</option>
                                     {udms.map((udm) => (
@@ -477,12 +483,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="culaan-locality" value="Lokaliti" />
+                                <label htmlFor="culaan-locality" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">Lokaliti</label>
                                 <select
                                     id="culaan-locality"
                                     value={formState.locality}
                                     onChange={(event) => updateFilter('locality', event.target.value)}
-                                    className="input-field mt-1.5"
+                                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-sm transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50 disabled:text-slate-400"
                                     disabled={!formState.udm}
                                 >
                                     <option value="">Semua Lokaliti</option>
@@ -493,94 +499,103 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="culaan-dah-cula" value="Dah Cula" />
+                                <label htmlFor="culaan-dah-cula" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">Dah Cula</label>
                                 <label
                                     htmlFor="culaan-dah-cula"
-                                    className="mt-1.5 inline-flex items-center rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-xs text-slate-300"
+                                    className="mt-2 inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs text-slate-700 shadow-sm"
                                 >
                                     <input
                                         id="culaan-dah-cula"
                                         type="checkbox"
                                         checked={formState.show_marked}
                                         onChange={(event) => updateFilter('show_marked', event.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-violet-500 focus:ring-violet-500"
+                                        className="h-5 w-5 rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500"
                                     />
                                 </label>
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="culaan-search" value="Cari Pemilih" />
-                                <TextInput
+                                <label htmlFor="culaan-search" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">Cari Pemilih</label>
+                                <div className="relative mt-2">
+                                    <input
                                     id="culaan-search"
                                     value={search}
                                     onChange={handleSearchChange}
-                                    className="input-field mt-1.5"
+                                    className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 pr-10 text-sm font-medium text-slate-950 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50 disabled:text-slate-400"
                                     placeholder="Nama, IC, telefon, UDM atau lokaliti"
                                     disabled={!formState.udm}
-                                />
+                                    />
+                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-lg text-emerald-600">⌕</span>
+                                </div>
                                 {searchError && <InputError className="mt-1.5" message={searchError} />}
                                 {actionError && <InputError className="mt-1.5" message={actionError} />}
-                                {shouldPromptUdm && <p className="mt-1.5 text-[10px] text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
+                                {shouldPromptUdm && <p className="mt-1.5 text-[10px] font-semibold text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
                             </div>
                         </div>
+                    </div>
 
-                        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-right">
-                            <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-300">Jumlah Paparan</p>
-                            <p className="mt-1 text-2xl font-black text-white">{visibleTotal}</p>
+                    <div className="flex items-center gap-4 rounded-xl border border-emerald-100 bg-white p-5 shadow-xl shadow-emerald-900/10">
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-700">●●</div>
+                        <div className="min-w-0 flex-1 text-right">
+                            <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-600">Jumlah Paparan</p>
+                            <p className="mt-1 text-4xl font-black leading-none text-slate-950">{visibleTotal}</p>
                         </div>
                     </div>
                 </section>
 
-                <section className="card p-4 sm:p-5">
+                <section>
                     {rows.length === 0 ? (
-                        <p className="py-4 text-center text-xs text-slate-400">
+                        <p className="rounded-xl border border-emerald-100 bg-white py-8 text-center text-xs font-semibold text-slate-500 shadow-lg shadow-emerald-900/5">
                             {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                         </p>
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {rows.map((voter, index) => (
-                                <div key={voter.id} className="rounded-lg border border-slate-700/60 bg-slate-800/40 p-4 transition-all duration-1000 hover:border-white/50">
+                                <div key={voter.id} className="rounded-xl border border-emerald-100 bg-white p-4 shadow-lg shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-900/10">
                                     <div className="flex items-start justify-between gap-2">
+                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-600 to-green-500 text-base font-black text-white shadow-md shadow-emerald-500/25">
+                                            {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
+                                        </span>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-bold text-white"><span className="mr-1.5 text-slate-500">{search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}.</span>{voter.name}</p>
-                                            <p className="mt-0.5 text-[10px] text-slate-500">{voter.address || '-'}</p>
+                                            <p className="text-sm font-black leading-5 text-slate-950">{voter.name}</p>
+                                            <p className="mt-1 text-[10px] font-semibold uppercase leading-4 tracking-[0.03em] text-slate-600">{voter.address || '-'}</p>
                                         </div>
                                         {voter.is_marked && (
-                                            <span className="shrink-0 rounded-md bg-amber-500/15 px-2 py-1 text-[10px] font-bold text-amber-300">
+                                            <span className="shrink-0 rounded-md bg-lime-100 px-2 py-1 text-[10px] font-black text-lime-700">
                                                 Dah Ditanda
                                             </span>
                                         )}
                                     </div>
-                                    <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+                                    <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]">
                                         <div>
-                                            <span className="text-slate-500">IC</span>
-                                            <p className="font-medium text-slate-200">{voter.no_kp || voter.old_ic || '-'}</p>
+                                            <span className="font-medium text-emerald-700">▣ IC</span>
+                                            <p className="mt-0.5 font-black text-slate-950">{voter.no_kp || voter.old_ic || '-'}</p>
                                         </div>
                                         <div>
-                                            <span className="text-slate-500">Telefon</span>
-                                            <p className="font-medium text-slate-200">{voter.phone_mobile || voter.phone_home || '-'}</p>
+                                            <span className="font-medium text-emerald-700">⌕ Telefon</span>
+                                            <p className="mt-0.5 font-black text-slate-950">{voter.phone_mobile || voter.phone_home || '-'}</p>
                                         </div>
                                         <div>
-                                            <span className="text-slate-500">Umur</span>
-                                            <p className="font-medium text-slate-200">{voter.age ?? '-'}</p>
+                                            <span className="font-medium text-emerald-700">▦ Umur</span>
+                                            <p className="mt-0.5 font-black text-slate-950">{voter.age ?? '-'}</p>
                                         </div>
                                         {showLocalityColumn && (
                                             <div className="col-span-3">
-                                                <span className="text-slate-500">Lokaliti</span>
-                                                <p className="font-medium text-slate-200">{voter.locality || '-'}</p>
+                                                <span className="font-medium text-emerald-700">⌖ Lokaliti</span>
+                                                <p className="mt-0.5 font-black text-slate-950">{voter.locality || '-'}</p>
                                             </div>
                                         )}
                                     </div>
                                     <div className="mt-3 flex flex-wrap gap-2">
                                         <a
                                             href={buildTelegramLink('kemascula', voter.telegram_identity)}
-                                            className="btn-ghost px-2.5 py-1.5 text-[10px]"
+                                            className="inline-flex flex-1 items-center justify-center rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-[10px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-50"
                                         >
                                             Kemas Cula
                                         </a>
                                         <a
                                             href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                            className="btn-ghost px-2.5 py-1.5 text-[10px]"
+                                            className="inline-flex flex-1 items-center justify-center rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-[10px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-50"
                                         >
                                             Kemas Tel
                                         </a>
@@ -589,7 +604,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                                 type="button"
                                                 onClick={() => unmarkVoter(voter)}
                                                 disabled={pendingIds.includes(voter.id)}
-                                                className="btn-danger px-2.5 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="inline-flex flex-1 items-center justify-center rounded-lg bg-rose-600 px-2.5 py-2 text-[10px] font-black text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                                             >
                                                 {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
                                             </button>
@@ -598,7 +613,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                                 type="button"
                                                 onClick={() => markVoter(voter)}
                                                 disabled={pendingIds.includes(voter.id)}
-                                                className="rounded-lg bg-emerald-500/15 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="inline-flex flex-1 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[10px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
                                             >
                                                 {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
                                             </button>
