@@ -20,6 +20,13 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function excelTextCell(value) {
+    return {
+        value: value ?? '-',
+        style: "mso-number-format:'\\@';",
+    };
+}
+
 function Pagination({ voters, onNavigate }) {
     if (!voters || voters.last_page <= 1) {
         return null;
@@ -255,18 +262,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
         const bodyRows = rows.map((voter, index) => {
             const cells = [
-                search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index,
-                voter.no_kp || voter.old_ic || '-',
-                voter.name || '-',
-                voter.address || '-',
-                voter.phone_mobile || voter.phone_home || '-',
+                { value: search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index, style: '' },
+                excelTextCell(voter.no_kp || voter.old_ic || '-'),
+                { value: voter.name || '-', style: '' },
+                { value: voter.address || '-', style: '' },
+                excelTextCell(voter.phone_mobile || voter.phone_home || '-'),
             ];
 
             if (showLocalityColumn) {
-                cells.push(voter.locality || '-');
+                cells.push({ value: voter.locality || '-', style: '' });
             }
 
-            return `<tr>${cells.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`;
+            return `<tr>${cells.map((cell) => `<td style="${cell.style}">${escapeHtml(cell.value)}</td>`).join('')}</tr>`;
         });
 
         const html = `
