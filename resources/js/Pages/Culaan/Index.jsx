@@ -261,6 +261,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
         }
 
         const titleRows = [];
+        const columnLengths = headers.map((header) => String(header).length);
 
         const bodyRows = rows.map((voter, index) => {
             const cells = [
@@ -276,6 +277,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                 cells.push({ value: voter.locality || '-', style: '' });
             }
 
+            cells.forEach((cell, columnIndex) => {
+                columnLengths[columnIndex] = Math.max(
+                    columnLengths[columnIndex] ?? 0,
+                    String(cell.value ?? '').length,
+                );
+            });
+
             return `<tr>${cells.map((cell) => `<td style="${cell.style}">${escapeHtml(cell.value)}</td>`).join('')}</tr>`;
         });
 
@@ -287,18 +295,27 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:16px; text-align:center; background:#e2e8f0; padding:10px 8px;">${escapeHtml(formState.locality)}</th></tr>`);
         }
 
+        const colGroup = `<colgroup>${columnLengths
+            .map((length) => {
+                const width = Math.max(10, Math.min(length + 2, 48));
+
+                return `<col style="width:${width}ch;" />`;
+            })
+            .join('')}</colgroup>`;
+
         const html = `
             <html>
                 <head>
                     <meta charset="UTF-8" />
                     <style>
-                        table { border-collapse: collapse; width: 100%; }
-                        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+                        table { border-collapse: collapse; table-layout: auto; }
+                        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; white-space: nowrap; }
                         th { background: #e2e8f0; font-weight: 700; }
                     </style>
                 </head>
                 <body>
                     <table>
+                        ${colGroup}
                         <thead>
                             ${titleRows.join('')}
                             <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
