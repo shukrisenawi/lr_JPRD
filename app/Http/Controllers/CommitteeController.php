@@ -157,15 +157,49 @@ class CommitteeController extends Controller
     public function storePosition(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:committee_positions,name'],
+            'name' => ['required', 'string', 'max:255'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        CommitteePosition::query()->create([
-            'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']),
-            'sort_order' => $validated['sort_order'] ?? 0,
-        ]);
+        $names = $this->parsePositionNames($validated['name']);
+
+        if ($names === []) {
+            return back()->withErrors([
+                'name' => 'Sila masukkan sekurang-kurangnya satu nama jawatan.',
+            ]);
+        }
+
+        $duplicatesInInput = collect($names)
+            ->map(fn (string $name) => mb_strtolower($name))
+            ->duplicates()
+            ->isNotEmpty();
+
+        if ($duplicatesInInput) {
+            return back()->withErrors([
+                'name' => 'Nama jawatan yang sama tidak boleh diulang dalam senarai yang sama.',
+            ]);
+        }
+
+        $existingNames = CommitteePosition::query()
+            ->whereIn('name', $names)
+            ->pluck('name')
+            ->all();
+
+        if ($existingNames !== []) {
+            return back()->withErrors([
+                'name' => 'Sebahagian nama jawatan sudah wujud: '.implode(', ', $existingNames),
+            ]);
+        }
+
+        $baseSortOrder = $validated['sort_order'] ?? 0;
+
+        foreach ($names as $index => $name) {
+            CommitteePosition::query()->create([
+                'name' => $name,
+                'slug' => Str::slug($name),
+                'sort_order' => $baseSortOrder + $index,
+            ]);
+        }
 
         return redirect()
             ->route('jawatankuasa.index')
@@ -280,5 +314,13 @@ class CommitteeController extends Controller
         $scopeName = $parts[1] ?? $voter->locality ?? '';
 
         return [$scopeName, $parent !== '' ? $parent : null];
+    }
+
+    private function parsePositionNames(string $value): array
+    {
+        return array_values(array_filter(array_map(
+            fn (string $name) => trim($name),
+            explode(',', $value)
+        )));
     }
 }

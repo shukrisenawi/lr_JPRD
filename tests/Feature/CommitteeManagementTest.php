@@ -61,6 +61,28 @@ it('allows authorized user to create, update, and delete committee positions', f
     ]);
 });
 
+it('creates multiple committee positions from comma separated names and keeps the order', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+
+    $this->actingAs($user)
+        ->post(route('jawatankuasa.positions.store'), [
+            'name' => 'Pengerusi, Setiausaha, Bendahari',
+            'sort_order' => 1,
+        ])
+        ->assertRedirect(route('jawatankuasa.index'));
+
+    $positions = \App\Models\CommitteePosition::query()
+        ->orderBy('sort_order')
+        ->pluck('name', 'sort_order')
+        ->all();
+
+    expect($positions)->toBe([
+        1 => 'Pengerusi',
+        2 => 'Setiausaha',
+        3 => 'Bendahari',
+    ]);
+});
+
 it('requires unique committee position name', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
 

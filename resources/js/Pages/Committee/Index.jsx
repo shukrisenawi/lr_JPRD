@@ -67,8 +67,9 @@ function PositionManager({ positions }) {
                         value={createForm.data.name}
                         onChange={(event) => createForm.setData('name', event.target.value)}
                         className="input-field mt-1.5"
-                        placeholder="Contoh: Pengerusi"
+                        placeholder="Contoh: Pengerusi, Setiausaha, Bendahari"
                     />
+                    <p className="mt-1.5 text-[10px] text-slate-500">Asingkan dengan koma untuk cipta beberapa jawatan terus ikut susunan.</p>
                     <InputError className="mt-1.5" message={createForm.errors.name} />
                 </div>
                 <div>
