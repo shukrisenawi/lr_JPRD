@@ -20,10 +20,19 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function escapeXml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
 function excelTextCell(value) {
     return {
         value: value ?? '-',
-        style: "mso-number-format:'\\@';",
+        type: 'String',
     };
 }
 
@@ -263,18 +272,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
         const titleRows = [];
         const columnLengths = headers.map((header) => String(header).length);
 
-        const bodyRows = rows.map((voter, index) => {
+        const dataRows = rows.map((voter, index) => {
             const cells = [
-                { value: search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index, style: '' },
+                { value: search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index, type: 'Number' },
                 excelTextCell(voter.no_kp || voter.old_ic || '-'),
-                { value: voter.name || '-', style: '' },
-                { value: voter.address || '-', style: '' },
+                { value: voter.name || '-', type: 'String' },
+                { value: voter.address || '-', type: 'String' },
                 excelTextCell(voter.phone_mobile || voter.phone_home || '-'),
-                { value: '', style: '' },
+                { value: '', type: 'String' },
             ];
 
             if (showLocalityColumn) {
-                cells.push({ value: voter.locality || '-', style: '' });
+                cells.push({ value: voter.locality || '-', type: 'String' });
             }
 
             cells.forEach((cell, columnIndex) => {
@@ -284,55 +293,125 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                 );
             });
 
-            return `<tr>${cells.map((cell) => `<td style="${cell.style}">${escapeHtml(cell.value)}</td>`).join('')}</tr>`;
+            return cells;
         });
 
         if (formState.udm) {
-            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:22px; text-align:center; background:#cbd5e1; padding:12px 8px;">${escapeHtml(formState.udm)}</th></tr>`);
+            titleRows.push({
+                value: formState.udm,
+                styleId: 'titleMain',
+            });
         }
 
         if (formState.locality) {
-            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:16px; text-align:center; background:#e2e8f0; padding:10px 8px;">${escapeHtml(formState.locality)}</th></tr>`);
+            titleRows.push({
+                value: formState.locality,
+                styleId: 'titleSub',
+            });
         }
 
-        const colGroup = `<colgroup>${columnLengths
+        const columnXml = columnLengths
             .map((length) => {
-                const width = Math.max(10, Math.min(length + 2, 48));
+                const width = Math.max(80, Math.min((length + 2) * 7, 360));
 
-                return `<col style="width:${width}ch;" />`;
+                return `<Column ss:AutoFitWidth="0" ss:Width="${width}"/>`;
             })
-            .join('')}</colgroup>`;
+            .join('');
 
-        const html = `
-            <html>
-                <head>
-                    <meta charset="UTF-8" />
-                    <style>
-                        table { border-collapse: collapse; table-layout: auto; }
-                        th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; white-space: nowrap; }
-                        th { background: #e2e8f0; font-weight: 700; }
-                    </style>
-                </head>
-                <body>
-                    <table>
-                        ${colGroup}
-                        <thead>
-                            ${titleRows.join('')}
-                            <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
-                        </thead>
-                        <tbody>
-                            ${bodyRows.join('')}
-                        </tbody>
-                    </table>
-                </body>
-            </html>
+        const titleRowXml = titleRows
+            .map((title) => `
+                <Row>
+                    <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="${title.styleId}">
+                        <Data ss:Type="String">${escapeXml(title.value)}</Data>
+                    </Cell>
+                </Row>
+            `)
+            .join('');
+
+        const headerRowXml = `
+            <Row>
+                ${headers.map((header) => `
+                    <Cell ss:StyleID="header">
+                        <Data ss:Type="String">${escapeXml(header)}</Data>
+                    </Cell>
+                `).join('')}
+            </Row>
         `;
 
-        const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const bodyRowsXml = dataRows
+            .map((cells) => `
+                <Row>
+                    ${cells.map((cell) => `
+                        <Cell ss:StyleID="cell">
+                            <Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data>
+                        </Cell>
+                    `).join('')}
+                </Row>
+            `)
+            .join('');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+    <Styles>
+        <Style ss:ID="Default" ss:Name="Normal">
+            <Alignment ss:Vertical="Center"/>
+            <Borders/>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+            <Interior/>
+            <NumberFormat/>
+            <Protection/>
+        </Style>
+        <Style ss:ID="titleMain">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1"/>
+            <Interior ss:Color="#CBD5E1" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="titleSub">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Font ss:FontName="Calibri" ss:Size="12" ss:Bold="1"/>
+            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="header">
+            <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="cell">
+            <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+    </Styles>
+    <Worksheet ss:Name="Culaan">
+        <Table>
+            ${columnXml}
+            ${titleRowXml}
+            ${headerRowXml}
+            ${bodyRowsXml}
+        </Table>
+    </Worksheet>
+</Workbook>`;
+
+        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xls`;
+        link.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xml`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -448,7 +527,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                             </span>
                                         )}
                                     </div>
-                                    <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+                                    <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
                                         <div>
                                             <span className="text-slate-500">IC</span>
                                             <p className="font-medium text-slate-200">{voter.no_kp || voter.old_ic || '-'}</p>
@@ -457,8 +536,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                             <span className="text-slate-500">Telefon</span>
                                             <p className="font-medium text-slate-200">{voter.phone_mobile || voter.phone_home || '-'}</p>
                                         </div>
+                                        <div>
+                                            <span className="text-slate-500">Umur</span>
+                                            <p className="font-medium text-slate-200">{voter.age ?? '-'}</p>
+                                        </div>
                                         {showLocalityColumn && (
-                                            <div>
+                                            <div className="col-span-3">
                                                 <span className="text-slate-500">Lokaliti</span>
                                                 <p className="font-medium text-slate-200">{voter.locality || '-'}</p>
                                             </div>
