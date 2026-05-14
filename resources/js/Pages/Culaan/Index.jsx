@@ -331,7 +331,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     <th className="px-3 py-2 text-left">Telefon</th>
                                     <th className="px-3 py-2 text-left">UDM</th>
                                     <th className="px-3 py-2 text-left">Lokaliti</th>
-                                    <th className="px-3 py-2 text-left">Status Cula</th>
                                     <th className="px-3 py-2 text-left">Tindakan</th>
                                 </tr>
                             </thead>
@@ -358,11 +357,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                         <td className="px-3 py-2.5 align-top">{voter.phone_mobile || voter.phone_home || '-'}</td>
                                         <td className="px-3 py-2.5 align-top">{voter.dm || '-'}</td>
                                         <td className="px-3 py-2.5 align-top">{voter.locality || '-'}</td>
-                                        <td className="px-3 py-2.5 align-top">
-                                            <span className="inline-flex rounded-md bg-slate-700/80 px-2 py-1 text-[10px] font-bold text-slate-200">
-                                                {voter.cula_display_label || voter.cula_code || 'BELUM DICULA'}
-                                            </span>
-                                        </td>
                                         <td className="px-3 py-2.5 align-top">
                                             <div className="flex flex-wrap gap-2">
                                                 <a
