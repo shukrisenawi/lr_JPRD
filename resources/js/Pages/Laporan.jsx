@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useMemo, useState } from 'react';
 
@@ -85,25 +85,6 @@ function DataTable({ rows, columns }) {
     );
 }
 
-function UploadPanel() {
-    const [file, setFile] = useState(null);
-    const [processing, setProcessing] = useState(false);
-    const submit = (e) => {
-        e.preventDefault();
-        if (!file) return;
-        const fd = new FormData();
-        fd.append('pemilih_file', file);
-        router.post(route('laporan.upload'), fd, { forceFormData: true, preserveScroll: true, onStart: () => setProcessing(true), onFinish: () => setProcessing(false) });
-    };
-    return (
-        <form onSubmit={submit} className="card flex flex-col gap-2 p-3 sm:flex-row sm:items-center">
-            <input type="file" accept=".xls,.xlsx,.csv,.ods,.html" onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-xs text-slate-400 file:mr-2 file:rounded-lg file:border-0 file:bg-violet-600 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white hover:file:bg-violet-500" />
-            <button type="submit" disabled={!file || processing} className="btn-primary shrink-0">{processing ? 'Naik...' : 'Muat Naik'}</button>
-        </form>
-    );
-}
-
 export default function Laporan({ report }) {
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
@@ -177,10 +158,8 @@ export default function Laporan({ report }) {
         >
             <Head title="Laporan" />
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
-                <UploadPanel />
-
                 {!report.source.exists ? (
-                    <div className="card-dashed"><p className="text-sm font-bold text-white">Tiada fail</p><p className="mt-1 text-xs text-slate-400">Upload fail pemilih untuk mula.</p></div>
+                    <div className="card-dashed"><p className="text-sm font-bold text-white">Tiada fail</p><p className="mt-1 text-xs text-slate-400">Muat naik fail pemilih di Settings untuk mula.</p></div>
                 ) : (
                     <>
                         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">

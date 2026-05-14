@@ -18,7 +18,6 @@ Route::redirect('/', '/dashboard');
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('module:laporan')->name('laporan.index');
-    Route::post('/laporan/upload', [LaporanController::class, 'upload'])->middleware('module:laporan')->name('laporan.upload');
     Route::get('/carian-pemilih', [CarianPemilihController::class, 'index'])->middleware('module:carian-pemilih')->name('carian-pemilih.index');
     Route::get('/carian-pemilih/search', [CarianPemilihController::class, 'search'])->middleware('module:carian-pemilih')->name('carian-pemilih.search');
     Route::get('/program', [ProgramController::class, 'index'])->middleware('module:program')->name('program.index');
@@ -46,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan')->name('culaan.mark.destroy');
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
+    Route::post('/settings/pemilih-upload', [SettingsController::class, 'uploadPemilih'])->middleware('module:settings')->name('settings.pemilih-upload');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->middleware('module:dashboard')->name('copied-records.store');
     Route::post('/sheet-pages', [SheetPageController::class, 'store'])->middleware('module:dashboard')->name('sheet-pages.store');
     Route::get('/sheet-pages/on-off-status', [SheetPageController::class, 'onOffStatus'])->middleware('module:dashboard')->name('sheet-pages.on-off-status');

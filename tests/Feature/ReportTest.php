@@ -112,17 +112,17 @@ it('renders carian pemilih page', function () {
             ->component('CarianPemilih'));
 });
 
-it('stores uploaded pemilih file for laporan', function () {
-    $user = User::factory()->create();
+it('stores uploaded pemilih file from settings for laporan data source', function () {
+    $user = User::factory()->withModules(['settings'])->create();
     $path = storage_path('app/testing-upload-pemilih.xls');
     file_put_contents($path, pemilihReportFixture());
     $file = new UploadedFile($path, 'pemilih.xls', 'application/vnd.ms-excel', null, true);
 
     $this->actingAs($user)
-        ->post('/laporan/upload', [
+        ->post(route('settings.pemilih-upload'), [
             'pemilih_file' => $file,
         ])
-        ->assertRedirect(route('laporan.index'));
+        ->assertRedirect(route('settings.edit'));
 
     $storedPath = Setting::valueOf('pemilih_report_file_path');
 
@@ -131,7 +131,7 @@ it('stores uploaded pemilih file for laporan', function () {
 });
 
 it('replaces matching no ic records and marks missing old records as xaktif on new upload', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->withModules(['settings'])->create();
 
     $firstPath = storage_path('app/testing-upload-sync-first.xls');
     file_put_contents($firstPath, <<<'HTML'
@@ -155,16 +155,16 @@ HTML);
     $secondFile = new UploadedFile($secondPath, 'pemilih-second.xls', 'application/vnd.ms-excel', null, true);
 
     $this->actingAs($user)
-        ->post('/laporan/upload', [
+        ->post(route('settings.pemilih-upload'), [
             'pemilih_file' => $firstFile,
         ])
-        ->assertRedirect(route('laporan.index'));
+        ->assertRedirect(route('settings.edit'));
 
     $this->actingAs($user)
-        ->post('/laporan/upload', [
+        ->post(route('settings.pemilih-upload'), [
             'pemilih_file' => $secondFile,
         ])
-        ->assertRedirect(route('laporan.index'));
+        ->assertRedirect(route('settings.edit'));
 
     $this->assertDatabaseHas('pemilih_records', [
         'identity_number' => '900101025555',
