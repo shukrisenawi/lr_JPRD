@@ -159,8 +159,7 @@ class CulaanController extends Controller
         }
 
         return $this->buildEligibleVotersQuery($filters)
-            ->orderBy('locality')
-            ->orderBy('name')
+            ->orderBy('no_kp')
             ->paginate(20)
             ->withQueryString()
             ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
@@ -227,6 +226,7 @@ class CulaanController extends Controller
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
             'address' => $voter->address,
+            'age' => $this->calculateAge($voter->no_kp),
             'dm' => $voter->dm,
             'locality' => $voter->locality,
             'status' => $voter->status,
@@ -235,6 +235,19 @@ class CulaanController extends Controller
             'is_marked' => $voter->culaWorkItem !== null,
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,
         ];
+    }
+
+    private function calculateAge(?string $noKp): ?int
+    {
+        if (! $noKp || strlen($noKp) < 2 || ! preg_match('/^(\d{2})/', $noKp, $m)) {
+            return null;
+        }
+
+        $yy = (int) $m[1];
+        $currentYear = (int) now()->format('y');
+        $century = $yy > $currentYear ? 1900 : 2000;
+
+        return (int) now()->year - ($century + $yy);
     }
 
     private function isEligibleForCulaan(PemilihRecord $voter): bool

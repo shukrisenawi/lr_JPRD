@@ -108,6 +108,7 @@ class PemilihReportService
                 'name' => $voter['name'],
                 'no_kp' => $voter['no_kp'],
                 'old_ic' => $voter['old_ic'],
+                'age' => $this->calculateAge($voter['no_kp']),
                 'phone_mobile' => $voter['phone_mobile'],
                 'phone_home' => $voter['phone_home'],
                 'dm' => $voter['dm'],
@@ -171,6 +172,7 @@ class PemilihReportService
                     'name' => $record->name,
                     'no_kp' => $record->no_kp,
                     'old_ic' => $record->old_ic,
+                    'age' => $this->calculateAge($record->no_kp),
                     'phone_mobile' => $record->phone_mobile,
                     'phone_home' => $record->phone_home,
                     'dm' => $record->dm,
@@ -960,5 +962,18 @@ class PemilihReportService
 
             return $row;
         }, $rows));
+    }
+
+    private function calculateAge(?string $noKp): ?int
+    {
+        if (! $noKp || strlen($noKp) < 2 || ! preg_match('/^(\d{2})/', $noKp, $m)) {
+            return null;
+        }
+
+        $yy = (int) $m[1];
+        $currentYear = (int) now()->format('y');
+        $century = $yy > $currentYear ? 1900 : 2000;
+
+        return (int) now()->year - ($century + $yy);
     }
 }

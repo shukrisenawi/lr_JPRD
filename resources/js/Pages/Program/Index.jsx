@@ -432,7 +432,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-4 flex justify-end">
+                            <div className="mt-4 flex justify-center">
                                 {isEditing && <button onClick={cancelEdit} className="btn-ghost mr-2">Batal</button>}
                                 <PrimaryButton disabled={f.processing}>{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
                             </div>
