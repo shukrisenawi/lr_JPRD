@@ -29,6 +29,30 @@ function escapeXml(value) {
         .replace(/'/g, '&apos;');
 }
 
+function estimateExcelWidth(value) {
+    const text = String(value ?? '').trim();
+
+    if (text === '') {
+        return 8;
+    }
+
+    return Array.from(text).reduce((total, character) => {
+        if (/[A-Z0-9]/.test(character)) {
+            return total + 1.15;
+        }
+
+        if (/[a-z]/.test(character)) {
+            return total + 1;
+        }
+
+        if (character === ' ') {
+            return total + 0.55;
+        }
+
+        return total + 1.05;
+    }, 2);
+}
+
 function excelTextCell(value) {
     return {
         value: value ?? '-',
@@ -270,7 +294,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
         }
 
         const titleRows = [];
-        const columnLengths = headers.map((header) => String(header).length);
+        const columnLengths = headers.map((header) => estimateExcelWidth(header));
 
         const dataRows = rows.map((voter, index) => {
             const cells = [
@@ -289,7 +313,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             cells.forEach((cell, columnIndex) => {
                 columnLengths[columnIndex] = Math.max(
                     columnLengths[columnIndex] ?? 0,
-                    String(cell.value ?? '').length,
+                    estimateExcelWidth(cell.value),
                 );
             });
 
@@ -312,9 +336,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
         const columnXml = columnLengths
             .map((length) => {
-                const width = Math.max(80, Math.min((length + 2) * 7, 360));
+                const width = Math.max(70, Math.min(length * 7.2, 420));
 
-                return `<Column ss:AutoFitWidth="0" ss:Width="${width}"/>`;
+                return `<Column ss:AutoFitWidth="1" ss:Width="${width}"/>`;
             })
             .join('');
 
