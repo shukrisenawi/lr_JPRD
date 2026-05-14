@@ -61,6 +61,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [searchError, setSearchError] = useState('');
+    const [actionError, setActionError] = useState('');
+    const [pendingIds, setPendingIds] = useState([]);
+    const [localVoters, setLocalVoters] = useState(voters);
+    const [localSummary, setLocalSummary] = useState(summary);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -75,6 +79,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
         });
     }, [filters.locality, filters.show_marked, filters.udm]);
 
+    useEffect(() => {
+        setLocalVoters(voters);
+        setLocalSummary(summary);
+        setActionError('');
+        setPendingIds([]);
+    }, [summary, voters]);
+
     const rows = useMemo(() => {
         if (search.trim().length >= 2 && suggestions.length > 0) {
             return suggestions;
@@ -84,8 +95,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             return suggestions;
         }
 
-        return voters.data ?? [];
-    }, [search, searching, suggestions, voters]);
+        return localVoters.data ?? [];
+    }, [localVoters.data, search, searching, suggestions]);
 
     const applyFilters = (nextState) => {
         router.get(route('culaan.index'), nextState, {
@@ -167,19 +178,62 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
         }
     };
 
-    const markVoter = (voter) => {
-        router.post(route('culaan.mark.store', voter.id), {}, {
-            preserveScroll: true,
+    const updateLocalCollections = (voter, marked) => {
+        setSuggestions((current) => current.filter((item) => item.id !== voter.id));
+
+        setLocalVoters((current) => {
+            const nextData = (current.data ?? []).filter((item) => item.id !== voter.id);
+
+            return {
+                ...current,
+                data: nextData,
+                total: Math.max(0, (current.total ?? 0) + (marked ? -1 : -1)),
+                to: nextData.length > 0 ? ((current.from ?? 1) + nextData.length - 1) : null,
+            };
         });
+
+        setLocalSummary((current) => ({
+            ...current,
+            total: Math.max(0, (current.total ?? 0) - 1),
+        }));
     };
 
-    const unmarkVoter = (voter) => {
-        router.delete(route('culaan.mark.destroy', voter.id), {
-            preserveScroll: true,
-        });
+    const sendMarkRequest = async (voter, method) => {
+        setActionError('');
+        setPendingIds((current) => [...current, voter.id]);
+
+        try {
+            const response = await fetch(
+                method === 'POST' ? route('culaan.mark.store', voter.id) : route('culaan.mark.destroy', voter.id),
+                {
+                    method,
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error('Request failed');
+            }
+
+            await response.json();
+            updateLocalCollections(voter, method === 'POST');
+        } catch (error) {
+            setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
+        } finally {
+            setPendingIds((current) => current.filter((id) => id !== voter.id));
+        }
     };
 
-    const visibleTotal = search.trim().length >= 2 ? rows.length : summary.total;
+    const markVoter = (voter) => sendMarkRequest(voter, 'POST');
+
+    const unmarkVoter = (voter) => sendMarkRequest(voter, 'DELETE');
+
+    const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const shouldPromptUdm = requires_udm && !formState.udm;
 
     return (
@@ -254,6 +308,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     disabled={!formState.udm}
                                 />
                                 {searchError && <InputError className="mt-1.5" message={searchError} />}
+                                {actionError && <InputError className="mt-1.5" message={actionError} />}
                                 {shouldPromptUdm && <p className="mt-1.5 text-[10px] text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
                             </div>
                             <div className="flex items-end">
@@ -323,12 +378,22 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                                     Kemas Tel
                                                 </a>
                                                 {voter.is_marked ? (
-                                                    <button type="button" onClick={() => unmarkVoter(voter)} className="btn-danger px-2.5 py-1.5 text-[10px]">
-                                                        Buka Semula
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => unmarkVoter(voter)}
+                                                        disabled={pendingIds.includes(voter.id)}
+                                                        className="btn-danger px-2.5 py-1.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                                                    >
+                                                        {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
                                                     </button>
                                                 ) : (
-                                                    <button type="button" onClick={() => markVoter(voter)} className="rounded-lg bg-emerald-500/15 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-500/25">
-                                                        Tanda Dah Cula
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => markVoter(voter)}
+                                                        disabled={pendingIds.includes(voter.id)}
+                                                        className="rounded-lg bg-emerald-500/15 px-2.5 py-1.5 text-[10px] font-bold text-emerald-300 transition hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    >
+                                                        {pendingIds.includes(voter.id) ? '...' : 'Tanda Dah Cula'}
                                                     </button>
                                                 )}
                                             </div>
@@ -339,7 +404,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                         </table>
                     </div>
                     {!shouldPromptUdm && search.trim().length < 2 && (
-                        <Pagination voters={voters} onNavigate={goToPage} />
+                        <Pagination voters={localVoters} onNavigate={goToPage} />
                     )}
                 </section>
             </div>

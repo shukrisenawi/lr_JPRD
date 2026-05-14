@@ -251,6 +251,52 @@ it('allows unmarking culaan checklist without changing original cula code', func
         ->and($voter->fresh()->cula_display_label)->toBe('BELUM DICULA');
 });
 
+it('returns json response when marking culaan via async request', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025567',
+        'no_kp' => '900101025567',
+        'name' => 'ALI ASYNC TANDA',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI SATU',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('culaan.mark.store', $voter))
+        ->assertOk()
+        ->assertJsonPath('message', 'Pemilih ditanda sebagai sudah diproses.')
+        ->assertJsonPath('marked', true)
+        ->assertJsonPath('voter_id', $voter->id);
+});
+
+it('returns json response when unmarking culaan via async request', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025568',
+        'no_kp' => '900101025568',
+        'name' => 'ALI ASYNC BUKA',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI SATU',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $this->actingAs($user)->post(route('culaan.mark.store', $voter));
+
+    $this->actingAs($user)
+        ->deleteJson(route('culaan.mark.destroy', $voter))
+        ->assertOk()
+        ->assertJsonPath('message', 'Tanda culaan berjaya dibuka semula.')
+        ->assertJsonPath('marked', false)
+        ->assertJsonPath('voter_id', $voter->id);
+});
+
 it('hides marked voters from default culaan search unless show marked is requested', function () {
     $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
 

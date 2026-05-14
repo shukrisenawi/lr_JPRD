@@ -78,7 +78,7 @@ class CulaanController extends Controller
         ]);
     }
 
-    public function storeMark(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
+    public function storeMark(Request $request, PemilihRecord $pemilihRecord): RedirectResponse|JsonResponse
     {
         abort_unless($this->isEligibleForCulaan($pemilihRecord), 422);
 
@@ -91,16 +91,32 @@ class CulaanController extends Controller
             ]
         );
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Pemilih ditanda sebagai sudah diproses.',
+                'marked' => true,
+                'voter_id' => $pemilihRecord->id,
+            ]);
+        }
+
         return redirect()
             ->route('culaan.index')
             ->with('success', 'Pemilih ditanda sebagai sudah diproses.');
     }
 
-    public function destroyMark(PemilihRecord $pemilihRecord): RedirectResponse
+    public function destroyMark(Request $request, PemilihRecord $pemilihRecord): RedirectResponse|JsonResponse
     {
         CulaWorkItem::query()
             ->where('pemilih_record_id', $pemilihRecord->id)
             ->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Tanda culaan berjaya dibuka semula.',
+                'marked' => false,
+                'voter_id' => $pemilihRecord->id,
+            ]);
+        }
 
         return redirect()
             ->route('culaan.index')
