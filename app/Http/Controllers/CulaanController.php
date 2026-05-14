@@ -226,6 +226,7 @@ class CulaanController extends Controller
             'old_ic' => $voter->old_ic,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
+            'address' => $voter->address,
             'dm' => $voter->dm,
             'locality' => $voter->locality,
             'status' => $voter->status,

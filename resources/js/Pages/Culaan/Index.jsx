@@ -347,6 +347,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     <tr key={voter.id} className="hover:bg-slate-700/20">
                                         <td className="px-3 py-2.5 align-top">
                                             <p className="font-bold text-white">{voter.name}</p>
+                                            <p className="mt-0.5 text-[10px] text-slate-500">{voter.address || '-'}</p>
                                             {voter.is_marked && (
                                                 <span className="mt-1 inline-flex rounded-md bg-amber-500/15 px-2 py-1 text-[10px] font-bold text-amber-300">
                                                     Dah Ditanda
