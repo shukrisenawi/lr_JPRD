@@ -260,6 +260,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             headers.push('Lokaliti');
         }
 
+        const titleRows = [];
+
         const bodyRows = rows.map((voter, index) => {
             const cells = [
                 { value: search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index, style: '' },
@@ -277,14 +279,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             return `<tr>${cells.map((cell) => `<td style="${cell.style}">${escapeHtml(cell.value)}</td>`).join('')}</tr>`;
         });
 
-        const titleRows = [];
-
-        if (formState.locality) {
-            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:20px; text-align:center; background:#cbd5e1; padding:12px 8px;">${escapeHtml(formState.locality)}</th></tr>`);
+        if (formState.udm) {
+            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:22px; text-align:center; background:#cbd5e1; padding:12px 8px;">${escapeHtml(formState.udm)}</th></tr>`);
         }
 
-        if (formState.udm) {
-            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:12px; text-align:left; background:#e2e8f0; padding:8px;">UDM: ${escapeHtml(formState.udm)}</th></tr>`);
+        if (formState.locality) {
+            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:16px; text-align:center; background:#e2e8f0; padding:10px 8px;">${escapeHtml(formState.locality)}</th></tr>`);
         }
 
         const html = `
