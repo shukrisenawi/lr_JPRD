@@ -22,6 +22,7 @@ export default function AuthenticatedLayout({ header, children }) {
         { key: 'carian-pemilih', href: 'carian-pemilih.index', routePattern: 'carian-pemilih.*', label: 'Carian', icon: '⌕' },
         { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program', icon: '▣' },
         { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'Jawatankuasa', icon: '◎' },
+        { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan', icon: '◌' },
         { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings', icon: '⚙' },
     ];
 

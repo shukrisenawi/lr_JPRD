@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PemilihRecord extends Model
@@ -28,5 +29,10 @@ class PemilihRecord extends Model
     public function committeeMemberships(): HasMany
     {
         return $this->hasMany(CommitteeMembership::class, 'pemilih_record_id');
+    }
+
+    public function culaWorkItem(): HasOne
+    {
+        return $this->hasOne(CulaWorkItem::class, 'pemilih_record_id');
     }
 }

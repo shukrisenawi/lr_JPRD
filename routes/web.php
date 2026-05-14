@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AccessManagementController;
 use App\Http\Controllers\CarianPemilihController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CopiedRecordController;
+use App\Http\Controllers\CulaanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
@@ -39,6 +40,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/jawatankuasa/positions/{position}', [CommitteeController::class, 'destroyPosition'])->middleware('module:jawatankuasa')->name('jawatankuasa.positions.destroy');
     Route::post('/jawatankuasa/memberships', [CommitteeController::class, 'storeMembership'])->middleware('module:jawatankuasa')->name('jawatankuasa.memberships.store');
     Route::delete('/jawatankuasa/memberships/{membership}', [CommitteeController::class, 'destroyMembership'])->middleware('module:jawatankuasa')->name('jawatankuasa.memberships.destroy');
+    Route::get('/culaan', [CulaanController::class, 'index'])->middleware('module:culaan')->name('culaan.index');
+    Route::get('/culaan/search', [CulaanController::class, 'search'])->middleware('module:culaan')->name('culaan.search');
+    Route::post('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'storeMark'])->middleware('module:culaan')->name('culaan.mark.store');
+    Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan')->name('culaan.mark.destroy');
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->middleware('module:dashboard')->name('copied-records.store');

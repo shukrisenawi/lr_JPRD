@@ -21,6 +21,10 @@ return [
         'label' => 'Jawatankuasa',
         'description' => 'Urus jawatan dan ahli jawatankuasa JPRD, UDM dan Cawangan.',
     ],
+    'culaan' => [
+        'label' => 'Culaan',
+        'description' => 'Semak pemilih belum cula, kemas data dan tanda senarai kerja culaan.',
+    ],
     'settings' => [
         'label' => 'Settings',
         'description' => 'Tetapan URL Google Sheet sistem.',
