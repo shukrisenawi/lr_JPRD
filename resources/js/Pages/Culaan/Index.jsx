@@ -291,7 +291,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     htmlFor="culaan-dah-cula"
                                     className="mt-1.5 flex w-full items-center justify-between rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5 text-xs text-slate-300"
                                 >
-                                    <span>Dah Cula</span>
                                     <input
                                         id="culaan-dah-cula"
                                         type="checkbox"
