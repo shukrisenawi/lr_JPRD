@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Program;
 use App\Models\ProgramAttendee;
+use App\Models\CommitteeMembership;
+use App\Models\PemilihRecord;
 use App\Models\ProgramGroup;
 use App\Models\Setting;
 use App\Models\User;
@@ -76,6 +78,9 @@ class ProgramController extends Controller
 
         $selectedProgramId = (int) $request->query('program', 0);
         $selectedProgram = $programs->firstWhere('id', $selectedProgramId);
+        $committeeBadges = $selectedProgram
+            ? $this->buildCommitteeBadgeMap($selectedProgram->attendees)
+            : collect();
 
         return Inertia::render('Program/Index', [
             'programs' => $programs
@@ -133,6 +138,7 @@ class ProgramController extends Controller
                             'cula_display_label' => $attendee->cula_display_label,
                             'address' => $attendee->address,
                             'group_badges' => $attendeeGroupCounts->get($attendee->voter_id, collect())->all(),
+                            'committee_badges' => $committeeBadges->get($attendee->id, []),
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),
                             'attended_at' => $attendee->attended_at?->format('d-m-Y h:i A'),
                         ])
@@ -408,5 +414,66 @@ class ProgramController extends Controller
     private function ensureGroupOwner(int $userId, ProgramGroup $group): void
     {
         abort_unless((int) $group->user_id === $userId, 403);
+    }
+
+    private function buildCommitteeBadgeMap($attendees)
+    {
+        $identityNumbers = $attendees
+            ->flatMap(fn (ProgramAttendee $attendee) => array_filter([
+                $attendee->no_kp,
+                $attendee->old_ic,
+            ]))
+            ->unique()
+            ->values();
+
+        if ($identityNumbers->isEmpty()) {
+            return collect();
+        }
+
+        $voters = PemilihRecord::query()
+            ->whereIn('identity_number', $identityNumbers)
+            ->orWhereIn('no_kp', $identityNumbers)
+            ->orWhereIn('old_ic', $identityNumbers)
+            ->get();
+
+        $membershipByVoterId = CommitteeMembership::query()
+            ->with('position')
+            ->whereIn('pemilih_record_id', $voters->pluck('id'))
+            ->get()
+            ->groupBy('pemilih_record_id');
+
+        $voterByIdentity = collect();
+
+        foreach ($voters as $voter) {
+            foreach (array_filter([$voter->identity_number, $voter->no_kp, $voter->old_ic]) as $identity) {
+                $voterByIdentity->put($identity, $voter);
+            }
+        }
+
+        return $attendees->mapWithKeys(function (ProgramAttendee $attendee) use ($voterByIdentity, $membershipByVoterId) {
+            $voter = $voterByIdentity->get($attendee->no_kp)
+                ?? $voterByIdentity->get($attendee->old_ic);
+
+            if (! $voter) {
+                return [$attendee->id => []];
+            }
+
+            $badges = ($membershipByVoterId->get($voter->id) ?? collect())
+                ->sortBy([
+                    fn (CommitteeMembership $membership) => $membership->position?->sort_order ?? 9999,
+                    fn (CommitteeMembership $membership) => $membership->position?->name ?? '',
+                    fn (CommitteeMembership $membership) => $membership->scope_name,
+                ])
+                ->map(fn (CommitteeMembership $membership) => [
+                    'label' => $membership->position?->name ?? 'Jawatan',
+                    'level' => $membership->level,
+                    'scope_name' => $membership->scope_name,
+                    'parent_scope_name' => $membership->parent_scope_name,
+                ])
+                ->values()
+                ->all();
+
+            return [$attendee->id => $badges];
+        });
     }
 }

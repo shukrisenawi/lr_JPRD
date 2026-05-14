@@ -194,6 +194,16 @@ function AttendeeProgramsModal({ attendee, onClose }) {
     );
 }
 
+function committeeScopeLabel(badge) {
+    if (!badge) return '';
+    if (badge.level === 'jprd') return 'JPRD';
+    if (badge.level === 'cawangan') {
+        return badge.parent_scope_name ? `${badge.parent_scope_name} / ${badge.scope_name}` : badge.scope_name;
+    }
+
+    return badge.scope_name;
+}
+
 function ProgramGroupManager({ groups }) {
     const [editingId, setEditingId] = useState(null);
     const f = useForm({ name: '' });
@@ -298,7 +308,7 @@ function SearchVoterPanel({ selectedProgram }) {
 }
 
 export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups }) {
-    const [tab, setTab] = useState('tambah-program');
+    const [tab, setTab] = useState(selectedProgram ? 'senarai-program' : 'tambah-program');
     const [editingId, setEditingId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
     const [selAttendee, setSelAttendee] = useState(null);
@@ -436,6 +446,15 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             <td className="px-3 py-2.5 font-semibold">
                                                                 <div>{a.name}</div>
                                                                 {a.group_badges?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{a.group_badges.map((b) => <span key={`${a.id}-${b.name}`} className="badge-amber text-[9px]">{b.name}{b.count > 1 ? ` - ${b.count}` : ''}</span>)}</div>}
+                                                                <div className="mt-1 flex flex-wrap gap-1">
+                                                                    {a.committee_badges?.length > 0
+                                                                        ? a.committee_badges.map((b, index) => (
+                                                                            <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-bold text-sky-300">
+                                                                                {b.label} • {committeeScopeLabel(b)}
+                                                                            </span>
+                                                                        ))
+                                                                        : <span className="rounded-lg border border-slate-600 bg-slate-700/40 px-1.5 py-0.5 text-[9px] font-bold text-slate-300">Tiada Jawatankuasa</span>}
+                                                                </div>
                                                             </td>
                                                             <td className="px-3 py-2.5">{a.dm || '-'}</td>
                                                             <td className="px-3 py-2.5">{a.phone_mobile || a.phone_home || '-'}</td>

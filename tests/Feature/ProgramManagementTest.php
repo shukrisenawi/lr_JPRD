@@ -499,6 +499,69 @@ it('shows attendee group badges and participation counts on selected program', f
             ->where('selectedProgram.attendees.0.joined_programs.0.tajuk', fn ($value) => is_string($value) && $value !== ''));
 });
 
+it('shows attendee jawatankuasa badges on selected program', function () {
+    $user = User::factory()->withModules(['dashboard', 'program'])->create();
+    $group = createProgramGroupFor($user, 'Zon Alpha');
+
+    $program = Program::query()->create([
+        'tajuk' => 'Program Dengan Jawatankuasa',
+        'tempat' => 'Dewan A',
+        'tarikh' => '2026-05-10',
+        'masa' => '09:00',
+        'group_id' => $group->id,
+        'user_id' => $user->id,
+    ]);
+
+    $program->attendees()->create([
+        'voter_id' => 'sha1-ali',
+        'name' => 'ALI BIN ABU',
+        'no_kp' => '900101025555',
+        'old_ic' => '',
+        'phone_mobile' => '0123456789',
+        'phone_home' => '049999999',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'gender' => 'L',
+        'race' => 'M',
+        'cula_code' => '2',
+        'cula_display_label' => '2 - PAS',
+        'address' => 'KG BARU KURA',
+        'attended_at' => now(),
+    ]);
+
+    $voter = \App\Models\PemilihRecord::query()->create([
+        'identity_number' => '900101025555',
+        'no_kp' => '900101025555',
+        'name' => 'ALI BIN ABU',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'status' => 'aktif',
+    ]);
+
+    $position = \App\Models\CommitteePosition::query()->create([
+        'name' => 'Pengerusi',
+        'slug' => 'pengerusi',
+        'sort_order' => 1,
+    ]);
+
+    \App\Models\CommitteeMembership::query()->create([
+        'pemilih_record_id' => $voter->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'PADANG CHICHAK',
+        'scope_name' => 'PADANG CHICHAK',
+        'parent_scope_name' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('program.index', ['program' => $program->id]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('selectedProgram.attendees.0.committee_badges.0.label', 'Pengerusi')
+            ->where('selectedProgram.attendees.0.committee_badges.0.level', 'udm')
+            ->where('selectedProgram.attendees.0.committee_badges.0.scope_name', 'PADANG CHICHAK'));
+});
+
 it('allows owner to share a program with selected authorized users', function () {
     $owner = User::factory()->withModules(['dashboard', 'program'])->create();
     $sharedUser = User::factory()->withModules(['dashboard', 'program'])->create();
