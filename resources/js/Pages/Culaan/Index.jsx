@@ -254,7 +254,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
     const showLocalityColumn = formState.locality === '';
 
     const exportToExcel = () => {
-        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon'];
+        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'UDM'];
 
         if (showLocalityColumn) {
             headers.push('Lokaliti');
@@ -267,6 +267,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                 { value: voter.name || '-', style: '' },
                 { value: voter.address || '-', style: '' },
                 excelTextCell(voter.phone_mobile || voter.phone_home || '-'),
+                { value: voter.dm || '-', style: '' },
             ];
 
             if (showLocalityColumn) {
@@ -275,6 +276,16 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
             return `<tr>${cells.map((cell) => `<td style="${cell.style}">${escapeHtml(cell.value)}</td>`).join('')}</tr>`;
         });
+
+        const titleRows = [];
+
+        if (formState.locality) {
+            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:20px; text-align:center; background:#cbd5e1; padding:12px 8px;">${escapeHtml(formState.locality)}</th></tr>`);
+        }
+
+        if (formState.udm) {
+            titleRows.push(`<tr><th colspan="${headers.length}" style="font-size:12px; text-align:left; background:#e2e8f0; padding:8px;">UDM: ${escapeHtml(formState.udm)}</th></tr>`);
+        }
 
         const html = `
             <html>
@@ -289,6 +300,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                 <body>
                     <table>
                         <thead>
+                            ${titleRows.join('')}
                             <tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
                         </thead>
                         <tbody>
