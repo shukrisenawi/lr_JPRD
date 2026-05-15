@@ -12,7 +12,7 @@ export default function GuestLayout({ children }) {
                                 <ApplicationLogo className="h-5 w-5 fill-current" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-400">LR JPRD</p>
+                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-400">PAS</p>
                                 <h1 className="text-base font-extrabold text-white">Panel Semakan Data Cula</h1>
                             </div>
                         </Link>
@@ -38,7 +38,7 @@ export default function GuestLayout({ children }) {
                             <ApplicationLogo className="h-4 w-4 fill-current" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-400">LR JPRD</p>
+                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-400">PAS</p>
                             <h1 className="text-sm font-extrabold text-white">Panel Semakan Data Cula</h1>
                         </div>
                     </div>

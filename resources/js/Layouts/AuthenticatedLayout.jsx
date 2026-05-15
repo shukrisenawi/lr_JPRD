@@ -52,7 +52,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-white shadow-sm">
                                     <ApplicationLogo className="block h-4 w-4 fill-current text-white" />
                                 </div>
-                                <span className="hidden text-sm font-bold text-slate-800 sm:inline">LR JPRD</span>
+                                <span className="hidden text-sm font-bold text-slate-800 sm:inline">PAS</span>
                             </Link>
 
                             <div className="ml-4 hidden items-stretch sm:flex">
