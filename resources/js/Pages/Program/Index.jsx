@@ -4,7 +4,7 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, usePage, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 
@@ -370,6 +370,13 @@ function SearchVoterPanel({ selectedProgram }) {
 }
 
 export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups }) {
+    const { auth } = usePage().props;
+    const isAdmin = auth?.user?.role?.is_master_admin;
+    const tabs = [
+        { key: 'tambah-program', label: 'Tambah Program' },
+        ...(isAdmin ? [{ key: 'group-program', label: 'Group Program' }] : []),
+        { key: 'senarai-program', label: 'Senarai Program' },
+    ];
     const [tab, setTab] = useState(selectedProgram ? 'senarai-program' : 'tambah-program');
     const [editingId, setEditingId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
@@ -442,12 +449,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 sf.post(route('program.share.store', selShare.id), { preserveScroll: true, preserveState: true, onSuccess: () => { setTab('senarai-program'); Swal.fire({ icon: 'success', title: 'Berjaya', text: names.length > 0 ? `Dikongsi kepada ${names.join(', ')}.` : 'Dikemaskini.', confirmButtonText: 'OK', confirmButtonColor: '#059669', background: '#ffffff', color: '#0f172a', iconColor: '#059669' }).then(() => closeShare()); } });
     };
 
-    const tabs = [
-        { key: 'tambah-program', label: 'Tambah Program' },
-        { key: 'group-program', label: 'Group Program' },
-        { key: 'senarai-program', label: 'Senarai Program' },
-    ];
-
     return (
         <AuthenticatedLayout header={
             <div><p className="label-section">Program</p><h2 className="mt-0.5 heading-lg">Program</h2></div>
@@ -455,7 +456,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             <Head title="Program" />
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <div className="card p-2">
-                    <div className="grid gap-2 sm:grid-cols-3">
+                    <div className={`grid gap-2 ${tabs.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
                                 className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-left transition ${tab === t.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}>
