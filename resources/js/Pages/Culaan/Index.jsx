@@ -465,7 +465,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem] xl:items-stretch">
-                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-4">
+                    <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
                         <div className="grid gap-3 xl:grid-cols-[12rem_12rem_5rem_minmax(0,1fr)] xl:items-end">
                             <div>
                                 <label htmlFor="culaan-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
@@ -534,7 +534,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-3 rounded-xl border border-green-600 bg-white px-4 py-3 shadow-sm shadow-green-600/20 overflow-hidden">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
                         <div className="min-w-0 flex-1 text-right">
                             <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
@@ -545,13 +545,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
 
                 <section>
                     {rows.length === 0 ? (
-                        <p className="rounded-lg border border-slate-200 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm">
+                        <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                             {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                         </p>
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {rows.map((voter, index) => (
-                                <div key={voter.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-all duration-1000 hover:border-white/50">
+                                <div key={voter.id} className="rounded-xl border border-green-600 bg-white p-3 shadow-sm shadow-green-600/20 overflow-hidden transition-all duration-1000 hover:border-white/50">
                                     <div className="flex items-start justify-between gap-2">
                                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
                                             {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
