@@ -77,41 +77,41 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="hidden sm:block">
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <button className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-900 shadow-sm transition hover:border-green-300 hover:text-green-700 lg:px-4">
+                                        <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                             {user.avatar_url ? (
-                                                <img src={user.avatar_url} alt={user.name} className="h-9 w-9 rounded-lg object-cover" />
+                                                <img src={user.avatar_url} alt={user.name} className="h-6 w-6 rounded object-cover" />
                                             ) : (
-                                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-sm font-black text-green-700">{userInitial}</div>
+                                                <div className="flex h-6 w-6 items-center justify-center rounded bg-green-100 text-[10px] font-bold text-green-700">{userInitial}</div>
                                             )}
                                             <span className="hidden lg:inline">{user.name}</span>
-                                            <HeaderIcon name="down" className="h-5 w-5 text-slate-500" />
+                                            <HeaderIcon name="down" className="h-3 w-3 text-slate-400" />
                                         </button>
                                     </Dropdown.Trigger>
-                                    <Dropdown.Content widthClasses="w-[28rem]" contentClasses="rounded-2xl border-slate-200 bg-white shadow-2xl shadow-slate-900/15">
-                                        <div className="border-b border-slate-200 px-6 py-6">
-                                            <div className="flex items-center gap-5">
+                                    <Dropdown.Content widthClasses="w-72" contentClasses="rounded-lg border border-slate-200 bg-white shadow-lg">
+                                        <div className="border-b border-slate-200 px-4 py-4">
+                                            <div className="flex items-center gap-3">
                                                 {user.avatar_url ? (
-                                                    <img src={user.avatar_url} alt={user.name} className="h-20 w-20 rounded-2xl object-cover" />
+                                                    <img src={user.avatar_url} alt={user.name} className="h-10 w-10 rounded-lg object-cover" />
                                                 ) : (
-                                                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-green-100 text-3xl font-black text-green-700">{userInitial}</div>
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-base font-bold text-green-700">{userInitial}</div>
                                                 )}
                                                 <div className="min-w-0">
-                                                    <p className="truncate text-2xl font-black text-slate-950">{user.name}</p>
-                                                    <p className="mt-1 truncate text-xl font-medium text-slate-500">{user.email}</p>
-                                                    {user.role?.name && <span className="mt-4 inline-flex rounded-lg bg-emerald-50 px-4 py-2 text-lg font-medium text-emerald-700 ring-1 ring-emerald-100">{user.role.name}</span>}
+                                                    <p className="truncate text-sm font-bold text-slate-800">{user.name}</p>
+                                                    <p className="truncate text-xs text-slate-500">{user.email}</p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="px-6 py-4">
-                                            <Dropdown.Link href={route('profile.edit')} className="group flex items-center gap-7 rounded-xl px-3 py-4 text-slate-950 hover:bg-emerald-50 focus:bg-emerald-50">
-                                                <HeaderIcon name="user" className="h-10 w-10 shrink-0 text-emerald-700" />
-                                                <span className="min-w-0 flex-1"><span className="block text-2xl font-black text-slate-950">Profile</span><span className="mt-1 block text-lg font-medium text-slate-500">Lihat dan kemas kini profil anda</span></span>
-                                                <HeaderIcon name="chevron" className="h-8 w-8 shrink-0 text-slate-500" />
+                                        <div className="px-2 py-2">
+                                            <Dropdown.Link href={route('profile.edit')} className="flex items-center gap-3 rounded-md px-3 py-2 text-xs font-medium text-slate-700 hover:bg-green-50 focus:bg-green-50">
+                                                <HeaderIcon name="user" className="h-4 w-4 shrink-0 text-green-600" />
+                                                <span>Profile</span>
+                                                <span className="ml-auto text-[10px] text-slate-400">Lihat & kemas kini profil</span>
                                             </Dropdown.Link>
-                                            <div className="my-3 border-t border-slate-200" />
-                                            <Dropdown.Link href={route('logout')} method="post" as="button" className="group flex items-center gap-7 rounded-xl px-3 py-4 text-slate-950 hover:bg-emerald-50 focus:bg-emerald-50">
-                                                <HeaderIcon name="logout" className="h-10 w-10 shrink-0 text-emerald-700" />
-                                                <span className="min-w-0 flex-1"><span className="block text-2xl font-black text-slate-950">Log Out</span><span className="mt-1 block text-lg font-medium text-slate-500">Keluar dari sistem</span></span>
+                                            <div className="my-1 border-t border-slate-100" />
+                                            <Dropdown.Link href={route('logout')} method="post" as="button" className="flex items-center gap-3 rounded-md px-3 py-2 text-xs font-medium text-slate-700 hover:bg-green-50 focus:bg-green-50">
+                                                <HeaderIcon name="logout" className="h-4 w-4 shrink-0 text-green-600" />
+                                                <span>Log Out</span>
+                                                <span className="ml-auto text-[10px] text-slate-400">Keluar dari sistem</span>
                                             </Dropdown.Link>
                                         </div>
                                     </Dropdown.Content>
