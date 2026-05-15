@@ -451,10 +451,13 @@ function MembershipManager({ positions, memberships, scopes }) {
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredMemberships.map((membership) => (
                             <div key={membership.id} className="group rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md">
-                                <div className="flex items-start gap-2.5">
+                                <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
-                                        <p className="text-xs font-semibold text-green-700">{membership.position.name}</p>
+                                        <div className="mt-1 flex items-center gap-2">
+                                            <p className="text-xs font-semibold text-green-700">{membership.position.name}</p>
+                                            {membership.order && <span className="text-[10px] text-slate-400">#{membership.order}</span>}
+                                        </div>
                                         <div className="mt-1 space-y-0.5">
                                             <p className="flex items-center gap-1 text-xs text-slate-400">
                                                 <Icon name="idCard" className="h-3 w-3" />
