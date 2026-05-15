@@ -63,27 +63,27 @@ function PositionManager({ positions }) {
     };
 
     return (
-        <section className="card p-6 sm:p-8">
+        <section className="card p-3">
             <div className="flex items-center justify-between gap-3">
                 <div>
-                    <p className="label-section">Jenis Jawatan</p>
-                    <h3 className="mt-2 text-2xl font-black text-slate-950">Tambah, edit dan padam jawatan</h3>
+                    <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Jenis Jawatan</p>
+                    <h3 className="mt-0.5 text-sm font-bold text-slate-950">Tambah, edit dan padam jawatan</h3>
                 </div>
-                <span className="rounded-full border border-slate-200 bg-slate-100 px-5 py-2 text-sm font-black uppercase text-emerald-800">{positions.length} jawatan</span>
+                <span className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-bold text-emerald-800">{positions.length} jawatan</span>
             </div>
 
-            <form onSubmit={submitCreate} className="mt-8 grid gap-5 lg:grid-cols-[1fr_9rem_auto] lg:items-end">
+            <form onSubmit={submitCreate} className="mt-3 grid gap-3 lg:grid-cols-[1fr_6rem_auto] lg:items-end">
                 <div>
                     <InputLabel htmlFor="position-name" value="Nama Jawatan" />
                     <TextInput
                         id="position-name"
                         value={createForm.data.name}
                         onChange={(event) => createForm.setData('name', event.target.value)}
-                        className="input-field mt-3 py-3 text-sm"
-                        placeholder="Contoh: Pengerusi, Setiausaha, Bendahari"
+                        className="input-field mt-1 text-xs"
+                        placeholder="Contoh: Pengerusi, Setiausaha"
                     />
-                    <p className="mt-3 text-sm font-medium text-slate-500">Asingkan dengan koma untuk cipta beberapa jawatan terus <span className="italic">ikut susunan.</span></p>
-                    <InputError className="mt-1.5" message={createForm.errors.name} />
+                    <p className="mt-1.5 text-xs text-slate-500">Asingkan dengan koma untuk cipta beberapa jawatan.</p>
+                    <InputError className="mt-1" message={createForm.errors.name} />
                 </div>
                 <div>
                     <InputLabel htmlFor="position-order" value="Susunan" />
@@ -93,79 +93,95 @@ function PositionManager({ positions }) {
                         min="0"
                         value={createForm.data.sort_order}
                         onChange={(event) => createForm.setData('sort_order', event.target.value)}
-                        className="input-field mt-3 py-3 text-sm"
+                        className="input-field mt-1 text-xs"
                     />
-                    <InputError className="mt-1.5" message={createForm.errors.sort_order} />
+                    <InputError className="mt-1" message={createForm.errors.sort_order} />
                 </div>
                 <div className="flex items-end">
-                    <PrimaryButton className="w-full justify-center gap-2 px-6 py-3 text-sm" disabled={createForm.processing}>
-                        <Icon name="plus" className="h-5 w-5" />
+                    <PrimaryButton className="w-full justify-center gap-1.5 px-3 py-1.5 text-xs" disabled={createForm.processing}>
+                        <Icon name="plus" className="h-3.5 w-3.5" />
                         {createForm.processing ? '...' : 'Tambah'}
                     </PrimaryButton>
                 </div>
             </form>
 
-            <div className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white">
-                <div className="grid grid-cols-[minmax(0,1fr)_9rem_14rem] bg-slate-700 px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-white">
-                    <div>Jawatan</div>
-                    <div>Susunan</div>
-                    <div className="text-right">Tindakan</div>
+            <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-slate-200 text-xs">
+                        <thead className="table-header">
+                            <tr>
+                                <th className="table-head-cell">Jawatan</th>
+                                <th className="table-head-cell w-20">Susunan</th>
+                                <th className="table-head-cell w-32">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody className="table-body">
+                            {positions.length === 0 && (
+                                <tr>
+                                    <td colSpan="3" className="px-3 py-4 text-center text-slate-500">
+                                        Belum ada jenis jawatan.
+                                    </td>
+                                </tr>
+                            )}
+                            {positions.map((position) => (
+                                <tr key={position.id} className="table-row">
+                                    {editingId === position.id ? (
+                                        <>
+                                            <td className="table-cell">
+                                                <form onSubmit={(event) => submitEdit(event, position.id)} className="grid gap-2">
+                                                    <div>
+                                                        <InputLabel htmlFor={`position-edit-name-${position.id}`} value="Nama Jawatan" />
+                                                        <TextInput
+                                                            id={`position-edit-name-${position.id}`}
+                                                            value={editingData.name}
+                                                            onChange={(event) => setEditingData((current) => ({ ...current, name: event.target.value }))}
+                                                            className="input-field mt-1 text-xs"
+                                                        />
+                                                        <InputError className="mt-1" message={editingErrors.name} />
+                                                    </div>
+                                                </form>
+                                            </td>
+                                            <td className="table-cell">
+                                                <InputLabel htmlFor={`position-edit-order-${position.id}`} value="Susunan" />
+                                                <TextInput
+                                                    id={`position-edit-order-${position.id}`}
+                                                    type="number"
+                                                    min="0"
+                                                    value={editingData.sort_order}
+                                                    onChange={(event) => setEditingData((current) => ({ ...current, sort_order: event.target.value }))}
+                                                    className="input-field mt-1 text-xs"
+                                                />
+                                                <InputError className="mt-1" message={editingErrors.sort_order} />
+                                            </td>
+                                            <td className="table-cell">
+                                                <div className="flex gap-1.5">
+                                                    <button type="submit" onClick={(e) => { e.preventDefault(); submitEdit(e, position.id); }} className="btn-primary px-2 py-1 text-xs">Simpan</button>
+                                                    <button type="button" onClick={() => setEditingId(null)} className="btn-ghost text-xs">Batal</button>
+                                                </div>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td className="table-cell align-top">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><Icon name="user" className="h-4 w-4" /></span>
+                                                    <p className="font-bold text-slate-950">{position.name}</p>
+                                                </div>
+                                            </td>
+                                            <td className="table-cell align-top font-bold text-slate-950">{position.sort_order ?? 0}</td>
+                                            <td className="table-cell align-top">
+                                                <div className="flex gap-1.5">
+                                                    <button type="button" onClick={() => startEdit(position)} className="btn-secondary px-2 py-1 text-xs">Edit</button>
+                                                    <button type="button" onClick={() => remove(position)} className="btn-danger px-2 py-1 text-xs">Padam</button>
+                                                </div>
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-                {positions.length === 0 && (
-                    <div className="px-5 py-8 text-center text-sm font-medium text-slate-500">
-                        Belum ada jenis jawatan.
-                    </div>
-                )}
-
-                {positions.map((position) => (
-                    <div key={position.id} className="border-t border-slate-200 px-5 py-5">
-                        {editingId === position.id ? (
-                            <form onSubmit={(event) => submitEdit(event, position.id)} className="grid gap-3 sm:grid-cols-[1fr_8rem_auto]">
-                                <div>
-                                    <InputLabel htmlFor={`position-edit-name-${position.id}`} value="Nama Jawatan" />
-                                    <TextInput
-                                        id={`position-edit-name-${position.id}`}
-                                        value={editingData.name}
-                                        onChange={(event) => setEditingData((current) => ({ ...current, name: event.target.value }))}
-                                        className="input-field mt-1.5"
-                                    />
-                                    <InputError className="mt-1.5" message={editingErrors.name} />
-                                </div>
-                                <div>
-                                    <InputLabel htmlFor={`position-edit-order-${position.id}`} value="Susunan" />
-                                    <TextInput
-                                        id={`position-edit-order-${position.id}`}
-                                        type="number"
-                                        min="0"
-                                        value={editingData.sort_order}
-                                        onChange={(event) => setEditingData((current) => ({ ...current, sort_order: event.target.value }))}
-                                        className="input-field mt-1.5"
-                                    />
-                                    <InputError className="mt-1.5" message={editingErrors.sort_order} />
-                                </div>
-                                <div className="flex items-end gap-2">
-                                    <PrimaryButton className="justify-center">Simpan</PrimaryButton>
-                                    <button type="button" onClick={() => setEditingId(null)} className="btn-ghost">Batal</button>
-                                </div>
-                            </form>
-                        ) : (
-                            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_9rem_14rem] lg:items-center">
-                                <div className="flex items-center gap-4">
-                                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><Icon name="user" className="h-6 w-6" /></span>
-                                    <div>
-                                        <p className="text-lg font-black text-slate-950">{position.name}</p>
-                                        <p className="mt-1 text-sm font-medium text-slate-500">Jawatan utama bagi jawatankuasa.</p>
-                                    </div>
-                                </div>
-                                <p className="text-lg font-black text-slate-950">{position.sort_order ?? 0}</p>
-                                <div className="flex justify-start gap-3 lg:justify-end">
-                                    <button type="button" onClick={() => startEdit(position)} className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50"><Icon name="edit" className="h-4 w-4" />Edit</button>
-                                    <button type="button" onClick={() => remove(position)} className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-50"><Icon name="trash" className="h-4 w-4" />Padam</button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ))}
             </div>
         </section>
     );

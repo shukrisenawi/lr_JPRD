@@ -184,9 +184,9 @@ export default function Laporan({ report }) {
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Top UDM">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={dmChartRows} margin={{ top: 4, right: 8, bottom: 48, left: 0 }}>
+                                    <BarChart data={dmChartRows} margin={{ top: 4, right: 8, bottom: 56, left: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
-                                        <XAxis dataKey="name" interval={0} angle={0} textAnchor="middle" height={40} tick={{ fontSize: 9, fill: '#334155', fontWeight: 700 }} />
+                                        <XAxis dataKey="name" interval={0} angle={-25} textAnchor="end" height={56} tick={{ fontSize: 9, fill: '#475569' }} />
                                         <YAxis tickFormatter={fmt} width={44} tick={{ fontSize: 9, fill: '#475569' }} />
                                         <Tooltip content={<TTip />} />
                                         <Bar dataKey="total" name="Jumlah" fill="#059669" radius={[2, 2, 0, 0]} />
