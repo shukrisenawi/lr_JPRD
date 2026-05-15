@@ -8,8 +8,8 @@ export default function GuestLayout({ children }) {
                 <div className="card hidden flex-col justify-between bg-gradient-to-br from-slate-800 to-slate-900 p-8 lg:flex">
                     <div>
                         <Link href={route('dashboard')} className="inline-flex items-center gap-2.5">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-white shadow-sm shadow-green-600/20">
-                                <ApplicationLogo className="h-5 w-5 fill-current" />
+                            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-green-100 bg-white shadow-sm shadow-green-600/20">
+                                <ApplicationLogo className="h-11 w-11 object-contain" />
                             </div>
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-400">PAS</p>
@@ -34,8 +34,8 @@ export default function GuestLayout({ children }) {
 
                 <div className="card overflow-hidden px-5 py-6 sm:px-6">
                     <div className="mb-5 flex items-center gap-2.5 lg:hidden">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-white">
-                            <ApplicationLogo className="h-4 w-4 fill-current" />
+                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-green-100 bg-white">
+                            <ApplicationLogo className="h-9 w-9 object-contain" />
                         </div>
                         <div>
                             <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-400">PAS</p>

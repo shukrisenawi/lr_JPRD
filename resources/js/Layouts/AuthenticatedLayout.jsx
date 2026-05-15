@@ -49,10 +49,10 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     <div className="flex h-14 items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Link href={route('dashboard')} className="flex shrink-0 items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white shadow-sm shadow-green-600/30">
-                                    <ApplicationLogo className="block h-4 w-4 fill-current text-white" />
+                                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-green-100 bg-white shadow-sm shadow-green-600/20">
+                                    <ApplicationLogo className="block h-8 w-8 object-contain" />
                                 </div>
-                                <span className="hidden text-sm font-bold text-green-800 sm:inline">PAS</span>
+                                <span className="hidden text-sm font-bold text-green-800 sm:inline">PAS Sik</span>
                             </Link>
 
                             <div className="ml-2 hidden items-stretch sm:flex">
