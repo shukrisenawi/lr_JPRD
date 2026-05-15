@@ -102,7 +102,7 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                                     </td>
                                     {normalizedHeaders.map((header) => (
                                         <td key={header.key} className="table-cell align-top">
-                                            <div className="max-w-[12rem] break-words">{row.values[header.key] || '-'}</div>
+                                            <div className={`max-w-[12rem] break-words ${isSelected ? 'font-bold' : ''}`}>{row.values[header.key] || '-'}</div>
                                         </td>
                                     ))}
                                 </tr>
