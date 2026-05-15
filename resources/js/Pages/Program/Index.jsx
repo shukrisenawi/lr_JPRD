@@ -561,7 +561,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 ) : (
                     <div className="card p-3">
                         <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Senarai Program</p>
-                        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                             {programs.length === 0 ? <div className="card-dashed py-4 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
                                 <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
                                     onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg} />
