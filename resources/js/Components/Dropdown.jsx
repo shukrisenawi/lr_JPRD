@@ -42,7 +42,7 @@ const Content = ({ align = 'right', contentClasses = '', widthClasses = 'w-44', 
     return (
         <Transition show={open} enter="transition ease-out duration-150" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="transition ease-in duration-100" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
             <div className={`absolute z-50 mt-1.5 ${alignmentClasses} ${widthClasses}`}>
-                <div className={`overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg ` + contentClasses}>
+                <div className={`overflow-hidden rounded-xl border border-green-200 bg-white shadow-lg shadow-green-900/5 ` + contentClasses}>
                     {children}
                 </div>
             </div>

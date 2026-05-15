@@ -2,14 +2,14 @@ import { Link } from '@inertiajs/react';
 
 export default function NavLink({ active = false, variant = 'light', className = '', children, ...props }) {
     const classes = active
-        ? 'border-b-2 border-green-600 bg-green-50 text-slate-800'
-        : 'border-b-2 border-transparent text-slate-600 hover:bg-green-50 hover:text-green-700';
+        ? 'bg-green-600 text-white shadow-sm shadow-green-600/20'
+        : 'text-slate-600 hover:bg-green-100 hover:text-green-700';
 
     return (
         <Link
             {...props}
             className={
-                'inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-sm font-medium tracking-[0.02em] transition mx-[2px] ' +
+                'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition mx-[2px] ' +
                 classes +
                 ' ' + className
             }
