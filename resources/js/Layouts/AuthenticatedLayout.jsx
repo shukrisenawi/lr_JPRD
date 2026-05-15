@@ -33,7 +33,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
 
     return (
         <div className={isLight
-            ? 'min-h-screen bg-[#f7fbf8] text-slate-950'
+            ? 'min-h-screen bg-[#f8fcfa] text-slate-950'
             : 'min-h-screen bg-slate-900 bg-[radial-gradient(ellipse_at_top_right,_rgba(139,92,246,0.12),_transparent_50%),radial-gradient(ellipse_at_bottom_left,_rgba(236,72,153,0.08),_transparent_50%)]'}>
             <nav className={isLight
                 ? 'sticky top-0 z-30 border-b border-emerald-100/80 bg-white/95 shadow-sm shadow-emerald-900/5 backdrop-blur-xl'
@@ -50,7 +50,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 <span className={isLight ? 'hidden text-lg font-extrabold text-slate-950 sm:inline' : 'hidden text-sm font-extrabold text-white sm:inline'}>LR JPRD</span>
                             </Link>
 
-                            <div className={isLight ? 'ml-8 hidden items-center gap-5 sm:flex' : 'ml-4 hidden items-center gap-0.5 sm:flex'}>
+                            <div className={isLight ? 'ml-8 hidden items-stretch gap-6 sm:flex' : 'ml-4 hidden items-center gap-0.5 sm:flex'}>
                                 {navItems.map((item) =>
                                     canAccess(item.key) && (
                                         <NavLink key={item.key} href={route(item.href)} active={route().current(item.routePattern)} variant={variant} className={isLight ? 'gap-2 px-3 py-2' : ''}>
@@ -151,7 +151,14 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
 
             {header && (
                 <header className={isLight ? 'relative overflow-hidden pt-5' : 'pt-4'}>
-                    {isLight && <div className="pointer-events-none absolute right-24 top-0 hidden h-28 w-80 -skew-x-12 bg-gradient-to-r from-emerald-50 to-green-100/80 lg:block" />}
+                    {isLight && (
+                        <>
+                            <div className="pointer-events-none absolute right-12 top-0 hidden h-28 w-[30rem] -skew-x-12 bg-gradient-to-r from-emerald-50 via-green-50 to-transparent lg:block" />
+                            <div className="pointer-events-none absolute right-80 top-16 hidden h-2 w-2 rounded-full bg-emerald-500 lg:block" />
+                            <div className="pointer-events-none absolute right-60 top-12 hidden h-2.5 w-2.5 rotate-45 rounded-sm bg-amber-400 lg:block" />
+                            <div className="pointer-events-none absolute right-44 top-10 hidden h-1.5 w-1.5 rotate-45 rounded-sm bg-lime-500 lg:block" />
+                        </>
+                    )}
                     <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">{header}</div>
                 </header>
             )}

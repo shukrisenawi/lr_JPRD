@@ -4,15 +4,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 function StatCard({ label, value, color = 'slate' }) {
     const colors = {
-        slate: 'border-slate-700 bg-slate-800 text-slate-100',
-        violet: 'border-violet-600/40 bg-violet-600/10 text-violet-200',
-        emerald: 'border-emerald-600/40 bg-emerald-600/10 text-emerald-200',
-        cyan: 'border-cyan-600/40 bg-cyan-600/10 text-cyan-200',
+        slate: { card: 'border-emerald-100 bg-white', icon: 'bg-emerald-100 text-emerald-700', symbol: '▤' },
+        violet: { card: 'border-emerald-100 bg-white', icon: 'bg-emerald-100 text-emerald-700', symbol: '▧' },
+        emerald: { card: 'border-lime-100 bg-white', icon: 'bg-lime-100 text-lime-700', symbol: '✓' },
+        cyan: { card: 'border-sky-100 bg-white', icon: 'bg-sky-100 text-sky-700', symbol: '◷' },
     };
+    const theme = colors[color] ?? colors.slate;
+
     return (
-        <div className={`rounded-lg border p-3 shadow-sm ${colors[color]}`}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</p>
-            <p className="mt-1 text-xl font-extrabold">{value}</p>
+        <div className={`flex items-center gap-5 rounded-xl border p-5 shadow-lg shadow-emerald-900/5 ${theme.card}`}>
+            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-3xl font-black ${theme.icon}`}>{theme.symbol}</div>
+            <div>
+                <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
+                <p className="mt-1 text-3xl font-black leading-none text-emerald-700">{value}</p>
+            </div>
         </div>
     );
 }
@@ -25,12 +30,12 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
     const copiedCount = page.rows.filter((row) => row.is_copied).length;
 
     return (
-        <section className="card-accent">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-700/60 px-4 py-3">
+        <section className="card-accent overflow-hidden">
+            <div className="flex items-center justify-between gap-3 border-b border-emerald-100 px-4 py-3">
                 <div className="flex items-center gap-3">
                     <div className="chip-violet">Page {page.page_number}</div>
-                    <span className="text-sm font-bold text-white">{page.row_count} rekod</span>
-                    <span className="text-xs text-slate-400">{copiedCount} sudah copy</span>
+                    <span className="text-sm font-black text-slate-950">{page.row_count} rekod</span>
+                    <span className="text-xs font-semibold text-emerald-700">{copiedCount} sudah copy</span>
                 </div>
                 <button onClick={() => onDelete(page.id)} disabled={deletingPage === page.id} className="btn-danger px-2.5 py-1.5 text-[10px]">
                     {deletingPage === page.id ? 'Memadam...' : 'Padam'}
@@ -42,12 +47,12 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                     const isSelected = selectedRowKey === row.row_key;
                     return (
                         <div key={row.row_key} onClick={() => onSelectRow(row.row_key)}
-                            className={`rounded-lg border p-3 transition ${isSelected ? 'border-violet-500/50 bg-violet-500/10' : row.is_copied ? 'border-emerald-600/30 bg-emerald-500/5' : 'border-slate-700 bg-slate-800/50'}`}>
+                            className={`rounded-lg border p-3 transition ${isSelected ? 'border-emerald-300 bg-emerald-50' : row.is_copied ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
                             <div className="flex items-start justify-between gap-2">
                                 <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Rekod #{row.position}</p>
-                                    <p className="mt-0.5 text-sm font-bold text-white">{row.values.nama_pemilih || 'Tiada nama'}</p>
-                                    <p className="text-xs text-slate-400">No KP: {row.values.no_kp || '-'}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Rekod #{row.position}</p>
+                                    <p className="mt-0.5 text-sm font-black text-slate-950">{row.values.nama_pemilih || 'Tiada nama'}</p>
+                                    <p className="text-xs text-slate-600">No KP: {row.values.no_kp || '-'}</p>
                                 </div>
                                 <span className={`shrink-0 ${isSelected ? 'badge-violet' : row.is_copied ? 'badge-emerald' : 'badge-slate'}`}>
                                     {row.is_copied ? 'Sudah copy' : 'Belum copy'}
@@ -55,16 +60,16 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                             </div>
                             <div className="mt-2 grid grid-cols-2 gap-1.5">
                                 {normalizedHeaders.map((header) => (
-                                    <div key={header.key} className={`rounded px-2.5 py-1.5 ${isSelected ? 'bg-violet-500/5' : 'bg-slate-800/60'}`}>
+                                    <div key={header.key} className={`rounded px-2.5 py-1.5 ${isSelected ? 'bg-white' : 'bg-slate-50'}`}>
                                         <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">{header.label}</p>
-                                        <p className="mt-0.5 break-words text-xs text-slate-300">{row.values[header.key] || '-'}</p>
+                                        <p className="mt-0.5 break-words text-xs text-slate-700">{row.values[header.key] || '-'}</p>
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-900 px-3 py-2">
-                                <span className="truncate text-xs text-slate-400">{row.copy_text}</span>
+                            <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
+                                <span className="truncate text-xs text-slate-600">{row.copy_text}</span>
                                 <button onClick={(e) => { e.stopPropagation(); onSelectRow(row.row_key); void onCopy(row); }}
-                                    className={`rounded px-2.5 py-1 text-[10px] font-bold ${row.is_copied ? 'bg-emerald-600 text-white' : 'bg-violet-600 text-white hover:bg-violet-500'}`}>
+                                    className={`rounded px-2.5 py-1 text-[10px] font-bold text-white ${row.is_copied ? 'bg-emerald-600' : 'bg-emerald-700 hover:bg-emerald-600'}`}>
                                     {copyingRow === row.row_key ? 'Menyalin...' : row.is_copied ? 'Copy semula' : 'Copy'}
                                 </button>
                             </div>
@@ -74,7 +79,7 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
             </div>
 
             <div className="hidden overflow-x-auto lg:block">
-                <table className="min-w-full divide-y divide-slate-700/60 text-xs">
+                <table className="min-w-full divide-y divide-emerald-100 text-xs">
                     <thead className="table-header">
                         <tr>
                             <th className="px-4 py-2.5">Tindakan</th>
@@ -83,15 +88,15 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/40 bg-slate-800/30 text-xs text-slate-300">
+                    <tbody className="divide-y divide-slate-200 bg-white text-xs text-slate-700">
                         {page.rows.map((row) => {
                             const isSelected = selectedRowKey === row.row_key;
                             return (
                                 <tr key={row.row_key} onClick={() => onSelectRow(row.row_key)}
-                                    className={`cursor-pointer transition ${isSelected ? 'bg-violet-500/15 text-violet-200' : row.is_copied ? 'bg-emerald-500/5' : 'hover:bg-slate-700/30'}`}>
+                                    className={`cursor-pointer transition ${isSelected ? 'bg-emerald-50 text-emerald-900' : row.is_copied ? 'bg-emerald-50/40' : 'hover:bg-slate-50'}`}>
                                     <td className="whitespace-nowrap px-4 py-2.5">
                                         <button onClick={(e) => { e.stopPropagation(); onSelectRow(row.row_key); void onCopy(row); }}
-                                            className={`rounded px-2.5 py-1 text-[10px] font-bold text-white transition ${row.is_copied ? 'bg-emerald-600' : 'bg-slate-700 hover:bg-violet-600'}`}>
+                                            className={`rounded px-2.5 py-1 text-[10px] font-bold text-white transition ${row.is_copied ? 'bg-emerald-600' : 'bg-emerald-700 hover:bg-emerald-600'}`}>
                                             {copyingRow === row.row_key ? 'Menyalin...' : row.is_copied ? 'Copy semula' : 'Copy'}
                                         </button>
                                     </td>
@@ -244,9 +249,9 @@ export default function Dashboard({ sheet, pages }) {
                         <h2 className="mt-0.5 heading-lg">Pengurusan Page Data</h2>
                         <p className="text-muted mt-0.5">Ambil data unik dari Google Sheet dan urus setiap page secara berasingan.</p>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-3">
                         <button onClick={() => setAutoSyncEnabled((p) => !p)}
-                            className={`rounded-lg px-3 py-2 text-xs font-bold text-white transition ${autoSyncEnabled ? 'bg-slate-700' : 'bg-amber-600 hover:bg-amber-500'}`}>
+                            className={`rounded-lg border px-4 py-2 text-xs font-black transition ${autoSyncEnabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-300 bg-white text-amber-600 hover:bg-amber-50'}`}>
                             Auto: {autoSyncEnabled ? 'ON' : 'OFF'}
                         </button>
                         <button onClick={() => void runSync()} disabled={syncingPage || !!sheet.error} className="btn-emerald">{syncingPage ? 'Mengambil...' : 'Ambil data'}</button>
@@ -258,8 +263,8 @@ export default function Dashboard({ sheet, pages }) {
         >
             <Head title="Dashboard" />
 
-            <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
-                <div className="grid gap-3 sm:grid-cols-4">
+            <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard label="Page Aktif" value={pages.length} color="violet" />
                     <StatCard label="Jumlah Rekod" value={totalRows} color="slate" />
                     <StatCard label="Sudah Disalin" value={copiedCount} color="emerald" />
@@ -270,7 +275,7 @@ export default function Dashboard({ sheet, pages }) {
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
                         <div className="min-w-0 flex-1">
                             <h3 className="heading-md">Sumber Data</h3>
-                            <p className="truncate text-xs text-slate-400">{sheet.sheet_url}</p>
+                            <p className="truncate text-sm font-medium text-slate-600">{sheet.sheet_url}</p>
                         </div>
                         <span className="badge-slate shrink-0">{sheet.new_rows_available > 0 ? `${sheet.new_rows_available} baru` : 'Tiada baru'}</span>
                     </div>
@@ -281,20 +286,20 @@ export default function Dashboard({ sheet, pages }) {
 
                 {pages.length === 0 ? (
                     <div className="card-dashed">
-                        <p className="text-base font-bold text-white">Belum ada page aktif</p>
-                        <p className="mt-1 text-sm text-slate-400">Tekan "Ambil data" untuk mula.</p>
+                        <p className="text-base font-black text-slate-950">Belum ada page aktif</p>
+                        <p className="mt-1 text-sm text-slate-600">Tekan "Ambil data" untuk mula.</p>
                     </div>
                 ) : (
                     <>
                         <div className="card">
-                            <div className="flex flex-wrap gap-1.5 p-3">
+                            <div className="flex flex-wrap gap-3 p-3">
                                 {pages.map((page) => {
                                     const isActive = page.id === activePage?.id;
                                     return (
                                         <button key={page.id} onClick={() => setActivePageId(page.id)}
                                             className={`rounded-lg border px-2.5 py-2 text-left transition ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}>
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-400">Page {page.tab_number}</p>
-                                            <p className="mt-0.5 text-xs font-bold text-white">{page.row_count} rekod</p>
+                                            <p className={`text-[10px] font-black uppercase tracking-[0.12em] ${isActive ? 'text-white' : 'text-emerald-700'}`}>Page {page.tab_number}</p>
+                                            <p className={`mt-0.5 text-xs font-black ${isActive ? 'text-white' : 'text-slate-950'}`}>{page.row_count} rekod</p>
                                         </button>
                                     );
                                 })}
