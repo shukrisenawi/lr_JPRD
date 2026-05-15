@@ -76,14 +76,14 @@ function DataTable({ rows, columns }) {
     return (
         <div className="card overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-emerald-100 text-xs">
+                <table className="min-w-full divide-y divide-slate-200 text-xs">
                     <thead className="table-header">
-                        <tr>{columns.map((c) => <th key={c.key} className="px-3 py-2">{c.label}</th>)}</tr>
+                        <tr>{columns.map((c) => <th key={c.key} className="table-head-cell">{c.label}</th>)}</tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
+                    <tbody className="table-body">
                         {rows.map((row, i) => (
-                            <tr key={row.key ?? `${row.name}-${i}`} className="hover:bg-emerald-50/50">
-                                {columns.map((c) => <td key={c.key} className="px-3 py-2.5 align-top leading-5">{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
+                            <tr key={row.key ?? `${row.name}-${i}`} className="table-row">
+                                {columns.map((c) => <td key={c.key} className="table-cell align-top">{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
                             </tr>
                         ))}
                     </tbody>

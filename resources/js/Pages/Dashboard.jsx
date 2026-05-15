@@ -79,29 +79,29 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
             </div>
 
             <div className="hidden overflow-x-auto lg:block">
-                <table className="min-w-full divide-y divide-emerald-100 text-xs">
+                <table className="min-w-full divide-y divide-slate-200 text-xs">
                     <thead className="table-header">
                         <tr>
-                            <th className="px-4 py-2.5">Tindakan</th>
+                            <th className="table-head-cell">Tindakan</th>
                             {normalizedHeaders.map((header) => (
-                                <th key={header.key} className="px-4 py-2.5">{header.label}</th>
+                                <th key={header.key} className="table-head-cell">{header.label}</th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 bg-white text-xs text-slate-700">
+                    <tbody className="table-body">
                         {page.rows.map((row) => {
                             const isSelected = selectedRowKey === row.row_key;
                             return (
                                 <tr key={row.row_key} onClick={() => onSelectRow(row.row_key)}
-                                    className={`cursor-pointer transition ${isSelected ? 'bg-emerald-50 text-emerald-900' : row.is_copied ? 'bg-emerald-50/40' : 'hover:bg-slate-50'}`}>
-                                    <td className="whitespace-nowrap px-4 py-2.5">
+                                    className={`cursor-pointer ${isSelected ? 'bg-green-50 text-green-900' : row.is_copied ? 'bg-green-50/40' : 'table-row'}`}>
+                                    <td className="table-cell whitespace-nowrap">
                                         <button onClick={(e) => { e.stopPropagation(); onSelectRow(row.row_key); void onCopy(row); }}
-                                            className={`rounded px-2.5 py-1 text-[10px] font-bold text-white transition ${row.is_copied ? 'bg-emerald-600' : 'bg-emerald-700 hover:bg-emerald-600'}`}>
+                                            className={`rounded px-2.5 py-1 text-[10px] font-bold text-white transition ${row.is_copied ? 'bg-green-600' : 'bg-green-700 hover:bg-green-600'}`}>
                                             {copyingRow === row.row_key ? 'Menyalin...' : row.is_copied ? 'Copy semula' : 'Copy'}
                                         </button>
                                     </td>
                                     {normalizedHeaders.map((header) => (
-                                        <td key={header.key} className="px-4 py-2.5 align-top leading-5">
+                                        <td key={header.key} className="table-cell align-top">
                                             <div className="max-w-[12rem] break-words">{row.values[header.key] || '-'}</div>
                                         </td>
                                     ))}

@@ -79,7 +79,25 @@
         @apply badge bg-rose-50 text-rose-700 ring-1 ring-rose-200;
     }
     .table-header {
-        @apply bg-emerald-50 text-left text-[11px] font-black uppercase tracking-[0.12em] text-slate-600;
+        @apply bg-gradient-to-r from-green-50 to-emerald-50 text-left text-[10px] font-black uppercase tracking-[0.1em] text-green-700;
+    }
+    .table-body {
+        @apply divide-y divide-slate-200 bg-white text-xs text-slate-600;
+    }
+    .table-row {
+        @apply transition hover:bg-green-50/50;
+    }
+    .table-head-cell {
+        @apply px-4 py-3 text-left align-middle;
+    }
+    .table-head-cell-right {
+        @apply px-4 py-3 text-right align-middle;
+    }
+    .table-cell {
+        @apply px-4 py-3 align-middle leading-5;
+    }
+    .table-cell-right {
+        @apply px-4 py-3 text-right align-middle leading-5;
     }
     .tab-btn {
         @apply rounded-lg border px-3 py-2 text-left text-xs font-bold transition;

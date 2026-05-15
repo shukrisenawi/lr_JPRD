@@ -372,41 +372,42 @@ function MembershipManager({ positions, memberships, scopes }) {
                 </div>
             </form>
 
-            <div className="mt-5 overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-700/60 text-xs">
+            <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200 text-xs">
                     <thead className="table-header">
                         <tr>
-                            <th className="px-3 py-2 text-left">Nama</th>
-                            <th className="px-3 py-2 text-left">Jawatan</th>
-                            <th className="px-3 py-2 text-left">IC</th>
-                            <th className="px-3 py-2 text-left">Telefon</th>
-                            <th className="px-3 py-2 text-left">UDM</th>
-                            <th className="px-3 py-2 text-left">Cawangan</th>
-                            <th className="px-3 py-2 text-left">Tindakan</th>
+                            <th className="table-head-cell">Nama</th>
+                            <th className="table-head-cell">Jawatan</th>
+                            <th className="table-head-cell">IC</th>
+                            <th className="table-head-cell">Telefon</th>
+                            <th className="table-head-cell">UDM</th>
+                            <th className="table-head-cell">Cawangan</th>
+                            <th className="table-head-cell">Tindakan</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-700/40 bg-slate-800/30 text-slate-300">
+                    <tbody className="table-body">
                         {filteredMemberships.length === 0 && (
                             <tr>
-                                <td colSpan="7" className="px-3 py-4 text-center text-slate-400">
+                                <td colSpan="7" className="px-4 py-5 text-center text-slate-500">
                                     Belum ada ahli untuk paparan ini.
                                 </td>
                             </tr>
                         )}
                         {filteredMemberships.map((membership) => (
-                            <tr key={membership.id} className="hover:bg-slate-700/20">
-                                <td className="px-3 py-2.5 align-top">
-                                    <p className="font-bold text-white">{membership.voter.name}</p>
-                                    <p className="mt-0.5 text-[10px] text-slate-500">
+                            <tr key={membership.id} className="table-row">
+                                <td className="table-cell align-top">
+                                    <p className="font-black text-slate-950">{membership.voter.name}</p>
+                                    <p className="mt-0.5 text-[10px] font-medium text-slate-500">
                                         {membership.parent_scope_name ? `${membership.parent_scope_name} / ` : ''}{membership.scope_name}
                                     </p>
                                 </td>
-                                <td className="px-3 py-2.5 align-top">{membership.position.name}</td>
-                                <td className="px-3 py-2.5 align-top">{membership.voter.no_kp || membership.voter.old_ic || '-'}</td>
-                                <td className="px-3 py-2.5 align-top">{membership.voter.phone_mobile || membership.voter.phone_home || '-'}</td>
-                                <td className="px-3 py-2.5 align-top">{membership.voter.dm || '-'}</td>
-                                <td className="px-3 py-2.5 align-top">{membership.voter.locality || '-'}</td>
-                                <td className="px-3 py-2.5 align-top">
+                                <td className="table-cell align-top">{membership.position.name}</td>
+                                <td className="table-cell align-top">{membership.voter.no_kp || membership.voter.old_ic || '-'}</td>
+                                <td className="table-cell align-top">{membership.voter.phone_mobile || membership.voter.phone_home || '-'}</td>
+                                <td className="table-cell align-top">{membership.voter.dm || '-'}</td>
+                                <td className="table-cell align-top">{membership.voter.locality || '-'}</td>
+                                <td className="table-cell align-top">
                                     <button type="button" onClick={() => removeMembership(membership)} className="btn-danger px-2.5 py-1.5 text-[10px]">
                                         Buang
                                     </button>
@@ -415,6 +416,7 @@ function MembershipManager({ positions, memberships, scopes }) {
                         ))}
                     </tbody>
                 </table>
+                </div>
             </div>
         </section>
     );

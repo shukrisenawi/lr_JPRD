@@ -516,41 +516,41 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                             <h3 className="mt-0.5 heading-md">{selectedProgram.tajuk}</h3>
                             <div className="mt-4">
                                 {selectedProgram.attendees.length === 0 ? <div className="card-dashed py-6 text-xs">Tiada</div> : (
-                                    <div className="card overflow-hidden">
+                                    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                                         <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-slate-700/60 text-xs">
-                                                <thead className="bg-slate-700/60"><tr>
-                                                    <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">Nama</th>
-                                                    <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">UDM</th>
-                                                    <th className="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">Telefon</th>
-                                                    <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-[0.1em] text-slate-300">Tindakan</th>
+                                            <table className="min-w-full divide-y divide-slate-200 text-xs">
+                                                <thead className="table-header"><tr>
+                                                    <th className="table-head-cell">Nama</th>
+                                                    <th className="table-head-cell">UDM</th>
+                                                    <th className="table-head-cell">Telefon</th>
+                                                    <th className="table-head-cell-right">Tindakan</th>
                                                 </tr></thead>
-                                                <tbody className="divide-y divide-slate-700/40 bg-slate-800/30 text-slate-300">
+                                                <tbody className="table-body">
                                                     {selectedProgram.attendees.map((a) => (
-                                                        <tr key={a.id} className={selAttendee?.id === a.id ? 'bg-violet-500/15' : 'hover:bg-slate-700/20'}>
-                                                            <td className="px-3 py-2.5 font-semibold">
-                                                                <div>{a.name}</div>
+                                                        <tr key={a.id} className={selAttendee?.id === a.id ? 'bg-green-50 text-green-900' : 'table-row'}>
+                                                            <td className="table-cell font-semibold">
+                                                                <div className="font-black text-slate-950">{a.name}</div>
                                                                 {a.group_badges?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{a.group_badges.map((b) => <span key={`${a.id}-${b.name}`} className="badge-amber text-[9px]">{b.name}{b.count > 1 ? ` - ${b.count}` : ''}</span>)}</div>}
                                                                 <div className="mt-1 flex flex-wrap gap-1">
                                                                     {a.committee_badges?.length > 0
                                                                         ? a.committee_badges.map((b, index) => (
-                                                                            <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-bold text-sky-300">
+                                                                            <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-bold text-sky-700">
                                                                                 {b.label} • {committeeScopeLabel(b)}
                                                                             </span>
                                                                         ))
-                                                                        : <span className="rounded-lg border border-slate-600 bg-slate-700/40 px-1.5 py-0.5 text-[9px] font-bold text-slate-300">Tiada Jawatankuasa</span>}
+                                                                        : <span className="badge-slate text-[9px]">Tiada Jawatankuasa</span>}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-3 py-2.5">{a.dm || '-'}</td>
-                                                            <td className="px-3 py-2.5">{a.phone_mobile || a.phone_home || '-'}</td>
-                                                            <td className="px-3 py-2.5"><div className="flex justify-end gap-1">
-                                                                <IconBtn label="Detail" onClick={() => setSelAttendee(a)} className={selAttendee?.id === a.id ? 'border-violet-500/50 bg-violet-500/20 text-violet-300' : 'border-slate-600 bg-slate-700/50 text-slate-400 hover:border-violet-500/50 hover:text-violet-300'}>
+                                                            <td className="table-cell">{a.dm || '-'}</td>
+                                                            <td className="table-cell">{a.phone_mobile || a.phone_home || '-'}</td>
+                                                            <td className="table-cell-right"><div className="flex justify-end gap-2">
+                                                                <IconBtn label="Detail" onClick={() => setSelAttendee(a)} className={selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-green-50/80 text-green-700 hover:bg-green-100'}>
                                                                     <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
                                                                 </IconBtn>
-                                                                <IconBtn label="Program" onClick={() => setSelAttendeeProgs(a)} className="border-amber-600/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20">
+                                                                <IconBtn label="Program" onClick={() => setSelAttendeeProgs(a)} className="border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100">
                                                                     <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
                                                                 </IconBtn>
-                                                                <IconBtn label="Padam" onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} className="border-rose-600/40 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 disabled:opacity-50">
+                                                                <IconBtn label="Padam" onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} className="border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:opacity-50">
                                                                     <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
                                                                 </IconBtn>
                                                             </div></td>
