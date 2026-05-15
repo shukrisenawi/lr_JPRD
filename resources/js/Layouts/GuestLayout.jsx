@@ -32,7 +32,7 @@ export default function GuestLayout({ children }) {
                     </div>
                 </div>
 
-                <div className="card overflow-hidden border-green-700/50 bg-green-900/90 px-5 py-6 sm:px-6">
+                <div className="card overflow-hidden border-green-200 bg-white px-5 py-6 sm:px-6">
                     <div className="mb-5 flex items-center gap-2.5 lg:hidden">
                         <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-green-600 bg-white/10">
                             <ApplicationLogo className="h-9 w-9 object-contain" />
