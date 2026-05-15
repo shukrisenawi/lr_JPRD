@@ -6,6 +6,19 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+function Icon({ name, className = 'h-5 w-5' }) {
+    const paths = {
+        users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+        userCog: <><path d="M20 21v-2a4 4 0 0 0-4-4h-1" /><circle cx="10" cy="7" r="4" /><path d="M8 15H6a4 4 0 0 0-4 4v2" /><path d="M19 8v6" /><path d="M22 11h-6" /></>,
+        user: <><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></>,
+        plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
+        edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></>,
+        trash: <><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></>,
+    };
+
+    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
+}
+
 function PositionManager({ positions }) {
     const createForm = useForm({ name: '', sort_order: 0 });
     const [editingId, setEditingId] = useState(null);
@@ -50,26 +63,26 @@ function PositionManager({ positions }) {
     };
 
     return (
-        <section className="card p-4 sm:p-5">
+        <section className="card p-6 sm:p-8">
             <div className="flex items-center justify-between gap-3">
                 <div>
                     <p className="label-section">Jenis Jawatan</p>
-                    <h3 className="mt-0.5 heading-md">Tambah, edit dan padam jawatan</h3>
+                    <h3 className="mt-2 text-2xl font-black text-slate-950">Tambah, edit dan padam jawatan</h3>
                 </div>
-                <span className="badge-slate">{positions.length} jawatan</span>
+                <span className="rounded-full border border-slate-200 bg-slate-100 px-5 py-2 text-sm font-black uppercase text-emerald-800">{positions.length} jawatan</span>
             </div>
 
-            <form onSubmit={submitCreate} className="mt-4 grid gap-3 sm:grid-cols-[1fr_8rem_auto]">
+            <form onSubmit={submitCreate} className="mt-8 grid gap-5 lg:grid-cols-[1fr_9rem_auto] lg:items-end">
                 <div>
                     <InputLabel htmlFor="position-name" value="Nama Jawatan" />
                     <TextInput
                         id="position-name"
                         value={createForm.data.name}
                         onChange={(event) => createForm.setData('name', event.target.value)}
-                        className="input-field mt-1.5"
+                        className="input-field mt-3 py-3 text-sm"
                         placeholder="Contoh: Pengerusi, Setiausaha, Bendahari"
                     />
-                    <p className="mt-1.5 text-[10px] text-slate-500">Asingkan dengan koma untuk cipta beberapa jawatan terus ikut susunan.</p>
+                    <p className="mt-3 text-sm font-medium text-slate-500">Asingkan dengan koma untuk cipta beberapa jawatan terus <span className="italic">ikut susunan.</span></p>
                     <InputError className="mt-1.5" message={createForm.errors.name} />
                 </div>
                 <div>
@@ -80,26 +93,32 @@ function PositionManager({ positions }) {
                         min="0"
                         value={createForm.data.sort_order}
                         onChange={(event) => createForm.setData('sort_order', event.target.value)}
-                        className="input-field mt-1.5"
+                        className="input-field mt-3 py-3 text-sm"
                     />
                     <InputError className="mt-1.5" message={createForm.errors.sort_order} />
                 </div>
                 <div className="flex items-end">
-                    <PrimaryButton className="w-full justify-center" disabled={createForm.processing}>
+                    <PrimaryButton className="w-full justify-center gap-2 px-6 py-3 text-sm" disabled={createForm.processing}>
+                        <Icon name="plus" className="h-5 w-5" />
                         {createForm.processing ? '...' : 'Tambah'}
                     </PrimaryButton>
                 </div>
             </form>
 
-            <div className="mt-4 space-y-2">
+            <div className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                <div className="grid grid-cols-[minmax(0,1fr)_9rem_14rem] bg-slate-700 px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-white">
+                    <div>Jawatan</div>
+                    <div>Susunan</div>
+                    <div className="text-right">Tindakan</div>
+                </div>
                 {positions.length === 0 && (
-                    <div className="rounded-lg border border-dashed border-slate-700 px-4 py-3 text-xs text-slate-400">
+                    <div className="px-5 py-8 text-center text-sm font-medium text-slate-500">
                         Belum ada jenis jawatan.
                     </div>
                 )}
 
                 {positions.map((position) => (
-                    <div key={position.id} className="rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3">
+                    <div key={position.id} className="border-t border-slate-200 px-5 py-5">
                         {editingId === position.id ? (
                             <form onSubmit={(event) => submitEdit(event, position.id)} className="grid gap-3 sm:grid-cols-[1fr_8rem_auto]">
                                 <div>
@@ -130,14 +149,18 @@ function PositionManager({ positions }) {
                                 </div>
                             </form>
                         ) : (
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <div>
-                                    <p className="text-sm font-bold text-white">{position.name}</p>
-                                    <p className="text-[10px] text-slate-400">Susunan: {position.sort_order ?? 0}</p>
+                            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_9rem_14rem] lg:items-center">
+                                <div className="flex items-center gap-4">
+                                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><Icon name="user" className="h-6 w-6" /></span>
+                                    <div>
+                                        <p className="text-lg font-black text-slate-950">{position.name}</p>
+                                        <p className="mt-1 text-sm font-medium text-slate-500">Jawatan utama bagi jawatankuasa.</p>
+                                    </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <button type="button" onClick={() => startEdit(position)} className="btn-ghost px-2.5 py-1.5 text-[10px]">Edit</button>
-                                    <button type="button" onClick={() => remove(position)} className="btn-danger px-2.5 py-1.5 text-[10px]">Padam</button>
+                                <p className="text-lg font-black text-slate-950">{position.sort_order ?? 0}</p>
+                                <div className="flex justify-start gap-3 lg:justify-end">
+                                    <button type="button" onClick={() => startEdit(position)} className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50"><Icon name="edit" className="h-4 w-4" />Edit</button>
+                                    <button type="button" onClick={() => remove(position)} className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-50"><Icon name="trash" className="h-4 w-4" />Padam</button>
                                 </div>
                             </div>
                         )}
@@ -425,8 +448,8 @@ function MembershipManager({ positions, memberships, scopes }) {
 export default function CommitteeIndex({ positions, memberships, scopes }) {
     const [activeSection, setActiveSection] = useState('senarai-jawatankuasa');
     const sectionTabs = [
-        { key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.' },
-        { key: 'jawatan', label: 'Jawatan', desc: 'Urus jenis jawatan dan susunan.' },
+        { key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' },
+        { key: 'jawatan', label: 'Jawatan', desc: 'Urus jenis jawatan dan susunan.', icon: 'userCog' },
     ];
 
     return (
@@ -442,17 +465,17 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
             <Head title="Jawatankuasa" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <div className="card p-1.5">
-                    <div className="grid gap-1.5 sm:grid-cols-2">
+                <div className="card p-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
                         {sectionTabs.map((tab) => (
                             <button
                                 key={tab.key}
                                 type="button"
                                 onClick={() => setActiveSection(tab.key)}
-                                className={`rounded-lg border px-3 py-2.5 text-left transition ${activeSection === tab.key ? 'tab-btn-active' : 'tab-btn-inactive'}`}
+                                className={`flex items-center gap-4 rounded-lg border px-5 py-5 text-left transition ${activeSection === tab.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}
                             >
-                                <p className="label-section">{tab.label}</p>
-                                <p className="mt-0.5 text-xs text-slate-500">{tab.desc}</p>
+                                <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${activeSection === tab.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}><Icon name={tab.icon} className="h-8 w-8" /></span>
+                                <span><span className={`block text-sm font-black uppercase tracking-[0.12em] ${activeSection === tab.key ? 'text-white' : 'text-emerald-800'}`}>{tab.label}</span><span className={`mt-1 block text-sm font-medium ${activeSection === tab.key ? 'text-emerald-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
                             </button>
                         ))}
                     </div>
