@@ -411,51 +411,29 @@ function MembershipManager({ positions, memberships, scopes }) {
                 </div>
             </form>
 
-            <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white">
-                <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200 text-xs">
-                    <thead className="table-header">
-                        <tr>
-                            <th className="table-head-cell">Nama</th>
-                            <th className="table-head-cell">Jawatan</th>
-                            <th className="table-head-cell">IC</th>
-                            <th className="table-head-cell">Telefon</th>
-                            <th className="table-head-cell">UDM</th>
-                            <th className="table-head-cell">Cawangan</th>
-                            <th className="table-head-cell">Tindakan</th>
-                        </tr>
-                    </thead>
-                    <tbody className="table-body">
-                        {filteredMemberships.length === 0 && (
-                            <tr>
-                                <td colSpan="7" className="px-4 py-5 text-center text-slate-500">
-                                    Belum ada ahli untuk paparan ini.
-                                </td>
-                            </tr>
-                        )}
+            <div className="mt-3">
+                {filteredMemberships.length === 0 ? (
+                    <div className="card-dashed py-4 text-xs">Belum ada ahli untuk paparan ini.</div>
+                ) : (
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredMemberships.map((membership) => (
-                            <tr key={membership.id} className="table-row">
-                                <td className="table-cell align-top">
-                                    <p className="font-black text-slate-950">{membership.voter.name}</p>
-                                    <p className="mt-0.5 text-xs font-medium text-slate-500">
-                                        {membership.parent_scope_name ? `${membership.parent_scope_name} / ` : ''}{membership.scope_name}
-                                    </p>
-                                </td>
-                                <td className="table-cell align-top">{membership.position.name}</td>
-                                <td className="table-cell align-top">{membership.voter.no_kp || membership.voter.old_ic || '-'}</td>
-                                <td className="table-cell align-top">{membership.voter.phone_mobile || membership.voter.phone_home || '-'}</td>
-                                <td className="table-cell align-top">{membership.voter.dm || '-'}</td>
-                                <td className="table-cell align-top">{membership.voter.locality || '-'}</td>
-                                <td className="table-cell align-top">
-                                    <button type="button" onClick={() => removeMembership(membership)} className="btn-danger px-2.5 py-1.5 text-xs">
-                                        Buang
-                                    </button>
-                                </td>
-                            </tr>
+                            <div key={membership.id} className="rounded-md border border-slate-200 bg-white p-2.5 shadow-sm transition hover:border-green-200">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-xs font-bold text-slate-950">{membership.voter.name}</p>
+                                        <p className="text-xs font-bold text-green-700">{membership.position.name}</p>
+                                        <p className="text-xs text-slate-500">{membership.voter.no_kp || membership.voter.old_ic || '-'}</p>
+                                        <p className="text-xs text-slate-400">{membership.voter.phone_mobile || membership.voter.phone_home || '-'}</p>
+                                        <p className="text-xs text-slate-500">{membership.voter.dm || '-'}</p>
+                                        <p className="text-xs text-slate-400">{membership.voter.locality || '-'}</p>
+                                        {membership.parent_scope_name && <p className="mt-1 text-[10px] font-bold text-sky-600">{membership.parent_scope_name} / {membership.scope_name}</p>}
+                                    </div>
+                                    <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">Buang</button>
+                                </div>
+                            </div>
                         ))}
-                    </tbody>
-                </table>
-                </div>
+                    </div>
+                )}
             </div>
         </section>
     );
