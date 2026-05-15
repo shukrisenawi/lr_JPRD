@@ -122,7 +122,7 @@ export default function AccessManagement({ roles, users, modules }) {
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <div className="grid gap-2 sm:grid-cols-3">
                         {tabs.map((t) => (
-                            <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left shadow-sm transition ${tab === t.key ? 'border-green-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-green-900/10' : 'border-emerald-100 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50/60'}`}>
+                            <button key={t.key} onClick={() => setTab(t.key)} className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left shadow-sm transition ${tab === t.key ? 'border-transparent bg-gradient-to-r from-green-700 to-green-500 text-white shadow-green-900/10' : 'border-emerald-100 bg-white text-slate-700 hover:border-green-200 hover:bg-green-50/60'}`}>
                                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${tab === t.key ? 'bg-white/90 text-green-700' : 'bg-green-50 text-green-700'}`}><Icon name={t.icon} className="h-5 w-5" /></span>
                                 <span><span className={`block text-xs font-bold ${tab === t.key ? 'text-white' : 'text-slate-900'}`}>{t.label}</span><span className={`mt-0.5 block text-xs ${tab === t.key ? 'text-green-50' : 'text-slate-500'}`}>{t.desc}</span></span>
                             </button>
