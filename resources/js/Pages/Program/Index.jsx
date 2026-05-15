@@ -183,14 +183,9 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
             <div className="p-3">
                 <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
-                    <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-800 truncate">{attendee.name}</p>
-                            <p className="text-xs text-slate-500">{attendee.dm || '-'}</p>
-                        </div>
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">{attendee.name}</p>
+                        <p className="text-xs text-slate-500">{attendee.dm || '-'}</p>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
