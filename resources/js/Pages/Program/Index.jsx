@@ -61,7 +61,7 @@ function RequiredLabel({ htmlFor, value }) {
 
 function IconBtn({ label, children, className = '', ...props }) {
     return <button type="button" title={label} aria-label={label}
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border transition ${className}`} {...props}>{children}</button>;
+        className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${className}`} {...props}>{children}</button>;
 }
 
 function ProgramImageModal({ program, onClose }) {
@@ -541,16 +541,19 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             </td>
                                                             <td className="table-cell">{a.dm || '-'}</td>
                                                             <td className="table-cell">{a.phone_mobile || a.phone_home || '-'}</td>
-                                                            <td className="table-cell-right"><div className="flex justify-end gap-1.5">
-                                                                <IconBtn label="Detail" onClick={() => setSelAttendee(a)} className={selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-green-50/80 text-green-700 hover:bg-green-100'}>
-                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
-                                                                </IconBtn>
-                                                                <IconBtn label="Program" onClick={() => setSelAttendeeProgs(a)} className="border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-100">
-                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
-                                                                </IconBtn>
-                                                                <IconBtn label="Padam" onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} className="border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 disabled:opacity-50">
-                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
-                                                                </IconBtn>
+                                                            <td className="table-cell-right"><div className="flex justify-end gap-1">
+                                                                <button onClick={() => setSelAttendee(a)} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-white text-green-700 hover:bg-green-50'}`}>
+                                                                    <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
+                                                                    Detail
+                                                                </button>
+                                                                <button onClick={() => setSelAttendeeProgs(a)} className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-white px-2 py-1 text-xs font-bold text-amber-600 transition hover:bg-amber-50">
+                                                                    <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+                                                                    Program
+                                                                </button>
+                                                                <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
+                                                                    <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
+                                                                    Padam
+                                                                </button>
                                                             </div></td>
                                                         </tr>
                                                     ))}
