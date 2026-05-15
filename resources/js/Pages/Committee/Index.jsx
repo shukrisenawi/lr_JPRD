@@ -14,6 +14,10 @@ function Icon({ name, className = 'h-5 w-5' }) {
         plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
         edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></>,
         trash: <><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></>,
+        search: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></>,
+        mapPin: <><path d="M20 10c0 4.5-8 11-8 11S4 14.5 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
+        phone: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z" /></>,
+        idCard: <><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h3v3H7z" /><path d="M14 7h3" /><path d="M14 11h3" /><path d="M7 14h10" /></>,
     };
 
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -63,116 +67,125 @@ function PositionManager({ positions }) {
     };
 
     return (
-        <section className="card p-3">
-            <div className="flex items-center justify-between gap-3">
-                <div>
-                    <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Jenis Jawatan</p>
-                    <h3 className="mt-0.5 text-sm font-bold text-slate-950">Tambah, edit dan padam jawatan</h3>
+        <section className="rounded-xl border border-green-200 bg-white shadow-sm">
+            <div className="border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-green-700">
+                            <Icon name="userCog" className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-green-700">Jenis Jawatan</p>
+                            <h3 className="text-sm font-bold text-slate-800">Tambah, edit dan padam jawatan</h3>
+                        </div>
+                    </div>
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">{positions.length} jawatan</span>
                 </div>
-                <span className="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-bold text-emerald-800">{positions.length} jawatan</span>
             </div>
 
-            <form onSubmit={submitCreate} className="mt-3 grid gap-3 lg:grid-cols-[1fr_6rem_auto] lg:items-end">
-                <div>
-                    <InputLabel htmlFor="position-name" value="Nama Jawatan" />
-                    <TextInput
-                        id="position-name"
-                        value={createForm.data.name}
-                        onChange={(event) => createForm.setData('name', event.target.value)}
-                        className="input-field mt-1 text-xs"
-                        placeholder="Contoh: Pengerusi, Setiausaha"
-                    />
-                    <p className="mt-1.5 text-xs text-slate-500">Asingkan dengan koma untuk cipta beberapa jawatan.</p>
-                    <InputError className="mt-1" message={createForm.errors.name} />
-                </div>
-                <div>
-                    <InputLabel htmlFor="position-order" value="Susunan" />
-                    <TextInput
-                        id="position-order"
-                        type="number"
-                        min="0"
-                        value={createForm.data.sort_order}
-                        onChange={(event) => createForm.setData('sort_order', event.target.value)}
-                        className="input-field mt-1 text-xs"
-                    />
-                    <InputError className="mt-1" message={createForm.errors.sort_order} />
-                </div>
-                <div className="flex items-end">
-                    <PrimaryButton className="w-full justify-center gap-1.5 px-3 py-1.5 text-xs" disabled={createForm.processing}>
-                        <Icon name="plus" className="h-3.5 w-3.5" />
-                        {createForm.processing ? '...' : 'Tambah'}
-                    </PrimaryButton>
-                </div>
-            </form>
+            <div className="p-3">
+                <form onSubmit={submitCreate} className="grid gap-3 lg:grid-cols-[1fr_6rem_auto] lg:items-end">
+                    <div>
+                        <InputLabel htmlFor="position-name" value="Nama Jawatan" />
+                        <TextInput
+                            id="position-name"
+                            value={createForm.data.name}
+                            onChange={(event) => createForm.setData('name', event.target.value)}
+                            className="input-field mt-1 text-xs"
+                            placeholder="Contoh: Pengerusi, Setiausaha"
+                        />
+                        <p className="mt-1 text-xs text-slate-400">Asingkan dengan koma untuk cipta beberapa jawatan.</p>
+                        <InputError className="mt-1" message={createForm.errors.name} />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="position-order" value="Susunan" />
+                        <TextInput
+                            id="position-order"
+                            type="number"
+                            min="0"
+                            value={createForm.data.sort_order}
+                            onChange={(event) => createForm.setData('sort_order', event.target.value)}
+                            className="input-field mt-1 text-xs"
+                        />
+                        <InputError className="mt-1" message={createForm.errors.sort_order} />
+                    </div>
+                    <div className="flex items-end">
+                        <PrimaryButton className="w-full justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold" disabled={createForm.processing}>
+                            <Icon name="plus" className="h-4 w-4" />
+                            {createForm.processing ? '...' : 'Tambah'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </div>
 
-            <div className="mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <div className="border-t border-green-100">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-slate-200 text-xs">
-                        <thead className="table-header">
+                    <table className="min-w-full divide-y divide-green-100 text-xs">
+                        <thead className="bg-green-50">
                             <tr>
-                                <th className="table-head-cell">Jawatan</th>
-                                <th className="table-head-cell w-20">Susunan</th>
-                                <th className="table-head-cell w-32">Tindakan</th>
+                                <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Jawatan</th>
+                                <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Susunan</th>
+                                <th className="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider text-green-700">Tindakan</th>
                             </tr>
                         </thead>
-                        <tbody className="table-body">
+                        <tbody className="divide-y divide-green-50 bg-white">
                             {positions.length === 0 && (
                                 <tr>
-                                    <td colSpan="3" className="px-3 py-4 text-center text-slate-500">
+                                    <td colSpan="3" className="px-3 py-4 text-center text-xs text-slate-400">
                                         Belum ada jenis jawatan.
                                     </td>
                                 </tr>
                             )}
                             {positions.map((position) => (
-                                <tr key={position.id} className="table-row">
+                                <tr key={position.id} className="transition hover:bg-green-50/50">
                                     {editingId === position.id ? (
                                         <>
-                                            <td className="table-cell">
+                                            <td className="px-3 py-2">
                                                 <form onSubmit={(event) => submitEdit(event, position.id)} className="grid gap-2">
                                                     <div>
-                                                        <InputLabel htmlFor={`position-edit-name-${position.id}`} value="Nama Jawatan" />
                                                         <TextInput
                                                             id={`position-edit-name-${position.id}`}
                                                             value={editingData.name}
                                                             onChange={(event) => setEditingData((current) => ({ ...current, name: event.target.value }))}
-                                                            className="input-field mt-1 text-xs"
+                                                            className="input-field text-xs"
                                                         />
                                                         <InputError className="mt-1" message={editingErrors.name} />
                                                     </div>
                                                 </form>
                                             </td>
-                                            <td className="table-cell">
-                                                <InputLabel htmlFor={`position-edit-order-${position.id}`} value="Susunan" />
+                                            <td className="px-3 py-2">
                                                 <TextInput
                                                     id={`position-edit-order-${position.id}`}
                                                     type="number"
                                                     min="0"
                                                     value={editingData.sort_order}
                                                     onChange={(event) => setEditingData((current) => ({ ...current, sort_order: event.target.value }))}
-                                                    className="input-field mt-1 text-xs"
+                                                    className="input-field text-xs"
                                                 />
                                                 <InputError className="mt-1" message={editingErrors.sort_order} />
                                             </td>
-                                            <td className="table-cell">
-                                                <div className="flex gap-1.5">
-                                                    <button type="submit" onClick={(e) => { e.preventDefault(); submitEdit(e, position.id); }} className="btn-primary px-2 py-1 text-xs">Simpan</button>
-                                                    <button type="button" onClick={() => setEditingId(null)} className="btn-ghost text-xs">Batal</button>
+                                            <td className="px-3 py-2 text-right">
+                                                <div className="flex justify-end gap-1.5">
+                                                    <button type="submit" onClick={(e) => { e.preventDefault(); submitEdit(e, position.id); }} className="rounded-md bg-green-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-green-500">Simpan</button>
+                                                    <button type="button" onClick={() => setEditingId(null)} className="rounded-md border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
                                                 </div>
                                             </td>
                                         </>
                                     ) : (
                                         <>
-                                            <td className="table-cell align-top">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><Icon name="user" className="h-4 w-4" /></span>
-                                                    <p className="font-bold text-slate-950">{position.name}</p>
+                                            <td className="px-3 py-2.5">
+                                                <div className="flex items-center gap-2.5">
+                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
+                                                    <p className="font-bold text-slate-800">{position.name}</p>
                                                 </div>
                                             </td>
-                                            <td className="table-cell align-top font-bold text-slate-950">{position.sort_order ?? 0}</td>
-                                            <td className="table-cell align-top">
-                                                <div className="flex gap-1.5">
-                                                    <button type="button" onClick={() => startEdit(position)} className="btn-secondary px-2 py-1 text-xs">Edit</button>
-                                                    <button type="button" onClick={() => remove(position)} className="btn-danger px-2 py-1 text-xs">Padam</button>
+                                            <td className="px-3 py-2.5">
+                                                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-green-50 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
+                                            </td>
+                                            <td className="px-3 py-2.5 text-right">
+                                                <div className="flex justify-end gap-1.5">
+                                                    <button type="button" onClick={() => startEdit(position)} className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
+                                                    <button type="button" onClick={() => remove(position)} className="rounded-md border border-rose-200 bg-white px-2.5 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
                                                 </div>
                                             </td>
                                         </>
@@ -189,9 +202,9 @@ function PositionManager({ positions }) {
 
 function MembershipManager({ positions, memberships, scopes }) {
     const tabs = [
-        { key: 'jprd', label: 'JPRD' },
-        { key: 'udm', label: 'UDM' },
-        { key: 'cawangan', label: 'Cawangan' },
+        { key: 'jprd', label: 'JPRD', icon: 'users' },
+        { key: 'udm', label: 'UDM', icon: 'mapPin' },
+        { key: 'cawangan', label: 'Cawangan', icon: 'userCog' },
     ];
     const [activeTab, setActiveTab] = useState('jprd');
     const suggestionsAbort = useRef(null);
@@ -302,133 +315,168 @@ function MembershipManager({ positions, memberships, scopes }) {
     };
 
     return (
-        <section className="card p-4 sm:p-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                    <p className="label-section">Ahli Jawatankuasa</p>
-                    <h3 className="mt-0.5 heading-md">Lantik pemilih ikut peringkat</h3>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.key}
-                            type="button"
-                            onClick={() => setActiveTab(tab.key)}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${activeTab === tab.key ? 'bg-violet-500/20 text-violet-300' : 'text-slate-400 hover:text-slate-200'}`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+        <section className="rounded-xl border border-green-200 bg-white shadow-sm">
+            <div className="border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-green-700">
+                            <Icon name="users" className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-green-700">Ahli Jawatankuasa</p>
+                            <h3 className="text-sm font-bold text-slate-800">Lantik pemilih ikut peringkat</h3>
+                        </div>
+                    </div>
+                    <div className="flex gap-1">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.key}
+                                type="button"
+                                onClick={() => setActiveTab(tab.key)}
+                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${activeTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
+                            >
+                                <Icon name={tab.icon} className="h-3.5 w-3.5" />
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            <form onSubmit={submit} className="mt-4 space-y-4">
-                <div className="grid gap-4 lg:grid-cols-3">
-                    <div className="relative">
-                        <InputLabel htmlFor="committee-voter-search" value="Cari Pemilih Aktif" />
-                        <TextInput
-                            id="committee-voter-search"
-                            value={form.data.voter_search}
-                            onChange={handleSearchChange}
-                            className="input-field mt-1.5"
-                            placeholder="Nama, IC atau telefon"
-                        />
-                        <InputError className="mt-1.5" message={form.errors.pemilih_record_id} />
-                        {(searching || suggestions.length > 0) && (
-                            <div className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
-                                {searching ? (
-                                    <div className="px-3 py-2 text-xs text-slate-400">Mencari...</div>
-                                ) : (
-                                    suggestions.map((voter) => (
-                                        <button
-                                            key={voter.id}
-                                            type="button"
-                                            onClick={() => selectVoter(voter)}
-                                            className="flex w-full items-start justify-between gap-3 border-b border-slate-700/50 px-3 py-2.5 text-left transition hover:bg-violet-500/10 last:border-b-0"
-                                        >
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-bold text-white">{voter.name}</p>
-                                                <p className="mt-0.5 text-xs text-slate-400">IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
-                                            </div>
-                                            <div className="shrink-0 text-right text-xs text-slate-500">
-                                                <p>{voter.dm || '-'}</p>
-                                                <p className="mt-0.5">{voter.locality || '-'}</p>
-                                            </div>
-                                        </button>
-                                    ))
-                                )}
+            <div className="p-3">
+                <form onSubmit={submit} className="space-y-3">
+                    <div className="grid gap-3 lg:grid-cols-3">
+                        <div className="relative">
+                            <InputLabel htmlFor="committee-voter-search" value="Cari Pemilih Aktif" />
+                            <div className="relative mt-1">
+                                <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <TextInput
+                                    id="committee-voter-search"
+                                    value={form.data.voter_search}
+                                    onChange={handleSearchChange}
+                                    className="input-field pl-9 text-xs"
+                                    placeholder="Nama, IC atau telefon"
+                                />
                             </div>
-                        )}
+                            <InputError className="mt-1" message={form.errors.pemilih_record_id} />
+                            {(searching || suggestions.length > 0) && (
+                                <div className="absolute left-0 right-0 z-20 mt-1.5 overflow-hidden rounded-lg border border-green-200 bg-white shadow-lg">
+                                    {searching ? (
+                                        <div className="px-3 py-2 text-xs text-slate-400">Mencari...</div>
+                                    ) : (
+                                        suggestions.map((voter) => (
+                                            <button
+                                                key={voter.id}
+                                                type="button"
+                                                onClick={() => selectVoter(voter)}
+                                                className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
+                                            >
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-bold text-slate-800">{voter.name}</p>
+                                                    <p className="text-xs text-slate-400">IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
+                                                </div>
+                                                <div className="shrink-0 text-right text-xs text-slate-500">
+                                                    <p>{voter.dm || '-'}</p>
+                                                    <p className="mt-0.5">{voter.locality || '-'}</p>
+                                                </div>
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="committee-position" value="Jawatan" />
+                            <select
+                                id="committee-position"
+                                value={form.data.committee_position_id}
+                                onChange={(event) => form.setData('committee_position_id', event.target.value)}
+                                className="input-field mt-1 text-xs"
+                            >
+                                <option value="">Pilih jawatan</option>
+                                {positions.map((position) => (
+                                    <option key={position.id} value={position.id}>{position.name}</option>
+                                ))}
+                            </select>
+                            <InputError className="mt-1" message={form.errors.committee_position_id} />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="committee-scope" value={activeTab === 'jprd' ? 'Peringkat' : 'Scope'} />
+                            <select
+                                id="committee-scope"
+                                value={form.data.scope_key}
+                                onChange={(event) => form.setData('scope_key', event.target.value)}
+                                className="input-field mt-1 text-xs"
+                            >
+                                {currentScopes.map((scope) => (
+                                    <option key={scope.key} value={scope.key}>
+                                        {scope.parent_scope_name ? `${scope.parent_scope_name} / ${scope.name}` : scope.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError className="mt-1" message={form.errors.scope_key} />
+                        </div>
                     </div>
 
-                    <div>
-                        <InputLabel htmlFor="committee-position" value="Jawatan" />
-                        <select
-                            id="committee-position"
-                            value={form.data.committee_position_id}
-                            onChange={(event) => form.setData('committee_position_id', event.target.value)}
-                            className="input-field mt-1.5"
-                        >
-                            <option value="">Pilih jawatan</option>
-                            {positions.map((position) => (
-                                <option key={position.id} value={position.id}>{position.name}</option>
-                            ))}
-                        </select>
-                        <InputError className="mt-1.5" message={form.errors.committee_position_id} />
+                    {selectedVoter && (
+                        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                    <Icon name="user" className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-green-800">{selectedVoter.name}</p>
+                                    <p className="text-xs text-green-600">
+                                        IC: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex justify-end">
+                        <PrimaryButton disabled={form.processing || !positions.length} className="rounded-lg px-4 py-2 text-xs font-bold">
+                            {form.processing ? '...' : 'Tambah Ahli'}
+                        </PrimaryButton>
                     </div>
+                </form>
+            </div>
 
-                    <div>
-                        <InputLabel htmlFor="committee-scope" value={activeTab === 'jprd' ? 'Peringkat' : 'Scope'} />
-                        <select
-                            id="committee-scope"
-                            value={form.data.scope_key}
-                            onChange={(event) => form.setData('scope_key', event.target.value)}
-                            className="input-field mt-1.5"
-                        >
-                            {currentScopes.map((scope) => (
-                                <option key={scope.key} value={scope.key}>
-                                    {scope.parent_scope_name ? `${scope.parent_scope_name} / ${scope.name}` : scope.name}
-                                </option>
-                            ))}
-                        </select>
-                        <InputError className="mt-1.5" message={form.errors.scope_key} />
-                    </div>
-                </div>
-
-                {selectedVoter && (
-                    <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3">
-                        <p className="text-sm font-bold text-white">{selectedVoter.name}</p>
-                        <p className="mt-1 text-xs text-slate-300">
-                            IC: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
-                        </p>
-                    </div>
-                )}
-
-                <div className="flex justify-end">
-                    <PrimaryButton disabled={form.processing || !positions.length}>
-                        {form.processing ? '...' : 'Tambah Ahli'}
-                    </PrimaryButton>
-                </div>
-            </form>
-
-            <div className="mt-3">
+            <div className="border-t border-green-100 p-3">
                 {filteredMemberships.length === 0 ? (
-                    <div className="card-dashed py-4 text-xs">Belum ada ahli untuk paparan ini.</div>
+                    <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">Belum ada ahli untuk paparan ini.</div>
                 ) : (
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredMemberships.map((membership) => (
-                            <div key={membership.id} className="rounded-md border border-slate-200 bg-white p-2.5 shadow-sm transition hover:border-green-200">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-bold text-slate-950">{membership.voter.name}</p>
-                                        <p className="text-xs font-bold text-green-700">{membership.position.name}</p>
-                                        <p className="text-xs text-slate-500">{membership.voter.no_kp || membership.voter.old_ic || '-'}</p>
-                                        <p className="text-xs text-slate-400">{membership.voter.phone_mobile || membership.voter.phone_home || '-'}</p>
-                                        <p className="text-xs text-slate-500">{membership.voter.dm || '-'}</p>
-                                        <p className="text-xs text-slate-400">{membership.voter.locality || '-'}</p>
-                                        {membership.parent_scope_name && <p className="mt-1 text-[10px] font-bold text-sky-600">{membership.parent_scope_name} / {membership.scope_name}</p>}
+                            <div key={membership.id} className="group rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md">
+                                <div className="flex items-start gap-2.5">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-xs font-bold text-white">
+                                        {membership.voter.name?.charAt(0)?.toUpperCase() ?? '?'}
                                     </div>
-                                    <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">Buang</button>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
+                                        <p className="text-xs font-semibold text-green-700">{membership.position.name}</p>
+                                        <div className="mt-1 space-y-0.5">
+                                            <p className="flex items-center gap-1 text-xs text-slate-400">
+                                                <Icon name="idCard" className="h-3 w-3" />
+                                                {membership.voter.no_kp || membership.voter.old_ic || '-'}
+                                            </p>
+                                            <p className="flex items-center gap-1 text-xs text-slate-400">
+                                                <Icon name="phone" className="h-3 w-3" />
+                                                {membership.voter.phone_mobile || membership.voter.phone_home || '-'}
+                                            </p>
+                                            <p className="flex items-center gap-1 text-xs text-slate-400">
+                                                <Icon name="mapPin" className="h-3 w-3" />
+                                                {membership.voter.dm || '-'}
+                                            </p>
+                                        </div>
+                                        {membership.parent_scope_name && (
+                                            <span className="mt-1.5 inline-block rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">{membership.parent_scope_name} / {membership.scope_name}</span>
+                                        )}
+                                    </div>
+                                    <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 opacity-0 transition hover:bg-rose-50 group-hover:opacity-100">Buang</button>
                                 </div>
                             </div>
                         ))}
@@ -459,20 +507,18 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
             <Head title="Jawatankuasa" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <div className="card p-2">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        {sectionTabs.map((tab) => (
-                            <button
-                                key={tab.key}
-                                type="button"
-                                onClick={() => setActiveSection(tab.key)}
-                                className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${activeSection === tab.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}
-                            >
-                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${activeSection === tab.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}><Icon name={tab.icon} className="h-5 w-5" /></span>
-                                <span><span className={`block text-xs font-bold uppercase tracking-[0.08em] ${activeSection === tab.key ? 'text-white' : 'text-emerald-800'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs font-medium ${activeSection === tab.key ? 'text-emerald-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
-                            </button>
-                        ))}
-                    </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                    {sectionTabs.map((tab) => (
+                        <button
+                            key={tab.key}
+                            type="button"
+                            onClick={() => setActiveSection(tab.key)}
+                            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${activeSection === tab.key ? 'border-green-300 bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-md' : 'border-green-200 bg-white text-slate-700 hover:border-green-300 hover:bg-green-50'}`}
+                        >
+                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${activeSection === tab.key ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}><Icon name={tab.icon} className="h-5 w-5" /></span>
+                            <span><span className={`block text-xs font-bold uppercase tracking-wider ${activeSection === tab.key ? 'text-white' : 'text-green-700'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeSection === tab.key ? 'text-green-100' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                        </button>
+                    ))}
                 </div>
 
                 {activeSection === 'senarai-jawatankuasa' && (
