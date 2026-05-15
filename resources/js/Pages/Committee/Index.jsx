@@ -332,9 +332,9 @@ function MembershipManager({ positions, memberships, scopes }) {
                                         >
                                             <div className="min-w-0">
                                                 <p className="text-xs font-bold text-white">{voter.name}</p>
-                                                <p className="mt-0.5 text-[10px] text-slate-400">IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
+                                                <p className="mt-0.5 text-xs text-slate-400">IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
                                             </div>
-                                            <div className="shrink-0 text-right text-[10px] text-slate-500">
+                                            <div className="shrink-0 text-right text-xs text-slate-500">
                                                 <p>{voter.dm || '-'}</p>
                                                 <p className="mt-0.5">{voter.locality || '-'}</p>
                                             </div>
@@ -382,7 +382,7 @@ function MembershipManager({ positions, memberships, scopes }) {
                 {selectedVoter && (
                     <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3">
                         <p className="text-sm font-bold text-white">{selectedVoter.name}</p>
-                        <p className="mt-1 text-[10px] text-slate-300">
+                        <p className="mt-1 text-xs text-slate-300">
                             IC: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
                         </p>
                     </div>
@@ -421,7 +421,7 @@ function MembershipManager({ positions, memberships, scopes }) {
                             <tr key={membership.id} className="table-row">
                                 <td className="table-cell align-top">
                                     <p className="font-black text-slate-950">{membership.voter.name}</p>
-                                    <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+                                    <p className="mt-0.5 text-xs font-medium text-slate-500">
                                         {membership.parent_scope_name ? `${membership.parent_scope_name} / ` : ''}{membership.scope_name}
                                     </p>
                                 </td>
@@ -431,7 +431,7 @@ function MembershipManager({ positions, memberships, scopes }) {
                                 <td className="table-cell align-top">{membership.voter.dm || '-'}</td>
                                 <td className="table-cell align-top">{membership.voter.locality || '-'}</td>
                                 <td className="table-cell align-top">
-                                    <button type="button" onClick={() => removeMembership(membership)} className="btn-danger px-2.5 py-1.5 text-[10px]">
+                                    <button type="button" onClick={() => removeMembership(membership)} className="btn-danger px-2.5 py-1.5 text-xs">
                                         Buang
                                     </button>
                                 </td>

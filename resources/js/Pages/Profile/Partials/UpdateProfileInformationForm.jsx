@@ -30,7 +30,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                             <input id="avatar" type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
                                 className="mt-1.5 block w-full rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-600 file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-white hover:file:bg-violet-500"
                                 onChange={(e) => setData('avatar', e.target.files?.[0] ?? null)} />
-                            <p className="mt-1 text-[10px] text-slate-500">PNG/JPG/WEBP max 2MB</p>
+                            <p className="mt-1 text-xs text-slate-500">PNG/JPG/WEBP max 2MB</p>
                             <InputError className="mt-1.5" message={errors.avatar} />
                         </div>
                     </div>

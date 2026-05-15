@@ -45,7 +45,7 @@ function PemilihUploadPanel({ report }) {
                     <h3 className="mt-1 text-sm font-bold text-slate-800">Fail Pemilih Semasa</h3>
                     <p className="mt-1 text-xs text-slate-500">Fail ini digunakan oleh sistem untuk uruskan data pemilih. Upload baharu akan update rekod IC yang sama dan set rekod yang tiada dalam fail baharu sebagai inaktif.</p>
                 </div>
-                <button type="button" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-700 shadow-sm transition hover:bg-green-50 hover:text-green-700">
+                <button type="button" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold uppercase tracking-[0.08em] text-slate-700 shadow-sm transition hover:bg-green-50 hover:text-green-700">
                     <Icon name="file" />
                     Panduan Upload
                 </button>

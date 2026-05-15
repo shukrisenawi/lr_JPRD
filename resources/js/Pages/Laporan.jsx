@@ -40,7 +40,7 @@ function StatCard({ label, value, detail, color = 'violet' }) {
 
     return (
         <div className={`flex items-center gap-4 rounded-lg border px-4 py-3 shadow-sm ${theme.card}`}>
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${theme.icon}`}>{theme.symbol}</div>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-black ${theme.icon}`}>{theme.symbol}</div>
             <div>
                 <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
                 <p className={`mt-1 text-xl font-bold leading-none ${theme.value}`}>{fmt(value)}</p>
@@ -160,8 +160,8 @@ export default function Laporan({ report }) {
                         <h2 className="mt-0.5 heading-lg">Analitik Pemilih</h2>
                         <p className="text-muted mt-0.5">Mengikut UDM, lokaliti dan status culaan.</p>
                     </div>
-                    <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase text-green-700 shadow-sm">
-                        <span className="rounded bg-green-600 px-1.5 py-0.5 text-[9px] text-white">XLS</span>
+                    <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold uppercase text-green-700 shadow-sm">
+                        <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs text-white">XLS</span>
                         {report.source.exists ? report.source.name : 'Belum ada fail'}
                     </span>
                 </div>

@@ -68,14 +68,14 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
                 <div className="flex shrink-0 flex-wrap gap-2">
                     <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
                     <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
-                    <button onClick={onClear} className="rounded-md bg-slate-600 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-slate-500">Buang</button>
+                    <button onClick={onClear} className="rounded-md bg-slate-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-500">Buang</button>
                 </div>
             </div>
             <div className="grid gap-2 p-3 sm:grid-cols-2">
                 {fields.map(([l, v]) => (
                     <div key={l} className="rounded-md border border-slate-100 bg-white px-2.5 py-1.5">
-                        <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
-                        <p className="mt-0.5 text-[11px] font-medium text-slate-800">{v || '-'}</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
+                        <p className="mt-0.5 text-xs font-medium text-slate-800">{v || '-'}</p>
                     </div>
                 ))}
             </div>
@@ -170,11 +170,11 @@ function SearchPanel() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="truncate text-xs font-bold text-slate-800">{voter.name}</p>
-                                        <p className="text-[10px] font-medium text-slate-500">IC: {voter.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {voter.phone_mobile || '-'}</p>
+                                        <p className="text-xs font-medium text-slate-500">IC: {voter.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {voter.phone_mobile || '-'}</p>
                                     </div>
                                     <div className="min-w-0 text-left">
                                         <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">{voter.dm || '-'}</p>
-                                        <p className="truncate text-[10px] font-medium text-slate-500">{voter.locality || '-'}</p>
+                                        <p className="truncate text-xs font-medium text-slate-500">{voter.locality || '-'}</p>
                                     </div>
                                     <ChevronRightIcon className="h-3.5 w-3.5 text-slate-400" />
                                 </button>

@@ -36,7 +36,7 @@ export default function Welcome({ auth }) {
                             { label: 'Program', desc: 'Pengurusan program dan kehadiran pemilih.' },
                         ].map((item) => (
                             <div key={item.label} className="rounded-lg border border-slate-700 bg-slate-800/60 px-3.5 py-3 text-left">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-400">{item.label}</p>
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-violet-400">{item.label}</p>
                                 <p className="mt-1 text-xs leading-5 text-slate-400">{item.desc}</p>
                             </div>
                         ))}

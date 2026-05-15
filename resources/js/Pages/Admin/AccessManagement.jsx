@@ -46,7 +46,7 @@ function RoleCard({ role, modules }) {
                         <label key={m.key} className={`rounded-lg border p-3 transition ${checked ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'} ${role.is_master_admin ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
                             <div className="flex items-start gap-2.5">
                                 <input type="checkbox" checked={checked} onChange={() => toggle(m.key)} disabled={role.is_master_admin} className="mt-0.5 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                                <div><p className="text-xs font-bold text-slate-900">{m.label}</p><p className="text-[10px] text-slate-500">{m.description}</p></div>
+                                <div><p className="text-xs font-bold text-slate-900">{m.label}</p><p className="text-xs text-slate-500">{m.description}</p></div>
                             </div>
                         </label>
                     );
@@ -162,7 +162,7 @@ export default function AccessManagement({ roles, users, modules }) {
                                         <label key={m.key} className={`cursor-pointer rounded-lg border p-3 transition ${checked ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'}`}>
                                             <div className="flex items-start gap-2.5">
                                                 <input type="checkbox" checked={checked} onChange={() => rf.setData('access_modules', rf.data.access_modules.includes(m.key) ? rf.data.access_modules.filter((i) => i !== m.key) : [...rf.data.access_modules, m.key])} className="mt-0.5 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                                                <div><p className="text-xs font-bold text-slate-900">{m.label}</p><p className="text-[10px] text-slate-500">{m.description}</p></div>
+                                                <div><p className="text-xs font-bold text-slate-900">{m.label}</p><p className="text-xs text-slate-500">{m.description}</p></div>
                                             </div>
                                         </label>
                                     );

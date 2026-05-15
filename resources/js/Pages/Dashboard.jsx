@@ -33,11 +33,11 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
         <section className="card-accent overflow-hidden">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <div className="inline-flex items-center rounded bg-green-600 px-1.5 py-0.5 text-[9px] font-bold text-white">Page {page.page_number}</div>
+                    <div className="inline-flex items-center rounded bg-green-600 px-1.5 py-0.5 text-xs font-bold text-white">Page {page.page_number}</div>
                     <span className="text-xs font-bold text-slate-800">{page.row_count} rekod</span>
-                    <span className="text-[10px] font-medium text-green-700">{copiedCount} sudah copy</span>
+                    <span className="text-xs font-medium text-green-700">{copiedCount} sudah copy</span>
                 </div>
-                <button onClick={() => onDelete(page.id)} disabled={deletingPage === page.id} className="btn-danger px-2.5 py-1.5 text-[10px]">
+                <button onClick={() => onDelete(page.id)} disabled={deletingPage === page.id} className="btn-danger px-2.5 py-1.5 text-xs">
                     {deletingPage === page.id ? 'Memadam...' : 'Padam'}
                 </button>
             </div>
@@ -50,18 +50,18 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                             className={`rounded-lg border p-3 transition ${isSelected ? 'border-green-300 bg-green-50' : row.is_copied ? 'border-green-200 bg-green-50/60' : 'border-slate-200 bg-white'}`}>
                             <div className="flex items-start justify-between gap-2">
                                 <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Rekod #{row.position}</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Rekod #{row.position}</p>
                                     <p className="mt-0.5 text-sm font-black text-slate-950">{row.values.nama_pemilih || 'Tiada nama'}</p>
                                     <p className="text-xs text-slate-600">No KP: {row.values.no_kp || '-'}</p>
                                 </div>
-                                <span className={`shrink-0 ${isSelected ? 'inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold bg-green-600 text-white' : row.is_copied ? 'inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold bg-green-600 text-white' : 'inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold bg-slate-200 text-slate-700'}`}>
+                                <span className={`shrink-0 ${isSelected ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold bg-green-600 text-white' : row.is_copied ? 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold bg-green-600 text-white' : 'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold bg-slate-200 text-slate-700'}`}>
                                     {row.is_copied ? 'Sudah copy' : 'Belum copy'}
                                 </span>
                             </div>
                             <div className="mt-2 grid grid-cols-2 gap-1.5">
                                 {normalizedHeaders.map((header) => (
                                     <div key={header.key} className={`rounded px-2.5 py-1.5 ${isSelected ? 'bg-white' : 'bg-slate-50'}`}>
-                                        <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500">{header.label}</p>
+                                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{header.label}</p>
                                         <p className="mt-0.5 break-words text-xs text-slate-700">{row.values[header.key] || '-'}</p>
                                     </div>
                                 ))}
@@ -69,7 +69,7 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                             <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
                                 <span className="truncate text-xs text-slate-600">{row.copy_text}</span>
                                 <button onClick={(e) => { e.stopPropagation(); onSelectRow(row.row_key); void onCopy(row); }}
-                                    className={`rounded px-2.5 py-1 text-[10px] font-bold text-white ${row.is_copied ? 'bg-green-600' : 'bg-green-700 hover:bg-green-600'}`}>
+                                    className={`rounded px-2.5 py-1 text-xs font-bold text-white ${row.is_copied ? 'bg-green-600' : 'bg-green-700 hover:bg-green-600'}`}>
                                     {copyingRow === row.row_key ? 'Menyalin...' : row.is_copied ? 'Copy semula' : 'Copy'}
                                 </button>
                             </div>
@@ -96,7 +96,7 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                                     className={`cursor-pointer ${isSelected ? 'bg-green-50 text-green-900' : row.is_copied ? 'bg-green-50/40' : 'table-row'}`}>
                                     <td className="table-cell whitespace-nowrap">
                                         <button onClick={(e) => { e.stopPropagation(); onSelectRow(row.row_key); void onCopy(row); }}
-                                            className={`rounded px-2.5 py-1 text-[10px] font-bold text-white transition ${row.is_copied ? 'bg-green-600' : 'bg-green-700 hover:bg-green-600'}`}>
+                                            className={`rounded px-2.5 py-1 text-xs font-bold text-white transition ${row.is_copied ? 'bg-green-600' : 'bg-green-700 hover:bg-green-600'}`}>
                                             {copyingRow === row.row_key ? 'Menyalin...' : row.is_copied ? 'Copy semula' : 'Copy'}
                                         </button>
                                     </td>
@@ -298,7 +298,7 @@ export default function Dashboard({ sheet, pages }) {
                                     return (
                                         <button key={page.id} onClick={() => setActivePageId(page.id)}
                                             className={`rounded-lg border px-2.5 py-2 text-left transition ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}>
-                                            <p className={`text-[10px] font-black uppercase tracking-[0.12em] ${isActive ? 'text-white' : 'text-green-700'}`}>Page {page.tab_number}</p>
+                                            <p className={`text-xs font-black uppercase tracking-[0.12em] ${isActive ? 'text-white' : 'text-green-700'}`}>Page {page.tab_number}</p>
                                             <p className={`mt-0.5 text-xs font-black ${isActive ? 'text-white' : 'text-slate-800'}`}>{page.row_count} rekod</p>
                                         </button>
                                     );

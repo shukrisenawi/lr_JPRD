@@ -70,7 +70,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                             {user.avatar_url ? (
                                                 <img src={user.avatar_url} alt={user.name} className="h-5 w-5 rounded object-cover" />
                                             ) : (
-                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-green-100 text-[9px] font-bold text-green-700">{userInitial}</div>
+                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-green-100 text-xs font-bold text-green-700">{userInitial}</div>
                                             )}
                                             <span className="hidden lg:inline">{user.name}</span>
                                             <svg className="h-3 w-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
@@ -114,11 +114,11 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             {user.avatar_url ? (
                                 <img src={user.avatar_url} alt={user.name} className="h-7 w-7 rounded object-cover" />
                             ) : (
-                                <div className="flex h-7 w-7 items-center justify-center rounded bg-green-100 text-[10px] font-bold text-green-700">{userInitial}</div>
+                                <div className="flex h-7 w-7 items-center justify-center rounded bg-green-100 text-xs font-bold text-green-700">{userInitial}</div>
                             )}
                             <div>
                                 <div className="text-xs font-semibold text-slate-800">{user.name}</div>
-                                <div className="text-[10px] text-slate-500">{user.email}</div>
+                                <div className="text-xs text-slate-500">{user.email}</div>
                             </div>
                         </div>
                         <div className="mt-1.5 space-y-0.5">

@@ -73,7 +73,7 @@ function Pagination({ voters, onNavigate }) {
                     type="button"
                     onClick={() => onNavigate(voters.current_page - 1)}
                     disabled={!voters.prev_page_url}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Sebelum
                 </button>
@@ -84,7 +84,7 @@ function Pagination({ voters, onNavigate }) {
                             key={link.label}
                             type="button"
                             onClick={() => onNavigate(Number(link.label))}
-                            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition ${link.active ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:text-green-700'}`}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${link.active ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:text-green-700'}`}
                         >
                             {link.label}
                         </button>
@@ -93,7 +93,7 @@ function Pagination({ voters, onNavigate }) {
                     type="button"
                     onClick={() => onNavigate(voters.current_page + 1)}
                     disabled={!voters.next_page_url}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Seterusnya
                 </button>
@@ -455,7 +455,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                         onClick={exportToExcel}
                         className="hidden shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex"
                     >
-                        <span className="rounded bg-green-600 px-1.5 py-0.5 text-[10px] font-black text-white">X</span>
+                        <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
                         Export Excel
                     </button>
                 </div>
@@ -468,7 +468,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-4">
                         <div className="grid gap-3 xl:grid-cols-[12rem_12rem_5rem_minmax(0,1fr)] xl:items-end">
                             <div>
-                                <label htmlFor="culaan-udm" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
+                                <label htmlFor="culaan-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
                                     id="culaan-udm"
                                     value={formState.udm}
@@ -483,7 +483,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </div>
 
                             <div>
-                                <label htmlFor="culaan-locality" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
+                                <label htmlFor="culaan-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
                                 <select
                                     id="culaan-locality"
                                     value={formState.locality}
@@ -499,7 +499,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </div>
 
                             <div>
-                                <label htmlFor="culaan-dah-cula" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">Dah Cula</label>
+                                <label htmlFor="culaan-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Cula</label>
                                 <label
                                     htmlFor="culaan-dah-cula"
                                     className="input-field mt-1.5 inline-flex items-center px-3 py-2"
@@ -515,7 +515,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </div>
 
                             <div>
-                                <label htmlFor="culaan-search" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
+                                <label htmlFor="culaan-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
                                 <div className="relative mt-1.5">
                                     <input
                                     id="culaan-search"
@@ -529,7 +529,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                 </div>
                                 {searchError && <InputError className="mt-1" message={searchError} />}
                                 {actionError && <InputError className="mt-1" message={actionError} />}
-                                {shouldPromptUdm && <p className="mt-1 text-[10px] font-medium text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
+                                {shouldPromptUdm && <p className="mt-1 text-xs font-medium text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
                             </div>
                         </div>
                     </div>
@@ -537,7 +537,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                     <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
                         <div className="min-w-0 flex-1 text-right">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
+                            <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
                             <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
                         </div>
                     </div>
@@ -558,15 +558,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                         </span>
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm font-bold leading-5 text-slate-800">{voter.name}</p>
-                                            <p className="mt-0.5 text-[10px] font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
+                                            <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
                                         </div>
                                         {voter.is_marked && (
-                                            <span className="shrink-0 rounded-md bg-lime-100 px-2 py-0.5 text-[9px] font-bold text-lime-700">
+                                            <span className="shrink-0 rounded-md bg-lime-100 px-2 py-0.5 text-xs font-bold text-lime-700">
                                                 Dah Ditanda
                                             </span>
                                         )}
                                     </div>
-                                    <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+                                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                                         <div>
                                             <span className="font-semibold text-green-700">IC</span>
                                             <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
@@ -589,13 +589,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                     <div className="mt-3 flex flex-wrap gap-1.5">
                                         <a
                                             href={buildTelegramLink('kemascula', voter.telegram_identity)}
-                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                         >
                                             Kemas Cula
                                         </a>
                                         <a
                                             href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                         >
                                             Kemas Tel
                                         </a>
@@ -604,7 +604,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                                 type="button"
                                                 onClick={() => unmarkVoter(voter)}
                                                 disabled={pendingIds.includes(voter.id)}
-                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-rose-600 px-2 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-rose-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                                             >
                                                 {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
                                             </button>
@@ -613,7 +613,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                                 type="button"
                                                 onClick={() => markVoter(voter)}
                                                 disabled={pendingIds.includes(voter.id)}
-                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
                                             >
                                                 {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
                                             </button>
