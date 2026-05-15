@@ -35,7 +35,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
         <div className="min-h-screen bg-slate-100 text-slate-800">
             <nav className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-xl">
                 <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-                    <div className="flex h-12 items-center justify-between">
+                    <div className="flex h-14 items-center justify-between">
                         <div className="flex items-center gap-1">
                             <Link href={route('dashboard')} className="flex shrink-0 items-center gap-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-white shadow-sm">
