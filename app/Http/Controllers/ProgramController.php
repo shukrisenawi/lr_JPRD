@@ -26,7 +26,6 @@ class ProgramController extends Controller
     {
         $user = $request->user();
         $groups = ProgramGroup::query()
-            ->where('user_id', $user->id)
             ->orderBy('name')
             ->get();
         $programs = $this->accessibleProgramsQuery($user->id)
@@ -382,9 +381,7 @@ class ProgramController extends Controller
             'group_id' => [
                 'required',
                 'integer',
-                Rule::exists('program_groups', 'id')->where(
-                    fn ($query) => $query->where('user_id', $request->user()->id),
-                ),
+                Rule::exists('program_groups', 'id'),
             ],
             'gambar' => ['nullable', 'image', 'max:2048'],
         ]);
