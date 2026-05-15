@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 const DropDownContext = createContext();
 
@@ -16,16 +16,26 @@ const Dropdown = ({ children }) => {
 
 const Trigger = ({ children }) => {
     const { open, setOpen, toggleOpen } = useContext(DropDownContext);
+    const triggerRef = useRef(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const handleClick = (e) => {
+            if (triggerRef.current && !triggerRef.current.contains(e.target)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    }, [open, setOpen]);
+
     return (
-        <>
-            <div onClick={toggleOpen}>{children}</div>
-            {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
-        </>
+        <div ref={triggerRef} onClick={toggleOpen}>{children}</div>
     );
 };
 
 const Content = ({ align = 'right', contentClasses = '', widthClasses = 'w-44', children }) => {
-    const { open, setOpen } = useContext(DropDownContext);
+    const { open } = useContext(DropDownContext);
     const alignmentClasses = align === 'left'
         ? 'ltr:origin-top-left rtl:origin-top-right start-0'
         : 'ltr:origin-top-right rtl:origin-top-left end-0';
