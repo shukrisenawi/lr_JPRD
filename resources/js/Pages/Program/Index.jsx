@@ -181,29 +181,29 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
     ];
     return (
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
-            <div className="p-3">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+            <div className="rounded-xl border border-green-200 bg-green-50/50 p-3">
+                <div className="flex items-center justify-between gap-2 border-b border-green-200 pb-2">
                     <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 truncate">{attendee.name}</p>
-                        <p className="text-xs text-slate-500">{attendee.dm || '-'}</p>
+                        <p className="text-xs font-bold text-green-900 truncate">{attendee.name}</p>
+                        <p className="text-xs text-green-700">{attendee.dm || '-'}</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                    <button onClick={onClose} className="text-green-400 hover:text-green-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {fields.map(([l, v]) => (
-                        <div key={l} className="rounded border border-slate-100 bg-white px-2 py-1.5">
+                        <div key={l} className="rounded border border-green-100 bg-white px-2 py-1.5">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-green-700">{l}</p>
                             <p className="truncate text-xs font-medium text-slate-800">{v}</p>
                         </div>
                     ))}
                 </div>
                 {attendee.address && (
-                    <div className="mt-2 rounded border border-slate-100 bg-white px-2 py-1.5">
+                    <div className="mt-2 rounded border border-green-100 bg-white px-2 py-1.5">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-green-700">Alamat</p>
                         <p className="text-xs font-medium text-slate-800">{attendee.address}</p>
                     </div>
                 )}
-                <div className="mt-3 flex gap-2 border-t border-slate-200 pt-2">
+                <div className="mt-3 flex gap-2 border-t border-green-200 pt-2">
                     <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
                 </div>
@@ -217,26 +217,26 @@ function AttendeeProgramsModal({ attendee, onClose }) {
     const programs = attendee.joined_programs ?? [];
     return (
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
-            <div className="p-3">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+            <div className="rounded-xl border border-green-200 bg-green-50/50 p-3">
+                <div className="flex items-center justify-between gap-2 border-b border-green-200 pb-2">
                     <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 truncate">{attendee.name}</p>
-                        <p className="text-xs text-slate-500">{programs.length} program</p>
+                        <p className="text-xs font-bold text-green-900 truncate">{attendee.name}</p>
+                        <p className="text-xs text-green-700">{programs.length} program</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                    <button onClick={onClose} className="text-green-400 hover:text-green-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
                 <div className="mt-2 max-h-64 overflow-y-auto">
                     {programs.length === 0 ? (
-                        <div className="py-4 text-center text-xs text-slate-500">Tiada program</div>
+                        <div className="py-4 text-center text-xs text-green-600">Tiada program</div>
                     ) : (
                         <div className="space-y-1.5">
                             {programs.map((p) => (
-                                <div key={p.program_id} className="flex items-center justify-between gap-2 rounded-md border border-slate-100 bg-white px-2 py-2">
+                                <div key={p.program_id} className="flex items-center justify-between gap-2 rounded-md border border-green-100 bg-white px-2 py-2">
                                     <div className="min-w-0">
                                         <p className="truncate text-xs font-bold text-slate-800">{p.tajuk}</p>
-                                        <p className="text-xs text-slate-500">{p.tarikh}</p>
+                                        <p className="text-xs text-green-600">{p.tarikh}</p>
                                     </div>
-                                    {p.group_name && <span className="shrink-0 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{p.group_name}</span>}
+                                    {p.group_name && <span className="shrink-0 rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{p.group_name}</span>}
                                 </div>
                             ))}
                         </div>
