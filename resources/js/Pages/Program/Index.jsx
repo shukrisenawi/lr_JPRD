@@ -67,15 +67,12 @@ function IconBtn({ label, children, className = '', ...props }) {
 function ProgramImageModal({ program, onClose }) {
     if (!program?.gambar_url) return null;
     return (
-        <Modal show={Boolean(program?.gambar_url)} onClose={onClose} maxWidth="4xl">
-            <div className="p-3">
-                <div className="flex items-start justify-between gap-2 border-b border-slate-700/60 pb-2">
-                    <h3 className="text-sm font-bold text-slate-800">{program.tajuk}</h3>
-                    <button onClick={onClose} className="btn-ghost px-2 py-1 text-xs">Tutup</button>
-                </div>
-                <div className="mt-2 overflow-hidden rounded-lg bg-slate-800">
-                    <img src={program.gambar_url} alt={program.tajuk} className="max-h-[60vh] w-full object-contain" />
-                </div>
+        <Modal show={Boolean(program?.gambar_url)} onClose={onClose} maxWidth="2xl">
+            <div className="relative">
+                <button onClick={onClose} className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                </button>
+                <img src={program.gambar_url} alt={program.tajuk} className="max-h-[70vh] w-full object-contain" />
             </div>
         </Modal>
     );
@@ -84,33 +81,29 @@ function ProgramImageModal({ program, onClose }) {
 function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
     if (!program) return null;
     return (
-        <Modal show={Boolean(program)} onClose={onClose} maxWidth="lg">
+        <Modal show={Boolean(program)} onClose={onClose} maxWidth="sm">
             <div className="p-3">
-                <div className="flex items-start justify-between gap-2 border-b border-slate-700/60 pb-2">
-                    <div><p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Share Program</p><h3 className="mt-0.5 text-sm font-bold text-slate-800">{program.tajuk}</h3></div>
-                    <button onClick={onClose} className="btn-ghost px-2 py-1 text-xs">Tutup</button>
+                <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                    <p className="text-xs font-bold text-white">Share Program</p>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
-                <form onSubmit={onSubmit} className="mt-3 space-y-2">
-                    <div>
-                        <InputLabel value="Pilih Pengguna Admin" />
-                        <div className="mt-1.5 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/60 p-2">
-                            {users.map((user) => {
-                                const checked = shareForm.data.shared_user_ids.includes(user.id);
-                                return (
-                                    <label key={user.id} className="flex cursor-pointer items-start gap-2 rounded-lg bg-slate-800 px-2 py-1.5 ring-1 ring-slate-700 transition hover:bg-violet-500/10">
-                                        <input type="checkbox" checked={checked}
-                                            onChange={(e) => shareForm.setData('shared_user_ids', e.target.checked ? [...shareForm.data.shared_user_ids, user.id] : shareForm.data.shared_user_ids.filter((id) => id !== user.id))}
-                                            className="mt-0.5 rounded border-slate-600 bg-slate-700 text-violet-600 shadow-sm focus:ring-violet-500" />
-                                        <span className="min-w-0"><span className="block text-xs font-bold text-white">{user.name}</span><span className="block text-xs text-slate-400">{user.email}</span></span>
-                                    </label>
-                                );
-                            })}
-                        </div>
-                        <InputError className="mt-1.5" message={shareForm.errors.shared_user_ids} />
+                <form onSubmit={onSubmit} className="mt-2">
+                    <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/60 p-1.5">
+                        {users.map((user) => {
+                            const checked = shareForm.data.shared_user_ids.includes(user.id);
+                            return (
+                                <label key={user.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition hover:bg-violet-500/20">
+                                    <input type="checkbox" checked={checked}
+                                        onChange={(e) => shareForm.setData('shared_user_ids', e.target.checked ? [...shareForm.data.shared_user_ids, user.id] : shareForm.data.shared_user_ids.filter((id) => id !== user.id))}
+                                        className="rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500" />
+                                    <span className="min-w-0"><span className="block truncate text-xs font-bold text-white">{user.name}</span></span>
+                                </label>
+                            );
+                        })}
                     </div>
-                    <div className="flex justify-end gap-1.5">
-                        <button onClick={onClose} className="btn-ghost text-xs">Batal</button>
-                        <PrimaryButton disabled={shareForm.processing} className="text-xs">{shareForm.processing ? 'Menyimpan...' : 'Share'}</PrimaryButton>
+                    <div className="mt-3 flex gap-2">
+                        <button onClick={onClose} type="button" className="flex-1 rounded-md border border-slate-600 bg-slate-700 px-3 py-1.5 text-xs font-bold text-slate-300 transition hover:bg-slate-600">Batal</button>
+                        <button type="submit" disabled={shareForm.processing} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">{shareForm.processing ? '...' : 'Share'}</button>
                     </div>
                 </form>
             </div>
@@ -180,30 +173,44 @@ function VoterDetailCard({ voter, onAdd, adding }) {
 function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
     if (!attendee) return null;
     const fields = [
-        ['Nama', attendee.name], ['No. IC Baru', attendee.no_kp || '-'], ['No. IC Lama', attendee.old_ic || '-'],
-        ['Tel. Bimbit', attendee.phone_mobile || '-'], ['Tel. Rumah', attendee.phone_home || '-'],
-        ['UDM', attendee.dm || '-'], ['Lokaliti', attendee.locality || '-'], ['Jantina', attendee.gender || '-'],
-        ['Bangsa', attendee.race || '-'], ['Status Culaan', attendee.cula_display_label || attendee.cula_code || '-'],
-        ['Alamat', attendee.address || '-'], ['Direkod', attendee.attended_at || '-'],
+        ['Nama', attendee.name], ['No. IC', attendee.no_kp || attendee.old_ic || '-'],
+        ['Tel', attendee.phone_mobile || attendee.phone_home || '-'],
+        ['UDM', attendee.dm || '-'], ['Lokaliti', attendee.locality || '-'],
+        ['Jantina', attendee.gender || '-'], ['Bangsa', attendee.race || '-'],
+        ['Status Culaan', attendee.cula_display_label || attendee.cula_code || '-'],
     ];
     return (
-        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="2xl">
+        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
             <div className="p-3">
-                <div className="flex items-start justify-between gap-2 border-b border-slate-700/60 pb-2">
-                    <div><p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Detail Kehadiran</p><h3 className="mt-0.5 text-sm font-bold text-slate-800">{attendee.name}</h3></div>
-                    <button onClick={onClose} className="btn-ghost px-2 py-1 text-xs">Tutup</button>
+                <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold text-white truncate">{attendee.name}</p>
+                            <p className="text-xs text-slate-400">{attendee.dm || '-'}</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
-                <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {fields.map(([l, v]) => (
-                        <div key={l} className="rounded-lg bg-slate-800/60 px-2 py-1.5">
-                            <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">{l}</p>
-                            <p className="text-xs font-medium text-slate-200">{v}</p>
+                        <div key={l} className="rounded bg-slate-800/60 px-2 py-1.5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{l}</p>
+                            <p className="truncate text-xs font-medium text-slate-200">{v}</p>
                         </div>
                     ))}
                 </div>
-                <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-slate-700/60 pt-2">
-                    <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="btn-primary text-xs">Kemas Cula</button>
-                    <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="btn-emerald text-xs">Kemaskini Tel</button>
+                {attendee.address && (
+                    <div className="mt-2 rounded bg-slate-800/60 px-2 py-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Alamat</p>
+                        <p className="text-xs font-medium text-slate-200">{attendee.address}</p>
+                    </div>
+                )}
+                <div className="mt-3 flex gap-2 border-t border-slate-700/60 pt-2">
+                    <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
+                    <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
                 </div>
             </div>
         </Modal>
@@ -214,28 +221,29 @@ function AttendeeProgramsModal({ attendee, onClose }) {
     if (!attendee) return null;
     const programs = attendee.joined_programs ?? [];
     return (
-        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="2xl">
+        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
             <div className="p-3">
-                <div className="flex items-start justify-between gap-2 border-b border-slate-700/60 pb-2">
-                    <div><p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Program Disertai</p><h3 className="mt-0.5 text-sm font-bold text-slate-800">{attendee.name}</h3></div>
-                    <button onClick={onClose} className="btn-ghost px-2 py-1 text-xs">Tutup</button>
+                <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{attendee.name}</p>
+                        <p className="text-xs text-slate-400">{programs.length} program</p>
+                    </div>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
-                <div className="mt-2">
-                    {programs.length === 0 ? <div className="card-dashed py-4 text-xs">Tiada</div> : (
-                        <div className="card overflow-hidden">
-                            <ul className="divide-y divide-slate-700/50">
-                                {programs.map((p) => (
-                                    <li key={p.program_id} className="px-2 py-2">
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0">
-                                                <p className="truncate text-xs font-bold text-white">{p.tajuk}</p>
-                                                <p className="text-xs text-slate-400">{p.masa ? `${p.tarikh} • ${p.masa}` : p.tarikh || '-'}</p>
-                                            </div>
-                                            {p.group_name && <span className="badge-amber shrink-0 text-xs">{p.group_name}</span>}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
+                <div className="mt-2 max-h-64 overflow-y-auto">
+                    {programs.length === 0 ? (
+                        <div className="py-4 text-center text-xs text-slate-500">Tiada program</div>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {programs.map((p) => (
+                                <div key={p.program_id} className="flex items-center justify-between gap-2 rounded-md border border-slate-700 bg-slate-800/40 px-2 py-2">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-xs font-bold text-white">{p.tajuk}</p>
+                                        <p className="text-xs text-slate-400">{p.tarikh}</p>
+                                    </div>
+                                    {p.group_name && <span className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">{p.group_name}</span>}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -542,17 +550,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             <td className="table-cell">{a.dm || '-'}</td>
                                                             <td className="table-cell">{a.phone_mobile || a.phone_home || '-'}</td>
                                                             <td className="table-cell-right"><div className="flex justify-end gap-1">
-                                                                <button onClick={() => setSelAttendee(a)} className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-white text-green-700 hover:bg-green-50'}`}>
-                                                                    <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
-                                                                    Detail
+                                                                <button onClick={() => setSelAttendee(a)} title="Detail" className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-white text-green-700 hover:bg-green-50'}`}>
+                                                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
                                                                 </button>
-                                                                <button onClick={() => setSelAttendeeProgs(a)} className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-white px-2 py-1 text-xs font-bold text-amber-600 transition hover:bg-amber-50">
-                                                                    <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
-                                                                    Program
+                                                                <button onClick={() => setSelAttendeeProgs(a)} title="Program" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-amber-200 bg-white text-amber-600 transition hover:bg-amber-50">
+                                                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
                                                                 </button>
-                                                                <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
-                                                                    <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
-                                                                    Padam
+                                                                <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} title="Padam" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
+                                                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
                                                                 </button>
                                                             </div></td>
                                                         </tr>
