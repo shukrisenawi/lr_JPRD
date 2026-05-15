@@ -67,8 +67,8 @@ function PositionManager({ positions }) {
     };
 
     return (
-        <section className="rounded-xl border border-green-200 bg-white shadow-sm">
-            <div className="border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
+        <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
+            <div className="rounded-t-[11px] border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-green-700">
