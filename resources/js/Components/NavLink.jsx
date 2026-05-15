@@ -9,7 +9,7 @@ export default function NavLink({ active = false, variant = 'light', className =
         <Link
             {...props}
             className={
-                'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold tracking-[0.02em] transition ' +
+                'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium tracking-[0.02em] transition ' +
                 classes +
                 ' ' + className
             }

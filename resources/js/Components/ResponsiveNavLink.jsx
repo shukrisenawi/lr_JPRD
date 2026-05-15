@@ -8,7 +8,7 @@ export default function ResponsiveNavLink({ active = false, variant = 'light', c
     return (
         <Link
             {...props}
-            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-[11px] font-bold transition ${classes} ${className}`}
+            className={`flex w-full items-center gap-2 rounded-md px-2 py-1 text-[11px] font-medium transition ${classes} ${className}`}
         >
             {children}
         </Link>
