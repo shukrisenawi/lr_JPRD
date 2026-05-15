@@ -77,26 +77,26 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
 function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare }) {
     const s = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
     return (
-        <div className={`rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 ${isActive ? 'border-emerald-300 ring-1 ring-emerald-100' : 'border-slate-200'}`}>
+        <div className={`rounded-xl border bg-white p-3.5 shadow-sm transition hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 ${isActive ? 'border-emerald-300 ring-1 ring-emerald-100' : 'border-slate-200'}`}>
             <div role="button" tabIndex={0} onClick={() => onSelect(program.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(program.id); } }} className="w-full text-left outline-none">
                 {program.gambar_url && (
-                    <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-4 block w-full overflow-hidden rounded-lg">
-                        <img src={program.gambar_url} alt={program.tajuk} className="h-28 w-full object-cover transition hover:scale-[1.02]" />
+                    <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-3 block w-full overflow-hidden rounded-lg">
+                        <img src={program.gambar_url} alt={program.tajuk} className="h-24 w-full object-cover transition hover:scale-[1.02]" />
                     </button>
                 )}
-                <p className="text-sm font-black uppercase tracking-[0.12em] text-emerald-700">▣ {s}</p>
-                <h3 className="mt-3 text-xl font-black leading-tight text-slate-950">{program.tajuk}</h3>
-                <p className="mt-2 text-sm font-medium text-slate-600">{program.tempat}</p>
-                {program.group_name && <p className="mt-4 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1 text-xs font-black uppercase tracking-[0.12em] text-emerald-700">{program.group_name}</p>}
-                <div className="mt-6 border-t border-slate-200 pt-4">
-                    <p className="text-sm font-medium text-slate-500">{program.attendees_count} hadir</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">▣ {s}</p>
+                <h3 className="mt-2 text-lg font-black leading-tight text-slate-950">{program.tajuk}</h3>
+                <p className="mt-1 text-sm font-medium text-slate-600">{program.tempat}</p>
+                {program.group_name && <p className="mt-2.5 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">{program.group_name}</p>}
+                <div className="mt-3 border-t border-slate-200 pt-2.5">
+                    <p className="text-xs font-medium text-slate-500">{program.attendees_count} hadir</p>
                 </div>
             </div>
-            <div className="mt-3 flex flex-wrap justify-end gap-3">
-                {program.can_share && <button onClick={() => onShare(program)} className="rounded-lg border border-orange-300 bg-white px-5 py-2 text-sm font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
+            <div className="mt-2.5 flex flex-wrap justify-end gap-2">
+                {program.can_share && <button onClick={() => onShare(program)} className="rounded-lg border border-orange-300 bg-white px-3.5 py-1.5 text-xs font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
                 {program.can_edit && <>
-                    <button onClick={() => onEdit(program)} className="rounded-lg border border-emerald-300 bg-white px-5 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">Edit</button>
-                    <button onClick={() => onDelete(program)} disabled={deleting} className="rounded-lg border border-red-400 bg-white px-5 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50">{deleting ? '...' : 'Padam'}</button>
+                    <button onClick={() => onEdit(program)} className="rounded-lg border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50">Edit</button>
+                    <button onClick={() => onDelete(program)} disabled={deleting} className="rounded-lg border border-red-400 bg-white px-3.5 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50">{deleting ? '...' : 'Padam'}</button>
                 </>}
             </div>
         </div>
@@ -217,31 +217,31 @@ function ProgramGroupManager({ groups }) {
     const del = (g) => { if (window.confirm(`Padam group "${g.name}"?`)) router.delete(route('program.groups.destroy', g.id), { preserveScroll: true, onSuccess: () => { if (editingId === g.id) { setEditingId(null); f.reset(); } } }); };
 
     return (
-        <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-            <form onSubmit={submit} className="card p-6 sm:p-8">
+        <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+            <form onSubmit={submit} className="card p-5 sm:p-6">
                 <p className="label-section">{editingId ? 'Edit Group' : 'Tambah Group'}</p>
-                <h3 className="mt-3 text-3xl font-black text-slate-950">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
-                <div className="mt-10">
+                <h3 className="mt-2 text-2xl font-black text-slate-950">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
+                <div className="mt-6">
                     <RequiredLabel htmlFor="gn" value="Nama Group" />
-                    <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="mt-3 w-full py-4" />
+                    <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="mt-2 w-full py-3" />
                     <InputError className="mt-2" message={f.errors.name} />
                 </div>
-                <div className="mt-10 flex justify-end">
+                <div className="mt-6 flex justify-end">
                     {editingId && <button onClick={() => { setEditingId(null); f.reset(); f.clearErrors(); }} className="btn-ghost mr-2">Batal</button>}
-                    <PrimaryButton disabled={f.processing} className="px-8 py-3 text-base">{f.processing ? '...' : editingId ? 'Simpan' : 'Tambah'}</PrimaryButton>
+                    <PrimaryButton disabled={f.processing} className="px-6 py-2.5 text-sm">{f.processing ? '...' : editingId ? 'Simpan' : 'Tambah'}</PrimaryButton>
                 </div>
             </form>
 
-            <section className="card p-6 sm:p-8">
+            <section className="card p-5 sm:p-6">
                 <p className="label-section">Senarai Group</p>
-                <h3 className="mt-3 text-3xl font-black text-slate-950">{groups.length} group</h3>
-                <div className="mt-8 space-y-5">
+                <h3 className="mt-2 text-2xl font-black text-slate-950">{groups.length} group</h3>
+                <div className="mt-5 space-y-3">
                     {groups.length === 0 ? <div className="card-dashed py-6 text-xs">Belum ada</div> : groups.map((g) => (
-                        <div key={g.id} className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-5 py-5 shadow-sm">
-                            <div><p className="text-xl font-black text-slate-950">{g.name}</p><p className="mt-1 text-sm font-medium text-slate-500">{g.programs_count} program</p></div>
-                            <div className="flex gap-3">
-                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700">Edit</button>
-                                <button onClick={() => del(g)} className="rounded-lg bg-gradient-to-r from-rose-600 to-red-500 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-rose-600/20 transition hover:from-rose-500 hover:to-red-400">Padam</button>
+                        <div key={g.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+                            <div><p className="text-lg font-black text-slate-950">{g.name}</p><p className="mt-0.5 text-xs font-medium text-slate-500">{g.programs_count} program</p></div>
+                            <div className="flex gap-2">
+                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-950 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700">Edit</button>
+                                <button onClick={() => del(g)} className="rounded-lg bg-gradient-to-r from-rose-600 to-red-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-rose-600/20 transition hover:from-rose-500 hover:to-red-400">Padam</button>
                             </div>
                         </div>
                     ))}
@@ -393,14 +393,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             <div><p className="label-section">Program</p><h2 className="mt-0.5 heading-lg">Program</h2></div>
         }>
             <Head title="Program" />
-            <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <div className="rounded-xl border border-emerald-100 bg-white p-2 shadow-lg shadow-emerald-900/5">
-                    <div className="grid gap-3 sm:grid-cols-3">
+            <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
+                <div className="rounded-xl border border-emerald-100 bg-white p-1.5 shadow-lg shadow-emerald-900/5">
+                    <div className="grid gap-2 sm:grid-cols-3">
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
-                                className={`flex items-center gap-3 rounded-lg border px-5 py-4 text-left transition ${tab === t.key ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm' : 'border-slate-200 bg-white text-slate-800 hover:border-emerald-200 hover:bg-emerald-50'}`}>
-                                <span className="text-xl text-emerald-700">{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
-                                <span className="text-sm font-black uppercase tracking-[0.06em]">{t.label}</span>
+                                className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-left transition ${tab === t.key ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm' : 'border-slate-200 bg-white text-slate-800 hover:border-emerald-200 hover:bg-emerald-50'}`}>
+                                <span className="text-lg text-emerald-700">{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
+                                <span className="text-xs font-black uppercase tracking-[0.06em]">{t.label}</span>
                             </button>
                         ))}
                     </div>
@@ -408,36 +408,36 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
                 {tab === 'tambah-program' && (
                     <section>
-                        <form onSubmit={submitProgram} className="card p-6 sm:p-7">
+                        <form onSubmit={submitProgram} className="card p-5 sm:p-6">
                             <p className="label-section">{isEditing ? 'Edit Program' : 'Tambah Program'}</p>
-                            <h3 className="mt-1 text-2xl font-black text-slate-950">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
-                            <div className="mt-6 grid gap-5">
-                                <div><RequiredLabel htmlFor="tajuk" value="Tajuk" /><TextInput id="tajuk" required value={f.data.tajuk} onChange={(e) => f.setData('tajuk', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.tajuk} /></div>
-                                <div><RequiredLabel htmlFor="tempat" value="Tempat" /><TextInput id="tempat" required value={f.data.tempat} onChange={(e) => f.setData('tempat', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.tempat} /></div>
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div><RequiredLabel htmlFor="tarikh" value="Tarikh" /><TextInput id="tarikh" type="date" required value={f.data.tarikh} onChange={(e) => f.setData('tarikh', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.tarikh} /></div>
-                                    <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.masa} /></div>
+                            <h3 className="mt-1 text-xl font-black text-slate-950">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
+                            <div className="mt-4 grid gap-3.5">
+                                <div><RequiredLabel htmlFor="tajuk" value="Tajuk" /><TextInput id="tajuk" required value={f.data.tajuk} onChange={(e) => f.setData('tajuk', e.target.value)} className="mt-1.5 w-full py-2.5" /><InputError className="mt-1.5" message={f.errors.tajuk} /></div>
+                                <div><RequiredLabel htmlFor="tempat" value="Tempat" /><TextInput id="tempat" required value={f.data.tempat} onChange={(e) => f.setData('tempat', e.target.value)} className="mt-1.5 w-full py-2.5" /><InputError className="mt-1.5" message={f.errors.tempat} /></div>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <div><RequiredLabel htmlFor="tarikh" value="Tarikh" /><TextInput id="tarikh" type="date" required value={f.data.tarikh} onChange={(e) => f.setData('tarikh', e.target.value)} className="mt-1.5 w-full py-2.5" /><InputError className="mt-1.5" message={f.errors.tarikh} /></div>
+                                    <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="mt-1.5 w-full py-2.5" /><InputError className="mt-1.5" message={f.errors.masa} /></div>
                                 </div>
-                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-2 py-3"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1.5" message={f.errors.group_id} /></div>
+                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1.5 py-2.5"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1.5" message={f.errors.group_id} /></div>
                                 <div>
                                     <InputLabel htmlFor="gambar" value="Gambar" />
-                                    <div className="mt-2 rounded-lg border border-emerald-100 bg-white p-3 shadow-sm">
-                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-28 w-full rounded-lg object-cover ring-1 ring-emerald-100 sm:w-48" /> : <div className="flex h-28 w-full items-center justify-center rounded-lg border border-dashed border-emerald-200 bg-white text-[11px] font-black uppercase tracking-[0.12em] text-slate-500 sm:w-48">Tiada</div>}
+                                    <div className="mt-1.5 rounded-lg border border-emerald-100 bg-white p-2.5 shadow-sm">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-20 w-full rounded-lg object-cover ring-1 ring-emerald-100 sm:w-36" /> : <div className="flex h-20 w-full items-center justify-center rounded-lg border border-dashed border-emerald-200 bg-white text-[10px] font-black uppercase tracking-[0.12em] text-slate-500 sm:w-36">Tiada</div>}
                                             <div className="min-w-0 flex-1">
                                                 <input id="gambar" ref={imgRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
-                                                    className="block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border file:border-emerald-200 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-emerald-700 hover:file:bg-emerald-100"
+                                                    className="block w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border file:border-emerald-200 file:bg-emerald-50 file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-emerald-700 hover:file:bg-emerald-100"
                                                     onChange={(e) => f.setData('gambar', e.target.files?.[0] ?? null)} />
-                                                <p className="mt-2 text-xs font-medium text-slate-500">PNG/JPG/WEBP sehingga 2MB</p>
+                                                <p className="mt-1 text-[10px] font-medium text-slate-500">PNG/JPG/WEBP sehingga 2MB</p>
                                                 <InputError className="mt-1.5" message={f.errors.gambar} />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-6 flex justify-center">
+                            <div className="mt-4 flex justify-center">
                                 {isEditing && <button onClick={cancelEdit} className="btn-ghost mr-2">Batal</button>}
-                                <PrimaryButton disabled={f.processing} className="px-8 py-3 text-sm">{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
+                                <PrimaryButton disabled={f.processing} className="px-6 py-2.5 text-sm">{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
                             </div>
                         </form>
                     </section>
@@ -508,9 +508,9 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                         </section>
                     </section>
                 ) : (
-                    <div className="card p-6">
+                    <div className="card p-4">
                         <p className="label-section">Senarai Program</p>
-                        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                             {programs.length === 0 ? <div className="card-dashed py-6 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
                                 <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
                                     onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg} />
