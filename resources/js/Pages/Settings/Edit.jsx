@@ -39,16 +39,10 @@ function PemilihUploadPanel({ report }) {
 
     return (
         <section className="card p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p className="label-section">Data Pemilih</p>
-                    <h3 className="mt-1 text-sm font-bold text-slate-800">Fail Pemilih Semasa</h3>
-                    <p className="mt-1 text-xs text-slate-500">Fail ini digunakan oleh sistem untuk uruskan data pemilih. Upload baharu akan update rekod IC yang sama dan set rekod yang tiada dalam fail baharu sebagai inaktif.</p>
-                </div>
-                <button type="button" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold uppercase tracking-[0.08em] text-slate-700 shadow-sm transition hover:bg-green-50 hover:text-green-700">
-                    <Icon name="file" />
-                    Panduan Upload
-                </button>
+            <div>
+                <p className="label-section">Data Pemilih</p>
+                <h3 className="mt-1 text-sm font-bold text-slate-800">Fail Pemilih Semasa</h3>
+                <p className="mt-1 text-xs text-slate-500">Fail ini digunakan oleh sistem untuk uruskan data pemilih. Upload baharu akan update rekod IC yang sama dan set rekod yang tiada dalam fail baharu sebagai inaktif.</p>
             </div>
 
             <form onSubmit={submit} className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
