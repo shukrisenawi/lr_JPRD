@@ -338,21 +338,21 @@ function SearchVoterPanel({ selectedProgram }) {
                     <p className="label-section">Carian Pemilih</p>
                     <h3 className="mt-0.5 heading-md">{selectedProgram.tajuk}</h3>
                     <div className="relative mt-2">
-                        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555..." className="input-field py-3 pl-12 pr-12 focus:ring-2" />
+                        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555..." className="input-field py-2 pl-9 pr-9 focus:ring-2" />
                         {q && (
-                            <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
-                                <XIcon />
+                            <button type="button" onClick={clearSearch} className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
+                                <XIcon className="h-3 w-3" />
                             </button>
                         )}
                         {(searching || suggestions.length > 0) && (
-                            <div className="absolute left-0 right-0 top-full z-40 mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
-                                {searching ? <div className="px-4 py-3 text-sm font-semibold text-slate-500">Mencari...</div> : suggestions.map((v) => (
-                                    <button key={v.id} onClick={() => pick(v)} className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.9fr)_auto] items-center gap-4 border-b border-slate-200 px-4 py-3 text-left transition hover:bg-green-50 last:border-b-0">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-700"><UserIcon /></div>
-                                        <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="mt-1 text-xs font-medium text-slate-600">IC: {v.no_kp || '-'} <span className="mx-2 text-slate-400">|</span> HP: {v.phone_mobile || '-'}</p></div>
-                                        <div className="min-w-0 text-left"><p className="flex items-center gap-2 truncate text-xs font-bold text-slate-800"><MapPinIcon className="h-4 w-4 shrink-0 text-green-700" /> {v.dm || '-'}</p><p className="mt-1 truncate text-xs font-medium text-slate-600">{v.locality || '-'}</p></div>
-                                        <ChevronRightIcon className="h-5 w-5 text-slate-500" />
+                            <div className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
+                                {searching ? <div className="px-3 py-2 text-xs font-medium text-slate-500">Mencari...</div> : suggestions.map((v) => (
+                                    <button key={v.id} onClick={() => pick(v)} className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(8rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-3 py-2.5 text-left transition hover:bg-green-50 last:border-b-0">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-50 text-green-700"><UserIcon className="h-4 w-4" /></div>
+                                        <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-[10px] font-medium text-slate-500">IC: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
+                                        <div className="min-w-0 text-left"><p className="truncate text-xs font-bold text-slate-800">{v.dm || '-'}</p><p className="truncate text-[10px] font-medium text-slate-500">{v.locality || '-'}</p></div>
+                                        <ChevronRightIcon className="h-3.5 w-3.5 text-slate-400" />
                                     </button>
                                 ))}
                             </div>
