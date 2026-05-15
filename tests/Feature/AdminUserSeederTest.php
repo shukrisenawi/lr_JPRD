@@ -13,7 +13,7 @@ it('creates or updates the default admin user from seeder', function () {
     $admin = User::query()->where('email', 'admin@jprd')->first();
 
     expect($admin)->not->toBeNull();
-    expect($admin->name)->toBe('Admin LR JPRD');
+    expect($admin->name)->toBe('Admin PAS SIK');
     expect($admin->email_verified_at)->not->toBeNull();
     expect(Hash::check('123', $admin->password))->toBeTrue();
 });
