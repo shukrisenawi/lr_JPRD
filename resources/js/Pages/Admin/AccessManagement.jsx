@@ -67,6 +67,7 @@ function UserCard({ user, roles, currentUserId }) {
     const cancel = () => { setData({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '' }); setEditing(false); };
     const del = () => { if (window.confirm(`Padam ${user.name}?`)) router.delete(route('admin.access.users.destroy', user.id), { preserveScroll: true }); };
     const imp = () => { if (window.confirm(`Masuk sebagai ${user.name}?`)) router.post(route('admin.access.users.impersonate', user.id), {}, { replace: true }); };
+    const resetPw = () => { if (window.confirm(`Reset kata laluan ${user.name} kepada 123?`)) router.post(route('admin.access.users.reset-password', user.id), {}, { preserveScroll: true }); };
 
     return (
         <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 shadow-sm">
@@ -77,6 +78,7 @@ function UserCard({ user, roles, currentUserId }) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {user.can_impersonate && <button onClick={imp} className="inline-flex items-center gap-1.5 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-600 transition hover:bg-amber-50"><Icon name="login" className="h-3.5 w-3.5" />Masuk</button>}
+                    {!isMe && <button onClick={resetPw} className="inline-flex items-center gap-1.5 rounded-md border border-sky-300 bg-white px-3 py-1.5 text-xs font-bold text-sky-600 transition hover:bg-sky-50"><Icon name="lock" className="h-3.5 w-3.5" />Reset</button>}
                     <button onClick={() => setEditing((p) => !p)} className="inline-flex items-center gap-1.5 rounded-md border border-green-300 bg-white px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-50"><Icon name="edit" className="h-3.5 w-3.5" />{editing ? 'Tutup' : 'Edit'}</button>
                     {!isMe ? <button onClick={del} className="inline-flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-50"><Icon name="trash" className="h-3.5 w-3.5" />Padam</button> : <span className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-green-700 to-green-600 px-3 py-1.5 text-xs font-bold text-white"><Icon name="user" className="h-3.5 w-3.5" />Akaun saya</span>}
                 </div>

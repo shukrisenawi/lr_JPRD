@@ -186,6 +186,26 @@ class AccessManagementController extends Controller
             ->with('success', 'Anda kembali sebagai master admin.');
     }
 
+    public function resetPassword(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($request->user()?->isMasterAdmin(), 403);
+
+        if ($request->user()->is($user)) {
+            return redirect()
+                ->route('admin.access.index')
+                ->with('error', 'Anda tidak boleh reset kata laluan akaun sendiri.');
+        }
+
+        $user->update([
+            'password' => Hash::make('123'),
+            'must_change_password' => true,
+        ]);
+
+        return redirect()
+            ->route('admin.access.index')
+            ->with('success', "Kata laluan {$user->name} telah direset kepada 123.");
+    }
+
     public function storeRole(Request $request): RedirectResponse
     {
         abort_unless($request->user()?->isMasterAdmin(), 403);
