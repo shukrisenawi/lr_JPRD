@@ -519,52 +519,37 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                             </div>
                         </div>
                         <SearchVoterPanel selectedProgram={selectedProgram} />
-                        <section className="card p-3">
+<section className="card p-3">
                             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Kehadiran</p>
-                            <h3 className="mt-0.5 text-sm font-bold text-slate-800">{selectedProgram.tajuk}</h3>
+                            <h3 className="mt-0.5 text-sm font-bold text-slate-800">{selectedProgram.attendees.length} orang</h3>
                             <div className="mt-3">
                                 {selectedProgram.attendees.length === 0 ? <div className="card-dashed py-4 text-xs">Tiada</div> : (
-                                    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full divide-y divide-slate-200 text-xs">
-                                                <thead className="table-header"><tr>
-                                                    <th className="table-head-cell">Nama</th>
-                                                    <th className="table-head-cell">UDM</th>
-                                                    <th className="table-head-cell">Telefon</th>
-                                                    <th className="table-head-cell-right">Tindakan</th>
-                                                </tr></thead>
-                                                <tbody className="table-body">
-                                                    {selectedProgram.attendees.map((a) => (
-                                                        <tr key={a.id} className={selAttendee?.id === a.id ? 'bg-green-50 text-green-900' : 'table-row'}>
-                                                            <td className="table-cell font-semibold">
-                                                                <div className="font-bold text-slate-950">{a.name}</div>
-                                                                 {a.group_badges?.length > 0 && <div className="mt-0.5 flex flex-wrap gap-0.5">{a.group_badges.map((b) => <span key={`${a.id}-${b.name}`} className="rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-bold text-amber-700">{b.name}{b.count > 1 ? ` - ${b.count}` : ''}</span>)}</div>}
-                                                                 {a.committee_badges?.length > 0 && <div className="mt-0.5 flex flex-wrap gap-0.5">
-                                                                     {a.committee_badges.map((b, index) => (
-                                                                         <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-xs font-bold text-sky-700">
-                                                                             {b.label} • {committeeScopeLabel(b)}
-                                                                         </span>
-                                                                     ))}
-                                                                  </div>}
-                                                            </td>
-                                                            <td className="table-cell">{a.dm || '-'}</td>
-                                                            <td className="table-cell">{a.phone_mobile || a.phone_home || '-'}</td>
-                                                            <td className="table-cell-right"><div className="flex justify-end gap-1">
-                                                                <button onClick={() => setSelAttendee(a)} title="Detail" className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-white text-green-700 hover:bg-green-50'}`}>
-                                                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
-                                                                </button>
-                                                                <button onClick={() => setSelAttendeeProgs(a)} title="Program" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-amber-200 bg-white text-amber-600 transition hover:bg-amber-50">
-                                                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
-                                                                </button>
-                                                                <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} title="Padam" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
-                                                                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
-                                                                </button>
-                                                            </div></td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                        {selectedProgram.attendees.map((a) => (
+                                            <div key={a.id} className={`rounded-md border p-2.5 transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-white hover:border-green-200'}`}>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="truncate text-xs font-bold text-slate-800">{a.name}</p>
+                                                        <p className="text-xs text-slate-500">{a.dm || '-'}</p>
+                                                        <p className="text-xs text-slate-400">{a.phone_mobile || a.phone_home || '-'}</p>
+                                                    </div>
+                                                    <div className="flex shrink-0 gap-1">
+                                                        <button onClick={() => setSelAttendee(a)} title="Detail" className={`inline-flex h-5 w-5 items-center justify-center rounded border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-white text-green-700 hover:bg-green-50'}`}>
+                                                            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
+                                                        </button>
+                                                        <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} title="Padam" className="inline-flex h-5 w-5 items-center justify-center rounded border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
+                                                            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {(a.group_badges?.length > 0 || a.committee_badges?.length > 0) && (
+                                                    <div className="mt-2 flex flex-wrap gap-1">
+                                                        {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
+                                                        {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-sky-200 bg-sky-50 px-1 py-0.5 text-[10px] font-bold text-sky-700">{b.label}</span>)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
