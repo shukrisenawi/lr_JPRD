@@ -3,7 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 function PemilihUploadPanel({ report }) {
@@ -54,6 +54,8 @@ function PemilihUploadPanel({ report }) {
 export default function Edit({ settings }) {
     const { data, setData, put, processing, errors } = useForm({ google_sheet_url: settings.google_sheet_url ?? '' });
     const submit = (e) => { e.preventDefault(); put(route('settings.update')); };
+    const { auth } = usePage().props;
+    const allowedModules = auth.user?.allowed_modules ?? [];
 
     return (
         <AuthenticatedLayout header={
@@ -61,18 +63,20 @@ export default function Edit({ settings }) {
         }>
             <Head title="Settings" />
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
-                <PemilihUploadPanel report={settings.pemilih_report} />
-                <div className="card p-5 sm:p-6">
-                    <form onSubmit={submit} className="space-y-4">
-                        <div>
-                            <InputLabel htmlFor="url" value="URL Google Sheet" />
-                            <TextInput id="url" type="url" value={data.google_sheet_url} onChange={(e) => setData('google_sheet_url', e.target.value)} className="input-field mt-1.5" placeholder="https://docs.google.com/spreadsheets/d/..." />
-                            <InputError className="mt-1.5" message={errors.google_sheet_url} />
-                        </div>
-                        <div className="rounded-lg bg-slate-800/60 px-4 py-3 text-xs text-slate-400">Sistem tukar pautan ke CSV auto. Pastikan fail public.</div>
-                        <div className="flex justify-end"><PrimaryButton className="btn-primary-lg" disabled={processing}>{processing ? 'Menyimpan...' : 'Simpan'}</PrimaryButton></div>
-                    </form>
-                </div>
+                {allowedModules.includes('laporan') && <PemilihUploadPanel report={settings.pemilih_report} />}
+                {allowedModules.includes('dashboard') && (
+                    <div className="card p-5 sm:p-6">
+                        <form onSubmit={submit} className="space-y-4">
+                            <div>
+                                <InputLabel htmlFor="url" value="URL Google Sheet" />
+                                <TextInput id="url" type="url" value={data.google_sheet_url} onChange={(e) => setData('google_sheet_url', e.target.value)} className="input-field mt-1.5" placeholder="https://docs.google.com/spreadsheets/d/..." />
+                                <InputError className="mt-1.5" message={errors.google_sheet_url} />
+                            </div>
+                            <div className="rounded-lg bg-slate-800/60 px-4 py-3 text-xs text-slate-400">Sistem tukar pautan ke CSV auto. Pastikan fail public.</div>
+                            <div className="flex justify-end"><PrimaryButton className="btn-primary-lg" disabled={processing}>{processing ? 'Menyimpan...' : 'Simpan'}</PrimaryButton></div>
+                        </form>
+                    </div>
+                )}
             </div>
         </AuthenticatedLayout>
     );
