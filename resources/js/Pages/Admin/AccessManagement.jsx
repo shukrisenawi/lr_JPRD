@@ -39,14 +39,14 @@ function RoleCard({ role, modules }) {
                 {role.is_master_admin && <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800">Akses penuh</span>}
             </div>
             <div className="mt-3"><InputLabel htmlFor={`rn-${role.id}`} value="Nama" /><TextInput id={`rn-${role.id}`} value={data.name} onChange={(e) => setData('name', e.target.value)} className="input-field mt-1" disabled={role.is_master_admin} /><InputError className="mt-1" message={errors.name} /></div>
-            <div className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-3 grid gap-1.5 grid-cols-2">
                 {modules.map((m) => {
                     const checked = data.access_modules.includes(m.key) || role.is_master_admin;
                     return (
                         <label key={m.key} className={`rounded-md border p-2 transition ${checked ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'} ${role.is_master_admin ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
-                            <div className="flex items-start gap-2">
-                                <input type="checkbox" checked={checked} onChange={() => toggle(m.key)} disabled={role.is_master_admin} className="mt-0.5 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                                <div><p className="text-xs font-bold text-slate-900">{m.label}</p><p className="text-xs text-slate-500">{m.description}</p></div>
+                            <div className="flex items-center gap-2">
+                                <input type="checkbox" checked={checked} onChange={() => toggle(m.key)} disabled={role.is_master_admin} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                <p className="text-xs font-bold text-slate-900">{m.label}</p>
                             </div>
                         </label>
                     );
