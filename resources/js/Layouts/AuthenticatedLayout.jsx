@@ -153,13 +153,13 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 <header className={isLight ? 'relative overflow-hidden pt-5' : 'pt-4'}>
                     {isLight && (
                         <>
-                            <div className="pointer-events-none absolute right-12 top-0 hidden h-28 w-[30rem] -skew-x-12 bg-gradient-to-r from-emerald-50 via-green-50 to-transparent lg:block" />
-                            <div className="pointer-events-none absolute right-80 top-16 hidden h-2 w-2 rounded-full bg-emerald-500 lg:block" />
-                            <div className="pointer-events-none absolute right-60 top-12 hidden h-2.5 w-2.5 rotate-45 rounded-sm bg-amber-400 lg:block" />
-                            <div className="pointer-events-none absolute right-44 top-10 hidden h-1.5 w-1.5 rotate-45 rounded-sm bg-lime-500 lg:block" />
+                            <div className="pointer-events-none absolute right-16 top-0 z-0 hidden h-24 w-[24rem] -skew-x-12 bg-gradient-to-r from-emerald-50 via-green-50 to-transparent lg:block" />
+                            <div className="pointer-events-none absolute right-80 top-16 z-0 hidden h-2 w-2 rounded-full bg-emerald-500 lg:block" />
+                            <div className="pointer-events-none absolute right-60 top-12 z-0 hidden h-2.5 w-2.5 rotate-45 rounded-sm bg-amber-400 lg:block" />
+                            <div className="pointer-events-none absolute right-44 top-10 z-0 hidden h-1.5 w-1.5 rotate-45 rounded-sm bg-lime-500 lg:block" />
                         </>
                     )}
-                    <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">{header}</div>
+                    <div className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">{header}</div>
                 </header>
             )}
 
