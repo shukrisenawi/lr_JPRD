@@ -7,6 +7,9 @@
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
+        <link rel="icon" type="image/png" href="/images/logo-pas-sik.png">
+        <link rel="shortcut icon" type="image/png" href="/images/logo-pas-sik.png">
+
         <!-- Scripts -->
         @routes
         @viteReactRefresh
