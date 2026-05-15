@@ -8,9 +8,7 @@ export default function GuestLayout({ children }) {
                 <div className="card hidden flex-col justify-between bg-gradient-to-br from-green-800 to-emerald-900 p-8 lg:flex">
                     <div>
                         <Link href={route('dashboard')} className="inline-flex items-center gap-2.5">
-                            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-green-600 bg-white/10 shadow-sm shadow-green-500/30">
-                                <ApplicationLogo className="h-11 w-11 object-contain" />
-                            </div>
+                            <ApplicationLogo className="h-12 w-12 object-contain" />
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-300">PAS SIK</p>
                                 <h1 className="text-base font-extrabold text-white">Panel Semakan Data Cula</h1>
@@ -34,9 +32,7 @@ export default function GuestLayout({ children }) {
 
                 <div className="card overflow-hidden border-green-200 bg-white px-5 py-6 sm:px-6">
                     <div className="mb-5 flex items-center gap-2.5 lg:hidden">
-                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-green-600 bg-white/10">
-                            <ApplicationLogo className="h-9 w-9 object-contain" />
-                        </div>
+                        <ApplicationLogo className="h-10 w-10 object-contain" />
                         <div>
                             <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-300">PAS SIK</p>
                             <h1 className="text-sm font-extrabold text-white">Panel Semakan Data Cula</h1>
