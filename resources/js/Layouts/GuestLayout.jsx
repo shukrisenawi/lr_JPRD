@@ -8,7 +8,7 @@ export default function GuestLayout({ children }) {
                 <div className="card hidden flex-col justify-between bg-gradient-to-br from-slate-800 to-slate-900 p-8 lg:flex">
                     <div>
                         <Link href={route('dashboard')} className="inline-flex items-center gap-2.5">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/30">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-white shadow-sm shadow-green-600/20">
                                 <ApplicationLogo className="h-5 w-5 fill-current" />
                             </div>
                             <div>
@@ -18,7 +18,7 @@ export default function GuestLayout({ children }) {
                         </Link>
 
                         <div className="mt-10 space-y-4">
-                            <h2 className="text-3xl font-extrabold leading-tight text-white">
+                            <h2 className="text-2xl font-bold leading-tight text-white">
                                 Log masuk admin untuk semak data Google Sheet dengan lebih pantas.
                             </h2>
                             <p className="max-w-md text-sm leading-7 text-slate-400">
@@ -34,7 +34,7 @@ export default function GuestLayout({ children }) {
 
                 <div className="card overflow-hidden px-5 py-6 sm:px-6">
                     <div className="mb-5 flex items-center gap-2.5 lg:hidden">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-white">
                             <ApplicationLogo className="h-4 w-4 fill-current" />
                         </div>
                         <div>

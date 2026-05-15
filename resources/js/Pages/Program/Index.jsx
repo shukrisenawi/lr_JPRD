@@ -121,17 +121,17 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
 function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare }) {
     const s = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
     return (
-        <div className={`rounded-xl border bg-white p-3.5 shadow-sm transition hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 ${isActive ? 'border-emerald-300 ring-1 ring-emerald-100' : 'border-slate-200'}`}>
+        <div className={`rounded-lg border bg-white p-3.5 shadow-sm transition hover:border-green-200 ${isActive ? 'border-green-200' : 'border-slate-200'}`}>
             <div role="button" tabIndex={0} onClick={() => onSelect(program.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(program.id); } }} className="w-full text-left outline-none">
                 {program.gambar_url && (
                     <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-3 block w-full overflow-hidden rounded-lg">
                         <img src={program.gambar_url} alt={program.tajuk} className="h-24 w-full object-cover transition hover:scale-[1.02]" />
                     </button>
                 )}
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-700">▣ {s}</p>
-                <h3 className="mt-2 text-lg font-black leading-tight text-slate-950">{program.tajuk}</h3>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-green-700">▣ {s}</p>
+                <h3 className="mt-2 text-base font-bold leading-tight text-slate-800">{program.tajuk}</h3>
                 <p className="mt-1 text-sm font-medium text-slate-600">{program.tempat}</p>
-                {program.group_name && <p className="mt-2.5 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">{program.group_name}</p>}
+                {program.group_name && <p className="mt-2.5 inline-flex rounded-full border border-slate-200 bg-green-50 px-3 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-green-700">{program.group_name}</p>}
                 <div className="mt-3 border-t border-slate-200 pt-2.5">
                     <p className="text-xs font-medium text-slate-500">{program.attendees_count} hadir</p>
                 </div>
@@ -139,7 +139,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
             <div className="mt-2.5 flex flex-wrap justify-end gap-2">
                 {program.can_share && <button onClick={() => onShare(program)} className="rounded-lg border border-orange-300 bg-white px-3.5 py-1.5 text-xs font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
                 {program.can_edit && <>
-                    <button onClick={() => onEdit(program)} className="rounded-lg border border-emerald-300 bg-white px-3.5 py-1.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50">Edit</button>
+                    <button onClick={() => onEdit(program)} className="rounded-lg border border-green-200 bg-white px-3.5 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
                     <button onClick={() => onDelete(program)} disabled={deleting} className="rounded-lg border border-red-400 bg-white px-3.5 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50">{deleting ? '...' : 'Padam'}</button>
                 </>}
             </div>
@@ -157,19 +157,19 @@ function VoterDetailCard({ voter, onAdd, adding }) {
         ['Bangsa', voter.race || '-'], ['Status Culaan', voter.cula_display_label || voter.cula_code || '-'], ['Alamat', voter.address || '-'],
     ];
     return (
-        <section className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
-            <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <p className="label-section">Pemilih Dipilih</p>
-                    <h3 className="mt-1 truncate text-2xl font-black uppercase leading-tight text-slate-950 sm:text-3xl">{voter.name}</h3>
+                    <h3 className="mt-1 truncate text-lg font-bold uppercase leading-tight text-slate-800 sm:text-2xl">{voter.name}</h3>
                 </div>
-                <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald-lg shrink-0 px-5 py-3 text-sm">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
+                <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald-lg shrink-0 px-5 py-2 text-sm">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
             </div>
             <div className="grid gap-3 p-5 sm:grid-cols-2">
                 {fields.map(([l, v]) => (
                     <div key={l} className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.03)]">
-                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">{l}</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-950">{v || '-'}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-green-700">{l}</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-800">{v || '-'}</p>
                     </div>
                 ))}
             </div>
@@ -268,10 +268,10 @@ function ProgramGroupManager({ groups }) {
         <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
             <form onSubmit={submit} className="card p-5 sm:p-6">
                 <p className="label-section">{editingId ? 'Edit Group' : 'Tambah Group'}</p>
-                <h3 className="mt-2 text-2xl font-black text-slate-950">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
+                <h3 className="mt-2 text-lg font-bold text-slate-800">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
                 <div className="mt-6">
                     <RequiredLabel htmlFor="gn" value="Nama Group" />
-                    <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="mt-2 w-full py-3" />
+                    <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="mt-2 w-full py-2" />
                     <InputError className="mt-2" message={f.errors.name} />
                 </div>
                 <div className="mt-6 flex justify-end">
@@ -282,14 +282,14 @@ function ProgramGroupManager({ groups }) {
 
             <section className="card p-5 sm:p-6">
                 <p className="label-section">Senarai Group</p>
-                <h3 className="mt-2 text-2xl font-black text-slate-950">{groups.length} group</h3>
+                <h3 className="mt-2 text-lg font-bold text-slate-800">{groups.length} group</h3>
                 <div className="mt-5 space-y-3">
                     {groups.length === 0 ? <div className="card-dashed py-6 text-xs">Belum ada</div> : groups.map((g) => (
                         <div key={g.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
-                            <div><p className="text-lg font-black text-slate-950">{g.name}</p><p className="mt-0.5 text-xs font-medium text-slate-500">{g.programs_count} program</p></div>
+                            <div><p className="text-base font-bold text-slate-800">{g.name}</p><p className="mt-0.5 text-xs font-medium text-slate-500">{g.programs_count} program</p></div>
                             <div className="flex gap-2">
-                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-950 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700">Edit</button>
-                                <button onClick={() => del(g)} className="rounded-lg bg-gradient-to-r from-rose-600 to-red-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-rose-600/20 transition hover:from-rose-500 hover:to-red-400">Padam</button>
+                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
+                                <button onClick={() => del(g)} className="rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:from-rose-500 hover:to-red-400">Padam</button>
                             </div>
                         </div>
                     ))}
@@ -339,19 +339,19 @@ function SearchVoterPanel({ selectedProgram }) {
                     <h3 className="mt-0.5 heading-md">{selectedProgram.tajuk}</h3>
                     <div className="relative mt-2">
                         <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555..." className="input-field py-3 pl-12 pr-12 ring-1 ring-emerald-200 focus:ring-2" />
+                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555..." className="input-field py-3 pl-12 pr-12 focus:ring-2" />
                         {q && (
-                            <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100">
+                            <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
                                 <XIcon />
                             </button>
                         )}
                         {(searching || suggestions.length > 0) && (
-                            <div className="absolute left-0 right-0 top-full z-40 mt-3 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-xl shadow-emerald-900/10">
-                                {searching ? <div className="px-5 py-4 text-sm font-semibold text-slate-500">Mencari...</div> : suggestions.map((v) => (
-                                    <button key={v.id} onClick={() => pick(v)} className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.9fr)_auto] items-center gap-4 border-b border-slate-200 px-5 py-4 text-left transition hover:bg-emerald-50/60 last:border-b-0">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><UserIcon /></div>
-                                        <div className="min-w-0"><p className="truncate text-sm font-black text-slate-950">{v.name}</p><p className="mt-1 text-xs font-medium text-slate-600">IC: {v.no_kp || '-'} <span className="mx-2 text-slate-400">|</span> HP: {v.phone_mobile || '-'}</p></div>
-                                        <div className="min-w-0 text-left"><p className="flex items-center gap-2 truncate text-sm font-black text-slate-950"><MapPinIcon className="h-4 w-4 shrink-0 text-emerald-700" /> {v.dm || '-'}</p><p className="mt-1 truncate text-xs font-medium text-slate-600">{v.locality || '-'}</p></div>
+                            <div className="absolute left-0 right-0 top-full z-40 mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
+                                {searching ? <div className="px-4 py-3 text-sm font-semibold text-slate-500">Mencari...</div> : suggestions.map((v) => (
+                                    <button key={v.id} onClick={() => pick(v)} className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.9fr)_auto] items-center gap-4 border-b border-slate-200 px-4 py-3 text-left transition hover:bg-green-50 last:border-b-0">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-50 text-green-700"><UserIcon /></div>
+                                        <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="mt-1 text-xs font-medium text-slate-600">IC: {v.no_kp || '-'} <span className="mx-2 text-slate-400">|</span> HP: {v.phone_mobile || '-'}</p></div>
+                                        <div className="min-w-0 text-left"><p className="flex items-center gap-2 truncate text-xs font-bold text-slate-800"><MapPinIcon className="h-4 w-4 shrink-0 text-green-700" /> {v.dm || '-'}</p><p className="mt-1 truncate text-xs font-medium text-slate-600">{v.locality || '-'}</p></div>
                                         <ChevronRightIcon className="h-5 w-5 text-slate-500" />
                                     </button>
                                 ))}
@@ -451,12 +451,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         }>
             <Head title="Program" />
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
-                <div className="rounded-xl border border-emerald-100 bg-white p-1.5 shadow-lg shadow-emerald-900/5">
+                <div className="rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm">
                     <div className="grid gap-2 sm:grid-cols-3">
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
-                                className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-left transition ${tab === t.key ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm' : 'border-slate-200 bg-white text-slate-800 hover:border-emerald-200 hover:bg-emerald-50'}`}>
-                                <span className="text-lg text-emerald-700">{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
+                                className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-left transition ${tab === t.key ? 'border-emerald-500 bg-green-50 text-green-700 shadow-sm' : 'border-slate-200 bg-white text-slate-800 hover:border-green-200 hover:bg-green-50'}`}>
+                                <span className="text-lg text-green-700">{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
                                 <span className="text-xs font-black uppercase tracking-[0.06em]">{t.label}</span>
                             </button>
                         ))}
@@ -467,7 +467,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                     <section>
                         <form onSubmit={submitProgram} className="card p-5 sm:p-6">
                             <p className="label-section">{isEditing ? 'Edit Program' : 'Tambah Program'}</p>
-                            <h3 className="mt-1 text-xl font-black text-slate-950">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
+                            <h3 className="mt-1 text-base font-bold text-slate-800">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
                             <div className="mt-4 grid gap-3.5">
                                 <div><RequiredLabel htmlFor="tajuk" value="Tajuk" /><TextInput id="tajuk" required value={f.data.tajuk} onChange={(e) => f.setData('tajuk', e.target.value)} className="mt-1.5 w-full py-2.5" /><InputError className="mt-1.5" message={f.errors.tajuk} /></div>
                                 <div><RequiredLabel htmlFor="tempat" value="Tempat" /><TextInput id="tempat" required value={f.data.tempat} onChange={(e) => f.setData('tempat', e.target.value)} className="mt-1.5 w-full py-2.5" /><InputError className="mt-1.5" message={f.errors.tempat} /></div>
@@ -478,12 +478,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1.5 py-2.5"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1.5" message={f.errors.group_id} /></div>
                                 <div>
                                     <InputLabel htmlFor="gambar" value="Gambar" />
-                                    <div className="mt-1.5 rounded-lg border border-emerald-100 bg-white p-2.5 shadow-sm">
+                                    <div className="mt-1.5 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-20 w-full rounded-lg object-cover ring-1 ring-emerald-100 sm:w-36" /> : <div className="flex h-20 w-full items-center justify-center rounded-lg border border-dashed border-emerald-200 bg-white text-[10px] font-black uppercase tracking-[0.12em] text-slate-500 sm:w-36">Tiada</div>}
+                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-20 w-full rounded-lg object-cover sm:w-36" /> : <div className="flex h-20 w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-[10px] font-black uppercase tracking-[0.12em] text-slate-500 sm:w-36">Tiada</div>}
                                             <div className="min-w-0 flex-1">
                                                 <input id="gambar" ref={imgRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
-                                                    className="block w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border file:border-emerald-200 file:bg-emerald-50 file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-emerald-700 hover:file:bg-emerald-100"
+                                                    className="block w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 file:mr-3 file:rounded-lg file:border file:border-slate-200 file:bg-green-50 file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-green-700 hover:file:bg-green-100"
                                                     onChange={(e) => f.setData('gambar', e.target.files?.[0] ?? null)} />
                                                 <p className="mt-1 text-[10px] font-medium text-slate-500">PNG/JPG/WEBP sehingga 2MB</p>
                                                 <InputError className="mt-1.5" message={f.errors.gambar} />

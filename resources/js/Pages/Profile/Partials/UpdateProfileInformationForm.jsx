@@ -24,7 +24,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
             <form onSubmit={submit} className="mt-4 space-y-4">
                 <div className="rounded-lg border border-slate-700 bg-slate-800/60 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                        {preview ? <img src={preview} alt="" className="h-16 w-16 rounded-lg object-cover shadow-sm" /> : <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 text-lg font-bold text-white">{user.name.charAt(0).toUpperCase()}</div>}
+                        {preview ? <img src={preview} alt="" className="h-16 w-16 rounded-lg object-cover shadow-sm" /> : <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-lg font-bold text-white">{user.name.charAt(0).toUpperCase()}</div>}
                         <div className="min-w-0 flex-1">
                             <InputLabel htmlFor="avatar" value="Avatar" />
                             <input id="avatar" type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
@@ -38,12 +38,12 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                 <div><InputLabel htmlFor="name" value="Name" /><TextInput id="name" className="input-field mt-1" value={data.name} onChange={(e) => setData('name', e.target.value)} required isFocused autoComplete="name" /><InputError className="mt-1.5" message={errors.name} /></div>
                 <div><InputLabel htmlFor="email" value="Email" /><TextInput id="email" type="email" className="input-field mt-1" value={data.email} onChange={(e) => setData('email', e.target.value)} required autoComplete="username" /><InputError className="mt-1.5" message={errors.email} /></div>
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div><p className="text-xs text-slate-400">Email belum disahkan. <Link href={route('verification.send')} method="post" as="button" className="text-violet-400 underline hover:text-violet-300">Hantar semula.</Link></p>{status === 'verification-link-sent' && <p className="mt-1 text-xs text-emerald-400">Pautan baru telah dihantar.</p>}</div>
+                    <div><p className="text-xs text-slate-400">Email belum disahkan. <Link href={route('verification.send')} method="post" as="button" className="text-green-500 underline hover:text-green-400">Hantar semula.</Link></p>{status === 'verification-link-sent' && <p className="mt-1 text-xs text-green-600">Pautan baru telah dihantar.</p>}</div>
                 )}
                 <div className="flex items-center gap-3">
                     <PrimaryButton disabled={processing}>Save</PrimaryButton>
                     <Transition show={recentlySuccessful} enter="transition ease-in-out" enterFrom="opacity-0" leave="transition ease-in-out" leaveTo="opacity-0">
-                        <p className="text-xs font-bold text-emerald-400">Saved.</p>
+                        <p className="text-xs font-bold text-green-600">Saved.</p>
                     </Transition>
                 </div>
             </form>

@@ -64,7 +64,7 @@ function Pagination({ voters, onNavigate }) {
     }
 
     return (
-        <div className="mt-4 flex flex-col gap-3 border-t border-emerald-100 px-1 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 px-1 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs font-medium text-slate-500">
                 Papar {voters.from ?? 0} - {voters.to ?? 0} daripada {voters.total} rekod
             </p>
@@ -73,7 +73,7 @@ function Pagination({ voters, onNavigate }) {
                     type="button"
                     onClick={() => onNavigate(voters.current_page - 1)}
                     disabled={!voters.prev_page_url}
-                    className="rounded-lg border border-emerald-100 bg-white px-3 py-1.5 text-[10px] font-bold text-emerald-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Sebelum
                 </button>
@@ -84,7 +84,7 @@ function Pagination({ voters, onNavigate }) {
                             key={link.label}
                             type="button"
                             onClick={() => onNavigate(Number(link.label))}
-                            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition ${link.active ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20' : 'border border-emerald-100 bg-white text-slate-600 hover:text-emerald-700'}`}
+                            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold transition ${link.active ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:text-green-700'}`}
                         >
                             {link.label}
                         </button>
@@ -93,7 +93,7 @@ function Pagination({ voters, onNavigate }) {
                     type="button"
                     onClick={() => onNavigate(voters.current_page + 1)}
                     disabled={!voters.next_page_url}
-                    className="rounded-lg border border-emerald-100 bg-white px-3 py-1.5 text-[10px] font-bold text-emerald-700 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     Seterusnya
                 </button>
@@ -446,16 +446,16 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
             header={
                 <div className="relative z-10 flex items-start justify-between gap-4">
                     <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600">Culaan</p>
-                        <h2 className="mt-1 max-w-4xl text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Senarai kerja pemilih belum cula</h2>
-                        <p className="mt-2 text-sm font-medium text-slate-600">Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
+                        <p className="label-section">Culaan</p>
+                        <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">Senarai kerja pemilih belum cula</h2>
+                        <p className="mt-1 text-xs font-medium text-slate-500">Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
                     </div>
                     <button
                         type="button"
                         onClick={exportToExcel}
-                        className="hidden shrink-0 items-center gap-2 rounded-lg border border-emerald-100 bg-white px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg shadow-emerald-900/10 transition hover:border-emerald-200 hover:text-emerald-700 sm:inline-flex"
+                        className="hidden shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex"
                     >
-                        <span className="rounded bg-emerald-600 px-1.5 py-1 text-xs font-black text-white">X</span>
+                        <span className="rounded bg-green-600 px-1.5 py-0.5 text-[10px] font-black text-white">X</span>
                         Export Excel
                     </button>
                 </div>
@@ -463,17 +463,17 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
         >
             <Head title="Culaan" />
 
-            <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_16rem] xl:items-stretch">
-                    <div className="rounded-xl border border-emerald-100 bg-white p-4 shadow-lg shadow-emerald-900/5 sm:p-5">
-                        <div className="grid gap-4 xl:grid-cols-[14rem_14rem_6rem_minmax(0,1fr)] xl:items-end">
+            <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
+                <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem] xl:items-stretch">
+                    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-4">
+                        <div className="grid gap-3 xl:grid-cols-[12rem_12rem_5rem_minmax(0,1fr)] xl:items-end">
                             <div>
-                                <label htmlFor="culaan-udm" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">UDM</label>
+                                <label htmlFor="culaan-udm" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
                                     id="culaan-udm"
                                     value={formState.udm}
                                     onChange={(event) => updateFilter('udm', event.target.value)}
-                                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-sm transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                                    className="input-field mt-1.5"
                                 >
                                     <option value="">Pilih UDM dahulu</option>
                                     {udms.map((udm) => (
@@ -483,12 +483,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </div>
 
                             <div>
-                                <label htmlFor="culaan-locality" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">Lokaliti</label>
+                                <label htmlFor="culaan-locality" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
                                 <select
                                     id="culaan-locality"
                                     value={formState.locality}
                                     onChange={(event) => updateFilter('locality', event.target.value)}
-                                    className="mt-2 block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-950 shadow-sm transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50 disabled:text-slate-400"
+                                    className="input-field mt-1.5"
                                     disabled={!formState.udm}
                                 >
                                     <option value="">Semua Lokaliti</option>
@@ -499,103 +499,103 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                             </div>
 
                             <div>
-                                <label htmlFor="culaan-dah-cula" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">Dah Cula</label>
+                                <label htmlFor="culaan-dah-cula" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">Dah Cula</label>
                                 <label
                                     htmlFor="culaan-dah-cula"
-                                    className="mt-2 inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs text-slate-700 shadow-sm"
+                                    className="input-field mt-1.5 inline-flex items-center px-3 py-2"
                                 >
                                     <input
                                         id="culaan-dah-cula"
                                         type="checkbox"
                                         checked={formState.show_marked}
                                         onChange={(event) => updateFilter('show_marked', event.target.checked)}
-                                        className="h-5 w-5 rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500"
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
                                     />
                                 </label>
                             </div>
 
                             <div>
-                                <label htmlFor="culaan-search" className="block text-xs font-black uppercase tracking-[0.08em] text-slate-950">Cari Pemilih</label>
-                                <div className="relative mt-2">
+                                <label htmlFor="culaan-search" className="block text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
+                                <div className="relative mt-1.5">
                                     <input
                                     id="culaan-search"
                                     value={search}
                                     onChange={handleSearchChange}
-                                    className="block w-full rounded-lg border border-slate-200 bg-white px-4 py-3 pr-10 text-sm font-medium text-slate-950 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:bg-slate-50 disabled:text-slate-400"
-                                    placeholder="Nama, IC, telefon, UDM atau lokaliti"
+                                    className="input-field pr-8"
+                                    placeholder="Nama, IC, telefon..."
                                     disabled={!formState.udm}
                                     />
-                                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-lg text-emerald-600">⌕</span>
+                                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
                                 </div>
-                                {searchError && <InputError className="mt-1.5" message={searchError} />}
-                                {actionError && <InputError className="mt-1.5" message={actionError} />}
-                                {shouldPromptUdm && <p className="mt-1.5 text-[10px] font-semibold text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
+                                {searchError && <InputError className="mt-1" message={searchError} />}
+                                {actionError && <InputError className="mt-1" message={actionError} />}
+                                {shouldPromptUdm && <p className="mt-1 text-[10px] font-medium text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4 rounded-xl border border-emerald-100 bg-white p-5 shadow-xl shadow-emerald-900/10">
-                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-700">●●</div>
+                    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
                         <div className="min-w-0 flex-1 text-right">
-                            <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-600">Jumlah Paparan</p>
-                            <p className="mt-1 text-4xl font-black leading-none text-slate-950">{visibleTotal}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
+                            <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
                         </div>
                     </div>
                 </section>
 
                 <section>
                     {rows.length === 0 ? (
-                        <p className="rounded-xl border border-emerald-100 bg-white py-8 text-center text-xs font-semibold text-slate-500 shadow-lg shadow-emerald-900/5">
+                        <p className="rounded-lg border border-slate-200 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm">
                             {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                         </p>
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {rows.map((voter, index) => (
-                                <div key={voter.id} className="rounded-xl border border-emerald-100 bg-white p-4 shadow-lg shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-900/10">
+                                <div key={voter.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-all duration-1000 hover:border-white/50">
                                     <div className="flex items-start justify-between gap-2">
-                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-600 to-green-500 text-base font-black text-white shadow-md shadow-emerald-500/25">
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
                                             {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
                                         </span>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-black leading-5 text-slate-950">{voter.name}</p>
-                                            <p className="mt-1 text-[10px] font-semibold uppercase leading-4 tracking-[0.03em] text-slate-600">{voter.address || '-'}</p>
+                                            <p className="text-sm font-bold leading-5 text-slate-800">{voter.name}</p>
+                                            <p className="mt-0.5 text-[10px] font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
                                         </div>
                                         {voter.is_marked && (
-                                            <span className="shrink-0 rounded-md bg-lime-100 px-2 py-1 text-[10px] font-black text-lime-700">
+                                            <span className="shrink-0 rounded-md bg-lime-100 px-2 py-0.5 text-[9px] font-bold text-lime-700">
                                                 Dah Ditanda
                                             </span>
                                         )}
                                     </div>
-                                    <div className="mt-4 grid grid-cols-3 gap-3 text-[11px]">
+                                    <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
                                         <div>
-                                            <span className="font-medium text-emerald-700">▣ IC</span>
-                                            <p className="mt-0.5 font-black text-slate-950">{voter.no_kp || voter.old_ic || '-'}</p>
+                                            <span className="font-semibold text-green-700">IC</span>
+                                            <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
                                         </div>
                                         <div>
-                                            <span className="font-medium text-emerald-700">⌕ Telefon</span>
-                                            <p className="mt-0.5 font-black text-slate-950">{voter.phone_mobile || voter.phone_home || '-'}</p>
+                                            <span className="font-semibold text-green-700">Telefon</span>
+                                            <p className="mt-0.5 font-bold text-slate-800">{voter.phone_mobile || voter.phone_home || '-'}</p>
                                         </div>
                                         <div>
-                                            <span className="font-medium text-emerald-700">▦ Umur</span>
-                                            <p className="mt-0.5 font-black text-slate-950">{voter.age ?? '-'}</p>
+                                            <span className="font-semibold text-green-700">Umur</span>
+                                            <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
                                         </div>
                                         {showLocalityColumn && (
                                             <div className="col-span-3">
-                                                <span className="font-medium text-emerald-700">⌖ Lokaliti</span>
-                                                <p className="mt-0.5 font-black text-slate-950">{voter.locality || '-'}</p>
+                                                <span className="font-semibold text-green-700">Lokaliti</span>
+                                                <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
                                             </div>
                                         )}
                                     </div>
-                                    <div className="mt-3 flex flex-wrap gap-2">
+                                    <div className="mt-3 flex flex-wrap gap-1.5">
                                         <a
                                             href={buildTelegramLink('kemascula', voter.telegram_identity)}
-                                            className="inline-flex flex-1 items-center justify-center rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-[10px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-50"
+                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                         >
                                             Kemas Cula
                                         </a>
                                         <a
                                             href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                            className="inline-flex flex-1 items-center justify-center rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-[10px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-50"
+                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                         >
                                             Kemas Tel
                                         </a>
@@ -604,7 +604,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                                 type="button"
                                                 onClick={() => unmarkVoter(voter)}
                                                 disabled={pendingIds.includes(voter.id)}
-                                                className="inline-flex flex-1 items-center justify-center rounded-lg bg-rose-600 px-2.5 py-2 text-[10px] font-black text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-rose-600 px-2 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                                             >
                                                 {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
                                             </button>
@@ -613,7 +613,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                                                 type="button"
                                                 onClick={() => markVoter(voter)}
                                                 disabled={pendingIds.includes(voter.id)}
-                                                className="inline-flex flex-1 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-[10px] font-black text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
                                             >
                                                 {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
                                             </button>

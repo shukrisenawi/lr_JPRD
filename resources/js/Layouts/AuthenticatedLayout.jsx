@@ -6,7 +6,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 function NavIcon({ children }) {
-    return <span className="text-base leading-none text-emerald-700">{children}</span>;
+    return <span className="text-sm leading-none text-green-600">{children}</span>;
 }
 
 export default function AuthenticatedLayout({ header, children, variant = 'light' }) {
@@ -32,36 +32,30 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     ];
 
     return (
-        <div className={isLight
-            ? 'min-h-screen bg-[#f8fcfa] text-slate-950'
-            : 'min-h-screen bg-slate-900 bg-[radial-gradient(ellipse_at_top_right,_rgba(139,92,246,0.12),_transparent_50%),radial-gradient(ellipse_at_bottom_left,_rgba(236,72,153,0.08),_transparent_50%)]'}>
-            <nav className={isLight
-                ? 'sticky top-0 z-30 border-b border-emerald-100/80 bg-white/95 shadow-sm shadow-emerald-900/5 backdrop-blur-xl'
-                : 'sticky top-0 z-30 border-b border-slate-700/50 bg-slate-900/90 backdrop-blur-xl'}>
+        <div className="min-h-screen bg-slate-100 text-slate-800">
+            <nav className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-xl">
                 <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-                    <div className={isLight ? 'flex h-16 items-center justify-between' : 'flex h-12 items-center justify-between'}>
-                        <div className="flex items-center gap-2">
+                    <div className="flex h-12 items-center justify-between">
+                        <div className="flex items-center gap-1">
                             <Link href={route('dashboard')} className="flex shrink-0 items-center gap-2">
-                                <div className={isLight
-                                    ? 'flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/25'
-                                    : 'flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-sm'}>
-                                    <ApplicationLogo className={isLight ? 'block h-5 w-5 fill-current text-white' : 'block h-4 w-4 fill-current text-white'} />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-white shadow-sm">
+                                    <ApplicationLogo className="block h-4 w-4 fill-current text-white" />
                                 </div>
-                                <span className={isLight ? 'hidden text-lg font-extrabold text-slate-950 sm:inline' : 'hidden text-sm font-extrabold text-white sm:inline'}>LR JPRD</span>
+                                <span className="hidden text-sm font-bold text-slate-800 sm:inline">LR JPRD</span>
                             </Link>
 
-                            <div className={isLight ? 'ml-8 hidden items-stretch gap-6 sm:flex' : 'ml-4 hidden items-center gap-0.5 sm:flex'}>
+                            <div className="ml-4 hidden items-stretch sm:flex">
                                 {navItems.map((item) =>
                                     canAccess(item.key) && (
-                                        <NavLink key={item.key} href={route(item.href)} active={route().current(item.routePattern)} variant={variant} className={isLight ? 'gap-2 px-3 py-2' : ''}>
-                                            {isLight && <NavIcon>{item.icon}</NavIcon>}
+                                        <NavLink key={item.key} href={route(item.href)} active={route().current(item.routePattern)} variant={variant}>
+                                            <NavIcon>{item.icon}</NavIcon>
                                             <span>{item.label}</span>
                                         </NavLink>
                                     )
                                 )}
                                 {isMasterAdmin && (
-                                    <NavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant} className={isLight ? 'gap-2 px-3 py-2' : ''}>
-                                        {isLight && <NavIcon>▣</NavIcon>}
+                                    <NavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>
+                                        <NavIcon>▣</NavIcon>
                                         <span>Akses</span>
                                     </NavLink>
                                 )}
@@ -72,16 +66,14 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="hidden sm:block">
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <button className={isLight
-                                            ? 'flex items-center gap-2 rounded-lg border border-emerald-100 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-950 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700'
-                                            : 'flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-1.5 text-xs font-semibold text-slate-300 shadow-sm transition hover:border-violet-500/50 hover:text-violet-300'}>
+                                        <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                             {user.avatar_url ? (
-                                                <img src={user.avatar_url} alt={user.name} className="h-6 w-6 rounded object-cover" />
+                                                <img src={user.avatar_url} alt={user.name} className="h-5 w-5 rounded object-cover" />
                                             ) : (
-                                                <div className={isLight ? 'flex h-6 w-6 items-center justify-center rounded bg-emerald-100 text-[10px] font-bold text-emerald-700' : 'flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-violet-600 to-fuchsia-600 text-[10px] font-bold text-white'}>{userInitial}</div>
+                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-green-100 text-[9px] font-bold text-green-700">{userInitial}</div>
                                             )}
                                             <span className="hidden lg:inline">{user.name}</span>
-                                            <svg className={isLight ? 'h-3 w-3 text-slate-700' : 'h-3 w-3 text-slate-500'} viewBox="0 0 20 20" fill="currentColor">
+                                            <svg className="h-3 w-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                             </svg>
                                         </button>
@@ -94,7 +86,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             </div>
 
                             <button onClick={() => setShowingNavigationDropdown((prev) => !prev)}
-                                className={isLight ? 'inline-flex items-center justify-center rounded-lg p-1.5 text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-700 sm:hidden' : 'inline-flex items-center justify-center rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-800 hover:text-white sm:hidden'}>
+                                className="inline-flex items-center justify-center rounded-md p-1 text-slate-500 transition hover:bg-green-50 hover:text-green-700 sm:hidden">
                                 <svg className="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                     <path className={!showingNavigationDropdown ? 'inline-flex' : 'hidden'} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                                     <path className={showingNavigationDropdown ? 'inline-flex' : 'hidden'} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -104,7 +96,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     </div>
                 </div>
 
-                <div className={(showingNavigationDropdown ? 'block' : 'hidden') + (isLight ? ' border-t border-emerald-100 bg-white sm:hidden' : ' border-t border-slate-700/50 bg-slate-900 sm:hidden')}>
+                <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' border-t border-slate-200 bg-white sm:hidden'}>
                     <div className="space-y-0.5 px-2 py-2">
                         {navItems.map((item) =>
                             canAccess(item.key) && (
@@ -117,19 +109,19 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>
                         )}
                     </div>
-                    <div className="divider px-3 py-2">
+                    <div className="border-t border-slate-100 px-3 py-2">
                         <div className="flex items-center gap-2.5">
                             {user.avatar_url ? (
-                                <img src={user.avatar_url} alt={user.name} className="h-8 w-8 rounded-lg object-cover" />
+                                <img src={user.avatar_url} alt={user.name} className="h-7 w-7 rounded object-cover" />
                             ) : (
-                                <div className={isLight ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-700' : 'flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-600 text-xs font-bold text-white'}>{userInitial}</div>
+                                <div className="flex h-7 w-7 items-center justify-center rounded bg-green-100 text-[10px] font-bold text-green-700">{userInitial}</div>
                             )}
                             <div>
-                                <div className={isLight ? 'text-sm font-semibold text-slate-950' : 'text-sm font-semibold text-white'}>{user.name}</div>
-                                <div className={isLight ? 'text-xs text-slate-500' : 'text-xs text-slate-400'}>{user.email}</div>
+                                <div className="text-xs font-semibold text-slate-800">{user.name}</div>
+                                <div className="text-[10px] text-slate-500">{user.email}</div>
                             </div>
                         </div>
-                        <div className="mt-2 space-y-0.5">
+                        <div className="mt-1.5 space-y-0.5">
                             <ResponsiveNavLink href={route('profile.edit')} variant={variant}>Profile</ResponsiveNavLink>
                             <ResponsiveNavLink method="post" href={route('logout')} as="button" variant={variant}>Log Out</ResponsiveNavLink>
                         </div>
@@ -138,7 +130,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             </nav>
 
             {impersonation.is_active && (
-                <div className="mx-auto mt-3 max-w-7xl px-3 sm:px-4 lg:px-6">
+                <div className="mx-auto mt-2 max-w-7xl px-3 sm:px-4 lg:px-6">
                     <div className="flash-warning flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <span>Anda sedang melihat sebagai <strong>{user.name}</strong>{impersonation.impersonator?.name ? ` (asal: ${impersonation.impersonator.name})` : ''}</span>
                         <Link href={route('admin.access.impersonation.destroy')} method="post" as="button" replace className="btn-ghost shrink-0">Kembali</Link>
@@ -146,24 +138,16 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 </div>
             )}
 
-            {flash.success && <div className="mx-auto mt-3 max-w-7xl px-3 sm:px-4 lg:px-6"><div className="flash-success">{flash.success}</div></div>}
-            {flash.error && <div className="mx-auto mt-3 max-w-7xl px-3 sm:px-4 lg:px-6"><div className="flash-error">{flash.error}</div></div>}
+            {flash.success && <div className="mx-auto mt-2 max-w-7xl px-3 sm:px-4 lg:px-6"><div className="flash-success">{flash.success}</div></div>}
+            {flash.error && <div className="mx-auto mt-2 max-w-7xl px-3 sm:px-4 lg:px-6"><div className="flash-error">{flash.error}</div></div>}
 
             {header && (
-                <header className={isLight ? 'relative overflow-hidden pt-5' : 'pt-4'}>
-                    {isLight && (
-                        <>
-                            <div className="pointer-events-none absolute right-16 top-0 z-0 hidden h-24 w-[24rem] -skew-x-12 bg-gradient-to-r from-emerald-50 via-green-50 to-transparent lg:block" />
-                            <div className="pointer-events-none absolute right-80 top-16 z-0 hidden h-2 w-2 rounded-full bg-emerald-500 lg:block" />
-                            <div className="pointer-events-none absolute right-60 top-12 z-0 hidden h-2.5 w-2.5 rotate-45 rounded-sm bg-amber-400 lg:block" />
-                            <div className="pointer-events-none absolute right-44 top-10 z-0 hidden h-1.5 w-1.5 rotate-45 rounded-sm bg-lime-500 lg:block" />
-                        </>
-                    )}
-                    <div className="relative z-10 mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">{header}</div>
+                <header className="pt-4">
+                    <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">{header}</div>
                 </header>
             )}
 
-            <main className="pb-8 pt-4">{children}</main>
+            <main className="pb-6 pt-3">{children}</main>
         </div>
     );
 }

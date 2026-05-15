@@ -59,23 +59,23 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
     ];
 
     return (
-        <section className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
-            <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <p className="label-section">Detail Pemilih</p>
-                    <h3 className="mt-1 truncate text-2xl font-black uppercase leading-tight text-slate-950 sm:text-3xl">{voter.name}</h3>
+                    <h3 className="mt-1 truncate text-lg font-bold uppercase leading-tight text-slate-800">{voter.name}</h3>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-3">
-                    <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary px-5 py-3 text-sm">Kemas Cula</button>
-                    <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald px-5 py-3 text-sm">Kemaskini Tel</button>
-                    <button onClick={onClear} className="rounded-lg bg-slate-800 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-700">Buang</button>
+                    <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary px-3 py-2 text-xs">Kemas Cula</button>
+                    <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald px-3 py-2 text-xs">Kemaskini Tel</button>
+                    <button onClick={onClear} className="rounded-md bg-slate-700 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-slate-600">Buang</button>
                 </div>
             </div>
             <div className="grid gap-3 p-5 sm:grid-cols-2">
                 {fields.map(([l, v]) => (
-                    <div key={l} className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.03)]">
-                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">{l}</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-950">{v || '-'}</p>
+                    <div key={l} className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-[0_8px_22px_rgba(15,23,42,0.03)]">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">{l}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-800">{v || '-'}</p>
                     </div>
                 ))}
             </div>
@@ -142,14 +142,14 @@ function SearchPanel() {
     return (
         <>
             <section className="card relative">
-                <div className="px-5 py-4">
+                <div className="px-4 py-3">
                     <p className="label-section">Carian Pemilih</p>
                     <p className="text-muted mt-0.5">Cari nama, IC atau nombor telefon.</p>
-                    <div className="relative mt-3">
-                        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789" className="input-field py-3 pl-12 pr-12 ring-1 ring-emerald-200 focus:ring-2" />
+                    <div className="relative mt-2">
+                        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
                         {q && (
-                            <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100">
+                            <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
                                 <XIcon />
                             </button>
                         )}
@@ -158,22 +158,22 @@ function SearchPanel() {
                 </div>
 
                 {(searching || suggestions.length > 0) && (
-                    <div className="absolute left-0 right-0 top-full z-20 mt-3 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-xl shadow-emerald-900/10">
+                    <div className="absolute left-0 right-0 top-full z-20 mt-3 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
                         {searching ? (
-                            <div className="px-5 py-4 text-sm font-semibold text-slate-500">Mencari...</div>
+                            <div className="px-4 py-3 text-xs font-medium text-slate-500">Mencari...</div>
                         ) : (
                             suggestions.map((voter) => (
                                 <button key={voter.id} onClick={() => pick(voter)}
-                                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.9fr)_auto] items-center gap-4 border-b border-slate-200 px-5 py-4 text-left transition hover:bg-emerald-50/60 last:border-b-0">
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.9fr)_auto] items-center gap-4 border-b border-slate-200 px-5 py-4 text-left transition hover:bg-green-50 last:border-b-0">
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700">
                                         <UserIcon className="h-8 w-8" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="truncate text-sm font-black text-slate-950">{voter.name}</p>
+                                        <p className="truncate text-xs font-bold text-slate-800">{voter.name}</p>
                                         <p className="mt-1 text-xs font-medium text-slate-600">IC: {voter.no_kp || '-'} <span className="mx-2 text-slate-400">|</span> HP: {voter.phone_mobile || '-'}</p>
                                     </div>
                                     <div className="min-w-0 text-left">
-                                        <p className="flex items-center gap-2 truncate text-sm font-black text-slate-950"><MapPinIcon className="h-4 w-4 shrink-0 text-emerald-700" /> {voter.dm || '-'}</p>
+                                        <p className="flex items-center gap-2 truncate text-xs font-bold text-slate-800"><MapPinIcon className="h-4 w-4 shrink-0 text-green-700" /> {voter.dm || '-'}</p>
                                         <p className="mt-1 truncate text-xs font-medium text-slate-600">{voter.locality || '-'}</p>
                                     </div>
                                     <ChevronRightIcon className="h-5 w-5 text-slate-500" />

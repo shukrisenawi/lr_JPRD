@@ -24,7 +24,7 @@ export default function UpdatePasswordForm({ className = '' }) {
                 <div className="flex items-center gap-3">
                     <PrimaryButton disabled={processing}>Save</PrimaryButton>
                     <Transition show={recentlySuccessful} enter="transition ease-in-out" enterFrom="opacity-0" leave="transition ease-in-out" leaveTo="opacity-0">
-                        <p className="text-xs font-bold text-emerald-400">Saved.</p>
+                        <p className="text-xs font-bold text-green-600">Saved.</p>
                     </Transition>
                 </div>
             </form>

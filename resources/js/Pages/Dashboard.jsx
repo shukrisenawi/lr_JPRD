@@ -4,19 +4,19 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 function StatCard({ label, value, color = 'slate' }) {
     const colors = {
-        slate: { card: 'border-emerald-100 bg-white', icon: 'bg-emerald-100 text-emerald-700', symbol: '▤' },
-        violet: { card: 'border-emerald-100 bg-white', icon: 'bg-emerald-100 text-emerald-700', symbol: '▧' },
+        slate: { card: 'border-slate-200 bg-white', icon: 'bg-slate-100 text-slate-600', symbol: '▤' },
+        violet: { card: 'border-slate-200 bg-white', icon: 'bg-green-100 text-green-700', symbol: '▧' },
         emerald: { card: 'border-lime-100 bg-white', icon: 'bg-lime-100 text-lime-700', symbol: '✓' },
         cyan: { card: 'border-sky-100 bg-white', icon: 'bg-sky-100 text-sky-700', symbol: '◷' },
     };
     const theme = colors[color] ?? colors.slate;
 
     return (
-        <div className={`flex items-center gap-5 rounded-xl border p-5 shadow-lg shadow-emerald-900/5 ${theme.card}`}>
-            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-3xl font-black ${theme.icon}`}>{theme.symbol}</div>
+        <div className={`flex items-center gap-5 rounded-lg border p-4 shadow-sm ${theme.card}`}>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-black ${theme.icon}`}>{theme.symbol}</div>
             <div>
                 <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
-                <p className="mt-1 text-3xl font-black leading-none text-emerald-700">{value}</p>
+                <p className="mt-1 text-2xl font-black leading-none text-slate-800">{value}</p>
             </div>
         </div>
     );
@@ -31,11 +31,11 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
 
     return (
         <section className="card-accent overflow-hidden">
-            <div className="flex items-center justify-between gap-3 border-b border-emerald-100 px-4 py-3">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
                 <div className="flex items-center gap-3">
-                    <div className="chip-violet">Page {page.page_number}</div>
-                    <span className="text-sm font-black text-slate-950">{page.row_count} rekod</span>
-                    <span className="text-xs font-semibold text-emerald-700">{copiedCount} sudah copy</span>
+                    <div className="inline-flex items-center rounded bg-green-600 px-1.5 py-0.5 text-[9px] font-bold text-white">Page {page.page_number}</div>
+                    <span className="text-xs font-bold text-slate-800">{page.row_count} rekod</span>
+                    <span className="text-[10px] font-medium text-green-700">{copiedCount} sudah copy</span>
                 </div>
                 <button onClick={() => onDelete(page.id)} disabled={deletingPage === page.id} className="btn-danger px-2.5 py-1.5 text-[10px]">
                     {deletingPage === page.id ? 'Memadam...' : 'Padam'}
@@ -47,14 +47,14 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                     const isSelected = selectedRowKey === row.row_key;
                     return (
                         <div key={row.row_key} onClick={() => onSelectRow(row.row_key)}
-                            className={`rounded-lg border p-3 transition ${isSelected ? 'border-emerald-300 bg-emerald-50' : row.is_copied ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-200 bg-white'}`}>
+                            className={`rounded-lg border p-3 transition ${isSelected ? 'border-green-300 bg-green-50' : row.is_copied ? 'border-green-200 bg-green-50/60' : 'border-slate-200 bg-white'}`}>
                             <div className="flex items-start justify-between gap-2">
                                 <div>
                                     <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Rekod #{row.position}</p>
                                     <p className="mt-0.5 text-sm font-black text-slate-950">{row.values.nama_pemilih || 'Tiada nama'}</p>
                                     <p className="text-xs text-slate-600">No KP: {row.values.no_kp || '-'}</p>
                                 </div>
-                                <span className={`shrink-0 ${isSelected ? 'badge-violet' : row.is_copied ? 'badge-emerald' : 'badge-slate'}`}>
+                                <span className={`shrink-0 ${isSelected ? 'inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold bg-green-600 text-white' : row.is_copied ? 'inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold bg-green-600 text-white' : 'inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold bg-slate-200 text-slate-700'}`}>
                                     {row.is_copied ? 'Sudah copy' : 'Belum copy'}
                                 </span>
                             </div>
@@ -69,7 +69,7 @@ function PageSection({ page, copyingRow, deletingPage, selectedRowKey, onCopy, o
                             <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
                                 <span className="truncate text-xs text-slate-600">{row.copy_text}</span>
                                 <button onClick={(e) => { e.stopPropagation(); onSelectRow(row.row_key); void onCopy(row); }}
-                                    className={`rounded px-2.5 py-1 text-[10px] font-bold text-white ${row.is_copied ? 'bg-emerald-600' : 'bg-emerald-700 hover:bg-emerald-600'}`}>
+                                    className={`rounded px-2.5 py-1 text-[10px] font-bold text-white ${row.is_copied ? 'bg-green-600' : 'bg-green-700 hover:bg-green-600'}`}>
                                     {copyingRow === row.row_key ? 'Menyalin...' : row.is_copied ? 'Copy semula' : 'Copy'}
                                 </button>
                             </div>
@@ -251,7 +251,7 @@ export default function Dashboard({ sheet, pages }) {
                     </div>
                     <div className="flex flex-wrap gap-3">
                         <button onClick={() => setAutoSyncEnabled((p) => !p)}
-                            className={`rounded-lg border px-4 py-2 text-xs font-black transition ${autoSyncEnabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-300 bg-white text-amber-600 hover:bg-amber-50'}`}>
+                            className={`rounded-lg border px-4 py-2 text-xs font-black transition ${autoSyncEnabled ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-300 bg-white text-amber-600 hover:bg-amber-50'}`}>
                             Auto: {autoSyncEnabled ? 'ON' : 'OFF'}
                         </button>
                         <button onClick={() => void runSync()} disabled={syncingPage || !!sheet.error} className="btn-emerald">{syncingPage ? 'Mengambil...' : 'Ambil data'}</button>
@@ -298,8 +298,8 @@ export default function Dashboard({ sheet, pages }) {
                                     return (
                                         <button key={page.id} onClick={() => setActivePageId(page.id)}
                                             className={`rounded-lg border px-2.5 py-2 text-left transition ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`}>
-                                            <p className={`text-[10px] font-black uppercase tracking-[0.12em] ${isActive ? 'text-white' : 'text-emerald-700'}`}>Page {page.tab_number}</p>
-                                            <p className={`mt-0.5 text-xs font-black ${isActive ? 'text-white' : 'text-slate-950'}`}>{page.row_count} rekod</p>
+                                            <p className={`text-[10px] font-black uppercase tracking-[0.12em] ${isActive ? 'text-white' : 'text-green-700'}`}>Page {page.tab_number}</p>
+                                            <p className={`mt-0.5 text-xs font-black ${isActive ? 'text-white' : 'text-slate-800'}`}>{page.row_count} rekod</p>
                                         </button>
                                     );
                                 })}
