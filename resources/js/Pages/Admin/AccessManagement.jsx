@@ -176,7 +176,7 @@ export default function AccessManagement({ roles, users, modules }) {
                     </section>
                 )}
 
-                {tab === 'group-role' && <section className="space-y-3">{roles.map((r) => <RoleCard key={r.id} role={r} modules={modules} />)}</section>}
+                {tab === 'group-role' && <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{roles.map((r) => <RoleCard key={r.id} role={r} modules={modules} />)}</section>}
             </div>
         </AuthenticatedLayout>
     );
