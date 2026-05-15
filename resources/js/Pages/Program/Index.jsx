@@ -531,16 +531,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             <td className="table-cell font-semibold">
                                                                 <div className="font-black text-slate-950">{a.name}</div>
                                                                 {a.group_badges?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{a.group_badges.map((b) => <span key={`${a.id}-${b.name}`} className="badge-amber text-[9px]">{b.name}{b.count > 1 ? ` - ${b.count}` : ''}</span>)}</div>}
-                                                                <div className="mt-1 flex flex-wrap gap-1">
-                                                                    {a.committee_badges?.length > 0
-                                                                        ? a.committee_badges.map((b, index) => (
-                                                                            <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-bold text-sky-700">
-                                                                                {b.label} • {committeeScopeLabel(b)}
-                                                                            </span>
-                                                                        ))
-                                                                        : <span className="badge-slate text-[9px]">Tiada Jawatankuasa</span>}
-                                                                </div>
-                                                            </td>
+                                                                {a.committee_badges?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">
+                                                                    {a.committee_badges.map((b, index) => (
+                                                                        <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-bold text-sky-700">
+                                                                            {b.label} • {committeeScopeLabel(b)}
+                                                                        </span>
+                                                                    ))}
+                                                                 </div>}
+                                                             </td>
                                                             <td className="table-cell">{a.dm || '-'}</td>
                                                             <td className="table-cell">{a.phone_mobile || a.phone_home || '-'}</td>
                                                             <td className="table-cell-right"><div className="flex justify-end gap-2">
