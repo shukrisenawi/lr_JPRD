@@ -94,8 +94,7 @@ export default function Edit({ settings }) {
                         <form onSubmit={submit} className="space-y-3">
                             <p className="label-section">URL Google Sheet</p>
                             <div>
-                                <InputLabel htmlFor="url" value="URL Google Sheet" />
-                                <div className="relative mt-1.5">
+                                <div className="relative">
                                     <Icon name="link" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-600" />
                                     <TextInput id="url" type="url" value={data.google_sheet_url} onChange={(e) => setData('google_sheet_url', e.target.value)} className="input-field py-2 pl-9" placeholder="https://docs.google.com/spreadsheets/d/..." />
                                 </div>
