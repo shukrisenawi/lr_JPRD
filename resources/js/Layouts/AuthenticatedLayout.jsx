@@ -49,9 +49,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     <div className="flex h-14 items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Link href={route('dashboard')} className="flex shrink-0 items-center gap-2">
-                                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-green-100 bg-white shadow-sm shadow-green-600/20">
-                                    <ApplicationLogo className="block h-8 w-8 object-contain" />
-                                </div>
+                                <ApplicationLogo className="block h-9 w-9 object-contain" />
                                 <span className="hidden text-sm font-bold text-green-800 sm:inline">PAS Sik</span>
                             </Link>
 
