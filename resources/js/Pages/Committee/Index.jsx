@@ -94,7 +94,6 @@ function PositionManager({ positions }) {
                             className="input-field mt-1 text-xs"
                             placeholder="Contoh: Pengerusi, Setiausaha"
                         />
-                        <p className="mt-1 text-xs text-slate-400">Asingkan dengan koma untuk cipta beberapa jawatan.</p>
                         <InputError className="mt-1" message={createForm.errors.name} />
                     </div>
                     <div>
