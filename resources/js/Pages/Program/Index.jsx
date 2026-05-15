@@ -530,14 +530,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                         <tr key={a.id} className={selAttendee?.id === a.id ? 'bg-green-50 text-green-900' : 'table-row'}>
                                                             <td className="table-cell font-semibold">
                                                                 <div className="font-black text-slate-950">{a.name}</div>
-                                                                {a.group_badges?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{a.group_badges.map((b) => <span key={`${a.id}-${b.name}`} className="badge-amber text-[9px]">{b.name}{b.count > 1 ? ` - ${b.count}` : ''}</span>)}</div>}
-                                                                {a.committee_badges?.length > 0 && <div className="mt-1 flex flex-wrap gap-1">
-                                                                    {a.committee_badges.map((b, index) => (
-                                                                        <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[9px] font-bold text-sky-700">
-                                                                            {b.label} • {committeeScopeLabel(b)}
-                                                                        </span>
-                                                                    ))}
-                                                                 </div>}
+                                                                 {a.group_badges?.length > 0 && <div className="mt-0.5 flex flex-wrap gap-0.5">{a.group_badges.map((b) => <span key={`${a.id}-${b.name}`} className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-[1px] text-[8px] font-bold text-amber-700">{b.name}{b.count > 1 ? ` - ${b.count}` : ''}</span>)}</div>}
+                                                                 {a.committee_badges?.length > 0 && <div className="mt-0.5 flex flex-wrap gap-0.5">
+                                                                     {a.committee_badges.map((b, index) => (
+                                                                         <span key={`${a.id}-${b.label}-${b.level}-${b.scope_name}-${index}`} className="rounded-full border border-sky-200 bg-sky-50 px-1.5 py-[1px] text-[8px] font-bold text-sky-700">
+                                                                             {b.label} • {committeeScopeLabel(b)}
+                                                                         </span>
+                                                                     ))}
+                                                                  </div>}
                                                              </td>
                                                             <td className="table-cell">{a.dm || '-'}</td>
                                                             <td className="table-cell">{a.phone_mobile || a.phone_home || '-'}</td>
