@@ -201,9 +201,9 @@ function PositionManager({ positions }) {
 
 function MembershipManager({ positions, memberships, scopes }) {
     const tabs = [
-        { key: 'jprd', label: 'JPRD', icon: 'users' },
-        { key: 'udm', label: 'UDM', icon: 'mapPin' },
-        { key: 'cawangan', label: 'Cawangan', icon: 'userCog' },
+        { key: 'jprd', label: 'JPRD', desc: 'Peringkat kawasan', icon: 'users' },
+        { key: 'udm', label: 'UDM', desc: 'Unit daerah mengundi', icon: 'mapPin' },
+        { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
     ];
     const [activeTab, setActiveTab] = useState('jprd');
     const suggestionsAbort = useRef(null);
@@ -332,10 +332,10 @@ function MembershipManager({ positions, memberships, scopes }) {
                                 key={tab.key}
                                 type="button"
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${activeTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
+                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left transition ${activeTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
                             >
                                 <Icon name={tab.icon} className="h-3.5 w-3.5" />
-                                {tab.label}
+                                <span><span className={`block text-xs font-bold ${activeTab === tab.key ? 'text-white' : 'text-slate-900'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeTab === tab.key ? 'text-green-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
                             </button>
                         ))}
                     </div>
