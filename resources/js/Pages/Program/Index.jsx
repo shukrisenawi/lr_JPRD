@@ -451,13 +451,13 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         }>
             <Head title="Program" />
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm">
-                    <div className="grid gap-2 sm:grid-cols-3">
+                <div className="card p-3">
+                    <div className="grid gap-3 sm:grid-cols-3">
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
-                                className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-left transition ${tab === t.key ? 'border-emerald-500 bg-green-50 text-green-700 shadow-sm' : 'border-slate-200 bg-white text-slate-800 hover:border-green-200 hover:bg-green-50'}`}>
-                                <span className="text-lg text-green-700">{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
-                                <span className="text-xs font-black uppercase tracking-[0.06em]">{t.label}</span>
+                                className={`flex items-center gap-4 rounded-lg border px-5 py-5 text-left transition ${tab === t.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}>
+                                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-black ${tab === t.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}>{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
+                                <span><span className={`block text-sm font-black uppercase tracking-[0.12em] ${tab === t.key ? 'text-white' : 'text-emerald-800'}`}>{t.label}</span></span>
                             </button>
                         ))}
                     </div>
