@@ -87,7 +87,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                             <HeaderIcon name="down" className="h-3 w-3 text-slate-400" />
                                         </button>
                                     </Dropdown.Trigger>
-                                    <Dropdown.Content widthClasses="w-72" contentClasses="rounded-lg border border-slate-200 bg-white shadow-lg">
+                                    <Dropdown.Content widthClasses="w-72">
                                         <div className="border-b border-slate-200 px-4 py-4">
                                             <div className="flex items-center gap-3">
                                                 {user.avatar_url ? (
