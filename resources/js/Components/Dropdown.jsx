@@ -24,14 +24,14 @@ const Trigger = ({ children }) => {
     );
 };
 
-const Content = ({ align = 'right', contentClasses = 'py-1', children }) => {
+const Content = ({ align = 'right', contentClasses = 'py-1', widthClasses = 'w-44', children }) => {
     const { open, setOpen } = useContext(DropDownContext);
     const alignmentClasses = align === 'left'
         ? 'ltr:origin-top-left rtl:origin-top-right start-0'
         : 'ltr:origin-top-right rtl:origin-top-left end-0';
     return (
         <Transition show={open} enter="transition ease-out duration-150" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="transition ease-in duration-100" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-            <div className={`absolute z-50 mt-1.5 ${alignmentClasses} w-44`} onClick={() => setOpen(false)}>
+            <div className={`absolute z-50 mt-1.5 ${alignmentClasses} ${widthClasses}`} onClick={() => setOpen(false)}>
                 <div className={`overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl shadow-black/30 ` + contentClasses}>
                     {children}
                 </div>

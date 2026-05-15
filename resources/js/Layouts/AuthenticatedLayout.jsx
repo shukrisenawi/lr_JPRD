@@ -9,6 +9,17 @@ function NavIcon({ children }) {
     return <span className="text-sm leading-none text-green-600">{children}</span>;
 }
 
+function HeaderIcon({ name, className = 'h-5 w-5' }) {
+    const paths = {
+        user: <><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></>,
+        logout: <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="m16 17 5-5-5-5" /><path d="M21 12H9" /></>,
+        chevron: <path d="m9 18 6-6-6-6" />,
+        down: <path d="m6 9 6 6 6-6" />,
+    };
+
+    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
+}
+
 export default function AuthenticatedLayout({ header, children, variant = 'light' }) {
     const { auth, flash } = usePage().props;
     const user = auth.user;
@@ -66,21 +77,43 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="hidden sm:block">
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
+                                        <button className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-black text-slate-900 shadow-sm transition hover:border-green-300 hover:text-green-700 lg:px-4">
                                             {user.avatar_url ? (
-                                                <img src={user.avatar_url} alt={user.name} className="h-5 w-5 rounded object-cover" />
+                                                <img src={user.avatar_url} alt={user.name} className="h-9 w-9 rounded-lg object-cover" />
                                             ) : (
-                                                <div className="flex h-5 w-5 items-center justify-center rounded bg-green-100 text-xs font-bold text-green-700">{userInitial}</div>
+                                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-sm font-black text-green-700">{userInitial}</div>
                                             )}
                                             <span className="hidden lg:inline">{user.name}</span>
-                                            <svg className="h-3 w-3 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                            </svg>
+                                            <HeaderIcon name="down" className="h-5 w-5 text-slate-500" />
                                         </button>
                                     </Dropdown.Trigger>
-                                    <Dropdown.Content>
-                                        <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
-                                        <Dropdown.Link href={route('logout')} method="post" as="button">Log Out</Dropdown.Link>
+                                    <Dropdown.Content widthClasses="w-[28rem]" contentClasses="rounded-2xl border-slate-200 bg-white shadow-2xl shadow-slate-900/15">
+                                        <div className="border-b border-slate-200 px-6 py-6">
+                                            <div className="flex items-center gap-5">
+                                                {user.avatar_url ? (
+                                                    <img src={user.avatar_url} alt={user.name} className="h-20 w-20 rounded-2xl object-cover" />
+                                                ) : (
+                                                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-green-100 text-3xl font-black text-green-700">{userInitial}</div>
+                                                )}
+                                                <div className="min-w-0">
+                                                    <p className="truncate text-2xl font-black text-slate-950">{user.name}</p>
+                                                    <p className="mt-1 truncate text-xl font-medium text-slate-500">{user.email}</p>
+                                                    {user.role?.name && <span className="mt-4 inline-flex rounded-lg bg-emerald-50 px-4 py-2 text-lg font-medium text-emerald-700 ring-1 ring-emerald-100">{user.role.name}</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="px-6 py-4">
+                                            <Dropdown.Link href={route('profile.edit')} className="group flex items-center gap-7 rounded-xl px-3 py-4 text-slate-950 hover:bg-emerald-50 focus:bg-emerald-50">
+                                                <HeaderIcon name="user" className="h-10 w-10 shrink-0 text-emerald-700" />
+                                                <span className="min-w-0 flex-1"><span className="block text-2xl font-black text-slate-950">Profile</span><span className="mt-1 block text-lg font-medium text-slate-500">Lihat dan kemas kini profil anda</span></span>
+                                                <HeaderIcon name="chevron" className="h-8 w-8 shrink-0 text-slate-500" />
+                                            </Dropdown.Link>
+                                            <div className="my-3 border-t border-slate-200" />
+                                            <Dropdown.Link href={route('logout')} method="post" as="button" className="group flex items-center gap-7 rounded-xl px-3 py-4 text-slate-950 hover:bg-emerald-50 focus:bg-emerald-50">
+                                                <HeaderIcon name="logout" className="h-10 w-10 shrink-0 text-emerald-700" />
+                                                <span className="min-w-0 flex-1"><span className="block text-2xl font-black text-slate-950">Log Out</span><span className="mt-1 block text-lg font-medium text-slate-500">Keluar dari sistem</span></span>
+                                            </Dropdown.Link>
+                                        </div>
                                     </Dropdown.Content>
                                 </Dropdown>
                             </div>
