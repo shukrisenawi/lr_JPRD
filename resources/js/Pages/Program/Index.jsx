@@ -83,26 +83,26 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
     return (
         <Modal show={Boolean(program)} onClose={onClose} maxWidth="sm">
             <div className="p-3">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
-                    <p className="text-xs font-bold text-white">Share Program</p>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                    <p className="text-xs font-bold text-slate-800">Share Program</p>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
                 <form onSubmit={onSubmit} className="mt-2">
-                    <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-slate-700 bg-slate-800/60 p-1.5">
+                    <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-1.5">
                         {users.map((user) => {
                             const checked = shareForm.data.shared_user_ids.includes(user.id);
                             return (
-                                <label key={user.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition hover:bg-violet-500/20">
+                                <label key={user.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition hover:bg-green-50">
                                     <input type="checkbox" checked={checked}
                                         onChange={(e) => shareForm.setData('shared_user_ids', e.target.checked ? [...shareForm.data.shared_user_ids, user.id] : shareForm.data.shared_user_ids.filter((id) => id !== user.id))}
-                                        className="rounded border-slate-600 bg-slate-700 text-violet-500 focus:ring-violet-500" />
-                                    <span className="min-w-0"><span className="block truncate text-xs font-bold text-white">{user.name}</span></span>
+                                        className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                    <span className="min-w-0"><span className="block truncate text-xs font-bold text-slate-800">{user.name}</span></span>
                                 </label>
                             );
                         })}
                     </div>
                     <div className="mt-3 flex gap-2">
-                        <button onClick={onClose} type="button" className="flex-1 rounded-md border border-slate-600 bg-slate-700 px-3 py-1.5 text-xs font-bold text-slate-300 transition hover:bg-slate-600">Batal</button>
+                        <button onClick={onClose} type="button" className="flex-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
                         <button type="submit" disabled={shareForm.processing} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">{shareForm.processing ? '...' : 'Share'}</button>
                     </div>
                 </form>
@@ -182,33 +182,33 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
     return (
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
             <div className="p-3">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
                     <div className="flex items-center gap-2">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
                             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>
                         </div>
                         <div className="min-w-0">
-                            <p className="text-xs font-bold text-white truncate">{attendee.name}</p>
-                            <p className="text-xs text-slate-400">{attendee.dm || '-'}</p>
+                            <p className="text-xs font-bold text-slate-800 truncate">{attendee.name}</p>
+                            <p className="text-xs text-slate-500">{attendee.dm || '-'}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {fields.map(([l, v]) => (
-                        <div key={l} className="rounded bg-slate-800/60 px-2 py-1.5">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{l}</p>
-                            <p className="truncate text-xs font-medium text-slate-200">{v}</p>
+                        <div key={l} className="rounded border border-slate-100 bg-white px-2 py-1.5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-green-700">{l}</p>
+                            <p className="truncate text-xs font-medium text-slate-800">{v}</p>
                         </div>
                     ))}
                 </div>
                 {attendee.address && (
-                    <div className="mt-2 rounded bg-slate-800/60 px-2 py-1.5">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Alamat</p>
-                        <p className="text-xs font-medium text-slate-200">{attendee.address}</p>
+                    <div className="mt-2 rounded border border-slate-100 bg-white px-2 py-1.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-green-700">Alamat</p>
+                        <p className="text-xs font-medium text-slate-800">{attendee.address}</p>
                     </div>
                 )}
-                <div className="mt-3 flex gap-2 border-t border-slate-700/60 pt-2">
+                <div className="mt-3 flex gap-2 border-t border-slate-200 pt-2">
                     <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
                 </div>
@@ -223,12 +223,12 @@ function AttendeeProgramsModal({ attendee, onClose }) {
     return (
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
             <div className="p-3">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-700/60 pb-2">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
                     <div className="min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{attendee.name}</p>
-                        <p className="text-xs text-slate-400">{programs.length} program</p>
+                        <p className="text-xs font-bold text-slate-800 truncate">{attendee.name}</p>
+                        <p className="text-xs text-slate-500">{programs.length} program</p>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
                 <div className="mt-2 max-h-64 overflow-y-auto">
                     {programs.length === 0 ? (
@@ -236,12 +236,12 @@ function AttendeeProgramsModal({ attendee, onClose }) {
                     ) : (
                         <div className="space-y-1.5">
                             {programs.map((p) => (
-                                <div key={p.program_id} className="flex items-center justify-between gap-2 rounded-md border border-slate-700 bg-slate-800/40 px-2 py-2">
+                                <div key={p.program_id} className="flex items-center justify-between gap-2 rounded-md border border-slate-100 bg-white px-2 py-2">
                                     <div className="min-w-0">
-                                        <p className="truncate text-xs font-bold text-white">{p.tajuk}</p>
-                                        <p className="text-xs text-slate-400">{p.tarikh}</p>
+                                        <p className="truncate text-xs font-bold text-slate-800">{p.tajuk}</p>
+                                        <p className="text-xs text-slate-500">{p.tarikh}</p>
                                     </div>
-                                    {p.group_name && <span className="shrink-0 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">{p.group_name}</span>}
+                                    {p.group_name && <span className="shrink-0 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{p.group_name}</span>}
                                 </div>
                             ))}
                         </div>
