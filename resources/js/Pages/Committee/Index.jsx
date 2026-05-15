@@ -314,7 +314,7 @@ function MembershipManager({ positions, memberships, scopes }) {
     };
 
     return (
-        <section className="rounded-xl border border-green-200 bg-white shadow-sm">
+        <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
             <div className="border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
