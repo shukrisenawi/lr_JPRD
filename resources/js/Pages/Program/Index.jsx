@@ -215,31 +215,31 @@ function ProgramGroupManager({ groups }) {
     const del = (g) => { if (window.confirm(`Padam group "${g.name}"?`)) router.delete(route('program.groups.destroy', g.id), { preserveScroll: true, onSuccess: () => { if (editingId === g.id) { setEditingId(null); f.reset(); } } }); };
 
     return (
-        <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-            <form onSubmit={submit} className="card p-5">
+        <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+            <form onSubmit={submit} className="card p-6 sm:p-8">
                 <p className="label-section">{editingId ? 'Edit Group' : 'Tambah Group'}</p>
-                <h3 className="mt-0.5 heading-md">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
-                <div className="mt-4">
+                <h3 className="mt-3 text-3xl font-black text-slate-950">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
+                <div className="mt-10">
                     <RequiredLabel htmlFor="gn" value="Nama Group" />
-                    <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="input-field mt-1.5" />
+                    <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="mt-3 w-full py-4" />
                     <InputError className="mt-2" message={f.errors.name} />
                 </div>
-                <div className="mt-4 flex justify-end">
+                <div className="mt-10 flex justify-end">
                     {editingId && <button onClick={() => { setEditingId(null); f.reset(); f.clearErrors(); }} className="btn-ghost mr-2">Batal</button>}
-                    <PrimaryButton disabled={f.processing}>{f.processing ? '...' : editingId ? 'Simpan' : 'Tambah'}</PrimaryButton>
+                    <PrimaryButton disabled={f.processing} className="px-8 py-3 text-base">{f.processing ? '...' : editingId ? 'Simpan' : 'Tambah'}</PrimaryButton>
                 </div>
             </form>
 
-            <section className="card p-5">
+            <section className="card p-6 sm:p-8">
                 <p className="label-section">Senarai Group</p>
-                <h3 className="mt-0.5 heading-md">{groups.length} group</h3>
-                <div className="mt-4 space-y-2">
+                <h3 className="mt-3 text-3xl font-black text-slate-950">{groups.length} group</h3>
+                <div className="mt-8 space-y-5">
                     {groups.length === 0 ? <div className="card-dashed py-6 text-xs">Belum ada</div> : groups.map((g) => (
-                        <div key={g.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2.5">
-                            <div><p className="text-xs font-bold text-white">{g.name}</p><p className="text-[10px] text-slate-400">{g.programs_count} program</p></div>
-                            <div className="flex gap-1.5">
-                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="btn-ghost px-2 py-1 text-[10px]">Edit</button>
-                                <button onClick={() => del(g)} className="btn-danger px-2 py-1 text-[10px]">Padam</button>
+                        <div key={g.id} className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-5 py-5 shadow-sm">
+                            <div><p className="text-xl font-black text-slate-950">{g.name}</p><p className="mt-1 text-sm font-medium text-slate-500">{g.programs_count} program</p></div>
+                            <div className="flex gap-3">
+                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700">Edit</button>
+                                <button onClick={() => del(g)} className="rounded-lg bg-gradient-to-r from-rose-600 to-red-500 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-rose-600/20 transition hover:from-rose-500 hover:to-red-400">Padam</button>
                             </div>
                         </div>
                     ))}
