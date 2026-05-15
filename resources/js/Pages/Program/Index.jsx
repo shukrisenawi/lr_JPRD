@@ -77,24 +77,26 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
 function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare }) {
     const s = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
     return (
-        <div className={`rounded-lg border px-3 py-3 transition ${isActive ? 'tab-btn-active' : 'border-slate-700 bg-slate-800/50 hover:border-violet-500/30 hover:bg-violet-500/5'}`}>
+        <div className={`rounded-xl border bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-900/5 ${isActive ? 'border-emerald-300 ring-1 ring-emerald-100' : 'border-slate-200'}`}>
             <div role="button" tabIndex={0} onClick={() => onSelect(program.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(program.id); } }} className="w-full text-left outline-none">
                 {program.gambar_url && (
-                    <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-2 block w-full overflow-hidden rounded-lg">
-                        <img src={program.gambar_url} alt={program.tajuk} className="h-24 w-full object-cover transition hover:scale-[1.02]" />
+                    <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-4 block w-full overflow-hidden rounded-lg">
+                        <img src={program.gambar_url} alt={program.tajuk} className="h-28 w-full object-cover transition hover:scale-[1.02]" />
                     </button>
                 )}
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-400">{s}</p>
-                <h3 className="mt-0.5 text-sm font-bold text-white">{program.tajuk}</h3>
-                <p className="mt-0.5 text-xs text-slate-400">{program.tempat}</p>
-                {program.group_name && <p className="badge-amber mt-1.5 inline-block">{program.group_name}</p>}
-                <p className="mt-1.5 text-[10px] text-slate-500">{program.attendees_count} hadir</p>
+                <p className="text-sm font-black uppercase tracking-[0.12em] text-emerald-700">▣ {s}</p>
+                <h3 className="mt-3 text-xl font-black leading-tight text-slate-950">{program.tajuk}</h3>
+                <p className="mt-2 text-sm font-medium text-slate-600">{program.tempat}</p>
+                {program.group_name && <p className="mt-4 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1 text-xs font-black uppercase tracking-[0.12em] text-emerald-700">{program.group_name}</p>}
+                <div className="mt-6 border-t border-slate-200 pt-4">
+                    <p className="text-sm font-medium text-slate-500">{program.attendees_count} hadir</p>
+                </div>
             </div>
-            <div className="mt-2 flex flex-wrap justify-end gap-1.5 border-t border-slate-700/60 pt-2">
-                {program.can_share && <button onClick={() => onShare(program)} className="btn-amber px-2 py-1 text-[10px]">Share</button>}
+            <div className="mt-3 flex flex-wrap justify-end gap-3">
+                {program.can_share && <button onClick={() => onShare(program)} className="rounded-lg border border-orange-300 bg-white px-5 py-2 text-sm font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
                 {program.can_edit && <>
-                    <button onClick={() => onEdit(program)} className="btn-ghost px-2 py-1 text-[10px]">Edit</button>
-                    <button onClick={() => onDelete(program)} disabled={deleting} className="btn-danger px-2 py-1 text-[10px]">{deleting ? '...' : 'Padam'}</button>
+                    <button onClick={() => onEdit(program)} className="rounded-lg border border-emerald-300 bg-white px-5 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">Edit</button>
+                    <button onClick={() => onDelete(program)} disabled={deleting} className="rounded-lg border border-red-400 bg-white px-5 py-2 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50">{deleting ? '...' : 'Padam'}</button>
                 </>}
             </div>
         </div>
@@ -506,9 +508,9 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                         </section>
                     </section>
                 ) : (
-                    <div className="card p-5">
+                    <div className="card p-6">
                         <p className="label-section">Senarai Program</p>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                             {programs.length === 0 ? <div className="card-dashed py-6 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
                                 <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
                                     onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg} />
