@@ -36,7 +36,7 @@ function RoleCard({ role, modules }) {
         <form onSubmit={submit} className="card p-3">
             <div className="flex items-start justify-between gap-3">
                 <div><p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Group Role</p><h3 className="mt-0.5 text-sm font-bold text-slate-950">{role.name}</h3><p className="text-xs text-slate-500">{role.user_count} pengguna</p></div>
-                {role.is_master_admin && <span className="badge-amber">Akses penuh</span>}
+                {role.is_master_admin && <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800">Akses penuh</span>}
             </div>
             <div className="mt-3"><InputLabel htmlFor={`rn-${role.id}`} value="Nama" /><TextInput id={`rn-${role.id}`} value={data.name} onChange={(e) => setData('name', e.target.value)} className="input-field mt-1" disabled={role.is_master_admin} /><InputError className="mt-1" message={errors.name} /></div>
             <div className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
