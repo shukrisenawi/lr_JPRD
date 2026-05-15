@@ -11,6 +11,41 @@ import Swal from 'sweetalert2';
 const bot = 'SSDP_Kedah_Bot';
 function cmd(v, p) { const n = v?.no_kp || v?.old_ic || ''; return n ? `/${p} ${n}` : ''; }
 
+function UserIcon({ className = 'h-5 w-5' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M20 21a8 8 0 0 0-16 0" />
+            <circle cx="12" cy="7" r="4" />
+        </svg>
+    );
+}
+
+function MapPinIcon({ className = 'h-4 w-4' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M20 10c0 4.5-8 11-8 11S4 14.5 4 10a8 8 0 1 1 16 0Z" />
+            <circle cx="12" cy="10" r="3" />
+        </svg>
+    );
+}
+
+function ChevronRightIcon({ className = 'h-5 w-5' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="m9 18 6-6-6-6" />
+        </svg>
+    );
+}
+
+function XIcon({ className = 'h-4 w-4' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+        </svg>
+    );
+}
+
 function RequiredLabel({ htmlFor, value }) {
     return <div className="flex items-center gap-1"><InputLabel htmlFor={htmlFor} value={value} /><span className="text-xs font-bold text-rose-500">*</span></div>;
 }
@@ -260,6 +295,7 @@ function SearchVoterPanel({ selectedProgram }) {
     useEffect(() => () => ac.current?.abort(), []);
 
     const pick = (voter) => { ac.current?.abort(); rid.current += 1; setSearching(false); setSuggestions([]); setQ(voter.name ?? ''); setErr(''); setSelected({ ...voter, voter_id: voter.voter_id ?? voter.id }); };
+    const clearSearch = () => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); };
 
     const handleChange = async (e) => {
         const nq = e.target.value; setQ(nq); setSelected(null); setErr(''); ac.current?.abort();
@@ -289,19 +325,26 @@ function SearchVoterPanel({ selectedProgram }) {
                     <p className="label-section">Carian Pemilih</p>
                     <h3 className="mt-0.5 heading-md">{selectedProgram.tajuk}</h3>
                     <div className="relative mt-2">
-                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555..." className="input-field" />
+                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555..." className="input-field py-3 pr-12 ring-1 ring-emerald-200 focus:ring-2" />
+                        {q && (
+                            <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100">
+                                <XIcon />
+                            </button>
+                        )}
                         {(searching || suggestions.length > 0) && (
-                            <div className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
-                                {searching ? <div className="px-3 py-2 text-xs text-slate-400">Mencari...</div> : suggestions.map((v) => (
-                                    <button key={v.id} onClick={() => pick(v)} className="flex w-full items-start justify-between gap-3 border-b border-slate-700/50 px-3 py-2.5 text-left transition hover:bg-violet-500/10 last:border-b-0">
-                                        <div className="min-w-0"><p className="text-xs font-bold text-white">{v.name}</p><p className="mt-0.5 text-[10px] text-slate-400">IC: {v.no_kp || '-'}</p></div>
-                                        <div className="shrink-0 text-right text-[10px] text-slate-500"><p>{v.dm}</p><p>{v.locality}</p></div>
+                            <div className="absolute left-0 right-0 top-full z-40 mt-3 overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-xl shadow-emerald-900/10">
+                                {searching ? <div className="px-5 py-4 text-sm font-semibold text-slate-500">Mencari...</div> : suggestions.map((v) => (
+                                    <button key={v.id} onClick={() => pick(v)} className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.9fr)_auto] items-center gap-4 border-b border-slate-200 px-5 py-4 text-left transition hover:bg-emerald-50/60 last:border-b-0">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><UserIcon /></div>
+                                        <div className="min-w-0"><p className="truncate text-sm font-black text-slate-950">{v.name}</p><p className="mt-1 text-xs font-medium text-slate-600">IC: {v.no_kp || '-'} <span className="mx-2 text-slate-400">|</span> HP: {v.phone_mobile || '-'}</p></div>
+                                        <div className="min-w-0 text-left"><p className="flex items-center gap-2 truncate text-sm font-black text-slate-950"><MapPinIcon className="h-4 w-4 shrink-0 text-emerald-700" /> {v.dm || '-'}</p><p className="mt-1 truncate text-xs font-medium text-slate-600">{v.locality || '-'}</p></div>
+                                        <ChevronRightIcon className="h-5 w-5 text-slate-500" />
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
-                    {err && <p className="mt-1.5 text-xs font-bold text-rose-400">{err}</p>}
+                    {err && <p className="mt-1.5 text-xs font-bold text-rose-500">{err}</p>}
                 </div>
             </section>
             <VoterDetailCard voter={selected} onAdd={add} adding={adding} />
