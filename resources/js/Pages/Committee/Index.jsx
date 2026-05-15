@@ -452,9 +452,6 @@ function MembershipManager({ positions, memberships, scopes }) {
                         {filteredMemberships.map((membership) => (
                             <div key={membership.id} className="group rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md">
                                 <div className="flex items-start gap-2.5">
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 text-xs font-bold text-white">
-                                        {membership.voter.name?.charAt(0)?.toUpperCase() ?? '?'}
-                                    </div>
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
                                         <p className="text-xs font-semibold text-green-700">{membership.position.name}</p>
