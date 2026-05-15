@@ -551,7 +551,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, voters
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {rows.map((voter, index) => (
-                                <div key={voter.id} className="rounded-xl border border-green-600 bg-white p-3 shadow-sm shadow-green-600/20 overflow-hidden transition-all duration-1000 hover:border-white/50">
+                                <div key={voter.id} className="rounded-xl border border-green-600 bg-white p-3 shadow-sm shadow-green-600/20 overflow-hidden transition hover:shadow-md">
                                     <div className="flex items-start justify-between gap-2">
                                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
                                             {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
