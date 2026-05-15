@@ -42,7 +42,6 @@ function PemilihUploadPanel({ report }) {
             <div>
                 <p className="label-section">Data Pemilih</p>
                 <h3 className="mt-1 text-sm font-bold text-slate-800">Fail Pemilih Semasa</h3>
-                <p className="mt-1 text-xs text-slate-500">Fail ini digunakan oleh sistem untuk uruskan data pemilih. Upload baharu akan update rekod IC yang sama dan set rekod yang tiada dalam fail baharu sebagai inaktif.</p>
             </div>
 
             <form onSubmit={submit} className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
