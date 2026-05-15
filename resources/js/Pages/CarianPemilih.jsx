@@ -40,6 +40,15 @@ function XIcon({ className = 'h-4 w-4' }) {
     );
 }
 
+function SearchIcon({ className = 'h-5 w-5' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+        </svg>
+    );
+}
+
 function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
     if (!voter) return null;
     const fields = [
@@ -50,23 +59,23 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
     ];
 
     return (
-        <section className="card-accent">
-            <div className="flex flex-col gap-3 border-b border-slate-700/60 px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+        <section className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm shadow-emerald-900/5">
+            <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                     <p className="label-section">Detail Pemilih</p>
-                    <h3 className="mt-0.5 heading-lg">{voter.name}</h3>
+                    <h3 className="mt-1 truncate text-2xl font-black uppercase leading-tight text-slate-950 sm:text-3xl">{voter.name}</h3>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                    <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
-                    <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
-                    <button onClick={onClear} className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-bold text-slate-300 transition hover:bg-slate-600">Buang</button>
+                <div className="flex shrink-0 flex-wrap gap-3">
+                    <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary px-5 py-3 text-sm">Kemas Cula</button>
+                    <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald px-5 py-3 text-sm">Kemaskini Tel</button>
+                    <button onClick={onClear} className="rounded-lg bg-slate-800 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-slate-700">Buang</button>
                 </div>
             </div>
-            <div className="grid gap-2 p-4 sm:grid-cols-2">
+            <div className="grid gap-3 p-5 sm:grid-cols-2">
                 {fields.map(([l, v]) => (
-                    <div key={l} className="rounded-lg bg-slate-800/60 px-3 py-2">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">{l}</p>
-                        <p className="mt-0.5 text-xs font-medium text-slate-200">{v}</p>
+                    <div key={l} className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.03)]">
+                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">{l}</p>
+                        <p className="mt-1 text-sm font-semibold text-slate-950">{v || '-'}</p>
                     </div>
                 ))}
             </div>
@@ -137,7 +146,8 @@ function SearchPanel() {
                     <p className="label-section">Carian Pemilih</p>
                     <p className="text-muted mt-0.5">Cari nama, IC atau nombor telefon.</p>
                     <div className="relative mt-3">
-                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789" className="input-field py-3 pr-12 ring-1 ring-emerald-200 focus:ring-2" />
+                        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789" className="input-field py-3 pl-12 pr-12 ring-1 ring-emerald-200 focus:ring-2" />
                         {q && (
                             <button type="button" onClick={clearSearch} className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100">
                                 <XIcon />
