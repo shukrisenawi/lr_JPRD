@@ -66,7 +66,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="hidden sm:block">
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
+                                        <button className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                             {user.avatar_url ? (
                                                 <img src={user.avatar_url} alt={user.name} className="h-5 w-5 rounded object-cover" />
                                             ) : (
