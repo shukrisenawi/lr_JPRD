@@ -165,8 +165,8 @@ function SearchPanel() {
                             suggestions.map((voter) => (
                                 <button key={voter.id} onClick={() => pick(voter)}
                                     className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(10rem,0.9fr)_auto] items-center gap-4 border-b border-slate-200 px-5 py-4 text-left transition hover:bg-emerald-50/60 last:border-b-0">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
-                                        <UserIcon />
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
+                                        <UserIcon className="h-8 w-8" />
                                     </div>
                                     <div className="min-w-0">
                                         <p className="truncate text-sm font-black text-slate-950">{voter.name}</p>
