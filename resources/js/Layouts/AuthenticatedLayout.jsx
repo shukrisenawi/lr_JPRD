@@ -81,7 +81,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                             {user.avatar_url ? (
                                                 <img src={user.avatar_url} alt={user.name} className="h-6 w-6 rounded object-cover" />
                                             ) : (
-                                                <div className="flex h-6 w-6 items-center justify-center rounded bg-green-100 text-[10px] font-bold text-green-700">{userInitial}</div>
+                                                <div className="flex h-6 w-6 items-center justify-center rounded bg-green-100 text-xs font-bold text-green-700">{userInitial}</div>
                                             )}
                                             <span className="hidden lg:inline">{user.name}</span>
                                             <HeaderIcon name="down" className="h-3 w-3 text-slate-400" />
@@ -105,13 +105,13 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                             <Dropdown.Link href={route('profile.edit')} className="flex items-center gap-3 rounded-md px-3 py-2 text-xs font-medium text-slate-700 hover:bg-green-50 focus:bg-green-50">
                                                 <HeaderIcon name="user" className="h-4 w-4 shrink-0 text-green-600" />
                                                 <span>Profile</span>
-                                                <span className="ml-auto text-[10px] text-slate-400">Lihat & kemas kini profil</span>
+                                                <span className="ml-auto text-xs text-slate-400">Lihat & kemas kini profil</span>
                                             </Dropdown.Link>
                                             <div className="my-1 border-t border-slate-100" />
                                             <Dropdown.Link href={route('logout')} method="post" as="button" className="flex items-center gap-3 rounded-md px-3 py-2 text-xs font-medium text-slate-700 hover:bg-green-50 focus:bg-green-50">
                                                 <HeaderIcon name="logout" className="h-4 w-4 shrink-0 text-green-600" />
                                                 <span>Log Out</span>
-                                                <span className="ml-auto text-[10px] text-slate-400">Keluar dari sistem</span>
+                                                <span className="ml-auto text-xs text-slate-400">Keluar dari sistem</span>
                                             </Dropdown.Link>
                                         </div>
                                     </Dropdown.Content>
