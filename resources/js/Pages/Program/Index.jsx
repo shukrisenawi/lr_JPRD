@@ -12,7 +12,7 @@ const bot = 'SSDP_Kedah_Bot';
 function cmd(v, p) { const n = v?.no_kp || v?.old_ic || ''; return n ? `/${p} ${n}` : ''; }
 
 function RequiredLabel({ htmlFor, value }) {
-    return <div className="flex items-center gap-1"><InputLabel htmlFor={htmlFor} value={value} /><span className="text-xs font-bold text-rose-400">*</span></div>;
+    return <div className="flex items-center gap-1"><InputLabel htmlFor={htmlFor} value={value} /><span className="text-xs font-bold text-rose-500">*</span></div>;
 }
 
 function IconBtn({ label, children, className = '', ...props }) {
@@ -327,10 +327,10 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         title: 'Berjaya',
         text: isEditingMode ? 'Program berjaya dikemaskini.' : 'Program berjaya disimpan.',
         confirmButtonText: 'OK',
-        confirmButtonColor: '#8b5cf6',
-        background: '#1e293b',
-        color: '#e2e8f0',
-        iconColor: '#34d399',
+        confirmButtonColor: '#059669',
+        background: '#ffffff',
+        color: '#0f172a',
+        iconColor: '#059669',
     });
 
     useEffect(() => {
@@ -377,7 +377,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const submitShare = (e) => {
         e.preventDefault(); if (!selShare) return;
         const names = shareableUsers.filter((u) => sf.data.shared_user_ids.includes(u.id)).map((u) => u.name);
-                sf.post(route('program.share.store', selShare.id), { preserveScroll: true, preserveState: true, onSuccess: () => { setTab('senarai-program'); Swal.fire({ icon: 'success', title: 'Berjaya', text: names.length > 0 ? `Dikongsi kepada ${names.join(', ')}.` : 'Dikemaskini.', confirmButtonText: 'OK', confirmButtonColor: '#8b5cf6', background: '#1e293b', color: '#e2e8f0', iconColor: '#34d399' }).then(() => closeShare()); } });
+                sf.post(route('program.share.store', selShare.id), { preserveScroll: true, preserveState: true, onSuccess: () => { setTab('senarai-program'); Swal.fire({ icon: 'success', title: 'Berjaya', text: names.length > 0 ? `Dikongsi kepada ${names.join(', ')}.` : 'Dikemaskini.', confirmButtonText: 'OK', confirmButtonColor: '#059669', background: '#ffffff', color: '#0f172a', iconColor: '#059669' }).then(() => closeShare()); } });
     };
 
     const tabs = [
@@ -392,12 +392,13 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         }>
             <Head title="Program" />
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <div className="card p-1.5">
-                    <div className="grid gap-1.5 sm:grid-cols-3">
+                <div className="rounded-xl border border-emerald-100 bg-white p-2 shadow-lg shadow-emerald-900/5">
+                    <div className="grid gap-3 sm:grid-cols-3">
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
-                                className={`rounded-lg border px-3 py-2.5 text-left transition ${tab === t.key ? 'tab-btn-active' : 'tab-btn-inactive'}`}>
-                                <p className="label-section">{t.label}</p>
+                                className={`flex items-center gap-3 rounded-lg border px-5 py-4 text-left transition ${tab === t.key ? 'border-emerald-500 bg-emerald-50 text-emerald-700 shadow-sm' : 'border-slate-200 bg-white text-slate-800 hover:border-emerald-200 hover:bg-emerald-50'}`}>
+                                <span className="text-xl text-emerald-700">{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
+                                <span className="text-sm font-black uppercase tracking-[0.06em]">{t.label}</span>
                             </button>
                         ))}
                     </div>
@@ -405,36 +406,36 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
                 {tab === 'tambah-program' && (
                     <section>
-                        <form onSubmit={submitProgram} className="card p-5">
+                        <form onSubmit={submitProgram} className="card p-6 sm:p-7">
                             <p className="label-section">{isEditing ? 'Edit Program' : 'Tambah Program'}</p>
-                            <h3 className="mt-0.5 heading-md">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
-                            <div className="mt-4 grid gap-4">
-                                <div><RequiredLabel htmlFor="tajuk" value="Tajuk" /><TextInput id="tajuk" required value={f.data.tajuk} onChange={(e) => f.setData('tajuk', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.tajuk} /></div>
-                                <div><RequiredLabel htmlFor="tempat" value="Tempat" /><TextInput id="tempat" required value={f.data.tempat} onChange={(e) => f.setData('tempat', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.tempat} /></div>
+                            <h3 className="mt-1 text-2xl font-black text-slate-950">{isEditing ? 'Kemaskini maklumat' : 'Maklumat program baru'}</h3>
+                            <div className="mt-6 grid gap-5">
+                                <div><RequiredLabel htmlFor="tajuk" value="Tajuk" /><TextInput id="tajuk" required value={f.data.tajuk} onChange={(e) => f.setData('tajuk', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.tajuk} /></div>
+                                <div><RequiredLabel htmlFor="tempat" value="Tempat" /><TextInput id="tempat" required value={f.data.tempat} onChange={(e) => f.setData('tempat', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.tempat} /></div>
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    <div><RequiredLabel htmlFor="tarikh" value="Tarikh" /><TextInput id="tarikh" type="date" required value={f.data.tarikh} onChange={(e) => f.setData('tarikh', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.tarikh} /></div>
-                                    <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="input-field mt-1.5" /><InputError className="mt-1.5" message={f.errors.masa} /></div>
+                                    <div><RequiredLabel htmlFor="tarikh" value="Tarikh" /><TextInput id="tarikh" type="date" required value={f.data.tarikh} onChange={(e) => f.setData('tarikh', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.tarikh} /></div>
+                                    <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="mt-2 w-full py-3" /><InputError className="mt-1.5" message={f.errors.masa} /></div>
                                 </div>
-                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1.5"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1.5" message={f.errors.group_id} /></div>
+                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-2 py-3"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1.5" message={f.errors.group_id} /></div>
                                 <div>
                                     <InputLabel htmlFor="gambar" value="Gambar" />
-                                    <div className="mt-1.5 rounded-lg border border-slate-700 bg-slate-800/60 p-3">
-                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-24 w-full rounded-lg object-cover sm:w-36" /> : <div className="flex h-24 w-full items-center justify-center rounded-lg border border-dashed border-slate-600 bg-slate-800 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 sm:w-36">Tiada</div>}
+                                    <div className="mt-2 rounded-lg border border-emerald-100 bg-white p-3 shadow-sm">
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-28 w-full rounded-lg object-cover ring-1 ring-emerald-100 sm:w-48" /> : <div className="flex h-28 w-full items-center justify-center rounded-lg border border-dashed border-emerald-200 bg-white text-[11px] font-black uppercase tracking-[0.12em] text-slate-500 sm:w-48">Tiada</div>}
                                             <div className="min-w-0 flex-1">
                                                 <input id="gambar" ref={imgRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
-                                                    className="block w-full rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1.5 text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-violet-600 file:px-2.5 file:py-1 file:text-xs file:font-bold file:text-white hover:file:bg-violet-500"
+                                                    className="block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-lg file:border file:border-emerald-200 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-emerald-700 hover:file:bg-emerald-100"
                                                     onChange={(e) => f.setData('gambar', e.target.files?.[0] ?? null)} />
-                                                <p className="mt-1 text-[10px] text-slate-500">PNG/JPG/WEBP sehingga 2MB</p>
+                                                <p className="mt-2 text-xs font-medium text-slate-500">PNG/JPG/WEBP sehingga 2MB</p>
                                                 <InputError className="mt-1.5" message={f.errors.gambar} />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-4 flex justify-center">
+                            <div className="mt-6 flex justify-center">
                                 {isEditing && <button onClick={cancelEdit} className="btn-ghost mr-2">Batal</button>}
-                                <PrimaryButton disabled={f.processing}>{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
+                                <PrimaryButton disabled={f.processing} className="px-8 py-3 text-sm">{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
                             </div>
                         </form>
                     </section>
