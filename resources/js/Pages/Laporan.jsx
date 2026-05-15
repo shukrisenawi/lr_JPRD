@@ -52,12 +52,12 @@ function StatCard({ label, value, detail, color = 'violet' }) {
 
 function ChartPanel({ title, children, action, compact = false }) {
     return (
-        <section className="card p-4">
+        <section className="card p-3">
             <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+                <h3 className="text-xs font-bold text-slate-800">{title}</h3>
                 {action}
             </div>
-            <div className={`mt-3 w-full ${compact ? '' : 'h-[15rem] lg:h-[16rem]'}`}>{children}</div>
+            <div className={`mt-2 w-full ${compact ? '' : 'h-[12rem] lg:h-[14rem]'}`}>{children}</div>
         </section>
     );
 }
@@ -78,12 +78,12 @@ function DataTable({ rows, columns }) {
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-xs">
                     <thead className="table-header">
-                        <tr>{columns.map((c) => <th key={c.key} className="table-head-cell">{c.label}</th>)}</tr>
+                        <tr>{columns.map((c) => <th key={c.key} className="px-2.5 py-1.5">{c.label}</th>)}</tr>
                     </thead>
-                    <tbody className="table-body">
+                    <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
                         {rows.map((row, i) => (
-                            <tr key={row.key ?? `${row.name}-${i}`} className="table-row">
-                                {columns.map((c) => <td key={c.key} className="table-cell align-top">{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
+                            <tr key={row.key ?? `${row.name}-${i}`} className="hover:bg-green-50/50">
+                                {columns.map((c) => <td key={c.key} className="px-2.5 py-2 align-top leading-4">{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
                             </tr>
                         ))}
                     </tbody>
@@ -205,11 +205,11 @@ export default function Laporan({ report }) {
                             </ChartPanel>
                         </div>
 
-                        <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
-                            <div className="flex flex-wrap gap-1">
+                        <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
+                            <div className="flex gap-0.5">
                                 {[{ k: 'udm', l: 'UDM' }, { k: 'locality', l: 'Lokaliti' }, { k: 'cula', l: 'Status Culaan' }].map((t) => (
                                     <button key={t.k} onClick={() => setTab(t.k)}
-                                        className={`rounded-lg px-4 py-2 text-xs font-black transition ${tab === t.k ? 'bg-green-50 text-green-700 ring-1 ring-green-100' : 'text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                                        className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${tab === t.k ? 'bg-green-50 text-green-700 ring-1 ring-green-100' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
                                         {t.l}
                                     </button>
                                 ))}

@@ -465,17 +465,17 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
             <Head title="Jawatankuasa" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <div className="card p-3">
-                    <div className="grid gap-3 sm:grid-cols-2">
+                <div className="card p-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                         {sectionTabs.map((tab) => (
                             <button
                                 key={tab.key}
                                 type="button"
                                 onClick={() => setActiveSection(tab.key)}
-                                className={`flex items-center gap-4 rounded-lg border px-5 py-5 text-left transition ${activeSection === tab.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}
+                                className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${activeSection === tab.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}
                             >
-                                <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${activeSection === tab.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}><Icon name={tab.icon} className="h-8 w-8" /></span>
-                                <span><span className={`block text-sm font-black uppercase tracking-[0.12em] ${activeSection === tab.key ? 'text-white' : 'text-emerald-800'}`}>{tab.label}</span><span className={`mt-1 block text-sm font-medium ${activeSection === tab.key ? 'text-emerald-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${activeSection === tab.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}><Icon name={tab.icon} className="h-5 w-5" /></span>
+                                <span><span className={`block text-xs font-bold uppercase tracking-[0.08em] ${activeSection === tab.key ? 'text-white' : 'text-emerald-800'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs font-medium ${activeSection === tab.key ? 'text-emerald-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
                             </button>
                         ))}
                     </div>

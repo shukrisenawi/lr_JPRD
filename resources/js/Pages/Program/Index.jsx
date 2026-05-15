@@ -452,12 +452,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             <Head title="Program" />
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <div className="card p-3">
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-2 sm:grid-cols-3">
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
-                                className={`flex items-center gap-4 rounded-lg border px-5 py-5 text-left transition ${tab === t.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}>
-                                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-black ${tab === t.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}>{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
-                                <span><span className={`block text-sm font-black uppercase tracking-[0.12em] ${tab === t.key ? 'text-white' : 'text-emerald-800'}`}>{t.label}</span></span>
+                                className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${tab === t.key ? 'border-emerald-600 bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}>
+                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black ${tab === t.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}>{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
+                                <span className={`text-xs font-bold uppercase tracking-[0.08em] ${tab === t.key ? 'text-white' : 'text-emerald-800'}`}>{t.label}</span>
                             </button>
                         ))}
                     </div>
