@@ -22,7 +22,7 @@
         @apply rounded-lg border border-dashed border-green-200 bg-white/80 p-5 text-center shadow-sm;
     }
     .label-section {
-        @apply text-[10px] font-bold uppercase tracking-[0.1em] text-green-700;
+        @apply text-xs font-bold uppercase tracking-[0.1em] text-green-700;
     }
     .heading-lg {
         @apply text-xl font-bold tracking-tight text-slate-800 sm:text-2xl;
@@ -58,7 +58,7 @@
         @apply block w-full rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-800 placeholder-slate-400 shadow-sm transition focus:border-green-500 focus:ring-1 focus:ring-green-500;
     }
     .badge {
-        @apply inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em];
+        @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-[0.08em];
     }
     .badge-violet {
         @apply badge bg-green-50 text-green-700 ring-1 ring-green-200;
@@ -79,7 +79,7 @@
         @apply badge bg-rose-50 text-rose-700 ring-1 ring-rose-200;
     }
     .table-header {
-        @apply bg-gradient-to-r from-green-50 to-emerald-50 text-left text-[10px] font-black uppercase tracking-[0.1em] text-green-700;
+        @apply bg-gradient-to-r from-green-50 to-emerald-50 text-left text-xs font-black uppercase tracking-[0.1em] text-green-700;
     }
     .table-body {
         @apply divide-y divide-slate-200 bg-white text-xs text-slate-600;
@@ -100,7 +100,7 @@
         @apply px-4 py-3 text-right align-middle leading-5;
     }
     .tab-btn {
-        @apply rounded-md border px-2.5 py-1.5 text-left text-[11px] font-bold transition;
+        @apply rounded-md border px-2.5 py-1.5 text-left text-xs font-bold transition;
     }
     .tab-btn-active {
         @apply border-green-600 bg-gradient-to-r from-green-600 to-green-500 text-white shadow-sm;
@@ -124,7 +124,7 @@
         @apply border-t border-slate-200;
     }
     .chip {
-        @apply inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em];
+        @apply inline-flex items-center rounded px-1.5 py-0.5 text-xs font-bold uppercase tracking-[0.08em];
     }
     .chip-violet {
         @apply chip bg-green-600 text-white shadow-sm;
