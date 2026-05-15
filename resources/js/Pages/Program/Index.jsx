@@ -158,18 +158,18 @@ function VoterDetailCard({ voter, onAdd, adding }) {
     ];
     return (
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-4 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <p className="label-section">Pemilih Dipilih</p>
-                    <h3 className="mt-1 truncate text-lg font-bold uppercase leading-tight text-slate-800 sm:text-2xl">{voter.name}</h3>
+                    <h3 className="truncate text-sm font-bold uppercase leading-tight text-slate-800">{voter.name}</h3>
                 </div>
-                <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald-lg shrink-0 px-5 py-2 text-sm">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
+                <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald shrink-0">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
             </div>
-            <div className="grid gap-3 p-5 sm:grid-cols-2">
+            <div className="grid gap-2 p-3 sm:grid-cols-2">
                 {fields.map(([l, v]) => (
-                    <div key={l} className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.03)]">
-                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-green-700">{l}</p>
-                        <p className="mt-1 text-sm font-semibold text-slate-800">{v || '-'}</p>
+                    <div key={l} className="rounded-md border border-slate-100 bg-white px-2.5 py-1.5">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
+                        <p className="mt-0.5 text-[11px] font-medium text-slate-800">{v || '-'}</p>
                     </div>
                 ))}
             </div>
