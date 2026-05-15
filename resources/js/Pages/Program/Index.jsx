@@ -455,7 +455,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         }>
             <Head title="Program" />
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
-                <div className="card p-2">
+                <div className="rounded-xl bg-white p-2 shadow-sm">
                     <div className={`grid gap-2 ${tabs.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
