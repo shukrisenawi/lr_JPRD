@@ -378,7 +378,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     }
                 });
             });
-            return ordered.sort((a, b) => (totals[b] ?? 0) - (totals[a] ?? 0));
+            return ordered.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
         }
         if (selectedGroup) {
             return (report?.cula_breakdown ?? []).map((e) => e.code);
