@@ -104,6 +104,7 @@ function UserCard({ user, roles, currentUserId }) {
     const [editing, setEditing] = useState(false);
     const isMe = currentUserId === user.id;
     const init = user.name?.charAt(0)?.toUpperCase() ?? '?';
+    const fmtDate = (d) => d ? d.split('-').reverse().join('/') : '';
     const isExpired = user.expires_at && new Date(user.expires_at) < new Date(new Date().toDateString());
     const { data, setData, put, processing, errors, reset } = useForm({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '', expires_at: user.expires_at ?? '' });
     const submit = (e) => { e.preventDefault(); put(route('admin.access.users.update', user.id), { onSuccess: () => { reset('password', 'password_confirmation'); setEditing(false); } }); };
@@ -117,7 +118,7 @@ function UserCard({ user, roles, currentUserId }) {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-3">
                     {user.avatar_url ? <img src={user.avatar_url} alt={user.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-50" /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-green-400 text-sm font-black text-white shadow-sm">{init}</div>}
-                    <div><p className="text-sm font-bold text-slate-950">{user.name}</p><p className="text-xs text-slate-500">{user.email}</p><span className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700"><Icon name={user.role?.is_master_admin ? 'crown' : 'shield'} className="h-3 w-3" />{user.role?.name ?? 'Tiada'}</span>{user.expires_at && <span className={`mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${isExpired ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}><Icon name="clock" className="h-3 w-3" />{isExpired ? 'Luput' : user.expires_at}</span>}</div>
+                    <div><p className="text-sm font-bold text-slate-950">{user.name}</p><p className="text-xs text-slate-500">{user.email}</p><span className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700"><Icon name={user.role?.is_master_admin ? 'crown' : 'shield'} className="h-3 w-3" />{user.role?.name ?? 'Tiada'}</span>{user.expires_at && <span className={`mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${isExpired ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}><Icon name="clock" className="h-3 w-3" />{isExpired ? 'Luput' : fmtDate(user.expires_at)}</span>}</div>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     {user.can_impersonate && <button onClick={imp} title="Masuk sebagai" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-amber-300 bg-white text-amber-600 transition hover:bg-amber-50"><Icon name="login" className="h-3.5 w-3.5" /></button>}
