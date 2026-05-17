@@ -481,21 +481,12 @@ class CulaanController extends Controller
 
     private function buildReportData(array $filters): array
     {
-        $usingCustomCulaCodes = $filters['custom_mode']
-            && is_array($filters['cula_codes'])
-            && count($filters['cula_codes']) > 0;
-
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
-            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']))
-            ->when($usingCustomCulaCodes, fn (Builder $b) => $b->whereIn('cula_code', $filters['cula_codes']));
+            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
         $this->applyGroupDemographicFilters($query, $filters['group_id']);
-
-        if ($filters['custom_mode']) {
-            $this->applyCustomDemographicFilters($query, $filters);
-        }
 
         $total = (clone $query)->count();
 
