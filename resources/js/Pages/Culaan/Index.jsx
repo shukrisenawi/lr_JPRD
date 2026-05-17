@@ -652,7 +652,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                 {canSenarai && canLaporan && (
                     <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-                        {[{ k: 'senarai', l: 'Senarai Belum Cula' }, { k: 'laporan', l: 'Laporan' }].map((t) => (
+                        {[{ k: 'senarai', l: 'Senarai Belum Cula' }, { k: 'laporan', l: 'Laporan (Graf)' }].map((t) => (
                             <button key={t.k} onClick={() => setTab(t.k)}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${tab === t.k ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
                                 {t.l}
