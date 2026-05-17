@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 
 const bot = 'SSDP_Kedah_Bot';
@@ -386,6 +386,16 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [selShare, setSelShare] = useState(null);
     const [deletingAtt, setDeletingAtt] = useState(null);
     const [openingTg, setOpeningTg] = useState(false);
+    const [attendeeSearch, setAttendeeSearch] = useState('');
+    const filteredAttendees = useMemo(() => {
+        if (!selectedProgram) return [];
+        const q = attendeeSearch.trim().toLowerCase();
+        if (!q) return selectedProgram.attendees;
+        return selectedProgram.attendees.filter((a) =>
+            [a.name, a.no_kp, a.old_ic, a.phone_mobile, a.phone_home, a.dm, a.locality]
+                .some((v) => v?.toLowerCase().includes(q))
+        );
+    }, [selectedProgram?.attendees, attendeeSearch]);
     const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
     const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', gambar: null, gambar_url: null });
@@ -510,41 +520,89 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                     <section className="space-y-3">
                         <div className="card px-3 py-2">
                             <div className="flex items-center justify-between gap-3">
-                                <div><p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{selectedProgram.tajuk}</p><h3 className="mt-0.5 text-sm font-bold text-slate-800">Kehadiran Program</h3></div>
-                                <button onClick={back} className="btn-ghost text-xs">Back</button>
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <button onClick={back} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition hover:bg-green-50 hover:text-green-700" title="Kembali">
+                                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+                                    </button>
+                                    <div className="min-w-0">
+                                        <p className="truncate text-xs font-black uppercase tracking-[0.08em] text-slate-500">{selectedProgram.tajuk}</p>
+                                        <h3 className="mt-0.5 truncate text-sm font-bold text-slate-800">
+                                            Kehadiran Program
+                                            {selectedProgram.group_name && <span className="ml-2 rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{selectedProgram.group_name}</span>}
+                                        </h3>
+                                    </div>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-2">
+                                    <div className="hidden sm:flex items-center gap-1.5 rounded-md bg-slate-50 border border-slate-200 px-2 py-1">
+                                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        <span className="text-xs font-bold text-slate-700">{selectedProgram.attendees.length}</span>
+                                    </div>
+                                    <span className="inline-flex items-center gap-1 rounded-md bg-green-50 border border-green-200 px-2 py-1">
+                                        <svg viewBox="0 0 24 24" className="h-3 w-3 text-green-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                        <span className="text-xs font-bold text-green-700">{filteredAttendees.length}</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <SearchVoterPanel selectedProgram={selectedProgram} />
-<section className="card p-3">
-                            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Kehadiran</p>
-                            <h3 className="mt-0.5 text-sm font-bold text-slate-800">{selectedProgram.attendees.length} orang</h3>
+                        <section className="card p-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Kehadiran</p>
+                                    <h3 className="mt-0.5 text-sm font-bold text-slate-800">{filteredAttendees.length} / {selectedProgram.attendees.length} orang</h3>
+                                </div>
+                                <div className="relative">
+                                    <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                    <input type="search" value={attendeeSearch} onChange={(e) => setAttendeeSearch(e.target.value)}
+                                        placeholder="Cari nama, IC, UDM..."
+                                        className="input-field py-1.5 pl-7 pr-2 text-xs w-40 sm:w-52" />
+                                </div>
+                            </div>
                             <div className="mt-3">
-                                {selectedProgram.attendees.length === 0 ? <div className="card-dashed py-4 text-xs">Tiada</div> : (
+                                {filteredAttendees.length === 0 ? (
+                                    <div className="card-dashed py-6 text-xs text-center text-slate-500">
+                                        {selectedProgram.attendees.length === 0 ? 'Tiada kehadiran lagi. Gunakan carian di atas untuk tambah pemilih.' : 'Tiada padanan carian.'}
+                                    </div>
+                                ) : (
                                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                        {selectedProgram.attendees.map((a) => (
-                                            <div key={a.id} className={`rounded-md border p-2.5 transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50' : 'border-slate-200 bg-white hover:border-green-200'}`}>
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="truncate text-xs font-bold text-slate-800">{a.name}</p>
-                                                        <p className="text-xs text-slate-500">{a.dm || '-'}</p>
-                                                        <p className="text-xs text-slate-400">{a.phone_mobile || a.phone_home || '-'}</p>
+                                        {filteredAttendees.map((a) => (
+                                            <div key={a.id} className={`rounded-md border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 shadow-sm shadow-green-200/30' : 'border-slate-200 bg-white hover:border-green-200 hover:shadow-sm'}`}>
+                                                <div className="p-2.5">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="truncate text-xs font-bold text-slate-800">{a.name}</p>
+                                                            <p className="text-[11px] font-medium text-slate-500">{a.no_kp || a.old_ic || '-'}</p>
+                                                        </div>
+                                                        <div className="flex shrink-0 gap-1">
+                                                            <button onClick={() => setSelAttendee(a)} title="Detail"
+                                                                className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-100 text-green-700' : 'border-green-200 bg-white text-green-600 hover:bg-green-50'}`}>
+                                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
+                                                            </button>
+                                                            <button onClick={() => setSelAttendeeProgs(a)} title="Program" className="inline-flex h-6 w-6 items-center justify-center rounded border border-amber-200 bg-white text-amber-600 transition hover:bg-amber-50">
+                                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+                                                            </button>
+                                                            <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} title="Padam" className="inline-flex h-6 w-6 items-center justify-center rounded border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
+                                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex shrink-0 gap-1">
-                                                        <button onClick={() => setSelAttendee(a)} title="Detail" className={`inline-flex h-5 w-5 items-center justify-center rounded border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 text-green-700' : 'border-green-200 bg-white text-green-700 hover:bg-green-50'}`}>
-                                                            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
-                                                        </button>
-                                                        <button onClick={() => setSelAttendeeProgs(a)} title="Program" className="inline-flex h-5 w-5 items-center justify-center rounded border border-amber-200 bg-white text-amber-600 transition hover:bg-amber-50">
-                                                            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
-                                                        </button>
-                                                        <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} title="Padam" className="inline-flex h-5 w-5 items-center justify-center rounded border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
-                                                            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
-                                                        </button>
+                                                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
+                                                        <span className="font-medium text-slate-600">{a.dm || '-'}</span>
+                                                        <span className="text-slate-400">/</span>
+                                                        <span className="font-medium text-slate-600">{a.locality || '-'}</span>
+                                                        <span className="text-slate-300">•</span>
+                                                        <span className="font-medium text-slate-600">{a.phone_mobile || a.phone_home || '-'}</span>
                                                     </div>
+                                                    {a.attended_at && (
+                                                        <p className="mt-1 text-[10px] font-medium text-slate-400">
+                                                            <span className="text-green-600">✓</span> {a.attended_at}
+                                                        </p>
+                                                    )}
                                                 </div>
                                                 {(a.group_badges?.length > 0 || a.committee_badges?.length > 0) && (
-                                                    <div className="mt-2 flex flex-wrap gap-1">
-                                                        {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
-                                                        {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-sky-200 bg-sky-50 px-1 py-0.5 text-[10px] font-bold text-sky-700">{b.label}</span>)}
+                                                    <div className="flex flex-wrap gap-1 border-t border-slate-100 px-2.5 py-1.5">
+                                                        {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
+                                                        {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">{b.label}</span>)}
                                                     </div>
                                                 )}
                                             </div>
