@@ -126,6 +126,24 @@ class CulaanController extends Controller
             ->with('success', 'Pemilih ditanda sebagai sudah diproses.');
     }
 
+    public function export(Request $request): JsonResponse
+    {
+        $filters = $this->resolveFilters($request);
+
+        if ($filters['udm'] === '') {
+            return response()->json(['voters' => []]);
+        }
+
+        $voters = $this->buildEligibleVotersQuery($filters)
+            ->with('culaWorkItem')
+            ->orderBy('no_kp')
+            ->get()
+            ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
+            ->values();
+
+        return response()->json(['voters' => $voters]);
+    }
+
     public function destroyMark(Request $request, PemilihRecord $pemilihRecord): RedirectResponse|JsonResponse
     {
         CulaWorkItem::query()

@@ -46,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/group-pemilih/{group}', [GroupPemilihController::class, 'destroy'])->middleware('module:group-pemilih')->name('group-pemilih.destroy');
 
     Route::get('/culaan', [CulaanController::class, 'index'])->middleware('module:culaan')->name('culaan.index');
+    Route::get('/culaan/export', [CulaanController::class, 'export'])->middleware('module:culaan.senarai')->name('culaan.export');
     Route::get('/culaan/search', [CulaanController::class, 'search'])->middleware('module:culaan.senarai')->name('culaan.search');
     Route::post('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'storeMark'])->middleware('module:culaan.senarai')->name('culaan.mark.store');
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');

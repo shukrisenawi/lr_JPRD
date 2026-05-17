@@ -432,7 +432,33 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         });
     }, [report_by_group, selectedGroup, report]);
 
-    const exportToExcel = () => {
+    const exportToExcel = async () => {
+        let exportRows = rows;
+
+        if (search.trim().length < 2) {
+            const params = new URLSearchParams({
+                udm: formState.udm,
+                locality: formState.locality,
+                show_marked: formState.show_marked ? '1' : '0',
+                group_id: formState.group_id || '',
+                keturunan: formState.keturunan,
+                jantina: formState.jantina,
+                umur_dari: formState.umur_dari ?? '',
+                umur_hingga: formState.umur_hingga ?? '',
+            });
+            (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
+
+            try {
+                const resp = await fetch(`${route('culaan.export')}?${params.toString()}`, {
+                    headers: { Accept: 'application/json' },
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    exportRows = data.voters ?? [];
+                }
+            } catch (_) { /* fallback to paginated data */ }
+        }
+
         const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula'];
 
         if (showLocalityColumn) {
@@ -442,9 +468,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const titleRows = [];
         const columnLengths = headers.map((header) => estimateExcelWidth(header));
 
-        const dataRows = rows.map((voter, index) => {
+        const dataRows = exportRows.map((voter, index) => {
             const cells = [
-                { value: search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index, type: 'Number' },
+                { value: search.trim().length >= 2 ? index + 1 : index + 1, type: 'Number' },
                 excelTextCell(voter.no_kp || voter.old_ic || '-'),
                 { value: voter.name || '-', type: 'String' },
                 { value: voter.address || '-', type: 'String' },
