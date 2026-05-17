@@ -459,35 +459,19 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             } catch (_) { /* fallback to paginated data */ }
         }
 
-        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula'];
-
-        if (showLocalityColumn) {
-            headers.push('Lokaliti');
-        }
+        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon'];
 
         const titleRows = [];
-        const columnLengths = headers.map((header) => estimateExcelWidth(header));
+        const columnWidths = [35, 360, 562, 128, 58];
 
         const dataRows = exportRows.map((voter, index) => {
             const cells = [
-                { value: search.trim().length >= 2 ? index + 1 : index + 1, type: 'Number' },
+                { value: index + 1, type: 'Number' },
                 excelTextCell(voter.no_kp || voter.old_ic || '-'),
                 { value: voter.name || '-', type: 'String' },
                 { value: voter.address || '-', type: 'String' },
                 excelTextCell(voter.phone_mobile || voter.phone_home || '-'),
-                { value: '', type: 'String' },
             ];
-
-            if (showLocalityColumn) {
-                cells.push({ value: voter.locality || '-', type: 'String' });
-            }
-
-            cells.forEach((cell, columnIndex) => {
-                columnLengths[columnIndex] = Math.max(
-                    columnLengths[columnIndex] ?? 0,
-                    estimateExcelWidth(cell.value),
-                );
-            });
 
             return cells;
         });
@@ -513,12 +497,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             });
         }
 
-        const columnXml = columnLengths
-            .map((length) => {
-                const width = Math.max(70, Math.min(length * 7.2, 420));
-
-                return `<Column ss:AutoFitWidth="1" ss:Width="${width}"/>`;
-            })
+        const columnXml = columnWidths
+            .map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`)
             .join('');
 
         const titleRowXml = titleRows
