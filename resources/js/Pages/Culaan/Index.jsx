@@ -164,7 +164,7 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
-export default function CulaanIndex({ filters, summary, udms, localities, groups, voters, requires_udm, report, report_by_group = [] }) {
+export default function CulaanIndex({ filters, summary, udms, localities, groups, voters, requires_udm, report, report_by_group = [], available_cula_codes = [], available_races = [] }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canSenarai = allowedModules.includes('culaan.senarai');
@@ -189,6 +189,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         locality: filters.locality ?? '',
         show_marked: Boolean(filters.show_marked),
         group_id: filters.group_id ?? '',
+        cula_codes: filters.cula_codes ?? [],
+        keturunan: filters.keturunan ?? 'M',
+        jantina: filters.jantina ?? '',
+        umur_dari: filters.umur_dari ?? '',
+        umur_hingga: filters.umur_hingga ?? '',
     });
 
     useEffect(() => {
@@ -197,8 +202,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             locality: filters.locality ?? '',
             show_marked: Boolean(filters.show_marked),
             group_id: filters.group_id ?? '',
+            cula_codes: filters.cula_codes ?? [],
+            keturunan: filters.keturunan ?? 'M',
+            jantina: filters.jantina ?? '',
+            umur_dari: filters.umur_dari ?? '',
+            umur_hingga: filters.umur_hingga ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga]);
 
     useEffect(() => {
         setLocalVoters(voters);
@@ -276,7 +286,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             locality: formState.locality,
             show_marked: formState.show_marked ? '1' : '0',
             group_id: formState.group_id || '',
+            keturunan: formState.keturunan,
+            jantina: formState.jantina,
+            umur_dari: formState.umur_dari ?? '',
+            umur_hingga: formState.umur_hingga ?? '',
         });
+        (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
 
         try {
             const response = await fetch(`${route('culaan.search')}?${params.toString()}`, {
@@ -587,7 +602,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 <div className="relative z-10 flex items-start justify-between gap-4">
                     <div>
                         <p className="label-section">Culaan</p>
-                        <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">{headerTitle}</h2>
+                        {formState.udm && <p className="mt-0.5 text-xl font-black uppercase tracking-[0.15em] text-slate-800">{formState.udm}</p>}
+                        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">{headerTitle}</h2>
                         <p className="mt-1 text-xs font-medium text-slate-500">{headerDesc}</p>
                     </div>
                     {tab === 'senarai' && (
@@ -648,7 +664,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     onChange={(event) => updateFilter('group_id', event.target.value)}
                                     className="input-field mt-1.5"
                                 >
-                                    <option value="">Semua Group</option>
+                                    <option value="">Semua Group (Custom Filter)</option>
                                     {groups.map((g) => (
                                         <option key={g.id} value={g.id}>{g.nama_group}</option>
                                     ))}
@@ -688,9 +704,56 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </div>
                                 {searchError && <InputError className="mt-1" message={searchError} />}
                                 {actionError && <InputError className="mt-1" message={actionError} />}
-                                {shouldPromptUdm && <p className="mt-1 text-xs font-medium text-slate-500">Pilih UDM untuk mula lihat atau cari senarai culaan.</p>}
+
                             </div>
                         </div>
+
+                        {formState.group_id === '' && (
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 xl:items-end">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Kod Cula</label>
+                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                        {available_cula_codes.map((cc) => {
+                                            const checked = formState.cula_codes.includes(cc.code);
+                                            return (
+                                                <label key={cc.code} className={`cursor-pointer rounded-md border px-2 py-1 text-xs font-bold transition ${checked ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'}`}>
+                                                    <input type="checkbox" className="sr-only" checked={checked} onChange={() => {
+                                                        const next = checked
+                                                            ? formState.cula_codes.filter((c) => c !== cc.code)
+                                                            : [...formState.cula_codes, cc.code];
+                                                        updateFilter('cula_codes', next);
+                                                    }} />
+                                                    {cc.code}
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="culaan-keturunan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Keturunan</label>
+                                    <select id="culaan-keturunan" value={formState.keturunan} onChange={(e) => updateFilter('keturunan', e.target.value)} className="input-field mt-1.5">
+                                        <option value="">Semua</option>
+                                        {available_races.map((r) => <option key={r} value={r}>{r}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="culaan-jantina" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Jantina</label>
+                                    <select id="culaan-jantina" value={formState.jantina} onChange={(e) => updateFilter('jantina', e.target.value)} className="input-field mt-1.5">
+                                        <option value="">Semua</option>
+                                        <option value="L">Lelaki</option>
+                                        <option value="P">Perempuan</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="culaan-umur-dari" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Umur Dari</label>
+                                    <input id="culaan-umur-dari" type="number" min="0" max="150" value={formState.umur_dari} onChange={(e) => updateFilter('umur_dari', e.target.value)} className="input-field mt-1.5" placeholder="cth: 21" />
+                                </div>
+                                <div>
+                                    <label htmlFor="culaan-umur-hingga" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Umur Hingga</label>
+                                    <input id="culaan-umur-hingga" type="number" min="0" max="150" value={formState.umur_hingga} onChange={(e) => updateFilter('umur_hingga', e.target.value)} className="input-field mt-1.5" placeholder="cth: 60" />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {tab === 'senarai' && (

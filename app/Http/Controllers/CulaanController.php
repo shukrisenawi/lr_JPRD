@@ -47,6 +47,8 @@ class CulaanController extends Controller
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
             'groups' => $groups,
             'voters' => $voters,
+            'available_cula_codes' => $this->availableCulaCodes(),
+            'available_races' => $this->availableRaces(),
         ]);
     }
 
@@ -147,21 +149,30 @@ class CulaanController extends Controller
     {
         $groupKodCulas = $this->resolveGroupKodCulas($filters['group_id']);
 
+        $usingCustomCulaCodes = $filters['group_id'] === null
+            && is_array($filters['cula_codes'])
+            && count($filters['cula_codes']) > 0;
+
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
-            ->where(function (Builder $builder) use ($groupKodCulas) {
+            ->where(function (Builder $builder) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
                 if ($groupKodCulas !== null) {
                     $builder->whereIn('cula_code', $groupKodCulas);
+                } elseif ($usingCustomCulaCodes) {
+                    $builder->whereIn('cula_code', $filters['cula_codes']);
                 } else {
                     $builder->whereNull('cula_code')
                         ->orWhere('cula_code', '')
                         ->orWhere('cula_code', '?');
                 }
-                $builder->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                if (! $usingCustomCulaCodes) {
+                    $builder->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                }
             })
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
-            ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']));
+            ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
+            ->when($filters['group_id'] === null, fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters));
 
         if (! $skipMarkedFilter) {
             $query->when(
@@ -266,6 +277,11 @@ class CulaanController extends Controller
             'locality' => trim((string) $request->query('locality', '')),
             'show_marked' => $request->boolean('show_marked'),
             'group_id' => $groupId,
+            'cula_codes' => $request->query('cula_codes'),
+            'keturunan' => trim((string) $request->query('keturunan', '')),
+            'jantina' => trim((string) $request->query('jantina', '')),
+            'umur_dari' => $request->query('umur_dari') !== null && $request->query('umur_dari') !== '' ? (int) $request->query('umur_dari') : null,
+            'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
         ];
     }
 
@@ -385,14 +401,99 @@ class CulaanController extends Controller
         }
     }
 
+    private function applyCustomDemographicFilters(Builder $query, array $filters): void
+    {
+        if ($filters['keturunan'] !== '') {
+            $query->where('race', $filters['keturunan']);
+        }
+
+        if ($filters['jantina'] !== '') {
+            $query->where('gender', $filters['jantina']);
+        }
+
+        $umurDari = $filters['umur_dari'];
+        $umurHingga = $filters['umur_hingga'];
+
+        if ($umurDari !== null || $umurHingga !== null) {
+            $query->whereNotNull('no_kp');
+            $query->where('no_kp', '!=', '');
+            $query->whereRaw('LENGTH(no_kp) >= 2');
+
+            $currentYY = (int) now()->format('y');
+            $currentYear = (int) now()->year;
+            $minAge = $umurDari ?? 0;
+            $maxAge = $umurHingga ?? 999;
+
+            $validPrefixes = [];
+            for ($yy = 0; $yy <= 99; $yy++) {
+                $century = $yy > $currentYY ? 1900 : 2000;
+                $birthYear = $century + $yy;
+                $age = $currentYear - $birthYear;
+                if ($age >= $minAge && $age <= $maxAge) {
+                    $validPrefixes[] = str_pad((string) $yy, 2, '0', STR_PAD_LEFT);
+                }
+            }
+
+            if (! empty($validPrefixes)) {
+                $query->where(function (Builder $q) use ($validPrefixes) {
+                    foreach ($validPrefixes as $prefix) {
+                        $q->orWhere('no_kp', 'like', $prefix.'%');
+                    }
+                });
+            }
+        }
+    }
+
+    private function availableCulaCodes(): array
+    {
+        return PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
+            ->groupBy('cula_code')
+            ->orderBy('cula_code')
+            ->get()
+            ->map(fn ($r) => [
+                'code' => $r->cula_code,
+                'label' => $r->display_label,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function availableRaces(): array
+    {
+        return PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('race')
+            ->where('race', '!=', '')
+            ->select('race')
+            ->distinct()
+            ->orderBy('race')
+            ->pluck('race')
+            ->values()
+            ->all();
+    }
+
     private function buildReportData(array $filters): array
     {
+        $usingCustomCulaCodes = $filters['group_id'] === null
+            && is_array($filters['cula_codes'])
+            && count($filters['cula_codes']) > 0;
+
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
-            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
+            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']))
+            ->when($usingCustomCulaCodes, fn (Builder $b) => $b->whereIn('cula_code', $filters['cula_codes']));
 
         $this->applyGroupDemographicFilters($query, $filters['group_id']);
+
+        if ($filters['group_id'] === null) {
+            $this->applyCustomDemographicFilters($query, $filters);
+        }
 
         $total = (clone $query)->count();
 
