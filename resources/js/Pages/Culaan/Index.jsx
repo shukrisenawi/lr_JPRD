@@ -551,7 +551,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         </Style>
         <Style ss:ID="titleMain">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-            <Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/>
+            <Font ss:FontName="Calibri" ss:Size="26" ss:Bold="1"/>
             <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
         </Style>
         <Style ss:ID="titleSub">
