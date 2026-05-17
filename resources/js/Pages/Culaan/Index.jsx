@@ -552,12 +552,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         <Style ss:ID="titleMain">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
             <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1"/>
-            <Interior ss:Color="#CBD5E1" ss:Pattern="Solid"/>
+            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
         </Style>
         <Style ss:ID="titleSub">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
             <Font ss:FontName="Calibri" ss:Size="12" ss:Bold="1"/>
-            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
+            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
         </Style>
         <Style ss:ID="header">
             <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
