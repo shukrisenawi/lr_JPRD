@@ -190,7 +190,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         show_marked: Boolean(filters.show_marked),
         group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
         cula_codes: filters.cula_codes ?? [],
-        keturunan: filters.keturunan ?? 'M',
+        keturunan: filters.keturunan || 'M',
         jantina: filters.jantina ?? '',
         umur_dari: filters.umur_dari ?? '',
         umur_hingga: filters.umur_hingga ?? '',
@@ -203,7 +203,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             show_marked: Boolean(filters.show_marked),
             group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
             cula_codes: filters.cula_codes ?? [],
-            keturunan: filters.keturunan ?? 'M',
+            keturunan: filters.keturunan || 'M',
             jantina: filters.jantina ?? '',
             umur_dari: filters.umur_dari ?? '',
             umur_hingga: filters.umur_hingga ?? '',
@@ -399,8 +399,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (selectedGroup) {
             return (report?.cula_breakdown ?? []).map((e) => e.code);
         }
+        if (filters.custom_mode) {
+            return (report?.cula_breakdown ?? []).map((e) => e.code);
+        }
         return [];
-    }, [report_by_group, selectedGroup, report]);
+    }, [report_by_group, selectedGroup, report, filters.custom_mode]);
 
     const codeLabels = useMemo(() => {
         const map = {};
@@ -415,8 +418,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 if (e.code && e.display_label) map[e.code] = e.display_label;
             });
         }
+        if (groups.length === 0 && !selectedGroup && filters.custom_mode) {
+            (report?.cula_breakdown ?? []).forEach((e) => {
+                if (e.code && e.display_label) map[e.code] = e.display_label;
+            });
+        }
         return map;
-    }, [report_by_group, selectedGroup, report]);
+    }, [report_by_group, selectedGroup, report, filters.custom_mode]);
 
     const tableRows = useMemo(() => {
         const groups = report_by_group?.length > 0 ? report_by_group : [];
@@ -425,12 +433,17 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             (report?.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
             return [{ nama_group: selectedGroup.nama_group, breakdownMap: bm, jumlah: report?.total ?? 0 }];
         }
+        if (groups.length === 0 && filters.custom_mode) {
+            const bm = {};
+            (report?.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
+            return [{ nama_group: 'Custom', breakdownMap: bm, jumlah: report?.total ?? 0 }];
+        }
         return groups.map((rg) => {
             const bm = {};
             (rg.report.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
             return { nama_group: rg.group.nama_group, breakdownMap: bm, jumlah: rg.report.total ?? 0 };
         });
-    }, [report_by_group, selectedGroup, report]);
+    }, [report_by_group, selectedGroup, report, filters.custom_mode]);
 
     const exportToExcel = async () => {
         let exportRows = rows;
@@ -459,6 +472,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             } catch (_) { /* fallback to paginated data */ }
         }
 
+        const titleRows = [];
         const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula'];
         const align = ['center', 'center', 'left', 'left', 'center', 'center'];
         const columnWidths = [35, 360, 562, 128, 58, 40];
@@ -616,7 +630,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xml`;
+        link.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -737,7 +751,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             </div>
                         </div>
 
-                        {tab === 'senarai' && formState.group_id === 'custom' && (
+                        {formState.group_id === 'custom' && (
                             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
                                 <div>
                                     <label htmlFor="culaan-keturunan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Keturunan</label>
@@ -882,7 +896,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     </section>
                 )}
 
-                {tab === 'laporan' && !shouldPromptUdm && (
+                {tab === 'laporan' && (
                     <section className="space-y-3">
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             <StatCard label="Jumlah Pemilih" value={report?.total ?? 0} color="violet" />
@@ -935,13 +949,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         )}
                     </section>
                 )}
-                {tab === 'laporan' && shouldPromptUdm && (
-                    <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
-                        Pilih UDM untuk melihat laporan.
-                    </p>
-                )}
-
-                {tab === 'jadual' && canJadual && !shouldPromptUdm && (
+                {tab === 'jadual' && canJadual && (
                     <section className="space-y-3">
                         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
                             <table className="w-full text-xs">
@@ -972,11 +980,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             </table>
                         </div>
                     </section>
-                )}
-                {tab === 'jadual' && canJadual && shouldPromptUdm && (
-                    <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
-                        Pilih UDM untuk melihat laporan.
-                    </p>
                 )}
             </div>
         </AuthenticatedLayout>

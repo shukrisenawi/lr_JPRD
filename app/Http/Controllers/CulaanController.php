@@ -24,7 +24,7 @@ class CulaanController extends Controller
         $report = $this->buildReportData($filters);
 
         $reportByGroup = [];
-        if ($filters['group_id'] === null) {
+        if ($filters['group_id'] === null && ! $filters['custom_mode']) {
             foreach ($groups as $group) {
                 $gf = $filters;
                 $gf['group_id'] = $group['id'];
@@ -504,7 +504,15 @@ class CulaanController extends Controller
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
+        if ($filters['custom_mode'] && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0) {
+            $query->whereIn('cula_code', $filters['cula_codes']);
+        }
+
         $this->applyGroupDemographicFilters($query, $filters['group_id']);
+
+        if ($filters['custom_mode']) {
+            $this->applyCustomDemographicFilters($query, $filters);
+        }
 
         $total = (clone $query)->count();
 
