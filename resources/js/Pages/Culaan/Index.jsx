@@ -364,22 +364,27 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         ? 'Statistik dan pecahan status culaan pemilih.'
         : 'Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.';
 
-    const tableData = useMemo(() => {
-        if (report_by_group?.length > 0) {
-            return report_by_group.map((rg) => ({
-                nama_group: rg.group.nama_group,
-                kod_culas: (rg.report.cula_breakdown ?? []).map((e) => e.code),
-                jumlah: rg.report.total ?? 0,
-            }));
+    const tableColumns = useMemo(() => {
+        if (!report_by_group?.length) return [];
+        const codes = new Set();
+        report_by_group.forEach((rg) => {
+            (rg.report.cula_breakdown ?? []).forEach((e) => codes.add(e.code));
+        });
+        return [...codes].sort();
+    }, [report_by_group]);
+
+    const tableRows = useMemo(() => {
+        const groups = report_by_group?.length > 0 ? report_by_group : [];
+        if (groups.length === 0 && selectedGroup) {
+            const bm = {};
+            (report?.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
+            return [{ nama_group: selectedGroup.nama_group, breakdownMap: bm, jumlah: report?.total ?? 0 }];
         }
-        if (selectedGroup) {
-            return [{
-                nama_group: selectedGroup.nama_group,
-                kod_culas: (report?.cula_breakdown ?? []).map((e) => e.code),
-                jumlah: report?.total ?? 0,
-            }];
-        }
-        return [];
+        return groups.map((rg) => {
+            const bm = {};
+            (rg.report.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
+            return { nama_group: rg.group.nama_group, breakdownMap: bm, jumlah: rg.report.total ?? 0 };
+        });
     }, [report_by_group, selectedGroup, report]);
 
     const exportToExcel = () => {
@@ -828,25 +833,29 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                 {tab === 'jadual' && !shouldPromptUdm && (
                     <section className="space-y-3">
-                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
                             <table className="w-full text-xs">
                                 <thead>
                                     <tr className="border-b border-slate-200 bg-slate-50">
-                                        <th className="px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Nama Group</th>
-                                        <th className="px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Kod Culaan</th>
-                                        <th className="px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-slate-600">Jumlah Keseluruhan</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Nama Group</th>
+                                        {tableColumns.map((code) => (
+                                            <th key={code} className="whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-slate-600">{code}</th>
+                                        ))}
+                                        <th className="whitespace-nowrap px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-slate-600">Jumlah Keseluruhan</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {tableData.length === 0 ? (
+                                    {tableRows.length === 0 ? (
                                         <tr>
-                                            <td colSpan={3} className="px-3 py-6 text-center text-slate-500">Tiada data untuk paparan ini.</td>
+                                            <td colSpan={tableColumns.length + 2} className="px-3 py-6 text-center text-slate-500">Tiada data untuk paparan ini.</td>
                                         </tr>
-                                    ) : tableData.map((row, i) => (
+                                    ) : tableRows.map((row, i) => (
                                         <tr key={i} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
-                                            <td className="px-3 py-2 font-bold text-slate-800">{row.nama_group}</td>
-                                            <td className="px-3 py-2 text-slate-600">{row.kod_culas.join(', ')}</td>
-                                            <td className="px-3 py-2 text-right font-bold text-slate-800">{fmt(row.jumlah)}</td>
+                                            <td className="whitespace-nowrap px-3 py-2 font-bold text-slate-800">{row.nama_group}</td>
+                                            {tableColumns.map((code) => (
+                                                <td key={code} className="whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800">{fmt(row.breakdownMap[code] ?? 0)}</td>
+                                            ))}
+                                            <td className="whitespace-nowrap px-3 py-2 text-right font-bold text-slate-800">{fmt(row.jumlah)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
