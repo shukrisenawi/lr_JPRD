@@ -710,26 +710,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </div>
 
                         {formState.group_id === 'custom' && (
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 xl:items-end">
-                                <div>
-                                    <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Kod Cula</label>
-                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                                        {available_cula_codes.map((cc) => {
-                                            const checked = formState.cula_codes.includes(cc.code);
-                                            return (
-                                                <label key={cc.code} className={`cursor-pointer rounded-md border px-2 py-1 text-xs font-bold transition ${checked ? 'border-green-500 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'}`}>
-                                                    <input type="checkbox" className="sr-only" checked={checked} onChange={() => {
-                                                        const next = checked
-                                                            ? formState.cula_codes.filter((c) => c !== cc.code)
-                                                            : [...formState.cula_codes, cc.code];
-                                                        updateFilter('cula_codes', next);
-                                                    }} />
-                                                    {cc.code}
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
                                 <div>
                                     <label htmlFor="culaan-keturunan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Keturunan</label>
                                     <select id="culaan-keturunan" value={formState.keturunan} onChange={(e) => updateFilter('keturunan', e.target.value)} className="input-field mt-1.5">
