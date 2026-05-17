@@ -366,14 +366,22 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     const tableColumns = useMemo(() => {
         if (report_by_group?.length > 0) {
-            const codes = new Set();
+            const seen = new Set();
+            const ordered = [];
+            const totals = {};
             report_by_group.forEach((rg) => {
-                (rg.report.cula_breakdown ?? []).forEach((e) => codes.add(e.code));
+                (rg.report.cula_breakdown ?? []).forEach((e) => {
+                    totals[e.code] = (totals[e.code] ?? 0) + (e.total ?? 0);
+                    if (!seen.has(e.code)) {
+                        seen.add(e.code);
+                        ordered.push(e.code);
+                    }
+                });
             });
-            return [...codes].sort();
+            return ordered.sort((a, b) => (totals[b] ?? 0) - (totals[a] ?? 0));
         }
         if (selectedGroup) {
-            return (report?.cula_breakdown ?? []).map((e) => e.code).sort();
+            return (report?.cula_breakdown ?? []).map((e) => e.code);
         }
         return [];
     }, [report_by_group, selectedGroup, report]);
