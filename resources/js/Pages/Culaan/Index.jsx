@@ -174,6 +174,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (canLaporan && !canSenarai) return 'laporan';
         return 'senarai';
     });
+    const isLaporanLike = tab === 'laporan' || tab === 'jadual';
     const [search, setSearch] = useState('');
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
@@ -358,10 +359,28 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const showLocalityColumn = formState.locality === '';
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
     const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group})` : '';
-    const headerTitle = tab === 'laporan' ? `Laporan Pemilih${groupSuffix}` : `Pemilih Belum Cula${groupSuffix}`;
-    const headerDesc = tab === 'laporan'
+    const headerTitle = isLaporanLike ? `Laporan Pemilih${groupSuffix}` : `Pemilih Belum Cula${groupSuffix}`;
+    const headerDesc = isLaporanLike
         ? 'Statistik dan pecahan status culaan pemilih.'
         : 'Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.';
+
+    const tableData = useMemo(() => {
+        if (report_by_group?.length > 0) {
+            return report_by_group.map((rg) => ({
+                nama_group: rg.group.nama_group,
+                kod_culas: rg.group.kod_culas ?? [],
+                jumlah: rg.report.total ?? 0,
+            }));
+        }
+        if (selectedGroup) {
+            return [{
+                nama_group: selectedGroup.nama_group,
+                kod_culas: selectedGroup.kod_culas ?? [],
+                jumlah: report?.total ?? 0,
+            }];
+        }
+        return [];
+    }, [report_by_group, selectedGroup, report]);
 
     const exportToExcel = () => {
         const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula'];
@@ -552,9 +571,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             <Head title="Culaan" />
 
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
-                <section className={`grid gap-3 xl:items-stretch ${tab === 'laporan' ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_14rem]'}`}>
+                <section className={`grid gap-3 xl:items-stretch ${isLaporanLike ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_14rem]'}`}>
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className={`grid gap-3 sm:grid-cols-2 xl:items-end ${tab === 'laporan' ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : 'xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)]'}`}>
+                        <div className={`grid gap-3 sm:grid-cols-2 xl:items-end ${isLaporanLike ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : 'xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)]'}`}>
                             <div>
                                 <label htmlFor="culaan-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
@@ -639,7 +658,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </div>
                     </div>
 
-                    {tab !== 'laporan' && (
+                    {tab === 'senarai' && (
                         <div className="flex items-center gap-3 rounded-xl border border-green-600 bg-white px-4 py-3 shadow-sm shadow-green-600/20 overflow-hidden">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
                             <div className="min-w-0 flex-1 text-right">
@@ -652,7 +671,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                 {canSenarai && canLaporan && (
                     <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-                        {[{ k: 'senarai', l: 'Senarai Belum Cula' }, { k: 'laporan', l: 'Laporan (Graf)' }].map((t) => (
+                        {[{ k: 'senarai', l: 'Senarai Belum Cula' }, { k: 'laporan', l: 'Laporan (Graf)' }, { k: 'jadual', l: 'Laporan (Jadual)' }].map((t) => (
                             <button key={t.k} onClick={() => setTab(t.k)}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${tab === t.k ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
                                 {t.l}
@@ -802,6 +821,40 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     </section>
                 )}
                 {tab === 'laporan' && shouldPromptUdm && (
+                    <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
+                        Pilih UDM untuk melihat laporan.
+                    </p>
+                )}
+
+                {tab === 'jadual' && !shouldPromptUdm && (
+                    <section className="space-y-3">
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                            <table className="w-full text-xs">
+                                <thead>
+                                    <tr className="border-b border-slate-200 bg-slate-50">
+                                        <th className="px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Nama Group</th>
+                                        <th className="px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Kod Culaan</th>
+                                        <th className="px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-slate-600">Jumlah Keseluruhan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {tableData.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={3} className="px-3 py-6 text-center text-slate-500">Tiada data untuk paparan ini.</td>
+                                        </tr>
+                                    ) : tableData.map((row, i) => (
+                                        <tr key={i} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                                            <td className="px-3 py-2 font-bold text-slate-800">{row.nama_group}</td>
+                                            <td className="px-3 py-2 text-slate-600">{row.kod_culas.join(', ')}</td>
+                                            <td className="px-3 py-2 text-right font-bold text-slate-800">{fmt(row.jumlah)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
+                {tab === 'jadual' && shouldPromptUdm && (
                     <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                         Pilih UDM untuk melihat laporan.
                     </p>
