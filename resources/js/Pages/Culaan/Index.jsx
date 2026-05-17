@@ -459,18 +459,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             } catch (_) { /* fallback to paginated data */ }
         }
 
-        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon'];
-
-        const titleRows = [];
-        const columnWidths = [35, 360, 562, 128, 58];
+        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula'];
+        const align = ['center', 'center', 'left', 'left', 'center', 'center'];
+        const columnWidths = [35, 360, 562, 128, 58, 40];
 
         const dataRows = exportRows.map((voter, index) => {
             const cells = [
-                { value: index + 1, type: 'Number' },
-                excelTextCell(voter.no_kp || voter.old_ic || '-'),
-                { value: voter.name || '-', type: 'String' },
-                { value: voter.address || '-', type: 'String' },
-                excelTextCell(voter.phone_mobile || voter.phone_home || '-'),
+                { value: index + 1, type: 'Number', align: 'center' },
+                { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
+                { value: voter.name || '-', type: 'String', align: 'left' },
+                { value: voter.address || '-', type: 'String', align: 'left' },
+                { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
+                { value: '', type: 'String', align: 'center' },
             ];
 
             return cells;
@@ -513,11 +513,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
         const headerRowXml = `
             <Row>
-                ${headers.map((header) => `
-                    <Cell ss:StyleID="header">
+                ${headers.map((header, i) => {
+                    const hStyle = align[i] === 'center' ? 'headerCenter' : 'header';
+                    return `<Cell ss:StyleID="${hStyle}">
                         <Data ss:Type="String">${escapeXml(header)}</Data>
-                    </Cell>
-                `).join('')}
+                    </Cell>`;
+                }).join('')}
             </Row>
         `;
 
@@ -525,7 +526,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             .map((cells) => `
                 <Row>
                     ${cells.map((cell) => `
-                        <Cell ss:StyleID="cell">
+                        <Cell ss:StyleID="${cell.align === 'center' ? 'cellCenter' : 'cell'}">
                             <Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data>
                         </Cell>
                     `).join('')}
@@ -569,8 +570,29 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
             <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
         </Style>
+        <Style ss:ID="headerCenter">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
+        </Style>
         <Style ss:ID="cell">
             <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+        <Style ss:ID="cellCenter">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
             <Borders>
                 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
                 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
