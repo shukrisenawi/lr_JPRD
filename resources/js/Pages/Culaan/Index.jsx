@@ -368,14 +368,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (report_by_group?.length > 0) {
             return report_by_group.map((rg) => ({
                 nama_group: rg.group.nama_group,
-                kod_culas: rg.group.kod_culas ?? [],
+                kod_culas: (rg.report.cula_breakdown ?? []).map((e) => e.code),
                 jumlah: rg.report.total ?? 0,
             }));
         }
         if (selectedGroup) {
             return [{
                 nama_group: selectedGroup.nama_group,
-                kod_culas: selectedGroup.kod_culas ?? [],
+                kod_culas: (report?.cula_breakdown ?? []).map((e) => e.code),
                 jumlah: report?.total ?? 0,
             }];
         }
