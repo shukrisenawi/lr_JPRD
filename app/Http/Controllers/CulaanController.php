@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
+use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +20,23 @@ class CulaanController extends Controller
     {
         $filters = $this->resolveFilters($request);
         $voters = $this->paginateVoters($filters);
+        $groups = $this->availableGroups();
+        $report = $this->buildReportData($filters);
+
+        $reportByGroup = [];
+        if ($filters['group_id'] === null) {
+            foreach ($groups as $group) {
+                if (! ($group['show_in_culaan_report'] ?? false)) {
+                    continue;
+                }
+                $gf = $filters;
+                $gf['group_id'] = $group['id'];
+                $reportByGroup[] = [
+                    'group' => $group,
+                    'report' => $this->buildReportData($gf),
+                ];
+            }
+        }
 
         return Inertia::render('Culaan/Index', [
             'filters' => $filters,
@@ -25,8 +44,11 @@ class CulaanController extends Controller
             'summary' => [
                 'total' => $voters->total(),
             ],
+            'report' => $report,
+            'report_by_group' => $reportByGroup,
             'udms' => $this->availableUdms(),
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
+            'groups' => $groups,
             'voters' => $voters,
         ]);
     }
@@ -48,6 +70,7 @@ class CulaanController extends Controller
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
         $suggestions = $this->buildEligibleVotersQuery($filters)
+            ->with('culaWorkItem')
             ->where(function (Builder $builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
@@ -123,24 +146,52 @@ class CulaanController extends Controller
             ->with('success', 'Tanda culaan berjaya dibuka semula.');
     }
 
-    private function buildEligibleVotersQuery(array $filters): Builder
+    private function buildEligibleVotersQuery(array $filters, bool $skipMarkedFilter = false): Builder
     {
-        return PemilihRecord::query()
-            ->with('culaWorkItem')
+        $groupKodCulas = $this->resolveGroupKodCulas($filters['group_id']);
+
+        $query = PemilihRecord::query()
             ->where('status', 'aktif')
-            ->where(function (Builder $builder) {
-                $builder->whereNull('cula_code')
-                    ->orWhere('cula_code', '')
-                    ->orWhere('cula_code', '?')
-                    ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+            ->where(function (Builder $builder) use ($groupKodCulas) {
+                if ($groupKodCulas !== null) {
+                    $builder->whereIn('cula_code', $groupKodCulas);
+                } else {
+                    $builder->whereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhere('cula_code', '?');
+                }
+                $builder->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
             })
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
-            ->when(
+            ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']));
+
+        if (! $skipMarkedFilter) {
+            $query->when(
                 $filters['show_marked'],
                 fn (Builder $builder) => $builder->whereHas('culaWorkItem'),
                 fn (Builder $builder) => $builder->whereDoesntHave('culaWorkItem')
             );
+        }
+
+        return $query;
+    }
+
+    private function resolveGroupKodCulas(?int $groupId): ?array
+    {
+        if ($groupId === null) {
+            return null;
+        }
+
+        $group = GroupPemilih::with('kodCulas')->find($groupId);
+
+        if (! $group) {
+            return null;
+        }
+
+        $kodCulas = $group->kodCulas->pluck('kod_cula')->filter()->values();
+
+        return $kodCulas->isNotEmpty() ? $kodCulas->all() : null;
     }
 
     private function paginateVoters(array $filters): LengthAwarePaginator
@@ -159,6 +210,7 @@ class CulaanController extends Controller
         }
 
         return $this->buildEligibleVotersQuery($filters)
+            ->with('culaWorkItem')
             ->orderBy('no_kp')
             ->paginate(20)
             ->withQueryString()
@@ -209,11 +261,36 @@ class CulaanController extends Controller
 
     private function resolveFilters(Request $request): array
     {
+        $groupId = $request->query('group_id', '');
+        $groupId = $groupId !== '' ? (int) $groupId : null;
+
         return [
             'udm' => trim((string) $request->query('udm', '')),
             'locality' => trim((string) $request->query('locality', '')),
             'show_marked' => $request->boolean('show_marked'),
+            'group_id' => $groupId,
         ];
+    }
+
+    private function availableGroups(): array
+    {
+        return GroupPemilih::query()
+            ->with('kodCulas')
+            ->orderBy('sort_order')
+            ->orderBy('nama_group')
+            ->get()
+            ->map(fn (GroupPemilih $group) => [
+                'id' => $group->id,
+                'nama_group' => $group->nama_group,
+                'keturunan' => $group->keturunan,
+                'jantina' => $group->jantina,
+                'umur_dari' => $group->umur_dari,
+                'umur_akhir' => $group->umur_akhir,
+                'show_in_culaan_report' => $group->show_in_culaan_report,
+                'kod_culas' => $group->kodCulas->pluck('kod_cula')->values(),
+            ])
+            ->values()
+            ->all();
     }
 
     private function transformVoter(PemilihRecord $voter): array
@@ -260,5 +337,100 @@ class CulaanController extends Controller
         $code = (string) ($voter->cula_code ?? '');
 
         return $code === '' || $code === '?' || str_contains($label, 'BELUM DICULA');
+    }
+
+    private function applyGroupDemographicFilters(Builder $query, ?int $groupId): void
+    {
+        if ($groupId === null) {
+            return;
+        }
+
+        $group = GroupPemilih::with('kodCulas')->find($groupId);
+
+        if (! $group) {
+            return;
+        }
+
+        if ($group->keturunan) {
+            $query->where('race', $group->keturunan);
+        }
+
+        if ($group->jantina) {
+            $query->where('gender', $group->jantina);
+        }
+
+        if ($group->umur_dari !== null || $group->umur_akhir !== null) {
+            $query->whereNotNull('no_kp');
+            $query->where('no_kp', '!=', '');
+            $query->whereRaw('LENGTH(no_kp) >= 2');
+
+            $currentYY = (int) now()->format('y');
+            $currentYear = (int) now()->year;
+            $minAge = $group->umur_dari ?? 0;
+            $maxAge = $group->umur_akhir ?? 999;
+
+            $validPrefixes = [];
+            for ($yy = 0; $yy <= 99; $yy++) {
+                $century = $yy > $currentYY ? 1900 : 2000;
+                $birthYear = $century + $yy;
+                $age = $currentYear - $birthYear;
+                if ($age >= $minAge && $age <= $maxAge) {
+                    $validPrefixes[] = str_pad((string) $yy, 2, '0', STR_PAD_LEFT);
+                }
+            }
+
+            if (! empty($validPrefixes)) {
+                $query->where(function (Builder $q) use ($validPrefixes) {
+                    foreach ($validPrefixes as $prefix) {
+                        $q->orWhere('no_kp', 'like', $prefix.'%');
+                    }
+                });
+            }
+        }
+    }
+
+    private function buildReportData(array $filters): array
+    {
+        $query = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
+            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
+
+        $this->applyGroupDemographicFilters($query, $filters['group_id']);
+
+        $total = (clone $query)->count();
+
+        $sudahDicula = (clone $query)
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->count();
+
+        $belumDicula = $total - $sudahDicula;
+
+        $culaBreakdown = (clone $query)
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'), DB::raw('COUNT(*) as total'))
+            ->groupBy('cula_code')
+            ->orderByDesc('total')
+            ->limit(12)
+            ->get()
+            ->map(fn ($r) => [
+                'code' => $r->cula_code,
+                'display_label' => $r->display_label,
+                'total' => (int) $r->total,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'total' => $total,
+            'sudah_dicula' => $sudahDicula,
+            'belum_dicula' => $belumDicula,
+            'peratus_siap' => $total > 0 ? round(($sudahDicula / $total) * 100, 1) : 0,
+            'cula_breakdown' => $culaBreakdown,
+        ];
     }
 }

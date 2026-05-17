@@ -3,7 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 function Icon({ name, className = 'h-5 w-5' }) {
@@ -487,11 +487,20 @@ function MembershipManager({ positions, memberships, scopes }) {
 }
 
 export default function CommitteeIndex({ positions, memberships, scopes }) {
-    const [activeSection, setActiveSection] = useState('senarai-jawatankuasa');
+    const { auth } = usePage().props;
+    const allowedModules = auth.user?.allowed_modules ?? [];
+    const canSenarai = allowedModules.includes('jawatankuasa.senarai');
+    const canJawatan = allowedModules.includes('jawatankuasa.jawatan');
+
     const sectionTabs = [
-        { key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' },
-        { key: 'jawatan', label: 'Jawatan', desc: 'Urus jenis jawatan dan susunan.', icon: 'userCog' },
+        ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
+        ...(canJawatan ? [{ key: 'jawatan', label: 'Jawatan', desc: 'Urus jenis jawatan dan susunan.', icon: 'userCog' }] : []),
     ];
+
+    const [activeSection, setActiveSection] = useState(() => {
+        if (canJawatan && !canSenarai) return 'jawatan';
+        return 'senarai-jawatankuasa';
+    });
 
     return (
         <AuthenticatedLayout
@@ -506,19 +515,21 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
             <Head title="Jawatankuasa" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <div className="grid gap-2 sm:grid-cols-2">
-                    {sectionTabs.map((tab) => (
-                        <button
-                            key={tab.key}
-                            type="button"
-                            onClick={() => setActiveSection(tab.key)}
-                            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${activeSection === tab.key ? 'border-green-300 bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-md' : 'border-green-200 bg-white text-slate-700 hover:border-green-300 hover:bg-green-50'}`}
-                        >
-                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${activeSection === tab.key ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}><Icon name={tab.icon} className="h-5 w-5" /></span>
-                            <span><span className={`block text-xs font-bold uppercase tracking-wider ${activeSection === tab.key ? 'text-white' : 'text-green-700'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeSection === tab.key ? 'text-green-100' : 'text-slate-500'}`}>{tab.desc}</span></span>
-                        </button>
-                    ))}
-                </div>
+                {sectionTabs.length > 1 && (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                        {sectionTabs.map((tab) => (
+                            <button
+                                key={tab.key}
+                                type="button"
+                                onClick={() => setActiveSection(tab.key)}
+                                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${activeSection === tab.key ? 'border-green-300 bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-md' : 'border-green-200 bg-white text-slate-700 hover:border-green-300 hover:bg-green-50'}`}
+                            >
+                                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${activeSection === tab.key ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}><Icon name={tab.icon} className="h-5 w-5" /></span>
+                                <span><span className={`block text-xs font-bold uppercase tracking-wider ${activeSection === tab.key ? 'text-white' : 'text-green-700'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeSection === tab.key ? 'text-green-100' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {activeSection === 'senarai-jawatankuasa' && (
                     <MembershipManager positions={positions} memberships={memberships} scopes={scopes} />

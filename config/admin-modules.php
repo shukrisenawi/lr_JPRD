@@ -20,10 +20,22 @@ return [
     'jawatankuasa' => [
         'label' => 'Jawatankuasa',
         'description' => 'Urus jawatan dan ahli jawatankuasa JPRD, UDM dan Cawangan.',
+        'children' => [
+            'jawatankuasa.senarai' => ['label' => 'Senarai Jawatankuasa'],
+            'jawatankuasa.jawatan' => ['label' => 'Jawatan'],
+        ],
+    ],
+    'group-pemilih' => [
+        'label' => 'Group Pemilih',
+        'description' => 'Urus group untuk tapisan data pemilih.',
     ],
     'culaan' => [
         'label' => 'Culaan',
         'description' => 'Semak pemilih belum cula, kemas data dan tanda senarai kerja culaan.',
+        'children' => [
+            'culaan.senarai' => ['label' => 'Senarai Belum Cula'],
+            'culaan.laporan' => ['label' => 'Laporan'],
+        ],
     ],
     'settings' => [
         'label' => 'Settings',

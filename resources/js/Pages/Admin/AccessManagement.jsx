@@ -27,9 +27,60 @@ function FieldIcon({ name }) {
     return <Icon name={name} className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />;
 }
 
+function toggleModule(data, setData, mod) {
+    if (mod.children?.length) {
+        const allChildKeys = mod.children.map(c => c.key);
+        const anyChildChecked = allChildKeys.some(k => data.access_modules.includes(k));
+        setData('access_modules', anyChildChecked
+            ? data.access_modules.filter(k => !allChildKeys.includes(k))
+            : [...data.access_modules, ...allChildKeys.filter(k => !data.access_modules.includes(k))]
+        );
+    } else {
+        setData('access_modules', data.access_modules.includes(mod.key)
+            ? data.access_modules.filter(i => i !== mod.key)
+            : [...data.access_modules, mod.key]);
+    }
+}
+
+function ModuleCheckbox({ m, data, setData, disabled }) {
+    if (m.children?.length) {
+        const anyChildChecked = m.children.some(c => data.access_modules.includes(c.key)) || disabled;
+        return (
+            <div key={m.key} className={`rounded-md border transition ${anyChildChecked ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-white'} ${disabled ? 'cursor-not-allowed opacity-70' : ''}`}>
+                <label className={`flex items-center gap-2 p-2 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                    <input type="checkbox" checked={anyChildChecked} onChange={() => toggleModule(data, setData, m)} disabled={disabled} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                    <p className="text-xs font-bold text-slate-900">{m.label}</p>
+                </label>
+                {anyChildChecked && (
+                    <div className="space-y-1 px-2 pb-2">
+                        {m.children.map(c => {
+                            const childChecked = data.access_modules.includes(c.key) || disabled;
+                            return (
+                                <label key={c.key} className={`flex items-center gap-2 rounded-md border p-1.5 transition ${childChecked ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'} ${disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
+                                    <input type="checkbox" checked={childChecked} onChange={() => toggleModule(data, setData, c)} disabled={disabled} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                    <p className="text-xs font-bold text-slate-900">{c.label}</p>
+                                </label>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    const checked = data.access_modules.includes(m.key) || disabled;
+    return (
+        <label key={m.key} className={`rounded-md border p-2 transition ${checked ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'} ${disabled ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
+            <div className="flex items-center gap-2">
+                <input type="checkbox" checked={checked} onChange={() => toggleModule(data, setData, m)} disabled={disabled} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                <p className="text-xs font-bold text-slate-900">{m.label}</p>
+            </div>
+        </label>
+    );
+}
+
 function RoleCard({ role, modules }) {
     const { data, setData, put, processing, errors } = useForm({ name: role.name, access_modules: role.access_modules ?? [] });
-    const toggle = (k) => setData('access_modules', data.access_modules.includes(k) ? data.access_modules.filter((i) => i !== k) : [...data.access_modules, k]);
     const submit = (e) => { e.preventDefault(); put(route('admin.access.roles.update', role.id)); };
 
     return (
@@ -40,17 +91,7 @@ function RoleCard({ role, modules }) {
             </div>
             <div className="mt-3"><InputLabel htmlFor={`rn-${role.id}`} value="Nama" /><TextInput id={`rn-${role.id}`} value={data.name} onChange={(e) => setData('name', e.target.value)} className="input-field mt-1" disabled={role.is_master_admin} /><InputError className="mt-1" message={errors.name} /></div>
             <div className="mt-3 grid gap-1.5 grid-cols-2">
-                {modules.map((m) => {
-                    const checked = data.access_modules.includes(m.key) || role.is_master_admin;
-                    return (
-                        <label key={m.key} className={`rounded-md border p-2 transition ${checked ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'} ${role.is_master_admin ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
-                            <div className="flex items-center gap-2">
-                                <input type="checkbox" checked={checked} onChange={() => toggle(m.key)} disabled={role.is_master_admin} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                                <p className="text-xs font-bold text-slate-900">{m.label}</p>
-                            </div>
-                        </label>
-                    );
-                })}
+                {modules.map((m) => <ModuleCheckbox key={m.key} m={m} data={data} setData={setData} disabled={role.is_master_admin} />)}
             </div>
             <InputError className="mt-1.5" message={errors.access_modules} />
             {!role.is_master_admin && <div className="mt-3 flex justify-end"><PrimaryButton disabled={processing} className="px-4 py-1.5 text-xs">{processing ? '...' : 'Simpan'}</PrimaryButton></div>}
@@ -158,17 +199,7 @@ export default function AccessManagement({ roles, users, modules }) {
                             <h3 className="mt-0.5 text-sm font-bold text-slate-950">Cipta group role</h3>
                             <div className="mt-3"><InputLabel htmlFor="rn" value="Nama" /><TextInput id="rn" value={rf.data.name} onChange={(e) => rf.setData('name', e.target.value)} className="input-field mt-1" /><InputError className="mt-1" message={rf.errors.name} /></div>
                             <div className="mt-3 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                                {modules.map((m) => {
-                                    const checked = rf.data.access_modules.includes(m.key);
-                                    return (
-                                        <label key={m.key} className={`cursor-pointer rounded-md border p-2 transition ${checked ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/50'}`}>
-                                            <div className="flex items-start gap-2">
-                                                <input type="checkbox" checked={checked} onChange={() => rf.setData('access_modules', rf.data.access_modules.includes(m.key) ? rf.data.access_modules.filter((i) => i !== m.key) : [...rf.data.access_modules, m.key])} className="mt-0.5 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                                                <div><p className="text-xs font-bold text-slate-900">{m.label}</p><p className="text-xs text-slate-500">{m.description}</p></div>
-                                            </div>
-                                        </label>
-                                    );
-                                })}
+                                {modules.map((m) => <ModuleCheckbox key={m.key} m={m} data={rf.data} setData={rf.setData} disabled={false} />)}
                             </div>
                             <InputError className="mt-1.5" message={rf.errors.access_modules} />
                             <div className="mt-3 flex justify-end"><PrimaryButton disabled={rf.processing} className="px-4 py-1.5 text-xs">{rf.processing ? '...' : 'Cipta'}</PrimaryButton></div>

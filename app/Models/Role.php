@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ModuleRegistry;
 use Database\Factories\RoleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,6 +39,18 @@ class Role extends Model
             return true;
         }
 
-        return in_array($module, $this->access_modules ?? [], true);
+        $access = $this->access_modules ?? [];
+
+        if (in_array($module, $access, true)) {
+            return true;
+        }
+
+        foreach (ModuleRegistry::children($module) as $childKey => $_) {
+            if (in_array($childKey, $access, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

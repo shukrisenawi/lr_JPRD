@@ -62,6 +62,12 @@ class AccessManagementController extends Controller
                     'key' => $key,
                     'label' => $module['label'],
                     'description' => $module['description'],
+                    'children' => isset($module['children'])
+                        ? collect($module['children'])->map(fn (array $child, string $childKey) => [
+                            'key' => $childKey,
+                            'label' => $child['label'],
+                        ])->values()->all()
+                        : [],
                 ])
                 ->values(),
         ]);
