@@ -188,7 +188,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
         show_marked: Boolean(filters.show_marked),
-        group_id: filters.group_id ?? '',
+        group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
         cula_codes: filters.cula_codes ?? [],
         keturunan: filters.keturunan ?? 'M',
         jantina: filters.jantina ?? '',
@@ -201,14 +201,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             udm: filters.udm ?? '',
             locality: filters.locality ?? '',
             show_marked: Boolean(filters.show_marked),
-            group_id: filters.group_id ?? '',
+            group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
             cula_codes: filters.cula_codes ?? [],
             keturunan: filters.keturunan ?? 'M',
             jantina: filters.jantina ?? '',
             umur_dari: filters.umur_dari ?? '',
             umur_hingga: filters.umur_hingga ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga]);
 
     useEffect(() => {
         setLocalVoters(voters);
@@ -664,7 +664,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     onChange={(event) => updateFilter('group_id', event.target.value)}
                                     className="input-field mt-1.5"
                                 >
-                                    <option value="">Semua Group (Custom Filter)</option>
+                                    <option value="">Semua Group</option>
+                                    <option value="custom">Custom</option>
                                     {groups.map((g) => (
                                         <option key={g.id} value={g.id}>{g.nama_group}</option>
                                     ))}
@@ -708,7 +709,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             </div>
                         </div>
 
-                        {formState.group_id === '' && (
+                        {formState.group_id === 'custom' && (
                             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 xl:items-end">
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Kod Cula</label>

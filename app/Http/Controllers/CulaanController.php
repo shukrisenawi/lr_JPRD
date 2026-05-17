@@ -149,7 +149,7 @@ class CulaanController extends Controller
     {
         $groupKodCulas = $this->resolveGroupKodCulas($filters['group_id']);
 
-        $usingCustomCulaCodes = $filters['group_id'] === null
+        $usingCustomCulaCodes = $filters['custom_mode']
             && is_array($filters['cula_codes'])
             && count($filters['cula_codes']) > 0;
 
@@ -172,7 +172,7 @@ class CulaanController extends Controller
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
-            ->when($filters['group_id'] === null, fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters));
+            ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters));
 
         if (! $skipMarkedFilter) {
             $query->when(
@@ -269,14 +269,16 @@ class CulaanController extends Controller
 
     private function resolveFilters(Request $request): array
     {
-        $groupId = $request->query('group_id', '');
-        $groupId = $groupId !== '' ? (int) $groupId : null;
+        $rawGroupId = $request->query('group_id', '');
+        $customMode = $rawGroupId === 'custom';
+        $groupId = $rawGroupId !== '' && ! $customMode ? (int) $rawGroupId : null;
 
         return [
             'udm' => trim((string) $request->query('udm', '')),
             'locality' => trim((string) $request->query('locality', '')),
             'show_marked' => $request->boolean('show_marked'),
             'group_id' => $groupId,
+            'custom_mode' => $customMode,
             'cula_codes' => $request->query('cula_codes'),
             'keturunan' => trim((string) $request->query('keturunan', '')),
             'jantina' => trim((string) $request->query('jantina', '')),
@@ -479,7 +481,7 @@ class CulaanController extends Controller
 
     private function buildReportData(array $filters): array
     {
-        $usingCustomCulaCodes = $filters['group_id'] === null
+        $usingCustomCulaCodes = $filters['custom_mode']
             && is_array($filters['cula_codes'])
             && count($filters['cula_codes']) > 0;
 
@@ -491,7 +493,7 @@ class CulaanController extends Controller
 
         $this->applyGroupDemographicFilters($query, $filters['group_id']);
 
-        if ($filters['group_id'] === null) {
+        if ($filters['custom_mode']) {
             $this->applyCustomDemographicFilters($query, $filters);
         }
 
