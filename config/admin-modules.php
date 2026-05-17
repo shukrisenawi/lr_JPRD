@@ -34,7 +34,8 @@ return [
         'description' => 'Semak pemilih belum cula, kemas data dan tanda senarai kerja culaan.',
         'children' => [
             'culaan.senarai' => ['label' => 'Senarai Belum Cula'],
-            'culaan.laporan' => ['label' => 'Laporan'],
+            'culaan.laporan' => ['label' => 'Laporan (Graf)'],
+            'culaan.jadual' => ['label' => 'Laporan (Jadual)'],
         ],
     ],
     'settings' => [

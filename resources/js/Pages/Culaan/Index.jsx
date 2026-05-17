@@ -169,9 +169,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canSenarai = allowedModules.includes('culaan.senarai');
     const canLaporan = allowedModules.includes('culaan.laporan');
+    const canJadual = allowedModules.includes('culaan.jadual');
     const suggestionsAbort = useRef(null);
     const [tab, setTab] = useState(() => {
-        if (canLaporan && !canSenarai) return 'laporan';
+        if ((canJadual || canLaporan) && !canSenarai) return 'laporan';
         return 'senarai';
     });
     const isLaporanLike = tab === 'laporan' || tab === 'jadual';
@@ -703,16 +704,23 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     )}
                 </section>
 
-                {canSenarai && canLaporan && (
-                    <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-                        {[{ k: 'senarai', l: 'Senarai Belum Cula' }, { k: 'laporan', l: 'Laporan (Graf)' }, { k: 'jadual', l: 'Laporan (Jadual)' }].map((t) => (
-                            <button key={t.k} onClick={() => setTab(t.k)}
-                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${tab === t.k ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
-                                {t.l}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                {(() => {
+                    const tabs = [];
+                    if (canSenarai) tabs.push({ k: 'senarai', l: 'Senarai Belum Cula' });
+                    if (canLaporan) tabs.push({ k: 'laporan', l: 'Laporan (Graf)' });
+                    if (canJadual) tabs.push({ k: 'jadual', l: 'Laporan (Jadual)' });
+                    if (tabs.length < 2) return null;
+                    return (
+                        <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+                            {tabs.map((t) => (
+                                <button key={t.k} onClick={() => setTab(t.k)}
+                                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${tab === t.k ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
+                                    {t.l}
+                                </button>
+                            ))}
+                        </div>
+                    );
+                })()}
 
                 {tab === 'senarai' && (
                     <section>
@@ -860,7 +868,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     </p>
                 )}
 
-                {tab === 'jadual' && !shouldPromptUdm && (
+                {tab === 'jadual' && canJadual && !shouldPromptUdm && (
                     <section className="space-y-3">
                         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
                             <table className="w-full text-xs">
@@ -892,7 +900,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </div>
                     </section>
                 )}
-                {tab === 'jadual' && shouldPromptUdm && (
+                {tab === 'jadual' && canJadual && shouldPromptUdm && (
                     <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                         Pilih UDM untuk melihat laporan.
                     </p>
