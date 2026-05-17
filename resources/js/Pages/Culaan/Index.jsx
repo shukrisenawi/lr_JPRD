@@ -365,13 +365,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         : 'Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.';
 
     const tableColumns = useMemo(() => {
-        if (!report_by_group?.length) return [];
-        const codes = new Set();
-        report_by_group.forEach((rg) => {
-            (rg.report.cula_breakdown ?? []).forEach((e) => codes.add(e.code));
-        });
-        return [...codes].sort();
-    }, [report_by_group]);
+        if (report_by_group?.length > 0) {
+            const codes = new Set();
+            report_by_group.forEach((rg) => {
+                (rg.report.cula_breakdown ?? []).forEach((e) => codes.add(e.code));
+            });
+            return [...codes].sort();
+        }
+        if (selectedGroup) {
+            return (report?.cula_breakdown ?? []).map((e) => e.code).sort();
+        }
+        return [];
+    }, [report_by_group, selectedGroup, report]);
 
     const codeLabels = useMemo(() => {
         const map = {};
@@ -381,8 +386,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 if (e.code && e.display_label) map[e.code] = e.display_label;
             });
         });
+        if (groups.length === 0 && selectedGroup) {
+            (report?.cula_breakdown ?? []).forEach((e) => {
+                if (e.code && e.display_label) map[e.code] = e.display_label;
+            });
+        }
         return map;
-    }, [report_by_group]);
+    }, [report_by_group, selectedGroup, report]);
 
     const tableRows = useMemo(() => {
         const groups = report_by_group?.length > 0 ? report_by_group : [];
