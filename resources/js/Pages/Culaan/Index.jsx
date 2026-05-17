@@ -709,7 +709,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             </div>
                         </div>
 
-                        {formState.group_id === 'custom' && (
+                        {tab === 'senarai' && formState.group_id === 'custom' && (
                             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
                                 <div>
                                     <label htmlFor="culaan-keturunan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Keturunan</label>
