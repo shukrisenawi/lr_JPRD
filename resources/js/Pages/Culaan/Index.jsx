@@ -373,6 +373,17 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         return [...codes].sort();
     }, [report_by_group]);
 
+    const codeLabels = useMemo(() => {
+        const map = {};
+        const groups = report_by_group?.length > 0 ? report_by_group : [];
+        groups.forEach((rg) => {
+            (rg.report.cula_breakdown ?? []).forEach((e) => {
+                if (e.code && e.display_label) map[e.code] = e.display_label;
+            });
+        });
+        return map;
+    }, [report_by_group]);
+
     const tableRows = useMemo(() => {
         const groups = report_by_group?.length > 0 ? report_by_group : [];
         if (groups.length === 0 && selectedGroup) {
@@ -839,7 +850,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     <tr className="border-b border-slate-200 bg-slate-50">
                                         <th className="whitespace-nowrap px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Nama Group</th>
                                         {tableColumns.map((code) => (
-                                            <th key={code} className="whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-slate-600">{code}</th>
+                                            <th key={code} title={codeLabels[code] ?? code} className="whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-slate-600">{code}</th>
                                         ))}
                                         <th className="whitespace-nowrap px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-slate-600">Jumlah Keseluruhan</th>
                                     </tr>
