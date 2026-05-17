@@ -27,7 +27,6 @@ class GroupPemilihController extends Controller
                 'umur_dari' => $group->umur_dari,
                 'umur_akhir' => $group->umur_akhir,
                 'sort_order' => $group->sort_order,
-                'show_in_culaan_report' => $group->show_in_culaan_report,
                 'kod_culas' => $group->kodCulas->pluck('kod_cula')->values(),
             ]);
 
@@ -143,19 +142,6 @@ class GroupPemilihController extends Controller
         return redirect()
             ->route('group-pemilih.index')
             ->with('success', 'Group pemilih berjaya dipadam.');
-    }
-
-    public function toggleCulaanReport(Request $request, GroupPemilih $group): RedirectResponse
-    {
-        $this->ensureOwner($request->user()->id, $group);
-
-        $group->update([
-            'show_in_culaan_report' => ! $group->show_in_culaan_report,
-        ]);
-
-        return redirect()
-            ->route('group-pemilih.index')
-            ->with('success', 'Paparan laporan culaan dikemaskini.');
     }
 
     private function ensureOwner(int $userId, GroupPemilih $group): void

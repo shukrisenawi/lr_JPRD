@@ -8,7 +8,6 @@ import { useState } from 'react';
 
 export default function GroupPemilihIndex({ groups, availableKodCulas, availableKeturunans }) {
     const [editingId, setEditingId] = useState(null);
-    const [toggling, setToggling] = useState({});
     const f = useForm({
         nama_group: '',
         kod_culas: [],
@@ -66,21 +65,9 @@ export default function GroupPemilihIndex({ groups, availableKodCulas, available
         }
     };
 
-    const toggleCulaanReport = (g) => {
-        setToggling((prev) => ({ ...prev, [g.id]: true }));
-        router.post(route('group-pemilih.toggle-culaan-report', g.id), {}, {
-            preserveScroll: true,
-            onFinish: () => setToggling((prev) => ({ ...prev, [g.id]: false })),
-        });
-    };
-
     const groupsContent = groups.map((g) => (
         <div key={g.id} className="flex items-start justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
-            <div className="flex items-start gap-3 min-w-0">
-                <label className="mt-1 shrink-0 cursor-pointer" title="Papar graf laporan culaan">
-                    <input type="checkbox" checked={g.show_in_culaan_report} disabled={toggling[g.id]} onChange={() => toggleCulaanReport(g)} className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                </label>
-                <div className="min-w-0">
+            <div className="min-w-0">
                 <p className="text-xs font-bold text-slate-800">
                     <span className="mr-1 text-slate-400">{g.sort_order}.</span>
                     {g.nama_group}
@@ -107,7 +94,6 @@ export default function GroupPemilihIndex({ groups, availableKodCulas, available
                         </span>
                     )}
                 </div>
-            </div>
             </div>
             <div className="flex shrink-0 gap-1.5">
                 <button onClick={() => edit(g)} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>

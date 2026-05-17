@@ -26,9 +26,6 @@ class CulaanController extends Controller
         $reportByGroup = [];
         if ($filters['group_id'] === null) {
             foreach ($groups as $group) {
-                if (! ($group['show_in_culaan_report'] ?? false)) {
-                    continue;
-                }
                 $gf = $filters;
                 $gf['group_id'] = $group['id'];
                 $reportByGroup[] = [
@@ -286,7 +283,6 @@ class CulaanController extends Controller
                 'jantina' => $group->jantina,
                 'umur_dari' => $group->umur_dari,
                 'umur_akhir' => $group->umur_akhir,
-                'show_in_culaan_report' => $group->show_in_culaan_report,
                 'kod_culas' => $group->kodCulas->pluck('kod_cula')->values(),
             ])
             ->values()
