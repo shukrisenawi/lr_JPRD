@@ -17,6 +17,14 @@ class RedirectIfMustChangePassword
     {
         $user = $request->user();
 
+        if ($user && $user->expires_at && $user->expires_at->isPast()) {
+            auth()->guard()->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('error', 'Akaun anda telah luput. Sila hubungi admin.');
+        }
+
         if ($user && (bool) $user->must_change_password && ! $request->routeIs('profile.edit') && ! $request->routeIs('profile.update') && ! $request->routeIs('logout')) {
             return redirect()->route('profile.edit')->with('error', 'Sila tukar kata laluan anda sebelum meneruskan.');
         }

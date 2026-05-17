@@ -18,6 +18,7 @@ function Icon({ name, className = 'h-4 w-4' }) {
         trash: <><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></>,
         login: <><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="m10 17 5-5-5-5" /><path d="M15 12H3" /></>,
         crown: <><path d="m2 6 5 5 5-8 5 8 5-5-3 12H5L2 6Z" /><path d="M5 21h14" /></>,
+        clock: <><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></>,
     };
 
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -103,9 +104,10 @@ function UserCard({ user, roles, currentUserId }) {
     const [editing, setEditing] = useState(false);
     const isMe = currentUserId === user.id;
     const init = user.name?.charAt(0)?.toUpperCase() ?? '?';
-    const { data, setData, put, processing, errors, reset } = useForm({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '' });
+    const isExpired = user.expires_at && new Date(user.expires_at) < new Date(new Date().toDateString());
+    const { data, setData, put, processing, errors, reset } = useForm({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '', expires_at: user.expires_at ?? '' });
     const submit = (e) => { e.preventDefault(); put(route('admin.access.users.update', user.id), { onSuccess: () => { reset('password', 'password_confirmation'); setEditing(false); } }); };
-    const cancel = () => { setData({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '' }); setEditing(false); };
+    const cancel = () => { setData({ name: user.name, email: user.email, role_id: user.role?.id ?? '', password: '', password_confirmation: '', expires_at: user.expires_at ?? '' }); setEditing(false); };
     const del = () => { if (window.confirm(`Padam ${user.name}?`)) router.delete(route('admin.access.users.destroy', user.id), { preserveScroll: true }); };
     const imp = () => { if (window.confirm(`Masuk sebagai ${user.name}?`)) router.post(route('admin.access.users.impersonate', user.id), {}, { replace: true }); };
     const resetPw = () => { if (window.confirm(`Reset kata laluan ${user.name} kepada 123?`)) router.post(route('admin.access.users.reset-password', user.id), {}, { preserveScroll: true }); };
@@ -115,7 +117,7 @@ function UserCard({ user, roles, currentUserId }) {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-3">
                     {user.avatar_url ? <img src={user.avatar_url} alt={user.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-50" /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-green-400 text-sm font-black text-white shadow-sm">{init}</div>}
-                    <div><p className="text-sm font-bold text-slate-950">{user.name}</p><p className="text-xs text-slate-500">{user.email}</p><span className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700"><Icon name={user.role?.is_master_admin ? 'crown' : 'shield'} className="h-3 w-3" />{user.role?.name ?? 'Tiada'}</span></div>
+                    <div><p className="text-sm font-bold text-slate-950">{user.name}</p><p className="text-xs text-slate-500">{user.email}</p><span className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700"><Icon name={user.role?.is_master_admin ? 'crown' : 'shield'} className="h-3 w-3" />{user.role?.name ?? 'Tiada'}</span>{user.expires_at && <span className={`mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${isExpired ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}><Icon name="clock" className="h-3 w-3" />{isExpired ? 'Luput' : user.expires_at}</span>}</div>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     {user.can_impersonate && <button onClick={imp} title="Masuk sebagai" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-amber-300 bg-white text-amber-600 transition hover:bg-amber-50"><Icon name="login" className="h-3.5 w-3.5" /></button>}
@@ -132,6 +134,7 @@ function UserCard({ user, roles, currentUserId }) {
                         <div><InputLabel htmlFor={`er-${user.id}`} value="Role" /><select id={`er-${user.id}`} value={data.role_id} onChange={(e) => setData('role_id', e.target.value)} className="input-field mt-1">{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select><InputError className="mt-1" message={errors.role_id} /></div>
                         <div><InputLabel htmlFor={`ep-${user.id}`} value="Password" /><TextInput id={`ep-${user.id}`} type="password" value={data.password} onChange={(e) => setData('password', e.target.value)} className="input-field mt-1" /><InputError className="mt-1" message={errors.password} /></div>
                         <div><InputLabel htmlFor={`epc-${user.id}`} value="Sahkan Password" /><TextInput id={`epc-${user.id}`} type="password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} className="input-field mt-1" /></div>
+                        <div><InputLabel htmlFor={`eea-${user.id}`} value="Akaun Luput Pada (optional)" /><TextInput id={`eea-${user.id}`} type="date" value={data.expires_at} onChange={(e) => setData('expires_at', e.target.value)} className="input-field mt-1" /><InputError className="mt-1" message={errors.expires_at} /></div>
                     </div>
                     <div className="mt-3 flex justify-end gap-2"><button onClick={cancel} className="btn-ghost text-xs">Batal</button><PrimaryButton disabled={processing} className="px-4 py-1.5 text-xs">{processing ? '...' : 'Simpan'}</PrimaryButton></div>
                 </form>
@@ -144,9 +147,9 @@ export default function AccessManagement({ roles, users, modules }) {
     const { auth } = usePage().props;
     const myId = auth.user?.id ?? null;
     const [tab, setTab] = useState('cipta-pengguna');
-    const uf = useForm({ name: '', email: '', password: '', password_confirmation: '', role_id: roles.find((r) => !r.is_master_admin)?.id ?? roles[0]?.id ?? '' });
+    const uf = useForm({ name: '', email: '', password: '', password_confirmation: '', role_id: roles.find((r) => !r.is_master_admin)?.id ?? roles[0]?.id ?? '', expires_at: '' });
     const rf = useForm({ name: '', access_modules: [] });
-    const tu = (e) => { e.preventDefault(); uf.post(route('admin.access.users.store'), { onSuccess: () => uf.reset('name', 'email', 'password', 'password_confirmation') }); };
+    const tu = (e) => { e.preventDefault(); uf.post(route('admin.access.users.store'), { onSuccess: () => uf.reset('name', 'email', 'password', 'password_confirmation', 'expires_at') }); };
     const tr = (e) => { e.preventDefault(); rf.post(route('admin.access.roles.store'), { onSuccess: () => rf.reset() }); };
 
     const tabs = [
@@ -182,6 +185,7 @@ export default function AccessManagement({ roles, users, modules }) {
                                 <div><InputLabel htmlFor="upc" value="Sahkan Password" /><div className="relative mt-1"><FieldIcon name="lock" /><TextInput id="upc" type="password" value={uf.data.password_confirmation} onChange={(e) => uf.setData('password_confirmation', e.target.value)} className="input-field pl-10" placeholder="Sahkan password" /></div></div>
                             </div>
                             <div className="mt-3"><InputLabel htmlFor="ur" value="Role" /><div className="relative mt-1"><FieldIcon name="shield" /><select id="ur" value={uf.data.role_id} onChange={(e) => uf.setData('role_id', e.target.value)} className="input-field pl-10">{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></div><InputError className="mt-1" message={uf.errors.role_id} /></div>
+                            <div className="mt-3"><InputLabel htmlFor="uea" value="Akaun Luput Pada (optional)" /><div className="relative mt-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4" /><path d="M8 2v4" /><path d="M3 10h18" /></svg><TextInput id="uea" type="date" value={uf.data.expires_at} onChange={(e) => uf.setData('expires_at', e.target.value)} className="input-field pl-10" /></div><InputError className="mt-1" message={uf.errors.expires_at} /></div>
                             <div className="mt-3 flex justify-end"><PrimaryButton disabled={uf.processing} className="px-4 py-1.5 text-xs">{uf.processing ? '...' : 'Cipta'}</PrimaryButton></div>
                         </form>
                         <div className="card p-3">

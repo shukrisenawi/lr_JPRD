@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'email_verified_at', 'password', 'avatar', 'role_id'])]
+#[Fillable(['name', 'email', 'email_verified_at', 'password', 'avatar', 'role_id', 'expires_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -29,6 +29,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'expires_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -52,6 +53,11 @@ class User extends Authenticatable
     public function canAccessModule(string $module): bool
     {
         return $this->role?->hasModuleAccess($module) ?? false;
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at?->isPast() ?? false;
     }
 
     #[Computed]

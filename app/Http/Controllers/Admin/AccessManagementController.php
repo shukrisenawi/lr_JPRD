@@ -47,6 +47,7 @@ class AccessManagementController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'avatar_url' => $user->avatarUrl(),
+                    'expires_at' => $user->expires_at?->format('Y-m-d'),
                     'can_impersonate' => ! request()->user()->is($user),
                     'role' => $user->role
                         ? [
@@ -82,6 +83,7 @@ class AccessManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
+            'expires_at' => ['nullable', 'date'],
         ]);
 
         User::query()->create([
@@ -90,6 +92,7 @@ class AccessManagementController extends Controller
             'email_verified_at' => now(),
             'password' => Hash::make($validated['password']),
             'role_id' => $validated['role_id'],
+            'expires_at' => $validated['expires_at'],
         ]);
 
         return redirect()
@@ -106,12 +109,14 @@ class AccessManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
+            'expires_at' => ['nullable', 'date'],
         ]);
 
         $updates = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role_id' => $validated['role_id'],
+            'expires_at' => $validated['expires_at'],
         ];
 
         if (filled($validated['password'] ?? null)) {
