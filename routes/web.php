@@ -14,7 +14,12 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SheetPageController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard');
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+});
+Route::get('/sistem', function () {
+    return redirect()->route('dashboard');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');

@@ -2,7 +2,7 @@ export default function ApplicationLogo({ className = '', alt = 'Logo PAS Sik', 
     return (
         <img
             {...props}
-            src="/images/logo-pas-sik.png"
+            src="/sistem/public/images/logo-pas-sik.png"
             alt={alt}
             className={className}
         />
