@@ -1,8 +1,10 @@
+import logoUrl from '../../../public/images/logo-pas-sik.png';
+
 export default function ApplicationLogo({ className = '', alt = 'Logo PAS Sik', ...props }) {
     return (
         <img
             {...props}
-            src="/sistem/public/images/logo-pas-sik.png"
+            src={logoUrl}
             alt={alt}
             className={className}
         />
