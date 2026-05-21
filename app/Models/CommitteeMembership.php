@@ -14,6 +14,8 @@ class CommitteeMembership extends Model
         'scope_key',
         'scope_name',
         'parent_scope_name',
+        'created_by',
+        'notes',
     ];
 
     public function voter(): BelongsTo
@@ -24,5 +26,10 @@ class CommitteeMembership extends Model
     public function position(): BelongsTo
     {
         return $this->belongsTo(CommitteePosition::class, 'committee_position_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

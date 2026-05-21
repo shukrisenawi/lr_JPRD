@@ -30,7 +30,7 @@ class CommitteeController extends Controller
                 ])
                 ->values(),
             'memberships' => CommitteeMembership::query()
-                ->with(['position', 'voter'])
+                ->with(['position', 'voter', 'creator'])
                 ->orderBy('level')
                 ->orderBy('scope_name')
                 ->latest('id')
@@ -41,6 +41,9 @@ class CommitteeController extends Controller
                     'scope_key' => $membership->scope_key,
                     'scope_name' => $membership->scope_name,
                     'parent_scope_name' => $membership->parent_scope_name,
+                    'notes' => $membership->notes,
+                    'created_by' => $membership->created_by,
+                    'creator_name' => $membership->creator?->name,
                     'position' => [
                         'id' => $membership->position?->id,
                         'name' => $membership->position?->name,
@@ -246,6 +249,7 @@ class CommitteeController extends Controller
             'committee_position_id' => ['required', 'integer', Rule::exists('committee_positions', 'id')],
             'level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
             'scope_key' => ['required', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $voter = PemilihRecord::query()->findOrFail($validated['pemilih_record_id']);
@@ -282,6 +286,8 @@ class CommitteeController extends Controller
             'scope_key' => $validated['scope_key'],
             'scope_name' => $scopeName,
             'parent_scope_name' => $parentScopeName,
+            'created_by' => $request->user()->id,
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         return redirect()
@@ -289,8 +295,16 @@ class CommitteeController extends Controller
             ->with('success', 'Ahli jawatankuasa berjaya ditambah.');
     }
 
-    public function destroyMembership(CommitteeMembership $membership): RedirectResponse
+    public function destroyMembership(Request $request, CommitteeMembership $membership): RedirectResponse
     {
+        $user = $request->user();
+
+        if ($membership->created_by !== $user->id && ! $user->isMasterAdmin()) {
+            return redirect()
+                ->route('jawatankuasa.index')
+                ->with('error', 'Anda tidak mempunyai kebenaran untuk memadam rekod ini.');
+        }
+
         $membership->delete();
 
         return redirect()

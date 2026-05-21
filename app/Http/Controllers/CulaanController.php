@@ -69,7 +69,7 @@ class CulaanController extends Controller
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
         $suggestions = $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem')
+            ->with('culaWorkItem.marker')
             ->where(function (Builder $builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
@@ -135,7 +135,7 @@ class CulaanController extends Controller
         }
 
         $voters = $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem')
+            ->with('culaWorkItem.marker')
             ->orderBy('no_kp')
             ->get()
             ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
@@ -236,7 +236,7 @@ class CulaanController extends Controller
         }
 
         return $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem')
+            ->with('culaWorkItem.marker')
             ->orderBy('no_kp')
             ->paginate(20)
             ->withQueryString()
@@ -342,6 +342,7 @@ class CulaanController extends Controller
             'cula_code' => $voter->cula_code,
             'cula_display_label' => $voter->cula_display_label,
             'is_marked' => $voter->culaWorkItem !== null,
+            'marked_by_name' => $voter->culaWorkItem?->marker?->name,
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,
         ];
     }

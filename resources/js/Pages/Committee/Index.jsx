@@ -199,7 +199,7 @@ function PositionManager({ positions }) {
     );
 }
 
-function MembershipManager({ positions, memberships, scopes }) {
+function MembershipManager({ positions, memberships, scopes, auth }) {
     const tabs = [
         { key: 'jprd', label: 'JPRD', desc: 'Peringkat kawasan', icon: 'users' },
         { key: 'udm', label: 'UDM', desc: 'Unit daerah mengundi', icon: 'mapPin' },
@@ -217,6 +217,7 @@ function MembershipManager({ positions, memberships, scopes }) {
         level: 'jprd',
         scope_key: scopes.jprd?.[0]?.key ?? 'jprd',
         voter_search: '',
+        notes: '',
     });
 
     useEffect(() => {
@@ -294,7 +295,7 @@ function MembershipManager({ positions, memberships, scopes }) {
             onSuccess: () => {
                 setSelectedVoter(null);
                 setSuggestions([]);
-                form.reset('pemilih_record_id', 'voter_search');
+                form.reset('pemilih_record_id', 'voter_search', 'notes');
                 form.setData((current) => ({
                     ...current,
                     committee_position_id: positions[0]?.id ?? '',
@@ -435,6 +436,18 @@ function MembershipManager({ positions, memberships, scopes }) {
                         </div>
                     )}
 
+                    <div>
+                        <InputLabel htmlFor="committee-notes" value="Catatan / Remark (Optional)" />
+                        <TextInput
+                            id="committee-notes"
+                            value={form.data.notes}
+                            onChange={(event) => form.setData('notes', event.target.value)}
+                            className="input-field mt-1 text-xs"
+                            placeholder="Contoh: dilantik pada mesyuarat agung"
+                        />
+                        <InputError className="mt-1" message={form.errors.notes} />
+                    </div>
+
                     <div className="flex justify-end">
                         <PrimaryButton disabled={form.processing || !positions.length} className="rounded-lg px-4 py-2 text-xs font-bold">
                             {form.processing ? '...' : 'Tambah Ahli'}
@@ -448,37 +461,48 @@ function MembershipManager({ positions, memberships, scopes }) {
                     <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">Belum ada ahli untuk paparan ini.</div>
                 ) : (
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        {filteredMemberships.map((membership) => (
-                            <div key={membership.id} className="group rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
-                                        <div className="mt-1 flex items-center gap-2">
-                                            <p className="text-xs font-semibold text-green-700">{membership.position.name}</p>
-                                            {membership.order && <span className="text-[10px] text-slate-400">#{membership.order}</span>}
+                        {filteredMemberships.map((membership) => {
+                            const canRemove = auth.user?.is_master_admin || membership.created_by === auth.user?.id;
+                            return (
+                                <div key={membership.id} className="group rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
+                                            <div className="mt-1 flex items-center gap-2">
+                                                <p className="text-xs font-semibold text-green-700">{membership.position.name}</p>
+                                                {membership.order && <span className="text-[10px] text-slate-400">#{membership.order}</span>}
+                                            </div>
+                                            <div className="mt-1 space-y-0.5">
+                                                <p className="flex items-center gap-1 text-xs text-slate-400">
+                                                    <Icon name="idCard" className="h-3 w-3" />
+                                                    {membership.voter.no_kp || membership.voter.old_ic || '-'}
+                                                </p>
+                                                <p className="flex items-center gap-1 text-xs text-slate-400">
+                                                    <Icon name="phone" className="h-3 w-3" />
+                                                    {membership.voter.phone_mobile || membership.voter.phone_home || '-'}
+                                                </p>
+                                                <p className="flex items-center gap-1 text-xs text-slate-400">
+                                                    <Icon name="mapPin" className="h-3 w-3" />
+                                                    {membership.voter.dm || '-'}
+                                                </p>
+                                            </div>
+                                            {membership.parent_scope_name && (
+                                                <span className="mt-1.5 inline-block rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">{membership.parent_scope_name} / {membership.scope_name}</span>
+                                            )}
+                                            {membership.notes && (
+                                                <p className="mt-1.5 text-[10px] font-medium text-amber-700">{membership.notes}</p>
+                                            )}
+                                            {membership.creator_name && (
+                                                <p className="mt-1 text-[10px] text-slate-400">Oleh: <span className="font-bold text-slate-600">{membership.creator_name}</span></p>
+                                            )}
                                         </div>
-                                        <div className="mt-1 space-y-0.5">
-                                            <p className="flex items-center gap-1 text-xs text-slate-400">
-                                                <Icon name="idCard" className="h-3 w-3" />
-                                                {membership.voter.no_kp || membership.voter.old_ic || '-'}
-                                            </p>
-                                            <p className="flex items-center gap-1 text-xs text-slate-400">
-                                                <Icon name="phone" className="h-3 w-3" />
-                                                {membership.voter.phone_mobile || membership.voter.phone_home || '-'}
-                                            </p>
-                                            <p className="flex items-center gap-1 text-xs text-slate-400">
-                                                <Icon name="mapPin" className="h-3 w-3" />
-                                                {membership.voter.dm || '-'}
-                                            </p>
-                                        </div>
-                                        {membership.parent_scope_name && (
-                                            <span className="mt-1.5 inline-block rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">{membership.parent_scope_name} / {membership.scope_name}</span>
+                                        {canRemove && (
+                                            <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 opacity-0 transition hover:bg-rose-50 group-hover:opacity-100">Buang</button>
                                         )}
                                     </div>
-                                    <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 opacity-0 transition hover:bg-rose-50 group-hover:opacity-100">Buang</button>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -532,7 +556,7 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
                 )}
 
                 {activeSection === 'senarai-jawatankuasa' && (
-                    <MembershipManager positions={positions} memberships={memberships} scopes={scopes} />
+                    <MembershipManager positions={positions} memberships={memberships} scopes={scopes} auth={auth} />
                 )}
 
                 {activeSection === 'jawatan' && (

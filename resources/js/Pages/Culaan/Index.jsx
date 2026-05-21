@@ -827,11 +827,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <p className="text-sm font-bold leading-5 text-slate-800">{voter.name}</p>
                                                 <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
                                             </div>
-                                            {voter.is_marked && (
-                                                <span className="shrink-0 rounded-md bg-lime-100 px-2 py-0.5 text-xs font-bold text-lime-700">
-                                                    Dah Ditanda
-                                                </span>
-                                            )}
+
                                         </div>
                                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                                             <div>
@@ -847,9 +843,16 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
                                             </div>
                                             {showLocalityColumn && (
-                                                <div className="col-span-3">
+                                                <div className={voter.is_marked && voter.marked_by_name ? 'col-span-2' : 'col-span-3'}>
                                                     <span className="font-semibold text-green-700">Lokaliti</span>
                                                     <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
+                                                </div>
+                                            )}
+                                            {showLocalityColumn && voter.is_marked && voter.marked_by_name && (
+                                                <div className="col-span-1 flex items-end">
+                                                    <span className="rounded bg-lime-100 px-2 py-0.5 text-xs font-bold text-lime-700">
+                                                        {voter.marked_by_name}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
