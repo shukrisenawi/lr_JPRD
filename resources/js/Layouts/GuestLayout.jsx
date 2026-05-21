@@ -28,9 +28,7 @@ export default function GuestLayout({ children }) {
                 {/* Logo Header */}
                 <div className="mb-8 text-center">
                     <Link href={route('dashboard')} className="inline-flex flex-col items-center gap-3">
-                        <div className="rounded-full border-2 border-green-400/30 bg-green-800/50 p-4 backdrop-blur-sm">
-                            <ApplicationLogo className="h-16 w-16 object-contain" />
-                        </div>
+                        <ApplicationLogo className="h-20 w-20 object-contain drop-shadow-lg" />
                         <div>
                             <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-300">PAS SIK</p>
                         </div>
