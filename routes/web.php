@@ -15,10 +15,10 @@ use App\Http\Controllers\SheetPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return auth()->check() ? redirect('/sistem/dashboard') : redirect('/sistem/login');
+    return auth()->check() ? redirect('/sistem/public/dashboard') : redirect('/sistem/public/login');
 });
 Route::get('/sistem', function () {
-    return auth()->check() ? redirect('/sistem/dashboard') : redirect('/sistem/login');
+    return auth()->check() ? redirect('/sistem/public/dashboard') : redirect('/sistem/public/login');
 });
 
 Route::middleware('auth')->group(function () {
