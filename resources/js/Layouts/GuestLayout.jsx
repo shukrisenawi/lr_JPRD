@@ -3,42 +3,60 @@ import { Link } from '@inertiajs/react';
 
 export default function GuestLayout({ children }) {
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 px-4 py-10">
-            <div className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="card hidden flex-col justify-between bg-gradient-to-br from-green-800 to-emerald-900 p-8 lg:flex">
-                    <div>
-                        <Link href={route('dashboard')} className="inline-flex items-center gap-2.5">
-                            <ApplicationLogo className="h-12 w-12 object-contain" />
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-green-300">PAS SIK</p>
-                                <h1 className="text-base font-extrabold text-white">Panel Semakan Data Cula</h1>
-                            </div>
-                        </Link>
+        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-green-950 via-green-900 to-emerald-950 px-4 py-10">
+            {/* Decorative Islamic geometric pattern background */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.03]">
+                <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="islamic-pattern" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+                            <path d="M40 0 L80 40 L40 80 L0 40 Z" fill="none" stroke="currentColor" strokeWidth="1" />
+                            <path d="M40 10 L70 40 L40 70 L10 40 Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                            <circle cx="40" cy="40" r="8" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                            <path d="M0 0 L80 80 M80 0 L0 80" stroke="currentColor" strokeWidth="0.3" />
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#islamic-pattern)" className="text-white" />
+                </svg>
+            </div>
 
-                        <div className="mt-10 space-y-4">
-                            <h2 className="text-2xl font-bold leading-tight text-white">
-                                Log masuk admin untuk semak data Google Sheet dengan lebih pantas.
-                            </h2>
-                            <p className="max-w-md text-sm leading-7 text-green-200/70">
-                                Dashboard ini dibina untuk kerja semakan yang pantas di desktop dan telefon, lengkap dengan status baris yang sudah disalin ke Telegram.
-                            </p>
+            {/* Subtle glow effects */}
+            <div className="pointer-events-none absolute -top-40 -right-40 h-80 w-80 rounded-full bg-green-500/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
+
+            {/* Main content */}
+            <div className="relative z-10 w-full max-w-md">
+                {/* Logo Header */}
+                <div className="mb-8 text-center">
+                    <Link href={route('dashboard')} className="inline-flex flex-col items-center gap-3">
+                        <div className="rounded-full border-2 border-green-400/30 bg-green-800/50 p-4 backdrop-blur-sm">
+                            <ApplicationLogo className="h-16 w-16 object-contain" />
                         </div>
-                    </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-300">PAS SIK</p>
+                        </div>
+                    </Link>
+                </div>
 
-                    <div className="mt-10 rounded-xl border border-green-700/50 bg-green-800/50 px-4 py-3">
-                        <p className="text-xs text-green-300/60">Sistem Pengurusan Data Cula — v2.0</p>
+                {/* Login Card */}
+                <div className="overflow-hidden rounded-2xl border border-green-400/20 bg-white/95 shadow-2xl shadow-green-950/50 backdrop-blur-sm">
+                    <div className="bg-gradient-to-r from-green-700 to-emerald-600 px-6 py-3">
+                        <p className="text-center text-xs font-bold uppercase tracking-wider text-green-100">Log Masuk Admin</p>
+                    </div>
+                    <div className="px-6 py-6">
+                        {children}
                     </div>
                 </div>
 
-                <div className="card overflow-hidden border-green-200 bg-white px-5 py-6 sm:px-6">
-                    <div className="mb-5 flex items-center gap-2.5 lg:hidden">
-                        <ApplicationLogo className="h-10 w-10 object-contain" />
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-300">PAS SIK</p>
-                            <h1 className="text-sm font-extrabold text-white">Panel Semakan Data Cula</h1>
-                        </div>
-                    </div>
-                    {children}
+                {/* Footer */}
+                <div className="mt-6 text-center">
+                    <a
+                        href="https://paskawasansik.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-green-400/50 transition hover:text-green-300 hover:underline"
+                    >
+                        paskawasansik.com
+                    </a>
                 </div>
             </div>
         </div>

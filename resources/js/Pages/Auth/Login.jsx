@@ -7,23 +7,113 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Login({ status, canResetPassword, defaultCredentials }) {
-    const { data, setData, post, processing, errors, reset } = useForm({ email: defaultCredentials?.email ?? '', password: defaultCredentials?.password ?? '', remember: false });
-    const submit = (e) => { e.preventDefault(); post(route('login'), { onFinish: () => reset('password') }); };
+    const { data, setData, post, processing, errors, reset } = useForm({
+        email: defaultCredentials?.email ?? '',
+        password: defaultCredentials?.password ?? '',
+        remember: false,
+    });
+
+    const submit = (e) => {
+        e.preventDefault();
+        post(route('login'), { onFinish: () => reset('password') });
+    };
 
     return (
         <GuestLayout>
-            <Head title="Login Admin" />
-            <div className="mb-5"><p className="text-xs font-bold uppercase tracking-[0.18em] text-green-600">Login Admin</p><h2 className="mt-0.5 text-lg font-extrabold text-slate-800">Akses dashboard</h2><p className="mt-0.5 text-xs text-slate-500">Guna akaun admin untuk semak data dan urus sistem.</p></div>
-            {status && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">{status}</div>}
-            <form onSubmit={submit}>
-                <div><InputLabel htmlFor="email" value="Email Admin" /><TextInput id="email" type="email" name="email" value={data.email} className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 shadow-sm outline-none transition focus:border-green-500 focus:ring-1 focus:ring-green-500" autoComplete="username" placeholder="admin@jprd" isFocused onChange={(e) => setData('email', e.target.value)} /><InputError message={errors.email} className="mt-1.5" /></div>
-                <div className="mt-4"><InputLabel htmlFor="password" value="Kata Laluan" /><TextInput id="password" type="password" name="password" value={data.password} className="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder-slate-400 shadow-sm outline-none transition focus:border-green-500 focus:ring-1 focus:ring-green-500" autoComplete="current-password" placeholder="123" onChange={(e) => setData('password', e.target.value)} /><InputError message={errors.password} className="mt-1.5" /></div>
-                <div className="mt-3"><label className="flex items-center"><Checkbox name="remember" checked={data.remember} onChange={(e) => setData('remember', e.target.checked)} /><span className="ml-2 text-xs text-slate-500">Kekalkan sesi</span></label></div>
-                <div className="mt-5 flex items-center justify-between gap-3">
-                    {canResetPassword && <Link href={route('password.request')} className="text-xs text-slate-400 underline hover:text-green-600">Lupa kata laluan?</Link>}
-                    <PrimaryButton className="ml-auto" disabled={processing}>{processing ? 'Masuk...' : 'Masuk'}</PrimaryButton>
+            <Head title="Log Masuk" />
+
+            {status && (
+                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-center text-xs text-green-700">
+                    {status}
+                </div>
+            )}
+
+            <form onSubmit={submit} className="space-y-4">
+                <div>
+                    <InputLabel htmlFor="email" value="Alamat Email" className="text-xs font-semibold text-slate-600" />
+                    <TextInput
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={data.email}
+                        className="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 shadow-sm outline-none transition focus:border-green-600 focus:bg-white focus:ring-2 focus:ring-green-500/20"
+                        autoComplete="username"
+                        placeholder="admin@jprd"
+                        isFocused
+                        onChange={(e) => setData('email', e.target.value)}
+                    />
+                    <InputError message={errors.email} className="mt-1.5" />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="password" value="Kata Laluan" className="text-xs font-semibold text-slate-600" />
+                    <TextInput
+                        id="password"
+                        type="password"
+                        name="password"
+                        value={data.password}
+                        className="mt-1.5 block w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 shadow-sm outline-none transition focus:border-green-600 focus:bg-white focus:ring-2 focus:ring-green-500/20"
+                        autoComplete="current-password"
+                        placeholder="••••••••"
+                        onChange={(e) => setData('password', e.target.value)}
+                    />
+                    <InputError message={errors.password} className="mt-1.5" />
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2">
+                        <Checkbox
+                            name="remember"
+                            checked={data.remember}
+                            onChange={(e) => setData('remember', e.target.checked)}
+                            className="rounded border-slate-300 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-xs text-slate-500">Kekalkan log masuk</span>
+                    </label>
+
+                    {canResetPassword && (
+                        <Link
+                            href={route('password.request')}
+                            className="text-xs font-medium text-green-600 transition hover:text-green-700 hover:underline"
+                        >
+                            Lupa kata laluan?
+                        </Link>
+                    )}
+                </div>
+
+                <div className="pt-2">
+                    <PrimaryButton
+                        className="w-full justify-center rounded-lg bg-gradient-to-r from-green-700 to-emerald-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-green-700/30 transition hover:from-green-600 hover:to-emerald-500 hover:shadow-green-700/40 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-70"
+                        disabled={processing}
+                    >
+                        {processing ? (
+                            <span className="flex items-center gap-2">
+                                <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                Sedang masuk...
+                            </span>
+                        ) : (
+                            'Log Masuk'
+                        )}
+                    </PrimaryButton>
                 </div>
             </form>
+
+            {/* Divider */}
+            <div className="mt-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-slate-200" />
+                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-400">atau</span>
+                <div className="h-px flex-1 bg-slate-200" />
+            </div>
+
+            {/* Helper text */}
+            <div className="mt-4 text-center">
+                <p className="text-[10px] text-slate-400">
+                    Sila hubungi pentadbir sistem jika terlupa kata laluan.
+                </p>
+            </div>
         </GuestLayout>
     );
 }
