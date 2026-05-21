@@ -3,19 +3,12 @@
 namespace Database\Seeders;
 
 use App\Models\GroupPemilih;
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class GroupPemilihSeeder extends Seeder
 {
     public function run(): void
     {
-        $userId = User::query()->value('id');
-
-        if (! $userId) {
-            return;
-        }
-
         $groups = [
             ['nama_group' => 'First Time Voter Lelaki',    'keturunan' => 'M', 'jantina' => 'L', 'umur_dari' => 18, 'umur_akhir' => 22, 'sort_order' => 1, 'show_in_culaan_report' => false],
             ['nama_group' => 'First Time Voter Perempuan',  'keturunan' => 'M', 'jantina' => null, 'umur_dari' => 18, 'umur_akhir' => 22, 'sort_order' => 2, 'show_in_culaan_report' => false],
@@ -30,7 +23,7 @@ class GroupPemilihSeeder extends Seeder
         foreach ($groups as $group) {
             GroupPemilih::query()->firstOrCreate(
                 ['nama_group' => $group['nama_group']],
-                [...$group, 'user_id' => $userId],
+                $group,
             );
         }
     }

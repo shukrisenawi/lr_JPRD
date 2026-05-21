@@ -15,7 +15,6 @@ class GroupPemilihController extends Controller
     {
         $groups = GroupPemilih::query()
             ->with('kodCulas')
-            ->where('user_id', $request->user()->id)
             ->orderBy('sort_order')
             ->orderBy('nama_group')
             ->get()
@@ -76,7 +75,6 @@ class GroupPemilihController extends Controller
             'umur_dari' => $validated['umur_dari'] !== null ? (int) $validated['umur_dari'] : null,
             'umur_akhir' => $validated['umur_akhir'] !== null ? (int) $validated['umur_akhir'] : null,
             'sort_order' => $validated['sort_order'] !== null ? (int) $validated['sort_order'] : 0,
-            'user_id' => $request->user()->id,
         ]);
 
         if (! empty($validated['kod_culas'])) {
@@ -96,8 +94,6 @@ class GroupPemilihController extends Controller
 
     public function update(Request $request, GroupPemilih $group): RedirectResponse
     {
-        $this->ensureOwner($request->user()->id, $group);
-
         $validated = $request->validate([
             'nama_group' => ['required', 'string', 'max:255'],
             'kod_culas' => ['nullable', 'array'],
@@ -136,7 +132,6 @@ class GroupPemilihController extends Controller
 
     public function destroy(GroupPemilih $group): RedirectResponse
     {
-        $this->ensureOwner(request()->user()->id, $group);
         $group->delete();
 
         return redirect()
@@ -144,8 +139,4 @@ class GroupPemilihController extends Controller
             ->with('success', 'Group pemilih berjaya dipadam.');
     }
 
-    private function ensureOwner(int $userId, GroupPemilih $group): void
-    {
-        abort_unless((int) $group->user_id === $userId, 403);
-    }
 }

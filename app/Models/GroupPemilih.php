@@ -16,7 +16,6 @@ class GroupPemilih extends Model
         'umur_akhir',
         'sort_order',
         'show_in_culaan_report',
-        'user_id',
     ];
 
     public function user(): BelongsTo
