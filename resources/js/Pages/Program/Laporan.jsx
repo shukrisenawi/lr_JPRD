@@ -93,7 +93,7 @@ function DataTable({ rows, columns }) {
 }
 
 export default function ProgramLaporan({ program, report }) {
-    const [tab, setTab] = useState('udm');
+    const [tab, setTab] = useState('cula');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
     const [search, setSearch] = useState('');
 
@@ -210,7 +210,7 @@ export default function ProgramLaporan({ program, report }) {
 
                         <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
                             <div className="flex gap-0.5">
-                                {[{ k: 'udm', l: 'UDM' }, { k: 'locality', l: 'Lokaliti' }, { k: 'cula', l: 'Status Culaan' }].map((t) => (
+                                {[{ k: 'cula', l: 'Status Culaan' }, { k: 'udm', l: 'UDM' }, { k: 'locality', l: 'Lokaliti' }].map((t) => (
                                     <button key={t.k} onClick={() => setTab(t.k)}
                                         className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${tab === t.k ? 'bg-green-50 text-green-700 ring-1 ring-green-100' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
                                         {t.l}
