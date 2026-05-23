@@ -531,7 +531,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
                                             <div className="mt-1 flex items-center gap-2">
-                                                <p className="text-xs font-semibold text-green-700">{membership.position.name}</p>
+                                                <p className="text-xs font-semibold text-green-700">{membership.position.name} <span className="font-normal text-green-500">({membership.level.toUpperCase()})</span></p>
                                                 {membership.order && <span className="text-[10px] text-slate-400">#{membership.order}</span>}
                                             </div>
                                             <div className="mt-1 space-y-0.5">
