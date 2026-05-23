@@ -136,7 +136,8 @@ class CulaanController extends Controller
             return response()->json(['voters' => []]);
         }
 
-        $voters = $this->buildEligibleVotersQuery($filters)
+        $voters = $this->buildEligibleVotersQuery($filters, true)
+            ->whereDoesntHave('culaWorkItem')
             ->with('culaWorkItem.marker')
             ->orderBy('no_kp')
             ->get()
