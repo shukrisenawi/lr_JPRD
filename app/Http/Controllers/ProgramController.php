@@ -124,6 +124,7 @@ class ProgramController extends Controller
                     'attendees' => $selectedProgram->attendees
                         ->map(fn (ProgramAttendee $attendee) => [
                             'id' => $attendee->id,
+                            'voter_id' => $attendee->voter_id,
                             'name' => $attendee->name,
                             'no_kp' => $attendee->no_kp,
                             'old_ic' => $attendee->old_ic,
