@@ -328,6 +328,45 @@ class ProgramController extends Controller
             ->with('success', 'Kehadiran pemilih berjaya dipadam.');
     }
 
+    public function storeMarkAttendee(Request $request, Program $program, ProgramAttendee $attendee): JsonResponse
+    {
+        $this->ensureAccessible($request->user()->id, $program);
+
+        if ($attendee->program_id !== $program->id) {
+            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
+        }
+
+        if ($attendee->voter_id) {
+            CulaWorkItem::query()->firstOrCreate(
+                ['pemilih_record_id' => $attendee->voter_id],
+                [
+                    'marked_by' => $request->user()->id,
+                    'marked_at' => now(),
+                    'notes' => null,
+                ]
+            );
+        }
+
+        return response()->json(['marked' => true]);
+    }
+
+    public function destroyMarkAttendee(Request $request, Program $program, ProgramAttendee $attendee): JsonResponse
+    {
+        $this->ensureAccessible($request->user()->id, $program);
+
+        if ($attendee->program_id !== $program->id) {
+            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
+        }
+
+        if ($attendee->voter_id) {
+            CulaWorkItem::query()
+                ->where('pemilih_record_id', $attendee->voter_id)
+                ->delete();
+        }
+
+        return response()->json(['marked' => false]);
+    }
+
     public function storeShare(Request $request, Program $program): RedirectResponse
     {
         $this->ensureOwner($request->user()->id, $program);

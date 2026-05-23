@@ -638,9 +638,10 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [attendeeSearch, setAttendeeSearch] = useState('');
     const [subTab, setSubTab] = useState(null);
     const toggleCula = async (a) => {
+        if (!selectedProgram) return;
         try {
             const method = a.is_marked ? 'DELETE' : 'POST';
-            await fetch(route(method === 'POST' ? 'culaan.mark.store' : 'culaan.mark.destroy', a.voter_id), {
+            await fetch(route(method === 'POST' ? 'program.attendees.mark.store' : 'program.attendees.mark.destroy', [selectedProgram.id, a.id]), {
                 method,
                 headers: { Accept: 'application/json', 'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '', 'X-Requested-With': 'XMLHttpRequest' },
             });
