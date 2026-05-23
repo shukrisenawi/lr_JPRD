@@ -417,7 +417,7 @@ class ProgramController extends Controller
         $byCula = $attendees
             ->groupBy(fn ($a) => $a->cula_code ?: '?')
             ->map(fn ($group, $code) => [
-                'code' => $code,
+                'code' => (string) $code,
                 'display_label' => $group->first()->cula_display_label ?: ($code === '?' ? 'Belum Dicula' : $code),
                 'total' => $group->count(),
             ])
@@ -475,7 +475,7 @@ class ProgramController extends Controller
                 ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
                 ->groupBy(fn ($a) => $a->cula_code ?: '?')
                 ->map(fn ($g, $code) => [
-                    'code' => $code,
+                    'code' => (string) $code,
                     'display_label' => $g->first()->cula_display_label ?: ($code === '?' ? 'Belum Dicula' : $code),
                     'total' => $g->count(),
                 ])

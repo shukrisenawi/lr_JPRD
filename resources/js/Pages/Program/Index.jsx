@@ -405,11 +405,11 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const { auth } = usePage().props;
     const isAdmin = auth?.user?.role?.is_master_admin;
     const tabs = [
+        { key: 'senarai-program', label: 'Senarai Program' },
         { key: 'tambah-program', label: 'Tambah Program' },
         ...(isAdmin ? [{ key: 'group-program', label: 'Group Program' }] : []),
-        { key: 'senarai-program', label: 'Senarai Program' },
     ];
-    const [tab, setTab] = useState(selectedProgram ? 'senarai-program' : 'tambah-program');
+    const [tab, setTab] = useState('senarai-program');
     const [editingId, setEditingId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
     const [selAttendee, setSelAttendee] = useState(null);
@@ -573,6 +573,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                         <svg viewBox="0 0 24 24" className="h-3 w-3 text-green-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                         <span className="text-xs font-bold text-green-700">{filteredAttendees.length}</span>
                                     </span>
+                                    {selectedProgram.attendees.length > 0 && (
+                                        <button onClick={() => router.get(route('program.laporan', selectedProgram.id))}
+                                            className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">
+                                            Laporan
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
