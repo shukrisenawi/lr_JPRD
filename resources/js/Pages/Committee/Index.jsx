@@ -201,13 +201,15 @@ function PositionManager({ positions }) {
 
 function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-function MembershipManager({ positions, memberships, scopes, auth }) {
+function MembershipManager({ positions, memberships, scopes, auth, activeTab, onTabChange }) {
     const tabs = [
         { key: 'jprd', label: 'JPRD', desc: 'Peringkat kawasan', icon: 'users' },
         { key: 'udm', label: 'UDM', desc: 'Unit daerah mengundi', icon: 'mapPin' },
         { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
     ];
-    const [activeTab, setActiveTab] = useState('jprd');
+    const [activeTabLocal, setActiveTabLocal] = useState('jprd');
+    const resolvedTab = activeTab ?? activeTabLocal;
+    const setResolvedTab = onTabChange ?? setActiveTabLocal;
     const suggestionsAbort = useRef(null);
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
@@ -225,28 +227,28 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
     useEffect(() => {
         form.setData((current) => ({
             ...current,
-            level: activeTab,
-            scope_key: scopes[activeTab]?.[0]?.key ?? '',
+            level: resolvedTab,
+            scope_key: scopes[resolvedTab]?.[0]?.key ?? '',
         }));
         setSelectedVoter(null);
         setSuggestions([]);
-    }, [activeTab]);
+    }, [resolvedTab]);
 
-    const currentScopes = scopes[activeTab] ?? [];
+    const currentScopes = scopes[resolvedTab] ?? [];
 
     const filteredMemberships = useMemo(() => {
         return memberships.filter((membership) => {
-            if (membership.level !== activeTab) {
+            if (membership.level !== resolvedTab) {
                 return false;
             }
 
-            if (activeTab === 'jprd') {
+            if (resolvedTab === 'jprd') {
                 return true;
             }
 
             return membership.scope_key === form.data.scope_key;
         });
-    }, [activeTab, form.data.scope_key, memberships]);
+    }, [resolvedTab, form.data.scope_key, memberships]);
 
     const handleSearchChange = async (event) => {
         const value = event.target.value;
@@ -301,8 +303,8 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
                 form.setData((current) => ({
                     ...current,
                     committee_position_id: positions[0]?.id ?? '',
-                    level: activeTab,
-                    scope_key: scopes[activeTab]?.[0]?.key ?? '',
+                    level: resolvedTab,
+                    scope_key: scopes[resolvedTab]?.[0]?.key ?? '',
                 }));
             },
         });
@@ -317,7 +319,7 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
     };
 
     const exportToExcel = () => {
-        const tabKey = activeTab;
+        const tabKey = resolvedTab;
         const tabLabel = tabs.find((t) => t.key === tabKey)?.label ?? tabKey.toUpperCase();
         const scope = currentScopes.find((s) => s.key === form.data.scope_key);
         const scopePart = tabKey === 'jprd' ? '' : ((scope?.parent_scope_name ? `${scope.parent_scope_name}_${scope.name}` : (scope?.name ?? '')).replace(/[\/\s]+/g, '_'));
@@ -384,11 +386,11 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
                                 <button
                                     key={tab.key}
                                     type="button"
-                                    onClick={() => setActiveTab(tab.key)}
-                                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left transition ${activeTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
+                                    onClick={() => setResolvedTab(tab.key)}
+                                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left transition ${resolvedTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
                                 >
                                     <Icon name={tab.icon} className="h-3.5 w-3.5" />
-                                    <span><span className={`block text-xs font-bold ${activeTab === tab.key ? 'text-white' : 'text-slate-900'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeTab === tab.key ? 'text-green-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                                    <span><span className={`block text-xs font-bold ${resolvedTab === tab.key ? 'text-white' : 'text-slate-900'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${resolvedTab === tab.key ? 'text-green-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
                                 </button>
                             ))}
                         </div>
@@ -463,7 +465,7 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="committee-scope" value={activeTab === 'jprd' ? 'Peringkat' : 'Scope'} />
+                            <InputLabel htmlFor="committee-scope" value={resolvedTab === 'jprd' ? 'Peringkat' : 'Scope'} />
                             <select
                                 id="committee-scope"
                                 value={form.data.scope_key}
