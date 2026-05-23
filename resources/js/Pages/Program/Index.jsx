@@ -635,15 +635,22 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [deletingAtt, setDeletingAtt] = useState(null);
     const [openingTg, setOpeningTg] = useState(false);
     const [attendeeSearch, setAttendeeSearch] = useState('');
+    const [subTab, setSubTab] = useState(null);
     const filteredAttendees = useMemo(() => {
         if (!selectedProgram) return [];
+        let list = selectedProgram.attendees;
+        if (subTab) {
+            list = list.filter((a) => (a.sub_program_ids ?? []).includes(subTab));
+        }
         const q = attendeeSearch.trim().toLowerCase();
-        if (!q) return selectedProgram.attendees;
-        return selectedProgram.attendees.filter((a) =>
-            [a.name, a.no_kp, a.old_ic, a.phone_mobile, a.phone_home, a.dm, a.locality]
-                .some((v) => v?.toLowerCase().includes(q))
-        );
-    }, [selectedProgram?.attendees, attendeeSearch]);
+        if (q) {
+            list = list.filter((a) =>
+                [a.name, a.no_kp, a.old_ic, a.phone_mobile, a.phone_home, a.dm, a.locality]
+                    .some((v) => v?.toLowerCase().includes(q))
+            );
+        }
+        return list;
+    }, [selectedProgram?.attendees, attendeeSearch, subTab]);
     const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
     const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', gambar: null, gambar_url: null });
@@ -692,8 +699,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         });
     };
 
-    const selectProg = (id) => { setTab('senarai-program'); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
-    const back = () => { setSelAttendee(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
+    const selectProg = (id) => { setTab('senarai-program'); setSubTab(null); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
+    const back = () => { setSelAttendee(null); setSubTab(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
     const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
     const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
@@ -813,6 +820,20 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                         className="input-field py-1.5 pl-7 pr-2 text-xs w-40 sm:w-52" />
                                 </div>
                             </div>
+                            {selectedProgram?.sub_programs?.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                    <button onClick={() => setSubTab(null)}
+                                        className={`rounded-md px-2 py-1 text-xs font-bold transition ${subTab === null ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700'}`}>
+                                        Semua
+                                    </button>
+                                    {selectedProgram.sub_programs.map((sp) => (
+                                        <button key={sp.id} onClick={() => setSubTab(sp.id)}
+                                            className={`rounded-md px-2 py-1 text-xs font-bold transition ${subTab === sp.id ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700'}`}>
+                                            {sp.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                             <div className="mt-3">
                                 {filteredAttendees.length === 0 ? (
                                     <div className="card-dashed py-6 text-xs text-center text-slate-500">
