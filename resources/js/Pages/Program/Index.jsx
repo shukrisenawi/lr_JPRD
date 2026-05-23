@@ -250,12 +250,21 @@ function AttendeeProgramsModal({ attendee, onClose }) {
                     ) : (
                         <div className="space-y-1.5">
                             {programs.map((p) => (
-                                <div key={p.program_id} className="flex items-center justify-between gap-2 rounded-md border border-green-100 bg-white px-2 py-2">
-                                    <div className="min-w-0">
-                                        <p className="truncate text-xs font-bold text-slate-800">{p.tajuk}</p>
-                                        <p className="text-xs text-green-600">{p.tarikh}</p>
+                                <div key={p.program_id} className="rounded-md border border-green-100 bg-white px-2 py-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-xs font-bold text-slate-800">{p.tajuk}</p>
+                                            <p className="text-xs text-green-600">{p.tarikh}</p>
+                                        </div>
+                                        {p.group_name && <span className="shrink-0 rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{p.group_name}</span>}
                                     </div>
-                                    {p.group_name && <span className="shrink-0 rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{p.group_name}</span>}
+                                    {p.sub_programs?.length > 0 && (
+                                        <div className="mt-1 flex flex-wrap gap-1">
+                                            {p.sub_programs.map((spName, idx) => (
+                                                <span key={idx} className="rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">{spName}</span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

@@ -66,6 +66,9 @@ class ProgramController extends Controller
                     'tarikh' => $program->tarikh?->format('d-m-Y'),
                     'masa' => $program->masa?->format('h:i A'),
                     'group_name' => $program->group?->name,
+                    'sub_programs' => $attendee->subPrograms
+                        ->map(fn ($sp) => $sp->name)
+                        ->values(),
                 ]);
             })
             ->groupBy('voter_id')
