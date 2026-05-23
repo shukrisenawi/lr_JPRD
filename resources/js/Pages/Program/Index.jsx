@@ -141,7 +141,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
                 <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">▣ {s}</p>
                 <h3 className="mt-1 text-xs font-bold leading-tight text-slate-800">{program.tajuk}</h3>
                 <p className="mt-0.5 text-xs text-slate-600">{program.tempat}</p>
-                {program.group_name && <p className="mt-2 inline-flex rounded-md border border-slate-200 bg-green-50 px-2 py-0.5 text-xs font-bold uppercase tracking-[0.08em] text-green-700">{program.group_name}</p>}
+                {program.group_name && <p className="mt-2 inline-flex rounded-md border border-slate-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-green-700">{program.group_name}</p>}
                 <div className="mt-2 border-t border-slate-200 pt-1.5">
                     <p className="text-xs text-slate-500">{program.attendees_count} hadir</p>
                 </div>
