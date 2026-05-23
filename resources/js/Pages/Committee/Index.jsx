@@ -549,7 +549,7 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
                                             {membership.notes && (
                                                 <p className="mt-1.5 text-[10px] font-medium text-amber-700">{membership.notes}</p>
                                             )}
-                                            {membership.creator_name && (
+                                            {membership.creator_name && membership.created_by !== auth.user?.id && (
                                                 <p className="mt-1 text-[10px] text-slate-400">Oleh: <span className="font-bold text-slate-600">{membership.creator_name}</span></p>
                                             )}
                                         </div>
