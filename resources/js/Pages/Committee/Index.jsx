@@ -330,7 +330,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
 
         const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
         const align = ['center', 'center', 'left', 'center'];
-        const widths = [35, 320, 520, 280];
+        const widths = [30, 150, 520, 280];
 
         const dataRows = filteredMemberships.map((m, i) => [
             { value: i + 1, type: 'Number', align: 'center' },
