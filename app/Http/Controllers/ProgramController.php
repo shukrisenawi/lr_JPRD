@@ -83,14 +83,41 @@ class ProgramController extends Controller
         $selectedProgramId = (int) $request->query('program', 0);
         $selectedProgram = $programs->firstWhere('id', $selectedProgramId);
 
-        $culaWorkItems = $selectedProgram?->attendees
-            ? collect(CulaWorkItem::with('marker')
-                ->whereIn('pemilih_record_id', $selectedProgram->attendees
-                    ->pluck('voter_id')->filter()->unique()->values())
+        $icToPemilihId = [];
+        if ($selectedProgram?->attendees) {
+            $icNumbers = $selectedProgram->attendees
+                ->pluck('no_kp')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+            $oldIcs = $selectedProgram->attendees
+                ->pluck('old_ic')
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+            $pemilihRecords = PemilihRecord::query()
+                ->whereIn('no_kp', $icNumbers)
+                ->orWhereIn('old_ic', $oldIcs)
+                ->get(['id', 'no_kp', 'old_ic']);
+            foreach ($pemilihRecords as $record) {
+                if ($record->no_kp) {
+                    $icToPemilihId[$record->no_kp] = $record->id;
+                }
+                if ($record->old_ic) {
+                    $icToPemilihId[$record->old_ic] = $record->id;
+                }
+            }
+        }
+        $culaWorkItems = collect();
+        if (! empty($icToPemilihId)) {
+            $culaWorkItems = collect(CulaWorkItem::with('marker')
+                ->whereIn('pemilih_record_id', array_values($icToPemilihId))
                 ->get()
                 ->keyBy('pemilih_record_id')
-                ->all())
-            : collect();
+                ->all());
+        }
 
         $committeeBadges = $selectedProgram
             ? $this->buildCommitteeBadgeMap($selectedProgram->attendees)
@@ -164,8 +191,8 @@ class ProgramController extends Controller
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),
                             'sub_program_ids' => $attendee->subPrograms->pluck('id')->all(),
                             'attended_at' => $attendee->attended_at?->format('d-m-Y h:i A'),
-                            'is_marked' => $culaWorkItems->has($attendee->voter_id),
-                            'marked_by_name' => $culaWorkItems->get($attendee->voter_id)?->marker?->name,
+                            'is_marked' => $culaWorkItems->has($icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null),
+                            'marked_by_name' => $culaWorkItems->get($icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null)?->marker?->name,
                         ])
                         ->values(),
                 ]
@@ -336,9 +363,18 @@ class ProgramController extends Controller
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
         }
 
-        if ($attendee->voter_id) {
+        $pemilihRecord = PemilihRecord::query()
+            ->where(function ($q) use ($attendee) {
+                $q->where('no_kp', $attendee->no_kp);
+                if ($attendee->old_ic) {
+                    $q->orWhere('old_ic', $attendee->old_ic);
+                }
+            })
+            ->first();
+
+        if ($pemilihRecord) {
             CulaWorkItem::query()->firstOrCreate(
-                ['pemilih_record_id' => $attendee->voter_id],
+                ['pemilih_record_id' => $pemilihRecord->id],
                 [
                     'marked_by' => $request->user()->id,
                     'marked_at' => now(),
@@ -358,9 +394,18 @@ class ProgramController extends Controller
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
         }
 
-        if ($attendee->voter_id) {
+        $pemilihRecord = PemilihRecord::query()
+            ->where(function ($q) use ($attendee) {
+                $q->where('no_kp', $attendee->no_kp);
+                if ($attendee->old_ic) {
+                    $q->orWhere('old_ic', $attendee->old_ic);
+                }
+            })
+            ->first();
+
+        if ($pemilihRecord) {
             CulaWorkItem::query()
-                ->where('pemilih_record_id', $attendee->voter_id)
+                ->where('pemilih_record_id', $pemilihRecord->id)
                 ->delete();
         }
 
