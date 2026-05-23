@@ -44,4 +44,9 @@ class Program extends Model
         return $this->belongsToMany(User::class, 'program_user_shares')
             ->withTimestamps();
     }
+
+    public function subPrograms(): HasMany
+    {
+        return $this->hasMany(ProgramSubProgram::class);
+    }
 }

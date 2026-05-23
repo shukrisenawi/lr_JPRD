@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ProgramAttendee extends Model
 {
@@ -32,5 +33,10 @@ class ProgramAttendee extends Model
     public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
+    }
+
+    public function subPrograms(): BelongsToMany
+    {
+        return $this->belongsToMany(ProgramSubProgram::class, 'attendee_sub_program');
     }
 }

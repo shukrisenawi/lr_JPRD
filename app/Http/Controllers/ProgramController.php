@@ -7,6 +7,7 @@ use App\Models\ProgramAttendee;
 use App\Models\CommitteeMembership;
 use App\Models\PemilihRecord;
 use App\Models\ProgramGroup;
+use App\Models\ProgramSubProgram;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\PemilihReportService;
@@ -29,7 +30,7 @@ class ProgramController extends Controller
             ->orderBy('name')
             ->get();
         $programs = $this->accessibleProgramsQuery($user->id)
-            ->with(['attendees', 'sharedUsers:id,name', 'group'])
+            ->with(['attendees.subPrograms', 'sharedUsers:id,name', 'group', 'subPrograms'])
             ->latest('tarikh')
             ->latest('masa')
             ->latest('id')
@@ -121,6 +122,13 @@ class ProgramController extends Controller
                             'name' => $sharedUser->name,
                         ])
                         ->values(),
+                    'sub_programs' => $selectedProgram->subPrograms
+                        ->map(fn (ProgramSubProgram $sp) => [
+                            'id' => $sp->id,
+                            'name' => $sp->name,
+                            'color' => $sp->color,
+                        ])
+                        ->values(),
                     'attendees' => $selectedProgram->attendees
                         ->map(fn (ProgramAttendee $attendee) => [
                             'id' => $attendee->id,
@@ -140,6 +148,7 @@ class ProgramController extends Controller
                             'group_badges' => $attendeeGroupCounts->get($attendee->voter_id, collect())->all(),
                             'committee_badges' => $committeeBadges->get($attendee->id, []),
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),
+                            'sub_program_ids' => $attendee->subPrograms->pluck('id')->all(),
                             'attended_at' => $attendee->attended_at?->format('d-m-Y h:i A'),
                         ])
                         ->values(),
@@ -267,15 +276,21 @@ class ProgramController extends Controller
             'cula_code' => ['nullable', 'string', 'max:50'],
             'cula_display_label' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string'],
+            'sub_program_ids' => ['nullable', 'array'],
+            'sub_program_ids.*' => ['integer', 'exists:program_sub_programs,id'],
         ]);
 
-        $program->attendees()->updateOrCreate(
+        $subProgramIds = $validated['sub_program_ids'] ?? [];
+
+        $attendee = $program->attendees()->updateOrCreate(
             ['voter_id' => $validated['voter_id']],
             [
                 ...$validated,
                 'attended_at' => now(),
             ],
         );
+
+        $attendee->subPrograms()->sync($subProgramIds);
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
@@ -515,6 +530,71 @@ class ProgramController extends Controller
                 'cula_by_dm' => $culaByDm,
             ],
         ]);
+    }
+
+    public function storeSubProgram(Request $request, Program $program): RedirectResponse
+    {
+        $this->ensureOwner($request->user()->id, $program);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'color' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $program->subPrograms()->create($validated);
+
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Sub program berjaya ditambah.');
+    }
+
+    public function updateSubProgram(Request $request, ProgramSubProgram $subProgram): RedirectResponse
+    {
+        $program = $subProgram->program;
+        $this->ensureOwner($request->user()->id, $program);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'color' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $subProgram->update($validated);
+
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Sub program berjaya dikemas kini.');
+    }
+
+    public function destroySubProgram(Request $request, ProgramSubProgram $subProgram): RedirectResponse
+    {
+        $program = $subProgram->program;
+        $this->ensureOwner($request->user()->id, $program);
+
+        $subProgram->delete();
+
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Sub program berjaya dipadam.');
+    }
+
+    public function updateAttendeeSubPrograms(Request $request, Program $program, ProgramAttendee $attendee): RedirectResponse
+    {
+        $this->ensureAccessible($request->user()->id, $program);
+
+        if ($attendee->program_id !== $program->id) {
+            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
+        }
+
+        $validated = $request->validate([
+            'sub_program_ids' => ['nullable', 'array'],
+            'sub_program_ids.*' => ['integer', 'exists:program_sub_programs,id'],
+        ]);
+
+        $attendee->subPrograms()->sync($validated['sub_program_ids'] ?? []);
+
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Sub program pemilih berjaya dikemas kini.');
     }
 
     private function validateProgram(Request $request): array

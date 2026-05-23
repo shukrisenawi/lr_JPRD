@@ -41,6 +41,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/program/{program}/laporan', [ProgramController::class, 'laporan'])->middleware('module:program')->name('program.laporan');
     Route::post('/program/{program}/attendees', [ProgramController::class, 'storeAttendee'])->middleware('module:program')->name('program.attendees.store');
     Route::delete('/program/{program}/attendees/{attendee}', [ProgramController::class, 'destroyAttendee'])->middleware('module:program')->name('program.attendees.destroy');
+    Route::post('/program/{program}/sub-programs', [ProgramController::class, 'storeSubProgram'])->middleware('module:program')->name('program.sub-programs.store');
+    Route::put('/program/sub-programs/{subProgram}', [ProgramController::class, 'updateSubProgram'])->middleware('module:program')->name('program.sub-programs.update');
+    Route::delete('/program/sub-programs/{subProgram}', [ProgramController::class, 'destroySubProgram'])->middleware('module:program')->name('program.sub-programs.destroy');
+    Route::put('/program/{program}/attendees/{attendee}/sub-programs', [ProgramController::class, 'updateAttendeeSubPrograms'])->middleware('module:program')->name('program.attendees.sub-programs.update');
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');
     Route::get('/jawatankuasa/search', [CommitteeController::class, 'search'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.search');
     Route::post('/jawatankuasa/positions', [CommitteeController::class, 'storePosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.store');

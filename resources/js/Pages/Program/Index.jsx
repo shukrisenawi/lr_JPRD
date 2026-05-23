@@ -158,7 +158,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
     );
 }
 
-function VoterDetailCard({ voter, onAdd, adding }) {
+function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, onToggleSub }) {
     if (!voter) return null;
     const fields = [
         ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
@@ -184,6 +184,7 @@ function VoterDetailCard({ voter, onAdd, adding }) {
                     </div>
                 ))}
             </div>
+            <SubProgramCheckboxes subPrograms={subPrograms} selectedIds={selectedSubIds} onChange={onToggleSub} />
         </section>
     );
 }
@@ -320,9 +321,181 @@ function ProgramGroupManager({ groups }) {
     );
 }
 
+function PlusIcon({ className = 'h-4 w-4' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M5 12h14" /><path d="M12 5v14" />
+        </svg>
+    );
+}
+
+function SubProgramSection({ program, canEdit }) {
+    const [items, setItems] = useState(program?.sub_programs ?? []);
+    const [newName, setNewName] = useState('');
+    const [editingId, setEditingId] = useState(null);
+    const [editName, setEditName] = useState('');
+    const subForm = useForm({ name: '', color: '' });
+
+    useEffect(() => {
+        setItems(program?.sub_programs ?? []);
+    }, [program?.sub_programs, program?.id]);
+
+    const addSub = (e) => {
+        e.preventDefault();
+        if (!newName.trim()) return;
+        subForm.setData('name', newName.trim());
+        subForm.post(route('program.sub-programs.store', program.id), {
+            preserveScroll: true,
+            onSuccess: () => { setNewName(''); subForm.reset(); },
+        });
+    };
+
+    const startEdit = (sp) => {
+        setEditingId(sp.id);
+        setEditName(sp.name);
+    };
+
+    const saveEdit = (spId) => {
+        if (!editName.trim()) return;
+        subForm.setData('name', editName.trim());
+        subForm.put(route('program.sub-programs.update', spId), {
+            preserveScroll: true,
+            onSuccess: () => { setEditingId(null); setEditName(''); subForm.reset(); },
+        });
+    };
+
+    const delSub = (sp) => {
+        if (!window.confirm(`Padam sub-program "${sp.name}"?`)) return;
+        router.delete(route('program.sub-programs.destroy', sp.id), {
+            preserveScroll: true,
+        });
+    };
+
+    if (!program) return null;
+
+    return (
+        <section className="card p-3">
+            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Sub Program</p>
+            <h3 className="mt-0.5 text-sm font-bold text-slate-800">{items.length} sub program</h3>
+            {canEdit && (
+                <form onSubmit={addSub} className="mt-2 flex gap-2">
+                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
+                        placeholder="Nama sub program..."
+                        className="input-field flex-1 py-1 text-xs" />
+                    <button type="submit" disabled={subForm.processing || !newName.trim()}
+                        className="btn-emerald shrink-0 text-xs">
+                        <PlusIcon className="h-3.5 w-3.5" />
+                    </button>
+                </form>
+            )}
+            {items.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                    {items.map((sp) => (
+                        <div key={sp.id} className="group flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 shadow-sm">
+                            {editingId === sp.id ? (
+                                <>
+                                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
+                                        className="w-24 rounded border border-slate-300 px-1 py-0.5 text-xs" autoFocus />
+                                    <button onClick={() => saveEdit(sp.id)} className="text-[10px] font-bold text-green-700 hover:text-green-500">Simpan</button>
+                                    <button onClick={() => { setEditingId(null); setEditName(''); }} className="text-[10px] font-bold text-slate-500 hover:text-slate-400">Batal</button>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-xs font-bold text-slate-800">{sp.name}</span>
+                                    {canEdit && (
+                                        <>
+                                            <button onClick={() => startEdit(sp)} className="text-slate-400 hover:text-green-600 transition">
+                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                            </button>
+                                            <button onClick={() => delSub(sp)} className="text-slate-400 hover:text-rose-600 transition">
+                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                            </button>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </section>
+    );
+}
+
+function SubProgramCheckboxes({ subPrograms, selectedIds, onChange }) {
+    if (!subPrograms || subPrograms.length === 0) return null;
+    return (
+        <div className="mt-2">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Sub Program</p>
+            <div className="flex flex-wrap gap-2">
+                {subPrograms.map((sp) => (
+                    <label key={sp.id} className="flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs transition hover:bg-green-50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50">
+                        <input type="checkbox" checked={selectedIds.includes(sp.id)}
+                            onChange={() => onChange(sp.id)}
+                            className="h-3 w-3 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                        <span className="font-bold text-slate-700">{sp.name}</span>
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function AttendeeSubProgramEditor({ attendee, subPrograms, onClose }) {
+    const [selectedIds, setSelectedIds] = useState(attendee?.sub_program_ids ?? []);
+    const [saving, setSaving] = useState(false);
+    const programId = usePage().props.selectedProgram?.id;
+
+    const toggle = (id) => {
+        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    };
+
+    const save = async () => {
+        if (!programId || !attendee) return;
+        setSaving(true);
+        router.put(route('program.attendees.sub-programs.update', [programId, attendee.id]), {
+            sub_program_ids: selectedIds,
+        }, {
+            preserveScroll: true,
+            onFinish: () => setSaving(false),
+        });
+        onClose();
+    };
+
+    return (
+        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="xs">
+            <div className="p-3">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                    <p className="text-xs font-bold text-slate-800">Edit Sub Program</p>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                </div>
+                <div className="mt-3 space-y-2">
+                    {(!subPrograms || subPrograms.length === 0) ? (
+                        <p className="text-xs text-slate-500">Tiada sub program.</p>
+                    ) : subPrograms.map((sp) => {
+                        const checked = selectedIds.includes(sp.id);
+                        return (
+                            <label key={sp.id} className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition hover:bg-green-50 has-[:checked]:border-green-300">
+                                <input type="checkbox" checked={checked} onChange={() => toggle(sp.id)}
+                                    className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                <span className="text-xs font-bold text-slate-800">{sp.name}</span>
+                            </label>
+                        );
+                    })}
+                </div>
+                <div className="mt-3 flex gap-2">
+                    <button onClick={onClose} className="flex-1 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
+                    <button onClick={save} disabled={saving} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">{saving ? '...' : 'Simpan'}</button>
+                </div>
+            </div>
+        </Modal>
+    );
+}
+
 function SearchVoterPanel({ selectedProgram }) {
     const [q, setQ] = useState(''); const [suggestions, setSuggestions] = useState([]); const [searching, setSearching] = useState(false);
     const [selected, setSelected] = useState(null); const [err, setErr] = useState(''); const [adding, setAdding] = useState(false);
+    const [selectedSubIds, setSelectedSubIds] = useState([]);
     const ac = useRef(null); const rid = useRef(0);
 
     const existingVoterIds = useMemo(() => {
@@ -333,11 +506,15 @@ function SearchVoterPanel({ selectedProgram }) {
         return ids;
     }, [selectedProgram?.attendees]);
 
-    useEffect(() => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); }, [selectedProgram?.id]);
+    useEffect(() => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); setSelectedSubIds([]); }, [selectedProgram?.id]);
     useEffect(() => () => ac.current?.abort(), []);
 
-    const pick = (voter) => { ac.current?.abort(); rid.current += 1; setSearching(false); setSuggestions([]); setQ(voter.name ?? ''); setErr(''); setSelected({ ...voter, voter_id: voter.voter_id ?? voter.id }); };
-    const clearSearch = () => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); };
+    const pick = (voter) => { ac.current?.abort(); rid.current += 1; setSearching(false); setSuggestions([]); setQ(voter.name ?? ''); setErr(''); setSelected({ ...voter, voter_id: voter.voter_id ?? voter.id }); setSelectedSubIds([]); };
+    const clearSearch = () => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); setSelectedSubIds([]); };
+
+    const toggleSub = (id) => {
+        setSelectedSubIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+    };
 
     const handleChange = async (e) => {
         const nq = e.target.value; setQ(nq); setSelected(null); setErr(''); ac.current?.abort();
@@ -353,8 +530,11 @@ function SearchVoterPanel({ selectedProgram }) {
 
     const add = async (voter) => {
         if (!selectedProgram) return; setAdding(true);
-        router.post(route('program.attendees.store', selectedProgram.id), { ...voter, voter_id: voter.voter_id ?? voter.id }, {
-            preserveScroll: true, onSuccess: () => { setQ(''); setSuggestions([]); setSelected(null); setErr(''); }, onError: () => setErr('Gagal rekod.'), onFinish: () => setAdding(false),
+        router.post(route('program.attendees.store', selectedProgram.id), {
+            ...voter, voter_id: voter.voter_id ?? voter.id,
+            sub_program_ids: selectedSubIds.length > 0 ? selectedSubIds : undefined,
+        }, {
+            preserveScroll: true, onSuccess: () => { setQ(''); setSuggestions([]); setSelected(null); setErr(''); setSelectedSubIds([]); }, onError: () => setErr('Gagal rekod.'), onFinish: () => setAdding(false),
         });
     };
 
@@ -396,7 +576,9 @@ function SearchVoterPanel({ selectedProgram }) {
                     {err && <p className="mt-1 text-xs font-bold text-rose-500">{err}</p>}
                 </div>
             </section>
-            <VoterDetailCard voter={selected} onAdd={add} adding={adding} />
+            <VoterDetailCard voter={selected} onAdd={add} adding={adding}
+                subPrograms={selectedProgram?.sub_programs ?? []}
+                selectedSubIds={selectedSubIds} onToggleSub={toggleSub} />
         </div>
     );
 }
@@ -414,6 +596,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [deletingId, setDeletingId] = useState(null);
     const [selAttendee, setSelAttendee] = useState(null);
     const [selAttendeeProgs, setSelAttendeeProgs] = useState(null);
+    const [selEditSub, setSelEditSub] = useState(null);
     const [selImage, setSelImage] = useState(null);
     const [selShare, setSelShare] = useState(null);
     const [deletingAtt, setDeletingAtt] = useState(null);
@@ -583,6 +766,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                             </div>
                         </div>
                         <SearchVoterPanel selectedProgram={selectedProgram} />
+                        <SubProgramSection program={selectedProgram} canEdit={selectedProgram.can_edit} />
                         <section className="card p-3">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
@@ -637,10 +821,25 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                         </p>
                                                     )}
                                                 </div>
-                                                {(a.group_badges?.length > 0 || a.committee_badges?.length > 0) && (
+                                                {(a.group_badges?.length > 0 || a.committee_badges?.length > 0 || selectedProgram?.sub_programs?.length > 0) && (
                                                     <div className="flex flex-wrap gap-1 border-t border-slate-100 px-2.5 py-1.5">
+                                                        {a.sub_program_ids?.length > 0 && selectedProgram?.sub_programs
+                                                            ?.filter((sp) => a.sub_program_ids.includes(sp.id))
+                                                            .map((sp) => (
+                                                                <span key={`${a.id}-sub-${sp.id}`}
+                                                                    className="inline-flex items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
+                                                                    {sp.name}
+                                                                </span>
+                                                            ))}
                                                         {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
                                                         {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">{b.label}</span>)}
+                                                        {selectedProgram?.sub_programs?.length > 0 && (
+                                                            <button onClick={() => setSelEditSub(a)}
+                                                                className="inline-flex items-center gap-0.5 rounded border border-dashed border-slate-300 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 transition hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50">
+                                                                <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                                                Sub
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -666,6 +865,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
             <AttendeeDetailModal attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} />
             <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
+            <AttendeeSubProgramEditor attendee={selEditSub} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSelEditSub(null)} />
             <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
             <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
         </AuthenticatedLayout>
