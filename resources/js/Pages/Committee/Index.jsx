@@ -567,11 +567,103 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
     );
 }
 
+function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) {
+    const [query, setQuery] = useState('');
+
+    const results = useMemo(() => {
+        if (!query.trim()) return [];
+
+        const q = query.toLowerCase();
+        const matched = allMemberships.filter((m) =>
+            m.voter.name.toLowerCase().includes(q) ||
+            (m.voter.no_kp && m.voter.no_kp.includes(q)) ||
+            (m.voter.old_ic && m.voter.old_ic.includes(q))
+        );
+
+        const grouped = {};
+        matched.forEach((m) => {
+            const vid = m.voter.id;
+            if (!grouped[vid]) grouped[vid] = { voter: m.voter, memberships: [] };
+            grouped[vid].memberships.push(m);
+        });
+
+        return Object.values(grouped).sort((a, b) => a.voter.name.localeCompare(b.voter.name));
+    }, [query, allMemberships]);
+
+    if (!isOpen) return null;
+
+    const levelColors = {
+        jprd: { bg: 'bg-green-100', text: 'text-green-700', label: 'JPRD' },
+        udm: { bg: 'bg-sky-100', text: 'text-sky-700', label: 'UDM' },
+        cawangan: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Cawangan' },
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-16 sm:pt-24" onClick={onClose}>
+            <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
+                    <Icon name="search" className="h-5 w-5 shrink-0 text-slate-400" />
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Cari nama ahli jawatankuasa..."
+                        className="flex-1 border-0 text-sm font-bold text-slate-800 outline-none placeholder:text-slate-400"
+                        autoFocus
+                    />
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="max-h-[60vh] overflow-y-auto p-4">
+                    {!query.trim() ? (
+                        <p className="py-8 text-center text-xs text-slate-400">Taip nama atau IC untuk mula mencari.</p>
+                    ) : results.length === 0 ? (
+                        <p className="py-8 text-center text-xs text-slate-400">Tiada hasil carian.</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {results.map(({ voter, memberships: vms }) => (
+                                <div key={voter.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                                    <p className="text-sm font-bold text-slate-800">{voter.name}</p>
+                                    <p className="text-xs text-slate-400">IC: {voter.no_kp || voter.old_ic || '-'}</p>
+                                    <div className="mt-2 space-y-1">
+                                        {vms.map((m) => {
+                                            const lc = levelColors[m.level] || { bg: 'bg-slate-100', text: 'text-slate-700', label: m.level };
+                                            return (
+                                                <div key={m.id} className="flex items-center gap-2">
+                                                    <span className={`inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold ${lc.bg} ${lc.text}`}>{lc.label}</span>
+                                                    <span className="text-xs font-semibold text-slate-700">{m.position.name}</span>
+                                                    {m.scope_name && <span className="text-[10px] text-slate-400">({m.scope_name})</span>}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {results.length > 0 && (
+                    <div className="border-t border-slate-100 px-4 py-2 text-right text-[10px] text-slate-400">
+                        {results.length} orang dijumpai
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 export default function CommitteeIndex({ positions, memberships, scopes }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canSenarai = allowedModules.includes('jawatankuasa.senarai');
     const canJawatan = allowedModules.includes('jawatankuasa.jawatan');
+
+    const [searchOpen, setSearchOpen] = useState(false);
 
     const sectionTabs = [
         ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
@@ -586,10 +678,17 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
     return (
         <AuthenticatedLayout
             header={
-                <div>
-                    <p className="label-section">Jawatankuasa</p>
-                    <h2 className="mt-0.5 heading-lg">Urus jawatan dan pelantikan</h2>
-                    <p className="text-muted mt-0.5">Semak jawatankuasa JPRD, UDM dan Cawangan dalam satu modul.</p>
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <p className="label-section">Jawatankuasa</p>
+                        <h2 className="mt-0.5 heading-lg">Urus jawatan dan pelantikan</h2>
+                        <p className="text-muted mt-0.5">Semak jawatankuasa JPRD, UDM dan Cawangan dalam satu modul.</p>
+                    </div>
+                    <button type="button" onClick={() => setSearchOpen(true)}
+                        className="mt-1 flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
+                        <Icon name="search" className="h-4 w-4" />
+                        Cari Ahli
+                    </button>
                 </div>
             }
         >
@@ -620,6 +719,8 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
                     <PositionManager positions={positions} />
                 )}
             </div>
+
+            <CommitteeSearchModal memberships={memberships} isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         </AuthenticatedLayout>
     );
 }
