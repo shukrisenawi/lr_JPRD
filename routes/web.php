@@ -15,12 +15,9 @@ use App\Http\Controllers\SheetPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    $prefix = app()->environment('local') ? '' : '/sistem/public';
-    return auth()->check() ? redirect($prefix.'/dashboard') : redirect($prefix.'/login');
-});
-Route::get('/sistem', function () {
-    $prefix = app()->environment('local') ? '' : '/sistem/public';
-    return auth()->check() ? redirect($prefix.'/dashboard') : redirect($prefix.'/login');
+    // Guna named route — Laravel akan jana URL betul
+    // sama ada app di root atau subdirectory.
+    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 Route::middleware('auth')->group(function () {
