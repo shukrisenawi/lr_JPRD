@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/program/{program}/share', [ProgramController::class, 'storeShare'])->middleware('module:program')->name('program.share.store');
     Route::get('/program/{program}/gambar', [ProgramController::class, 'gambar'])->middleware('module:program')->name('program.gambar');
     Route::get('/program/{program}/search', [ProgramController::class, 'search'])->middleware('module:program')->name('program.search');
+    Route::get('/program/{program}/laporan', [ProgramController::class, 'laporan'])->middleware('module:program')->name('program.laporan');
     Route::post('/program/{program}/attendees', [ProgramController::class, 'storeAttendee'])->middleware('module:program')->name('program.attendees.store');
     Route::delete('/program/{program}/attendees/{attendee}', [ProgramController::class, 'destroyAttendee'])->middleware('module:program')->name('program.attendees.destroy');
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');

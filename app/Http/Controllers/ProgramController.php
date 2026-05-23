@@ -372,6 +372,146 @@ class ProgramController extends Controller
             ->with('success', 'Group program berjaya dipadam.');
     }
 
+    public function laporan(Request $request, Program $program): Response
+    {
+        $this->ensureAccessible($request->user()->id, $program);
+
+        $attendees = $program->attendees;
+        $total = $attendees->count();
+
+        $byDm = $attendees
+            ->groupBy(fn ($a) => $a->dm ?: 'Tiada')
+            ->map(fn ($group, $dm) => [
+                'name' => $dm,
+                'key' => $dm,
+                'total' => $group->count(),
+            ])
+            ->sortByDesc('total')
+            ->values();
+
+        $byLocality = $attendees
+            ->groupBy(fn ($a) => $a->locality ?: 'Tiada')
+            ->map(fn ($group, $loc) => [
+                'name' => $loc,
+                'total' => $group->count(),
+            ])
+            ->sortByDesc('total')
+            ->values();
+
+        $gender = collect([
+            ['key' => 'L', 'label' => 'Lelaki', 'total' => $attendees->where('gender', 'L')->count()],
+            ['key' => 'P', 'label' => 'Perempuan', 'total' => $attendees->where('gender', 'P')->count()],
+            ['key' => 'X', 'label' => 'Tiada', 'total' => $attendees->filter(fn ($a) => ! in_array($a->gender, ['L', 'P']))->count()],
+        ])->filter(fn ($g) => $g['total'] > 0)->values();
+
+        $race = $attendees
+            ->groupBy(fn ($a) => $a->race ?: 'Tiada')
+            ->map(fn ($group, $race) => [
+                'code' => $race,
+                'label' => $race,
+                'total' => $group->count(),
+            ])
+            ->sortByDesc('total')
+            ->values();
+
+        $byCula = $attendees
+            ->groupBy(fn ($a) => $a->cula_code ?: '?')
+            ->map(fn ($group, $code) => [
+                'code' => $code,
+                'display_label' => $group->first()->cula_display_label ?: ($code === '?' ? 'Belum Dicula' : $code),
+                'total' => $group->count(),
+            ])
+            ->sortByDesc('total')
+            ->values();
+
+        $dmDetails = $byDm->map(function ($dm) use ($attendees) {
+            $filtered = $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key']);
+            $localities = $filtered
+                ->groupBy(fn ($a) => $a->locality ?: 'Tiada')
+                ->map(fn ($g, $loc) => [
+                    'name' => $loc,
+                    'total' => $g->count(),
+                    'with_cula' => $g->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
+                    'belum_dicula' => $g->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
+                ])
+                ->sortByDesc('total')
+                ->values();
+
+            return [
+                'key' => $dm['key'],
+                'name' => $dm['name'],
+                'total' => $dm['total'],
+                'localities' => $localities,
+                'summary' => [
+                    'total_voters' => $dm['total'],
+                    'total_localities' => $localities->count(),
+                    'with_cula' => $filtered->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
+                    'belum_dicula' => $filtered->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
+                ],
+            ];
+        });
+
+        $raceByDm = $byDm->mapWithKeys(fn ($dm) => [$dm['key'] => $attendees
+            ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
+            ->groupBy(fn ($a) => $a->race ?: 'Tiada')
+            ->map(fn ($g, $race) => ['code' => $race, 'label' => $race, 'total' => $g->count()])
+            ->sortByDesc('total')
+            ->values(),
+        ]);
+
+        $genderByDm = $byDm->mapWithKeys(fn ($dm) => [$dm['key'] => collect([
+            ['k' => 'L', 'l' => 'Lelaki', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'L')->count()],
+            ['k' => 'P', 'l' => 'Perempuan', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'P')->count()],
+        ])->filter(fn ($g) => $g['t'] > 0)->values()]);
+
+        $culaByDm = $byDm->mapWithKeys(fn ($dm) => [$dm['key'] => [
+            'key' => $dm['key'],
+            'cula_breakdown' => $attendees
+                ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
+                ->groupBy(fn ($a) => $a->cula_code ?: '?')
+                ->map(fn ($g, $code) => [
+                    'code' => $code,
+                    'display_label' => $g->first()->cula_display_label ?: ($code === '?' ? 'Belum Dicula' : $code),
+                    'total' => $g->count(),
+                ])
+                ->sortByDesc('total')
+                ->values(),
+        ]]);
+
+        return Inertia::render('Program/Laporan', [
+            'program' => [
+                'id' => $program->id,
+                'tajuk' => $program->tajuk,
+                'tempat' => $program->tempat,
+                'tarikh' => $program->tarikh?->format('d-m-Y'),
+                'masa' => $program->masa?->format('h:i A'),
+                'group_name' => $program->group?->name,
+                'attendees_count' => $total,
+            ],
+            'report' => [
+                'total' => $total,
+                'total_dm' => $byDm->count(),
+                'total_localities' => $byLocality->count(),
+                'summary' => [
+                    'total_voters' => $total,
+                    'total_dm' => $byDm->count(),
+                    'total_localities' => $byLocality->count(),
+                    'with_cula' => $attendees->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
+                    'belum_dicula' => $attendees->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
+                ],
+                'by_dm' => $byDm,
+                'by_locality' => $byLocality,
+                'gender' => $gender,
+                'race' => $race,
+                'by_cula' => $byCula,
+                'dm_details' => $dmDetails,
+                'race_by_dm' => $raceByDm,
+                'gender_by_dm' => $genderByDm,
+                'cula_by_dm' => $culaByDm,
+            ],
+        ]);
+    }
+
     private function validateProgram(Request $request): array
     {
         return $request->validate([

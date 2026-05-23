@@ -128,7 +128,7 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
     );
 }
 
-function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare }) {
+function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare, onLaporan }) {
     const s = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
     return (
         <div className={`rounded-md border bg-white p-2.5 shadow-sm transition hover:border-green-200 ${isActive ? 'border-green-200' : 'border-slate-200'}`}>
@@ -147,6 +147,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
                 </div>
             </div>
             <div className="mt-2 flex flex-wrap justify-end gap-1.5">
+                {program.attendees_count > 0 && <button onClick={() => onLaporan(program)} className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">Laporan</button>}
                 {program.can_share && <button onClick={() => onShare(program)} className="rounded-md border border-orange-300 bg-white px-2.5 py-1 text-xs font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
                 {program.can_edit && <>
                     <button onClick={() => onEdit(program)} className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
@@ -649,7 +650,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                             {programs.length === 0 ? <div className="card-dashed py-4 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
                                 <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
-                                    onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg} />
+                                    onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg}
+                                    onLaporan={(prog) => router.get(route('program.laporan', prog.id))} />
                             ))}
                         </div>
                     </div>
