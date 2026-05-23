@@ -316,6 +316,55 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
         }
     };
 
+    const exportToExcel = () => {
+        const tabKey = activeTab;
+        const tabLabel = tabs.find((t) => t.key === tabKey)?.label ?? tabKey.toUpperCase();
+        const scope = currentScopes.find((s) => s.key === form.data.scope_key);
+        const scopePart = scope?.parent_scope_name ? `${scope.parent_scope_name}_${scope.name}`.replace(/[\/\s]+/g, '_') : (scope?.name ?? '').replace(/[\/\s]+/g, '_');
+
+        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
+        const align = ['center', 'center', 'left', 'center'];
+        const widths = [35, 320, 520, 280];
+
+        const dataRows = filteredMemberships.map((m, i) => [
+            { value: i + 1, type: 'Number', align: 'center' },
+            { value: m.position?.name ?? '-', type: 'String', align: 'center' },
+            { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
+            { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
+        ]);
+
+        const colXml = widths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
+        const titleXml = `
+            <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">Ahli Jawatankuasa ${tabLabel}</Data></Cell></Row>
+            ${tabKey === 'jprd' ? '' : `<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleSub"><Data ss:Type="String">${scopePart.replace(/_/g, ' ')}</Data></Cell></Row>`}
+        `;
+        const headerXml = `<Row>${cols.map((h, i) => `<Cell ss:StyleID="${align[i] === 'center' ? 'headerCenter' : 'header'}"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('')}</Row>`;
+        const bodyXml = dataRows.map((cells) => `<Row>${cells.map((c) => `<Cell ss:StyleID="${c.align === 'center' ? 'cellCenter' : 'cell'}"><Data ss:Type="${c.type}">${escapeXml(c.value)}</Data></Cell>`).join('')}</Row>`).join('');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
+<Styles>
+<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style>
+<Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="24" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
+<Style ss:ID="titleSub"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
+<Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
+<Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
+<Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
+<Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
+</Styles>
+<Worksheet ss:Name="Jawatankuasa"><Table>${colXml}${titleXml}${headerXml}${bodyXml}</Table></Worksheet>
+</Workbook>`;
+        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `AJK_${tabLabel}_${scopePart}.xls`.replace(/__+/g, '_');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
             <div className="rounded-t-[11px] border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
@@ -343,6 +392,13 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
                                 </button>
                             ))}
                         </div>
+                        {filteredMemberships.length > 0 && (
+                            <button type="button" onClick={exportToExcel}
+                                className="hidden shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex">
+                                <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
+                                Export Excel
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -530,64 +586,13 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
         return 'senarai-jawatankuasa';
     });
 
-    const levelLabels = { jprd: 'JPRD', udm: 'UDM', cawangan: 'Cawangan' };
-
-    const exportToExcel = () => {
-        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
-        const align = ['center', 'center', 'left', 'center'];
-        const widths = [35, 320, 520, 280];
-
-        const dataRows = memberships.map((m, i) => [
-            { value: i + 1, type: 'Number', align: 'center' },
-            { value: m.position?.name ?? '-', type: 'String', align: 'center' },
-            { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
-            { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
-        ]);
-
-        const colXml = widths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
-        const titleXml = `<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">Ahli Jawatankuasa</Data></Cell></Row>`;
-        const headerXml = `<Row>${cols.map((h, i) => `<Cell ss:StyleID="${align[i] === 'center' ? 'headerCenter' : 'header'}"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('')}</Row>`;
-        const bodyXml = dataRows.map((cells) => `<Row>${cells.map((c) => `<Cell ss:StyleID="${c.align === 'center' ? 'cellCenter' : 'cell'}"><Data ss:Type="${c.type}">${escapeXml(c.value)}</Data></Cell>`).join('')}</Row>`).join('');
-
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
-<Styles>
-<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style>
-<Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="24" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
-<Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-<Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-</Styles>
-<Worksheet ss:Name="Jawatankuasa"><Table>${colXml}${titleXml}${headerXml}${bodyXml}</Table></Worksheet>
-</Workbook>`;
-        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `jawatankuasa_${new Date().toISOString().slice(0, 10)}.xls`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
-
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <p className="label-section">Jawatankuasa</p>
-                        <h2 className="mt-0.5 heading-lg">Urus jawatan dan pelantikan</h2>
-                        <p className="text-muted mt-0.5">Semak jawatankuasa JPRD, UDM dan Cawangan dalam satu modul.</p>
-                    </div>
-                    {canSenarai && memberships.length > 0 && (
-                        <button type="button" onClick={exportToExcel}
-                            className="hidden shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex">
-                            <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
-                            Export Excel
-                        </button>
-                    )}
+                <div>
+                    <p className="label-section">Jawatankuasa</p>
+                    <h2 className="mt-0.5 heading-lg">Urus jawatan dan pelantikan</h2>
+                    <p className="text-muted mt-0.5">Semak jawatankuasa JPRD, UDM dan Cawangan dalam satu modul.</p>
                 </div>
             }
         >
