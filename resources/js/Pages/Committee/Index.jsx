@@ -336,7 +336,7 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
         const colXml = widths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
         const titleXml = `
             <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">Ahli Jawatankuasa ${tabLabel}</Data></Cell></Row>
-            <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleSub"><Data ss:Type="String">${scopeLabel}</Data></Cell></Row>
+            ${activeTab === 'jprd' ? '' : `<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleSub"><Data ss:Type="String">${scopeLabel}</Data></Cell></Row>`}
         `;
         const headerXml = `<Row>${cols.map((h, i) => `<Cell ss:StyleID="${align[i] === 'center' ? 'headerCenter' : 'header'}"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('')}</Row>`;
         const bodyXml = dataRows.map((cells) => `<Row>${cells.map((c) => `<Cell ss:StyleID="${c.align === 'center' ? 'cellCenter' : 'cell'}"><Data ss:Type="${c.type}">${escapeXml(c.value)}</Data></Cell>`).join('')}</Row>`).join('');
