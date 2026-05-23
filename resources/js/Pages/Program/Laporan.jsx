@@ -103,9 +103,9 @@ export default function ProgramLaporan({ program, report }) {
     const selLoc = selUdm?.localities.slice(0, 12) ?? [];
     const selLocTable = selUdm?.localities.slice(0, 20) ?? [];
 
-    const selRace = report.race_by_dm?.[udmKey]?.slice(0, 8) ?? [];
+    const selRace = report.race_by_dm?.find((r) => r.key === udmKey)?.items?.slice(0, 8) ?? [];
     const selGender = useMemo(() => {
-        const g = report.gender_by_dm?.[udmKey];
+        const g = report.gender_by_dm?.find((r) => r.key === udmKey)?.items;
         if (!g) return [];
         return g;
     }, [udmKey, report.gender_by_dm]);
@@ -122,6 +122,7 @@ export default function ProgramLaporan({ program, report }) {
     const locChartRows = localityRows.slice(0, 12);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((r) => r.total > 0);
+    const raceRows = report.race.slice(0, 8);
 
     const dmCols = [
         { key: 'name', label: 'UDM' },

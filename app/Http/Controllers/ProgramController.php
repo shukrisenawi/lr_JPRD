@@ -451,20 +451,25 @@ class ProgramController extends Controller
             ];
         });
 
-        $raceByDm = $byDm->mapWithKeys(fn ($dm) => [$dm['key'] => $attendees
-            ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
-            ->groupBy(fn ($a) => $a->race ?: 'Tiada')
-            ->map(fn ($g, $race) => ['code' => $race, 'label' => $race, 'total' => $g->count()])
-            ->sortByDesc('total')
-            ->values(),
+        $raceByDm = $byDm->map(fn ($dm) => [
+            'key' => $dm['key'],
+            'items' => $attendees
+                ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
+                ->groupBy(fn ($a) => $a->race ?: 'Tiada')
+                ->map(fn ($g, $race) => ['code' => $race, 'label' => $race, 'total' => $g->count()])
+                ->sortByDesc('total')
+                ->values(),
         ]);
 
-        $genderByDm = $byDm->mapWithKeys(fn ($dm) => [$dm['key'] => collect([
-            ['k' => 'L', 'l' => 'Lelaki', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'L')->count()],
-            ['k' => 'P', 'l' => 'Perempuan', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'P')->count()],
-        ])->filter(fn ($g) => $g['t'] > 0)->values()]);
+        $genderByDm = $byDm->map(fn ($dm) => [
+            'key' => $dm['key'],
+            'items' => collect([
+                ['k' => 'L', 'l' => 'Lelaki', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'L')->count()],
+                ['k' => 'P', 'l' => 'Perempuan', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'P')->count()],
+            ])->filter(fn ($g) => $g['t'] > 0)->values(),
+        ]);
 
-        $culaByDm = $byDm->mapWithKeys(fn ($dm) => [$dm['key'] => [
+        $culaByDm = $byDm->map(fn ($dm) => [
             'key' => $dm['key'],
             'cula_breakdown' => $attendees
                 ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
@@ -476,7 +481,7 @@ class ProgramController extends Controller
                 ])
                 ->sortByDesc('total')
                 ->values(),
-        ]]);
+        ]);
 
         return Inertia::render('Program/Laporan', [
             'program' => [
