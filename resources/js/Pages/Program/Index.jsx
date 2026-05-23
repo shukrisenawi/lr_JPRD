@@ -873,7 +873,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                 <p className="text-[11px] font-medium text-slate-500">{a.no_kp || a.old_ic || '-'}</p>
                                                             </div>
                                                         </div>
-                                                        <div className="flex shrink-0 gap-1">
+                                                        <div className="flex shrink-0 items-center gap-1">
+                                                            {selectedProgram?.sub_programs?.length > 0 && (
+                                                                <button onClick={() => setSelEditSub(a)}
+                                                                    className="inline-flex items-center gap-0.5 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 transition hover:bg-indigo-100 hover:border-indigo-300">
+                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                                                    Sub
+                                                                </button>
+                                                            )}
                                                             <button onClick={() => setSelAttendee(a)} title="Detail"
                                                                 className={`inline-flex h-6 w-6 items-center justify-center rounded border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-100 text-green-700' : 'border-green-200 bg-white text-green-600 hover:bg-green-50'}`}>
                                                                 <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" /></svg>
@@ -906,13 +913,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             ))}
                                                         {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
                                                         {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{b.label} <span className="font-normal text-green-500">({b.level.toUpperCase()})</span></span>)}
-                                                        {selectedProgram?.sub_programs?.length > 0 && (
-                                                            <button onClick={() => setSelEditSub(a)}
-                                                                className="inline-flex items-center gap-0.5 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 transition hover:bg-indigo-100 hover:border-indigo-300">
-                                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-                                                                Sub
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 )}
                                             </div>
