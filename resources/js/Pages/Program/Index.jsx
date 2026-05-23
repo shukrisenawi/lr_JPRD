@@ -254,17 +254,21 @@ function AttendeeProgramsModal({ attendee, onClose }) {
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
                                             <p className="truncate text-xs font-bold text-slate-800">{p.tajuk}</p>
-                                            <p className="text-xs text-green-600">{p.tarikh}</p>
+                                            <p className="text-xs text-green-600">{p.tarikh}
+                                                {p.sub_programs?.length > 0 && (
+                                                    <span> <span className="text-green-300 mx-0.5">•</span>
+                                                        {p.sub_programs.map((spName, idx) => (
+                                                            <span key={idx}>
+                                                                {idx > 0 && <span className="text-green-300 mx-0.5">,</span>}
+                                                                <span className="text-indigo-600 font-semibold">{spName}</span>
+                                                            </span>
+                                                        ))}
+                                                    </span>
+                                                )}
+                                            </p>
                                         </div>
                                         {p.group_name && <span className="shrink-0 rounded-md border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{p.group_name}</span>}
                                     </div>
-                                    {p.sub_programs?.length > 0 && (
-                                        <div className="mt-1 flex flex-wrap gap-1">
-                                            {p.sub_programs.map((spName, idx) => (
-                                                <span key={idx} className="rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">{spName}</span>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
                             ))}
                         </div>
