@@ -4,6 +4,8 @@ import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveCo
 import { useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
+const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+function fmtDate(d) { if (!d) return ''; const dt = new Date(d); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 const chartColors = ['#8b5cf6', '#a78bfa', '#38bdf8', '#bbf7d0', '#f59e0b', '#ef4444'];
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
 
@@ -165,7 +167,7 @@ export default function Laporan({ report, pemilih_report = null }) {
                             <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-bold text-white">XLS</span>
                             <span className="font-bold text-slate-700">{pemilih_report.name}</span>
                             {pemilih_report?.uploaded_by && <span className="text-slate-500">Oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
-                            {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{pemilih_report.uploaded_at}</span></span>}
+                            {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{fmtDate(pemilih_report.uploaded_at)}</span></span>}
                         </div>
                     )}
                 </div>

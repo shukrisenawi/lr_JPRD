@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const nf = new Intl.NumberFormat('ms-MY');
+const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+function fmtDate(d) { if (!d) return ''; const dt = new Date(d); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
 
@@ -668,7 +670,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
                         <span className="font-bold text-slate-700">Fail semasa: <span className="text-green-700">{pemilih_report.name}</span></span>
                         {pemilih_report?.uploaded_by && <span className="text-slate-500">Oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
-                        {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{pemilih_report.uploaded_at}</span></span>}
+                        {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{fmtDate(pemilih_report.uploaded_at)}</span></span>}
                     </div>
                 )}
                 <section className={`grid gap-3 xl:items-stretch ${isLaporanLike ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_14rem]'}`}>

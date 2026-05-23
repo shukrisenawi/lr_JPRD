@@ -6,6 +6,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
+const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+function fmtDate(d) { if (!d) return ''; const dt = new Date(d); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 function Icon({ name, className = 'h-4 w-4' }) {
     const paths = {
         file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /></>,
@@ -142,7 +144,7 @@ function PemilihUploadPanel({ report }) {
                     )}
                     {report?.uploaded_at && (
                         <span className="text-slate-500">
-                            Pada: <span className="font-bold text-slate-700">{report.uploaded_at}</span>
+                            Pada: <span className="font-bold text-slate-700">{fmtDate(report.uploaded_at)}</span>
                         </span>
                     )}
                 </div>
