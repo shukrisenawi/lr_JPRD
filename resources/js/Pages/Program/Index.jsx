@@ -651,6 +651,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         }
         return list;
     }, [selectedProgram?.attendees, attendeeSearch, subTab]);
+    const activeSubPrograms = useMemo(() => {
+        if (!selectedProgram?.sub_programs) return [];
+        const ids = new Set();
+        selectedProgram.attendees.forEach((a) => (a.sub_program_ids ?? []).forEach((id) => ids.add(id)));
+        return selectedProgram.sub_programs.filter((sp) => ids.has(sp.id));
+    }, [selectedProgram?.attendees, selectedProgram?.sub_programs]);
     const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
     const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', gambar: null, gambar_url: null });
@@ -820,13 +826,13 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                         className="input-field py-1.5 pl-7 pr-2 text-xs w-40 sm:w-52" />
                                 </div>
                             </div>
-                            {selectedProgram?.sub_programs?.length > 0 && (
+                            {activeSubPrograms.length > 0 && (
                                 <div className="mt-2 flex flex-wrap gap-1.5">
                                     <button onClick={() => setSubTab(null)}
                                         className={`rounded-md px-2 py-1 text-xs font-bold transition ${subTab === null ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700'}`}>
                                         Semua
                                     </button>
-                                    {selectedProgram.sub_programs.map((sp) => (
+                                    {activeSubPrograms.map((sp) => (
                                         <button key={sp.id} onClick={() => setSubTab(sp.id)}
                                             className={`rounded-md px-2 py-1 text-xs font-bold transition ${subTab === sp.id ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700'}`}>
                                             {sp.name}
