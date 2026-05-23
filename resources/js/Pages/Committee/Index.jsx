@@ -322,18 +322,15 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
             ? `${currentScopes.find((s) => s.key === form.data.scope_key)?.parent_scope_name} / ${currentScopes.find((s) => s.key === form.data.scope_key)?.name}`
             : (currentScopes.find((s) => s.key === form.data.scope_key)?.name ?? form.data.scope_key);
 
-        const cols = ['Bil', 'Jawatan', 'Nama', 'No. IC', 'Telefon', 'UDM', 'Cawangan'];
-        const align = ['center', 'center', 'left', 'center', 'center', 'center', 'center'];
-        const widths = [35, 320, 520, 360, 280, 200, 280];
+        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
+        const align = ['center', 'center', 'left', 'center'];
+        const widths = [35, 320, 520, 280];
 
         const dataRows = filteredMemberships.map((m, i) => [
             { value: i + 1, type: 'Number', align: 'center' },
             { value: m.position?.name ?? '-', type: 'String', align: 'center' },
             { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
-            { value: m.voter?.no_kp || m.voter?.old_ic || '-', type: 'String', align: 'center' },
             { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
-            { value: m.voter?.dm || '-', type: 'String', align: 'center' },
-            { value: m.voter?.locality || '-', type: 'String', align: 'center' },
         ]);
 
         const colXml = widths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
