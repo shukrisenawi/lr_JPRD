@@ -199,6 +199,8 @@ function PositionManager({ positions }) {
     );
 }
 
+function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
 function MembershipManager({ positions, memberships, scopes, auth }) {
     const tabs = [
         { key: 'jprd', label: 'JPRD', desc: 'Peringkat kawasan', icon: 'users' },
@@ -314,6 +316,58 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
         }
     };
 
+    const exportToExcel = () => {
+        const tabLabel = tabs.find((t) => t.key === activeTab)?.label ?? activeTab.toUpperCase();
+        const scopeLabel = form.data.scope_key === 'jprd' ? 'JPRD' : currentScopes.find((s) => s.key === form.data.scope_key)?.parent_scope_name
+            ? `${currentScopes.find((s) => s.key === form.data.scope_key)?.parent_scope_name} / ${currentScopes.find((s) => s.key === form.data.scope_key)?.name}`
+            : (currentScopes.find((s) => s.key === form.data.scope_key)?.name ?? form.data.scope_key);
+
+        const cols = ['Bil', 'Jawatan', 'Nama', 'No. IC', 'Telefon', 'UDM', 'Cawangan'];
+        const align = ['center', 'center', 'left', 'center', 'center', 'center', 'center'];
+        const widths = [35, 320, 520, 360, 280, 200, 280];
+
+        const dataRows = filteredMemberships.map((m, i) => [
+            { value: i + 1, type: 'Number', align: 'center' },
+            { value: m.position?.name ?? '-', type: 'String', align: 'center' },
+            { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
+            { value: m.voter?.no_kp || m.voter?.old_ic || '-', type: 'String', align: 'center' },
+            { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
+            { value: m.voter?.dm || '-', type: 'String', align: 'center' },
+            { value: m.voter?.locality || '-', type: 'String', align: 'center' },
+        ]);
+
+        const colXml = widths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
+        const titleXml = `
+            <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">Ahli Jawatankuasa ${tabLabel}</Data></Cell></Row>
+            <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleSub"><Data ss:Type="String">${scopeLabel}</Data></Cell></Row>
+        `;
+        const headerXml = `<Row>${cols.map((h, i) => `<Cell ss:StyleID="${align[i] === 'center' ? 'headerCenter' : 'header'}"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('')}</Row>`;
+        const bodyXml = dataRows.map((cells) => `<Row>${cells.map((c) => `<Cell ss:StyleID="${c.align === 'center' ? 'cellCenter' : 'cell'}"><Data ss:Type="${c.type}">${escapeXml(c.value)}</Data></Cell>`).join('')}</Row>`).join('');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
+<Styles>
+<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style>
+<Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="24" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
+<Style ss:ID="titleSub"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
+<Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
+<Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
+<Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
+<Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
+</Styles>
+<Worksheet ss:Name="Jawatankuasa"><Table>${colXml}${titleXml}${headerXml}${bodyXml}</Table></Worksheet>
+</Workbook>`;
+        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `jawatankuasa_${activeTab}_${new Date().toISOString().slice(0, 10)}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
             <div className="rounded-t-[11px] border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
@@ -327,18 +381,27 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
                             <h3 className="text-sm font-bold text-slate-800">Lantik pemilih ikut peringkat</h3>
                         </div>
                     </div>
-                    <div className="flex gap-1">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.key}
-                                type="button"
-                                onClick={() => setActiveTab(tab.key)}
-                                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left transition ${activeTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
-                            >
-                                <Icon name={tab.icon} className="h-3.5 w-3.5" />
-                                <span><span className={`block text-xs font-bold ${activeTab === tab.key ? 'text-white' : 'text-slate-900'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeTab === tab.key ? 'text-green-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex gap-1">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left transition ${activeTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
+                                >
+                                    <Icon name={tab.icon} className="h-3.5 w-3.5" />
+                                    <span><span className={`block text-xs font-bold ${activeTab === tab.key ? 'text-white' : 'text-slate-900'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeTab === tab.key ? 'text-green-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                                </button>
+                            ))}
+                        </div>
+                        {filteredMemberships.length > 0 && (
+                            <button type="button" onClick={exportToExcel}
+                                className="hidden shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex">
+                                <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
+                                Export Excel
                             </button>
-                        ))}
+                        )}
                     </div>
                 </div>
             </div>
