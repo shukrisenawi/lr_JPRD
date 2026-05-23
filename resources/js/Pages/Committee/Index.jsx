@@ -545,14 +545,7 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
                                                     <Icon name="phone" className="h-3 w-3" />
                                                     {membership.voter.phone_mobile || membership.voter.phone_home || '-'}
                                                 </p>
-                                                <p className="flex items-center gap-1 text-xs text-slate-400">
-                                                    <Icon name="mapPin" className="h-3 w-3" />
-                                                    {membership.voter.dm || '-'}
-                                                </p>
                                             </div>
-                                            {membership.parent_scope_name && (
-                                                <span className="mt-1.5 inline-block rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">{membership.parent_scope_name} / {membership.scope_name}</span>
-                                            )}
                                             {membership.notes && (
                                                 <p className="mt-1.5 text-[10px] font-medium text-amber-700">{membership.notes}</p>
                                             )}
