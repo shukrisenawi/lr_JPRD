@@ -896,7 +896,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                         {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">{b.label}</span>)}
                                                         {selectedProgram?.sub_programs?.length > 0 && (
                                                             <button onClick={() => setSelEditSub(a)}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-100 hover:border-indigo-300">
+                                                                className="inline-flex items-center gap-0.5 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 transition hover:bg-indigo-100 hover:border-indigo-300">
                                                                 <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                                                                 Sub
                                                             </button>
