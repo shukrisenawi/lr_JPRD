@@ -533,16 +533,15 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
     const levelLabels = { jprd: 'JPRD', udm: 'UDM', cawangan: 'Cawangan' };
 
     const exportToExcel = () => {
-        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel', 'Tahap'];
-        const align = ['center', 'center', 'left', 'center', 'center'];
-        const widths = [35, 320, 520, 280, 200];
+        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
+        const align = ['center', 'center', 'left', 'center'];
+        const widths = [35, 320, 520, 280];
 
         const dataRows = memberships.map((m, i) => [
             { value: i + 1, type: 'Number', align: 'center' },
             { value: m.position?.name ?? '-', type: 'String', align: 'center' },
             { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
             { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
-            { value: levelLabels[m.level] ?? m.level, type: 'String', align: 'center' },
         ]);
 
         const colXml = widths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
