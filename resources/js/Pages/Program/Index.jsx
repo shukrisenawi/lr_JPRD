@@ -330,8 +330,10 @@ function PlusIcon({ className = 'h-4 w-4' }) {
 }
 
 function SubProgramSection({ program, canEdit }) {
+    const { errors } = usePage().props;
     const [items, setItems] = useState(program?.sub_programs ?? []);
     const [newName, setNewName] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [adding, setAdding] = useState(false);
@@ -339,33 +341,45 @@ function SubProgramSection({ program, canEdit }) {
 
     useEffect(() => {
         setItems(program?.sub_programs ?? []);
+        setErrorMsg('');
     }, [program?.sub_programs, program?.id]);
+
+    useEffect(() => {
+        if (errors?.name) setErrorMsg(errors.name);
+    }, [errors]);
 
     const addSub = (e) => {
         e.preventDefault();
         if (!newName.trim() || adding) return;
+        setErrorMsg('');
         setAdding(true);
         router.post(route('program.sub-programs.store', program.id), {
             name: newName.trim(),
         }, {
             preserveScroll: true,
-            onFinish: () => { setAdding(false); setNewName(''); },
+            onSuccess: () => { setNewName(''); setErrorMsg(''); },
+            onError: (errs) => { if (errs?.name) setErrorMsg(errs.name); },
+            onFinish: () => setAdding(false),
         });
     };
 
     const startEdit = (sp) => {
         setEditingId(sp.id);
         setEditName(sp.name);
+        setErrorMsg('');
     };
 
     const saveEdit = (spId) => {
         if (!editName.trim() || savingEdit) return;
+        setErrorMsg('');
         setSavingEdit(true);
         router.put(route('program.sub-programs.update', spId), {
             name: editName.trim(),
         }, {
             preserveScroll: true,
-            onFinish: () => { setSavingEdit(false); setEditingId(null); setEditName(''); },
+            onSuccess: () => { setEditingId(null); setEditName(''); setErrorMsg(''); },
+            onError: (errs) => { if (errs?.name) setErrorMsg(errs.name); },
+            onFinish: () => setSavingEdit(false),
         });
     };
 
@@ -393,6 +407,7 @@ function SubProgramSection({ program, canEdit }) {
                     </button>
                 </form>
             )}
+            {errorMsg && <p className="mt-1 text-xs font-bold text-rose-500">{errorMsg}</p>}
             {items.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                     {items.map((sp) => (

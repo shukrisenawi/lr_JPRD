@@ -537,7 +537,11 @@ class ProgramController extends Controller
         $this->ensureOwner($request->user()->id, $program);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('program_sub_programs', 'name')
+                    ->where('program_id', $program->id),
+            ],
             'color' => ['nullable', 'string', 'max:50'],
         ]);
 
@@ -554,7 +558,12 @@ class ProgramController extends Controller
         $this->ensureOwner($request->user()->id, $program);
 
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required', 'string', 'max:255',
+                Rule::unique('program_sub_programs', 'name')
+                    ->where('program_id', $program->id)
+                    ->ignore($subProgram->id),
+            ],
             'color' => ['nullable', 'string', 'max:50'],
         ]);
 
