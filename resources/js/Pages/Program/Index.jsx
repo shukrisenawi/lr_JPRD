@@ -334,7 +334,8 @@ function SubProgramSection({ program, canEdit }) {
     const [newName, setNewName] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
-    const subForm = useForm({ name: '', color: '' });
+    const [adding, setAdding] = useState(false);
+    const [savingEdit, setSavingEdit] = useState(false);
 
     useEffect(() => {
         setItems(program?.sub_programs ?? []);
@@ -342,11 +343,13 @@ function SubProgramSection({ program, canEdit }) {
 
     const addSub = (e) => {
         e.preventDefault();
-        if (!newName.trim()) return;
-        subForm.setData('name', newName.trim());
-        subForm.post(route('program.sub-programs.store', program.id), {
+        if (!newName.trim() || adding) return;
+        setAdding(true);
+        router.post(route('program.sub-programs.store', program.id), {
+            name: newName.trim(),
+        }, {
             preserveScroll: true,
-            onSuccess: () => { setNewName(''); subForm.reset(); },
+            onFinish: () => { setAdding(false); setNewName(''); },
         });
     };
 
@@ -356,11 +359,13 @@ function SubProgramSection({ program, canEdit }) {
     };
 
     const saveEdit = (spId) => {
-        if (!editName.trim()) return;
-        subForm.setData('name', editName.trim());
-        subForm.put(route('program.sub-programs.update', spId), {
+        if (!editName.trim() || savingEdit) return;
+        setSavingEdit(true);
+        router.put(route('program.sub-programs.update', spId), {
+            name: editName.trim(),
+        }, {
             preserveScroll: true,
-            onSuccess: () => { setEditingId(null); setEditName(''); subForm.reset(); },
+            onFinish: () => { setSavingEdit(false); setEditingId(null); setEditName(''); },
         });
     };
 
@@ -382,7 +387,7 @@ function SubProgramSection({ program, canEdit }) {
                     <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
                         placeholder="Nama sub program..."
                         className="input-field flex-1 py-1 text-xs" />
-                    <button type="submit" disabled={subForm.processing || !newName.trim()}
+                    <button type="submit" disabled={adding || !newName.trim()}
                         className="btn-emerald shrink-0 text-xs">
                         <PlusIcon className="h-3.5 w-3.5" />
                     </button>
