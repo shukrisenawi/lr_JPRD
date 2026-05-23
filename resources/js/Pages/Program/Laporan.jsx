@@ -4,7 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveCo
 import { useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
-const chartColors = ['#8b5cf6', '#a78bfa', '#38bdf8', '#bbf7d0', '#f59e0b', '#ef4444', '#06b6d4', '#84cc16'];
+const chartColors = ['#8b5cf6', '#a78bfa', '#38bdf8', '#bbf7d0', '#f59e0b', '#ef4444'];
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
 
 function fmt(v) { return nf.format(v ?? 0); }
