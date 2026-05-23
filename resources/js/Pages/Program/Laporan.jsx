@@ -136,6 +136,7 @@ export default function ProgramLaporan({ program, report }) {
         { key: 'cula_breakdown', label: 'Status Culaan', format: (_, r) => renderCula(r.cula_breakdown) },
     ];
     const culaCols = [
+        { key: 'bil', label: 'Bil.' },
         { key: 'display_label', label: 'Status' },
         { key: 'total', label: 'Jumlah', format: fmt },
     ];
@@ -329,7 +330,7 @@ export default function ProgramLaporan({ program, report }) {
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </ChartPanel>
-                                <DataTable rows={report.by_cula} columns={culaCols} />
+                                <DataTable rows={report.by_cula.map((r, i) => ({ ...r, bil: i + 1 }))} columns={culaCols} />
                             </section>
                         )}
                     </>
