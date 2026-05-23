@@ -164,7 +164,7 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
-export default function CulaanIndex({ filters, summary, udms, localities, groups, voters, requires_udm, report, report_by_group = [], available_cula_codes = [], available_races = [] }) {
+export default function CulaanIndex({ filters, summary, udms, localities, groups, voters, requires_udm, report, report_by_group = [], available_cula_codes = [], available_races = [], pemilih_report = null }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canSenarai = allowedModules.includes('culaan.senarai');
@@ -664,6 +664,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             <Head title="Culaan" />
 
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
+                {pemilih_report?.name && (
+                    <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+                        <span className="font-bold text-slate-700">Fail semasa: <span className="text-green-700">{pemilih_report.name}</span></span>
+                        {pemilih_report?.uploaded_by && <span className="text-slate-500">Oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
+                        {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{pemilih_report.uploaded_at}</span></span>}
+                    </div>
+                )}
                 <section className={`grid gap-3 xl:items-stretch ${isLaporanLike ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_14rem]'}`}>
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
                         <div className={`grid gap-3 sm:grid-cols-2 xl:items-end ${isLaporanLike ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : 'xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)]'}`}>

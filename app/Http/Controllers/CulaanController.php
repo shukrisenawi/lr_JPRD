@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
+use App\Services\PemilihReportService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +17,7 @@ use Inertia\Response;
 
 class CulaanController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, PemilihReportService $reportService): Response
     {
         $filters = $this->resolveFilters($request);
         $voters = $this->paginateVoters($filters);
@@ -43,6 +44,7 @@ class CulaanController extends Controller
             ],
             'report' => $report,
             'report_by_group' => $reportByGroup,
+            'pemilih_report' => $reportService->getMetadata(),
             'udms' => $this->availableUdms(),
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
             'groups' => $groups,

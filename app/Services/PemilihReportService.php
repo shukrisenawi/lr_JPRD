@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PemilihRecord;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
@@ -211,6 +212,26 @@ class PemilihReportService
         PemilihRecord::query()
             ->whereNotIn('identity_number', $identityNumbers)
             ->update(['status' => 'xaktif']);
+    }
+
+    public function getMetadata(): array
+    {
+        $path = Setting::valueOf('pemilih_report_file_path', self::DEFAULT_SAMPLE_PATH);
+        $uploadedAt = Setting::valueOf('pemilih_report_uploaded_at');
+
+        if ($uploadedAt) {
+            try {
+                $uploadedAt = \Carbon\Carbon::parse($uploadedAt, 'Asia/Kuala_Lumpur')->format('d-m-Y h:i A');
+            } catch (\Exception $e) {
+            }
+        }
+
+        return [
+            'name' => is_string($path) ? basename($path) : null,
+            'exists' => is_string($path) && file_exists($path),
+            'uploaded_by' => Setting::valueOf('pemilih_report_uploaded_by'),
+            'uploaded_at' => $uploadedAt,
+        ];
     }
 
     private function searchIndexForPath(?string $path = null): array

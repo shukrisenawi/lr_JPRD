@@ -15,6 +15,7 @@ class LaporanController extends Controller
 
         return Inertia::render('Laporan', [
             'report' => $reportService->buildFromPath($path),
+            'pemilih_report' => $reportService->getMetadata(),
         ]);
     }
 }
