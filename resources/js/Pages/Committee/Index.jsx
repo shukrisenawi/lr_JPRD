@@ -684,11 +684,13 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
                         <p className="text-muted mt-0.5">Semak jawatankuasa JPRD, UDM dan Cawangan dalam satu modul.</p>
                     </div>
                     <div className="mt-1 flex shrink-0 items-center gap-2">
-                        <button type="button" onClick={() => membershipRef.current?.exportToExcel()}
-                            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
-                            <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
-                            Export Excel
-                        </button>
+                        {memberships.length > 0 && (
+                            <button type="button" onClick={() => membershipRef.current?.exportToExcel()}
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
+                                <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
+                                Export Excel
+                            </button>
+                        )}
                         <button type="button" onClick={() => setSearchOpen(true)}
                             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                             <Icon name="search" className="h-4 w-4" />
