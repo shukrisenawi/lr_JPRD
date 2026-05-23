@@ -295,6 +295,7 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
     const submit = (event) => {
         event.preventDefault();
         form.post(route('jawatankuasa.memberships.store'), {
+            preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
                 setSelectedVoter(null);
@@ -313,6 +314,7 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
     const removeMembership = (membership) => {
         if (window.confirm(`Buang ${membership.voter.name} daripada jawatankuasa ini?`)) {
             router.delete(route('jawatankuasa.memberships.destroy', membership.id), {
+                preserveState: true,
                 preserveScroll: true,
             });
         }
