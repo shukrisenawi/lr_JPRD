@@ -159,6 +159,13 @@ export default function Laporan({ report, pemilih_report = null }) {
                         <p className="label-section">Laporan</p>
                         <h2 className="mt-0.5 heading-lg">Analitik Pemilih</h2>
                         <p className="text-muted mt-0.5">Mengikut UDM, lokaliti dan status culaan.</p>
+                        {pemilih_report?.name && (
+                            <div className="mt-1 flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs">
+                                <span className="font-bold text-slate-700">Fail semasa: <span className="text-green-700">{pemilih_report.name}</span></span>
+                                {pemilih_report?.uploaded_by && <span className="text-slate-500">Oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
+                                {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{pemilih_report.uploaded_at}</span></span>}
+                            </div>
+                        )}
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold uppercase text-green-700 shadow-sm">
                         <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs text-white">XLS</span>
@@ -180,14 +187,6 @@ export default function Laporan({ report, pemilih_report = null }) {
                             <StatCard label="Belum Dicula" value={report.summary.belum_dicula} detail="Kod kosong/?" color="amber" />
                             <StatCard label="Peratus Siap" value={report.summary.coverage_percent} detail={`${fmt(report.summary.total_localities)} lokaliti`} color="cyan" />
                         </div>
-
-                        {pemilih_report?.name && (
-                            <div className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
-                                <span className="font-bold text-slate-700">Fail semasa: <span className="text-green-700">{pemilih_report.name}</span></span>
-                                {pemilih_report?.uploaded_by && <span className="text-slate-500">Oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
-                                {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{pemilih_report.uploaded_at}</span></span>}
-                            </div>
-                        )}
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Top UDM">
