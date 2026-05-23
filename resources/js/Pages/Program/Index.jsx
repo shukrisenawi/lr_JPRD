@@ -864,7 +864,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                 <div className="p-2.5">
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex min-w-0 flex-1 items-start gap-2">
-                                                            {!a.is_marked && (
+                                                            {a.cula_code === '?' && (
                                                                 <button type="button" onClick={() => toggleCula(a)}
                                                                     className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-transparent transition hover:border-green-400 hover:text-green-400">
                                                                     <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 12 5 5L20 7" /></svg>
