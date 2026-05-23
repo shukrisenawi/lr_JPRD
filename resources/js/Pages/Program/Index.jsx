@@ -892,11 +892,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                         <span className="text-slate-300">•</span>
                                                         <span className="font-medium text-slate-600">{a.phone_mobile || a.phone_home || '-'}</span>
                                                     </div>
-                                                    {a.attended_at && (
-                                                        <p className="mt-1 text-[10px] font-medium text-slate-400">
-                                                            <span className="text-green-600">✓</span> {a.attended_at}
-                                                        </p>
-                                                    )}
                                                 </div>
                                                 {(a.group_badges?.length > 0 || a.committee_badges?.length > 0 || selectedProgram?.sub_programs?.length > 0) && (
                                                     <div className="flex flex-wrap gap-1 border-t border-slate-100 px-2.5 py-1.5">
