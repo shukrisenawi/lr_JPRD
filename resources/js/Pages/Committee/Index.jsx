@@ -4,7 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -201,12 +201,14 @@ function PositionManager({ positions }) {
 
 function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-function MembershipManager({ positions, memberships, scopes, auth, activeTab, onTabChange }) {
-    const tabs = [
-        { key: 'jprd', label: 'JPRD', desc: 'Peringkat kawasan', icon: 'users' },
-        { key: 'udm', label: 'UDM', desc: 'Unit daerah mengundi', icon: 'mapPin' },
-        { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
-    ];
+const committeeTabs = [
+    { key: 'jprd', label: 'JPRD', desc: 'Peringkat kawasan', icon: 'users' },
+    { key: 'udm', label: 'UDM', desc: 'Unit daerah mengundi', icon: 'mapPin' },
+    { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
+];
+
+const MembershipManager = forwardRef(function MembershipManager({ positions, memberships, scopes, auth, activeTab, onTabChange }, ref) {
+    const tabs = committeeTabs;
     const [activeTabLocal, setActiveTabLocal] = useState('jprd');
     const resolvedTab = activeTab ?? activeTabLocal;
     const setResolvedTab = onTabChange ?? setActiveTabLocal;
@@ -320,7 +322,7 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
         }
     };
 
-    const exportToExcel = () => {
+    const exportToExcel = useCallback(() => {
         const tabKey = resolvedTab;
         const tabLabel = tabs.find((t) => t.key === tabKey)?.label ?? tabKey.toUpperCase();
         const scope = currentScopes.find((s) => s.key === form.data.scope_key);
@@ -367,7 +369,9 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-    };
+    }, [resolvedTab, currentScopes, form.data.scope_key, filteredMemberships]);
+
+    useImperativeHandle(ref, () => ({ exportToExcel }), [exportToExcel]);
 
     return (
         <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
@@ -396,13 +400,7 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
                                 </button>
                             ))}
                         </div>
-                        {filteredMemberships.length > 0 && (
-                            <button type="button" onClick={exportToExcel}
-                                className="hidden shrink-0 items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex">
-                                <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
-                                Export Excel
-                            </button>
-                        )}
+
                     </div>
                 </div>
             </div>
@@ -565,7 +563,7 @@ function MembershipManager({ positions, memberships, scopes, auth, activeTab, on
             </div>
         </section>
     );
-}
+});
 
 function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) {
     const [query, setQuery] = useState('');
@@ -664,6 +662,7 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
     const canJawatan = allowedModules.includes('jawatankuasa.jawatan');
 
     const [searchOpen, setSearchOpen] = useState(false);
+    const membershipRef = useRef(null);
 
     const sectionTabs = [
         ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
@@ -684,11 +683,18 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
                         <h2 className="mt-0.5 heading-lg">Urus jawatan dan pelantikan</h2>
                         <p className="text-muted mt-0.5">Semak jawatankuasa JPRD, UDM dan Cawangan dalam satu modul.</p>
                     </div>
-                    <button type="button" onClick={() => setSearchOpen(true)}
-                        className="mt-1 flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
-                        <Icon name="search" className="h-4 w-4" />
-                        Cari Ahli
-                    </button>
+                    <div className="mt-1 flex shrink-0 items-center gap-2">
+                        <button type="button" onClick={() => membershipRef.current?.exportToExcel()}
+                            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
+                            <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
+                            Export Excel
+                        </button>
+                        <button type="button" onClick={() => setSearchOpen(true)}
+                            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
+                            <Icon name="search" className="h-4 w-4" />
+                            Cari Ahli
+                        </button>
+                    </div>
                 </div>
             }
         >
@@ -712,7 +718,7 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
                 )}
 
                 {activeSection === 'senarai-jawatankuasa' && (
-                    <MembershipManager positions={positions} memberships={memberships} scopes={scopes} auth={auth} />
+                    <MembershipManager ref={membershipRef} positions={positions} memberships={memberships} scopes={scopes} auth={auth} />
                 )}
 
                 {activeSection === 'jawatan' && (
