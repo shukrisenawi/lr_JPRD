@@ -824,7 +824,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                             </div>
                         </div>
                         <SearchVoterPanel selectedProgram={selectedProgram} />
-                        <SubProgramSection program={selectedProgram} canEdit={selectedProgram.can_edit} />
                         <section className="card p-3">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
@@ -922,6 +921,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 )}
                             </div>
                         </section>
+                        <SubProgramSection program={selectedProgram} canEdit={selectedProgram.can_edit} />
                     </section>
                 ) : (
                     <div className="card p-3">
