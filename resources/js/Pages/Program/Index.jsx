@@ -324,6 +324,14 @@ function SearchVoterPanel({ selectedProgram }) {
     const [selected, setSelected] = useState(null); const [err, setErr] = useState(''); const [adding, setAdding] = useState(false);
     const ac = useRef(null); const rid = useRef(0);
 
+    const existingVoterIds = useMemo(() => {
+        const ids = new Set();
+        (selectedProgram?.attendees ?? []).forEach((a) => {
+            if (a.voter_id) ids.add(a.voter_id);
+        });
+        return ids;
+    }, [selectedProgram?.attendees]);
+
     useEffect(() => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); }, [selectedProgram?.id]);
     useEffect(() => () => ac.current?.abort(), []);
 
@@ -367,14 +375,20 @@ function SearchVoterPanel({ selectedProgram }) {
                         )}
                         {(searching || suggestions.length > 0) && (
                             <div className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
-                                {searching ? <div className="px-2.5 py-1.5 text-xs font-medium text-slate-500">Mencari...</div> : suggestions.map((v) => (
-                                    <button key={v.id} onClick={() => pick(v)} className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition hover:bg-green-50 last:border-b-0">
-                                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-50 text-green-700"><UserIcon className="h-3.5 w-3.5" /></div>
-                                        <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">IC: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
-                                        <div className="min-w-0 text-left"><p className="truncate text-xs font-bold text-slate-800">{v.dm || '-'}</p><p className="truncate text-xs font-medium text-slate-500">{v.locality || '-'}</p></div>
-                                        <ChevronRightIcon className="h-3 w-3 text-slate-400" />
-                                    </button>
-                                ))}
+                                {searching ? <div className="px-2.5 py-1.5 text-xs font-medium text-slate-500">Mencari...</div> : suggestions.map((v) => {
+                                    const alreadyAdded = existingVoterIds.has(v.voter_id ?? v.id);
+                                    return (
+                                        <button key={v.id} disabled={alreadyAdded} onClick={() => !alreadyAdded && pick(v)} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition last:border-b-0 ${alreadyAdded ? 'cursor-not-allowed bg-slate-50 opacity-60' : 'hover:bg-green-50'}`}>
+                                            <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
+                                            <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">IC: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
+                                            <div className="min-w-0 text-left">
+                                                <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? 'Telah dipilih' : (v.dm || '-')}</p>
+                                                <p className="truncate text-xs font-medium text-slate-500">{alreadyAdded ? '' : (v.locality || '-')}</p>
+                                            </div>
+                                            {alreadyAdded ? <span className="text-[10px] font-bold text-slate-400">✓</span> : <ChevronRightIcon className="h-3 w-3 text-slate-400" />}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
