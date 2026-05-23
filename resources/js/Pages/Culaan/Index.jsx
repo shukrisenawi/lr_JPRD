@@ -477,7 +477,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const titleRows = [];
         const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula'];
         const align = ['center', 'center', 'left', 'left', 'center', 'center'];
-        const columnWidths = [35, 360, 562, 128, 58, 40];
+        const columnWidths = [30, 100, 120, 200, 100, 40];
 
         const dataRows = exportRows.map((voter, index) => {
             const cells = [
