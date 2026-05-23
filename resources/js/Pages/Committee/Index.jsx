@@ -320,7 +320,7 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
         const tabKey = activeTab;
         const tabLabel = tabs.find((t) => t.key === tabKey)?.label ?? tabKey.toUpperCase();
         const scope = currentScopes.find((s) => s.key === form.data.scope_key);
-        const scopePart = scope?.parent_scope_name ? `${scope.parent_scope_name}_${scope.name}`.replace(/[\/\s]+/g, '_') : (scope?.name ?? '').replace(/[\/\s]+/g, '_');
+        const scopePart = tabKey === 'jprd' ? '' : ((scope?.parent_scope_name ? `${scope.parent_scope_name}_${scope.name}` : (scope?.name ?? '')).replace(/[\/\s]+/g, '_'));
 
         const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
         const align = ['center', 'center', 'left', 'center'];
@@ -358,7 +358,7 @@ function MembershipManager({ positions, memberships, scopes, auth }) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `AJK_${tabLabel}_${scopePart}.xls`.replace(/__+/g, '_');
+        link.download = `AJK_${tabLabel}${scopePart ? '_' + scopePart : ''}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
