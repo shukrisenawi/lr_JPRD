@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Program;
 use App\Models\ProgramAttendee;
 use App\Models\CommitteeMembership;
+use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\ProgramGroup;
 use App\Models\ProgramSubProgram;
@@ -81,6 +82,16 @@ class ProgramController extends Controller
 
         $selectedProgramId = (int) $request->query('program', 0);
         $selectedProgram = $programs->firstWhere('id', $selectedProgramId);
+
+        $culaWorkItems = $selectedProgram?->attendees
+            ? collect(CulaWorkItem::with('marker')
+                ->whereIn('pemilih_record_id', $selectedProgram->attendees
+                    ->pluck('voter_id')->filter()->unique()->values())
+                ->get()
+                ->keyBy('pemilih_record_id')
+                ->all())
+            : collect();
+
         $committeeBadges = $selectedProgram
             ? $this->buildCommitteeBadgeMap($selectedProgram->attendees)
             : collect();
@@ -153,6 +164,8 @@ class ProgramController extends Controller
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),
                             'sub_program_ids' => $attendee->subPrograms->pluck('id')->all(),
                             'attended_at' => $attendee->attended_at?->format('d-m-Y h:i A'),
+                            'is_marked' => $culaWorkItems->has($attendee->voter_id),
+                            'marked_by_name' => $culaWorkItems->get($attendee->voter_id)?->marker?->name,
                         ])
                         ->values(),
                 ]

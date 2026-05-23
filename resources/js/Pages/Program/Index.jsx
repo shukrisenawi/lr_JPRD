@@ -637,6 +637,16 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [openingTg, setOpeningTg] = useState(false);
     const [attendeeSearch, setAttendeeSearch] = useState('');
     const [subTab, setSubTab] = useState(null);
+    const toggleCula = async (a) => {
+        try {
+            const method = a.is_marked ? 'DELETE' : 'POST';
+            await fetch(route(method === 'POST' ? 'culaan.mark.store' : 'culaan.mark.destroy', a.voter_id), {
+                method,
+                headers: { Accept: 'application/json', 'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+        } catch (_) { /* ignore */ }
+        router.reload({ preserveState: true, preserveScroll: true });
+    };
     const filteredAttendees = useMemo(() => {
         if (!selectedProgram) return [];
         let list = selectedProgram.attendees;
@@ -852,9 +862,15 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                             <div key={a.id} className={`rounded-md border transition ${selAttendee?.id === a.id ? 'border-green-300 bg-green-50 shadow-sm shadow-green-200/30' : 'border-slate-200 bg-white hover:border-green-200 hover:shadow-sm'}`}>
                                                 <div className="p-2.5">
                                                     <div className="flex items-start justify-between gap-2">
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-xs font-bold text-slate-800">{a.name}</p>
-                                                            <p className="text-[11px] font-medium text-slate-500">{a.no_kp || a.old_ic || '-'}</p>
+                                                        <div className="flex min-w-0 flex-1 items-start gap-2">
+                                                            <button type="button" onClick={() => toggleCula(a)}
+                                                                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${a.is_marked ? 'border-green-500 bg-green-500 text-white' : 'border-slate-300 bg-white text-transparent hover:border-green-400 hover:text-green-400'}`}>
+                                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 12 5 5L20 7" /></svg>
+                                                            </button>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="truncate text-xs font-bold text-slate-800">{a.name}</p>
+                                                                <p className="text-[11px] font-medium text-slate-500">{a.no_kp || a.old_ic || '-'}</p>
+                                                            </div>
                                                         </div>
                                                         <div className="flex shrink-0 gap-1">
                                                             <button onClick={() => setSelAttendee(a)} title="Detail"
