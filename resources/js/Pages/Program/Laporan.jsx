@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useMemo, useState } from 'react';
 
@@ -156,9 +156,9 @@ export default function ProgramLaporan({ program, report }) {
                     <h2 className="mt-0.5 heading-lg">{program.tajuk}</h2>
                     <p className="text-muted mt-0.5">{program.tarikh} • {program.tempat}{program.group_name && <> • {program.group_name}</>}</p>
                 </div>
-                <Link href={route('program.index', { program: program.id })} className="btn-ghost text-xs">
-                    ← Kembali ke Program
-                </Link>
+                <button onClick={() => window.history.back()} className="btn-ghost text-xs">
+                    ← Kembali
+                </button>
             </div>
         }>
             <Head title={`Laporan - ${program.tajuk}`} />
