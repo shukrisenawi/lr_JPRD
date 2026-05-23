@@ -169,12 +169,22 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
     ];
     return (
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="flex flex-col gap-2 border-b border-slate-200 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 px-3 py-2 sm:flex-row sm:justify-between">
                 <div className="min-w-0">
                     <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Pemilih Dipilih</p>
                     <h3 className="truncate text-xs font-bold uppercase leading-tight text-slate-800">{voter.name}</h3>
                 </div>
-                <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald shrink-0 text-xs">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
+                <div className="flex flex-wrap items-center gap-2">
+                    {subPrograms?.length > 0 && subPrograms.map((sp) => (
+                        <label key={sp.id} className="flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs transition hover:bg-green-50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50">
+                            <input type="checkbox" checked={selectedSubIds.includes(sp.id)}
+                                onChange={() => onToggleSub(sp.id)}
+                                className="h-3 w-3 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                            <span className="font-bold text-slate-700">{sp.name}</span>
+                        </label>
+                    ))}
+                    <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald shrink-0 text-xs">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
+                </div>
             </div>
             <div className="grid gap-1.5 p-2 sm:grid-cols-2">
                 {fields.map(([l, v]) => (
@@ -184,7 +194,6 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
                     </div>
                 ))}
             </div>
-            <SubProgramCheckboxes subPrograms={subPrograms} selectedIds={selectedSubIds} onChange={onToggleSub} />
         </section>
     );
 }
@@ -452,25 +461,6 @@ function SubProgramSection({ program, canEdit }) {
                 </div>
             )}
         </section>
-    );
-}
-
-function SubProgramCheckboxes({ subPrograms, selectedIds, onChange }) {
-    if (!subPrograms || subPrograms.length === 0) return null;
-    return (
-        <div className="mt-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Sub Program</p>
-            <div className="flex flex-wrap gap-2">
-                {subPrograms.map((sp) => (
-                    <label key={sp.id} className="flex cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-xs transition hover:bg-green-50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50">
-                        <input type="checkbox" checked={selectedIds.includes(sp.id)}
-                            onChange={() => onChange(sp.id)}
-                            className="h-3 w-3 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                        <span className="font-bold text-slate-700">{sp.name}</span>
-                    </label>
-                ))}
-            </div>
-        </div>
     );
 }
 
