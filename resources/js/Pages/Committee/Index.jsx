@@ -5,6 +5,9 @@ import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -23,11 +26,110 @@ function Icon({ name, className = 'h-5 w-5' }) {
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
 }
 
+function DragHandle() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="9" cy="5" r="1" /><circle cx="15" cy="5" r="1" />
+            <circle cx="9" cy="12" r="1" /><circle cx="15" cy="12" r="1" />
+            <circle cx="9" cy="19" r="1" /><circle cx="15" cy="19" r="1" />
+        </svg>
+    );
+}
+
+function SortablePositionRow({ position, editingId, editingData, editingErrors, onStartEdit, onSubmitEdit, onCancelEdit, onRemove, onEditingChange }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: position.id });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+    };
+
+    const isEditing = editingId === position.id;
+
+    const submitEdit = (event) => {
+        event.preventDefault();
+        onSubmitEdit(event, position.id);
+    };
+
+    const handleEditingDataChange = (field) => (event) => {
+        onEditingChange((current) => ({ ...current, [field]: event.target.value }));
+    };
+
+    return (
+        <tr ref={setNodeRef} style={style} className={`transition ${isDragging ? 'z-10 opacity-50 shadow-lg' : ''} ${isEditing ? '' : 'hover:bg-green-50/50'}`}>
+            {isEditing ? (
+                <>
+                    <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                            <span {...attributes} {...listeners} className="cursor-grab text-slate-400 hover:text-slate-600"><DragHandle /></span>
+                            <form onSubmit={submitEdit} className="flex-1">
+                                <div>
+                                    <TextInput
+                                        id={`position-edit-name-${position.id}`}
+                                        value={editingData.name}
+                                        onChange={handleEditingDataChange('name')}
+                                        className="input-field text-xs"
+                                    />
+                                    <InputError className="mt-1" message={editingErrors.name} />
+                                </div>
+                            </form>
+                        </div>
+                    </td>
+                    <td className="px-3 py-2">
+                        <TextInput
+                            id={`position-edit-order-${position.id}`}
+                            type="number"
+                            min="0"
+                            value={editingData.sort_order}
+                            onChange={handleEditingDataChange('sort_order')}
+                            className="input-field text-xs"
+                        />
+                        <InputError className="mt-1" message={editingErrors.sort_order} />
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                        <div className="flex justify-end gap-1.5">
+                            <button type="submit" onClick={(e) => { e.preventDefault(); submitEdit(e); }} className="rounded-md bg-green-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-green-500">Simpan</button>
+                            <button type="button" onClick={onCancelEdit} className="rounded-md border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
+                        </div>
+                    </td>
+                </>
+            ) : (
+                <>
+                    <td className="px-3 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                            <span {...attributes} {...listeners} className="cursor-grab text-slate-400 hover:text-slate-600"><DragHandle /></span>
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
+                            <p className="font-bold text-slate-800">{position.name}</p>
+                        </div>
+                    </td>
+                    <td className="px-3 py-2.5">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-green-50 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                        <div className="flex justify-end gap-1.5">
+                            <button type="button" onClick={() => onStartEdit(position)} className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
+                            <button type="button" onClick={() => onRemove(position)} className="rounded-md border border-rose-200 bg-white px-2.5 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
+                        </div>
+                    </td>
+                </>
+            )}
+        </tr>
+    );
+}
+
 function PositionManager({ positions }) {
     const createForm = useForm({ name: '', sort_order: 0 });
     const [editingId, setEditingId] = useState(null);
     const [editingData, setEditingData] = useState({ name: '', sort_order: 0 });
     const [editingErrors, setEditingErrors] = useState({});
+    const [items, setItems] = useState(() => positions.map((p) => p.id));
+
+    useEffect(() => {
+        setItems(positions.map((p) => p.id));
+    }, [positions]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    );
 
     const submitCreate = (event) => {
         event.preventDefault();
@@ -65,6 +167,31 @@ function PositionManager({ positions }) {
             });
         }
     };
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        const reordered = [...items];
+        reordered.splice(oldIndex, 1);
+        reordered.splice(newIndex, 0, active.id);
+
+        setItems(reordered);
+
+        const payload = reordered.map((id, i) => ({ id, sort_order: i }));
+        router.put(route('jawatankuasa.positions.reorder'), { positions: payload }, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const sortedPositions = useMemo(() => {
+        const map = {};
+        positions.forEach((p) => { map[p.id] = p; });
+        return items.map((id) => map[id]).filter(Boolean);
+    }, [positions, items]);
 
     return (
         <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
@@ -117,84 +244,46 @@ function PositionManager({ positions }) {
                 </form>
             </div>
 
-            <div className="border-t border-green-100">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-green-100 text-xs">
-                        <thead className="bg-green-50">
-                            <tr>
-                                <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Jawatan</th>
-                                <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Susunan</th>
-                                <th className="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider text-green-700">Tindakan</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-green-50 bg-white">
-                            {positions.length === 0 && (
-                                <tr>
-                                    <td colSpan="3" className="px-3 py-4 text-center text-xs text-slate-400">
-                                        Belum ada jenis jawatan.
-                                    </td>
-                                </tr>
-                            )}
-                            {positions.map((position) => (
-                                <tr key={position.id} className="transition hover:bg-green-50/50">
-                                    {editingId === position.id ? (
-                                        <>
-                                            <td className="px-3 py-2">
-                                                <form onSubmit={(event) => submitEdit(event, position.id)} className="grid gap-2">
-                                                    <div>
-                                                        <TextInput
-                                                            id={`position-edit-name-${position.id}`}
-                                                            value={editingData.name}
-                                                            onChange={(event) => setEditingData((current) => ({ ...current, name: event.target.value }))}
-                                                            className="input-field text-xs"
-                                                        />
-                                                        <InputError className="mt-1" message={editingErrors.name} />
-                                                    </div>
-                                                </form>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={items} strategy={verticalListSortingStrategy}>
+                    <div className="border-t border-green-100">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-green-100 text-xs">
+                                <thead className="bg-green-50">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Jawatan</th>
+                                        <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Susunan</th>
+                                        <th className="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider text-green-700">Tindakan</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-green-50 bg-white">
+                                    {sortedPositions.length === 0 && (
+                                        <tr>
+                                            <td colSpan="3" className="px-3 py-4 text-center text-xs text-slate-400">
+                                                Belum ada jenis jawatan.
                                             </td>
-                                            <td className="px-3 py-2">
-                                                <TextInput
-                                                    id={`position-edit-order-${position.id}`}
-                                                    type="number"
-                                                    min="0"
-                                                    value={editingData.sort_order}
-                                                    onChange={(event) => setEditingData((current) => ({ ...current, sort_order: event.target.value }))}
-                                                    className="input-field text-xs"
-                                                />
-                                                <InputError className="mt-1" message={editingErrors.sort_order} />
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                <div className="flex justify-end gap-1.5">
-                                                    <button type="submit" onClick={(e) => { e.preventDefault(); submitEdit(e, position.id); }} className="rounded-md bg-green-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-green-500">Simpan</button>
-                                                    <button type="button" onClick={() => setEditingId(null)} className="rounded-md border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
-                                                </div>
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td className="px-3 py-2.5">
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
-                                                    <p className="font-bold text-slate-800">{position.name}</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-3 py-2.5">
-                                                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-green-50 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
-                                            </td>
-                                            <td className="px-3 py-2.5 text-right">
-                                                <div className="flex justify-end gap-1.5">
-                                                    <button type="button" onClick={() => startEdit(position)} className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
-                                                    <button type="button" onClick={() => remove(position)} className="rounded-md border border-rose-200 bg-white px-2.5 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
-                                                </div>
-                                            </td>
-                                        </>
+                                        </tr>
                                     )}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                                    {sortedPositions.map((position) => (
+                                        <SortablePositionRow
+                                            key={position.id}
+                                            position={position}
+                                            editingId={editingId}
+                                            editingData={editingData}
+                                            editingErrors={editingErrors}
+                                            onStartEdit={startEdit}
+                                            onSubmitEdit={submitEdit}
+                                            onCancelEdit={() => setEditingId(null)}
+                                            onRemove={remove}
+                                            onEditingChange={setEditingData}
+                                        />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </SortableContext>
+            </DndContext>
         </section>
     );
 }

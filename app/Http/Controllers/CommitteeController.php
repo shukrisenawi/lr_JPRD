@@ -8,6 +8,7 @@ use App\Models\PemilihRecord;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -240,6 +241,25 @@ class CommitteeController extends Controller
         return redirect()
             ->route('jawatankuasa.index')
             ->with('success', 'Jenis jawatan berjaya dipadam.');
+    }
+
+    public function reorderPositions(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'positions' => ['required', 'array'],
+            'positions.*.id' => ['required', 'exists:committee_positions,id'],
+            'positions.*.sort_order' => ['required', 'integer', 'min:0'],
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['positions'] as $item) {
+                CommitteePosition::where('id', $item['id'])->update(['sort_order' => $item['sort_order']]);
+            }
+        });
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', 'Susunan jawatan berjaya dikemas kini.');
     }
 
     public function storeMembership(Request $request): RedirectResponse

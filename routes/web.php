@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');
     Route::get('/jawatankuasa/search', [CommitteeController::class, 'search'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.search');
     Route::post('/jawatankuasa/positions', [CommitteeController::class, 'storePosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.store');
+    Route::put('/jawatankuasa/positions/reorder', [CommitteeController::class, 'reorderPositions'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.reorder');
     Route::put('/jawatankuasa/positions/{position}', [CommitteeController::class, 'updatePosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.update');
     Route::delete('/jawatankuasa/positions/{position}', [CommitteeController::class, 'destroyPosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.destroy');
     Route::post('/jawatankuasa/memberships', [CommitteeController::class, 'storeMembership'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.memberships.store');
