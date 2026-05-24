@@ -660,7 +660,7 @@ function SearchVoterPanel({ selectedProgram }) {
             <VoterDetailCard voter={selected} onAdd={add} adding={adding}
                 subPrograms={selectedProgram?.sub_programs ?? []}
                 selectedSubIds={selectedSubIds} onToggleSub={toggleSub} />
-            <AttendeeSubProgramEditor attendee={subEditorAttendee} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSubEditorAttendee(null)} />
+            <AttendeeSubProgramEditor key={subEditorAttendee?.id ?? 'sub-editor'} attendee={subEditorAttendee} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSubEditorAttendee(null)} />
         </div>
     );
 }
