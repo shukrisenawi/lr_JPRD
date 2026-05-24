@@ -60,108 +60,108 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="card space-y-4 p-4 sm:p-6">
+        <form onSubmit={handleSubmit} className="card space-y-3 p-3 sm:p-4">
             <div>
                 <label className="label-field" htmlFor="name">Nama Pemilih <span className="text-rose-500">*</span></label>
                 <input id="name" type="text" value={data.name} onChange={e => setData('name', e.target.value)}
-                    className="input-field w-full mt-1" placeholder="NAMA PENUH" />
-                {errors.name && <p className="mt-1 text-xs font-bold text-rose-500">{errors.name}</p>}
+                    className="input-field w-full mt-0.5" placeholder="NAMA PENUH" />
+                {errors.name && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.name}</p>}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                     <label className="label-field" htmlFor="no_kp">No. K/P (Baru) <span className="text-rose-500">*</span></label>
                     <input id="no_kp" type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)}
-                        className="input-field w-full mt-1" placeholder="900101025555" />
-                    {errors.no_kp && <p className="mt-1 text-xs font-bold text-rose-500">{errors.no_kp}</p>}
+                        className="input-field w-full mt-0.5" placeholder="900101025555" />
+                    {errors.no_kp && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.no_kp}</p>}
                 </div>
                 <div>
                     <label className="label-field" htmlFor="old_ic">No. K/P (Lama)</label>
                     <input id="old_ic" type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)}
-                        className="input-field w-full mt-1" placeholder="A1234567" />
-                    {errors.old_ic && <p className="mt-1 text-xs font-bold text-rose-500">{errors.old_ic}</p>}
+                        className="input-field w-full mt-0.5" placeholder="A1234567" />
+                    {errors.old_ic && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.old_ic}</p>}
                 </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                     <label className="label-field" htmlFor="phone_mobile">Tel. Bimbit</label>
                     <input id="phone_mobile" type="text" value={data.phone_mobile} onChange={e => setData('phone_mobile', e.target.value)}
-                        className="input-field w-full mt-1" placeholder="0123456789" />
-                    {errors.phone_mobile && <p className="mt-1 text-xs font-bold text-rose-500">{errors.phone_mobile}</p>}
+                        className="input-field w-full mt-0.5" placeholder="0123456789" />
+                    {errors.phone_mobile && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.phone_mobile}</p>}
                 </div>
                 <div>
                     <label className="label-field" htmlFor="phone_home">Tel. Rumah</label>
                     <input id="phone_home" type="text" value={data.phone_home} onChange={e => setData('phone_home', e.target.value)}
-                        className="input-field w-full mt-1" placeholder="045123456" />
-                    {errors.phone_home && <p className="mt-1 text-xs font-bold text-rose-500">{errors.phone_home}</p>}
+                        className="input-field w-full mt-0.5" placeholder="045123456" />
+                    {errors.phone_home && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.phone_home}</p>}
                 </div>
             </div>
 
             <div>
                 <label className="label-field" htmlFor="address">Alamat</label>
                 <textarea id="address" value={data.address} onChange={e => setData('address', e.target.value)}
-                    className="input-field w-full mt-1" rows="2" placeholder="Alamat kediaman" />
-                {errors.address && <p className="mt-1 text-xs font-bold text-rose-500">{errors.address}</p>}
+                    className="input-field w-full mt-0.5" rows="1" placeholder="Alamat kediaman" />
+                {errors.address && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.address}</p>}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                     <label className="label-field" htmlFor="dm">UDM / DM</label>
                     <select id="dm" value={data.dm} onChange={e => handleDmChange(e.target.value)}
-                        className="input-field w-full mt-1">
+                        className="input-field w-full mt-0.5">
                         <option value="">-- Pilih UDM --</option>
                         {dms.map(dm => <option key={dm} value={dm}>{dm}</option>)}
                     </select>
-                    {errors.dm && <p className="mt-1 text-xs font-bold text-rose-500">{errors.dm}</p>}
+                    {errors.dm && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.dm}</p>}
                 </div>
                 <div>
                     <label className="label-field" htmlFor="locality">Lokaliti</label>
                     <select id="locality" value={data.locality} onChange={e => setData('locality', e.target.value)}
-                        className="input-field w-full mt-1" disabled={!data.dm}>
+                        className="input-field w-full mt-0.5" disabled={!data.dm}>
                         <option value="">{data.dm ? '-- Pilih Lokaliti --' : '-- Pilih UDM dahulu --'}</option>
                         {filteredLocalities.map(loc => <option key={loc} value={loc}>{loc}</option>)}
                     </select>
-                    {errors.locality && <p className="mt-1 text-xs font-bold text-rose-500">{errors.locality}</p>}
+                    {errors.locality && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.locality}</p>}
                 </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                     <label className="label-field" htmlFor="gender">Jantina</label>
                     <select id="gender" value={data.gender} onChange={e => setData('gender', e.target.value)}
-                        className="input-field w-full mt-1">
+                        className="input-field w-full mt-0.5">
                         <option value="">-- Pilih --</option>
                         <option value="Lelaki">Lelaki</option>
                         <option value="Perempuan">Perempuan</option>
                     </select>
-                    {errors.gender && <p className="mt-1 text-xs font-bold text-rose-500">{errors.gender}</p>}
+                    {errors.gender && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.gender}</p>}
                 </div>
                 <div>
                     <label className="label-field" htmlFor="race">Bangsa</label>
                     <select id="race" value={data.race} onChange={e => setData('race', e.target.value)}
-                        className="input-field w-full mt-1">
+                        className="input-field w-full mt-0.5">
                         <option value="">-- Pilih --</option>
                         <option value="Melayu">Melayu</option>
                         <option value="Cina">Cina</option>
                         <option value="India">India</option>
                         <option value="Lain-lain">Lain-lain</option>
                     </select>
-                    {errors.race && <p className="mt-1 text-xs font-bold text-rose-500">{errors.race}</p>}
+                    {errors.race && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.race}</p>}
                 </div>
             </div>
 
             <div>
                 <label className="label-field" htmlFor="cula_code">Kod Cula</label>
                 <select id="cula_code" value={data.cula_code} onChange={e => handleCulaChange(e.target.value)}
-                    className="input-field w-full mt-1">
+                    className="input-field w-full mt-0.5">
                     <option value="">-- Pilih Kod Cula --</option>
                     {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
                 </select>
-                {errors.cula_code && <p className="mt-1 text-xs font-bold text-rose-500">{errors.cula_code}</p>}
+                {errors.cula_code && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.cula_code}</p>}
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-3 pt-1">
                 <button type="submit" disabled={processing}
                     className="btn-primary inline-flex items-center gap-2">
                     <UserPlusIcon className="h-4 w-4" />
