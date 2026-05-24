@@ -676,7 +676,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             <path d="M14 13h2"/>
                             <path d="M16 13v4"/>
                         </svg>
-                        {pemilih_report?.uploaded_by && <span className="text-slate-500">Oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
+                        {pemilih_report?.uploaded_by && <span className="text-slate-500">Data Terbaru Dimuat naik oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
                         {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{fmtDate(pemilih_report.uploaded_at)}</span></span>}
                     </div>
                 )}
