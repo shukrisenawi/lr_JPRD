@@ -8,15 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('pemilih_records', function (Blueprint $table) {
-            $table->boolean('is_manual')->default(false)->after('source_file');
-        });
+        if (!Schema::hasColumn('pemilih_records', 'is_manual')) {
+            Schema::table('pemilih_records', function (Blueprint $table) {
+                $table->boolean('is_manual')->default(false)->after('source_file');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('pemilih_records', function (Blueprint $table) {
-            $table->dropColumn('is_manual');
-        });
+        if (Schema::hasColumn('pemilih_records', 'is_manual')) {
+            Schema::table('pemilih_records', function (Blueprint $table) {
+                $table->dropColumn('is_manual');
+            });
+        }
     }
 };
