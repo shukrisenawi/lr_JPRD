@@ -457,7 +457,7 @@ export default function TambahPemilih() {
             </div>
         }>
             <Head title="Pemilih Manual" />
-            <div className="mx-auto max-w-3xl px-3 sm:px-4 lg:px-6">
+            <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
                 <div className="mb-4 flex gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
                     {tabs.map(t => {
                         const Icon = t.icon;
