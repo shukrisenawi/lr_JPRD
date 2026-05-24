@@ -534,11 +534,21 @@ function SearchVoterPanel({ selectedProgram }) {
 
     const existingVoterIds = useMemo(() => {
         const ids = new Set();
+        const icIds = new Set();
         (selectedProgram?.attendees ?? []).forEach((a) => {
             if (a.voter_id) ids.add(a.voter_id);
+            if (a.no_kp) icIds.add(a.no_kp);
+            if (a.old_ic) icIds.add(a.old_ic);
         });
-        return ids;
+        return { voterIdSet: ids, icSet: icIds };
     }, [selectedProgram?.attendees]);
+
+    const isAlreadyAdded = (v) => {
+        if (existingVoterIds.voterIdSet.has(v.voter_id ?? v.id)) return true;
+        if (v.no_kp && existingVoterIds.icSet.has(v.no_kp)) return true;
+        if (v.old_ic && existingVoterIds.icSet.has(v.old_ic)) return true;
+        return false;
+    };
 
     useEffect(() => { ac.current?.abort(); rid.current += 1; setQ(''); setSuggestions([]); setSelected(null); setSearching(false); setErr(''); setSelectedSubIds([]); }, [selectedProgram?.id]);
     useEffect(() => () => ac.current?.abort(), []);
@@ -591,7 +601,7 @@ function SearchVoterPanel({ selectedProgram }) {
                         {(searching || suggestions.length > 0) && (
                             <div className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
                                 {searching ? <div className="px-2.5 py-1.5 text-xs font-medium text-slate-500">Mencari...</div> : suggestions.map((v) => {
-                                    const alreadyAdded = existingVoterIds.has(v.voter_id ?? v.id);
+                                    const alreadyAdded = isAlreadyAdded(v);
                                     return (
                                         <button key={v.id} disabled={alreadyAdded} onClick={() => !alreadyAdded && pick(v)} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition last:border-b-0 ${alreadyAdded ? 'cursor-not-allowed bg-slate-50 opacity-60' : 'hover:bg-green-50'}`}>
                                             <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
