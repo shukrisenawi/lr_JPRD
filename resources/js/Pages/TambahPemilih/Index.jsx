@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import Swal from 'sweetalert2';
 
 function UserPlusIcon({ className = 'h-5 w-5' }) {
@@ -27,7 +27,7 @@ function ListIcon({ className = 'h-5 w-5' }) {
     );
 }
 
-function FormTab({ dms, localitiesByDm, onSuccess }) {
+function FormTab({ dms, localitiesByDm }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', no_kp: '', old_ic: '', phone_mobile: '', phone_home: '',
         address: '', dm: '', locality: '', gender: '', race: '',
@@ -37,8 +37,6 @@ function FormTab({ dms, localitiesByDm, onSuccess }) {
         return data.dm ? (localitiesByDm[data.dm] ?? []) : [];
     }, [data.dm, localitiesByDm]);
 
-    useEffect(() => { onSuccess?.(reset); }, []);
-
     const handleDmChange = (value) => {
         setData('dm', value);
         setData('locality', '');
@@ -46,7 +44,12 @@ function FormTab({ dms, localitiesByDm, onSuccess }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('tambah-pemilih.store'));
+        post(route('tambah-pemilih.store'), {
+            onSuccess: () => {
+                Swal.fire({ icon: 'success', title: 'Berjaya', text: 'Pemilih manual berjaya ditambah.', timer: 2000, showConfirmButton: false });
+                reset();
+            },
+        });
     };
 
     return (
@@ -213,18 +216,8 @@ function SenaraiTab({ manualVoters }) {
 }
 
 export default function TambahPemilih() {
-    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] }, flash } = usePage().props;
+    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] } } = usePage().props;
     const [tab, setTab] = useState('tambah');
-    const prevFlash = useRef(null);
-    const resetRef = useRef(null);
-
-    useEffect(() => {
-        if (flash?.success && flash.success !== prevFlash.current) {
-            prevFlash.current = flash.success;
-            Swal.fire({ icon: 'success', title: 'Berjaya', text: flash.success, timer: 2000, showConfirmButton: false });
-            resetRef.current?.();
-        }
-    }, [flash?.success]);
 
     const tabs = [
         { key: 'tambah', label: 'Tambah Pemilih', icon: UserPlusIcon },
@@ -254,7 +247,7 @@ export default function TambahPemilih() {
                     })}
                 </div>
 
-                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} onSuccess={(r) => { resetRef.current = r; }} />}
+                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} />}
                 {tab === 'senarai' && <SenaraiTab manualVoters={manualVoters} />}
             </div>
         </AuthenticatedLayout>

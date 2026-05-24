@@ -88,7 +88,6 @@ class TambahPemilihController extends Controller
 
         PemilihRecord::create($validated);
 
-        return redirect()->route('tambah-pemilih.index')
-            ->with('success', 'Pemilih manual berjaya ditambah.');
+        return redirect()->route('tambah-pemilih.index');
     }
 }
