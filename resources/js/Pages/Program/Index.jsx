@@ -965,7 +965,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             .map((sp) => (
                                                                 <span key={`${a.id}-sub-${sp.id}`}
                                                                     className="inline-flex items-center gap-1 rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700">
-                                                                    #{sp.name}{(a.sub_program_counts?.[sp.name] ?? 0) > 0 ? <span className="font-normal text-indigo-400">-{a.sub_program_counts[sp.name]}</span> : null}
+                                                                    #{sp.name}{(a.sub_program_counts?.[sp.name] ?? 0) > 1 ? <span className="font-normal text-indigo-400">-{a.sub_program_counts[sp.name]}</span> : null}
                                                                 </span>
                                                             ))}
                                                         {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
