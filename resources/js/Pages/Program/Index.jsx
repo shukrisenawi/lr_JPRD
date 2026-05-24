@@ -180,7 +180,7 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
                             <input type="checkbox" checked={selectedSubIds.includes(sp.id)}
                                 onChange={() => onToggleSub(sp.id)}
                                 className="h-3 w-3 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                            <span className="font-bold text-slate-700">{sp.name}</span>
+                            <span className="font-bold text-slate-700">#{sp.name}</span>
                         </label>
                     ))}
                     <button onClick={() => onAdd(voter)} disabled={adding} className="btn-emerald shrink-0 text-xs">{adding ? 'Menyimpan...' : 'Tambah ke Program'}</button>
@@ -512,7 +512,7 @@ function AttendeeSubProgramEditor({ attendee, subPrograms, onClose }) {
                                     {checked && <svg viewBox="0 0 24 24" className="h-3 w-3 text-white" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 12 5 5L20 7" /></svg>}
                                 </div>
                                 <input type="checkbox" checked={checked} onChange={() => toggle(sp.id)} className="sr-only" />
-                                <span className="text-sm font-bold text-slate-800">{sp.name}</span>
+                                <span className="text-sm font-bold text-slate-800">#{sp.name}</span>
                             </label>
                         );
                     })}
@@ -881,7 +881,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                     {activeSubPrograms.map((sp) => (
                                         <button key={sp.id} onClick={() => setSubTab(sp.id)}
                                             className={`rounded-md px-2 py-1 text-xs font-bold transition ${subTab === sp.id ? 'bg-indigo-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:text-indigo-700'}`}>
-                                            {sp.name}
+                                            #{sp.name}
                                         </button>
                                     ))}
                                 </div>
@@ -953,8 +953,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                     #{sp.name}
                                                                 </span>
                                                             ))}
-                                                        {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
-                                                        {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{b.label} <span className="font-normal text-green-500">({b.level.toUpperCase()})</span></span>)}
                                                     </div>
                                                 )}
                                             </div>
