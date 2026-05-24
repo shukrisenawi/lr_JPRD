@@ -27,9 +27,7 @@ function ListIcon({ className = 'h-5 w-5' }) {
     );
 }
 
-function FormTab({ dms, localitiesByDm }) {
-    const { flash } = usePage().props;
-    const prevFlash = useRef(null);
+function FormTab({ dms, localitiesByDm, onSuccess }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', no_kp: '', old_ic: '', phone_mobile: '', phone_home: '',
         address: '', dm: '', locality: '', gender: '', race: '',
@@ -39,13 +37,7 @@ function FormTab({ dms, localitiesByDm }) {
         return data.dm ? (localitiesByDm[data.dm] ?? []) : [];
     }, [data.dm, localitiesByDm]);
 
-    useEffect(() => {
-        if (flash?.success && flash.success !== prevFlash.current) {
-            prevFlash.current = flash.success;
-            Swal.fire({ icon: 'success', title: 'Berjaya', text: flash.success, timer: 2000, showConfirmButton: false });
-            reset();
-        }
-    }, [flash?.success]);
+    useEffect(() => { onSuccess?.(reset); }, []);
 
     const handleDmChange = (value) => {
         setData('dm', value);
@@ -221,8 +213,18 @@ function SenaraiTab({ manualVoters }) {
 }
 
 export default function TambahPemilih() {
-    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] } } = usePage().props;
+    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] }, flash } = usePage().props;
     const [tab, setTab] = useState('tambah');
+    const prevFlash = useRef(null);
+    const resetRef = useRef(null);
+
+    useEffect(() => {
+        if (flash?.success && flash.success !== prevFlash.current) {
+            prevFlash.current = flash.success;
+            Swal.fire({ icon: 'success', title: 'Berjaya', text: flash.success, timer: 2000, showConfirmButton: false });
+            resetRef.current?.();
+        }
+    }, [flash?.success]);
 
     const tabs = [
         { key: 'tambah', label: 'Tambah Pemilih', icon: UserPlusIcon },
@@ -252,7 +254,7 @@ export default function TambahPemilih() {
                     })}
                 </div>
 
-                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} />}
+                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} onSuccess={(r) => { resetRef.current = r; }} />}
                 {tab === 'senarai' && <SenaraiTab manualVoters={manualVoters} />}
             </div>
         </AuthenticatedLayout>
