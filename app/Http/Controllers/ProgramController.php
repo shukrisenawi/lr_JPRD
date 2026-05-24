@@ -762,6 +762,11 @@ class ProgramController extends Controller
 
     private function ensureOwner(int $userId, Program $program): void
     {
+        $user = request()->user();
+        if ($user->isMasterAdmin()) {
+            return;
+        }
+
         abort_unless((int) $program->user_id === $userId, 403);
     }
 
