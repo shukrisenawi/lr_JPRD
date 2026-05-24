@@ -199,6 +199,9 @@ class ProgramController extends Controller
                             'sub_program_ids' => $attendee->subPrograms->pluck('id')->all(),
                             'sub_program_counts' => $subProgramCounts->get($attendee->voter_id, []),
                             'attended_at' => $attendee->attended_at?->format('d-m-Y h:i A'),
+                            'can_modify' => $user->isMasterAdmin()
+                                || (int) $selectedProgram->user_id === (int) $user->id
+                                || ((int) $attendee->user_id === (int) $user->id),
                             'is_marked' => $culaWorkItems->has($icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null),
                             'marked_by_name' => $culaWorkItems->get($icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null)?->marker?->name,
                         ])
@@ -333,13 +336,21 @@ class ProgramController extends Controller
 
         $subProgramIds = $validated['sub_program_ids'] ?? [];
 
-        $attendee = $program->attendees()->updateOrCreate(
-            ['voter_id' => $validated['voter_id']],
-            [
+        $existing = $program->attendees()->where('voter_id', $validated['voter_id'])->first();
+
+        if ($existing) {
+            $existing->update([
                 ...$validated,
                 'attended_at' => now(),
-            ],
-        );
+            ]);
+            $attendee = $existing;
+        } else {
+            $validated['user_id'] = $request->user()->id;
+            $attendee = $program->attendees()->create([
+                ...$validated,
+                'attended_at' => now(),
+            ]);
+        }
 
         $attendee->subPrograms()->sync($subProgramIds);
 
@@ -348,9 +359,10 @@ class ProgramController extends Controller
             ->with('success', 'Pemilih berjaya direkodkan sebagai hadir program.');
     }
 
-    public function destroyAttendee(Program $program, ProgramAttendee $attendee): RedirectResponse
+    public function destroyAttendee(Request $request, Program $program, ProgramAttendee $attendee): RedirectResponse
     {
-        $this->ensureAccessible(request()->user()->id, $program);
+        $this->ensureAccessible($request->user()->id, $program);
+        $this->ensureAttendeeModifiable($request->user(), $program, $attendee);
 
         if ($attendee->program_id !== $program->id) {
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
@@ -701,6 +713,7 @@ class ProgramController extends Controller
     public function updateAttendeeSubPrograms(Request $request, Program $program, ProgramAttendee $attendee): RedirectResponse
     {
         $this->ensureAccessible($request->user()->id, $program);
+        $this->ensureAttendeeModifiable($request->user(), $program, $attendee);
 
         if ($attendee->program_id !== $program->id) {
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
@@ -773,6 +786,19 @@ class ProgramController extends Controller
     private function ensureGroupOwner(int $userId, ProgramGroup $group): void
     {
         abort_unless((int) $group->user_id === $userId, 403);
+    }
+
+    private function ensureAttendeeModifiable(User $user, Program $program, ProgramAttendee $attendee): void
+    {
+        if ($user->isMasterAdmin()) {
+            return;
+        }
+
+        if ((int) $program->user_id === (int) $user->id) {
+            return;
+        }
+
+        abort_unless((int) $attendee->user_id === (int) $user->id, 403);
     }
 
     private function buildCommitteeBadgeMap($attendees)

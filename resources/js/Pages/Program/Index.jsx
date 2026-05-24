@@ -933,7 +933,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             </div>
                                                         </div>
                                                         <div className="flex shrink-0 items-center gap-1">
-                                                            {selectedProgram?.sub_programs?.length > 0 && (
+                                                            {a.can_modify && selectedProgram?.sub_programs?.length > 0 && (
                                                                 <button onClick={() => setSelEditSub(a)} title="Sub"
                                                                     className="inline-flex h-6 w-6 items-center justify-center rounded border border-indigo-200 bg-white text-indigo-600 transition hover:bg-indigo-50">
                                                                     <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
@@ -946,9 +946,11 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                             <button onClick={() => setSelAttendeeProgs(a)} title="Program" className="inline-flex h-6 w-6 items-center justify-center rounded border border-amber-200 bg-white text-amber-600 transition hover:bg-amber-50">
                                                                 <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
                                                             </button>
-                                                            <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} title="Padam" className="inline-flex h-6 w-6 items-center justify-center rounded border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
-                                                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
-                                                            </button>
+                                                            {a.can_modify && (
+                                                                <button onClick={() => delAttendee(a)} disabled={deletingAtt === a.id} title="Padam" className="inline-flex h-6 w-6 items-center justify-center rounded border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
+                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">

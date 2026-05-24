@@ -10,6 +10,7 @@ class ProgramAttendee extends Model
 {
     protected $fillable = [
         'program_id',
+        'user_id',
         'voter_id',
         'name',
         'no_kp',
