@@ -54,27 +54,23 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
         onEditingChange((current) => ({ ...current, [field]: event.target.value }));
     };
 
-    return (
-        <tr ref={setNodeRef} style={style} className={`transition ${isDragging ? 'z-10 opacity-50 shadow-lg' : ''} ${isEditing ? '' : 'hover:bg-green-50/50'}`}>
-            {isEditing ? (
-                <>
-                    <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                            <span {...attributes} {...listeners} className="cursor-grab text-slate-400 hover:text-slate-600"><DragHandle /></span>
-                            <form onSubmit={submitEdit} className="flex-1">
-                                <div>
-                                    <TextInput
-                                        id={`position-edit-name-${position.id}`}
-                                        value={editingData.name}
-                                        onChange={handleEditingDataChange('name')}
-                                        className="input-field text-xs"
-                                    />
-                                    <InputError className="mt-1" message={editingErrors.name} />
-                                </div>
-                            </form>
-                        </div>
-                    </td>
-                    <td className="px-3 py-2">
+    if (isEditing) {
+        return (
+            <div ref={setNodeRef} style={style} className={`rounded-lg border-2 border-green-400 bg-green-50 p-3 transition ${isDragging ? 'z-10 opacity-50 shadow-lg' : ''}`}>
+                <div className="flex items-center gap-2">
+                    <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
+                    <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">{position.name}</p>
+                    <span className="shrink-0 rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
+                </div>
+                <form onSubmit={submitEdit} className="mt-2 space-y-2">
+                    <div className="grid grid-cols-[1fr_5rem] gap-2">
+                        <TextInput
+                            id={`position-edit-name-${position.id}`}
+                            value={editingData.name}
+                            onChange={handleEditingDataChange('name')}
+                            className="input-field text-xs"
+                        />
                         <TextInput
                             id={`position-edit-order-${position.id}`}
                             type="number"
@@ -83,36 +79,29 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
                             onChange={handleEditingDataChange('sort_order')}
                             className="input-field text-xs"
                         />
-                        <InputError className="mt-1" message={editingErrors.sort_order} />
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                        <div className="flex justify-end gap-1.5">
-                            <button type="submit" onClick={(e) => { e.preventDefault(); submitEdit(e); }} className="rounded-md bg-green-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-green-500">Simpan</button>
-                            <button type="button" onClick={onCancelEdit} className="rounded-md border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
-                        </div>
-                    </td>
-                </>
-            ) : (
-                <>
-                    <td className="px-3 py-2.5">
-                        <div className="flex items-center gap-2.5">
-                            <span {...attributes} {...listeners} className="cursor-grab text-slate-400 hover:text-slate-600"><DragHandle /></span>
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
-                            <p className="font-bold text-slate-800">{position.name}</p>
-                        </div>
-                    </td>
-                    <td className="px-3 py-2.5">
-                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-green-50 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right">
-                        <div className="flex justify-end gap-1.5">
-                            <button type="button" onClick={() => onStartEdit(position)} className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
-                            <button type="button" onClick={() => onRemove(position)} className="rounded-md border border-rose-200 bg-white px-2.5 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
-                        </div>
-                    </td>
-                </>
-            )}
-        </tr>
+                    </div>
+                    <InputError className="mt-1" message={editingErrors.name} />
+                    <InputError className="mt-1" message={editingErrors.sort_order} />
+                    <div className="flex justify-end gap-1.5">
+                        <button type="submit" className="rounded-md bg-green-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-green-500">Simpan</button>
+                        <button type="button" onClick={onCancelEdit} className="rounded-md border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
+                    </div>
+                </form>
+            </div>
+        );
+    }
+
+    return (
+        <div ref={setNodeRef} style={style} className={`flex items-center gap-2.5 rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md ${isDragging ? 'z-10 opacity-50 shadow-lg' : ''}`}>
+            <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
+            <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">{position.name}</p>
+            <span className="shrink-0 rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
+            <div className="flex shrink-0 items-center gap-1">
+                <button type="button" onClick={() => onStartEdit(position)} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50">Edit</button>
+                <button type="button" onClick={() => onRemove(position)} className="rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
+            </div>
+        </div>
     );
 }
 
@@ -246,41 +235,29 @@ function PositionManager({ positions }) {
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={items} strategy={verticalListSortingStrategy}>
-                    <div className="border-t border-green-100">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-green-100 text-xs">
-                                <thead className="bg-green-50">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Jawatan</th>
-                                        <th className="px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-green-700">Susunan</th>
-                                        <th className="px-3 py-2 text-right text-xs font-bold uppercase tracking-wider text-green-700">Tindakan</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-green-50 bg-white">
-                                    {sortedPositions.length === 0 && (
-                                        <tr>
-                                            <td colSpan="3" className="px-3 py-4 text-center text-xs text-slate-400">
-                                                Belum ada jenis jawatan.
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {sortedPositions.map((position) => (
-                                        <SortablePositionRow
-                                            key={position.id}
-                                            position={position}
-                                            editingId={editingId}
-                                            editingData={editingData}
-                                            editingErrors={editingErrors}
-                                            onStartEdit={startEdit}
-                                            onSubmitEdit={submitEdit}
-                                            onCancelEdit={() => setEditingId(null)}
-                                            onRemove={remove}
-                                            onEditingChange={setEditingData}
-                                        />
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                    <div className="border-t border-green-100 p-3">
+                        {sortedPositions.length === 0 ? (
+                            <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">
+                                Belum ada jenis jawatan.
+                            </div>
+                        ) : (
+                            <div className="grid gap-2 sm:grid-cols-2">
+                                {sortedPositions.map((position) => (
+                                    <SortablePositionRow
+                                        key={position.id}
+                                        position={position}
+                                        editingId={editingId}
+                                        editingData={editingData}
+                                        editingErrors={editingErrors}
+                                        onStartEdit={startEdit}
+                                        onSubmitEdit={submitEdit}
+                                        onCancelEdit={() => setEditingId(null)}
+                                        onRemove={remove}
+                                        onEditingChange={setEditingData}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </SortableContext>
             </DndContext>
