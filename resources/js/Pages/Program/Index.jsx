@@ -637,8 +637,11 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [openingTg, setOpeningTg] = useState(false);
     const [attendeeSearch, setAttendeeSearch] = useState('');
     const [subTab, setSubTab] = useState(null);
+    const [processingCulaIds, setProcessingCulaIds] = useState([]);
     const toggleCula = async (a) => {
         if (!selectedProgram) return;
+        if (processingCulaIds.includes(a.id)) return;
+        setProcessingCulaIds((prev) => [...prev, a.id]);
         try {
             const method = a.is_marked ? 'DELETE' : 'POST';
             await fetch(route(method === 'POST' ? 'program.attendees.mark.store' : 'program.attendees.mark.destroy', [selectedProgram.id, a.id]), {
@@ -646,7 +649,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 headers: { Accept: 'application/json', 'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '', 'X-Requested-With': 'XMLHttpRequest' },
             });
         } catch (_) { /* ignore */ }
-        router.reload({ preserveState: true, preserveScroll: true });
+        router.reload({ preserveState: true, preserveScroll: true, onFinish: () => setProcessingCulaIds((prev) => prev.filter((id) => id !== a.id)) });
     };
     const filteredAttendees = useMemo(() => {
         if (!selectedProgram) return [];
@@ -864,9 +867,16 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex min-w-0 flex-1 items-start gap-2">
                                                             {(a.cula_code === '?' || a.cula_code === '0') && (
-                                                                <button type="button" onClick={() => toggleCula(a)}
-                                                                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${a.is_marked ? 'border-green-500 bg-green-500 text-white' : 'border-slate-300 bg-white text-transparent hover:border-green-400 hover:text-green-400'}`}>
-                                                                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 12 5 5L20 7" /></svg>
+                                                                <button type="button" onClick={() => toggleCula(a)} disabled={processingCulaIds.includes(a.id)}
+                                                                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${processingCulaIds.includes(a.id) ? 'border-slate-300 bg-slate-100 text-slate-400' : a.is_marked ? 'border-green-500 bg-green-500 text-white' : 'border-slate-300 bg-white text-transparent hover:border-green-400 hover:text-green-400'}`}>
+                                                                    {processingCulaIds.includes(a.id) ? (
+                                                                        <svg className="h-3 w-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                                                        </svg>
+                                                                    ) : (
+                                                                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 12 5 5L20 7" /></svg>
+                                                                    )}
                                                                 </button>
                                                             )}
                                                             <div className="min-w-0 flex-1">
