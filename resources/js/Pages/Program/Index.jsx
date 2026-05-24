@@ -968,6 +968,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                     #{sp.name}
                                                                 </span>
                                                             ))}
+                                                        {a.group_badges?.map((b) => <span key={`${a.id}-${b.name}`} className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">{b.name}</span>)}
+                                                        {a.committee_badges?.map((b, index) => <span key={`${a.id}-${b.label}-${index}`} className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] font-bold text-green-700">{b.label} <span className="font-normal text-green-500">({b.level.toUpperCase()})</span></span>)}
                                                     </div>
                                                 )}
                                             </div>
