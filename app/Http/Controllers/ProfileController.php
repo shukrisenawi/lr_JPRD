@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,13 +27,16 @@ class ProfileController extends Controller
     }
 
     /**
-     * Display the authenticated user's avatar.
+     * Display a user's avatar.
      */
-    public function avatar(Request $request)
+    public function avatar(Request $request, User $user)
     {
-        $user = $request->user();
+        abort_unless(
+            $request->user()->is($user) || $request->user()->isMasterAdmin(),
+            403,
+        );
 
-        abort_unless($user?->avatar, 404);
+        abort_unless($user->avatar, 404);
         abort_unless(Storage::disk('public')->exists($user->avatar), 404);
 
         return response()->file(

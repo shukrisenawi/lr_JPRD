@@ -68,6 +68,7 @@ class User extends Authenticatable
         }
 
         return route('profile.avatar', [
+            'user' => $this->id,
             't' => $this->updated_at?->timestamp,
         ]);
     }
