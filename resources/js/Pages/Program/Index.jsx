@@ -634,6 +634,7 @@ function SearchVoterPanel({ selectedProgram }) {
                                     return (
                                         <button key={v.id} disabled={!clickable} onClick={() => {
                                             if (alreadyAdded && hasSubs) {
+                                                clearSearch();
                                                 const att = attendeeLookup(v);
                                                 if (att) setSubEditorAttendee(att);
                                             } else if (!alreadyAdded) {
