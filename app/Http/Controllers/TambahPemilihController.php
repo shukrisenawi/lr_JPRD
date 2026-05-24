@@ -34,9 +34,14 @@ class TambahPemilihController extends Controller
                 ->toArray();
         }
 
+        $manualVoters = PemilihRecord::where('is_manual', true)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
         return Inertia::render('TambahPemilih/Index', [
             'dms' => $dms,
             'localitiesByDm' => $localitiesByDm,
+            'manualVoters' => $manualVoters,
         ]);
     }
 
