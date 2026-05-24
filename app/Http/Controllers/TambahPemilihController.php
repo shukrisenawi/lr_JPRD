@@ -11,7 +11,12 @@ use Inertia\Response;
 
 class TambahPemilihController extends Controller
 {
-    public function index(): Response
+    private function isMasterAdmin(Request $request): bool
+    {
+        return $request->user()->role?->is_master_admin === true;
+    }
+
+    public function index(Request $request): Response
     {
         $dms = PemilihRecord::whereNotNull('dm')
             ->where('dm', '!=', '-')
@@ -43,7 +48,11 @@ class TambahPemilihController extends Controller
             ->get()
             ->toArray();
 
-        $manualVoters = PemilihRecord::where('is_manual', true)
+        $query = PemilihRecord::where('is_manual', true);
+        if (!$this->isMasterAdmin($request)) {
+            $query->where('created_by', $request->user()->id);
+        }
+        $manualVoters = $query->with('creator:id,name')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -97,6 +106,7 @@ class TambahPemilihController extends Controller
         $validated['identity_number'] = $identityNumber;
         $validated['status'] = 'aktif';
         $validated['is_manual'] = true;
+        $validated['created_by'] = $request->user()->id;
 
         PemilihRecord::create($validated);
 
@@ -106,6 +116,9 @@ class TambahPemilihController extends Controller
     public function update(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
     {
         if (!$pemilihRecord->is_manual) {
+            abort(403);
+        }
+        if (!$this->isMasterAdmin($request) && $pemilihRecord->created_by !== $request->user()->id) {
             abort(403);
         }
 
@@ -134,9 +147,12 @@ class TambahPemilihController extends Controller
         return redirect()->route('tambah-pemilih.index');
     }
 
-    public function destroy(PemilihRecord $pemilihRecord): RedirectResponse
+    public function destroy(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
     {
         if (!$pemilihRecord->is_manual) {
+            abort(403);
+        }
+        if (!$this->isMasterAdmin($request) && $pemilihRecord->created_by !== $request->user()->id) {
             abort(403);
         }
 

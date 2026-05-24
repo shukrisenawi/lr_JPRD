@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -25,6 +26,7 @@ class PemilihRecord extends Model
         'status',
         'source_file',
         'is_manual',
+        'created_by',
     ];
 
     protected function casts(): array
@@ -32,6 +34,11 @@ class PemilihRecord extends Model
         return [
             'is_manual' => 'boolean',
         ];
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function committeeMemberships(): HasMany

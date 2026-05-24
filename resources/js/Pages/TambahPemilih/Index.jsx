@@ -183,6 +183,7 @@ function DetailModal({ voter, onClose }) {
         ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['Alamat', voter.address || '-'], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
         ['Kod Cula', voter.cula_code || '-'], ['Jantina', voter.gender || '-'], ['Bangsa', voter.race || '-'],
+        ['Dicipta Oleh', voter.creator?.name || '-'],
         ['Tarikh Daftar', voter.created_at ? new Date(voter.created_at).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'],
     ];
     return (
@@ -372,13 +373,14 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Kod Cula</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">UDM</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Lokaliti</th>
+                                <th className="px-3 py-2.5 font-bold text-slate-600">Dicipta Oleh</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Tindakan</th>
                             </tr>
                         </thead>
                         <tbody>
                             {manualVoters.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" className="px-3 py-8 text-center text-sm text-slate-500">
+                                    <td colSpan="8" className="px-3 py-8 text-center text-sm text-slate-500">
                                         Tiada pemilih manual lagi.
                                     </td>
                                 </tr>
@@ -391,6 +393,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                                         <td className="px-3 py-2.5 text-slate-600">{voter.cula_code || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.dm || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.locality || '-'}</td>
+                                        <td className="px-3 py-2.5 text-slate-600">{voter.creator?.name || '-'}</td>
                                         <td className="px-3 py-2.5">
                                             <div className="flex gap-1">
                                                 <button onClick={() => setDetailVoter(voter)}
