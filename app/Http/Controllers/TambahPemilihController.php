@@ -35,6 +35,14 @@ class TambahPemilihController extends Controller
                 ->toArray();
         }
 
+        $culaCodes = PemilihRecord::whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->select('cula_code', 'cula_display_label')
+            ->distinct()
+            ->orderBy('cula_code')
+            ->get()
+            ->toArray();
+
         $manualVoters = PemilihRecord::where('is_manual', true)
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -42,6 +50,7 @@ class TambahPemilihController extends Controller
         return Inertia::render('TambahPemilih/Index', [
             'dms' => $dms,
             'localitiesByDm' => $localitiesByDm,
+            'culaCodes' => $culaCodes,
             'manualVoters' => $manualVoters,
         ]);
     }
@@ -59,6 +68,8 @@ class TambahPemilihController extends Controller
             'address' => 'nullable|string',
             'phone_home' => 'nullable|string|max:20',
             'phone_mobile' => 'nullable|string|max:20',
+            'cula_code' => 'nullable|string|max:50',
+            'cula_display_label' => 'nullable|string|max:255',
         ]);
 
         $identityNumber = $validated['no_kp'] ?? $validated['old_ic'] ?? '';
@@ -109,6 +120,8 @@ class TambahPemilihController extends Controller
             'locality' => 'nullable|string|max:255',
             'gender' => 'nullable|string|max:20',
             'race' => 'nullable|string|max:50',
+            'cula_code' => 'nullable|string|max:50',
+            'cula_display_label' => 'nullable|string|max:255',
         ]);
 
         $identityNumber = $validated['no_kp'] ?? $validated['old_ic'] ?? '';

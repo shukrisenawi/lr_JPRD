@@ -27,15 +27,22 @@ function ListIcon({ className = 'h-5 w-5' }) {
     );
 }
 
-function FormTab({ dms, localitiesByDm }) {
+function FormTab({ dms, localitiesByDm, culaCodes }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', no_kp: '', old_ic: '', phone_mobile: '', phone_home: '',
         address: '', dm: '', locality: '', gender: '', race: '',
+        cula_code: '', cula_display_label: '',
     });
 
     const filteredLocalities = useMemo(() => {
         return data.dm ? (localitiesByDm[data.dm] ?? []) : [];
     }, [data.dm, localitiesByDm]);
+
+    const handleCulaChange = (value) => {
+        const match = culaCodes.find(c => c.cula_code === value);
+        setData('cula_code', value);
+        setData('cula_display_label', match ? match.cula_display_label : '');
+    };
 
     const handleDmChange = (value) => {
         setData('dm', value);
@@ -144,6 +151,16 @@ function FormTab({ dms, localitiesByDm }) {
                 </div>
             </div>
 
+            <div>
+                <label className="label-field" htmlFor="cula_code">Kod Cula</label>
+                <select id="cula_code" value={data.cula_code} onChange={e => handleCulaChange(e.target.value)}
+                    className="input-field w-full mt-1">
+                    <option value="">-- Pilih Kod Cula --</option>
+                    {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
+                </select>
+                {errors.cula_code && <p className="mt-1 text-xs font-bold text-rose-500">{errors.cula_code}</p>}
+            </div>
+
             <div className="flex items-center gap-3 pt-2">
                 <button type="submit" disabled={processing}
                     className="btn-primary inline-flex items-center gap-2">
@@ -165,7 +182,7 @@ function DetailModal({ voter, onClose }) {
         ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
         ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['Alamat', voter.address || '-'], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
-        ['Jantina', voter.gender || '-'], ['Bangsa', voter.race || '-'],
+        ['Kod Cula', voter.cula_code || '-'], ['Jantina', voter.gender || '-'], ['Bangsa', voter.race || '-'],
         ['Tarikh Daftar', voter.created_at ? new Date(voter.created_at).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'],
     ];
     return (
@@ -190,7 +207,7 @@ function DetailModal({ voter, onClose }) {
     );
 }
 
-function EditModal({ voter, dms, localitiesByDm, onClose }) {
+function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
     const { data, setData, put, processing, errors } = useForm({
         name: voter.name || '',
         no_kp: voter.no_kp || '',
@@ -202,6 +219,7 @@ function EditModal({ voter, dms, localitiesByDm, onClose }) {
         locality: voter.locality || '',
         gender: voter.gender || '',
         race: voter.race || '',
+        cula_code: voter.cula_code || '',
     });
 
     const filteredLocalities = useMemo(() => {
@@ -300,6 +318,13 @@ function EditModal({ voter, dms, localitiesByDm, onClose }) {
                             </select>
                         </div>
                     </div>
+                    <div>
+                        <label className="label-field">Kod Cula</label>
+                        <select value={data.cula_code} onChange={e => setData('cula_code', e.target.value)} className="input-field w-full mt-1">
+                            <option value="">-- Pilih Kod Cula --</option>
+                            {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
+                        </select>
+                    </div>
                     <div className="flex justify-end gap-2 pt-2">
                         <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
                         <button type="submit" disabled={processing} className="btn-primary text-xs">{processing ? 'Menyimpan...' : 'Simpan'}</button>
@@ -310,7 +335,7 @@ function EditModal({ voter, dms, localitiesByDm, onClose }) {
     );
 }
 
-function SenaraiTab({ manualVoters, dms, localitiesByDm }) {
+function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
     const [detailVoter, setDetailVoter] = useState(null);
     const [editVoter, setEditVoter] = useState(null);
 
@@ -334,7 +359,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm }) {
     return (
         <>
             {detailVoter && <DetailModal voter={detailVoter} onClose={() => setDetailVoter(null)} />}
-            {editVoter && <EditModal voter={editVoter} dms={dms} localitiesByDm={localitiesByDm} onClose={() => setEditVoter(null)} />}
+            {editVoter && <EditModal voter={editVoter} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} onClose={() => setEditVoter(null)} />}
 
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
@@ -344,6 +369,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm }) {
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Nama</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">No. K/P (Baru)</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Tel. Bimbit</th>
+                                <th className="px-3 py-2.5 font-bold text-slate-600">Kod Cula</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">UDM</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Lokaliti</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Tindakan</th>
@@ -352,7 +378,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm }) {
                         <tbody>
                             {manualVoters.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="px-3 py-8 text-center text-sm text-slate-500">
+                                    <td colSpan="7" className="px-3 py-8 text-center text-sm text-slate-500">
                                         Tiada pemilih manual lagi.
                                     </td>
                                 </tr>
@@ -362,6 +388,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm }) {
                                         <td className="px-3 py-2.5 font-semibold text-slate-800">{voter.name}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.no_kp || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.phone_mobile || '-'}</td>
+                                        <td className="px-3 py-2.5 text-slate-600">{voter.cula_code || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.dm || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.locality || '-'}</td>
                                         <td className="px-3 py-2.5">
@@ -401,7 +428,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm }) {
 }
 
 export default function TambahPemilih() {
-    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] } } = usePage().props;
+    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] }, culaCodes = [] } = usePage().props;
     const [tab, setTab] = useState('tambah');
 
     const tabs = [
@@ -432,8 +459,8 @@ export default function TambahPemilih() {
                     })}
                 </div>
 
-                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} />}
-                {tab === 'senarai' && <SenaraiTab manualVoters={manualVoters} dms={dms} localitiesByDm={localitiesByDm} />}
+                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} />}
+                {tab === 'senarai' && <SenaraiTab manualVoters={manualVoters} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} />}
             </div>
         </AuthenticatedLayout>
     );
