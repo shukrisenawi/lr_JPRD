@@ -1,6 +1,6 @@
 import { Transition } from '@headlessui/react';
 import { Link } from '@inertiajs/react';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 const DropDownContext = createContext();
 
@@ -21,7 +21,10 @@ const Trigger = ({ children }) => {
     useEffect(() => {
         if (!open) return;
         const handleClick = (e) => {
-            if (triggerRef.current && !triggerRef.current.contains(e.target)) {
+            const contentEl = triggerRef.current?.closest('.relative')?.querySelector('[data-dropdown-content]');
+            const clickedInsideTrigger = triggerRef.current?.contains(e.target);
+            const clickedInsideContent = contentEl?.contains(e.target);
+            if (!clickedInsideTrigger && !clickedInsideContent) {
                 setOpen(false);
             }
         };
@@ -41,7 +44,7 @@ const Content = ({ align = 'right', contentClasses = '', widthClasses = 'w-44', 
         : 'ltr:origin-top-right rtl:origin-top-left end-0';
     return (
         <Transition show={open} enter="transition ease-out duration-150" enterFrom="opacity-0 scale-95" enterTo="opacity-100 scale-100" leave="transition ease-in duration-100" leaveFrom="opacity-100 scale-100" leaveTo="opacity-0 scale-95">
-            <div className={`absolute z-50 mt-1.5 ${alignmentClasses} ${widthClasses}`}>
+            <div data-dropdown-content className={`absolute z-50 mt-1.5 ${alignmentClasses} ${widthClasses}`}>
                 <div className={`overflow-hidden rounded-xl border border-green-200 bg-white shadow-lg shadow-green-900/5 ` + contentClasses}>
                     {children}
                 </div>
