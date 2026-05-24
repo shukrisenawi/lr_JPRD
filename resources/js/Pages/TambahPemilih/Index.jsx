@@ -62,7 +62,7 @@ export default function TambahPemilih() {
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                            <label className="label-field" htmlFor="no_kp">No. K/P (Baru)</label>
+                            <label className="label-field" htmlFor="no_kp">No. K/P (Baru) <span className="text-rose-500">*</span></label>
                             <input id="no_kp" type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)}
                                 className="input-field w-full mt-1" placeholder="900101025555" />
                             {errors.no_kp && <p className="mt-1 text-xs font-bold text-rose-500">{errors.no_kp}</p>}
