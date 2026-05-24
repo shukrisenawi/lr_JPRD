@@ -12,7 +12,32 @@ class TambahPemilihController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('TambahPemilih/Index');
+        $dms = PemilihRecord::whereNotNull('dm')
+            ->where('dm', '!=', '-')
+            ->where('status', 'aktif')
+            ->select('dm')
+            ->distinct()
+            ->orderBy('dm')
+            ->pluck('dm')
+            ->toArray();
+
+        $localitiesByDm = [];
+        foreach ($dms as $dm) {
+            $localitiesByDm[$dm] = PemilihRecord::where('dm', $dm)
+                ->whereNotNull('locality')
+                ->where('locality', '!=', '-')
+                ->where('status', 'aktif')
+                ->select('locality')
+                ->distinct()
+                ->orderBy('locality')
+                ->pluck('locality')
+                ->toArray();
+        }
+
+        return Inertia::render('TambahPemilih/Index', [
+            'dms' => $dms,
+            'localitiesByDm' => $localitiesByDm,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useMemo } from 'react';
 import Swal from 'sweetalert2';
 
 function UserPlusIcon({ className = 'h-5 w-5' }) {
@@ -15,6 +15,7 @@ function UserPlusIcon({ className = 'h-5 w-5' }) {
 }
 
 export default function TambahPemilih() {
+    const { dms = [], localitiesByDm = {} } = usePage().props;
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         no_kp: '',
@@ -28,6 +29,10 @@ export default function TambahPemilih() {
         race: '',
     });
 
+    const filteredLocalities = useMemo(() => {
+        return data.dm ? (localitiesByDm[data.dm] ?? []) : [];
+    }, [data.dm, localitiesByDm]);
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('success') === '1') {
@@ -36,6 +41,11 @@ export default function TambahPemilih() {
             window.history.replaceState({}, '', window.location.pathname);
         }
     }, []);
+
+    const handleDmChange = (value) => {
+        setData('dm', value);
+        setData('locality', '');
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -100,14 +110,20 @@ export default function TambahPemilih() {
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                             <label className="label-field" htmlFor="dm">UDM / DM</label>
-                            <input id="dm" type="text" value={data.dm} onChange={e => setData('dm', e.target.value)}
-                                className="input-field w-full mt-1" placeholder="Nama UDM" />
+                            <select id="dm" value={data.dm} onChange={e => handleDmChange(e.target.value)}
+                                className="input-field w-full mt-1">
+                                <option value="">-- Pilih UDM --</option>
+                                {dms.map(dm => <option key={dm} value={dm}>{dm}</option>)}
+                            </select>
                             {errors.dm && <p className="mt-1 text-xs font-bold text-rose-500">{errors.dm}</p>}
                         </div>
                         <div>
                             <label className="label-field" htmlFor="locality">Lokaliti</label>
-                            <input id="locality" type="text" value={data.locality} onChange={e => setData('locality', e.target.value)}
-                                className="input-field w-full mt-1" placeholder="Nama lokaliti" />
+                            <select id="locality" value={data.locality} onChange={e => setData('locality', e.target.value)}
+                                className="input-field w-full mt-1" disabled={!data.dm}>
+                                <option value="">{data.dm ? '-- Pilih Lokaliti --' : '-- Pilih UDM dahulu --'}</option>
+                                {filteredLocalities.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+                            </select>
                             {errors.locality && <p className="mt-1 text-xs font-bold text-rose-500">{errors.locality}</p>}
                         </div>
                     </div>
