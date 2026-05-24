@@ -645,6 +645,8 @@ class ProgramController extends Controller
             'color' => ['nullable', 'string', 'max:50'],
         ]);
 
+        $validated['name'] = strtolower($validated['name']);
+
         $program->subPrograms()->create($validated);
 
         return redirect()
@@ -666,6 +668,8 @@ class ProgramController extends Controller
             ],
             'color' => ['nullable', 'string', 'max:50'],
         ]);
+
+        $validated['name'] = strtolower($validated['name']);
 
         $subProgram->update($validated);
 

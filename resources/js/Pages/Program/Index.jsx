@@ -372,11 +372,16 @@ function SubProgramSection({ program, canEdit }) {
 
     const addSub = (e) => {
         e.preventDefault();
-        if (!newName.trim() || adding) return;
+        const name = newName.trim().toLowerCase();
+        if (!name || adding) return;
+        if (items.some((sp) => sp.name === name)) {
+            setErrorMsg('Sub program sudah wujud.');
+            return;
+        }
         setErrorMsg('');
         setAdding(true);
         router.post(route('program.sub-programs.store', program.id), {
-            name: newName.trim(),
+            name,
         }, {
             preserveScroll: true,
             onSuccess: () => { setNewName(''); setErrorMsg(''); },
@@ -393,10 +398,15 @@ function SubProgramSection({ program, canEdit }) {
 
     const saveEdit = (spId) => {
         if (!editName.trim() || savingEdit) return;
+        const name = editName.trim().toLowerCase();
+        if (items.some((sp) => sp.name === name && sp.id !== spId)) {
+            setErrorMsg('Sub program sudah wujud.');
+            return;
+        }
         setErrorMsg('');
         setSavingEdit(true);
         router.put(route('program.sub-programs.update', spId), {
-            name: editName.trim(),
+            name,
         }, {
             preserveScroll: true,
             onSuccess: () => { setEditingId(null); setEditName(''); setErrorMsg(''); },
@@ -420,9 +430,13 @@ function SubProgramSection({ program, canEdit }) {
             <h3 className="mt-0.5 text-sm font-bold text-slate-800">{items.length} sub program</h3>
             {canEdit && (
                 <form onSubmit={addSub} className="mt-2 flex gap-2">
-                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
+                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value.toLowerCase())}
                         placeholder="Nama sub program..."
-                        className="input-field flex-1 py-1 text-xs" />
+                        className="input-field flex-1 py-1 text-xs"
+                        list="sub-program-list" />
+                    <datalist id="sub-program-list">
+                        {items.map((sp) => <option key={sp.id} value={sp.name} />)}
+                    </datalist>
                     <button type="submit" disabled={adding || !newName.trim()}
                         className="btn-emerald shrink-0 text-xs">
                         <PlusIcon className="h-3.5 w-3.5" />
@@ -436,8 +450,9 @@ function SubProgramSection({ program, canEdit }) {
                         <div key={sp.id} className="group flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 shadow-sm">
                             {editingId === sp.id ? (
                                 <>
-                                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
-                                        className="w-24 rounded border border-slate-300 px-1 py-0.5 text-xs" autoFocus />
+                                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value.toLowerCase())}
+                                        className="w-24 rounded border border-slate-300 px-1 py-0.5 text-xs" autoFocus
+                                        list="sub-program-edit-list" />
                                     <button onClick={() => saveEdit(sp.id)} className="text-[10px] font-bold text-green-700 hover:text-green-500">Simpan</button>
                                     <button onClick={() => { setEditingId(null); setEditName(''); }} className="text-[10px] font-bold text-slate-500 hover:text-slate-400">Batal</button>
                                 </>
