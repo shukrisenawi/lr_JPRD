@@ -161,7 +161,7 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
                 {errors.cula_code && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.cula_code}</p>}
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center justify-center gap-3 pt-1">
                 <button type="submit" disabled={processing}
                     className="btn-primary inline-flex items-center gap-2">
                     <UserPlusIcon className="h-4 w-4" />
