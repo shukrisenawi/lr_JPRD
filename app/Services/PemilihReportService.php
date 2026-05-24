@@ -197,10 +197,24 @@ class PemilihReportService
         $identityNumbers = array_values(array_filter(array_column($voters, 'identity_number')));
 
         foreach ($voters as $voter) {
-            PemilihRecord::query()->updateOrCreate(
+            $record = PemilihRecord::query()->updateOrCreate(
                 ['identity_number' => $voter['identity_number']],
                 $voter,
             );
+
+            if ($record->no_kp || $record->old_ic) {
+                \App\Models\ProgramAttendee::query()
+                    ->where(function ($q) use ($record) {
+                        $q->where('no_kp', $record->no_kp);
+                        if ($record->old_ic) {
+                            $q->orWhere('old_ic', $record->old_ic);
+                        }
+                    })
+                    ->update([
+                        'cula_code' => $record->cula_code,
+                        'cula_display_label' => $record->cula_display_label,
+                    ]);
+            }
         }
 
         if ($identityNumbers === []) {
