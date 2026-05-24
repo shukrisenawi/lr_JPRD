@@ -55,6 +55,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/jawatankuasa/memberships/{membership}', [CommitteeController::class, 'destroyMembership'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.memberships.destroy');
     Route::get('/tambah-pemilih', [TambahPemilihController::class, 'index'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.index');
     Route::post('/tambah-pemilih', [TambahPemilihController::class, 'store'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.store');
+    Route::put('/tambah-pemilih/{pemilihRecord}', [TambahPemilihController::class, 'update'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.update');
+    Route::delete('/tambah-pemilih/{pemilihRecord}', [TambahPemilihController::class, 'destroy'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.destroy');
 
     Route::get('/group-pemilih', [GroupPemilihController::class, 'index'])->middleware('module:group-pemilih')->name('group-pemilih.index');
     Route::post('/group-pemilih', [GroupPemilihController::class, 'store'])->middleware('module:group-pemilih')->name('group-pemilih.store');

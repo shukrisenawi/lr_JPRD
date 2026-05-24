@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PemilihRecord;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -87,6 +88,46 @@ class TambahPemilihController extends Controller
         $validated['is_manual'] = true;
 
         PemilihRecord::create($validated);
+
+        return redirect()->route('tambah-pemilih.index');
+    }
+
+    public function update(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
+    {
+        if (!$pemilihRecord->is_manual) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'no_kp' => 'nullable|string|max:20',
+            'old_ic' => 'nullable|string|max:20',
+            'phone_mobile' => 'nullable|string|max:20',
+            'phone_home' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'dm' => 'nullable|string|max:255',
+            'locality' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:20',
+            'race' => 'nullable|string|max:50',
+        ]);
+
+        $identityNumber = $validated['no_kp'] ?? $validated['old_ic'] ?? '';
+        if ($identityNumber !== '') {
+            $validated['identity_number'] = $identityNumber;
+        }
+
+        $pemilihRecord->update($validated);
+
+        return redirect()->route('tambah-pemilih.index');
+    }
+
+    public function destroy(PemilihRecord $pemilihRecord): RedirectResponse
+    {
+        if (!$pemilihRecord->is_manual) {
+            abort(403);
+        }
+
+        $pemilihRecord->delete();
 
         return redirect()->route('tambah-pemilih.index');
     }
