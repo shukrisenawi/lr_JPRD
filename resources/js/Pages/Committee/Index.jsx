@@ -241,7 +241,7 @@ function PositionManager({ positions }) {
                                 Belum ada jenis jawatan.
                             </div>
                         ) : (
-                            <div className="grid gap-2 sm:grid-cols-2">
+                            <div className="grid gap-2" style={{ gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.ceil(sortedPositions.length / 2)}, auto)` }}>
                                 {sortedPositions.map((position) => (
                                     <SortablePositionRow
                                         key={position.id}
