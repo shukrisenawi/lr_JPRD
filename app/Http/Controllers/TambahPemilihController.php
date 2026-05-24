@@ -65,7 +65,19 @@ class TambahPemilihController extends Controller
             return back()->withErrors(['no_kp' => 'No. KP Baru atau No. KP Lama wajib diisi.'])->withInput();
         }
 
-        $exists = PemilihRecord::where('identity_number', $identityNumber)->exists();
+        $exists = PemilihRecord::where(function ($q) use ($validated) {
+            if (!empty($validated['no_kp'])) {
+                $q->where('identity_number', $validated['no_kp'])
+                  ->orWhere('no_kp', $validated['no_kp'])
+                  ->orWhere('old_ic', $validated['no_kp']);
+            }
+            if (!empty($validated['old_ic'])) {
+                $q->orWhere('identity_number', $validated['old_ic'])
+                  ->orWhere('no_kp', $validated['old_ic'])
+                  ->orWhere('old_ic', $validated['old_ic']);
+            }
+        })->exists();
+
         if ($exists) {
             return back()->withErrors(['no_kp' => 'Pemilih dengan no. IC ini sudah wujud dalam sistem.'])->withInput();
         }
