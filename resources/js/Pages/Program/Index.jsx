@@ -530,7 +530,16 @@ function SearchVoterPanel({ selectedProgram }) {
     const [q, setQ] = useState(''); const [suggestions, setSuggestions] = useState([]); const [searching, setSearching] = useState(false);
     const [selected, setSelected] = useState(null); const [err, setErr] = useState(''); const [adding, setAdding] = useState(false);
     const [selectedSubIds, setSelectedSubIds] = useState([]);
+    const [subEditorAttendee, setSubEditorAttendee] = useState(null);
     const ac = useRef(null); const rid = useRef(0);
+
+    const attendeeByVoterId = useMemo(() => {
+        const map = {};
+        (selectedProgram?.attendees ?? []).forEach((a) => {
+            if (a.voter_id) map[a.voter_id] = a;
+        });
+        return map;
+    }, [selectedProgram?.attendees]);
 
     const existingVoterIds = useMemo(() => {
         const ids = new Set();
@@ -602,12 +611,22 @@ function SearchVoterPanel({ selectedProgram }) {
                             <div className="absolute left-0 right-0 top-full z-40 mt-1.5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md">
                                 {searching ? <div className="px-2.5 py-1.5 text-xs font-medium text-slate-500">Mencari...</div> : suggestions.map((v) => {
                                     const alreadyAdded = isAlreadyAdded(v);
+                                    const hasSubs = selectedProgram?.sub_programs?.length > 0;
+                                    const clickable = !alreadyAdded || (alreadyAdded && hasSubs);
                                     return (
-                                        <button key={v.id} disabled={alreadyAdded} onClick={() => !alreadyAdded && pick(v)} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition last:border-b-0 ${alreadyAdded ? 'cursor-not-allowed bg-slate-50 opacity-60' : 'hover:bg-green-50'}`}>
+                                        <button key={v.id} disabled={!clickable} onClick={() => {
+                                            if (alreadyAdded && hasSubs) {
+                                                const vid = v.voter_id ?? v.id;
+                                                const att = attendeeByVoterId[vid];
+                                                if (att) setSubEditorAttendee(att);
+                                            } else if (!alreadyAdded) {
+                                                pick(v);
+                                            }
+                                        }} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition last:border-b-0 ${alreadyAdded ? (hasSubs ? 'cursor-pointer bg-indigo-50 opacity-100 hover:bg-indigo-100' : 'cursor-not-allowed bg-slate-50 opacity-60') : 'hover:bg-green-50'}`}>
                                             <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
                                             <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">IC: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
                                             <div className="min-w-0 text-left">
-                                                <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? (selectedProgram?.sub_programs?.length > 0 ? 'Klik Sub untuk sub program' : 'Pemilih ini telah dipilih') : (v.dm || '-')}</p>
+                                                <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? (hasSubs ? 'Klik Sub untuk sub program' : 'Pemilih ini telah dipilih') : (v.dm || '-')}</p>
                                                 <p className="truncate text-xs font-medium text-slate-500">{alreadyAdded ? '' : (v.locality || '-')}</p>
                                             </div>
                                             {alreadyAdded ? <span className="text-[10px] font-bold text-slate-400">✓</span> : <ChevronRightIcon className="h-3 w-3 text-slate-400" />}
@@ -623,6 +642,7 @@ function SearchVoterPanel({ selectedProgram }) {
             <VoterDetailCard voter={selected} onAdd={add} adding={adding}
                 subPrograms={selectedProgram?.sub_programs ?? []}
                 selectedSubIds={selectedSubIds} onToggleSub={toggleSub} />
+            <AttendeeSubProgramEditor attendee={subEditorAttendee} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSubEditorAttendee(null)} />
         </div>
     );
 }
