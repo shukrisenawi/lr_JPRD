@@ -533,12 +533,15 @@ function SearchVoterPanel({ selectedProgram }) {
     const [subEditorAttendee, setSubEditorAttendee] = useState(null);
     const ac = useRef(null); const rid = useRef(0);
 
-    const attendeeByVoterId = useMemo(() => {
-        const map = {};
+    const attendeeLookup = useMemo(() => {
+        const byVoterId = {};
+        const byIc = {};
         (selectedProgram?.attendees ?? []).forEach((a) => {
-            if (a.voter_id) map[a.voter_id] = a;
+            if (a.voter_id) byVoterId[a.voter_id] = a;
+            if (a.no_kp) byIc[a.no_kp] = a;
+            if (a.old_ic) byIc[a.old_ic] = a;
         });
-        return map;
+        return (voter) => byVoterId[voter.voter_id ?? voter.id] ?? byIc[voter.no_kp] ?? byIc[voter.old_ic] ?? null;
     }, [selectedProgram?.attendees]);
 
     const existingVoterIds = useMemo(() => {
@@ -616,8 +619,7 @@ function SearchVoterPanel({ selectedProgram }) {
                                     return (
                                         <button key={v.id} disabled={!clickable} onClick={() => {
                                             if (alreadyAdded && hasSubs) {
-                                                const vid = v.voter_id ?? v.id;
-                                                const att = attendeeByVoterId[vid];
+                                                const att = attendeeLookup(v);
                                                 if (att) setSubEditorAttendee(att);
                                             } else if (!alreadyAdded) {
                                                 pick(v);
