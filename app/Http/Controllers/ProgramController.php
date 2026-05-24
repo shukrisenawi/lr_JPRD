@@ -736,6 +736,11 @@ class ProgramController extends Controller
 
     private function accessibleProgramsQuery(int $userId): Builder
     {
+        $user = request()->user();
+        if ($user->isMasterAdmin()) {
+            return Program::query();
+        }
+
         return Program::query()->where(function (Builder $query) use ($userId) {
             $query->where('user_id', $userId)
                 ->orWhereHas('sharedUsers', fn (Builder $sharedQuery) => $sharedQuery->whereKey($userId));
@@ -744,6 +749,11 @@ class ProgramController extends Controller
 
     private function ensureAccessible(int $userId, Program $program): void
     {
+        $user = request()->user();
+        if ($user->isMasterAdmin()) {
+            return;
+        }
+
         abort_unless(
             (int) $program->user_id === $userId || $program->sharedUsers()->whereKey($userId)->exists(),
             403,
