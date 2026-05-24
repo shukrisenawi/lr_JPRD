@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import Swal from 'sweetalert2';
 
 function UserPlusIcon({ className = 'h-5 w-5' }) {
@@ -15,7 +15,8 @@ function UserPlusIcon({ className = 'h-5 w-5' }) {
 }
 
 export default function TambahPemilih() {
-    const { dms = [], localitiesByDm = {} } = usePage().props;
+    const { dms = [], localitiesByDm = {}, flash } = usePage().props;
+    const prevFlash = useRef(null);
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         no_kp: '',
@@ -34,13 +35,12 @@ export default function TambahPemilih() {
     }, [data.dm, localitiesByDm]);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('success') === '1') {
-            Swal.fire({ icon: 'success', title: 'Berjaya', text: 'Pemilih manual berjaya ditambah.', timer: 2000, showConfirmButton: false });
+        if (flash?.success && flash.success !== prevFlash.current) {
+            prevFlash.current = flash.success;
+            Swal.fire({ icon: 'success', title: 'Berjaya', text: flash.success, timer: 2000, showConfirmButton: false });
             reset();
-            window.history.replaceState({}, '', window.location.pathname);
         }
-    }, []);
+    }, [flash?.success]);
 
     const handleDmChange = (value) => {
         setData('dm', value);
