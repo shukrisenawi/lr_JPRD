@@ -628,7 +628,7 @@ function SearchVoterPanel({ selectedProgram }) {
                                             <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
                                             <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">IC: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
                                             <div className="min-w-0 text-left">
-                                                <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? (hasSubs ? 'Klik Sub untuk sub program' : 'Pemilih ini telah dipilih') : (v.dm || '-')}</p>
+                                                <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? (hasSubs ? 'Klik untuk tambah sub program' : 'Pemilih ini telah dipilih') : (v.dm || '-')}</p>
                                                 <p className="truncate text-xs font-medium text-slate-500">{alreadyAdded ? '' : (v.locality || '-')}</p>
                                             </div>
                                             {alreadyAdded ? <span className="text-[10px] font-bold text-slate-400">✓</span> : <ChevronRightIcon className="h-3 w-3 text-slate-400" />}
