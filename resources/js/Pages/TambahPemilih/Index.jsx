@@ -337,6 +337,11 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
 }
 
 function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
+    const { auth } = usePage().props;
+    const currentUser = auth.user;
+    const isMasterAdmin = currentUser.role?.is_master_admin === true;
+    const canModify = (voter) => isMasterAdmin || voter.created_by === currentUser.id;
+
     const [detailVoter, setDetailVoter] = useState(null);
     const [editVoter, setEditVoter] = useState(null);
 
@@ -398,10 +403,14 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                                             <div className="flex gap-1">
                                                 <button onClick={() => setDetailVoter(voter)}
                                                     className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-100">Detail</button>
-                                                <button onClick={() => setEditVoter(voter)}
-                                                    className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-amber-600 transition hover:bg-amber-50">Edit</button>
-                                                <button onClick={() => confirmDelete(voter)}
-                                                    className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
+                                                {canModify(voter) && (
+                                                    <>
+                                                        <button onClick={() => setEditVoter(voter)}
+                                                            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-amber-600 transition hover:bg-amber-50">Edit</button>
+                                                        <button onClick={() => confirmDelete(voter)}
+                                                            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

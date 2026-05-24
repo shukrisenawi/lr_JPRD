@@ -48,11 +48,8 @@ class TambahPemilihController extends Controller
             ->get()
             ->toArray();
 
-        $query = PemilihRecord::where('is_manual', true);
-        if (!$this->isMasterAdmin($request)) {
-            $query->where('created_by', $request->user()->id);
-        }
-        $manualVoters = $query->with('creator:id,name')
+        $manualVoters = PemilihRecord::where('is_manual', true)
+            ->with('creator:id,name')
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
