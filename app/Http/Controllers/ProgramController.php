@@ -645,7 +645,7 @@ class ProgramController extends Controller
             'color' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $validated['name'] = strtolower($validated['name']);
+        $validated['name'] = strtolower(preg_replace('/\s+/', '_', $validated['name']));
 
         $program->subPrograms()->create($validated);
 
@@ -669,7 +669,7 @@ class ProgramController extends Controller
             'color' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $validated['name'] = strtolower($validated['name']);
+        $validated['name'] = strtolower(preg_replace('/\s+/', '_', $validated['name']));
 
         $subProgram->update($validated);
 

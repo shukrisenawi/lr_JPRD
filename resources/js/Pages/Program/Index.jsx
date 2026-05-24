@@ -372,7 +372,7 @@ function SubProgramSection({ program, canEdit }) {
 
     const addSub = (e) => {
         e.preventDefault();
-        const name = newName.trim().toLowerCase();
+        const name = newName.trim().toLowerCase().replace(/\s+/g, '_');
         if (!name || adding) return;
         if (items.some((sp) => sp.name === name)) {
             setErrorMsg('Sub program sudah wujud.');
@@ -398,7 +398,7 @@ function SubProgramSection({ program, canEdit }) {
 
     const saveEdit = (spId) => {
         if (!editName.trim() || savingEdit) return;
-        const name = editName.trim().toLowerCase();
+        const name = editName.trim().toLowerCase().replace(/\s+/g, '_');
         if (items.some((sp) => sp.name === name && sp.id !== spId)) {
             setErrorMsg('Sub program sudah wujud.');
             return;
@@ -430,7 +430,7 @@ function SubProgramSection({ program, canEdit }) {
             <h3 className="mt-0.5 text-sm font-bold text-slate-800">{items.length} sub program</h3>
             {canEdit && (
                 <form onSubmit={addSub} className="mt-2 flex gap-2">
-                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value.toLowerCase())}
+                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                         placeholder="Nama sub program..."
                         className="input-field flex-1 py-1 text-xs"
                         list="sub-program-list" />
@@ -450,7 +450,7 @@ function SubProgramSection({ program, canEdit }) {
                         <div key={sp.id} className="group flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 shadow-sm">
                             {editingId === sp.id ? (
                                 <>
-                                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value.toLowerCase())}
+                                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                                         className="w-24 rounded border border-slate-300 px-1 py-0.5 text-xs" autoFocus
                                         list="sub-program-edit-list" />
                                     <button onClick={() => saveEdit(sp.id)} className="text-[10px] font-bold text-green-700 hover:text-green-500">Simpan</button>
