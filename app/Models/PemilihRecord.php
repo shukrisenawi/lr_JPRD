@@ -24,7 +24,15 @@ class PemilihRecord extends Model
         'phone_mobile',
         'status',
         'source_file',
+        'is_manual',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_manual' => 'boolean',
+        ];
+    }
 
     public function committeeMemberships(): HasMany
     {

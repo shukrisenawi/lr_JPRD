@@ -66,8 +66,10 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
                     <h3 className="truncate text-sm font-bold uppercase leading-tight text-slate-800">{voter.name}</h3>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                    <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
-                    <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
+                    {!voter.is_manual && <>
+                        <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
+                        <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
+                    </>}
                     <button onClick={onClear} className="rounded-md bg-slate-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-500">Buang</button>
                 </div>
             </div>

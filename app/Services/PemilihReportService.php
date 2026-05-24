@@ -183,6 +183,7 @@ class PemilihReportService
                     'cula_code' => $record->cula_code,
                     'cula_display_label' => $record->cula_display_label,
                     'address' => $record->address,
+                    'is_manual' => $record->is_manual,
                 ];
             })
             ->all();
@@ -791,6 +792,7 @@ class PemilihReportService
                 'phone_mobile' => $this->nullableLabel($this->cleanDigits($row['Tel. Bimbit'] ?? '')),
                 'status' => 'aktif',
                 'source_file' => $sourceFile,
+                'is_manual' => false,
             ];
         }
 

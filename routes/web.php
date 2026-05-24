@@ -11,6 +11,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\TambahPemilihController;
 use App\Http\Controllers\SheetPageController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/jawatankuasa/positions/{position}', [CommitteeController::class, 'destroyPosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.destroy');
     Route::post('/jawatankuasa/memberships', [CommitteeController::class, 'storeMembership'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.memberships.store');
     Route::delete('/jawatankuasa/memberships/{membership}', [CommitteeController::class, 'destroyMembership'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.memberships.destroy');
+    Route::get('/tambah-pemilih', [TambahPemilihController::class, 'index'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.index');
+    Route::post('/tambah-pemilih', [TambahPemilihController::class, 'store'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.store');
+
     Route::get('/group-pemilih', [GroupPemilihController::class, 'index'])->middleware('module:group-pemilih')->name('group-pemilih.index');
     Route::post('/group-pemilih', [GroupPemilihController::class, 'store'])->middleware('module:group-pemilih')->name('group-pemilih.store');
     Route::put('/group-pemilih/{group}', [GroupPemilihController::class, 'update'])->middleware('module:group-pemilih')->name('group-pemilih.update');
