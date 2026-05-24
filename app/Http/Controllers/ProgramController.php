@@ -80,6 +80,13 @@ class ProgramController extends Controller
                     ->values();
             });
 
+        $subProgramCounts = $attendeePrograms->map(function ($entries) {
+            return $entries
+                ->flatMap(fn ($entry) => $entry['sub_programs'])
+                ->countBy()
+                ->all();
+        });
+
         $selectedProgramId = (int) $request->query('program', 0);
         $selectedProgram = $programs->firstWhere('id', $selectedProgramId);
 
@@ -190,6 +197,7 @@ class ProgramController extends Controller
                             'committee_badges' => $committeeBadges->get($attendee->id, []),
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),
                             'sub_program_ids' => $attendee->subPrograms->pluck('id')->all(),
+                            'sub_program_counts' => $subProgramCounts->get($attendee->voter_id, []),
                             'attended_at' => $attendee->attended_at?->format('d-m-Y h:i A'),
                             'is_marked' => $culaWorkItems->has($icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null),
                             'marked_by_name' => $culaWorkItems->get($icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null)?->marker?->name,
