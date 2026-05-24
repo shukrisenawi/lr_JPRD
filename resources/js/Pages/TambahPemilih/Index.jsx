@@ -444,8 +444,8 @@ export default function TambahPemilih() {
     const [tab, setTab] = useState('tambah');
 
     const tabs = [
-        { key: 'tambah', label: 'Tambah Pemilih', icon: UserPlusIcon },
-        { key: 'senarai', label: 'Senarai Pemilih Manual', icon: ListIcon },
+        { key: 'tambah', label: 'Tambah Pemilih', desc: 'Daftar pemilih baru secara manual.', icon: UserPlusIcon },
+        { key: 'senarai', label: 'Senarai Pemilih Manual', desc: 'Lihat, edit dan padam pemilih manual.', icon: ListIcon },
     ];
 
     return (
@@ -458,14 +458,19 @@ export default function TambahPemilih() {
         }>
             <Head title="Pemilih Manual" />
             <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-                <div className="mb-4 flex gap-1 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+                <div className="mb-4 grid gap-2 sm:grid-cols-2">
                     {tabs.map(t => {
                         const Icon = t.icon;
                         return (
-                            <button key={t.key} onClick={() => setTab(t.key)}
-                                className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition ${tab === t.key ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}>
-                                <Icon className="h-4 w-4" />
-                                {t.label}
+                            <button key={t.key} type="button" onClick={() => setTab(t.key)}
+                                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${tab === t.key ? 'border-green-300 bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-md' : 'border-green-200 bg-white text-slate-700 hover:border-green-300 hover:bg-green-50'}`}>
+                                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${tab === t.key ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
+                                    <Icon className="h-5 w-5" />
+                                </span>
+                                <span>
+                                    <span className={`block text-xs font-bold uppercase tracking-wider ${tab === t.key ? 'text-white' : 'text-green-700'}`}>{t.label}</span>
+                                    <span className={`mt-0.5 block text-xs ${tab === t.key ? 'text-green-100' : 'text-slate-500'}`}>{t.desc}</span>
+                                </span>
                             </button>
                         );
                     })}
