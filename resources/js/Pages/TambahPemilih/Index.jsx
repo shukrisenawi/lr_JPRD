@@ -406,7 +406,7 @@ export default function TambahPemilih() {
 
     const tabs = [
         { key: 'tambah', label: 'Tambah Pemilih', icon: UserPlusIcon },
-        { key: 'senarai', label: 'Senarai Pemilih', icon: ListIcon },
+        { key: 'senarai', label: 'Senarai Pemilih Manual', icon: ListIcon },
     ];
 
     return (
