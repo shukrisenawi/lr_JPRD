@@ -564,12 +564,12 @@ function AttendeeSubProgramEditor({ attendee, subPrograms, onClose }) {
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
                             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                         </div>
-                        <p className="text-sm font-bold text-slate-800">Sub Program</p>
+                        <p className="text-sm font-bold text-white">Sub Program</p>
                     </div>
-                    <button onClick={onClose} className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"><svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                    <button onClick={onClose} className="rounded-md p-1 text-slate-400 transition hover:bg-slate-700 hover:text-white"><svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
                 {attendee && (
-                    <p className="mt-2 text-xs text-slate-500">Untuk: <span className="font-bold text-slate-700">{attendee.voter?.name ?? attendee.name ?? '-'}</span></p>
+                    <p className="mt-2 text-xs text-slate-400">Untuk: <span className="font-bold text-slate-200">{attendee.voter?.name ?? attendee.name ?? '-'}</span></p>
                 )}
                 <div className="mt-4 space-y-2">
                     {(!subPrograms || subPrograms.length === 0) ? (
