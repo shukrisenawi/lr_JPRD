@@ -175,8 +175,11 @@ class CulaanController extends Controller
             && count($filters['cula_codes']) > 0;
 
         $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where(function (Builder $builder) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
+            ->where('status', 'aktif');
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        $query->where(function (Builder $builder) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
                 if ($groupKodCulas !== null) {
                     $builder->whereIn('cula_code', $groupKodCulas);
                 } elseif ($usingCustomCulaCodes) {
@@ -257,10 +260,14 @@ class CulaanController extends Controller
 
     private function availableUdms(): array
     {
-        return PemilihRecord::query()
+        $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->whereNotNull('dm')
-            ->where('dm', '!=', '')
+            ->where('dm', '!=', '');
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        return $query
             ->select('dm')
             ->distinct()
             ->orderBy('dm')
@@ -275,11 +282,15 @@ class CulaanController extends Controller
             return [];
         }
 
-        $localities = PemilihRecord::query()
+        $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->when($udm !== '', fn (Builder $builder) => $builder->where('dm', $udm))
             ->whereNotNull('locality')
-            ->where('locality', '!=', '')
+            ->where('locality', '!=', '');
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        $localities = $query
             ->select('locality')
             ->distinct()
             ->orderBy('locality')
@@ -303,9 +314,33 @@ class CulaanController extends Controller
         $customMode = $rawGroupId === 'custom';
         $groupId = $rawGroupId !== '' && ! $customMode ? (int) $rawGroupId : null;
 
+        $user = $request->user();
+        $scope = $user?->accessScope();
+        $defaultUdm = filled($scope['dm'] ?? null) ? $scope['dm'] : '';
+        $defaultLocality = filled($scope['locality'] ?? null) ? $scope['locality'] : '';
+
+        $requestedUdm = trim((string) $request->query('udm', ''));
+        $requestedLocality = trim((string) $request->query('locality', ''));
+
+        // Scoped users cannot view outside their scope
+        if ($scope !== null) {
+            if ($defaultUdm !== '' && $requestedUdm !== '' && $requestedUdm !== $defaultUdm) {
+                $requestedUdm = $defaultUdm;
+            }
+            if ($defaultLocality !== '' && $requestedLocality !== '' && $requestedLocality !== $defaultLocality) {
+                $requestedLocality = $defaultLocality;
+            }
+            if ($requestedUdm === '' && $defaultUdm !== '') {
+                $requestedUdm = $defaultUdm;
+            }
+            if ($requestedLocality === '' && $defaultLocality !== '') {
+                $requestedLocality = $defaultLocality;
+            }
+        }
+
         return [
-            'udm' => trim((string) $request->query('udm', '')),
-            'locality' => trim((string) $request->query('locality', '')),
+            'udm' => $requestedUdm,
+            'locality' => $requestedLocality,
             'show_marked' => $request->boolean('show_marked'),
             'group_id' => $groupId,
             'custom_mode' => $customMode,
@@ -481,11 +516,15 @@ class CulaanController extends Controller
 
     private function availableCulaCodes(): array
     {
-        return PemilihRecord::query()
+        $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', '?');
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        return $query
             ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
             ->groupBy('cula_code')
             ->orderBy('cula_code')
@@ -500,10 +539,14 @@ class CulaanController extends Controller
 
     private function availableRaces(): array
     {
-        return PemilihRecord::query()
+        $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->whereNotNull('race')
-            ->where('race', '!=', '')
+            ->where('race', '!=', '');
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        return $query
             ->select('race')
             ->distinct()
             ->orderBy('race')
@@ -518,6 +561,8 @@ class CulaanController extends Controller
             ->where('status', 'aktif')
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
+
+        request()->user()?->applyScopeToPemilihQuery($query);
 
         if ($filters['custom_mode'] && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0) {
             $query->whereIn('cula_code', $filters['cula_codes']);

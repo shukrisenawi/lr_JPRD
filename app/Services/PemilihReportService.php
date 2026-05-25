@@ -83,7 +83,7 @@ class PemilihReportService
         return $report;
     }
 
-    public function searchVoters(string $query, ?string $path = null, int $limit = 8): array
+    public function searchVoters(string $query, ?string $path = null, int $limit = 8, ?\App\Models\User $user = null): array
     {
         $normalizedQuery = $this->normalizeSearch($query);
 
@@ -92,7 +92,7 @@ class PemilihReportService
         }
 
         if (PemilihRecord::query()->count() > 0) {
-            return $this->searchVotersFromDb($normalizedQuery, $query, $limit);
+            return $this->searchVotersFromDb($normalizedQuery, $query, $limit, $user);
         }
 
         $voters = $this->searchIndexForPath($path);
@@ -130,12 +130,12 @@ class PemilihReportService
         return $matches;
     }
 
-    private function searchVotersFromDb(string $normalizedQuery, string $rawQuery, int $limit): array
+    private function searchVotersFromDb(string $normalizedQuery, string $rawQuery, int $limit, ?\App\Models\User $user = null): array
     {
         $keywords = preg_split('/\s+/', $normalizedQuery);
         $keywords = array_values(array_filter($keywords));
 
-        $records = PemilihRecord::query()
+        $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->where(function ($q) use ($keywords, $rawQuery) {
                 foreach ($keywords as $keyword) {
@@ -151,7 +151,11 @@ class PemilihReportService
                             ->orWhere('phone_mobile', 'like', $like);
                     });
                 }
-            })
+            });
+
+        $user?->applyScopeToPemilihQuery($query);
+
+        $records = $query
             ->limit($limit)
             ->get()
             ->map(function (PemilihRecord $record) {

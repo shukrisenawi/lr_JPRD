@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\PemilihRecord;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\ModuleRegistry;
@@ -49,6 +50,8 @@ class AccessManagementController extends Controller
                     'avatar_url' => $user->avatarUrl(),
                     'expires_at' => $user->expires_at?->format('Y-m-d'),
                     'can_impersonate' => ! request()->user()->is($user),
+                    'access_level' => $user->access_level ?? 'jprd',
+                    'scope_key' => $user->scope_key,
                     'role' => $user->role
                         ? [
                             'id' => $user->role->id,
@@ -58,6 +61,33 @@ class AccessManagementController extends Controller
                         : null,
                 ])
                 ->values(),
+            'udms' => PemilihRecord::query()
+                ->where('status', 'aktif')
+                ->whereNotNull('dm')
+                ->where('dm', '!=', '')
+                ->select('dm')
+                ->distinct()
+                ->orderBy('dm')
+                ->pluck('dm')
+                ->all(),
+            'cawangans' => PemilihRecord::query()
+                ->where('status', 'aktif')
+                ->whereNotNull('dm')
+                ->where('dm', '!=', '')
+                ->whereNotNull('locality')
+                ->where('locality', '!=', '')
+                ->select('dm', 'locality')
+                ->distinct()
+                ->orderBy('dm')
+                ->orderBy('locality')
+                ->get()
+                ->map(fn (PemilihRecord $r) => [
+                    'key' => $r->dm.'|'.$r->locality,
+                    'name' => $r->locality,
+                    'dm' => $r->dm,
+                ])
+                ->values()
+                ->all(),
             'modules' => collect(ModuleRegistry::all())
                 ->map(fn (array $module, string $key) => [
                     'key' => $key,
@@ -83,6 +113,8 @@ class AccessManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
+            'access_level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+            'scope_key' => ['nullable', 'string', 'max:255'],
             'expires_at' => ['nullable', 'date'],
         ]);
 
@@ -92,6 +124,8 @@ class AccessManagementController extends Controller
             'email_verified_at' => now(),
             'password' => Hash::make($validated['password']),
             'role_id' => $validated['role_id'],
+            'access_level' => $validated['access_level'],
+            'scope_key' => $validated['access_level'] === 'jprd' ? null : $validated['scope_key'],
             'expires_at' => $validated['expires_at'],
         ]);
 
@@ -109,6 +143,8 @@ class AccessManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
+            'access_level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+            'scope_key' => ['nullable', 'string', 'max:255'],
             'expires_at' => ['nullable', 'date'],
         ]);
 
@@ -116,6 +152,8 @@ class AccessManagementController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role_id' => $validated['role_id'],
+            'access_level' => $validated['access_level'],
+            'scope_key' => $validated['access_level'] === 'jprd' ? null : $validated['scope_key'],
             'expires_at' => $validated['expires_at'],
         ];
 

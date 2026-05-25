@@ -18,9 +18,14 @@ class TambahPemilihController extends Controller
 
     public function index(Request $request): Response
     {
-        $dms = PemilihRecord::whereNotNull('dm')
+        $user = $request->user();
+        $scope = $user->accessScope();
+
+        $dmsQuery = PemilihRecord::whereNotNull('dm')
             ->where('dm', '!=', '-')
-            ->where('status', 'aktif')
+            ->where('status', 'aktif');
+        $user->applyScopeToPemilihQuery($dmsQuery);
+        $dms = $dmsQuery
             ->select('dm')
             ->distinct()
             ->orderBy('dm')
@@ -29,10 +34,12 @@ class TambahPemilihController extends Controller
 
         $localitiesByDm = [];
         foreach ($dms as $dm) {
-            $localitiesByDm[$dm] = PemilihRecord::where('dm', $dm)
+            $locQuery = PemilihRecord::where('dm', $dm)
                 ->whereNotNull('locality')
                 ->where('locality', '!=', '-')
-                ->where('status', 'aktif')
+                ->where('status', 'aktif');
+            $user->applyScopeToPemilihQuery($locQuery);
+            $localitiesByDm[$dm] = $locQuery
                 ->select('locality')
                 ->distinct()
                 ->orderBy('locality')
@@ -48,10 +55,11 @@ class TambahPemilihController extends Controller
             ->get()
             ->toArray();
 
-        $manualVoters = PemilihRecord::where('is_manual', true)
+        $manualQuery = PemilihRecord::where('is_manual', true)
             ->with('creator:id,name')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->orderBy('created_at', 'desc');
+        $user->applyScopeToPemilihQuery($manualQuery);
+        $manualVoters = $manualQuery->paginate(20);
 
         return Inertia::render('TambahPemilih/Index', [
             'dms' => $dms,
@@ -78,6 +86,17 @@ class TambahPemilihController extends Controller
             'cula_code' => 'nullable|string|max:50',
             'cula_display_label' => 'nullable|string|max:255',
         ]);
+
+        $user = $request->user();
+        $scope = $user->accessScope();
+        if ($scope !== null) {
+            if (filled($scope['dm']) && ($validated['dm'] ?? '') !== '' && $validated['dm'] !== $scope['dm']) {
+                return back()->withErrors(['dm' => 'Anda tidak mempunyai akses untuk UDM ini.'])->withInput();
+            }
+            if (filled($scope['locality']) && ($validated['locality'] ?? '') !== '' && $validated['locality'] !== $scope['locality']) {
+                return back()->withErrors(['locality' => 'Anda tidak mempunyai akses untuk cawangan ini.'])->withInput();
+            }
+        }
 
         $identityNumber = $validated['no_kp'] ?? $validated['old_ic'] ?? '';
         if ($identityNumber === '') {
@@ -135,6 +154,17 @@ class TambahPemilihController extends Controller
             'cula_code' => 'nullable|string|max:50',
             'cula_display_label' => 'nullable|string|max:255',
         ]);
+
+        $user = $request->user();
+        $scope = $user->accessScope();
+        if ($scope !== null) {
+            if (filled($scope['dm']) && ($validated['dm'] ?? '') !== '' && $validated['dm'] !== $scope['dm']) {
+                return back()->withErrors(['dm' => 'Anda tidak mempunyai akses untuk UDM ini.'])->withInput();
+            }
+            if (filled($scope['locality']) && ($validated['locality'] ?? '') !== '' && $validated['locality'] !== $scope['locality']) {
+                return back()->withErrors(['locality' => 'Anda tidak mempunyai akses untuk cawangan ini.'])->withInput();
+            }
+        }
 
         $identityNumber = $validated['no_kp'] ?? $validated['old_ic'] ?? '';
         if ($identityNumber !== '') {

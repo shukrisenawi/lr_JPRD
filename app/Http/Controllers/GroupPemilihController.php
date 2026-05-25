@@ -13,6 +13,8 @@ class GroupPemilihController extends Controller
 {
     public function index(Request $request): Response
     {
+        $user = $request->user();
+
         $groups = GroupPemilih::query()
             ->with('kodCulas')
             ->orderBy('sort_order')
@@ -29,19 +31,23 @@ class GroupPemilihController extends Controller
                 'kod_culas' => $group->kodCulas->pluck('kod_cula')->values(),
             ]);
 
-        $availableKodCulas = PemilihRecord::query()
+        $kodCulaQuery = PemilihRecord::query()
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', '?');
+        $user->applyScopeToPemilihQuery($kodCulaQuery);
+        $availableKodCulas = $kodCulaQuery
             ->select('cula_code')
             ->distinct()
             ->orderBy('cula_code')
             ->pluck('cula_code')
             ->values();
 
-        $availableKeturunans = PemilihRecord::query()
+        $keturunanQuery = PemilihRecord::query()
             ->whereNotNull('race')
-            ->where('race', '!=', '')
+            ->where('race', '!=', '');
+        $user->applyScopeToPemilihQuery($keturunanQuery);
+        $availableKeturunans = $keturunanQuery
             ->select('race')
             ->distinct()
             ->orderBy('race')

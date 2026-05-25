@@ -16,8 +16,64 @@ use Inertia\Response;
 
 class CommitteeController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $user = $request->user();
+        $scope = $user->accessScope();
+
+        $membershipsQuery = CommitteeMembership::query()
+            ->with(['position', 'voter', 'creator'])
+            ->orderBy('level')
+            ->orderBy('scope_name')
+            ->latest('id');
+
+        if ($scope !== null) {
+            if (filled($scope['dm']) && filled($scope['locality'])) {
+                // Cawangan scope: show jprd + own cawangan
+                $membershipsQuery->where(function ($q) use ($scope) {
+                    $q->where('level', 'jprd')
+                      ->orWhere(function ($sq) use ($scope) {
+                          $sq->where('level', 'cawangan')
+                             ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
+                      });
+                });
+            } elseif (filled($scope['dm'])) {
+                // UDM scope: show jprd + own udm + cawangan under udm
+                $membershipsQuery->where(function ($q) use ($scope) {
+                    $q->where('level', 'jprd')
+                      ->orWhere(function ($sq) use ($scope) {
+                          $sq->where('level', 'udm')
+                             ->where('scope_key', $scope['dm']);
+                      })
+                      ->orWhere(function ($sq) use ($scope) {
+                          $sq->where('level', 'cawangan')
+                             ->where('parent_scope_name', $scope['dm']);
+                      });
+                });
+            }
+        }
+
+        $udmQuery = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '');
+        if ($scope !== null && filled($scope['dm'])) {
+            $udmQuery->where('dm', $scope['dm']);
+        }
+
+        $cawanganQuery = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->whereNotNull('locality')
+            ->where('locality', '!=', '');
+        if ($scope !== null && filled($scope['dm'])) {
+            $cawanganQuery->where('dm', $scope['dm']);
+        }
+        if ($scope !== null && filled($scope['locality'])) {
+            $cawanganQuery->where('locality', $scope['locality']);
+        }
+
         return Inertia::render('Committee/Index', [
             'positions' => CommitteePosition::query()
                 ->orderBy('sort_order')
@@ -30,11 +86,7 @@ class CommitteeController extends Controller
                     'sort_order' => $position->sort_order,
                 ])
                 ->values(),
-            'memberships' => CommitteeMembership::query()
-                ->with(['position', 'voter', 'creator'])
-                ->orderBy('level')
-                ->orderBy('scope_name')
-                ->latest('id')
+            'memberships' => $membershipsQuery
                 ->get()
                 ->map(fn (CommitteeMembership $membership) => [
                     'id' => $membership->id,
@@ -70,10 +122,7 @@ class CommitteeController extends Controller
                         'parent_scope_name' => null,
                     ],
                 ],
-                'udm' => PemilihRecord::query()
-                    ->where('status', 'aktif')
-                    ->whereNotNull('dm')
-                    ->where('dm', '!=', '')
+                'udm' => $udmQuery
                     ->select('dm')
                     ->distinct()
                     ->orderBy('dm')
@@ -84,12 +133,7 @@ class CommitteeController extends Controller
                         'parent_scope_name' => null,
                     ])
                     ->values(),
-                'cawangan' => PemilihRecord::query()
-                    ->where('status', 'aktif')
-                    ->whereNotNull('dm')
-                    ->where('dm', '!=', '')
-                    ->whereNotNull('locality')
-                    ->where('locality', '!=', '')
+                'cawangan' => $cawanganQuery
                     ->select('dm', 'locality')
                     ->distinct()
                     ->orderBy('dm')
@@ -117,7 +161,7 @@ class CommitteeController extends Controller
 
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
-        $suggestions = PemilihRecord::query()
+        $builder = PemilihRecord::query()
             ->where('status', 'aktif')
             ->where(function ($builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
@@ -137,7 +181,11 @@ class CommitteeController extends Controller
                         }
                     });
                 }
-            })
+            });
+
+        $request->user()?->applyScopeToPemilihQuery($builder);
+
+        $suggestions = $builder
             ->limit(8)
             ->get()
             ->map(fn (PemilihRecord $record) => [

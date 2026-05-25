@@ -24,6 +24,8 @@ class CarianPemilihController extends Controller
             'suggestions' => $reportService->searchVoters(
                 (string) $request->query('q', ''),
                 $path,
+                8,
+                $request->user(),
             ),
         ]);
     }

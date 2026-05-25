@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'email_verified_at', 'password', 'avatar', 'role_id', 'expires_at'])]
+#[Fillable(['name', 'email', 'email_verified_at', 'password', 'avatar', 'role_id', 'access_level', 'scope_key', 'expires_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -58,6 +58,44 @@ class User extends Authenticatable
     public function isExpired(): bool
     {
         return $this->expires_at?->isPast() ?? false;
+    }
+
+    public function accessScope(): ?array
+    {
+        $level = $this->access_level ?? 'jprd';
+        $key = $this->scope_key;
+
+        if ($level === 'jprd' || blank($key)) {
+            return null;
+        }
+
+        if ($level === 'udm') {
+            return ['dm' => $key, 'locality' => null];
+        }
+
+        if ($level === 'cawangan') {
+            $parts = explode('|', $key, 2);
+            return ['dm' => $parts[0] ?? $key, 'locality' => $parts[1] ?? null];
+        }
+
+        return null;
+    }
+
+    public function applyScopeToPemilihQuery($query): void
+    {
+        $scope = $this->accessScope();
+
+        if ($scope === null) {
+            return;
+        }
+
+        if (filled($scope['dm'])) {
+            $query->where('dm', $scope['dm']);
+        }
+
+        if (filled($scope['locality'])) {
+            $query->where('locality', $scope['locality']);
+        }
     }
 
     #[Computed]
