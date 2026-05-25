@@ -125,6 +125,10 @@ class TambahPemilihController extends Controller
         $validated['is_manual'] = true;
         $validated['created_by'] = $request->user()->id;
 
+        if (!$user->isMasterAdmin() && $user->access_level !== 'jprd') {
+            unset($validated['no_ahli']);
+        }
+
         PemilihRecord::create($validated);
 
         return redirect()->route('tambah-pemilih.index');
@@ -156,6 +160,10 @@ class TambahPemilihController extends Controller
         ]);
 
         $user = $request->user();
+        if (!$user->isMasterAdmin() && $user->access_level !== 'jprd') {
+            unset($validated['no_ahli']);
+        }
+
         $scope = $user->accessScope();
         if ($scope !== null) {
             if (filled($scope['dm']) && ($validated['dm'] ?? '') !== '' && $validated['dm'] !== $scope['dm']) {

@@ -342,6 +342,11 @@ class ProgramController extends Controller
 
         $subProgramIds = $validated['sub_program_ids'] ?? [];
 
+        $user = $request->user();
+        if (!$user->isMasterAdmin() && $user->access_level !== 'jprd') {
+            unset($validated['no_ahli']);
+        }
+
         $existing = $program->attendees()->where('voter_id', $validated['voter_id'])->first();
 
         if ($existing) {
