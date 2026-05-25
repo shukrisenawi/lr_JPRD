@@ -254,7 +254,7 @@ function NoAhliModal({ attendee, onClose, onSaved }) {
 function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli }) {
     if (!attendee) return null;
     const fields = [
-        ['Nama', attendee.name], ['No. IC', attendee.no_kp || attendee.old_ic || '-'],
+        ['Nama', attendee.name], ['No Kp', attendee.no_kp || attendee.old_ic || '-'],
         ['No. Ahli', attendee.no_ahli || '-'], ['Tel', attendee.phone_mobile || attendee.phone_home || '-'],
         ['UDM', attendee.dm || '-'], ['Lokaliti', attendee.locality || '-'],
         ['Jantina', attendee.gender || '-'], ['Bangsa', attendee.race || '-'],
@@ -698,7 +698,7 @@ function SearchVoterPanel({ selectedProgram }) {
                                             }
                                         }} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition last:border-b-0 ${alreadyAdded ? (hasSubs ? 'cursor-pointer bg-indigo-50 opacity-100 hover:bg-indigo-100' : 'cursor-not-allowed bg-slate-50 opacity-60') : 'hover:bg-green-50'}`}>
                                             <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
-                                            <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">IC: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
+                                            <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">No Kp: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
                                             <div className="min-w-0 text-left">
                                                 <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? (hasSubs ? 'Klik untuk tambah sub program' : 'Pemilih ini telah dipilih') : (v.dm || '-')}</p>
                                                 <p className="truncate text-xs font-medium text-slate-500">{alreadyAdded ? '' : (v.locality || '-')}</p>
@@ -941,7 +941,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 <div className="relative">
                                     <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                                     <input type="search" value={attendeeSearch} onChange={(e) => setAttendeeSearch(e.target.value)}
-                                        placeholder="Cari nama, IC, UDM..."
+                                        placeholder="Cari nama, No Kp, UDM..."
                                         className="input-field py-1.5 pl-7 pr-2 text-xs w-40 sm:w-52" />
                                 </div>
                             </div>

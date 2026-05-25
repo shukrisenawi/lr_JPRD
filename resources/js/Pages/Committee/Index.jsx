@@ -483,7 +483,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                                     value={form.data.voter_search}
                                     onChange={handleSearchChange}
                                     className="input-field pl-9 text-xs"
-                                    placeholder="Nama, IC atau telefon"
+                                    placeholder="Nama, No Kp atau telefon"
                                 />
                             </div>
                             <InputError className="mt-1" message={form.errors.pemilih_record_id} />
@@ -501,7 +501,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                                             >
                                                 <div className="min-w-0">
                                                     <p className="text-xs font-bold text-slate-800">{voter.name}</p>
-                                                    <p className="text-xs text-slate-400">IC: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
+                                                    <p className="text-xs text-slate-400">No Kp: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
                                                 </div>
                                                 <div className="shrink-0 text-right text-xs text-slate-500">
                                                     <p>{voter.dm || '-'}</p>
@@ -557,7 +557,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                                 <div className="min-w-0 flex-1">
                                     <p className="text-xs font-bold text-green-800">{selectedVoter.name}</p>
                                     <p className="text-xs text-green-600">
-                                        IC: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
+                                        No Kp: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
                                     </p>
                                 </div>
                             </div>
@@ -684,7 +684,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
 
                 <div className="max-h-[60vh] overflow-y-auto p-4">
                     {!query.trim() ? (
-                        <p className="py-8 text-center text-xs text-slate-400">Taip nama atau IC untuk mula mencari.</p>
+                        <p className="py-8 text-center text-xs text-slate-400">Taip nama atau No Kp untuk mula mencari.</p>
                     ) : results.length === 0 ? (
                         <p className="py-8 text-center text-xs text-slate-400">Tiada hasil carian.</p>
                     ) : (
@@ -692,7 +692,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
                             {results.map(({ voter, memberships: vms }) => (
                                 <div key={voter.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
                                     <p className="text-sm font-bold text-slate-800">{voter.name}</p>
-                                    <p className="text-xs text-slate-400">IC: {voter.no_kp || voter.old_ic || '-'}</p>
+                                    <p className="text-xs text-slate-400">No Kp: {voter.no_kp || voter.old_ic || '-'}</p>
                                     <div className="mt-2 space-y-1">
                                         {vms.map((m) => {
                                             const lc = levelColors[m.level] || { bg: 'bg-slate-100', text: 'text-slate-700', label: m.level };

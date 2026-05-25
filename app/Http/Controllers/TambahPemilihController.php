@@ -98,7 +98,7 @@ class TambahPemilihController extends Controller
         })->exists();
 
         if ($exists) {
-            return back()->withErrors(['no_kp' => 'Pemilih dengan no. IC ini sudah wujud dalam sistem.'])->withInput();
+            return back()->withErrors(['no_kp' => 'Pemilih dengan No Kp ini sudah wujud dalam sistem.'])->withInput();
         }
 
         $validated['identity_number'] = $identityNumber;

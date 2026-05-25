@@ -174,7 +174,7 @@ function SearchPanel() {
 
     const openTg = async (voter, prefix) => {
         const c = cmd(voter, prefix);
-        if (!c) { setErr('No. IC tidak tersedia.'); return; }
+        if (!c) { setErr('No Kp tidak tersedia.'); return; }
         const w = window.open('about:blank', '_blank');
         setOpeningTg(true);
         try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); setErr('Telegram gagal dibuka.'); }
@@ -196,7 +196,7 @@ function SearchPanel() {
             <section className="card relative">
                 <div className="px-4 py-3">
                     <p className="label-section">Carian Pemilih</p>
-                    <p className="text-muted mt-0.5">Cari nama, IC, nombor telefon atau No. Ahli.</p>
+                    <p className="text-muted mt-0.5">Cari nama, No Kp, nombor telefon atau No. Ahli.</p>
                     <div className="relative mt-2">
                         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789, A0001" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
@@ -230,7 +230,7 @@ function SearchPanel() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="truncate text-xs font-bold text-slate-800">{voter.name}</p>
-                                        <p className="text-xs font-medium text-slate-500">IC: {voter.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {voter.phone_mobile || '-'}</p>
+                                        <p className="text-xs font-medium text-slate-500">No Kp: {voter.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {voter.phone_mobile || '-'}</p>
                                     </div>
                                     <div className="min-w-0 text-left">
                                         <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">{voter.dm || '-'}</p>

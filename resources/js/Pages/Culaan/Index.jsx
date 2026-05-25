@@ -524,7 +524,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         }
 
         const titleRows = [];
-        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula', 'No. Ahli'];
+        const headers = ['No', 'No Kp', 'Nama', 'Alamat', 'Telefon', 'Cula', 'No. Ahli'];
         const align = ['center', 'center', 'left', 'left', 'center', 'center', 'center'];
         const columnWidths = [30, 100, 120, 200, 100, 40, 60];
 
@@ -806,7 +806,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         value={search}
                                         onChange={handleSearchChange}
                                         className="input-field pr-10"
-                                        placeholder="Nama, IC, telefon..."
+                                        placeholder="Nama, No Kp, telefon..."
                                         disabled={!formState.udm}
                                     />
                                     {search ? (
@@ -939,7 +939,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         <div className={showLocalityColumn ? 'mt-3 space-y-2 text-xs' : 'mt-3 grid grid-cols-3 gap-2 text-xs'}>
                                             <div className={showLocalityColumn ? 'grid grid-cols-3 gap-2' : undefined}>
                                                 <div>
-                                                    <span className="font-semibold text-green-700">IC</span>
+                                                    <span className="font-semibold text-green-700">No Kp</span>
                                                     <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
                                                 </div>
                                                 <div className="ml-[30px]">
