@@ -83,11 +83,6 @@ export default function GroupPemilihIndex({ groups, availableKodCulas, available
                             Keturunan: {g.keturunan}
                         </span>
                     )}
-                    {g.jantina && (
-                        <span className="rounded-md border border-slate-200 bg-purple-50 px-1.5 py-0.5 text-[10px] font-bold text-purple-700">
-                            Jantina: {g.jantina === 'L' ? 'Lelaki' : 'Perempuan'}
-                        </span>
-                    )}
                     {(g.umur_dari || g.umur_akhir) && (
                         <span className="rounded-md border border-slate-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
                             Umur: {g.umur_dari ?? '0'} - {g.umur_akhir ?? '999'}

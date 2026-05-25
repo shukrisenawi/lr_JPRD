@@ -176,7 +176,7 @@ function DetailModal({ voter, onClose }) {
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['Alamat', voter.address || '-'], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
-        ['Kod Cula', voter.cula_code || '-'], ['Jantina', voter.gender || '-'], ['Bangsa', voter.race || '-'],
+        ['Kod Cula', voter.cula_code || '-'], ['Bangsa', voter.race || '-'],
         ['Dicipta Oleh', voter.creator?.name || '-'],
         ['Tarikh Daftar', voter.created_at ? new Date(voter.created_at).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'],
     ];
