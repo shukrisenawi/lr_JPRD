@@ -25,7 +25,7 @@
 
     /* === TYPOGRAPHY === */
     .label-field {
-        @apply text-[13.5px] font-semibold text-green-800;
+        @apply ml-[2px] text-[13.5px] font-semibold text-green-800;
     }
     .label-section {
         @apply text-xs font-bold uppercase tracking-wider text-green-700;
