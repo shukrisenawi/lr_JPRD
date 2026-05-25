@@ -91,6 +91,7 @@ class ProgramController extends Controller
         $selectedProgram = $programs->firstWhere('id', $selectedProgramId);
 
         $icToPemilihId = [];
+        $icToNoAhli = [];
         if ($selectedProgram?->attendees) {
             $icNumbers = $selectedProgram->attendees
                 ->pluck('no_kp')
@@ -107,13 +108,15 @@ class ProgramController extends Controller
             $pemilihRecords = PemilihRecord::query()
                 ->whereIn('no_kp', $icNumbers)
                 ->orWhereIn('old_ic', $oldIcs)
-                ->get(['id', 'no_kp', 'old_ic']);
+                ->get(['id', 'no_kp', 'old_ic', 'no_ahli']);
             foreach ($pemilihRecords as $record) {
                 if ($record->no_kp) {
                     $icToPemilihId[$record->no_kp] = $record->id;
+                    $icToNoAhli[$record->no_kp] = $record->no_ahli;
                 }
                 if ($record->old_ic) {
                     $icToPemilihId[$record->old_ic] = $record->id;
+                    $icToNoAhli[$record->old_ic] = $record->no_ahli;
                 }
             }
         }
@@ -184,7 +187,7 @@ class ProgramController extends Controller
                             'name' => $attendee->name,
                             'no_kp' => $attendee->no_kp,
                             'old_ic' => $attendee->old_ic,
-                            'no_ahli' => $attendee->no_ahli,
+                            'no_ahli' => $attendee->no_ahli ?? $icToNoAhli[$attendee->no_kp] ?? $icToNoAhli[$attendee->old_ic] ?? null,
                             'phone_mobile' => $attendee->phone_mobile,
                             'phone_home' => $attendee->phone_home,
                             'dm' => $attendee->dm,
