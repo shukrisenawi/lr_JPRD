@@ -70,7 +70,7 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
 
             <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                    <label className="label-field" htmlFor="no_kp">No. K/P (Baru) <span className="text-rose-500">*</span></label>
+                    <label className="label-field" htmlFor="no_kp">No KP <span className="text-rose-500">*</span></label>
                     <input id="no_kp" type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)}
                         className="input-field w-full mt-0.5" placeholder="900101025555" />
                     {errors.no_kp && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.no_kp}</p>}
@@ -173,7 +173,7 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
 function DetailModal({ voter, onClose }) {
     if (!voter) return null;
     const fields = [
-        ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'],
+        ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['Alamat', voter.address || '-'], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
         ['Kod Cula', voter.cula_code || '-'], ['Jantina', voter.gender || '-'], ['Bangsa', voter.race || '-'],
@@ -253,7 +253,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
 
                     <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-3">
                         <div>
-                            <label className="label-field">No. K/P (Baru)</label>
+                            <label className="label-field">No KP</label>
                             <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="900101025555" />
                             {errors.no_kp && <p className="text-xs font-bold text-rose-500">{errors.no_kp}</p>}
                         </div>
@@ -369,7 +369,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                         <thead>
                             <tr className="border-b border-slate-200 bg-slate-50">
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Nama</th>
-                                <th className="px-3 py-2.5 font-bold text-slate-600">No. K/P (Baru)</th>
+                                <th className="px-3 py-2.5 font-bold text-slate-600">No KP</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">No. Ahli</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Tel. Bimbit</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Kod Cula</th>

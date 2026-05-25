@@ -161,7 +161,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
 function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, onToggleSub }) {
     if (!voter) return null;
     const fields = [
-        ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'],
+        ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Umur', voter.age ?? '-'],
         ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'], ['Jantina', voter.gender || '-'],
