@@ -24,6 +24,9 @@
     }
 
     /* === TYPOGRAPHY === */
+    .label-field {
+        @apply text-sm font-semibold text-green-800;
+    }
     .label-section {
         @apply text-xs font-bold uppercase tracking-wider text-green-700;
     }
