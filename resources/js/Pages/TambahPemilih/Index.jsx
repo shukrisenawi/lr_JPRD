@@ -246,18 +246,18 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3" onClick={onClose}>
             <div className="w-full max-w-lg rounded-lg bg-white shadow-xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5">
+                <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
                     <h3 className="text-sm font-bold text-slate-800">Edit Pemilih</h3>
                     <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-2 p-3.5">
+                <form onSubmit={handleSubmit} className="space-y-1.5 p-3">
                     <input type="text" value={data.name} onChange={e => setData('name', e.target.value)}
-                        className="input-field w-full py-1.5 text-sm font-bold uppercase" placeholder="NAMA PENUH *" />
+                        className="input-field w-full py-1.5 text-xs font-bold uppercase" placeholder="NAMA PENUH *" />
                     {errors.name && <p className="text-xs font-bold text-rose-500">{errors.name}</p>}
 
-                    <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="grid gap-1.5 sm:grid-cols-3">
                         <div>
                             <label className="label-field">No. K/P (Baru)</label>
                             <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-1.5 text-xs" placeholder="900101025555" />
@@ -274,7 +274,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                     </div>
 
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid gap-1.5 sm:grid-cols-2">
                         <div>
                             <label className="label-field">Tel. Bimbit</label>
                             <input type="text" value={data.phone_mobile} onChange={e => setData('phone_mobile', e.target.value)} className="input-field w-full py-1.5 text-xs" placeholder="0123456789" />
@@ -288,7 +288,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                     <textarea value={data.address} onChange={e => setData('address', e.target.value)}
                         className="input-field w-full py-1.5 text-xs" rows="1" placeholder="Alamat" />
 
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid gap-1.5 sm:grid-cols-2">
                         <div>
                             <label className="label-field">UDM / DM</label>
                             <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full py-1.5 text-xs">
@@ -305,7 +305,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                     </div>
 
-                    <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="grid gap-1.5 sm:grid-cols-3">
                         <div>
                             <label className="label-field">Jantina</label>
                             <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="input-field w-full py-1.5 text-xs">
@@ -333,8 +333,8 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                     </div>
 
-                    <div className="flex justify-center gap-2 pt-1.5">
-                        <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-4 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
+                    <div className="flex justify-center gap-2 pt-1">
+                        <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
                         <button type="submit" disabled={processing} className="btn-primary text-xs py-1.5">{processing ? 'Menyimpan...' : 'Simpan'}</button>
                     </div>
                 </form>
