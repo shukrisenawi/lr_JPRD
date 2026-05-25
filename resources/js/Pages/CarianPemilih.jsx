@@ -121,12 +121,16 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli })
                 </div>
             </div>
             <div className="grid gap-2 p-3 sm:grid-cols-2">
-                {fields.map(([l, v]) => (
-                    <div key={l} className="rounded-md border border-slate-100 bg-white px-2.5 py-1.5">
-                        <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
-                        <p className="mt-0.5 text-xs font-medium text-slate-800">{v || '-'}</p>
-                    </div>
-                ))}
+                {fields.map(([l, v]) => {
+                    const isNoAhli = l === 'No. Ahli';
+                    const hasVal = v && v !== '-' && v !== '';
+                    return (
+                        <div key={l} className={`rounded-md border px-2.5 py-1.5 ${isNoAhli && hasVal ? 'border-amber-200 bg-amber-50' : 'border-slate-100 bg-white'}`}>
+                            <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
+                            <p className="mt-0.5 text-xs font-medium text-slate-800">{v || '-'}</p>
+                        </div>
+                    );
+                })}
             </div>
         </section>
     );
