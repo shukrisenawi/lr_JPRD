@@ -200,10 +200,18 @@ function SearchPanel() {
                     <div className="relative mt-2">
                         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789, A0001" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
-                        {q && (
-                            <button type="button" onClick={clearSearch} className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
+                        {q ? (
+                            <button
+                                type="button"
+                                onClick={clearSearch}
+                                className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100"
+                            >
                                 <XIcon className="h-3 w-3" />
                             </button>
+                        ) : (
+                            <span className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-slate-400">
+                                <SearchIcon className="h-3.5 w-3.5" />
+                            </span>
                         )}
                     </div>
                     {err && <p className="mt-1 text-xs font-bold text-rose-500">{err}</p>}
