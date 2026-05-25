@@ -286,7 +286,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                     </div>
 
                     <textarea value={data.address} onChange={e => setData('address', e.target.value)}
-                        className="input-field w-full py-[5px] text-xs" rows="1" placeholder="Alamat" />
+                        className="input-field w-full py-[5px] text-xs" rows="6" placeholder="Alamat" />
 
                     <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-2">
                         <div>
