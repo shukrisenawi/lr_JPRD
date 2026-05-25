@@ -198,7 +198,53 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
     );
 }
 
-function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
+function NoAhliModal({ attendee, onClose, onSaved }) {
+    const [value, setValue] = useState(attendee?.no_ahli || '');
+    const [saving, setSaving] = useState(false);
+
+    const handleSave = async () => {
+        if (!attendee) return;
+        setSaving(true);
+        try {
+            const res = await fetch(route('carian-pemilih.update-no-ahli'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: JSON.stringify({ record_id: attendee.record_id ?? attendee.voter_id, no_ahli: value }),
+            });
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
+            const data = await res.json();
+            if (data.success) {
+                onSaved(value);
+                onClose();
+            } else {
+                alert(data.message || 'Gagal mengemaskini No. Ahli.');
+            }
+        } catch (e) {
+            alert('Gagal mengemaskini No. Ahli.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+            <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl" onClick={e => e.stopPropagation()}>
+                <h3 className="mb-3 text-sm font-bold text-slate-800">Kemaskini No. Ahli</h3>
+                <p className="mb-2 text-xs text-slate-500">{attendee?.name}</p>
+                <input type="text" value={value} onChange={e => setValue(e.target.value)} className="input-field w-full text-xs" placeholder="Masukkan No. Ahli" autoFocus />
+                <div className="mt-3 flex justify-end gap-2">
+                    <button onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
+                    <button onClick={handleSave} disabled={saving} className="btn-primary text-xs">{saving ? 'Menyimpan...' : 'Simpan'}</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli }) {
     if (!attendee) return null;
     const fields = [
         ['Nama', attendee.name], ['No. IC', attendee.no_kp || attendee.old_ic || '-'],
@@ -234,6 +280,9 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
                 <div className="mt-3 flex gap-2 border-t border-green-200 pt-2">
                     <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
+                    {onUpdateNoAhli && (
+                        <button onClick={() => onUpdateNoAhli(attendee)} className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500">No Ahli</button>
+                    )}
                 </div>
             </div>
         </Modal>
@@ -682,6 +731,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [selImage, setSelImage] = useState(null);
     const [selShare, setSelShare] = useState(null);
     const [deletingAtt, setDeletingAtt] = useState(null);
+    const [editNoAhli, setEditNoAhli] = useState(null);
     const [openingTg, setOpeningTg] = useState(false);
     const [attendeeSearch, setAttendeeSearch] = useState('');
     const [subTab, setSubTab] = useState(null);
@@ -997,11 +1047,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 ))}
             </div>
 
-            <AttendeeDetailModal attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} />
+            <AttendeeDetailModal attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={(a) => setEditNoAhli(a)} />
             <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
             <AttendeeSubProgramEditor key={selEditSub?.id} attendee={selEditSub} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSelEditSub(null)} />
             <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
             <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
+            {editNoAhli && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
         </AuthenticatedLayout>
     );
 }
