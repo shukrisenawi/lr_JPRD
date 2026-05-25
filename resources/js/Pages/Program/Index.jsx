@@ -928,7 +928,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                 </button>
                                                             )}
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="truncate text-xs font-bold text-slate-800">{a.name}</p>
+                                                                <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">{a.no_ahli && <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-green-500" title={`No. Ahli: ${a.no_ahli}`} />}{a.name}</p>
                                                                 <p className="text-[11px] font-medium text-slate-500">{a.no_kp || a.old_ic || '-'}</p>
                                                             </div>
                                                         </div>
