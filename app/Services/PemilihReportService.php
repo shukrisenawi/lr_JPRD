@@ -144,15 +144,11 @@ class PemilihReportService
                         $kw->where(DB::raw('LOWER(name)'), 'like', $like)
                             ->orWhere(DB::raw('LOWER(dm)'), 'like', $like)
                             ->orWhere(DB::raw('LOWER(locality)'), 'like', $like)
-                            ->orWhere(DB::raw('LOWER(no_ahli)'), 'like', $like);
-
-                        if (preg_match('/\d/', $keyword)) {
-                            $digitLike = '%' . $this->cleanDigits($keyword) . '%';
-                            $kw->orWhere('no_kp', 'like', $digitLike)
-                                ->orWhere('old_ic', 'like', $digitLike)
-                                ->orWhere('phone_home', 'like', $digitLike)
-                                ->orWhere('phone_mobile', 'like', $digitLike);
-                        }
+                            ->orWhere(DB::raw('LOWER(no_ahli)'), 'like', $like)
+                            ->orWhere('no_kp', 'like', $like)
+                            ->orWhere('old_ic', 'like', $like)
+                            ->orWhere('phone_home', 'like', $like)
+                            ->orWhere('phone_mobile', 'like', $like);
                     });
                 }
             })
