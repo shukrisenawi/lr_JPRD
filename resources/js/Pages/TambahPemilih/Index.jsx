@@ -101,7 +101,7 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
 
             <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                    <label className="label-field" htmlFor="dm">UDM / DM</label>
+                    <label className="label-field" htmlFor="dm">UDM</label>
                     <select id="dm" value={data.dm} onChange={e => handleDmChange(e.target.value)}
                         className="input-field w-full mt-0.5">
                         <option value="">-- Pilih UDM --</option>
@@ -279,7 +279,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
 
                     <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-2">
                         <div>
-                            <label className="label-field">UDM / DM</label>
+                            <label className="label-field">UDM</label>
                             <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full py-[5px] text-xs">
                                 <option value="">-- Pilih UDM --</option>
                                 {dms.map(dm => <option key={dm} value={dm}>{dm}</option>)}
