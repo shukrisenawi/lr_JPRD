@@ -298,8 +298,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         applyFilters(nextState);
     };
 
-    const handleSearchChange = async (event) => {
-        const value = event.target.value;
+    const doSearch = async (value) => {
         setSearch(value);
         setSearchError('');
         suggestionsAbort.current?.abort();
@@ -353,6 +352,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         } finally {
             setSearching(false);
         }
+    };
+
+    const handleSearchChange = async (event) => {
+        await doSearch(event.target.value);
     };
 
     const updateLocalCollections = (voter, marked) => {
@@ -966,13 +969,21 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 const namaAyah = extractNamaAyah(voter.name);
                                                 if (!namaAyah) return null;
                                                 return (
-                                                    <a
-                                                        href={`${route('carian-pemilih.index')}?q=${encodeURIComponent(namaAyah)}`}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            doSearch(namaAyah);
+                                                            const el = document.getElementById('culaan-search');
+                                                            if (el) {
+                                                                el.focus();
+                                                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                            }
+                                                        }}
                                                         className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-bold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-100"
                                                         title={`Cari keluarga: ${namaAyah}`}
                                                     >
                                                         <UserGroupIcon className="h-3.5 w-3.5" />
-                                                    </a>
+                                                    </button>
                                                 );
                                             })()}
                                         </div>
