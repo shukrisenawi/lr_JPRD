@@ -247,7 +247,7 @@ class CulaanController extends Controller
                     WHEN LENGTH(no_kp) >= 2
                         THEN 2000 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
                     ELSE 9999
-                END ASC
+                END DESC
             ")
             ->orderBy('no_kp')
             ->paginate(20)
