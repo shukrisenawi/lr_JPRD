@@ -852,10 +852,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
                                             </div>
                                             <div>
-                                                <span className="font-semibold text-green-700">No. Ahli</span>
-                                                <p className="mt-0.5 font-bold text-slate-800">{voter.no_ahli || '-'}</p>
-                                            </div>
-                                            <div>
                                                 <span className="font-semibold text-green-700">Telefon</span>
                                                 <p className="mt-0.5 font-bold text-slate-800">{voter.phone_mobile || voter.phone_home || '-'}</p>
                                             </div>
