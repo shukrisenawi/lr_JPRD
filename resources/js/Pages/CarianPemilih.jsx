@@ -59,15 +59,21 @@ function NoAhliModal({ voter, onClose, onSaved }) {
         try {
             const res = await fetch(route('carian-pemilih.update-no-ahli'), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
                 body: JSON.stringify({ id: voter.id, no_ahli: value }),
             });
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `HTTP ${res.status}`);
+            }
             const data = await res.json();
             if (data.success) {
                 onSaved(value);
                 onClose();
+            } else {
+                alert(data.message || 'Gagal mengemaskini No. Ahli.');
             }
-        } catch {
+        } catch (e) {
             alert('Gagal mengemaskini No. Ahli.');
         } finally {
             setSaving(false);
