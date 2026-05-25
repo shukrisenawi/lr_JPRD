@@ -358,6 +358,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         await doSearch(event.target.value);
     };
 
+    const clearSearch = () => {
+        suggestionsAbort.current?.abort();
+        setSearch('');
+        setSuggestions([]);
+        setSearching(false);
+        setSearchError('');
+    };
+
     const updateLocalCollections = (voter, marked) => {
         setSuggestions((current) => current.filter((item) => item.id !== voter.id));
 
@@ -794,14 +802,24 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 <label htmlFor="culaan-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
                                 <div className="relative mt-1.5">
                                     <input
-                                    id="culaan-search"
-                                    value={search}
-                                    onChange={handleSearchChange}
-                                    className="input-field pr-8"
-                                    placeholder="Nama, IC, telefon..."
-                                    disabled={!formState.udm}
+                                        id="culaan-search"
+                                        value={search}
+                                        onChange={handleSearchChange}
+                                        className="input-field pr-10"
+                                        placeholder="Nama, IC, telefon..."
+                                        disabled={!formState.udm}
                                     />
-                                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
+                                    {search ? (
+                                        <button
+                                            type="button"
+                                            onClick={clearSearch}
+                                            className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100"
+                                        >
+                                            <span className="text-sm leading-none">×</span>
+                                        </button>
+                                    ) : (
+                                        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
+                                    )}
                                 </div>
                                 {searchError && <InputError className="mt-1" message={searchError} />}
                                 {actionError && <InputError className="mt-1" message={actionError} />}
