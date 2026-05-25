@@ -245,77 +245,78 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3" onClick={onClose}>
-            <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <div className="w-full max-w-lg rounded-lg bg-white shadow-xl" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2">
                     <h3 className="text-sm font-bold text-slate-800">Edit Pemilih</h3>
                     <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-3 p-4">
-                    <div>
-                        <label className="label-field">Nama Pemilih <span className="text-rose-500">*</span></label>
-                        <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="input-field w-full mt-1" />
-                        {errors.name && <p className="mt-1 text-xs font-bold text-rose-500">{errors.name}</p>}
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                <form onSubmit={handleSubmit} className="space-y-1.5 p-3">
+                    <input type="text" value={data.name} onChange={e => setData('name', e.target.value)}
+                        className="input-field w-full py-1 text-xs font-bold uppercase" placeholder="NAMA PENUH *" />
+                    {errors.name && <p className="text-xs font-bold text-rose-500">{errors.name}</p>}
+
+                    <div className="grid gap-1.5 sm:grid-cols-3">
                         <div>
-                            <label className="label-field">No. K/P (Baru)</label>
-                            <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full mt-1" />
-                            {errors.no_kp && <p className="mt-1 text-xs font-bold text-rose-500">{errors.no_kp}</p>}
+                            <label className="label-field text-[10px]">No. K/P (Baru)</label>
+                            <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="900101025555" />
+                            {errors.no_kp && <p className="text-[10px] font-bold text-rose-500">{errors.no_kp}</p>}
                         </div>
                         <div>
-                            <label className="label-field">No. K/P (Lama)</label>
-                            <input type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)} className="input-field w-full mt-1" />
-                            {errors.old_ic && <p className="mt-1 text-xs font-bold text-rose-500">{errors.old_ic}</p>}
+                            <label className="label-field text-[10px]">No. K/P (Lama)</label>
+                            <input type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="A1234567" />
+                            {errors.old_ic && <p className="text-[10px] font-bold text-rose-500">{errors.old_ic}</p>}
                         </div>
                         <div>
-                            <label className="label-field">No. Ahli</label>
-                            <input type="text" value={data.no_ahli} onChange={e => setData('no_ahli', e.target.value)} className="input-field w-full mt-1" />
-                        </div>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                        <div>
-                            <label className="label-field">Tel. Bimbit</label>
-                            <input type="text" value={data.phone_mobile} onChange={e => setData('phone_mobile', e.target.value)} className="input-field w-full mt-1" />
-                        </div>
-                        <div>
-                            <label className="label-field">Tel. Rumah</label>
-                            <input type="text" value={data.phone_home} onChange={e => setData('phone_home', e.target.value)} className="input-field w-full mt-1" />
+                            <label className="label-field text-[10px]">No. Ahli</label>
+                            <input type="text" value={data.no_ahli} onChange={e => setData('no_ahli', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="A0001" />
                         </div>
                     </div>
-                    <div>
-                        <label className="label-field">Alamat</label>
-                        <textarea value={data.address} onChange={e => setData('address', e.target.value)} className="input-field w-full mt-1" rows="2" />
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
+
+                    <div className="grid gap-1.5 sm:grid-cols-2">
                         <div>
-                            <label className="label-field">UDM / DM</label>
-                            <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full mt-1">
+                            <label className="label-field text-[10px]">Tel. Bimbit</label>
+                            <input type="text" value={data.phone_mobile} onChange={e => setData('phone_mobile', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="0123456789" />
+                        </div>
+                        <div>
+                            <label className="label-field text-[10px]">Tel. Rumah</label>
+                            <input type="text" value={data.phone_home} onChange={e => setData('phone_home', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="045123456" />
+                        </div>
+                    </div>
+
+                    <textarea value={data.address} onChange={e => setData('address', e.target.value)}
+                        className="input-field w-full py-1 text-xs" rows="1" placeholder="Alamat" />
+
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                        <div>
+                            <label className="label-field text-[10px]">UDM / DM</label>
+                            <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full py-1 text-xs">
                                 <option value="">-- Pilih UDM --</option>
                                 {dms.map(dm => <option key={dm} value={dm}>{dm}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="label-field">Lokaliti</label>
-                            <select value={data.locality} onChange={e => setData('locality', e.target.value)} className="input-field w-full mt-1" disabled={!data.dm}>
+                            <label className="label-field text-[10px]">Lokaliti</label>
+                            <select value={data.locality} onChange={e => setData('locality', e.target.value)} className="input-field w-full py-1 text-xs" disabled={!data.dm}>
                                 <option value="">{data.dm ? '-- Pilih Lokaliti --' : '-- Pilih UDM dahulu --'}</option>
                                 {filteredLocalities.map(loc => <option key={loc} value={loc}>{loc}</option>)}
                             </select>
                         </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
+
+                    <div className="grid gap-1.5 sm:grid-cols-3">
                         <div>
-                            <label className="label-field">Jantina</label>
-                            <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="input-field w-full mt-1">
+                            <label className="label-field text-[10px]">Jantina</label>
+                            <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="input-field w-full py-1 text-xs">
                                 <option value="">-- Pilih --</option>
                                 <option value="Lelaki">Lelaki</option>
                                 <option value="Perempuan">Perempuan</option>
                             </select>
                         </div>
                         <div>
-                            <label className="label-field">Bangsa</label>
-                            <select value={data.race} onChange={e => setData('race', e.target.value)} className="input-field w-full mt-1">
+                            <label className="label-field text-[10px]">Bangsa</label>
+                            <select value={data.race} onChange={e => setData('race', e.target.value)} className="input-field w-full py-1 text-xs">
                                 <option value="">-- Pilih --</option>
                                 <option value="Melayu">Melayu</option>
                                 <option value="Cina">Cina</option>
@@ -323,17 +324,18 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                                 <option value="Lain-lain">Lain-lain</option>
                             </select>
                         </div>
+                        <div>
+                            <label className="label-field text-[10px]">Kod Cula</label>
+                            <select value={data.cula_code} onChange={e => setData('cula_code', e.target.value)} className="input-field w-full py-1 text-xs">
+                                <option value="">-- Pilih --</option>
+                                {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label className="label-field">Kod Cula</label>
-                        <select value={data.cula_code} onChange={e => setData('cula_code', e.target.value)} className="input-field w-full mt-1">
-                            <option value="">-- Pilih Kod Cula --</option>
-                            {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
-                        </select>
-                    </div>
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
-                        <button type="submit" disabled={processing} className="btn-primary text-xs">{processing ? 'Menyimpan...' : 'Simpan'}</button>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                        <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
+                        <button type="submit" disabled={processing} className="btn-primary text-xs py-1.5">{processing ? 'Menyimpan...' : 'Simpan'}</button>
                     </div>
                 </form>
             </div>
