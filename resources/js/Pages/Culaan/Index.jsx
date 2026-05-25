@@ -231,19 +231,30 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         return localVoters.data ?? [];
     }, [localVoters.data, search, searching, suggestions]);
 
-    const applyFilters = (nextState) => {
+    const applyFilters = (nextState, options = {}) => {
         router.get(route('culaan.index'), nextState, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            ...options,
         });
     };
 
     const goToPage = (page) => {
-        applyFilters({
-            ...formState,
-            page,
-        });
+        applyFilters(
+            {
+                ...formState,
+                page,
+            },
+            {
+                onFinish: () => {
+                    const el = document.getElementById('senarai-grid');
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                },
+            }
+        );
     };
 
     const updateFilter = (key, value) => {
@@ -833,7 +844,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                             </p>
                         ) : (
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 {rows.map((voter, index) => (
                                     <div key={voter.id} className="rounded-xl border border-green-600 bg-white p-3 shadow-sm shadow-green-600/20 overflow-hidden transition hover:shadow-md">
                                         <div className="flex items-start justify-between gap-2">
