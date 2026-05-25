@@ -75,12 +75,6 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
                         className="input-field w-full mt-0.5" placeholder="900101025555" />
                     {errors.no_kp && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.no_kp}</p>}
                 </div>
-                <div>
-                    <label className="label-field" htmlFor="old_ic">No. K/P (Lama)</label>
-                    <input id="old_ic" type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)}
-                        className="input-field w-full mt-0.5" placeholder="A1234567" />
-                    {errors.old_ic && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.old_ic}</p>}
-                </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -179,7 +173,7 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
 function DetailModal({ voter, onClose }) {
     if (!voter) return null;
     const fields = [
-        ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
+        ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['Alamat', voter.address || '-'], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
         ['Kod Cula', voter.cula_code || '-'], ['Jantina', voter.gender || '-'], ['Bangsa', voter.race || '-'],
@@ -262,11 +256,6 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                             <label className="label-field">No. K/P (Baru)</label>
                             <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="900101025555" />
                             {errors.no_kp && <p className="text-xs font-bold text-rose-500">{errors.no_kp}</p>}
-                        </div>
-                        <div>
-                            <label className="label-field">No. K/P (Lama)</label>
-                            <input type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="A1234567" />
-                            {errors.old_ic && <p className="text-xs font-bold text-rose-500">{errors.old_ic}</p>}
                         </div>
                         <div>
                             <label className="label-field">No. Ahli</label>
