@@ -889,7 +889,31 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-sm font-bold leading-5 text-slate-800">{voter.name}</p>
+                                                <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
+                                                    {voter.name}
+                                                    {(() => {
+                                                        const namaAyah = extractNamaAyah(voter.name);
+                                                        if (!namaAyah) return null;
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    doSearch(namaAyah);
+                                                                    const el = document.getElementById('culaan-search');
+                                                                    if (el) {
+                                                                        el.focus();
+                                                                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                                    }
+                                                                }}
+                                                                className="inline-flex shrink-0 items-center justify-center rounded-md border border-white bg-white px-1 py-0.5 text-slate-400 transition hover:border-slate-200 hover:text-green-600"
+                                                                title={`Cari keluarga: ${namaAyah}`}
+                                                            >
+                                                                <UserGroupIcon className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        );
+                                                    })()}
+                                                </p>
                                                 <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
                                             </div>
 
@@ -954,27 +978,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     Kemas Tel
                                                 </a>
                                             </>}
-                                            {(() => {
-                                                const namaAyah = extractNamaAyah(voter.name);
-                                                if (!namaAyah) return null;
-                                                return (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            doSearch(namaAyah);
-                                                            const el = document.getElementById('culaan-search');
-                                                            if (el) {
-                                                                el.focus();
-                                                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                                            }
-                                                        }}
-                                                        className="ml-auto inline-flex shrink-0 items-center justify-center rounded-md border border-white bg-white px-2 py-1.5 text-xs font-bold text-slate-400 shadow-sm transition hover:border-slate-200 hover:text-green-600"
-                                                        title={`Cari keluarga: ${namaAyah}`}
-                                                    >
-                                                        <UserGroupIcon className="h-3.5 w-3.5" />
-                                                    </button>
-                                                );
-                                            })()}
                                             {voter.is_marked ? (
                                                 <button
                                                     type="button"
