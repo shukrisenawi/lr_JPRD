@@ -15,6 +15,7 @@ class ProgramAttendee extends Model
         'name',
         'no_kp',
         'old_ic',
+        'no_ahli',
         'phone_mobile',
         'phone_home',
         'dm',

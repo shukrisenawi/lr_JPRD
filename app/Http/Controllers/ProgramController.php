@@ -322,6 +322,7 @@ class ProgramController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'no_kp' => ['nullable', 'string', 'max:50'],
             'old_ic' => ['nullable', 'string', 'max:50'],
+            'no_ahli' => ['nullable', 'string', 'max:255'],
             'phone_mobile' => ['nullable', 'string', 'max:50'],
             'phone_home' => ['nullable', 'string', 'max:50'],
             'dm' => ['nullable', 'string', 'max:255'],
