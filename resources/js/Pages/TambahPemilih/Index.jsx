@@ -333,7 +333,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-1">
+                    <div className="flex justify-center gap-2 pt-1">
                         <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
                         <button type="submit" disabled={processing} className="btn-primary text-xs py-1.5">{processing ? 'Menyimpan...' : 'Simpan'}</button>
                     </div>
