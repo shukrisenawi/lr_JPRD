@@ -49,7 +49,47 @@ function SearchIcon({ className = 'h-5 w-5' }) {
     );
 }
 
-function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
+function NoAhliModal({ voter, onClose, onSaved }) {
+    const [value, setValue] = useState(voter?.no_ahli || '');
+    const [saving, setSaving] = useState(false);
+
+    const handleSave = async () => {
+        if (!voter) return;
+        setSaving(true);
+        try {
+            const res = await fetch(route('carian-pemilih.update-no-ahli'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content },
+                body: JSON.stringify({ id: voter.id, no_ahli: value }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                onSaved(value);
+                onClose();
+            }
+        } catch {
+            alert('Gagal mengemaskini No. Ahli.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+            <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl" onClick={e => e.stopPropagation()}>
+                <h3 className="mb-3 text-sm font-bold text-slate-800">Kemaskini No. Ahli</h3>
+                <p className="mb-2 text-xs text-slate-500">{voter?.name}</p>
+                <input type="text" value={value} onChange={e => setValue(e.target.value)} className="input-field w-full text-xs" placeholder="Masukkan No. Ahli" autoFocus />
+                <div className="mt-3 flex justify-end gap-2">
+                    <button onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
+                    <button onClick={handleSave} disabled={saving} className="btn-primary text-xs">{saving ? 'Menyimpan...' : 'Simpan'}</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli }) {
     if (!voter) return null;
     const fields = [
         ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
@@ -69,7 +109,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
                     {!voter.is_manual && <>
                         <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
-                        <button onClick={() => onOpenTelegram(voter, 'kemasnoahli')} disabled={!tgReady} className="btn-primary">Kemaskini No Ahli</button>
+                        <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>
                     </>}
                     <button onClick={onClear} className="rounded-md bg-slate-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-500">Buang</button>
                 </div>
@@ -93,6 +133,7 @@ function SearchPanel() {
     const [selected, setSelected] = useState(null);
     const [err, setErr] = useState('');
     const [openingTg, setOpeningTg] = useState(false);
+    const [editNoAhli, setEditNoAhli] = useState(null);
     const ac = useRef(null);
     const rid = useRef(0);
     useEffect(() => () => ac.current?.abort(), []);
@@ -187,8 +228,11 @@ function SearchPanel() {
                 )}
             </section>
 
+            {editNoAhli && <NoAhliModal voter={editNoAhli} onClose={() => setEditNoAhli(null)}
+                onSaved={(val) => setSelected(prev => prev ? { ...prev, no_ahli: val } : prev)} />}
             <ResultCard voter={selected} onClear={() => { clearSearch(); setOpeningTg(false); }}
-                onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selected, 'kemascula'))} />
+                onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selected, 'kemascula'))}
+                onUpdateNoAhli={(v) => setEditNoAhli(v)} />
         </>
     );
 }
