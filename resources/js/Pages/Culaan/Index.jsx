@@ -946,6 +946,27 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     Kemas Tel
                                                 </a>
                                             </>}
+                                            {(() => {
+                                                const namaAyah = extractNamaAyah(voter.name);
+                                                if (!namaAyah) return null;
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            doSearch(namaAyah);
+                                                            const el = document.getElementById('culaan-search');
+                                                            if (el) {
+                                                                el.focus();
+                                                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                            }
+                                                        }}
+                                                        className="ml-auto inline-flex shrink-0 items-center justify-center rounded-md border border-white bg-white px-2 py-1.5 text-xs font-bold text-slate-400 shadow-sm transition hover:border-slate-200 hover:text-green-600"
+                                                        title={`Cari keluarga: ${namaAyah}`}
+                                                    >
+                                                        <UserGroupIcon className="h-3.5 w-3.5" />
+                                                    </button>
+                                                );
+                                            })()}
                                             {voter.is_marked ? (
                                                 <button
                                                     type="button"
@@ -965,27 +986,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
                                                 </button>
                                             )}
-                                            {(() => {
-                                                const namaAyah = extractNamaAyah(voter.name);
-                                                if (!namaAyah) return null;
-                                                return (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            doSearch(namaAyah);
-                                                            const el = document.getElementById('culaan-search');
-                                                            if (el) {
-                                                                el.focus();
-                                                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                                            }
-                                                        }}
-                                                        className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-bold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-100"
-                                                        title={`Cari keluarga: ${namaAyah}`}
-                                                    >
-                                                        <UserGroupIcon className="h-3.5 w-3.5" />
-                                                    </button>
-                                                );
-                                            })()}
                                         </div>
                                     </div>
                                 ))}
