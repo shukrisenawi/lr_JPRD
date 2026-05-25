@@ -240,6 +240,15 @@ class CulaanController extends Controller
 
         return $this->buildEligibleVotersQuery($filters)
             ->with('culaWorkItem.marker')
+            ->orderByRaw("
+                CASE
+                    WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
+                        THEN 1900 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
+                    WHEN LENGTH(no_kp) >= 2
+                        THEN 2000 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
+                    ELSE 9999
+                END ASC
+            ")
             ->orderBy('no_kp')
             ->paginate(20)
             ->withQueryString()
