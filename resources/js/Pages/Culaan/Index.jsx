@@ -891,12 +891,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 >
                                                     Kemas Tel
                                                 </a>
-                                                <a
-                                                    href={buildTelegramLink('kemasnoahli', voter.telegram_identity)}
-                                                    className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
-                                                >
-                                                    No Ahli
-                                                </a>
                                             </>}
                                             {voter.is_marked ? (
                                                 <button
