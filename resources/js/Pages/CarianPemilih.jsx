@@ -196,10 +196,10 @@ function SearchPanel() {
             <section className="card relative">
                 <div className="px-4 py-3">
                     <p className="label-section">Carian Pemilih</p>
-                    <p className="text-muted mt-0.5">Cari nama, IC atau nombor telefon.</p>
+                    <p className="text-muted mt-0.5">Cari nama, IC, nombor telefon atau No. Ahli.</p>
                     <div className="relative mt-2">
                         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
+                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789, A0001" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
                         {q && (
                             <button type="button" onClick={clearSearch} className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
                                 <XIcon className="h-3 w-3" />

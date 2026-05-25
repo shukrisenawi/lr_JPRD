@@ -143,7 +143,8 @@ class PemilihReportService
                         $like = '%' . $keyword . '%';
                         $kw->where(DB::raw('LOWER(name)'), 'like', $like)
                             ->orWhere(DB::raw('LOWER(dm)'), 'like', $like)
-                            ->orWhere(DB::raw('LOWER(locality)'), 'like', $like);
+                            ->orWhere(DB::raw('LOWER(locality)'), 'like', $like)
+                            ->orWhere(DB::raw('LOWER(no_ahli)'), 'like', $like);
 
                         if (preg_match('/\d/', $keyword)) {
                             $digitLike = '%' . $this->cleanDigits($keyword) . '%';
