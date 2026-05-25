@@ -936,8 +936,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             </div>
 
                                         </div>
-                                        <div className={showLocalityColumn ? 'mt-3 space-y-2 text-xs' : 'mt-3 grid grid-cols-3 gap-2 text-xs'}>
-                                            <div className={showLocalityColumn ? 'grid grid-cols-3 gap-2' : undefined}>
+                                        <div className="mt-3 space-y-2 text-xs">
+                                            <div className="grid grid-cols-3 gap-2">
                                                 <div>
                                                     <span className="font-semibold text-green-700">No Kp</span>
                                                     <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
