@@ -250,7 +250,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 onFinish: () => {
                     const el = document.getElementById('senarai-grid');
                     if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
                     }
                 },
             }
