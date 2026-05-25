@@ -252,53 +252,53 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-1 p-2.5">
+                <form onSubmit={handleSubmit} className="space-y-1 p-[11px]">
                     <input type="text" value={data.name} onChange={e => setData('name', e.target.value)}
-                        className="input-field w-full py-1 text-xs font-bold uppercase" placeholder="NAMA PENUH *" />
+                        className="input-field w-full py-[5px] text-xs font-bold uppercase" placeholder="NAMA PENUH *" />
                     {errors.name && <p className="text-xs font-bold text-rose-500">{errors.name}</p>}
 
                     <div className="grid gap-1 sm:grid-cols-3">
                         <div>
                             <label className="label-field">No. K/P (Baru)</label>
-                            <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="900101025555" />
+                            <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="900101025555" />
                             {errors.no_kp && <p className="text-xs font-bold text-rose-500">{errors.no_kp}</p>}
                         </div>
                         <div>
                             <label className="label-field">No. K/P (Lama)</label>
-                            <input type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="A1234567" />
+                            <input type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="A1234567" />
                             {errors.old_ic && <p className="text-xs font-bold text-rose-500">{errors.old_ic}</p>}
                         </div>
                         <div>
                             <label className="label-field">No. Ahli</label>
-                            <input type="text" value={data.no_ahli} onChange={e => setData('no_ahli', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="A0001" />
+                            <input type="text" value={data.no_ahli} onChange={e => setData('no_ahli', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="A0001" />
                         </div>
                     </div>
 
                     <div className="grid gap-1 sm:grid-cols-2">
                         <div>
                             <label className="label-field">Tel. Bimbit</label>
-                            <input type="text" value={data.phone_mobile} onChange={e => setData('phone_mobile', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="0123456789" />
+                            <input type="text" value={data.phone_mobile} onChange={e => setData('phone_mobile', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="0123456789" />
                         </div>
                         <div>
                             <label className="label-field">Tel. Rumah</label>
-                            <input type="text" value={data.phone_home} onChange={e => setData('phone_home', e.target.value)} className="input-field w-full py-1 text-xs" placeholder="045123456" />
+                            <input type="text" value={data.phone_home} onChange={e => setData('phone_home', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="045123456" />
                         </div>
                     </div>
 
                     <textarea value={data.address} onChange={e => setData('address', e.target.value)}
-                        className="input-field w-full py-1 text-xs" rows="1" placeholder="Alamat" />
+                        className="input-field w-full py-[5px] text-xs" rows="1" placeholder="Alamat" />
 
                     <div className="grid gap-1 sm:grid-cols-2">
                         <div>
                             <label className="label-field">UDM / DM</label>
-                            <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full py-1 text-xs">
+                            <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full py-[5px] text-xs">
                                 <option value="">-- Pilih UDM --</option>
                                 {dms.map(dm => <option key={dm} value={dm}>{dm}</option>)}
                             </select>
                         </div>
                         <div>
                             <label className="label-field">Lokaliti</label>
-                            <select value={data.locality} onChange={e => setData('locality', e.target.value)} className="input-field w-full py-1 text-xs" disabled={!data.dm}>
+                            <select value={data.locality} onChange={e => setData('locality', e.target.value)} className="input-field w-full py-[5px] text-xs" disabled={!data.dm}>
                                 <option value="">{data.dm ? '-- Pilih Lokaliti --' : '-- Pilih UDM dahulu --'}</option>
                                 {filteredLocalities.map(loc => <option key={loc} value={loc}>{loc}</option>)}
                             </select>
@@ -308,7 +308,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                     <div className="grid gap-1 sm:grid-cols-3">
                         <div>
                             <label className="label-field">Jantina</label>
-                            <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="input-field w-full py-1 text-xs">
+                            <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="input-field w-full py-[5px] text-xs">
                                 <option value="">-- Pilih --</option>
                                 <option value="Lelaki">Lelaki</option>
                                 <option value="Perempuan">Perempuan</option>
@@ -316,7 +316,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                         <div>
                             <label className="label-field">Bangsa</label>
-                            <select value={data.race} onChange={e => setData('race', e.target.value)} className="input-field w-full py-1 text-xs">
+                            <select value={data.race} onChange={e => setData('race', e.target.value)} className="input-field w-full py-[5px] text-xs">
                                 <option value="">-- Pilih --</option>
                                 <option value="Melayu">Melayu</option>
                                 <option value="Cina">Cina</option>
@@ -326,7 +326,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                         <div>
                             <label className="label-field">Kod Cula</label>
-                            <select value={data.cula_code} onChange={e => setData('cula_code', e.target.value)} className="input-field w-full py-1 text-xs">
+                            <select value={data.cula_code} onChange={e => setData('cula_code', e.target.value)} className="input-field w-full py-[5px] text-xs">
                                 <option value="">-- Pilih --</option>
                                 {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
                             </select>
@@ -334,8 +334,8 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                     </div>
 
                     <div className="flex justify-center gap-2 pt-1">
-                        <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
-                        <button type="submit" disabled={processing} className="btn-primary text-xs py-1">{processing ? 'Menyimpan...' : 'Simpan'}</button>
+                        <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-[5px] text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
+                        <button type="submit" disabled={processing} className="btn-primary text-xs py-[5px]">{processing ? 'Menyimpan...' : 'Simpan'}</button>
                     </div>
                 </form>
             </div>
