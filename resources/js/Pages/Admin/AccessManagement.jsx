@@ -293,7 +293,7 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                                 <ScopeSelect data={uf.data} setData={uf.setData} errors={uf.errors} udms={udms} cawangans={cawangans} prefix="u-" />
                             </div>
                             <div className="mt-3"><InputLabel htmlFor="uea" value="Akaun Luput Pada (optional)" /><div className="relative mt-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4" /><path d="M8 2v4" /><path d="M3 10h18" /></svg><TextInput id="uea" type="date" value={uf.data.expires_at} onChange={(e) => uf.setData('expires_at', e.target.value)} className="input-field pl-10" /></div><InputError className="mt-1" message={uf.errors.expires_at} /></div>
-                            <div className="mt-3 flex justify-end"><PrimaryButton disabled={uf.processing} className="px-4 py-1.5 text-xs">{uf.processing ? '...' : 'Cipta'}</PrimaryButton></div>
+                            <div className="mt-3 flex justify-center"><PrimaryButton disabled={uf.processing} className="px-4 py-1.5 text-xs">{uf.processing ? '...' : 'Cipta'}</PrimaryButton></div>
                         </form>
                         <div className="card p-3">
                             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Pengguna</p>
