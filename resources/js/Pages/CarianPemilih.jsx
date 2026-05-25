@@ -60,7 +60,7 @@ function NoAhliModal({ voter, onClose, onSaved }) {
             const res = await fetch(route('carian-pemilih.update-no-ahli'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
-                body: JSON.stringify({ id: voter.id, no_ahli: value }),
+                body: JSON.stringify({ record_id: voter.record_id, no_ahli: value }),
             });
             if (!res.ok) {
                 const txt = await res.text();

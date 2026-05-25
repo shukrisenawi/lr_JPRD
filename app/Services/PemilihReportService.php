@@ -170,6 +170,7 @@ class PemilihReportService
 
                 return [
                     'id' => $id,
+                    'record_id' => $record->id,
                     'voter_id' => $id,
                     'name' => $record->name,
                     'no_kp' => $record->no_kp,

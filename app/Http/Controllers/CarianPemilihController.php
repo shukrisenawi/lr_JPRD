@@ -31,11 +31,11 @@ class CarianPemilihController extends Controller
     public function updateNoAhli(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|integer|exists:pemilih_records,id',
+            'record_id' => 'required|integer|exists:pemilih_records,id',
             'no_ahli' => 'nullable|string|max:255',
         ]);
 
-        $record = PemilihRecord::findOrFail($validated['id']);
+        $record = PemilihRecord::findOrFail($validated['record_id']);
         $record->no_ahli = $validated['no_ahli'];
         $record->save();
 
