@@ -252,12 +252,12 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="space-y-1 p-[11px]">
+                <form onSubmit={handleSubmit} className="space-y-[6px] p-[11px]">
                     <input type="text" value={data.name} onChange={e => setData('name', e.target.value)}
                         className="input-field w-full py-[5px] text-xs font-bold uppercase" placeholder="NAMA PENUH *" />
                     {errors.name && <p className="text-xs font-bold text-rose-500">{errors.name}</p>}
 
-                    <div className="grid gap-1 sm:grid-cols-3">
+                    <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-3">
                         <div>
                             <label className="label-field">No. K/P (Baru)</label>
                             <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="900101025555" />
@@ -274,7 +274,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                     </div>
 
-                    <div className="grid gap-1 sm:grid-cols-2">
+                    <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-2">
                         <div>
                             <label className="label-field">Tel. Bimbit</label>
                             <input type="text" value={data.phone_mobile} onChange={e => setData('phone_mobile', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="0123456789" />
@@ -288,7 +288,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                     <textarea value={data.address} onChange={e => setData('address', e.target.value)}
                         className="input-field w-full py-[5px] text-xs" rows="1" placeholder="Alamat" />
 
-                    <div className="grid gap-1 sm:grid-cols-2">
+                    <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-2">
                         <div>
                             <label className="label-field">UDM / DM</label>
                             <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full py-[5px] text-xs">
@@ -305,7 +305,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                         </div>
                     </div>
 
-                    <div className="grid gap-1 sm:grid-cols-3">
+                    <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-3">
                         <div>
                             <label className="label-field">Jantina</label>
                             <select value={data.gender} onChange={e => setData('gender', e.target.value)} className="input-field w-full py-[5px] text-xs">
