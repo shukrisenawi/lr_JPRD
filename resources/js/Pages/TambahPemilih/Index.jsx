@@ -202,7 +202,7 @@ function DetailModal({ voter, onClose }) {
     );
 }
 
-function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, isJprd }) {
+function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, canEditNoAhli }) {
     const { data, setData, put, processing, errors } = useForm({
         name: voter.name || '',
         no_kp: voter.no_kp || '',
@@ -257,7 +257,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, isJprd }) {
                             <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="900101025555" />
                             {errors.no_kp && <p className="text-xs font-bold text-rose-500">{errors.no_kp}</p>}
                         </div>
-                        {isJprd && (
+                        {canEditNoAhli && (
                             <div>
                                 <label className="label-field">No. Ahli</label>
                                 <input type="text" value={data.no_ahli} onChange={e => setData('no_ahli', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="A0001" />
@@ -338,7 +338,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
     const { auth } = usePage().props;
     const currentUser = auth.user;
     const isMasterAdmin = currentUser.role?.is_master_admin === true;
-    const isJprd = currentUser?.access_level === 'jprd' || isMasterAdmin;
+    const canEditNoAhli = currentUser?.allowed_modules?.includes('kemaskini-no-ahli');
     const canModify = (voter) => isMasterAdmin || voter.created_by === currentUser.id;
 
     const [detailVoter, setDetailVoter] = useState(null);
@@ -364,7 +364,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
     return (
         <>
             {detailVoter && <DetailModal voter={detailVoter} onClose={() => setDetailVoter(null)} />}
-            {editVoter && <EditModal voter={editVoter} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} onClose={() => setEditVoter(null)} isJprd={isJprd} />}
+            {editVoter && <EditModal voter={editVoter} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} onClose={() => setEditVoter(null)} canEditNoAhli={canEditNoAhli} />}
 
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">

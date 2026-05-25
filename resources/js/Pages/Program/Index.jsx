@@ -724,7 +724,7 @@ function SearchVoterPanel({ selectedProgram }) {
 export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups }) {
     const { auth } = usePage().props;
     const isAdmin = auth?.user?.role?.is_master_admin;
-    const isJprd = auth?.user?.access_level === 'jprd' || isAdmin;
+    const canEditNoAhli = auth?.user?.allowed_modules?.includes('kemaskini-no-ahli');
     const tabs = [
         { key: 'senarai-program', label: 'Senarai Program' },
         { key: 'tambah-program', label: 'Tambah Program' },
@@ -1055,12 +1055,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 ))}
             </div>
 
-            <AttendeeDetailModal attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={isJprd ? (a) => setEditNoAhli(a) : null} />
+            <AttendeeDetailModal attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={canEditNoAhli ? (a) => setEditNoAhli(a) : null} />
             <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
             <AttendeeSubProgramEditor key={selEditSub?.id} attendee={selEditSub} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSelEditSub(null)} />
             <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
             <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
-            {editNoAhli && isJprd && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
+            {editNoAhli && canEditNoAhli && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
         </AuthenticatedLayout>
     );
 }

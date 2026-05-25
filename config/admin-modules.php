@@ -46,4 +46,8 @@ return [
         'label' => 'Settings',
         'description' => 'Tetapan URL Google Sheet sistem.',
     ],
+    'kemaskini-no-ahli' => [
+        'label' => 'Kemaskini No Ahli',
+        'description' => 'Benarkan kemaskini nombor ahli pemilih.',
+    ],
 ];

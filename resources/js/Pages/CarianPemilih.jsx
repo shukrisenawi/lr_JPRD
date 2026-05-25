@@ -95,7 +95,7 @@ function NoAhliModal({ voter, onClose, onSaved }) {
     );
 }
 
-function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, isJprd }) {
+function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli }) {
     if (!voter) return null;
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
@@ -115,7 +115,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, i
                     {!voter.is_manual && <>
                         <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
-                        {isJprd && <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>}
+                        {canEditNoAhli && <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>}
                     </>}
                     <button onClick={onClear} className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-600 text-white shadow-sm transition hover:bg-slate-500" title="Tutup"><XIcon className="h-3.5 w-3.5" /></button>
                 </div>
@@ -133,8 +133,8 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, i
 }
 
 function SearchPanel() {
-    const { auth } = usePage().props;
-    const isJprd = auth.user?.access_level === 'jprd' || auth.user?.role?.is_master_admin === true;
+        const { auth } = usePage().props;
+        const canEditNoAhli = auth.user?.allowed_modules?.includes('kemaskini-no-ahli');
 
     const [q, setQ] = useState('');
     const [searching, setSearching] = useState(false);
@@ -248,11 +248,11 @@ function SearchPanel() {
             </section>
 
             {flash && <div className="flash-msg">{flash}</div>}
-            {editNoAhli && isJprd && <NoAhliModal voter={editNoAhli} onClose={() => setEditNoAhli(null)}
+            {editNoAhli && canEditNoAhli && <NoAhliModal voter={editNoAhli} onClose={() => setEditNoAhli(null)}
                 onSaved={(val) => { setSelected(prev => prev ? { ...prev, no_ahli: val } : prev); setFlash('No. Ahli berjaya dikemaskini!'); }} />}
             <ResultCard voter={selected} onClear={() => { clearSearch(); setOpeningTg(false); }}
                 onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selected, 'kemascula'))}
-                onUpdateNoAhli={(v) => setEditNoAhli(v)} isJprd={isJprd} />
+                onUpdateNoAhli={(v) => setEditNoAhli(v)} canEditNoAhli={canEditNoAhli} />
         </>
     );
 }

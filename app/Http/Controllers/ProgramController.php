@@ -343,7 +343,7 @@ class ProgramController extends Controller
         $subProgramIds = $validated['sub_program_ids'] ?? [];
 
         $user = $request->user();
-        if (!$user->isMasterAdmin() && $user->access_level !== 'jprd') {
+        if (!$user->canAccessModule('kemaskini-no-ahli')) {
             unset($validated['no_ahli']);
         }
 

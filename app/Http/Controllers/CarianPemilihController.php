@@ -33,8 +33,8 @@ class CarianPemilihController extends Controller
     public function updateNoAhli(Request $request)
     {
         $user = $request->user();
-        if (!$user->isMasterAdmin() && $user->access_level !== 'jprd') {
-            abort(403, 'Hanya peringkat JPRD boleh mengemaskini No. Ahli.');
+        if (!$user->canAccessModule('kemaskini-no-ahli')) {
+            abort(403, 'Anda tidak mempunyai akses untuk mengemaskini No. Ahli.');
         }
 
         $validated = $request->validate([
