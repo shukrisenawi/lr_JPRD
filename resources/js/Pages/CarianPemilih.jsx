@@ -117,7 +117,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli })
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
                         <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>
                     </>}
-                    <button onClick={onClear} className="rounded-md bg-slate-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-500">Tutup</button>
+                    <button onClick={onClear} className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-600 text-white shadow-sm transition hover:bg-slate-500" title="Tutup"><XIcon className="h-3.5 w-3.5" /></button>
                 </div>
             </div>
             <div className="grid gap-2 p-3 sm:grid-cols-2">
