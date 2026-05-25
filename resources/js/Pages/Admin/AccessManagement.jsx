@@ -278,7 +278,7 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                 </div>
 
                 {tab === 'cipta-pengguna' && (
-                    <section className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
+                    <section className="space-y-3">
                         <form onSubmit={tu} className="card p-3">
                             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Cipta Pengguna</p>
                             <h3 className="mt-0.5 text-sm font-bold text-slate-950">Tambah user baru</h3>
@@ -298,7 +298,7 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                         <div className="card p-3">
                             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Pengguna</p>
                             <h3 className="mt-0.5 text-sm font-bold text-slate-950">Akaun sedia ada</h3>
-                            <div className="mt-3 space-y-2">{users.map((u) => <UserCard key={u.id} user={u} roles={roles} currentUserId={myId} udms={udms} cawangans={cawangans} />)}</div>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{users.map((u) => <UserCard key={u.id} user={u} roles={roles} currentUserId={myId} udms={udms} cawangans={cawangans} />)}</div>
                         </div>
                     </section>
                 )}
