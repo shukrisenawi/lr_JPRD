@@ -29,7 +29,7 @@ function ListIcon({ className = 'h-5 w-5' }) {
 
 function FormTab({ dms, localitiesByDm, culaCodes }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '', no_kp: '', old_ic: '', phone_mobile: '', phone_home: '',
+        name: '', no_kp: '', old_ic: '', no_ahli: '', phone_mobile: '', phone_home: '',
         address: '', dm: '', locality: '', gender: '', race: '',
         cula_code: '', cula_display_label: '',
     });
@@ -180,7 +180,7 @@ function DetailModal({ voter, onClose }) {
     if (!voter) return null;
     const fields = [
         ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
-        ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
+        ['No. Ahli', voter.no_ahli || '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['Alamat', voter.address || '-'], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
         ['Kod Cula', voter.cula_code || '-'], ['Jantina', voter.gender || '-'], ['Bangsa', voter.race || '-'],
         ['Dicipta Oleh', voter.creator?.name || '-'],
@@ -213,6 +213,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
         name: voter.name || '',
         no_kp: voter.no_kp || '',
         old_ic: voter.old_ic || '',
+        no_ahli: voter.no_ahli || '',
         phone_mobile: voter.phone_mobile || '',
         phone_home: voter.phone_home || '',
         address: voter.address || '',
@@ -267,6 +268,10 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                             <label className="label-field">No. K/P (Lama)</label>
                             <input type="text" value={data.old_ic} onChange={e => setData('old_ic', e.target.value)} className="input-field w-full mt-1" />
                             {errors.old_ic && <p className="mt-1 text-xs font-bold text-rose-500">{errors.old_ic}</p>}
+                        </div>
+                        <div>
+                            <label className="label-field">No. Ahli</label>
+                            <input type="text" value={data.no_ahli} onChange={e => setData('no_ahli', e.target.value)} className="input-field w-full mt-1" />
                         </div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -374,6 +379,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                             <tr className="border-b border-slate-200 bg-slate-50">
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Nama</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">No. K/P (Baru)</th>
+                                <th className="px-3 py-2.5 font-bold text-slate-600">No. Ahli</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Tel. Bimbit</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Kod Cula</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">UDM</th>
@@ -385,7 +391,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                         <tbody>
                             {manualVoters.data.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="px-3 py-8 text-center text-sm text-slate-500">
+                                    <td colSpan="9" className="px-3 py-8 text-center text-sm text-slate-500">
                                         Tiada pemilih manual lagi.
                                     </td>
                                 </tr>
@@ -394,6 +400,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                                     <tr key={voter.id} className="border-b border-slate-100 transition hover:bg-green-50/50">
                                         <td className="px-3 py-2.5 font-semibold text-slate-800">{voter.name}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.no_kp || '-'}</td>
+                                        <td className="px-3 py-2.5 text-slate-600">{voter.no_ahli || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.phone_mobile || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.cula_code || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.dm || '-'}</td>

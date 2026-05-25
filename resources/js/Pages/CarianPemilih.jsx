@@ -53,7 +53,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
     if (!voter) return null;
     const fields = [
         ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
-        ['Umur', voter.age ?? '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
+        ['No. Ahli', voter.no_ahli || '-'], ['Umur', voter.age ?? '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['UDM', voter.dm], ['Lokaliti', voter.locality], ['Jantina', voter.gender],
         ['Bangsa', voter.race], ['Status Culaan', voter.cula_display_label || voter.cula_code], ['Alamat', voter.address],
     ];
@@ -69,6 +69,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady }) {
                     {!voter.is_manual && <>
                         <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
+                        <button onClick={() => onOpenTelegram(voter, 'kemasnoahli')} disabled={!tgReady} className="btn-primary">Kemaskini No Ahli</button>
                     </>}
                     <button onClick={onClear} className="rounded-md bg-slate-600 px-2.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-500">Buang</button>
                 </div>

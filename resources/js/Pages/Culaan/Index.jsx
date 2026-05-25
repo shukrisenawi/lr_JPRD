@@ -475,9 +475,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         }
 
         const titleRows = [];
-        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula'];
-        const align = ['center', 'center', 'left', 'left', 'center', 'center'];
-        const columnWidths = [30, 100, 120, 200, 100, 40];
+        const headers = ['No', 'IC', 'Nama', 'Alamat', 'Telefon', 'Cula', 'No. Ahli'];
+        const align = ['center', 'center', 'left', 'left', 'center', 'center', 'center'];
+        const columnWidths = [30, 100, 120, 200, 100, 40, 60];
 
         const dataRows = exportRows.map((voter, index) => {
             const cells = [
@@ -487,6 +487,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 { value: voter.address || '-', type: 'String', align: 'left' },
                 { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
                 { value: '', type: 'String', align: 'center' },
+                { value: voter.no_ahli || '-', type: 'String', align: 'center' },
             ];
 
             return cells;
@@ -851,6 +852,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
                                             </div>
                                             <div>
+                                                <span className="font-semibold text-green-700">No. Ahli</span>
+                                                <p className="mt-0.5 font-bold text-slate-800">{voter.no_ahli || '-'}</p>
+                                            </div>
+                                            <div>
                                                 <span className="font-semibold text-green-700">Telefon</span>
                                                 <p className="mt-0.5 font-bold text-slate-800">{voter.phone_mobile || voter.phone_home || '-'}</p>
                                             </div>
@@ -885,6 +890,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                                 >
                                                     Kemas Tel
+                                                </a>
+                                                <a
+                                                    href={buildTelegramLink('kemasnoahli', voter.telegram_identity)}
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                                >
+                                                    No Ahli
                                                 </a>
                                             </>}
                                             {voter.is_marked ? (

@@ -13,6 +13,7 @@ class PemilihRecord extends Model
         'identity_number',
         'no_kp',
         'old_ic',
+        'no_ahli',
         'name',
         'dm',
         'locality',

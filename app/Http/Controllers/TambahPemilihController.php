@@ -66,6 +66,7 @@ class TambahPemilihController extends Controller
         $validated = $request->validate([
             'no_kp' => 'nullable|string|max:20',
             'old_ic' => 'nullable|string|max:20',
+            'no_ahli' => 'nullable|string|max:255',
             'name' => 'required|string|max:255',
             'dm' => 'nullable|string|max:255',
             'locality' => 'nullable|string|max:255',
@@ -123,6 +124,7 @@ class TambahPemilihController extends Controller
             'name' => 'required|string|max:255',
             'no_kp' => 'nullable|string|max:20',
             'old_ic' => 'nullable|string|max:20',
+            'no_ahli' => 'nullable|string|max:255',
             'phone_mobile' => 'nullable|string|max:20',
             'phone_home' => 'nullable|string|max:20',
             'address' => 'nullable|string',

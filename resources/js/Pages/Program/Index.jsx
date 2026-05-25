@@ -162,7 +162,7 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
     if (!voter) return null;
     const fields = [
         ['Nama', voter.name], ['No. IC Baru', voter.no_kp || '-'], ['No. IC Lama', voter.old_ic || '-'],
-        ['Umur', voter.age ?? '-'],
+        ['No. Ahli', voter.no_ahli || '-'], ['Umur', voter.age ?? '-'],
         ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'], ['Jantina', voter.gender || '-'],
         ['Bangsa', voter.race || '-'], ['Status Culaan', voter.cula_display_label || voter.cula_code || '-'], ['Alamat', voter.address || '-'],
@@ -202,7 +202,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady }) {
     if (!attendee) return null;
     const fields = [
         ['Nama', attendee.name], ['No. IC', attendee.no_kp || attendee.old_ic || '-'],
-        ['Tel', attendee.phone_mobile || attendee.phone_home || '-'],
+        ['No. Ahli', attendee.no_ahli || '-'], ['Tel', attendee.phone_mobile || attendee.phone_home || '-'],
         ['UDM', attendee.dm || '-'], ['Lokaliti', attendee.locality || '-'],
         ['Jantina', attendee.gender || '-'], ['Bangsa', attendee.race || '-'],
         ['Status Culaan', attendee.cula_display_label || attendee.cula_code || '-'],

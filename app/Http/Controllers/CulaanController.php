@@ -335,6 +335,7 @@ class CulaanController extends Controller
             'name' => $voter->name,
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,
+            'no_ahli' => $voter->no_ahli,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
             'address' => $voter->address,
