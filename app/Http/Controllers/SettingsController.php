@@ -36,7 +36,7 @@ class SettingsController extends Controller
         return back()->with('success', 'Tetapan URL Google Sheet berjaya dikemaskini.');
     }
 
-    public function uploadPemilih(Request $request, PemilihReportService $reportService): RedirectResponse
+    public function uploadPemilih(Request $request, PemilihReportService $reportService): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         ini_set('max_execution_time', '300');
         ini_set('memory_limit', '512M');
@@ -65,9 +65,23 @@ class SettingsController extends Controller
             $reportService->syncUploadedVoters($storedPath);
             $reportService->buildFromPath($storedPath);
         } catch (\Throwable $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ralat memproses fail: '.$e->getMessage(),
+                ], 500);
+            }
+
             return redirect()
                 ->route('settings.edit')
                 ->with('error', 'Ralat memproses fail: '.$e->getMessage());
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Fail pemilih berjaya dimuat naik sebagai data terkini sistem.',
+            ]);
         }
 
         return redirect()
