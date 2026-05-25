@@ -184,6 +184,7 @@ class ProgramController extends Controller
                             'name' => $attendee->name,
                             'no_kp' => $attendee->no_kp,
                             'old_ic' => $attendee->old_ic,
+                            'no_ahli' => $attendee->no_ahli,
                             'phone_mobile' => $attendee->phone_mobile,
                             'phone_home' => $attendee->phone_home,
                             'dm' => $attendee->dm,
