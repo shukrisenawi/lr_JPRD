@@ -10,6 +10,31 @@ function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
 
+function extractNamaAyah(name) {
+    if (!name) return null;
+    const lowerName = name.toLowerCase();
+    const connectors = [' bin ', ' binti ', ' bt ', ' a/p ', ' a/l '];
+    for (const connector of connectors) {
+        const idx = lowerName.lastIndexOf(connector);
+        if (idx !== -1) {
+            const result = name.substring(idx + connector.length).trim();
+            return result || null;
+        }
+    }
+    return null;
+}
+
+function UserGroupIcon({ className = 'h-4 w-4' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    );
+}
+
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
 
 function getBarColor(entry, i) {
@@ -937,6 +962,19 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
                                                 </button>
                                             )}
+                                            {(() => {
+                                                const namaAyah = extractNamaAyah(voter.name);
+                                                if (!namaAyah) return null;
+                                                return (
+                                                    <a
+                                                        href={`${route('carian-pemilih.index')}?q=${encodeURIComponent(namaAyah)}`}
+                                                        className="inline-flex flex-1 items-center justify-center rounded-md border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-bold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-100"
+                                                        title={`Cari keluarga: ${namaAyah}`}
+                                                    >
+                                                        <UserGroupIcon className="h-3.5 w-3.5" />
+                                                    </a>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 ))}
