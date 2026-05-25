@@ -858,30 +858,40 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             </div>
 
                                         </div>
-                                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                                            <div>
-                                                <span className="font-semibold text-green-700">IC</span>
-                                                <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <span className="font-semibold text-green-700">Telefon</span>
-                                                <p className="mt-0.5 font-bold text-slate-800">{voter.phone_mobile || voter.phone_home || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <span className="font-semibold text-green-700">Umur</span>
-                                                <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
+                                        <div className={showLocalityColumn ? 'mt-3 space-y-2 text-xs' : 'mt-3 grid grid-cols-3 gap-2 text-xs'}>
+                                            <div className={showLocalityColumn ? 'grid grid-cols-3 gap-2' : undefined}>
+                                                <div>
+                                                    <span className="font-semibold text-green-700">IC</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="font-semibold text-green-700">Telefon</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.phone_mobile || voter.phone_home || '-'}</p>
+                                                </div>
+                                                {!showLocalityColumn && (
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">Umur</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                             {showLocalityColumn && (
-                                                <div className={voter.is_marked && voter.marked_by_name ? 'col-span-2' : 'col-span-3'}>
-                                                    <span className="font-semibold text-green-700">Lokaliti</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
-                                                </div>
-                                            )}
-                                            {showLocalityColumn && voter.is_marked && voter.marked_by_name && (
-                                                <div className="col-span-1 flex items-end">
-                                                    <span className="rounded bg-lime-100 px-2 py-0.5 text-xs font-bold text-lime-700">
-                                                        {voter.marked_by_name}
-                                                    </span>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <div className={voter.is_marked && voter.marked_by_name ? 'col-span-1' : 'col-span-2'}>
+                                                        <span className="font-semibold text-green-700">Lokaliti</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">Umur</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
+                                                    </div>
+                                                    {voter.is_marked && voter.marked_by_name && (
+                                                        <div className="flex items-end">
+                                                            <span className="rounded bg-lime-100 px-2 py-0.5 text-xs font-bold text-lime-700">
+                                                                {voter.marked_by_name}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
