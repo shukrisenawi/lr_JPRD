@@ -209,7 +209,7 @@ function NoAhliModal({ attendee, onClose, onSaved }) {
             const res = await fetch(route('carian-pemilih.update-no-ahli'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
-                body: JSON.stringify({ record_id: attendee.record_id ?? attendee.voter_id, no_ahli: value }),
+                body: JSON.stringify({ record_id: attendee.pemilih_record_id, no_ahli: value }),
             });
             if (!res.ok) {
                 const txt = await res.text();
@@ -230,17 +230,24 @@ function NoAhliModal({ attendee, onClose, onSaved }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-            <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl" onClick={e => e.stopPropagation()}>
-                <h3 className="mb-3 text-sm font-bold text-slate-800">Kemaskini No. Ahli</h3>
-                <p className="mb-2 text-xs text-slate-500">{attendee?.name}</p>
-                <input type="text" value={value} onChange={e => setValue(e.target.value)} className="input-field w-full text-xs" placeholder="Masukkan No. Ahli" autoFocus />
-                <div className="mt-3 flex justify-end gap-2">
-                    <button onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
-                    <button onClick={handleSave} disabled={saving} className="btn-primary text-xs">{saving ? 'Menyimpan...' : 'Simpan'}</button>
+        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
+            <div className="rounded-xl border border-green-200 bg-green-50/50 p-3">
+                <div className="flex items-center justify-between gap-2 border-b border-green-200 pb-2">
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-green-900 truncate">Kemaskini No. Ahli</p>
+                        <p className="text-xs text-green-700">{attendee?.name}</p>
+                    </div>
+                    <button onClick={onClose} className="text-green-400 hover:text-green-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
+                </div>
+                <div className="mt-2">
+                    <input type="text" value={value} onChange={e => setValue(e.target.value)} className="input-field w-full text-xs" placeholder="Masukkan No. Ahli" autoFocus />
+                </div>
+                <div className="mt-3 flex gap-2 border-t border-green-200 pt-2">
+                    <button onClick={onClose} className="flex-1 rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-300">Batal</button>
+                    <button onClick={handleSave} disabled={saving} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">{saving ? 'Menyimpan...' : 'Simpan'}</button>
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }
 

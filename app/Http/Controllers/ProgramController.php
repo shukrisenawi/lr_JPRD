@@ -188,6 +188,7 @@ class ProgramController extends Controller
                             'no_kp' => $attendee->no_kp,
                             'old_ic' => $attendee->old_ic,
                             'no_ahli' => $attendee->no_ahli ?? $icToNoAhli[$attendee->no_kp] ?? $icToNoAhli[$attendee->old_ic] ?? null,
+                            'pemilih_record_id' => $icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null,
                             'phone_mobile' => $attendee->phone_mobile,
                             'phone_home' => $attendee->phone_home,
                             'dm' => $attendee->dm,
