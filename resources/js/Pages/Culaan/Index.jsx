@@ -902,7 +902,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 </div>
                                                 <div className="ml-[30px]">
                                                     <span className="font-semibold text-green-700">Telefon</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.phone_mobile || voter.phone_home || '-'}</p>
+                                                    {(() => {
+                                                        const phone = voter.phone_mobile || voter.phone_home;
+                                                        if (!phone) return <p className="mt-0.5 font-bold text-slate-800">-</p>;
+                                                        return (
+                                                            <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                                {phone}
+                                                            </a>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 {!showLocalityColumn && (
                                                     <div>
