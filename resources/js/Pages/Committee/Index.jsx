@@ -1077,15 +1077,15 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
     const membershipRef = useRef(null);
 
     const sectionTabs = [
+        ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
         ...(canKumpulan ? [{ key: 'kumpulan', label: 'Kumpulan', desc: 'Urus kumpulan dan jawatan kumpulan.', icon: 'layers' }] : []),
         ...(canJawatan ? [{ key: 'jawatan', label: 'Jawatan', desc: 'Senarai master jawatan.', icon: 'userCog' }] : []),
-        ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
     ];
 
     const [activeSection, setActiveSection] = useState(() => {
+        if (canSenarai) return 'senarai-jawatankuasa';
         if (canKumpulan) return 'kumpulan';
-        if (canJawatan) return 'jawatan';
-        return 'senarai-jawatankuasa';
+        return 'jawatan';
     });
 
     return (
