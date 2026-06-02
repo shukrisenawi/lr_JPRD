@@ -1173,9 +1173,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                      )}
                                                                                  </div>
                                                                              )}
-                                                                             <div className="mt-1.5 flex items-center gap-2">
-                                                                                 {m.scope_name && <span className="text-[10px] text-slate-400">{m.scope_name}</span>}
-                                                                                 {canRemove && (
+                                                                              <div className="mt-1.5 flex items-center gap-2">
+                                                                                  {canRemove && (
                                                                                      <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
                                                                                  )}
                                                                              </div>
