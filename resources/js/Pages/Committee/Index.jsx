@@ -65,6 +65,7 @@ function GroupManager({ groups, positions: allPositions }) {
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+                if (addModal) return;
                 setExpandedId(null);
                 setAddModal(null);
                 setSelectedPositionIds([]);
@@ -74,7 +75,7 @@ function GroupManager({ groups, positions: allPositions }) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [expandedId]);
+    }, [expandedId, addModal]);
 
     const submitCreate = (e) => {
         e.preventDefault();
