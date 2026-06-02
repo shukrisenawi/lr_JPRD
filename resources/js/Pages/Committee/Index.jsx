@@ -665,6 +665,31 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         }
     }, [positionsForForm]);
 
+    const [expandedVoterId, setExpandedVoterId] = useState(null);
+    const expandedRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+                setExpandedVoterId(null);
+            }
+        };
+        if (expandedVoterId !== null) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [expandedVoterId]);
+
+    const voterMembershipsMap = useMemo(() => {
+        const map = {};
+        memberships.forEach((m) => {
+            const vid = m.voter.id;
+            if (!map[vid]) map[vid] = [];
+            map[vid].push(m);
+        });
+        return map;
+    }, [memberships]);
+
     const currentScopes = scopes[resolvedTab] ?? [];
 
     const filteredMemberships = useMemo(() => {
@@ -962,9 +987,12 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredMemberships.map((membership) => {
                             const canRemove = auth.user?.is_master_admin || membership.created_by === auth.user?.id;
+                            const isExpanded = expandedVoterId === membership.voter.id;
+                            const voterMemberships = voterMembershipsMap[membership.voter.id] || [];
+
                             return (
-                                <div key={membership.id} className="group rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md">
-                                    <div className="flex items-start justify-between gap-2">
+                                <div key={membership.id} className={'rounded-lg border bg-white shadow-sm transition ' + (isExpanded ? 'border-green-400 shadow-md' : 'border-green-100 hover:border-green-300 hover:shadow-md')} ref={isExpanded ? expandedRef : null}>
+                                    <div className="flex items-start justify-between gap-2 p-2.5">
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
                                             <div className="mt-1 flex items-center gap-2">
@@ -987,10 +1015,37 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                 <p className="mt-1 text-[10px] text-slate-400">Oleh: <span className="font-bold text-slate-600">{membership.creator_name}</span></p>
                                             )}
                                         </div>
-                                        {canRemove && (
-                                            <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 opacity-0 transition hover:bg-rose-50 group-hover:opacity-100">Buang</button>
-                                        )}
+                                        <div className="flex shrink-0 items-center gap-1">
+                                            {voterMemberships.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExpandedVoterId(isExpanded ? null : membership.voter.id)}
+                                                    className={'rounded-md border px-2 py-1 text-[10px] font-bold transition ' + (isExpanded ? 'bg-green-600 text-white border-green-600' : 'border-green-200 bg-white text-green-700 hover:bg-green-50')}
+                                                >
+                                                    Jawatan
+                                                </button>
+                                            )}
+                                            {canRemove && (
+                                                <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 opacity-0 transition hover:bg-rose-50 group-hover:opacity-100">Buang</button>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {isExpanded && voterMemberships.length > 1 && (
+                                        <div className="border-t border-green-100 p-2.5 space-y-1.5">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Semua Jawatan</p>
+                                            {voterMemberships.map((vm) => {
+                                                const lc = levelMeta[vm.level] || { label: vm.level, bg: 'bg-slate-100', text: 'text-slate-700' };
+                                                return (
+                                                    <div key={vm.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1.5">
+                                                        <span className={'inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold ' + lc.bg + ' ' + lc.text}>{lc.label}</span>
+                                                        <span className="text-xs font-semibold text-slate-700">{vm.position.name}</span>
+                                                        {vm.scope_name && <span className="text-[10px] text-slate-400">({vm.scope_name})</span>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
