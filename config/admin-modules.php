@@ -25,8 +25,9 @@ return [
         'label' => 'Jawatankuasa',
         'description' => 'Urus jawatan dan ahli jawatankuasa JPRD, UDM dan Cawangan.',
         'children' => [
-            'jawatankuasa.senarai' => ['label' => 'Senarai Jawatankuasa'],
+            'jawatankuasa.kumpulan' => ['label' => 'Kumpulan'],
             'jawatankuasa.jawatan' => ['label' => 'Jawatan'],
+            'jawatankuasa.senarai' => ['label' => 'Senarai Jawatankuasa'],
         ],
     ],
     'group-pemilih' => [

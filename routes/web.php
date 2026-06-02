@@ -48,6 +48,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/program/{program}/attendees/{attendee}/mark', [ProgramController::class, 'destroyMarkAttendee'])->middleware('module:program')->name('program.attendees.mark.destroy');
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');
     Route::get('/jawatankuasa/search', [CommitteeController::class, 'search'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.search');
+    Route::post('/jawatankuasa/groups', [CommitteeController::class, 'storeGroup'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.store');
+    Route::put('/jawatankuasa/groups/{group}', [CommitteeController::class, 'updateGroup'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.update');
+    Route::delete('/jawatankuasa/groups/{group}', [CommitteeController::class, 'destroyGroup'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.destroy');
+    Route::post('/jawatankuasa/groups/{group}/positions', [CommitteeController::class, 'storeGroupPosition'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.positions.store');
+    Route::put('/jawatankuasa/groups/{group}/positions/reorder', [CommitteeController::class, 'reorderGroupPositions'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.positions.reorder');
+    Route::delete('/jawatankuasa/groups/{group}/positions/{position}', [CommitteeController::class, 'destroyGroupPosition'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.positions.destroy');
     Route::post('/jawatankuasa/positions', [CommitteeController::class, 'storePosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.store');
     Route::put('/jawatankuasa/positions/reorder', [CommitteeController::class, 'reorderPositions'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.reorder');
     Route::put('/jawatankuasa/positions/{position}', [CommitteeController::class, 'updatePosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.update');

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CommitteePosition extends Model
@@ -12,6 +13,13 @@ class CommitteePosition extends Model
         'slug',
         'sort_order',
     ];
+
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(CommitteeGroup::class, 'committee_group_position')
+            ->withPivot(['level', 'sort_order'])
+            ->withTimestamps();
+    }
 
     public function memberships(): HasMany
     {

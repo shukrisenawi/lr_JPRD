@@ -21,10 +21,327 @@ function Icon({ name, className = 'h-5 w-5' }) {
         mapPin: <><path d="M20 10c0 4.5-8 11-8 11S4 14.5 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
         phone: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z" /></>,
         idCard: <><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h3v3H7z" /><path d="M14 7h3" /><path d="M14 11h3" /><path d="M7 14h10" /></>,
+        layers: <><path d="M12 2 2 7l10 5 10-5-10-5Z" /><path d="m2 17 10 5 10-5" /><path d="m2 12 10 5 10-5" /></>,
+        check: <><path d="M20 6 9 17l-5-5" /></>,
+        chevronDown: <><path d="m6 9 6 6 6-6" /></>,
+        eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
+        link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></>,
+        x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
     };
 
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
 }
+
+const levelMeta = {
+    jprd: { label: 'JPRD', bg: 'bg-green-100', text: 'text-green-700' },
+    udm: { label: 'UDM', bg: 'bg-sky-100', text: 'text-sky-700' },
+    cawangan: { label: 'Cawangan', bg: 'bg-purple-100', text: 'text-purple-700' },
+};
+
+const levelOptions = [
+    { key: 'jprd', label: 'JPRD' },
+    { key: 'udm', label: 'UDM' },
+    { key: 'cawangan', label: 'Cawangan' },
+];
+
+function LevelBadge({ level, size = 'sm' }) {
+    const meta = levelMeta[level] || { label: level, bg: 'bg-slate-100', text: 'text-slate-700' };
+    const sizing = size === 'sm' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs';
+    return <span className={'inline-block rounded-md font-bold ' + meta.bg + ' ' + meta.text + ' ' + sizing}>{meta.label}</span>;
+}
+
+// ─── GroupManager ─────────────────────────────────────────────────────────
+
+function GroupManager({ groups, positions: allPositions }) {
+    const createForm = useForm({ name: '', levels: [], description: '' });
+    const [editingId, setEditingId] = useState(null);
+    const editForm = useForm({ name: '', levels: [], description: '' });
+    const [expandedId, setExpandedId] = useState(null);
+    const [addPositionLevel, setAddPositionLevel] = useState(null);
+    const [addPositionGroupId, setAddPositionGroupId] = useState(null);
+
+    const submitCreate = (e) => {
+        e.preventDefault();
+        if (createForm.data.levels.length === 0) {
+            createForm.setError('levels', 'Sila pilih sekurang-kurangnya satu peringkat.');
+            return;
+        }
+        createForm.post(route('jawatankuasa.groups.store'), {
+            preserveScroll: true,
+            onSuccess: () => createForm.reset('name', 'levels', 'description'),
+        });
+    };
+
+    const startEdit = (group) => {
+        setEditingId(group.id);
+        editForm.setData({
+            name: group.name,
+            levels: [...(group.levels || [])],
+            description: group.description || '',
+        });
+    };
+
+    const submitEdit = (e) => {
+        e.preventDefault();
+        if (editForm.data.levels.length === 0) {
+            editForm.setError('levels', 'Sila pilih sekurang-kurangnya satu peringkat.');
+            return;
+        }
+        editForm.put(route('jawatankuasa.groups.update', editingId), {
+            preserveScroll: true,
+            onSuccess: () => setEditingId(null),
+        });
+    };
+
+    const remove = (group) => {
+        if (window.confirm('Padam kumpulan ' + group.name + '?')) {
+            router.delete(route('jawatankuasa.groups.destroy', group.id), {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const toggleLevel = (form, key) => {
+        const levels = form.data.levels;
+        if (levels.includes(key)) {
+            form.setData('levels', levels.filter((l) => l !== key));
+        } else {
+            form.setData('levels', [...levels, key]);
+        }
+    };
+
+    const CheckboxLevel = ({ form, level }) => (
+        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 transition hover:border-green-300 has-[:checked]:border-green-500 has-[:checked]:bg-green-50">
+            <input
+                type="checkbox"
+                checked={form.data.levels.includes(level.key)}
+                onChange={() => toggleLevel(form, level.key)}
+                className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+            />
+            <span className="text-xs font-bold text-slate-700">{level.label}</span>
+        </label>
+    );
+
+    const toggleExpand = (groupId) => {
+        setExpandedId(expandedId === groupId ? null : groupId);
+        setAddPositionLevel(null);
+        setAddPositionGroupId(null);
+    };
+
+    const positionsByLevel = (group, level) => {
+        return (group.positions || []).filter((p) => p.pivot_level === level);
+    };
+
+    const availablePositionsForLevel = (groupId, level) => {
+        const group = groups.find((g) => g.id === groupId);
+        if (!group) return [];
+        const assigned = positionsByLevel(group, level);
+        const assignedIds = new Set(assigned.map((p) => p.id));
+        return allPositions.filter((p) => !assignedIds.has(p.id));
+    };
+
+    const addPosition = (groupId, level, positionId) => {
+        router.post(route('jawatankuasa.groups.positions.store', groupId), {
+            committee_position_id: positionId,
+            level,
+        }, { preserveScroll: true });
+        setAddPositionLevel(null);
+        setAddPositionGroupId(null);
+    };
+
+    const removePosition = (groupId, positionId, level) => {
+        router.delete(route('jawatankuasa.groups.positions.destroy', [groupId, positionId]), {
+            data: { level },
+            preserveScroll: true,
+        });
+    };
+
+    return (
+        <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
+            <div className="rounded-t-[11px] border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-green-700">
+                            <Icon name="layers" className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-green-700">Kumpulan</p>
+                            <h3 className="text-sm font-bold text-slate-800">Tambah, edit dan urus jawatan kumpulan</h3>
+                        </div>
+                    </div>
+                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">{groups.length} kumpulan</span>
+                </div>
+            </div>
+
+            <div className="p-3">
+                <form onSubmit={submitCreate} className="space-y-3">
+                    <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+                        <div>
+                            <InputLabel htmlFor="group-name" value="Nama Kumpulan" />
+                            <TextInput
+                                id="group-name"
+                                value={createForm.data.name}
+                                onChange={(e) => createForm.setData('name', e.target.value)}
+                                className="input-field mt-1 text-xs"
+                                placeholder="Contoh: AJK, Bilik Operasi"
+                            />
+                            <InputError className="mt-1" message={createForm.errors.name} />
+                        </div>
+                        <div className="flex items-end gap-2">
+                            <PrimaryButton className="w-full justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold" disabled={createForm.processing}>
+                                <Icon name="plus" className="h-4 w-4" />
+                                {createForm.processing ? '...' : 'Tambah'}
+                            </PrimaryButton>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="mb-1.5 text-xs font-semibold text-slate-600">Peringkat:</p>
+                        <div className="flex flex-wrap gap-2">
+                            {levelOptions.map((level) => (
+                                <CheckboxLevel key={level.key} form={createForm} level={level} />
+                            ))}
+                        </div>
+                        <InputError className="mt-1" message={createForm.errors.levels} />
+                    </div>
+                </form>
+            </div>
+
+            <div className="border-t border-green-100 p-3">
+                {groups.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">Belum ada kumpulan.</div>
+                ) : (
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {groups.map((group) => {
+                            const isEditing = editingId === group.id;
+                            const isExpanded = expandedId === group.id && !isEditing;
+
+                            if (isEditing) {
+                                return (
+                                    <div key={group.id} className="rounded-lg border-2 border-green-400 bg-green-50 p-3">
+                                        <form onSubmit={submitEdit} className="space-y-2">
+                                            <TextInput
+                                                value={editForm.data.name}
+                                                onChange={(e) => editForm.setData('name', e.target.value)}
+                                                className="input-field text-xs"
+                                            />
+                                            <InputError className="mt-1" message={editForm.errors.name} />
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {levelOptions.map((level) => (
+                                                    <CheckboxLevel key={level.key} form={editForm} level={level} />
+                                                ))}
+                                            </div>
+                                            <InputError className="mt-1" message={editForm.errors.levels} />
+                                            <div className="flex justify-end gap-1.5">
+                                                <button type="submit" className="rounded-md bg-green-600 px-3 py-1 text-xs font-bold text-white transition hover:bg-green-500">Simpan</button>
+                                                <button type="button" onClick={() => setEditingId(null)} className="rounded-md border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm transition hover:border-green-300 hover:shadow-md">
+                                    <div className="flex items-start justify-between gap-2 p-2.5">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold text-slate-800">{group.name}</p>
+                                            {group.description && <p className="mt-0.5 text-[10px] text-slate-400">{group.description}</p>}
+                                            <div className="mt-1.5 flex flex-wrap gap-1">
+                                                {(group.levels || []).map((level) => (
+                                                    <LevelBadge key={level} level={level} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="flex shrink-0 items-center gap-1">
+                                            <button type="button" onClick={() => toggleExpand(group.id)} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50">Jawatan</button>
+                                            <button type="button" onClick={() => startEdit(group)} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50">Edit</button>
+                                            <button type="button" onClick={() => remove(group)} className="rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
+                                        </div>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div className="border-t border-green-100 p-2.5 space-y-3">
+                                            {(group.levels || []).map((level) => {
+                                                const assigned = positionsByLevel(group, level);
+                                                const available = availablePositionsForLevel(group.id, level);
+                                                const showAdd = addPositionGroupId === group.id && addPositionLevel === level;
+
+                                                return (
+                                                    <div key={level}>
+                                                        <div className="mb-1 flex items-center justify-between">
+                                                            <LevelBadge level={level} />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setAddPositionGroupId(showAdd ? null : group.id);
+                                                                    setAddPositionLevel(showAdd ? null : level);
+                                                                }}
+                                                                className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-0.5 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                                                            >
+                                                                <Icon name="plus" className="h-3 w-3" />
+                                                                Tambah
+                                                            </button>
+                                                        </div>
+
+                                                        {assigned.length === 0 && !showAdd && (
+                                                            <p className="text-[10px] text-slate-400">Tiada jawatan.</p>
+                                                        )}
+
+                                                        {assigned.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {assigned.map((p) => (
+                                                                    <span key={p.id} className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 border border-green-200">
+                                                                        {p.name}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removePosition(group.id, p.id, level)}
+                                                                            className="text-green-500 hover:text-rose-600"
+                                                                        >
+                                                                            <Icon name="x" className="h-3 w-3" />
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {showAdd && (
+                                                            <div className="flex items-center gap-1.5">
+                                                                <select
+                                                                    id={'add-pos-' + group.id + '-' + level}
+                                                                    className="input-field flex-1 text-xs"
+                                                                    value=""
+                                                                    onChange={(e) => {
+                                                                        if (e.target.value) {
+                                                                            addPosition(group.id, level, Number(e.target.value));
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    <option value="">Pilih jawatan...</option>
+                                                                    {available.map((p) => (
+                                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                                    ))}
+                                                                </select>
+                                                                {available.length === 0 && (
+                                                                    <span className="text-[10px] text-slate-400">Semua jawatan telah ditambah.</span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+}
+
+// ─── PositionManager ──────────────────────────────────────────────────────
 
 function DragHandle() {
     return (
@@ -56,7 +373,7 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
 
     if (isEditing) {
         return (
-            <div ref={setNodeRef} style={style} className={`rounded-lg border-2 border-green-400 bg-green-50 p-3 transition ${isDragging ? 'z-10 opacity-50 shadow-lg' : ''}`}>
+            <div ref={setNodeRef} style={style} className={'rounded-lg border-2 border-green-400 bg-green-50 p-3 transition ' + (isDragging ? 'z-10 opacity-50 shadow-lg' : '')}>
                 <div className="flex items-center gap-2">
                     <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
@@ -66,13 +383,13 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
                 <form onSubmit={submitEdit} className="mt-2 space-y-2">
                     <div className="grid grid-cols-[1fr_5rem] gap-2">
                         <TextInput
-                            id={`position-edit-name-${position.id}`}
+                            id={'position-edit-name-' + position.id}
                             value={editingData.name}
                             onChange={handleEditingDataChange('name')}
                             className="input-field text-xs"
                         />
                         <TextInput
-                            id={`position-edit-order-${position.id}`}
+                            id={'position-edit-order-' + position.id}
                             type="number"
                             min="0"
                             value={editingData.sort_order}
@@ -92,7 +409,7 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
     }
 
     return (
-        <div ref={setNodeRef} style={style} className={`flex items-center gap-2.5 rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md ${isDragging ? 'z-10 opacity-50 shadow-lg' : ''}`}>
+        <div ref={setNodeRef} style={style} className={'flex items-center gap-2.5 rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md ' + (isDragging ? 'z-10 opacity-50 shadow-lg' : '')}>
             <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
             <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">{position.name}</p>
@@ -110,7 +427,8 @@ function PositionManager({ positions }) {
     const [editingId, setEditingId] = useState(null);
     const [editingData, setEditingData] = useState({ name: '', sort_order: 0 });
     const [editingErrors, setEditingErrors] = useState({});
-    const [items, setItems] = useState(() => positions.map((p) => p.id));
+
+    const [items, setItems] = useState([]);
 
     useEffect(() => {
         setItems(positions.map((p) => p.id));
@@ -150,7 +468,7 @@ function PositionManager({ positions }) {
     };
 
     const remove = (position) => {
-        if (window.confirm(`Padam jenis jawatan ${position.name}?`)) {
+        if (window.confirm('Padam jawatan ' + position.name + '? Tindakan ini akan membuang jawatan dari semua kumpulan.')) {
             router.delete(route('jawatankuasa.positions.destroy', position.id), {
                 preserveScroll: true,
             });
@@ -191,15 +509,15 @@ function PositionManager({ positions }) {
                             <Icon name="userCog" className="h-5 w-5" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-green-700">Jenis Jawatan</p>
-                            <h3 className="text-sm font-bold text-slate-800">Tambah, edit dan padam jawatan</h3>
+                            <p className="text-xs font-bold uppercase tracking-wider text-green-700">Jawatan</p>
+                            <h3 className="text-sm font-bold text-slate-800">Senarai master jawatan (digunakan oleh semua kumpulan)</h3>
                         </div>
                     </div>
                     <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">{positions.length} jawatan</span>
                 </div>
             </div>
 
-            <div className="p-3">
+            <div className="p-3 space-y-3">
                 <form onSubmit={submitCreate} className="grid gap-3 lg:grid-cols-[1fr_6rem_auto] lg:items-end">
                     <div>
                         <InputLabel htmlFor="position-name" value="Nama Jawatan" />
@@ -231,39 +549,41 @@ function PositionManager({ positions }) {
                         </PrimaryButton>
                     </div>
                 </form>
-            </div>
 
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={items} strategy={verticalListSortingStrategy}>
-                    <div className="border-t border-green-100 p-3">
-                        {sortedPositions.length === 0 ? (
-                            <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">
-                                Belum ada jenis jawatan.
-                            </div>
-                        ) : (
-                            <div className="grid gap-2" style={{ gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.ceil(sortedPositions.length / 3)}, auto)` }}>
-                                {sortedPositions.map((position) => (
-                                    <SortablePositionRow
-                                        key={position.id}
-                                        position={position}
-                                        editingId={editingId}
-                                        editingData={editingData}
-                                        editingErrors={editingErrors}
-                                        onStartEdit={startEdit}
-                                        onSubmitEdit={submitEdit}
-                                        onCancelEdit={() => setEditingId(null)}
-                                        onRemove={remove}
-                                        onEditingChange={setEditingData}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </SortableContext>
-            </DndContext>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={items} strategy={verticalListSortingStrategy}>
+                        <div className="border-t border-green-100 pt-3">
+                            {sortedPositions.length === 0 ? (
+                                <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">
+                                    Belum ada jawatan.
+                                </div>
+                            ) : (
+                                <div className="grid gap-2" style={{ gridAutoFlow: 'column', gridTemplateRows: 'repeat(' + Math.ceil(sortedPositions.length / 3) + ', auto)' }}>
+                                    {sortedPositions.map((position) => (
+                                        <SortablePositionRow
+                                            key={position.id}
+                                            position={position}
+                                            editingId={editingId}
+                                            editingData={editingData}
+                                            editingErrors={editingErrors}
+                                            onStartEdit={startEdit}
+                                            onSubmitEdit={submitEdit}
+                                            onCancelEdit={() => setEditingId(null)}
+                                            onRemove={remove}
+                                            onEditingChange={setEditingData}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </SortableContext>
+                </DndContext>
+            </div>
         </section>
     );
 }
+
+// ─── MembershipManager ────────────────────────────────────────────────────
 
 function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -273,7 +593,7 @@ const committeeTabs = [
     { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
 ];
 
-const MembershipManager = forwardRef(function MembershipManager({ positions, memberships, scopes, auth, activeTab, onTabChange }, ref) {
+const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, activeTab, onTabChange }, ref) {
     const tabs = committeeTabs;
     const [activeTabLocal, setActiveTabLocal] = useState('jprd');
     const resolvedTab = activeTab ?? activeTabLocal;
@@ -282,10 +602,18 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
+    const [selectedGroupId, setSelectedGroupId] = useState('');
+
+    const positionsForForm = useMemo(() => {
+        if (!selectedGroupId) return [];
+        const group = groups.find((g) => g.id === selectedGroupId);
+        if (!group) return [];
+        return (group.positions || []).filter((p) => p.pivot_level === resolvedTab);
+    }, [groups, selectedGroupId, resolvedTab]);
 
     const form = useForm({
         pemilih_record_id: '',
-        committee_position_id: positions[0]?.id ?? '',
+        committee_position_id: '',
         level: 'jprd',
         scope_key: scopes.jprd?.[0]?.key ?? 'jprd',
         voter_search: '',
@@ -302,18 +630,20 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
         setSuggestions([]);
     }, [resolvedTab]);
 
+    useEffect(() => {
+        if (positionsForForm.length > 0) {
+            form.setData('committee_position_id', positionsForForm[0].id);
+        } else {
+            form.setData('committee_position_id', '');
+        }
+    }, [positionsForForm]);
+
     const currentScopes = scopes[resolvedTab] ?? [];
 
     const filteredMemberships = useMemo(() => {
         return memberships.filter((membership) => {
-            if (membership.level !== resolvedTab) {
-                return false;
-            }
-
-            if (resolvedTab === 'jprd') {
-                return true;
-            }
-
+            if (membership.level !== resolvedTab) return false;
+            if (resolvedTab === 'jprd') return true;
             return membership.scope_key === form.data.scope_key;
         });
     }, [resolvedTab, form.data.scope_key, memberships]);
@@ -335,7 +665,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
         setSearching(true);
 
         try {
-            const response = await fetch(`${route('jawatankuasa.search')}?q=${encodeURIComponent(value)}`, {
+            const response = await fetch(route('jawatankuasa.search') + '?q=' + encodeURIComponent(value), {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
             });
@@ -371,7 +701,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                 form.reset('pemilih_record_id', 'voter_search', 'notes');
                 form.setData((current) => ({
                     ...current,
-                    committee_position_id: positions[0]?.id ?? '',
+                    committee_position_id: positionsForForm[0]?.id ?? '',
                     level: resolvedTab,
                     scope_key: scopes[resolvedTab]?.[0]?.key ?? '',
                 }));
@@ -380,7 +710,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
     };
 
     const removeMembership = (membership) => {
-        if (window.confirm(`Buang ${membership.voter.name} daripada jawatankuasa ini?`)) {
+        if (window.confirm('Buang ' + membership.voter.name + ' daripada jawatankuasa ini?')) {
             router.delete(route('jawatankuasa.memberships.destroy', membership.id), {
                 preserveState: true,
                 preserveScroll: true,
@@ -392,7 +722,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
         const tabKey = resolvedTab;
         const tabLabel = tabs.find((t) => t.key === tabKey)?.label ?? tabKey.toUpperCase();
         const scope = currentScopes.find((s) => s.key === form.data.scope_key);
-        const scopePart = tabKey === 'jprd' ? '' : ((scope?.parent_scope_name ? `${scope.parent_scope_name}_${scope.name}` : (scope?.name ?? '')).replace(/[\/\s]+/g, '_'));
+        const scopePart = tabKey === 'jprd' ? '' : ((scope?.parent_scope_name ? scope.parent_scope_name + '_' + scope.name : (scope?.name ?? '')).replace(/[\/\s]+/g, '_'));
 
         const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
         const align = ['center', 'center', 'left', 'center'];
@@ -405,13 +735,13 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
             { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
         ]);
 
-        const colXml = widths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
+        const colXml = widths.map((w) => '<Column ss:AutoFitWidth="1" ss:Width="' + w + '"/>').join('');
         const titleXml = `
             <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">Ahli Jawatankuasa ${tabLabel}</Data></Cell></Row>
             ${tabKey === 'jprd' ? '' : `<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleSub"><Data ss:Type="String">${scopePart.replace(/_/g, ' ')}</Data></Cell></Row>`}
         `;
-        const headerXml = `<Row>${cols.map((h, i) => `<Cell ss:StyleID="${align[i] === 'center' ? 'headerCenter' : 'header'}"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('')}</Row>`;
-        const bodyXml = dataRows.map((cells) => `<Row>${cells.map((c) => `<Cell ss:StyleID="${c.align === 'center' ? 'cellCenter' : 'cell'}"><Data ss:Type="${c.type}">${escapeXml(c.value)}</Data></Cell>`).join('')}</Row>`).join('');
+        const headerXml = '<Row>' + cols.map((h, i) => '<Cell ss:StyleID="' + (align[i] === 'center' ? 'headerCenter' : 'header') + '"><Data ss:Type="String">' + escapeXml(h) + '</Data></Cell>').join('') + '</Row>';
+        const bodyXml = dataRows.map((cells) => '<Row>' + cells.map((c) => '<Cell ss:StyleID="' + (c.align === 'center' ? 'cellCenter' : 'cell') + '"><Data ss:Type="' + c.type + '">' + escapeXml(c.value) + '</Data></Cell>').join('') + '</Row>').join('');
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
@@ -430,7 +760,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `AJK_${tabLabel}${scopePart ? '_' + scopePart : ''}.xls`;
+        link.download = 'AJK_' + tabLabel + (scopePart ? '_' + scopePart : '') + '.xls';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -459,21 +789,20 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                                     key={tab.key}
                                     type="button"
                                     onClick={() => setResolvedTab(tab.key)}
-                                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left transition ${resolvedTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}
+                                    className={'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-left transition ' + (resolvedTab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700')}
                                 >
                                     <Icon name={tab.icon} className="h-3.5 w-3.5" />
-                                    <span><span className={`block text-xs font-bold ${resolvedTab === tab.key ? 'text-white' : 'text-slate-900'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${resolvedTab === tab.key ? 'text-green-50' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                                    <span><span className={'block text-xs font-bold ' + (resolvedTab === tab.key ? 'text-white' : 'text-slate-900')}>{tab.label}</span><span className={'mt-0.5 block text-xs ' + (resolvedTab === tab.key ? 'text-green-50' : 'text-slate-500')}>{tab.desc}</span></span>
                                 </button>
                             ))}
                         </div>
-
                     </div>
                 </div>
             </div>
 
             <div className="p-3">
                 <form onSubmit={submit} className="space-y-3">
-                    <div className="grid gap-3 lg:grid-cols-3">
+                    <div className="grid gap-3 lg:grid-cols-4">
                         <div className="relative">
                             <InputLabel htmlFor="committee-voter-search" value="Cari Pemilih Aktif" />
                             <div className="relative mt-1">
@@ -515,6 +844,21 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                         </div>
 
                         <div>
+                            <InputLabel htmlFor="membership-group" value="Kumpulan" />
+                            <select
+                                id="membership-group"
+                                value={selectedGroupId}
+                                onChange={(e) => setSelectedGroupId(Number(e.target.value))}
+                                className="input-field mt-1 text-xs"
+                            >
+                                <option value="">Pilih kumpulan</option>
+                                {groups.map((group) => (
+                                    <option key={group.id} value={group.id}>{group.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
                             <InputLabel htmlFor="committee-position" value="Jawatan" />
                             <select
                                 id="committee-position"
@@ -523,7 +867,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                                 className="input-field mt-1 text-xs"
                             >
                                 <option value="">Pilih jawatan</option>
-                                {positions.map((position) => (
+                                {positionsForForm.map((position) => (
                                     <option key={position.id} value={position.id}>{position.name}</option>
                                 ))}
                             </select>
@@ -540,7 +884,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                             >
                                 {currentScopes.map((scope) => (
                                     <option key={scope.key} value={scope.key}>
-                                        {scope.parent_scope_name ? `${scope.parent_scope_name} / ${scope.name}` : scope.name}
+                                        {scope.parent_scope_name ? scope.parent_scope_name + ' / ' + scope.name : scope.name}
                                     </option>
                                 ))}
                             </select>
@@ -577,7 +921,7 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                     </div>
 
                     <div className="flex justify-end">
-                        <PrimaryButton disabled={form.processing || !positions.length} className="rounded-lg px-4 py-2 text-xs font-bold">
+                        <PrimaryButton disabled={form.processing || !positionsForForm.length} className="rounded-lg px-4 py-2 text-xs font-bold">
                             {form.processing ? '...' : 'Tambah Ahli'}
                         </PrimaryButton>
                     </div>
@@ -598,7 +942,6 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
                                             <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
                                             <div className="mt-1 flex items-center gap-2">
                                                 <p className="text-xs font-semibold text-green-700">{membership.position.name} <span className="font-normal text-green-500">({membership.level.toUpperCase()})</span></p>
-                                                {membership.order && <span className="text-[10px] text-slate-400">#{membership.order}</span>}
                                             </div>
                                             <div className="mt-1 space-y-0.5">
                                                 <p className="flex items-center gap-1 text-xs text-slate-400">
@@ -630,6 +973,8 @@ const MembershipManager = forwardRef(function MembershipManager({ positions, mem
         </section>
     );
 });
+
+// ─── CommitteeSearchModal ─────────────────────────────────────────────────
 
 function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) {
     const [query, setQuery] = useState('');
@@ -676,9 +1021,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
                         autoFocus
                     />
                     <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
-                        </svg>
+                        <Icon name="x" className="h-5 w-5" />
                     </button>
                 </div>
 
@@ -698,7 +1041,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
                                             const lc = levelColors[m.level] || { bg: 'bg-slate-100', text: 'text-slate-700', label: m.level };
                                             return (
                                                 <div key={m.id} className="flex items-center gap-2">
-                                                    <span className={`inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold ${lc.bg} ${lc.text}`}>{lc.label}</span>
+                                                    <span className={'inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold ' + lc.bg + ' ' + lc.text}>{lc.label}</span>
                                                     <span className="text-xs font-semibold text-slate-700">{m.position.name}</span>
                                                     {m.scope_name && <span className="text-[10px] text-slate-400">({m.scope_name})</span>}
                                                 </div>
@@ -721,22 +1064,27 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
     );
 }
 
-export default function CommitteeIndex({ positions, memberships, scopes }) {
+// ─── Main Export ──────────────────────────────────────────────────────────
+
+export default function CommitteeIndex({ groups, positions, memberships, scopes }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
-    const canSenarai = allowedModules.includes('jawatankuasa.senarai');
+    const canKumpulan = allowedModules.includes('jawatankuasa.kumpulan');
     const canJawatan = allowedModules.includes('jawatankuasa.jawatan');
+    const canSenarai = allowedModules.includes('jawatankuasa.senarai');
 
     const [searchOpen, setSearchOpen] = useState(false);
     const membershipRef = useRef(null);
 
     const sectionTabs = [
+        ...(canKumpulan ? [{ key: 'kumpulan', label: 'Kumpulan', desc: 'Urus kumpulan dan jawatan kumpulan.', icon: 'layers' }] : []),
+        ...(canJawatan ? [{ key: 'jawatan', label: 'Jawatan', desc: 'Senarai master jawatan.', icon: 'userCog' }] : []),
         ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
-        ...(canJawatan ? [{ key: 'jawatan', label: 'Jawatan', desc: 'Urus jenis jawatan dan susunan.', icon: 'userCog' }] : []),
     ];
 
     const [activeSection, setActiveSection] = useState(() => {
-        if (canJawatan && !canSenarai) return 'jawatan';
+        if (canKumpulan) return 'kumpulan';
+        if (canJawatan) return 'jawatan';
         return 'senarai-jawatankuasa';
     });
 
@@ -770,27 +1118,31 @@ export default function CommitteeIndex({ positions, memberships, scopes }) {
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
                 {sectionTabs.length > 1 && (
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className={'grid gap-2 ' + (sectionTabs.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
                         {sectionTabs.map((tab) => (
                             <button
                                 key={tab.key}
                                 type="button"
                                 onClick={() => setActiveSection(tab.key)}
-                                className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${activeSection === tab.key ? 'border-green-300 bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-md' : 'border-green-200 bg-white text-slate-700 hover:border-green-300 hover:bg-green-50'}`}
+                                className={'flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ' + (activeSection === tab.key ? 'border-green-300 bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-md' : 'border-green-200 bg-white text-slate-700 hover:border-green-300 hover:bg-green-50')}
                             >
-                                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${activeSection === tab.key ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}><Icon name={tab.icon} className="h-5 w-5" /></span>
-                                <span><span className={`block text-xs font-bold uppercase tracking-wider ${activeSection === tab.key ? 'text-white' : 'text-green-700'}`}>{tab.label}</span><span className={`mt-0.5 block text-xs ${activeSection === tab.key ? 'text-green-100' : 'text-slate-500'}`}>{tab.desc}</span></span>
+                                <span className={'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ' + (activeSection === tab.key ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700')}><Icon name={tab.icon} className="h-5 w-5" /></span>
+                                <span><span className={'block text-xs font-bold uppercase tracking-wider ' + (activeSection === tab.key ? 'text-white' : 'text-green-700')}>{tab.label}</span><span className={'mt-0.5 block text-xs ' + (activeSection === tab.key ? 'text-green-100' : 'text-slate-500')}>{tab.desc}</span></span>
                             </button>
                         ))}
                     </div>
                 )}
 
-                {activeSection === 'senarai-jawatankuasa' && (
-                    <MembershipManager ref={membershipRef} positions={positions} memberships={memberships} scopes={scopes} auth={auth} />
+                {activeSection === 'kumpulan' && (
+                    <GroupManager groups={groups} positions={positions} />
                 )}
 
                 {activeSection === 'jawatan' && (
                     <PositionManager positions={positions} />
+                )}
+
+                {activeSection === 'senarai-jawatankuasa' && (
+                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} auth={auth} />
                 )}
             </div>
 

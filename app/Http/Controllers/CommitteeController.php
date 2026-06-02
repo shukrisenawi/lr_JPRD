@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CommitteeGroup;
 use App\Models\CommitteeMembership;
 use App\Models\CommitteePosition;
 use App\Models\PemilihRecord;
@@ -29,7 +30,6 @@ class CommitteeController extends Controller
 
         if ($scope !== null) {
             if (filled($scope['dm']) && filled($scope['locality'])) {
-                // Cawangan scope: show jprd + own cawangan
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
                       ->orWhere(function ($sq) use ($scope) {
@@ -38,7 +38,6 @@ class CommitteeController extends Controller
                       });
                 });
             } elseif (filled($scope['dm'])) {
-                // UDM scope: show jprd + own udm + cawangan under udm
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
                       ->orWhere(function ($sq) use ($scope) {
@@ -75,15 +74,40 @@ class CommitteeController extends Controller
         }
 
         return Inertia::render('Committee/Index', [
+            'groups' => CommitteeGroup::query()
+                ->with(['positions' => function ($q) {
+                    $q->orderBy('committee_group_position.sort_order');
+                }])
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (CommitteeGroup $group) => [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'levels' => $group->levels,
+                    'sort_order' => $group->sort_order,
+                    'description' => $group->description,
+                    'positions' => $group->positions
+                        ->map(fn (CommitteePosition $position) => [
+                            'id' => $position->id,
+                            'name' => $position->name,
+                            'slug' => $position->slug,
+                            'sort_order' => $position->sort_order,
+                            'pivot_level' => $position->pivot->level,
+                            'pivot_sort_order' => $position->pivot->sort_order,
+                        ])
+                        ->values(),
+                ])
+                ->values(),
             'positions' => CommitteePosition::query()
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get()
-                ->map(fn (CommitteePosition $position) => [
-                    'id' => $position->id,
-                    'name' => $position->name,
-                    'slug' => $position->slug,
-                    'sort_order' => $position->sort_order,
+                ->map(fn (CommitteePosition $p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'slug' => $p->slug,
+                    'sort_order' => $p->sort_order,
                 ])
                 ->values(),
             'memberships' => $membershipsQuery
@@ -206,56 +230,82 @@ class CommitteeController extends Controller
         ]);
     }
 
-    public function storePosition(Request $request): RedirectResponse
+    // ─── Groups ───────────────────────────────────────────────────
+
+    public function storeGroup(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('committee_groups', 'name')],
+            'levels' => ['required', 'array'],
+            'levels.*' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+            'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $names = $this->parsePositionNames($validated['name']);
-
-        if ($names === []) {
-            return back()->withErrors([
-                'name' => 'Sila masukkan sekurang-kurangnya satu nama jawatan.',
-            ]);
-        }
-
-        $duplicatesInInput = collect($names)
-            ->map(fn (string $name) => mb_strtolower($name))
-            ->duplicates()
-            ->isNotEmpty();
-
-        if ($duplicatesInInput) {
-            return back()->withErrors([
-                'name' => 'Nama jawatan yang sama tidak boleh diulang dalam senarai yang sama.',
-            ]);
-        }
-
-        $existingNames = CommitteePosition::query()
-            ->whereIn('name', $names)
-            ->pluck('name')
-            ->all();
-
-        if ($existingNames !== []) {
-            return back()->withErrors([
-                'name' => 'Sebahagian nama jawatan sudah wujud: '.implode(', ', $existingNames),
-            ]);
-        }
-
-        $baseSortOrder = $validated['sort_order'] ?? 0;
-
-        foreach ($names as $index => $name) {
-            CommitteePosition::query()->create([
-                'name' => $name,
-                'slug' => Str::slug($name),
-                'sort_order' => $baseSortOrder + $index,
-            ]);
-        }
+        CommitteeGroup::query()->create([
+            'name' => $validated['name'],
+            'levels' => $validated['levels'],
+            'sort_order' => CommitteeGroup::query()->max('sort_order') + 1,
+            'description' => $validated['description'] ?? null,
+        ]);
 
         return redirect()
             ->route('jawatankuasa.index')
-            ->with('success', 'Jenis jawatan berjaya ditambah.');
+            ->with('success', 'Kumpulan berjaya ditambah.');
+    }
+
+    public function updateGroup(Request $request, CommitteeGroup $group): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique('committee_groups', 'name')->ignore($group->id)],
+            'levels' => ['required', 'array'],
+            'levels.*' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $group->update([
+            'name' => $validated['name'],
+            'levels' => $validated['levels'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', 'Kumpulan berjaya dikemaskini.');
+    }
+
+    public function destroyGroup(CommitteeGroup $group): RedirectResponse
+    {
+        if ($group->positions()->exists()) {
+            return redirect()
+                ->route('jawatankuasa.index')
+                ->with('error', 'Kumpulan yang mempunyai jawatan tidak boleh dipadam.');
+        }
+
+        $group->delete();
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', 'Kumpulan berjaya dipadam.');
+    }
+
+    // ─── Positions (Global Master List) ────────────────────────────
+
+    public function storePosition(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', Rule::unique('committee_positions', 'name')],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        CommitteePosition::query()->create([
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'sort_order' => $validated['sort_order'] ?? 0,
+        ]);
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', 'Jawatan berjaya ditambah.');
     }
 
     public function updatePosition(Request $request, CommitteePosition $position): RedirectResponse
@@ -273,22 +323,22 @@ class CommitteeController extends Controller
 
         return redirect()
             ->route('jawatankuasa.index')
-            ->with('success', 'Jenis jawatan berjaya dikemaskini.');
+            ->with('success', 'Jawatan berjaya dikemaskini.');
     }
 
     public function destroyPosition(CommitteePosition $position): RedirectResponse
     {
-        if ($position->memberships()->exists()) {
+        if ($position->groups()->exists() || $position->memberships()->exists()) {
             return redirect()
                 ->route('jawatankuasa.index')
-                ->with('error', 'Jenis jawatan yang sedang digunakan tidak boleh dipadam.');
+                ->with('error', 'Jawatan yang sedang digunakan tidak boleh dipadam.');
         }
 
         $position->delete();
 
         return redirect()
             ->route('jawatankuasa.index')
-            ->with('success', 'Jenis jawatan berjaya dipadam.');
+            ->with('success', 'Jawatan berjaya dipadam.');
     }
 
     public function reorderPositions(Request $request): RedirectResponse
@@ -309,6 +359,75 @@ class CommitteeController extends Controller
             ->route('jawatankuasa.index')
             ->with('success', 'Susunan jawatan berjaya dikemas kini.');
     }
+
+    // ─── Group-Position Assignments (Pivot) ────────────────────────
+
+    public function storeGroupPosition(Request $request, CommitteeGroup $group): RedirectResponse
+    {
+        $validated = $request->validate([
+            'committee_position_id' => ['required', 'exists:committee_positions,id'],
+            'level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+        ]);
+
+        if (! in_array($validated['level'], $group->levels)) {
+            return back()->withErrors(['level' => 'Peringkat tidak sah untuk kumpulan ini.']);
+        }
+
+        $maxSortOrder = DB::table('committee_group_position')
+            ->where('committee_group_id', $group->id)
+            ->where('level', $validated['level'])
+            ->max('sort_order') ?? -1;
+
+        $group->positions()->attach($validated['committee_position_id'], [
+            'level' => $validated['level'],
+            'sort_order' => $maxSortOrder + 1,
+        ]);
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', 'Jawatan berjaya dikaitkan.');
+    }
+
+    public function destroyGroupPosition(Request $request, CommitteeGroup $group, CommitteePosition $position): RedirectResponse
+    {
+        $validated = $request->validate([
+            'level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+        ]);
+
+        $group->positions()
+            ->wherePivot('level', $validated['level'])
+            ->detach($position->id);
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', 'Jawatan berjaya dibuang.');
+    }
+
+    public function reorderGroupPositions(Request $request, CommitteeGroup $group): RedirectResponse
+    {
+        $validated = $request->validate([
+            'positions' => ['required', 'array'],
+            'positions.*.id' => ['required', 'exists:committee_positions,id'],
+            'positions.*.sort_order' => ['required', 'integer', 'min:0'],
+            'level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+        ]);
+
+        DB::transaction(function () use ($validated, $group) {
+            foreach ($validated['positions'] as $item) {
+                DB::table('committee_group_position')
+                    ->where('committee_group_id', $group->id)
+                    ->where('committee_position_id', $item['id'])
+                    ->where('level', $validated['level'])
+                    ->update(['sort_order' => $item['sort_order']]);
+            }
+        });
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', 'Susunan jawatan berjaya dikemas kini.');
+    }
+
+    // ─── Memberships ──────────────────────────────────────────────
 
     public function storeMembership(Request $request): RedirectResponse
     {
@@ -380,6 +499,8 @@ class CommitteeController extends Controller
             ->with('success', 'Ahli jawatankuasa berjaya dibuang.');
     }
 
+    // ─── Private ──────────────────────────────────────────────────
+
     private function resolveScope(string $level, string $scopeKey, PemilihRecord $voter): array
     {
         return match ($level) {
@@ -396,13 +517,5 @@ class CommitteeController extends Controller
         $scopeName = $parts[1] ?? $voter->locality ?? '';
 
         return [$scopeName, $parent !== '' ? $parent : null];
-    }
-
-    private function parsePositionNames(string $value): array
-    {
-        return array_values(array_filter(array_map(
-            fn (string $name) => trim($name),
-            explode(',', $value)
-        )));
     }
 }
