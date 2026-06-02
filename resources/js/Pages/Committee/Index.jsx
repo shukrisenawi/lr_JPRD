@@ -1167,7 +1167,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                      {showMore && (
                                                                                          <div className="mt-1 flex flex-wrap gap-1">
                                                                                               {voterPositions.map(vp => (
-                                                                                                  <span key={vp.key} className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
+                                                                                                   <span key={vp.key} className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
                                                                                               ))}
                                                                                          </div>
                                                                                      )}
