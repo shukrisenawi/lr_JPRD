@@ -1166,7 +1166,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                               {showMore ? '− Sembunyi jawatan lain' : `+ ${voterPositions.length} jawatan lain`}
                                                                                           </button>
                                                                                           {canRemove && (
-                                                                                              <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
+                                                                                               <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-rose-600 hover:text-rose-800" title="Buang"><Icon name="trash" className="h-3.5 w-3.5" /></button>
                                                                                           )}
                                                                                       </div>
                                                                                       {showMore && (
@@ -1179,7 +1179,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                   </div>
                                                                               ) : canRemove ? (
                                                                                   <div className="mt-1 flex items-center justify-end">
-                                                                                      <button type="button" onClick={() => removeMembership(m)} className="text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
+                                                                                       <button type="button" onClick={() => removeMembership(m)} className="text-rose-600 hover:text-rose-800" title="Buang"><Icon name="trash" className="h-3.5 w-3.5" /></button>
                                                                                   </div>
                                                                               ) : null}
                                                                          </div>
