@@ -518,29 +518,18 @@ function PositionManager({ positions }) {
             </div>
 
             <div className="p-3 space-y-3">
-                <form onSubmit={submitCreate} className="grid gap-3 lg:grid-cols-[1fr_6rem_auto] lg:items-end">
+                <form onSubmit={submitCreate} className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
                     <div>
-                        <InputLabel htmlFor="position-name" value="Nama Jawatan" />
+                        <InputLabel htmlFor="position-name" value="Nama Jawatan (asingkan dengan koma)" />
                         <TextInput
                             id="position-name"
                             value={createForm.data.name}
                             onChange={(event) => createForm.setData('name', event.target.value)}
                             className="input-field mt-1 text-xs"
-                            placeholder="Contoh: Pengerusi, Setiausaha"
+                            placeholder="Contoh: Pengerusi, Timbalan Pengerusi, Setiausaha, Bendahari"
                         />
+                        <p className="mt-0.5 text-[10px] text-slate-400">Susunan jawatan mengikut turutan yang ditaip.</p>
                         <InputError className="mt-1" message={createForm.errors.name} />
-                    </div>
-                    <div>
-                        <InputLabel htmlFor="position-order" value="Susunan" />
-                        <TextInput
-                            id="position-order"
-                            type="number"
-                            min="0"
-                            value={createForm.data.sort_order}
-                            onChange={(event) => createForm.setData('sort_order', event.target.value)}
-                            className="input-field mt-1 text-xs"
-                        />
-                        <InputError className="mt-1" message={createForm.errors.sort_order} />
                     </div>
                     <div className="flex items-end">
                         <PrimaryButton className="w-full justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold" disabled={createForm.processing}>

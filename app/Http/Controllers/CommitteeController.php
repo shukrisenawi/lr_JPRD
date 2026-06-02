@@ -293,15 +293,39 @@ class CommitteeController extends Controller
     public function storePosition(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('committee_positions', 'name')],
+            'name' => ['required', 'string', 'max:1000'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        CommitteePosition::query()->create([
-            'name' => $validated['name'],
-            'slug' => Str::slug($validated['name']),
-            'sort_order' => $validated['sort_order'] ?? 0,
-        ]);
+        $names = array_values(array_filter(array_map(
+            fn (string $n) => trim($n),
+            explode(',', $validated['name'])
+        )));
+
+        if ($names === []) {
+            return back()->withErrors(['name' => 'Sila masukkan sekurang-kurangnya satu nama jawatan.']);
+        }
+
+        $existing = CommitteePosition::query()->whereIn('name', $names)->pluck('name')->all();
+
+        $baseSortOrder = $validated['sort_order'] ?? CommitteePosition::query()->max('sort_order') + 1;
+
+        foreach ($names as $index => $name) {
+            if (in_array($name, $existing)) {
+                continue;
+            }
+            CommitteePosition::query()->create([
+                'name' => $name,
+                'slug' => Str::slug($name),
+                'sort_order' => $baseSortOrder + $index,
+            ]);
+        }
+
+        if ($existing !== []) {
+            return redirect()
+                ->route('jawatankuasa.index')
+                ->with('warning', 'Sebahagian jawatan sudah wujud: '.implode(', ', $existing).'. Jawatan baru berjaya ditambah.');
+        }
 
         return redirect()
             ->route('jawatankuasa.index')
