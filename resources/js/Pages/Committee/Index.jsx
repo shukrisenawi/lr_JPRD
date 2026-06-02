@@ -1125,8 +1125,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                             ) : (
                                                 group.positionsWithMembers.map((pos) => {
                                                     const voterGroupPositions = {};
-                                                    group.positionsWithMembers.forEach(p => {
-                                                        p.members.forEach(m => {
+                                                    group.positions?.forEach(p => {
+                                                        const posMemberships = memberships.filter(m => m.position?.id === p.id);
+                                                        posMemberships.forEach(m => {
                                                             const vid = m.voter?.id;
                                                             if (!vid) return;
                                                             if (!voterGroupPositions[vid]) voterGroupPositions[vid] = [];
@@ -1147,7 +1148,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                             <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                                                                  {pos.members.map((m, i) => {
                                                                      const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
-                                                                     const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => !p.key.startsWith(`${pos.id}-`));
+                                                                     const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.key !== `${pos.id}-${m.scope_key || ''}`);
                                                                      const multiKey = `${pos.id}-${m.id}`;
                                                                      const showMore = multiPosExpand[multiKey];
                                                                      return (
