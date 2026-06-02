@@ -1130,8 +1130,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                             const vid = m.voter?.id;
                                                             if (!vid) return;
                                                             if (!voterGroupPositions[vid]) voterGroupPositions[vid] = [];
-                                                            if (!voterGroupPositions[vid].find(x => x.id === p.id)) {
-                                                                voterGroupPositions[vid].push({ id: p.id, name: p.name });
+                                                            const key = `${p.id}-${m.scope_key || ''}`;
+                                                            if (!voterGroupPositions[vid].find(x => x.key === key)) {
+                                                                voterGroupPositions[vid].push({ key, positionName: p.name, scopeName: m.scope_name, groupName: group.name });
                                                             }
                                                         });
                                                     });
@@ -1146,7 +1147,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                             <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                                                                  {pos.members.map((m, i) => {
                                                                      const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
-                                                                     const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.id !== pos.id);
+                                                                     const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => !p.key.startsWith(`${pos.id}-`));
                                                                      const multiKey = `${pos.id}-${m.id}`;
                                                                      const showMore = multiPosExpand[multiKey];
                                                                      return (
@@ -1164,9 +1165,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                      </button>
                                                                                      {showMore && (
                                                                                          <div className="mt-1 flex flex-wrap gap-1">
-                                                                                             {voterPositions.map(vp => (
-                                                                                                 <span key={vp.id} className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">{vp.name}</span>
-                                                                                             ))}
+                                                                                              {voterPositions.map(vp => (
+                                                                                                  <span key={vp.key} className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
+                                                                                              ))}
                                                                                          </div>
                                                                                      )}
                                                                                  </div>
