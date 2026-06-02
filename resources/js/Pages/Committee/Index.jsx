@@ -1159,25 +1159,29 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                  <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
                                                                              </div>
                                                                              {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}
-                                                                             {voterPositions.length > 0 && (
-                                                                                 <div className="mt-1">
-                                                                                     <button type="button" onClick={() => setMultiPosExpand(prev => ({ ...prev, [multiKey]: !showMore }))} className="text-[10px] font-medium text-green-600 hover:text-green-800">
-                                                                                         {showMore ? '− Sembunyi jawatan lain' : `+ ${voterPositions.length} jawatan lain`}
-                                                                                     </button>
-                                                                                     {showMore && (
-                                                                                         <div className="mt-1 flex flex-wrap gap-1">
-                                                                                              {voterPositions.map(vp => (
-                                                                                                   <span key={vp.key} className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
-                                                                                              ))}
-                                                                                         </div>
-                                                                                     )}
-                                                                                 </div>
-                                                                             )}
-                                                                              <div className="mt-1.5 flex items-center gap-2">
-                                                                                  {canRemove && (
-                                                                                     <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
-                                                                                 )}
-                                                                             </div>
+                                                                              {voterPositions.length > 0 ? (
+                                                                                  <div className="mt-1">
+                                                                                      <div className="flex items-center gap-2">
+                                                                                          <button type="button" onClick={() => setMultiPosExpand(prev => ({ ...prev, [multiKey]: !showMore }))} className="text-[10px] font-medium text-green-600 hover:text-green-800">
+                                                                                              {showMore ? '− Sembunyi jawatan lain' : `+ ${voterPositions.length} jawatan lain`}
+                                                                                          </button>
+                                                                                          {canRemove && (
+                                                                                              <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
+                                                                                          )}
+                                                                                      </div>
+                                                                                      {showMore && (
+                                                                                          <div className="mt-1 flex flex-wrap gap-1">
+                                                                                               {voterPositions.map(vp => (
+                                                                                                    <span key={vp.key} className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
+                                                                                               ))}
+                                                                                          </div>
+                                                                                      )}
+                                                                                  </div>
+                                                                              ) : canRemove ? (
+                                                                                  <div className="mt-1 flex items-center justify-end">
+                                                                                      <button type="button" onClick={() => removeMembership(m)} className="text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
+                                                                                  </div>
+                                                                              ) : null}
                                                                          </div>
                                                                      );
                                                                  })}
