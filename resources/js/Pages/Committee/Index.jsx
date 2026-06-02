@@ -689,22 +689,10 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         }
     }, [positionsForForm]);
 
-    const [expandedVoterId, setExpandedVoterId] = useState(null);
-    const expandedRef = useRef(null);
     const [expandedGroupId, setExpandedGroupId] = useState(null);
     const expandedGroupRef = useRef(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (expandedRef.current && !expandedRef.current.contains(event.target)) {
-                setExpandedVoterId(null);
-            }
-        };
-        if (expandedVoterId !== null) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [expandedVoterId]);
+    const [multiPosExpand, setMultiPosExpand] = useState({});
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -1135,7 +1123,19 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                             {group.positionsWithMembers.length === 0 ? (
                                                 <p className="text-center text-xs text-slate-400">Tiada jawatan untuk kumpulan ini.</p>
                                             ) : (
-                                                group.positionsWithMembers.map((pos) => (
+                                                group.positionsWithMembers.map((pos) => {
+                                                    const voterGroupPositions = {};
+                                                    group.positionsWithMembers.forEach(p => {
+                                                        p.members.forEach(m => {
+                                                            const vid = m.voter?.id;
+                                                            if (!vid) return;
+                                                            if (!voterGroupPositions[vid]) voterGroupPositions[vid] = [];
+                                                            if (!voterGroupPositions[vid].find(x => x.id === p.id)) {
+                                                                voterGroupPositions[vid].push({ id: p.id, name: p.name });
+                                                            }
+                                                        });
+                                                    });
+                                                    return (
                                                     <div key={pos.id}>
                                                         <div className="mb-2">
                                                             <span className="rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{pos.name}</span>
@@ -1146,27 +1146,45 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                             <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                                                                  {pos.members.map((m, i) => {
                                                                      const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
+                                                                     const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.id !== pos.id);
+                                                                     const multiKey = `${pos.id}-${m.id}`;
+                                                                     const showMore = multiPosExpand[multiKey];
                                                                      return (
                                                                          <div key={m.id} className="rounded-md border border-green-50 bg-green-50/50 px-2.5 py-2">
                                                                              <p className="text-xs font-bold text-slate-800">{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
-                                                                            <div className="mt-0.5 space-y-0.5">
-                                                                                <p className="text-[10px] text-slate-400">No Kp: {m.voter.no_kp || m.voter.old_ic || '-'}</p>
-                                                                                <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
-                                                                            </div>
-                                                                            {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}
-                                                                            <div className="mt-1.5 flex items-center gap-2">
-                                                                                {m.scope_name && <span className="text-[10px] text-slate-400">{m.scope_name}</span>}
-                                                                                {canRemove && (
-                                                                                    <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
-                                                                                )}
-                                                                            </div>
-                                                                        </div>
-                                                                    );
-                                                                })}
+                                                                             <div className="mt-0.5 space-y-0.5">
+                                                                                 <p className="text-[10px] text-slate-400">No Kp: {m.voter.no_kp || m.voter.old_ic || '-'}</p>
+                                                                                 <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
+                                                                             </div>
+                                                                             {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}
+                                                                             {voterPositions.length > 0 && (
+                                                                                 <div className="mt-1">
+                                                                                     <button type="button" onClick={() => setMultiPosExpand(prev => ({ ...prev, [multiKey]: !showMore }))} className="text-[10px] font-medium text-blue-600 hover:text-blue-800">
+                                                                                         {showMore ? '− Sembunyi jawatan lain' : `+ ${voterPositions.length} jawatan lain`}
+                                                                                     </button>
+                                                                                     {showMore && (
+                                                                                         <div className="mt-1 flex flex-wrap gap-1">
+                                                                                             {voterPositions.map(vp => (
+                                                                                                 <span key={vp.id} className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">{vp.name}</span>
+                                                                                             ))}
+                                                                                         </div>
+                                                                                     )}
+                                                                                 </div>
+                                                                             )}
+                                                                             <div className="mt-1.5 flex items-center gap-2">
+                                                                                 {m.scope_name && <span className="text-[10px] text-slate-400">{m.scope_name}</span>}
+                                                                                 {canRemove && (
+                                                                                     <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
+                                                                                 )}
+                                                                             </div>
+                                                                         </div>
+                                                                     );
+                                                                 })}
                                                             </div>
                                                         )}
                                                     </div>
-                                                ))
+                                                    );
+                                                })
                                             )}
                                         </div>
                                     )}
