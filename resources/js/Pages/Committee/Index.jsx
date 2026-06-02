@@ -754,7 +754,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                 const totalMembers = positionsWithMembers.reduce((sum, p) => sum + p.members.length, 0);
 
                 return { ...group, positionsWithMembers, totalMembers };
-            });
+            })
+            .filter(g => g.totalMembers > 0);
     }, [groups, resolvedTab, filteredMemberships]);
 
     const handleSearchChange = async (event) => {
