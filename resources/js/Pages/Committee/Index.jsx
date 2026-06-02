@@ -1161,13 +1161,13 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                              {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}
                                                                              {voterPositions.length > 0 && (
                                                                                  <div className="mt-1">
-                                                                                     <button type="button" onClick={() => setMultiPosExpand(prev => ({ ...prev, [multiKey]: !showMore }))} className="text-[10px] font-medium text-blue-600 hover:text-blue-800">
+                                                                                     <button type="button" onClick={() => setMultiPosExpand(prev => ({ ...prev, [multiKey]: !showMore }))} className="text-[10px] font-medium text-green-600 hover:text-green-800">
                                                                                          {showMore ? '− Sembunyi jawatan lain' : `+ ${voterPositions.length} jawatan lain`}
                                                                                      </button>
                                                                                      {showMore && (
                                                                                          <div className="mt-1 flex flex-wrap gap-1">
                                                                                               {voterPositions.map(vp => (
-                                                                                                  <span key={vp.key} className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
+                                                                                                  <span key={vp.key} className="rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-medium text-green-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
                                                                                               ))}
                                                                                          </div>
                                                                                      )}
