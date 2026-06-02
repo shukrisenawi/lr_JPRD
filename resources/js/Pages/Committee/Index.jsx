@@ -744,7 +744,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             .map(group => {
                 const levelPositions = (group.positions || [])
                     .filter(p => p.pivot_level === resolvedTab)
-                    .sort((a, b) => (a.pivot_sort_order ?? 0) - (b.pivot_sort_order ?? 0));
+                    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
                 const positionsWithMembers = levelPositions.map(pos => ({
                     ...pos,
@@ -1137,19 +1137,18 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                             ) : (
                                                 group.positionsWithMembers.map((pos) => (
                                                     <div key={pos.id}>
-                                                        <div className="mb-2 flex items-center gap-2">
+                                                        <div className="mb-2">
                                                             <span className="rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{pos.name}</span>
-                                                            <span className="text-[10px] text-slate-400">({pos.members.length} ahli)</span>
                                                         </div>
                                                         {pos.members.length === 0 ? (
                                                             <p className="text-[10px] text-slate-400 ml-1">Tiada ahli.</p>
                                                         ) : (
                                                             <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                                                                {pos.members.map((m) => {
-                                                                    const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
-                                                                    return (
-                                                                        <div key={m.id} className="rounded-md border border-green-50 bg-green-50/50 px-2.5 py-2">
-                                                                            <p className="text-xs font-bold text-slate-800">{m.voter.name}</p>
+                                                                 {pos.members.map((m, i) => {
+                                                                     const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
+                                                                     return (
+                                                                         <div key={m.id} className="rounded-md border border-green-50 bg-green-50/50 px-2.5 py-2">
+                                                                             <p className="text-xs font-bold text-slate-800">{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
                                                                             <div className="mt-0.5 space-y-0.5">
                                                                                 <p className="text-[10px] text-slate-400">No Kp: {m.voter.no_kp || m.voter.old_ic || '-'}</p>
                                                                                 <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
