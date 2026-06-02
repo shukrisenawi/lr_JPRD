@@ -59,6 +59,22 @@ function GroupManager({ groups, positions: allPositions }) {
     const [expandedId, setExpandedId] = useState(null);
     const [addModal, setAddModal] = useState(null); // { groupId, level } or null
     const [selectedPositionIds, setSelectedPositionIds] = useState([]);
+    const expandedRef = useRef(null);
+    const [animExpandId, setAnimExpandId] = useState(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (expandedRef.current && !expandedRef.current.contains(event.target)) {
+                setExpandedId(null);
+                setAddModal(null);
+                setSelectedPositionIds([]);
+            }
+        };
+        if (expandedId !== null) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [expandedId]);
 
     const submitCreate = (e) => {
         e.preventDefault();
@@ -123,9 +139,11 @@ function GroupManager({ groups, positions: allPositions }) {
     );
 
     const toggleExpand = (groupId) => {
-        setExpandedId(expandedId === groupId ? null : groupId);
+        const next = expandedId === groupId ? null : groupId;
+        setExpandedId(next);
         setAddModal(null);
         setSelectedPositionIds([]);
+        if (next) setAnimExpandId((prev) => prev === groupId ? prev : groupId);
     };
 
     const positionsByLevel = (group, level) => {
@@ -261,7 +279,7 @@ function GroupManager({ groups, positions: allPositions }) {
                             }
 
                             return (
-                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm transition hover:border-green-300 hover:shadow-md">
+                                <div key={group.id} ref={isExpanded ? expandedRef : null} className="rounded-lg border border-green-100 bg-white shadow-sm transition hover:border-green-300 hover:shadow-md">
                                     <div className="flex items-start justify-between gap-2 p-2.5">
                                         <div className="min-w-0 flex-1">
                                             <p className="text-xs font-bold text-slate-800">{group.name}</p>
@@ -279,46 +297,51 @@ function GroupManager({ groups, positions: allPositions }) {
                                         </div>
                                     </div>
 
-                                    {isExpanded && (
-                                        <div className="border-t border-green-100 p-2.5 space-y-3">
-                                            {(group.levels || []).map((level) => {
-                                                const assigned = positionsByLevel(group, level);
+                                    {animExpandId === group.id && (
+                                        <div
+                                            className="border-t border-green-100 overflow-hidden transition-all duration-300 ease-in-out"
+                                            style={{ maxHeight: isExpanded ? '600px' : '0px', opacity: isExpanded ? 1 : 0 }}
+                                        >
+                                            <div className="p-2.5 space-y-3">
+                                                {(group.levels || []).map((level) => {
+                                                    const assigned = positionsByLevel(group, level);
 
-                                                return (
-                                                    <div key={level}>
-                                                        <div className="mb-1 flex items-center justify-between">
-                                                            <LevelBadge level={level} />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openAddModal(group.id, level)}
-                                                                className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-0.5 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
-                                                            >
-                                                                <Icon name="plus" className="h-3 w-3" />
-                                                                Tambah
-                                                            </button>
-                                                        </div>
-
-                                                        {assigned.length === 0 ? (
-                                                            <p className="text-[10px] text-slate-400">Tiada jawatan.</p>
-                                                        ) : (
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {assigned.map((p) => (
-                                                                    <span key={p.id} className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 border border-green-200">
-                                                                        {p.name}
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => removePosition(group.id, p.id, level)}
-                                                                            className="text-green-500 hover:text-rose-600"
-                                                                        >
-                                                                            <Icon name="x" className="h-3 w-3" />
-                                                                        </button>
-                                                                    </span>
-                                                                ))}
+                                                    return (
+                                                        <div key={level}>
+                                                            <div className="mb-1 flex items-center justify-between">
+                                                                <LevelBadge level={level} />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openAddModal(group.id, level)}
+                                                                    className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-0.5 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                                                                >
+                                                                    <Icon name="plus" className="h-3 w-3" />
+                                                                    Tambah
+                                                                </button>
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
+
+                                                            {assigned.length === 0 ? (
+                                                                <p className="text-[10px] text-slate-400">Tiada jawatan.</p>
+                                                            ) : (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {assigned.map((p) => (
+                                                                        <span key={p.id} className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 border border-green-200">
+                                                                            {p.name}
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => removePosition(group.id, p.id, level)}
+                                                                                className="text-green-500 hover:text-rose-600"
+                                                                            >
+                                                                                <Icon name="x" className="h-3 w-3" />
+                                                                            </button>
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                     )}
                                 </div>
