@@ -412,6 +412,65 @@ class CommitteeController extends Controller
             ->with('success', 'Jawatan berjaya dikaitkan.');
     }
 
+    public function storeGroupPositions(Request $request, CommitteeGroup $group): RedirectResponse
+    {
+        $validated = $request->validate([
+            'committee_position_ids' => ['required', 'array'],
+            'committee_position_ids.*' => ['required', 'exists:committee_positions,id'],
+            'level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+        ]);
+
+        if (! in_array($validated['level'], $group->levels)) {
+            return back()->withErrors(['level' => 'Peringkat tidak sah untuk kumpulan ini.']);
+        }
+
+        $existing = DB::table('committee_group_position')
+            ->where('committee_group_id', $group->id)
+            ->where('level', $validated['level'])
+            ->whereIn('committee_position_id', $validated['committee_position_ids'])
+            ->pluck('committee_position_id')
+            ->all();
+
+        $maxSortOrder = DB::table('committee_group_position')
+            ->where('committee_group_id', $group->id)
+            ->where('level', $validated['level'])
+            ->max('sort_order') ?? -1;
+
+        $insert = [];
+        foreach ($validated['committee_position_ids'] as $i => $positionId) {
+            if (in_array($positionId, $existing)) {
+                continue;
+            }
+            $insert[] = [
+                'committee_group_id' => $group->id,
+                'committee_position_id' => $positionId,
+                'level' => $validated['level'],
+                'sort_order' => $maxSortOrder + 1 + $i,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if ($insert !== []) {
+            DB::table('committee_group_position')->insert($insert);
+        }
+
+        $count = count($insert);
+        $skipped = count($validated['committee_position_ids']) - $count;
+
+        $message = $count > 0
+            ? "$count jawatan berjaya ditambah."
+            : 'Tiada jawatan baru ditambah.';
+
+        if ($skipped > 0) {
+            $message .= " ($skipped sudah wujud).";
+        }
+
+        return redirect()
+            ->route('jawatankuasa.index')
+            ->with('success', $message);
+    }
+
     public function destroyGroupPosition(Request $request, CommitteeGroup $group, CommitteePosition $position): RedirectResponse
     {
         $validated = $request->validate([

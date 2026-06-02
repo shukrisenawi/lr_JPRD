@@ -57,8 +57,8 @@ function GroupManager({ groups, positions: allPositions }) {
     const [editingId, setEditingId] = useState(null);
     const editForm = useForm({ name: '', levels: [], description: '' });
     const [expandedId, setExpandedId] = useState(null);
-    const [addPositionLevel, setAddPositionLevel] = useState(null);
-    const [addPositionGroupId, setAddPositionGroupId] = useState(null);
+    const [addModal, setAddModal] = useState(null); // { groupId, level } or null
+    const [selectedPositionIds, setSelectedPositionIds] = useState([]);
 
     const submitCreate = (e) => {
         e.preventDefault();
@@ -124,8 +124,8 @@ function GroupManager({ groups, positions: allPositions }) {
 
     const toggleExpand = (groupId) => {
         setExpandedId(expandedId === groupId ? null : groupId);
-        setAddPositionLevel(null);
-        setAddPositionGroupId(null);
+        setAddModal(null);
+        setSelectedPositionIds([]);
     };
 
     const positionsByLevel = (group, level) => {
@@ -140,13 +140,33 @@ function GroupManager({ groups, positions: allPositions }) {
         return allPositions.filter((p) => !assignedIds.has(p.id));
     };
 
-    const addPosition = (groupId, level, positionId) => {
-        router.post(route('jawatankuasa.groups.positions.store', groupId), {
-            committee_position_id: positionId,
-            level,
-        }, { preserveScroll: true });
-        setAddPositionLevel(null);
-        setAddPositionGroupId(null);
+    const openAddModal = (groupId, level) => {
+        setAddModal({ groupId, level });
+        setSelectedPositionIds([]);
+    };
+
+    const closeAddModal = () => {
+        setAddModal(null);
+        setSelectedPositionIds([]);
+    };
+
+    const toggleSelectedPosition = (positionId) => {
+        setSelectedPositionIds((prev) =>
+            prev.includes(positionId)
+                ? prev.filter((id) => id !== positionId)
+                : [...prev, positionId]
+        );
+    };
+
+    const submitAddPositions = () => {
+        if (!addModal || selectedPositionIds.length === 0) return;
+        router.post(route('jawatankuasa.groups.positions.store-bulk', addModal.groupId), {
+            committee_position_ids: selectedPositionIds,
+            level: addModal.level,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => closeAddModal(),
+        });
     };
 
     const removePosition = (groupId, positionId, level) => {
@@ -263,8 +283,6 @@ function GroupManager({ groups, positions: allPositions }) {
                                         <div className="border-t border-green-100 p-2.5 space-y-3">
                                             {(group.levels || []).map((level) => {
                                                 const assigned = positionsByLevel(group, level);
-                                                const available = availablePositionsForLevel(group.id, level);
-                                                const showAdd = addPositionGroupId === group.id && addPositionLevel === level;
 
                                                 return (
                                                     <div key={level}>
@@ -272,10 +290,7 @@ function GroupManager({ groups, positions: allPositions }) {
                                                             <LevelBadge level={level} />
                                                             <button
                                                                 type="button"
-                                                                onClick={() => {
-                                                                    setAddPositionGroupId(showAdd ? null : group.id);
-                                                                    setAddPositionLevel(showAdd ? null : level);
-                                                                }}
+                                                                onClick={() => openAddModal(group.id, level)}
                                                                 className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-0.5 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                                             >
                                                                 <Icon name="plus" className="h-3 w-3" />
@@ -283,11 +298,9 @@ function GroupManager({ groups, positions: allPositions }) {
                                                             </button>
                                                         </div>
 
-                                                        {assigned.length === 0 && !showAdd && (
+                                                        {assigned.length === 0 ? (
                                                             <p className="text-[10px] text-slate-400">Tiada jawatan.</p>
-                                                        )}
-
-                                                        {assigned.length > 0 && (
+                                                        ) : (
                                                             <div className="flex flex-wrap gap-1">
                                                                 {assigned.map((p) => (
                                                                     <span key={p.id} className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 border border-green-200">
@@ -303,29 +316,6 @@ function GroupManager({ groups, positions: allPositions }) {
                                                                 ))}
                                                             </div>
                                                         )}
-
-                                                        {showAdd && (
-                                                            <div className="flex items-center gap-1.5">
-                                                                <select
-                                                                    id={'add-pos-' + group.id + '-' + level}
-                                                                    className="input-field flex-1 text-xs"
-                                                                    value=""
-                                                                    onChange={(e) => {
-                                                                        if (e.target.value) {
-                                                                            addPosition(group.id, level, Number(e.target.value));
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <option value="">Pilih jawatan...</option>
-                                                                    {available.map((p) => (
-                                                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                                                    ))}
-                                                                </select>
-                                                                {available.length === 0 && (
-                                                                    <span className="text-[10px] text-slate-400">Semua jawatan telah ditambah.</span>
-                                                                )}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 );
                                             })}
@@ -337,6 +327,54 @@ function GroupManager({ groups, positions: allPositions }) {
                     </div>
                 )}
             </div>
+
+            {addModal && (
+                <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-16 sm:pt-24" onClick={closeAddModal}>
+                    <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Tambah Jawatan</p>
+                            <button type="button" onClick={closeAddModal} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                                <Icon name="x" className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="max-h-80 overflow-y-auto p-4 space-y-1.5">
+                            {(() => {
+                                const available = availablePositionsForLevel(addModal.groupId, addModal.level);
+                                if (available.length === 0) {
+                                    return <p className="py-4 text-center text-xs text-slate-400">Semua jawatan telah ditambah.</p>;
+                                }
+                                return available.map((p) => (
+                                    <label key={p.id} className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 transition hover:border-green-300 has-[:checked]:border-green-500 has-[:checked]:bg-green-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedPositionIds.includes(p.id)}
+                                            onChange={() => toggleSelectedPosition(p.id)}
+                                            className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                                        />
+                                        <span className="text-xs font-semibold text-slate-700">{p.name}</span>
+                                    </label>
+                                ));
+                            })()}
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3">
+                            <span className="text-xs text-slate-400">{selectedPositionIds.length} dipilih</span>
+                            <div className="flex gap-2">
+                                <button type="button" onClick={closeAddModal} className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50">Batal</button>
+                                <button
+                                    type="button"
+                                    onClick={submitAddPositions}
+                                    disabled={selectedPositionIds.length === 0}
+                                    className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Tambah
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }
