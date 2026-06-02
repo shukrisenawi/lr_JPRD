@@ -691,6 +691,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
     const [expandedVoterId, setExpandedVoterId] = useState(null);
     const expandedRef = useRef(null);
+    const [expandedGroupId, setExpandedGroupId] = useState(null);
+    const expandedGroupRef = useRef(null);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -703,6 +705,18 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         }
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [expandedVoterId]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (expandedGroupRef.current && !expandedGroupRef.current.contains(event.target)) {
+                setExpandedGroupId(null);
+            }
+        };
+        if (expandedGroupId !== null) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [expandedGroupId]);
 
     const voterMembershipsMap = useMemo(() => {
         const map = {};
@@ -723,6 +737,25 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             return membership.scope_key === form.data.scope_key;
         });
     }, [resolvedTab, form.data.scope_key, memberships]);
+
+    const groupsWithMembers = useMemo(() => {
+        return groups
+            .filter(g => g.levels && g.levels.includes(resolvedTab))
+            .map(group => {
+                const levelPositions = (group.positions || [])
+                    .filter(p => p.pivot_level === resolvedTab)
+                    .sort((a, b) => (a.pivot_sort_order ?? 0) - (b.pivot_sort_order ?? 0));
+
+                const positionsWithMembers = levelPositions.map(pos => ({
+                    ...pos,
+                    members: filteredMemberships.filter(m => m.committee_position_id === pos.id)
+                }));
+
+                const totalMembers = positionsWithMembers.reduce((sum, p) => sum + p.members.length, 0);
+
+                return { ...group, positionsWithMembers, totalMembers };
+            });
+    }, [groups, resolvedTab, filteredMemberships]);
 
     const handleSearchChange = async (event) => {
         const value = event.target.value;
@@ -1005,69 +1038,71 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             </div>
 
             <div className="border-t border-green-100 p-3">
-                {filteredMemberships.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">Belum ada ahli untuk paparan ini.</div>
+                {groupsWithMembers.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">Belum ada kumpulan atau ahli untuk peringkat ini.</div>
                 ) : (
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        {filteredMemberships.map((membership) => {
-                            const canRemove = auth.user?.is_master_admin || membership.created_by === auth.user?.id;
-                            const isExpanded = expandedVoterId === membership.voter.id;
-                            const voterMemberships = voterMembershipsMap[membership.voter.id] || [];
-
+                    <div className="space-y-2">
+                        {groupsWithMembers.map((group) => {
+                            const isExpanded = expandedGroupId === group.id;
                             return (
-                                <div key={membership.id} className={'rounded-lg border bg-white shadow-sm transition ' + (isExpanded ? 'border-green-400 shadow-md' : 'border-green-100 hover:border-green-300 hover:shadow-md')} ref={isExpanded ? expandedRef : null}>
-                                    <div className="flex items-start justify-between gap-2 p-2.5">
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-xs font-bold text-slate-800">{membership.voter.name}</p>
-                                            <div className="mt-1 flex items-center gap-2">
-                                                <p className="text-xs font-semibold text-green-700">{membership.position.name} <span className="font-normal text-green-500">({membership.level.toUpperCase()})</span></p>
-                                            </div>
-                                            <div className="mt-1 space-y-0.5">
-                                                <p className="flex items-center gap-1 text-xs text-slate-400">
-                                                    <Icon name="idCard" className="h-3 w-3" />
-                                                    {membership.voter.no_kp || membership.voter.old_ic || '-'}
-                                                </p>
-                                                <p className="flex items-center gap-1 text-xs text-slate-400">
-                                                    <Icon name="phone" className="h-3 w-3" />
-                                                    {membership.voter.phone_mobile || membership.voter.phone_home || '-'}
-                                                </p>
-                                            </div>
-                                            {membership.notes && (
-                                                <p className="mt-1.5 text-[10px] font-medium text-amber-700">{membership.notes}</p>
-                                            )}
-                                            {membership.creator_name && membership.created_by !== auth.user?.id && (
-                                                <p className="mt-1 text-[10px] text-slate-400">Oleh: <span className="font-bold text-slate-600">{membership.creator_name}</span></p>
-                                            )}
+                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm overflow-hidden" ref={isExpanded ? expandedGroupRef : null}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpandedGroupId(isExpanded ? null : group.id)}
+                                        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-green-50"
+                                    >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className={'shrink-0 transition-transform duration-200 ' + (isExpanded ? 'rotate-90' : '')}>
+                                                <Icon name="chevronDown" className="h-4 w-4 text-slate-400" />
+                                            </span>
+                                            <span className="text-xs font-bold text-slate-800">{group.name}</span>
+                                            {group.description && <span className="text-[10px] text-slate-400 truncate">— {group.description}</span>}
                                         </div>
-                                        <div className="flex shrink-0 items-center gap-1">
-                                            {voterMemberships.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setExpandedVoterId(isExpanded ? null : membership.voter.id)}
-                                                    className={'rounded-md border px-2 py-1 text-[10px] font-bold transition ' + (isExpanded ? 'bg-green-600 text-white border-green-600' : 'border-green-200 bg-white text-green-700 hover:bg-green-50')}
-                                                >
-                                                    Jawatan
-                                                </button>
-                                            )}
-                                            {canRemove && (
-                                                <button type="button" onClick={() => removeMembership(membership)} className="shrink-0 rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 opacity-0 transition hover:bg-rose-50 group-hover:opacity-100">Buang</button>
-                                            )}
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{group.totalMembers} ahli</span>
+                                            <LevelBadge level={resolvedTab} />
                                         </div>
-                                    </div>
+                                    </button>
 
-                                    {isExpanded && voterMemberships.length > 1 && (
-                                        <div className="border-t border-green-100 p-2.5 space-y-1.5">
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Semua Jawatan</p>
-                                            {voterMemberships.map((vm) => {
-                                                const lc = levelMeta[vm.level] || { label: vm.level, bg: 'bg-slate-100', text: 'text-slate-700' };
-                                                return (
-                                                    <div key={vm.id} className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1.5">
-                                                        <span className={'inline-block rounded-md px-1.5 py-0.5 text-[10px] font-bold ' + lc.bg + ' ' + lc.text}>{lc.label}</span>
-                                                        <span className="text-xs font-semibold text-slate-700">{vm.position.name}</span>
-                                                        {vm.scope_name && <span className="text-[10px] text-slate-400">({vm.scope_name})</span>}
+                                    {isExpanded && (
+                                        <div className="border-t border-green-100 p-3 space-y-4">
+                                            {group.positionsWithMembers.length === 0 ? (
+                                                <p className="text-center text-xs text-slate-400">Tiada jawatan untuk kumpulan ini.</p>
+                                            ) : (
+                                                group.positionsWithMembers.map((pos) => (
+                                                    <div key={pos.id}>
+                                                        <div className="mb-2 flex items-center gap-2">
+                                                            <span className="rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{pos.name}</span>
+                                                            <span className="text-[10px] text-slate-400">({pos.members.length} ahli)</span>
+                                                        </div>
+                                                        {pos.members.length === 0 ? (
+                                                            <p className="text-[10px] text-slate-400 ml-1">Tiada ahli.</p>
+                                                        ) : (
+                                                            <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                                                                {pos.members.map((m) => {
+                                                                    const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
+                                                                    return (
+                                                                        <div key={m.id} className="rounded-md border border-green-50 bg-green-50/50 px-2.5 py-2">
+                                                                            <p className="text-xs font-bold text-slate-800">{m.voter.name}</p>
+                                                                            <div className="mt-0.5 space-y-0.5">
+                                                                                <p className="text-[10px] text-slate-400">No Kp: {m.voter.no_kp || m.voter.old_ic || '-'}</p>
+                                                                                <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
+                                                                            </div>
+                                                                            {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}
+                                                                            <div className="mt-1.5 flex items-center gap-2">
+                                                                                {m.scope_name && <span className="text-[10px] text-slate-400">{m.scope_name}</span>}
+                                                                                {canRemove && (
+                                                                                    <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-[10px] font-bold text-rose-600 hover:text-rose-800">Buang</button>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                );
-                                            })}
+                                                ))
+                                            )}
                                         </div>
                                     )}
                                 </div>
