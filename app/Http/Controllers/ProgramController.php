@@ -454,7 +454,7 @@ class ProgramController extends Controller
         }
 
         return redirect()
-            ->route('program.index')
+            ->back()
             ->with('success', $count . ' orang pemilih berjaya direkodkan sebagai hadir program.');
     }
 

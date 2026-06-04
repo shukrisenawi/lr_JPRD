@@ -595,7 +595,7 @@ function AttendeeSubProgramEditor({ attendee, subPrograms, onClose }) {
     );
 }
 
-function CommitteeMemberPickerModal({ show, program, onClose }) {
+function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }) {
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
@@ -603,15 +603,19 @@ function CommitteeMemberPickerModal({ show, program, onClose }) {
 
     useEffect(() => {
         if (!show || !program?.committee_group_filters) return;
-        setLoading(true); setSelectedIds([]);
+        setLoading(true);
         fetch(route('program.committee-members', program.id), {
             headers: { Accept: 'application/json' },
         })
         .then(r => r.json())
-        .then(data => setMembers(data.members ?? []))
+        .then(data => {
+            const ms = data.members ?? [];
+            setMembers(ms);
+            setSelectedIds(ms.filter(m => existingVoterIds?.has(m.pemilih_record_id)).map(m => m.pemilih_record_id));
+        })
         .catch(() => {})
         .finally(() => setLoading(false));
-    }, [show, program?.id, program?.committee_group_filters]);
+    }, [show, program?.id, program?.committee_group_filters, existingVoterIds]);
 
     const toggleMember = (id) => {
         setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -625,8 +629,8 @@ function CommitteeMemberPickerModal({ show, program, onClose }) {
             members: selectedMembers,
         }, {
             preserveScroll: true,
-            onSuccess: () => { onClose(); },
-            onError: () => {},
+            onSuccess: () => { onClose(); router.reload({ preserveState: true, preserveScroll: true }); },
+            onError: () => { setSaving(false); },
             onFinish: () => setSaving(false),
         });
     };
@@ -787,7 +791,7 @@ function SearchVoterPanel({ selectedProgram }) {
                 subPrograms={selectedProgram?.sub_programs ?? []}
                 selectedSubIds={selectedSubIds} onToggleSub={toggleSub} />
             <AttendeeSubProgramEditor key={subEditorAttendee?.id ?? 'sub-editor'} attendee={subEditorAttendee} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSubEditorAttendee(null)} />
-            <CommitteeMemberPickerModal show={ajkPickerOpen} program={selectedProgram} onClose={() => setAjkPickerOpen(false)} />
+            <CommitteeMemberPickerModal show={ajkPickerOpen} program={selectedProgram} existingVoterIds={existingVoterIds?.voterIdSet} onClose={() => setAjkPickerOpen(false)} />
         </div>
     );
 }
