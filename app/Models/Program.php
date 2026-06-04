@@ -16,6 +16,7 @@ class Program extends Model
         'masa',
         'group_id',
         'committee_group_id',
+        'committee_group_level',
         'gambar',
         'has_laporan',
         'user_id',

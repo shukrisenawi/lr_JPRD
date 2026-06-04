@@ -34,7 +34,17 @@ class ProgramController extends Controller
         $committeeGroups = CommitteeGroup::query()
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get();
+        $committeeGroupOptions = $committeeGroups
+            ->flatMap(fn (CommitteeGroup $group) =>
+                $group->levels
+                    ? collect($group->levels)->map(fn (string $level) => [
+                        'value' => $group->id . ':' . $level,
+                        'label' => $group->name . ' ' . ucfirst($level),
+                    ])
+                    : collect([['value' => $group->id . ':', 'label' => $group->name]])
+            )
+            ->values();
         $programs = $this->accessibleProgramsQuery($user->id)
             ->with(['attendees.subPrograms', 'sharedUsers:id,name', 'group', 'subPrograms'])
             ->latest('tarikh')
@@ -148,6 +158,7 @@ class ProgramController extends Controller
                     'masa' => $program->masa?->format('h:i A'),
                     'group_id' => $program->group_id,
                     'committee_group_id' => $program->committee_group_id,
+                    'committee_group_level' => $program->committee_group_level,
                     'committee_group_name' => $program->committeeGroup?->name,
                     'group_name' => $program->group?->name,
                     'has_laporan' => $program->has_laporan,
@@ -172,6 +183,7 @@ class ProgramController extends Controller
                     'masa' => $selectedProgram->masa?->format('h:i A'),
                     'group_id' => $selectedProgram->group_id,
                     'committee_group_id' => $selectedProgram->committee_group_id,
+                    'committee_group_level' => $selectedProgram->committee_group_level,
                     'committee_group_name' => $selectedProgram->committeeGroup?->name,
                     'group_name' => $selectedProgram->group?->name,
                     'has_laporan' => $selectedProgram->has_laporan,
@@ -231,7 +243,7 @@ class ProgramController extends Controller
                     'programs_count' => $group->programs()->count(),
                 ])
                 ->values(),
-            'committeeGroups' => $committeeGroups,
+            'committeeGroupOptions' => $committeeGroupOptions,
             'shareableUsers' => User::query()
                 ->whereKeyNot($user->id)
                 ->get()
@@ -336,7 +348,13 @@ class ProgramController extends Controller
                 ?->pluck('committee_positions.id') ?? collect();
 
             if ($positionIds->isNotEmpty()) {
-                $voterPemilihIds = CommitteeMembership::whereIn('committee_position_id', $positionIds)
+                $query = CommitteeMembership::whereIn('committee_position_id', $positionIds);
+
+                if ($program->committee_group_level) {
+                    $query->where('level', $program->committee_group_level);
+                }
+
+                $voterPemilihIds = $query
                     ->pluck('pemilih_record_id')
                     ->unique()
                     ->values()
@@ -795,6 +813,7 @@ class ProgramController extends Controller
                 Rule::exists('program_groups', 'id'),
             ],
             'committee_group_id' => ['nullable', 'integer', Rule::exists('committee_groups', 'id')],
+            'committee_group_level' => ['nullable', 'string', 'max:50'],
             'gambar' => ['nullable', 'image', 'max:2048'],
             'has_laporan' => ['nullable', 'boolean'],
         ]);
