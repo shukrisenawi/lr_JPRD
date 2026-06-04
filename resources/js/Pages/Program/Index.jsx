@@ -719,7 +719,7 @@ function SearchVoterPanel({ selectedProgram }) {
     );
 }
 
-export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups, committeeGroupOptions }) {
+export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups, committeeGroupOptions, groupPemilihOptions }) {
     const { auth } = usePage().props;
     const isAdmin = auth?.user?.role?.is_master_admin;
     const canEditNoAhli = auth?.user?.allowed_modules?.includes('kemaskini-no-ahli');
@@ -778,7 +778,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     }, [selectedProgram?.attendees, selectedProgram?.sub_programs]);
     const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
-    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', committee_group_filters: [], has_laporan: false, gambar: null, gambar_url: null });
+    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', committee_group_filters: [], group_pemilih_filters: [], has_laporan: false, gambar: null, gambar_url: null });
     const sf = useForm({ shared_user_ids: [] });
     const [previewUrl, setPreviewUrl] = useState(null);
     const showProgramSavedAlert = (isEditingMode) => Swal.fire({
@@ -801,7 +801,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const submitProgram = (e) => {
         e.preventDefault();
         const editingMode = isEditing;
-        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
+        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
         if (editingMode) {
             f.transform((d) => ({ ...d, _method: 'put' }));
             f.post(route('program.update', editingId), {
@@ -831,8 +831,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     const selectProg = (id) => { setTab('senarai-program'); setSubTab(null); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
     const back = () => { setSelAttendee(null); setSubTab(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
-    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', committee_group_filters: p.committee_group_filters ?? [], has_laporan: p.has_laporan ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
-    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
+    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', committee_group_filters: p.committee_group_filters ?? [], group_pemilih_filters: p.group_pemilih_filters ?? [], has_laporan: p.has_laporan ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
+    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
     const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
     const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } };
@@ -876,6 +876,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 </div>
                                 <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1 text-xs"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.group_id} /></div>
                                 <div><InputLabel htmlFor="committee_group_filters" value="Kumpulan AJK (pilih lebih dari satu)" /><div className="mt-1 flex flex-wrap gap-2">{committeeGroupOptions.map((opt) => { const checked = (f.data.committee_group_filters ?? []).includes(opt.value); return (<label key={opt.value} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${checked ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:bg-green-50/50'}`}><input type="checkbox" checked={checked} onChange={() => { const current = f.data.committee_group_filters ?? []; f.setData('committee_group_filters', checked ? current.filter((v) => v !== opt.value) : [...current, opt.value]); }} className="h-3.5 w-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500" /><span>{opt.label}</span></label>); })}</div><InputError className="mt-1" message={f.errors.committee_group_filters} /></div>
+                                <div><InputLabel htmlFor="group_pemilih_filters" value="Group Pemilih (pilih lebih dari satu)" /><div className="mt-1 flex flex-wrap gap-2">{groupPemilihOptions.map((opt) => { const checked = (f.data.group_pemilih_filters ?? []).includes(opt.id); return (<label key={opt.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${checked ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:bg-green-50/50'}`}><input type="checkbox" checked={checked} onChange={() => { const current = f.data.group_pemilih_filters ?? []; f.setData('group_pemilih_filters', checked ? current.filter((v) => v !== opt.id) : [...current, opt.id]); }} className="h-3.5 w-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500" /><span>{opt.nama_group}</span></label>); })}</div><InputError className="mt-1" message={f.errors.group_pemilih_filters} /></div>
                                 <div>
                                     <InputLabel htmlFor="gambar" value="Gambar" />
                                     <div className="mt-1 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">

@@ -7,6 +7,7 @@ use App\Models\ProgramAttendee;
 use App\Models\CommitteeMembership;
 use App\Models\CommitteeGroup;
 use App\Models\CulaWorkItem;
+use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
 use App\Models\ProgramGroup;
 use App\Models\ProgramSubProgram;
@@ -56,6 +57,10 @@ class ProgramController extends Controller
                     : collect([['value' => $group->id . ':', 'label' => $group->name]])
             )
             ->values();
+        $groupPemilihOptions = GroupPemilih::query()
+            ->orderBy('sort_order')
+            ->orderBy('nama_group')
+            ->get(['id', 'nama_group']);
         $programs = $this->accessibleProgramsQuery($user->id)
             ->with(['attendees.subPrograms', 'sharedUsers:id,name', 'group', 'subPrograms'])
             ->latest('tarikh')
@@ -169,6 +174,7 @@ class ProgramController extends Controller
                     'masa' => $program->masa?->format('h:i A'),
                     'group_id' => $program->group_id,
                     'committee_group_filters' => $program->committee_group_filters,
+                    'group_pemilih_filters' => $program->group_pemilih_filters,
                     'group_name' => $program->group?->name,
                     'has_laporan' => $program->has_laporan,
                     'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
@@ -192,6 +198,7 @@ class ProgramController extends Controller
                     'masa' => $selectedProgram->masa?->format('h:i A'),
                     'group_id' => $selectedProgram->group_id,
                     'committee_group_filters' => $selectedProgram->committee_group_filters,
+                    'group_pemilih_filters' => $selectedProgram->group_pemilih_filters,
                     'group_name' => $selectedProgram->group?->name,
                     'has_laporan' => $selectedProgram->has_laporan,
                     'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
@@ -251,6 +258,7 @@ class ProgramController extends Controller
                 ])
                 ->values(),
             'committeeGroupOptions' => $committeeGroupOptions,
+            'groupPemilihOptions' => $groupPemilihOptions,
             'shareableUsers' => User::query()
                 ->whereKeyNot($user->id)
                 ->get()
@@ -380,6 +388,36 @@ class ProgramController extends Controller
                 array_filter($suggestions, fn ($voter) =>
                     in_array($voter['record_id'] ?? null, $allVoterPemilihIds)
                 )
+            );
+        }
+
+        if ($groupIds = $program->group_pemilih_filters) {
+            $groups = GroupPemilih::with('kodCulas')->whereIn('id', $groupIds)->get();
+
+            $suggestions = array_values(
+                array_filter($suggestions, function ($voter) use ($groups) {
+                    foreach ($groups as $group) {
+                        $kodCulas = $group->kodCulas->pluck('kod_cula')->filter()->values()->all();
+                        $culaOk = empty($kodCulas) || in_array($voter['cula_code'] ?? null, $kodCulas);
+                        if (! $culaOk) continue;
+
+                        $raceOk = ! $group->keturunan || ($voter['race'] ?? null) === $group->keturunan;
+                        if (! $raceOk) continue;
+
+                        $genderOk = ! $group->jantina || ($voter['gender'] ?? null) === $group->jantina;
+                        if (! $genderOk) continue;
+
+                        $age = $voter['age'] ?? null;
+                        $ageOk = ($group->umur_dari === null && $group->umur_akhir === null)
+                            || ($age !== null
+                                && ($group->umur_dari === null || $age >= $group->umur_dari)
+                                && ($group->umur_akhir === null || $age <= $group->umur_akhir));
+                        if (! $ageOk) continue;
+
+                        return true;
+                    }
+                    return false;
+                })
             );
         }
 
@@ -827,6 +865,8 @@ class ProgramController extends Controller
             ],
             'committee_group_filters' => ['nullable', 'array'],
             'committee_group_filters.*' => ['string', 'max:50'],
+            'group_pemilih_filters' => ['nullable', 'array'],
+            'group_pemilih_filters.*' => ['integer', 'exists:group_pemilihs,id'],
             'gambar' => ['nullable', 'image', 'max:2048'],
             'has_laporan' => ['nullable', 'boolean'],
         ]);

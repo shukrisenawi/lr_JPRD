@@ -16,6 +16,7 @@ class Program extends Model
         'masa',
         'group_id',
         'committee_group_filters',
+        'group_pemilih_filters',
         'gambar',
         'has_laporan',
         'user_id',
@@ -26,6 +27,7 @@ class Program extends Model
         'masa' => 'datetime:h:i A',
         'has_laporan' => 'boolean',
         'committee_group_filters' => 'array',
+        'group_pemilih_filters' => 'array',
     ];
 
     public function creator(): BelongsTo
