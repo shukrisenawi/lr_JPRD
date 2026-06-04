@@ -350,6 +350,111 @@ class ProgramController extends Controller
         );
     }
 
+    public function committeeMembers(Request $request, Program $program): JsonResponse
+    {
+        $this->ensureAccessible($request->user()->id, $program);
+
+        $filter = $program->committee_group_filters;
+        if (! $filter) {
+            return response()->json(['members' => []]);
+        }
+
+        [$groupId, $level] = explode(':', $filter) + [null, null];
+        if (! $groupId) {
+            return response()->json(['members' => []]);
+        }
+
+        $positionIds = CommitteeGroup::find((int) $groupId)
+            ?->positions()
+            ?->pluck('committee_positions.id') ?? collect();
+
+        if ($positionIds->isEmpty()) {
+            return response()->json(['members' => []]);
+        }
+
+        $memberships = CommitteeMembership::whereIn('committee_position_id', $positionIds)
+            ->when($level, fn ($q) => $q->where('level', $level))
+            ->with('voter')
+            ->get()
+            ->unique('pemilih_record_id')
+            ->values();
+
+        $members = $memberships->map(fn (CommitteeMembership $m) => [
+            'pemilih_record_id' => $m->pemilih_record_id,
+            'name' => $m->voter?->name,
+            'no_kp' => $m->voter?->no_kp,
+            'old_ic' => $m->voter?->old_ic,
+            'phone_mobile' => $m->voter?->phone_mobile,
+            'dm' => $m->voter?->dm,
+            'locality' => $m->voter?->locality,
+            'gender' => $m->voter?->gender,
+            'race' => $m->voter?->race,
+            'cula_code' => $m->voter?->cula_code,
+            'cula_display_label' => $m->voter?->cula_display_label,
+            'address' => $m->voter?->address,
+            'scope_name' => $m->scope_name,
+            'position_name' => $m->position?->name,
+        ]);
+
+        return response()->json(['members' => $members]);
+    }
+
+    public function storeBulkAttendees(Request $request, Program $program): RedirectResponse
+    {
+        $this->ensureAccessible($request->user()->id, $program);
+
+        $validated = $request->validate([
+            'members' => ['required', 'array', 'min:1'],
+            'members.*.pemilih_record_id' => ['required', 'integer'],
+            'members.*.name' => ['required', 'string', 'max:255'],
+            'members.*.no_kp' => ['nullable', 'string', 'max:50'],
+            'members.*.old_ic' => ['nullable', 'string', 'max:50'],
+            'members.*.phone_mobile' => ['nullable', 'string', 'max:50'],
+            'members.*.dm' => ['nullable', 'string', 'max:255'],
+            'members.*.locality' => ['nullable', 'string', 'max:255'],
+            'members.*.gender' => ['nullable', 'string', 'max:50'],
+            'members.*.race' => ['nullable', 'string', 'max:50'],
+            'members.*.cula_code' => ['nullable', 'string', 'max:50'],
+            'members.*.cula_display_label' => ['nullable', 'string', 'max:255'],
+            'members.*.address' => ['nullable', 'string'],
+        ]);
+
+        $user = $request->user();
+        $count = 0;
+
+        foreach ($validated['members'] as $member) {
+            $voterId = $member['pemilih_record_id'];
+            $existing = $program->attendees()->where('voter_id', (string) $voterId)->first();
+
+            if ($existing) {
+                $existing->update(['attended_at' => now()]);
+            } else {
+                $program->attendees()->create([
+                    'voter_id' => (string) $voterId,
+                    'name' => $member['name'],
+                    'no_kp' => $member['no_kp'] ?? null,
+                    'old_ic' => $member['old_ic'] ?? null,
+                    'phone_mobile' => $member['phone_mobile'] ?? null,
+                    'dm' => $member['dm'] ?? null,
+                    'locality' => $member['locality'] ?? null,
+                    'gender' => $member['gender'] ?? null,
+                    'race' => $member['race'] ?? null,
+                    'cula_code' => $member['cula_code'] ?? null,
+                    'cula_display_label' => $member['cula_display_label'] ?? null,
+                    'address' => $member['address'] ?? null,
+                    'user_id' => $user->id,
+                    'attended_at' => now(),
+                ]);
+            }
+
+            $count++;
+        }
+
+        return redirect()
+            ->route('program.index')
+            ->with('success', $count . ' orang pemilih berjaya direkodkan sebagai hadir program.');
+    }
+
     public function search(Request $request, Program $program, PemilihReportService $reportService)
     {
         $this->ensureAccessible($request->user()->id, $program);

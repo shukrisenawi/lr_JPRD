@@ -39,6 +39,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/program/{program}/search', [ProgramController::class, 'search'])->middleware('module:program')->name('program.search');
     Route::get('/program/{program}/laporan', [ProgramController::class, 'laporan'])->middleware('module:program')->name('program.laporan');
     Route::post('/program/{program}/attendees', [ProgramController::class, 'storeAttendee'])->middleware('module:program')->name('program.attendees.store');
+    Route::post('/program/{program}/attendees/bulk', [ProgramController::class, 'storeBulkAttendees'])->middleware('module:program')->name('program.attendees.store-bulk');
+    Route::get('/program/{program}/committee-members', [ProgramController::class, 'committeeMembers'])->middleware('module:program')->name('program.committee-members');
     Route::delete('/program/{program}/attendees/{attendee}', [ProgramController::class, 'destroyAttendee'])->middleware('module:program')->name('program.attendees.destroy');
     Route::post('/program/{program}/sub-programs', [ProgramController::class, 'storeSubProgram'])->middleware('module:program')->name('program.sub-programs.store');
     Route::put('/program/sub-programs/{subProgram}', [ProgramController::class, 'updateSubProgram'])->middleware('module:program')->name('program.sub-programs.update');
