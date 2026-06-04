@@ -809,6 +809,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 forceFormData: true,
                 onSuccess: () => {
                     reset();
+                    setTab('senarai-program');
                     showProgramSavedAlert(true);
                 },
             });
