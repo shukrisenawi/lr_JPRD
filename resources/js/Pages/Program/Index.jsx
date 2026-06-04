@@ -670,7 +670,7 @@ function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }
     );
 }
 
-function SearchVoterPanel({ selectedProgram }) {
+function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
     const [q, setQ] = useState(''); const [suggestions, setSuggestions] = useState([]); const [searching, setSearching] = useState(false);
     const [selected, setSelected] = useState(null); const [err, setErr] = useState(''); const [adding, setAdding] = useState(false);
     const [selectedSubIds, setSelectedSubIds] = useState([]);
@@ -1160,7 +1160,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 </div>
                             </div>
                         </div>
-                        <SearchVoterPanel selectedProgram={selectedProgram} />
+                        <SearchVoterPanel selectedProgram={selectedProgram} committeeGroupOptions={committeeGroupOptions} />
                         <section className="card p-3">
                             <div className="flex items-center justify-between gap-3">
                                 <div>
