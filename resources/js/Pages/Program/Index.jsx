@@ -611,7 +611,7 @@ function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }
         .then(data => {
             const ms = data.members ?? [];
             setMembers(ms);
-            setSelectedIds(ms.filter(m => existingVoterIds?.has(m.pemilih_record_id)).map(m => m.pemilih_record_id));
+            setSelectedIds(ms.filter(m => existingVoterIds?.has(String(m.pemilih_record_id))).map(m => m.pemilih_record_id));
         })
         .catch(() => {})
         .finally(() => setLoading(false));
