@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Program;
 use App\Models\ProgramAttendee;
+use App\Models\ProgramFile;
 use App\Models\CommitteeMembership;
 use App\Models\CommitteeGroup;
 use App\Models\CulaWorkItem;
@@ -272,85 +273,7 @@ class ProgramController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $this->validateProgram($request);
-        $validated['committee_group_filters'] = $validated['committee_group_filters']
-            ? [$validated['committee_group_filters']]
-            : null;
-        $gambarPath = $request->hasFile('gambar')
-            ? $request->file('gambar')->store('programs', 'public')
-            : null;
-
-        $program = Program::query()->create([
-            ...$validated,
-            'gambar' => $gambarPath,
-            'user_id' => $request->user()->id,
-        ]);
-
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Program baharu berjaya ditambah.');
-    }
-
-    public function update(Request $request, Program $program): RedirectResponse
-    {
-        $this->ensureOwner($request->user()->id, $program);
-
-        $validated = $this->validateProgram($request);
-        $validated['committee_group_filters'] = $validated['committee_group_filters']
-            ? [$validated['committee_group_filters']]
-            : null;
-        $payload = [...$validated];
-
-        if ($request->hasFile('gambar')) {
-            if ($program->gambar) {
-                Storage::disk('public')->delete($program->gambar);
-            }
-
-            $payload['gambar'] = $request->file('gambar')->store('programs', 'public');
-        } else {
-            unset($payload['gambar']);
-        }
-
-        $program->update($payload);
-
-        return redirect()
-            ->route('program.index')
-            ->with('success', 'Program berjaya dikemas kini.');
-    }
-
-    public function destroy(Program $program): RedirectResponse
-    {
-        $this->ensureOwner(request()->user()->id, $program);
-
-        if ($program->gambar) {
-            Storage::disk('public')->delete($program->gambar);
-        }
-
-        $program->delete();
-
-        return redirect()
-            ->route('program.index')
-            ->with('success', 'Program berjaya dipadam.');
-    }
-
-    public function gambar(Program $program)
-    {
-        $this->ensureAccessible(request()->user()->id, $program);
-
-        abort_unless($program->gambar, 404);
-        abort_unless(Storage::disk('public')->exists($program->gambar), 404);
-
-        return response()->file(
-            Storage::disk('public')->path($program->gambar),
-            [
-                'Cache-Control' => 'private, max-age=3600',
-            ],
-        );
-    }
-
-    public function committeeMembers(Request $request, Program $program): JsonResponse
+    public function mesyuarat(Request $request, Program $program): JsonResponse
     {
         $this->ensureAccessible($request->user()->id, $program);
 
@@ -358,618 +281,114 @@ class ProgramController extends Controller
         if (is_array($filter)) {
             $filter = $filter[0] ?? null;
         }
-        if (! $filter) {
-            return response()->json(['members' => []]);
-        }
 
-        [$groupId, $level] = explode(':', $filter) + [null, null];
-        if (! $groupId) {
-            return response()->json(['members' => []]);
-        }
+        [$groupId, $level] = explode(':', $filter ?? '') + [null, null];
 
-        $positionIds = CommitteeGroup::find((int) $groupId)
-            ?->positions()
-            ?->pluck('committee_positions.id') ?? collect();
+        $memberships = collect();
+        if ($groupId) {
+            $positionIds = CommitteeGroup::find((int) $groupId)
+                ?->positions()
+                ?->pluck('committee_positions.id') ?? collect();
 
-        if ($positionIds->isEmpty()) {
-            return response()->json(['members' => []]);
-        }
-
-        $memberships = CommitteeMembership::whereIn('committee_position_id', $positionIds)
-            ->when($level, fn ($q) => $q->where('level', $level))
-            ->with('voter')
-            ->get()
-            ->unique('pemilih_record_id')
-            ->values();
-
-        $members = $memberships->map(fn (CommitteeMembership $m) => [
-            'pemilih_record_id' => $m->pemilih_record_id,
-            'name' => $m->voter?->name,
-            'no_kp' => $m->voter?->no_kp,
-            'old_ic' => $m->voter?->old_ic,
-            'phone_mobile' => $m->voter?->phone_mobile,
-            'dm' => $m->voter?->dm,
-            'locality' => $m->voter?->locality,
-            'gender' => $m->voter?->gender,
-            'race' => $m->voter?->race,
-            'cula_code' => $m->voter?->cula_code,
-            'cula_display_label' => $m->voter?->cula_display_label,
-            'address' => $m->voter?->address,
-            'scope_name' => $m->scope_name,
-            'position_name' => $m->position?->name,
-        ]);
-
-        return response()->json(['members' => $members]);
-    }
-
-    public function storeBulkAttendees(Request $request, Program $program): RedirectResponse
-    {
-        $this->ensureAccessible($request->user()->id, $program);
-
-        $validated = $request->validate([
-            'members' => ['nullable', 'array'],
-            'members.*.pemilih_record_id' => ['required', 'integer'],
-            'members.*.name' => ['required', 'string', 'max:255'],
-            'members.*.no_kp' => ['nullable', 'string', 'max:50'],
-            'members.*.old_ic' => ['nullable', 'string', 'max:50'],
-            'members.*.phone_mobile' => ['nullable', 'string', 'max:50'],
-            'members.*.dm' => ['nullable', 'string', 'max:255'],
-            'members.*.locality' => ['nullable', 'string', 'max:255'],
-            'members.*.gender' => ['nullable', 'string', 'max:50'],
-            'members.*.race' => ['nullable', 'string', 'max:50'],
-            'members.*.cula_code' => ['nullable', 'string', 'max:50'],
-            'members.*.cula_display_label' => ['nullable', 'string', 'max:255'],
-            'members.*.address' => ['nullable', 'string'],
-            'remove_ids' => ['nullable', 'array'],
-            'remove_ids.*' => ['required', 'integer'],
-        ]);
-
-        $user = $request->user();
-        $count = 0;
-
-        foreach (($validated['members'] ?? []) as $member) {
-            $voterId = $member['pemilih_record_id'];
-            $existing = $program->attendees()->where('voter_id', (string) $voterId)->first();
-
-            if ($existing) {
-                $existing->update(['attended_at' => now()]);
-            } else {
-                $program->attendees()->create([
-                    'voter_id' => (string) $voterId,
-                    'name' => $member['name'],
-                    'no_kp' => $member['no_kp'] ?? null,
-                    'old_ic' => $member['old_ic'] ?? null,
-                    'phone_mobile' => $member['phone_mobile'] ?? null,
-                    'dm' => $member['dm'] ?? null,
-                    'locality' => $member['locality'] ?? null,
-                    'gender' => $member['gender'] ?? null,
-                    'race' => $member['race'] ?? null,
-                    'cula_code' => $member['cula_code'] ?? null,
-                    'cula_display_label' => $member['cula_display_label'] ?? null,
-                    'address' => $member['address'] ?? null,
-                    'user_id' => $user->id,
-                    'attended_at' => now(),
-                ]);
-            }
-
-            $count++;
-        }
-
-        $removed = 0;
-        foreach (($validated['remove_ids'] ?? []) as $voterId) {
-            $deleted = $program->attendees()->where('voter_id', (string) $voterId)->delete();
-            if ($deleted) $removed++;
-        }
-
-        $msg = $count . ' orang pemilih berjaya direkodkan sebagai hadir program.';
-        if ($removed > 0) {
-            $msg .= ' ' . $removed . ' orang dikeluarkan.';
-        }
-
-        return redirect()
-            ->back()
-            ->with('success', $msg);
-    }
-
-    public function search(Request $request, Program $program, PemilihReportService $reportService)
-    {
-        $this->ensureAccessible($request->user()->id, $program);
-
-        $path = Setting::valueOf('pemilih_report_file_path', PemilihReportService::DEFAULT_SAMPLE_PATH);
-
-        $suggestions = $reportService->searchVoters(
-            (string) $request->query('q', ''),
-            $path,
-            8,
-            $request->user(),
-        );
-
-        $rawFilter = $program->committee_group_filters;
-        $filter = is_array($rawFilter) ? ($rawFilter[0] ?? null) : $rawFilter;
-        if ($filter) {
-            [$groupId, $level] = explode(':', $filter) + [null, null];
-
-            if ($groupId) {
-                $positionIds = CommitteeGroup::find((int) $groupId)
-                    ?->positions()
-                    ?->pluck('committee_positions.id') ?? collect();
-
-                if ($positionIds->isNotEmpty()) {
-                    $query = CommitteeMembership::whereIn('committee_position_id', $positionIds);
-
-                    if ($level) {
-                        $query->where('level', $level);
-                    }
-
-                    $voterIds = $query->pluck('pemilih_record_id')->unique()->values()->all();
-
-                    $suggestions = array_values(
-                        array_filter($suggestions, fn ($voter) =>
-                            in_array($voter['record_id'] ?? null, $voterIds)
-                        )
-                    );
-                }
+            if ($positionIds->isNotEmpty()) {
+                $memberships = CommitteeMembership::whereIn('committee_position_id', $positionIds)
+                    ->when($level, fn ($q) => $q->where('level', $level))
+                    ->with('voter', 'position')
+                    ->get()
+                    ->unique('pemilih_record_id')
+                    ->values();
             }
         }
 
-        if ($groupIds = $program->group_pemilih_filters) {
-            $groups = GroupPemilih::with('kodCulas')->whereIn('id', $groupIds)->get();
+        $allPrograms = $this->accessibleProgramsQuery($request->user()->id)
+            ->where('id', '!=', $program->id)
+            ->where('is_mesyuarat', true)
+            ->where('group_id', $program->group_id)
+            ->with('attendees')
+            ->get();
 
-            $suggestions = array_values(
-                array_filter($suggestions, function ($voter) use ($groups) {
-                    foreach ($groups as $group) {
-                        $kodCulas = $group->kodCulas->pluck('kod_cula')->filter()->values()->all();
-                        $culaOk = empty($kodCulas) || in_array($voter['cula_code'] ?? null, $kodCulas);
-                        if (! $culaOk) continue;
-
-                        $raceOk = ! $group->keturunan || ($voter['race'] ?? null) === $group->keturunan;
-                        if (! $raceOk) continue;
-
-                        $genderOk = ! $group->jantina || ($voter['gender'] ?? null) === $group->jantina;
-                        if (! $genderOk) continue;
-
-                        $age = $voter['age'] ?? null;
-                        $ageOk = ($group->umur_dari === null && $group->umur_akhir === null)
-                            || ($age !== null
-                                && ($group->umur_dari === null || $age >= $group->umur_dari)
-                                && ($group->umur_akhir === null || $age <= $group->umur_akhir));
-                        if (! $ageOk) continue;
-
-                        return true;
-                    }
-                    return false;
-                })
+        $members = $memberships->map(function (CommitteeMembership $m) use ($allPrograms) {
+            $previousCount = $allPrograms->sum(fn (Program $p) =>
+                $p->attendees->where('voter_id', (string) $m->pemilih_record_id)->count()
             );
-        }
+
+            return [
+                'pemilih_record_id' => $m->pemilih_record_id,
+                'name' => $m->voter?->name,
+                'no_kp' => $m->voter?->no_kp,
+                'phone_mobile' => $m->voter?->phone_mobile,
+                'dm' => $m->voter?->dm,
+                'position_name' => $m->position?->name,
+                'previous_attendance' => $previousCount,
+            ];
+        })->values();
+
+        $files = $program->files()->with('uploader:id,name')->latest()->get()->map(fn (ProgramFile $f) => [
+            'id' => $f->id,
+            'original_name' => $f->original_name,
+            'type' => $f->type,
+            'mime_type' => $f->mime_type,
+            'size' => $f->size,
+            'uploader' => $f->uploader?->name,
+            'created_at' => $f->created_at?->format('d-m-Y H:i'),
+        ]);
 
         return response()->json([
-            'suggestions' => $suggestions,
+            'members' => $members,
+            'files' => $files,
         ]);
     }
 
-    public function storeAttendee(Request $request, Program $program): RedirectResponse
+    public function uploadFile(Request $request, Program $program): RedirectResponse
     {
         $this->ensureAccessible($request->user()->id, $program);
 
         $validated = $request->validate([
-            'voter_id' => ['required', 'string', 'max:255'],
-            'name' => ['required', 'string', 'max:255'],
-            'no_kp' => ['nullable', 'string', 'max:50'],
-            'old_ic' => ['nullable', 'string', 'max:50'],
-            'no_ahli' => ['nullable', 'string', 'max:255'],
-            'phone_mobile' => ['nullable', 'string', 'max:50'],
-            'phone_home' => ['nullable', 'string', 'max:50'],
-            'dm' => ['nullable', 'string', 'max:255'],
-            'locality' => ['nullable', 'string', 'max:255'],
-            'gender' => ['nullable', 'string', 'max:50'],
-            'race' => ['nullable', 'string', 'max:50'],
-            'cula_code' => ['nullable', 'string', 'max:50'],
-            'cula_display_label' => ['nullable', 'string', 'max:255'],
-            'address' => ['nullable', 'string'],
-            'sub_program_ids' => ['nullable', 'array'],
-            'sub_program_ids.*' => ['integer', 'exists:program_sub_programs,id'],
+            'file' => ['required', 'file', 'max:10240'],
         ]);
 
-        $subProgramIds = $validated['sub_program_ids'] ?? [];
+        $file = $validated['file'];
+        $originalName = $file->getClientOriginalName();
+        $storedName = $file->store('program-files/' . $program->id, 'public');
+        $mimeType = $file->getMimeType();
+        $size = $file->getSize();
+        $type = str_starts_with($mimeType ?? '', 'image/') ? 'image' : 'document';
 
-        $user = $request->user();
-        if (!$user->canAccessModule('kemaskini-no-ahli')) {
-            unset($validated['no_ahli']);
-        }
-
-        $existing = $program->attendees()->where('voter_id', $validated['voter_id'])->first();
-
-        if ($existing) {
-            $existing->update([
-                ...$validated,
-                'attended_at' => now(),
-            ]);
-            $attendee = $existing;
-        } else {
-            $validated['user_id'] = $request->user()->id;
-            $attendee = $program->attendees()->create([
-                ...$validated,
-                'attended_at' => now(),
-            ]);
-        }
-
-        $attendee->subPrograms()->sync($subProgramIds);
-
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Pemilih berjaya direkodkan sebagai hadir program.');
-    }
-
-    public function destroyAttendee(Request $request, Program $program, ProgramAttendee $attendee): RedirectResponse
-    {
-        $this->ensureAccessible($request->user()->id, $program);
-        $this->ensureAttendeeModifiable($request->user(), $program, $attendee);
-
-        if ($attendee->program_id !== $program->id) {
-            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
-        }
-
-        $attendee->delete();
-
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Kehadiran pemilih berjaya dipadam.');
-    }
-
-    public function storeMarkAttendee(Request $request, Program $program, ProgramAttendee $attendee): JsonResponse
-    {
-        $this->ensureAccessible($request->user()->id, $program);
-
-        if ($attendee->program_id !== $program->id) {
-            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
-        }
-
-        $pemilihRecord = PemilihRecord::query()
-            ->where(function ($q) use ($attendee) {
-                $q->where('no_kp', $attendee->no_kp);
-                if ($attendee->old_ic) {
-                    $q->orWhere('old_ic', $attendee->old_ic);
-                }
-            })
-            ->first();
-
-        if ($pemilihRecord) {
-            CulaWorkItem::query()->firstOrCreate(
-                ['pemilih_record_id' => $pemilihRecord->id],
-                [
-                    'marked_by' => $request->user()->id,
-                    'marked_at' => now(),
-                    'notes' => null,
-                ]
-            );
-        }
-
-        return response()->json(['marked' => true]);
-    }
-
-    public function destroyMarkAttendee(Request $request, Program $program, ProgramAttendee $attendee): JsonResponse
-    {
-        $this->ensureAccessible($request->user()->id, $program);
-
-        if ($attendee->program_id !== $program->id) {
-            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
-        }
-
-        $pemilihRecord = PemilihRecord::query()
-            ->where(function ($q) use ($attendee) {
-                $q->where('no_kp', $attendee->no_kp);
-                if ($attendee->old_ic) {
-                    $q->orWhere('old_ic', $attendee->old_ic);
-                }
-            })
-            ->first();
-
-        if ($pemilihRecord) {
-            CulaWorkItem::query()
-                ->where('pemilih_record_id', $pemilihRecord->id)
-                ->delete();
-        }
-
-        return response()->json(['marked' => false]);
-    }
-
-    public function storeShare(Request $request, Program $program): RedirectResponse
-    {
-        $this->ensureOwner($request->user()->id, $program);
-
-        $validated = $request->validate([
-            'shared_user_ids' => ['nullable', 'array'],
-            'shared_user_ids.*' => ['integer'],
-        ]);
-
-        $sharedUserIds = collect($validated['shared_user_ids'] ?? [])
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values();
-
-        $shareableUserIds = User::query()
-            ->get()
-            ->filter(fn (User $candidate) => $candidate->canAccessModule('program'))
-            ->pluck('id')
-            ->map(fn ($id) => (int) $id);
-
-        abort_if($sharedUserIds->contains((int) $program->user_id), 422, 'Pemilik tidak perlu dikongsi.');
-        abort_unless(
-            $sharedUserIds->every(fn (int $id) => $shareableUserIds->contains($id)),
-            422,
-            'Terdapat pengguna dipilih yang tidak sah untuk perkongsian program.',
-        );
-
-        $program->sharedUsers()->sync($sharedUserIds->all());
-
-        return back()->with('success', 'Perkongsian program berjaya dikemaskini.');
-    }
-
-    public function storeGroup(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-        ]);
-
-        ProgramGroup::query()->create([
-            'name' => $validated['name'],
+        $program->files()->create([
+            'original_name' => $originalName,
+            'stored_name' => $storedName,
+            'type' => $type,
+            'mime_type' => $mimeType,
+            'size' => $size,
             'user_id' => $request->user()->id,
         ]);
 
-        return redirect()
-            ->route('program.index')
-            ->with('success', 'Group program berjaya ditambah.');
+        return redirect()->back()->with('success', 'Fail berjaya dimuat naik.');
     }
 
-    public function updateGroup(Request $request, ProgramGroup $group): RedirectResponse
+    public function downloadFile(Program $program, ProgramFile $file)
     {
-        $this->ensureGroupOwner($request->user()->id, $group);
+        $this->ensureAccessible(request()->user()->id, $program);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-        ]);
+        abort_unless(Storage::disk('public')->exists($file->stored_name), 404);
 
-        $group->update([
-            'name' => $validated['name'],
-        ]);
-
-        return redirect()
-            ->route('program.index')
-            ->with('success', 'Group program berjaya dikemaskini.');
+        return response()->download(
+            Storage::disk('public')->path($file->stored_name),
+            $file->original_name,
+        );
     }
 
-    public function destroyGroup(ProgramGroup $group): RedirectResponse
+    public function destroyFile(Program $program, ProgramFile $file): RedirectResponse
     {
-        $this->ensureGroupOwner(request()->user()->id, $group);
-        $group->delete();
+        $this->ensureAccessible(request()->user()->id, $program);
 
-        return redirect()
-            ->route('program.index')
-            ->with('success', 'Group program berjaya dipadam.');
-    }
-
-    public function laporan(Request $request, Program $program): Response
-    {
-        $this->ensureAccessible($request->user()->id, $program);
-
-        $attendees = $program->attendees;
-        $total = $attendees->count();
-
-        $byDm = $attendees
-            ->groupBy(fn ($a) => $a->dm ?: 'Tiada')
-            ->map(fn ($group, $dm) => [
-                'name' => $dm,
-                'key' => $dm,
-                'total' => $group->count(),
-            ])
-            ->sortByDesc('total')
-            ->values();
-
-        $byLocality = $attendees
-            ->groupBy(fn ($a) => $a->locality ?: 'Tiada')
-            ->map(fn ($group, $loc) => [
-                'name' => $loc,
-                'total' => $group->count(),
-            ])
-            ->sortByDesc('total')
-            ->values();
-
-        $gender = collect([
-            ['key' => 'L', 'label' => 'Lelaki', 'total' => $attendees->where('gender', 'L')->count()],
-            ['key' => 'P', 'label' => 'Perempuan', 'total' => $attendees->where('gender', 'P')->count()],
-            ['key' => 'X', 'label' => 'Tiada', 'total' => $attendees->filter(fn ($a) => ! in_array($a->gender, ['L', 'P']))->count()],
-        ])->filter(fn ($g) => $g['total'] > 0)->values();
-
-        $race = $attendees
-            ->groupBy(fn ($a) => $a->race ?: 'Tiada')
-            ->map(fn ($group, $race) => [
-                'code' => $race,
-                'label' => $race,
-                'total' => $group->count(),
-            ])
-            ->sortByDesc('total')
-            ->values();
-
-        $byCula = $attendees
-            ->groupBy(fn ($a) => $a->cula_code ?: '?')
-            ->map(fn ($group, $code) => [
-                'code' => (string) $code,
-                'display_label' => $group->first()->cula_display_label ?: ($code === '?' ? 'Belum Dicula' : $code),
-                'total' => $group->count(),
-            ])
-            ->sortByDesc('total')
-            ->values();
-
-        $dmDetails = $byDm->map(function ($dm) use ($attendees) {
-            $filtered = $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key']);
-            $localities = $filtered
-                ->groupBy(fn ($a) => $a->locality ?: 'Tiada')
-                ->map(fn ($g, $loc) => [
-                    'name' => $loc,
-                    'total' => $g->count(),
-                    'with_cula' => $g->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
-                    'belum_dicula' => $g->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
-                ])
-                ->sortByDesc('total')
-                ->values();
-
-            return [
-                'key' => $dm['key'],
-                'name' => $dm['name'],
-                'total' => $dm['total'],
-                'localities' => $localities,
-                'summary' => [
-                    'total_voters' => $dm['total'],
-                    'total_localities' => $localities->count(),
-                    'with_cula' => $filtered->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
-                    'belum_dicula' => $filtered->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
-                ],
-            ];
-        });
-
-        $raceByDm = $byDm->map(fn ($dm) => [
-            'key' => $dm['key'],
-            'items' => $attendees
-                ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
-                ->groupBy(fn ($a) => $a->race ?: 'Tiada')
-                ->map(fn ($g, $race) => ['code' => $race, 'label' => $race, 'total' => $g->count()])
-                ->sortByDesc('total')
-                ->values(),
-        ]);
-
-        $genderByDm = $byDm->map(fn ($dm) => [
-            'key' => $dm['key'],
-            'items' => collect([
-                ['k' => 'L', 'l' => 'Lelaki', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'L')->count()],
-                ['k' => 'P', 'l' => 'Perempuan', 't' => $attendees->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])->where('gender', 'P')->count()],
-            ])->filter(fn ($g) => $g['t'] > 0)->values(),
-        ]);
-
-        $culaByDm = $byDm->map(fn ($dm) => [
-            'key' => $dm['key'],
-            'cula_breakdown' => $attendees
-                ->where('dm', $dm['key'] === 'Tiada' ? null : $dm['key'])
-                ->groupBy(fn ($a) => $a->cula_code ?: '?')
-                ->map(fn ($g, $code) => [
-                    'code' => (string) $code,
-                    'display_label' => $g->first()->cula_display_label ?: ($code === '?' ? 'Belum Dicula' : $code),
-                    'total' => $g->count(),
-                ])
-                ->sortByDesc('total')
-                ->values(),
-        ]);
-
-        return Inertia::render('Program/Laporan', [
-            'program' => [
-                'id' => $program->id,
-                'tajuk' => $program->tajuk,
-                'tempat' => $program->tempat,
-                'tarikh' => $program->tarikh?->format('d-m-Y'),
-                'masa' => $program->masa?->format('h:i A'),
-                'group_name' => $program->group?->name,
-                'attendees_count' => $total,
-            ],
-            'report' => [
-                'total' => $total,
-                'total_dm' => $byDm->count(),
-                'total_localities' => $byLocality->count(),
-                'summary' => [
-                    'total_voters' => $total,
-                    'total_dm' => $byDm->count(),
-                    'total_localities' => $byLocality->count(),
-                    'with_cula' => $attendees->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
-                    'belum_dicula' => $attendees->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
-                ],
-                'by_dm' => $byDm,
-                'by_locality' => $byLocality,
-                'gender' => $gender,
-                'race' => $race,
-                'by_cula' => $byCula,
-                'dm_details' => $dmDetails,
-                'race_by_dm' => $raceByDm,
-                'gender_by_dm' => $genderByDm,
-                'cula_by_dm' => $culaByDm,
-            ],
-        ]);
-    }
-
-    public function storeSubProgram(Request $request, Program $program): RedirectResponse
-    {
-        $this->ensureOwner($request->user()->id, $program);
-
-        $validated = $request->validate([
-            'name' => [
-                'required', 'string', 'max:255',
-                Rule::unique('program_sub_programs', 'name')
-                    ->where('program_id', $program->id),
-            ],
-            'color' => ['nullable', 'string', 'max:50'],
-        ]);
-
-        $validated['name'] = strtolower(preg_replace('/\s+/', '_', $validated['name']));
-
-        $program->subPrograms()->create($validated);
-
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Sub program berjaya ditambah.');
-    }
-
-    public function updateSubProgram(Request $request, ProgramSubProgram $subProgram): RedirectResponse
-    {
-        $program = $subProgram->program;
-        $this->ensureOwner($request->user()->id, $program);
-
-        $validated = $request->validate([
-            'name' => [
-                'required', 'string', 'max:255',
-                Rule::unique('program_sub_programs', 'name')
-                    ->where('program_id', $program->id)
-                    ->ignore($subProgram->id),
-            ],
-            'color' => ['nullable', 'string', 'max:50'],
-        ]);
-
-        $validated['name'] = strtolower(preg_replace('/\s+/', '_', $validated['name']));
-
-        $subProgram->update($validated);
-
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Sub program berjaya dikemas kini.');
-    }
-
-    public function destroySubProgram(Request $request, ProgramSubProgram $subProgram): RedirectResponse
-    {
-        $program = $subProgram->program;
-        $this->ensureOwner($request->user()->id, $program);
-
-        $subProgram->delete();
-
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Sub program berjaya dipadam.');
-    }
-
-    public function updateAttendeeSubPrograms(Request $request, Program $program, ProgramAttendee $attendee): RedirectResponse
-    {
-        $this->ensureAccessible($request->user()->id, $program);
-        $this->ensureAttendeeModifiable($request->user(), $program, $attendee);
-
-        if ($attendee->program_id !== $program->id) {
-            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
+        if (Storage::disk('public')->exists($file->stored_name)) {
+            Storage::disk('public')->delete($file->stored_name);
         }
 
-        $validated = $request->validate([
-            'sub_program_ids' => ['nullable', 'array'],
-            'sub_program_ids.*' => ['integer', 'exists:program_sub_programs,id'],
-        ]);
+        $file->delete();
 
-        $attendee->subPrograms()->sync($validated['sub_program_ids'] ?? []);
-
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Sub program pemilih berjaya dikemas kini.');
+        return redirect()->back()->with('success', 'Fail berjaya dipadam.');
     }
 
     private function validateProgram(Request $request): array
@@ -989,6 +408,7 @@ class ProgramController extends Controller
             'group_pemilih_filters.*' => ['integer', 'exists:group_pemilihs,id'],
             'gambar' => ['nullable', 'image', 'max:2048'],
             'has_laporan' => ['nullable', 'boolean'],
+            'is_mesyuarat' => ['nullable', 'boolean'],
         ]);
     }
 

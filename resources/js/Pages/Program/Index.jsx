@@ -128,7 +128,7 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
     );
 }
 
-function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare, onLaporan }) {
+function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare, onLaporan, onMesyuarat }) {
     const s = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
     return (
         <div className={`rounded-md border bg-white p-2.5 shadow-sm transition hover:border-green-200 ${isActive ? 'border-green-200' : 'border-slate-200'}`}>
@@ -148,6 +148,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
             </div>
             <div style={{ marginTop: '10px' }} className="flex flex-wrap justify-end gap-1.5">
                 {program.has_laporan && <button onClick={() => onLaporan(program)} className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">Laporan</button>}
+                {program.is_mesyuarat && <button onClick={() => onMesyuarat(program)} className="rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-amber-600 transition hover:bg-amber-50">Mesyuarat</button>}
                 {program.can_share && <button onClick={() => onShare(program)} className="rounded-md border border-orange-300 bg-white px-2.5 py-1 text-xs font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
                 {program.can_edit && <>
                     <button onClick={() => onEdit(program)} className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
@@ -801,6 +802,112 @@ function SearchVoterPanel({ selectedProgram }) {
     );
 }
 
+function MesyuaratView({ program, onClose }) {
+    if (!program) return null;
+    const [tab, setTab] = useState('fail');
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const fileRef = useRef(null);
+
+    useEffect(() => {
+        if (!program) return;
+        setLoading(true);
+        fetch(route('program.mesyuarat', program.id), {
+            headers: { Accept: 'application/json' },
+        })
+        .then(r => r.json())
+        .then(d => setData(d))
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }, [program?.id, program]);
+
+    const handleUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploading(true);
+        const form = new FormData();
+        form.append('file', file);
+        router.post(route('program.files.upload', program.id), form, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setUploading(false);
+                fetch(route('program.mesyuarat', program.id), {
+                    headers: { Accept: 'application/json' },
+                }).then(r => r.json()).then(d => setData(d)).catch(() => {});
+            },
+            onError: () => setUploading(false),
+        });
+    };
+
+    const handleDeleteFile = (fileId) => {
+        if (!window.confirm('Padam fail ini?')) return;
+        router.delete(route('program.files.destroy', [program.id, fileId]), {
+            preserveScroll: true,
+            onSuccess: () => {
+                setData(prev => prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId) } : prev);
+            },
+        });
+    };
+
+    return (
+        <Modal show={true} onClose={onClose} maxWidth="3xl">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-3">
+                <div className="flex items-center justify-between gap-2 border-b border-amber-200 pb-2">
+                    <p className="text-xs font-bold text-amber-900">{program.tajuk} — Mesyuarat</p>
+                    <button onClick={onClose} className="text-amber-400 hover:text-amber-600"><XIcon className="h-4 w-4" /></button>
+                </div>
+                <div className="mt-2 flex gap-1.5 border-b border-amber-200 pb-2">
+                    <button onClick={() => setTab('fail')} className={`rounded-md px-3 py-1 text-xs font-bold transition ${tab === 'fail' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Fail Mesyuarat</button>
+                    <button onClick={() => setTab('kehadiran')} className={`rounded-md px-3 py-1 text-xs font-bold transition ${tab === 'kehadiran' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Senarai Kehadiran</button>
+                </div>
+                <div className="mt-2 max-h-96 space-y-1.5 overflow-y-auto">
+                    {loading ? <p className="text-xs text-slate-500 p-2">Memuatkan...</p>
+                    : tab === 'fail' ? (
+                        <div>
+                            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-amber-300 bg-white p-3 text-xs text-amber-600 transition hover:bg-amber-50">
+                                <input ref={fileRef} type="file" onChange={handleUpload} className="hidden" />
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                {uploading ? 'Memuat naik...' : 'Muat naik fail (dokumen/gambar)'}
+                            </label>
+                            {data?.files?.length > 0 ? (
+                                <div className="mt-2 space-y-1">
+                                    {data.files.map(f => (
+                                        <div key={f.id} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs">
+                                            <div className="min-w-0 flex-1 truncate">
+                                                <p className="truncate font-bold text-slate-700">
+                                                    {f.type === 'image' ? '🖼 ' : '📄 '}{f.original_name}
+                                                </p>
+                                                <p className="text-slate-400">{f.size ? Math.round(f.size / 1024) + ' KB' : ''}{f.uploader ? ` • ${f.uploader}` : ''}{f.created_at ? ` • ${f.created_at}` : ''}</p>
+                                            </div>
+                                            <div className="flex shrink-0 gap-1">
+                                                <a href={route('program.files.download', [program.id, f.id])} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-200">Download</a>
+                                                <button onClick={() => handleDeleteFile(f.id)} className="rounded-md bg-red-100 px-2 py-1 text-xs font-bold text-red-600 transition hover:bg-red-200">Padam</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : !loading && <p className="mt-2 text-xs text-slate-500 p-2">Tiada fail.</p>}
+                        </div>
+                    ) : (
+                        <div className="space-y-1">
+                            {data?.members?.length > 0 ? data.members.map(m => (
+                                <div key={m.pemilih_record_id} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate font-bold text-slate-700">{m.name}</p>
+                                        <p className="text-slate-500">{m.no_kp || '-'}{m.position_name ? ` | ${m.position_name}` : ''}</p>
+                                    </div>
+                                    <span className="shrink-0 rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">{m.previous_attendance} kehadiran</span>
+                                </div>
+                            )) : !loading && <p className="text-xs text-slate-500 p-2">Tiada ahli jawatankuasa.</p>}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </Modal>
+    );
+}
+
 export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups, committeeGroupOptions, groupPemilihOptions }) {
     const { auth } = usePage().props;
     const isAdmin = auth?.user?.role?.is_master_admin;
@@ -818,6 +925,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [selEditSub, setSelEditSub] = useState(null);
     const [selImage, setSelImage] = useState(null);
     const [selShare, setSelShare] = useState(null);
+    const [mesyuaratProgram, setMesyuaratProgram] = useState(null);
     const [deletingAtt, setDeletingAtt] = useState(null);
     const [editNoAhli, setEditNoAhli] = useState(null);
     const [openingTg, setOpeningTg] = useState(false);
@@ -860,7 +968,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     }, [selectedProgram?.attendees, selectedProgram?.sub_programs]);
     const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
-    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', committee_group_filters: '', group_pemilih_filters: [], has_laporan: false, gambar: null, gambar_url: null });
+    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', committee_group_filters: '', group_pemilih_filters: [], has_laporan: false, is_mesyuarat: false, gambar: null, gambar_url: null });
     const sf = useForm({ shared_user_ids: [] });
     const [previewUrl, setPreviewUrl] = useState(null);
     const showProgramSavedAlert = (isEditingMode) => Swal.fire({
@@ -883,7 +991,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const submitProgram = (e) => {
         e.preventDefault();
         const editingMode = isEditing;
-        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
+        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'is_mesyuarat', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
         if (editingMode) {
             f.transform((d) => ({ ...d, _method: 'put' }));
             f.post(route('program.update', editingId), {
@@ -913,12 +1021,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     const selectProg = (id) => { setTab('senarai-program'); setSubTab(null); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
     const back = () => { setSelAttendee(null); setSubTab(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
-    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', committee_group_filters: Array.isArray(p.committee_group_filters) ? (p.committee_group_filters[0] ?? '') : (p.committee_group_filters ?? ''), group_pemilih_filters: p.group_pemilih_filters ?? [], has_laporan: p.has_laporan ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
-    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
+    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', committee_group_filters: Array.isArray(p.committee_group_filters) ? (p.committee_group_filters[0] ?? '') : (p.committee_group_filters ?? ''), group_pemilih_filters: p.group_pemilih_filters ?? [], has_laporan: p.has_laporan ?? false, is_mesyuarat: p.is_mesyuarat ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
+    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'is_mesyuarat', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
     const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
     const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } };
     const openShare = (p) => { setSelShare(p); sf.setData('shared_user_ids', (p.shared_users ?? []).map((u) => u.id)); sf.clearErrors(); };
+    const openMesyuarat = (p) => setMesyuaratProgram(p);
+    const closeMesyuarat = () => setMesyuaratProgram(null);
     const closeShare = () => { setSelShare(null); sf.setData('shared_user_ids', []); sf.clearErrors(); };
     const submitShare = (e) => {
         e.preventDefault(); if (!selShare) return;
@@ -983,6 +1093,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 <p className="text-xs text-slate-500">Papar butang laporan dalam senarai program</p>
                             </div>
                         </label>
+                        <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm cursor-pointer transition hover:border-amber-300 hover:bg-amber-50/50 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50">
+                            <input type="checkbox" checked={f.data.is_mesyuarat} onChange={(e) => f.setData('is_mesyuarat', e.target.checked)}
+                                className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
+                            <div>
+                                <p className="text-xs font-bold text-slate-800">Mesyuarat</p>
+                                <p className="text-xs text-slate-500">Tandakan sebagai mesyuarat untuk paparan fail dan kehadiran kumulatif</p>
+                            </div>
+                        </label>
                     <div className="mt-3 flex justify-center">
                         {isEditing && <button onClick={cancelEdit} className="btn-ghost text-xs mr-2">Batal</button>}
                         <PrimaryButton disabled={f.processing} className="px-4 py-1.5 text-xs">{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
@@ -1022,6 +1140,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                         <button onClick={() => router.get(route('program.laporan', selectedProgram.id))}
                                             className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">
                                             Laporan
+                                        </button>
+                                    )}
+                                    {selectedProgram.is_mesyuarat && (
+                                        <button onClick={() => setMesyuaratProgram(selectedProgram)}
+                                            className="rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-bold text-amber-600 transition hover:bg-amber-50">
+                                            Mesyuarat
                                         </button>
                                     )}
                                 </div>
@@ -1143,7 +1267,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                             {programs.length === 0 ? <div className="card-dashed py-4 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
                                 <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
                                     onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg}
-                                    onLaporan={(prog) => router.get(route('program.laporan', prog.id))} />
+                                    onLaporan={(prog) => router.get(route('program.laporan', prog.id))}
+                                    onMesyuarat={openMesyuarat} />
                             ))}
                         </div>
                     </div>
@@ -1156,6 +1281,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
             <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
             {editNoAhli && canEditNoAhli && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
+            <MesyuaratView program={mesyuaratProgram} onClose={closeMesyuarat} />
         </AuthenticatedLayout>
     );
 }

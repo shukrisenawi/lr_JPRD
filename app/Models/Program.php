@@ -19,6 +19,7 @@ class Program extends Model
         'group_pemilih_filters',
         'gambar',
         'has_laporan',
+        'is_mesyuarat',
         'user_id',
     ];
 
@@ -26,6 +27,7 @@ class Program extends Model
         'tarikh' => 'date:d-m-Y',
         'masa' => 'datetime:h:i A',
         'has_laporan' => 'boolean',
+        'is_mesyuarat' => 'boolean',
         'committee_group_filters' => 'array',
         'group_pemilih_filters' => 'array',
     ];
@@ -54,5 +56,10 @@ class Program extends Model
     public function subPrograms(): HasMany
     {
         return $this->hasMany(ProgramSubProgram::class);
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(ProgramFile::class);
     }
 }
