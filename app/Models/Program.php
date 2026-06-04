@@ -15,6 +15,7 @@ class Program extends Model
         'tarikh',
         'masa',
         'group_id',
+        'committee_group_id',
         'gambar',
         'has_laporan',
         'user_id',
@@ -34,6 +35,11 @@ class Program extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(ProgramGroup::class, 'group_id');
+    }
+
+    public function committeeGroup(): BelongsTo
+    {
+        return $this->belongsTo(CommitteeGroup::class, 'committee_group_id');
     }
 
     public function attendees(): HasMany

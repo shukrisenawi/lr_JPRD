@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Program;
 use App\Models\ProgramAttendee;
 use App\Models\CommitteeMembership;
+use App\Models\CommitteeGroup;
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\ProgramGroup;
@@ -30,6 +31,10 @@ class ProgramController extends Controller
         $groups = ProgramGroup::query()
             ->orderBy('name')
             ->get();
+        $committeeGroups = CommitteeGroup::query()
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
         $programs = $this->accessibleProgramsQuery($user->id)
             ->with(['attendees.subPrograms', 'sharedUsers:id,name', 'group', 'subPrograms'])
             ->latest('tarikh')
@@ -142,6 +147,8 @@ class ProgramController extends Controller
                     'tarikh' => $program->tarikh?->format('d-m-Y'),
                     'masa' => $program->masa?->format('h:i A'),
                     'group_id' => $program->group_id,
+                    'committee_group_id' => $program->committee_group_id,
+                    'committee_group_name' => $program->committeeGroup?->name,
                     'group_name' => $program->group?->name,
                     'has_laporan' => $program->has_laporan,
                     'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
@@ -164,6 +171,8 @@ class ProgramController extends Controller
                     'tarikh' => $selectedProgram->tarikh?->format('d-m-Y'),
                     'masa' => $selectedProgram->masa?->format('h:i A'),
                     'group_id' => $selectedProgram->group_id,
+                    'committee_group_id' => $selectedProgram->committee_group_id,
+                    'committee_group_name' => $selectedProgram->committeeGroup?->name,
                     'group_name' => $selectedProgram->group?->name,
                     'has_laporan' => $selectedProgram->has_laporan,
                     'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
@@ -222,6 +231,7 @@ class ProgramController extends Controller
                     'programs_count' => $group->programs()->count(),
                 ])
                 ->values(),
+            'committeeGroups' => $committeeGroups,
             'shareableUsers' => User::query()
                 ->whereKeyNot($user->id)
                 ->get()
@@ -313,11 +323,37 @@ class ProgramController extends Controller
 
         $path = Setting::valueOf('pemilih_report_file_path', PemilihReportService::DEFAULT_SAMPLE_PATH);
 
+        $suggestions = $reportService->searchVoters(
+            (string) $request->query('q', ''),
+            $path,
+            8,
+            $request->user(),
+        );
+
+        if ($program->committee_group_id) {
+            $positionIds = CommitteeGroup::find($program->committee_group_id)
+                ?->positions()
+                ?->pluck('committee_positions.id') ?? collect();
+
+            if ($positionIds->isNotEmpty()) {
+                $voterPemilihIds = CommitteeMembership::whereIn('committee_position_id', $positionIds)
+                    ->pluck('pemilih_record_id')
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $suggestions = array_values(
+                    array_filter($suggestions, fn ($voter) =>
+                        in_array($voter['record_id'] ?? null, $voterPemilihIds)
+                    )
+                );
+            } else {
+                $suggestions = [];
+            }
+        }
+
         return response()->json([
-            'suggestions' => $reportService->searchVoters(
-                (string) $request->query('q', ''),
-                $path,
-            ),
+            'suggestions' => $suggestions,
         ]);
     }
 
@@ -758,6 +794,7 @@ class ProgramController extends Controller
                 'integer',
                 Rule::exists('program_groups', 'id'),
             ],
+            'committee_group_id' => ['nullable', 'integer', Rule::exists('committee_groups', 'id')],
             'gambar' => ['nullable', 'image', 'max:2048'],
             'has_laporan' => ['nullable', 'boolean'],
         ]);

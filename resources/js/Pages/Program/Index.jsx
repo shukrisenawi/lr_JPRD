@@ -719,7 +719,7 @@ function SearchVoterPanel({ selectedProgram }) {
     );
 }
 
-export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups }) {
+export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups, committeeGroups }) {
     const { auth } = usePage().props;
     const isAdmin = auth?.user?.role?.is_master_admin;
     const canEditNoAhli = auth?.user?.allowed_modules?.includes('kemaskini-no-ahli');
@@ -778,7 +778,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     }, [selectedProgram?.attendees, selectedProgram?.sub_programs]);
     const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
-    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', has_laporan: false, gambar: null, gambar_url: null });
+    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', committee_group_id: '', has_laporan: false, gambar: null, gambar_url: null });
     const sf = useForm({ shared_user_ids: [] });
     const [previewUrl, setPreviewUrl] = useState(null);
     const showProgramSavedAlert = (isEditingMode) => Swal.fire({
@@ -801,7 +801,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const submitProgram = (e) => {
         e.preventDefault();
         const editingMode = isEditing;
-        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
+        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_id', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
         if (editingMode) {
             f.transform((d) => ({ ...d, _method: 'put' }));
             f.post(route('program.update', editingId), {
@@ -831,8 +831,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     const selectProg = (id) => { setTab('senarai-program'); setSubTab(null); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
     const back = () => { setSelAttendee(null); setSubTab(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
-    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', has_laporan: p.has_laporan ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
-    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
+    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', committee_group_id: p.committee_group_id ?? '', has_laporan: p.has_laporan ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
+    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_id', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
     const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
     const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } };
@@ -875,6 +875,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                     <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="mt-1 w-full text-xs" /><InputError className="mt-1" message={f.errors.masa} /></div>
                                 </div>
                                 <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1 text-xs"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.group_id} /></div>
+                                <div><InputLabel htmlFor="committee_group_id" value="Kumpulan AJK" /><select id="committee_group_id" value={f.data.committee_group_id} onChange={(e) => f.setData('committee_group_id', e.target.value)} className="input-field mt-1 text-xs"><option value="">Tiada</option>{committeeGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.committee_group_id} /></div>
                                 <div>
                                     <InputLabel htmlFor="gambar" value="Gambar" />
                                     <div className="mt-1 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
