@@ -683,6 +683,15 @@ function SearchVoterPanel({ selectedProgram }) {
             ? selectedProgram.committee_group_filters[0]
             : selectedProgram.committee_group_filters);
 
+    const ajkFilterLabel = useMemo(() => {
+        if (!hasAjkFilter || !committeeGroupOptions) return '';
+        const filterVal = Array.isArray(selectedProgram.committee_group_filters)
+            ? selectedProgram.committee_group_filters[0]
+            : selectedProgram.committee_group_filters;
+        const match = committeeGroupOptions.find(opt => String(opt.value) === String(filterVal));
+        return match ? match.label : '';
+    }, [selectedProgram?.committee_group_filters, committeeGroupOptions, hasAjkFilter]);
+
     const attendeeLookup = useMemo(() => {
         const byVoterId = {};
         const byIc = {};
@@ -790,7 +799,7 @@ function SearchVoterPanel({ selectedProgram }) {
                         )}
                     </div>
                     {err && <p className="mt-1 text-xs font-bold text-rose-500">{err}</p>}
-                    {hasAjkFilter && <button type="button" onClick={() => setAjkPickerOpen(true)} className="mt-2 flex w-full items-center gap-2 rounded-lg border border-dashed border-green-300 bg-green-50/50 px-3 py-2 text-xs font-bold text-green-700 transition hover:bg-green-100"><UserIcon className="h-4 w-4" />Pilih Ahli AJK</button>}
+                    {hasAjkFilter && <button type="button" onClick={() => setAjkPickerOpen(true)} className="mt-2 flex w-full items-center gap-2 rounded-lg border border-dashed border-green-300 bg-green-50/50 px-3 py-2 text-xs font-bold text-green-700 transition hover:bg-green-100"><UserIcon className="h-4 w-4" />Pilih AJK {ajkFilterLabel}</button>}
                 </div>
             </section>
             <VoterDetailCard voter={selected} onAdd={add} adding={adding}
