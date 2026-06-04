@@ -15,8 +15,7 @@ class Program extends Model
         'tarikh',
         'masa',
         'group_id',
-        'committee_group_id',
-        'committee_group_level',
+        'committee_group_filters',
         'gambar',
         'has_laporan',
         'user_id',
@@ -26,6 +25,7 @@ class Program extends Model
         'tarikh' => 'date:d-m-Y',
         'masa' => 'datetime:h:i A',
         'has_laporan' => 'boolean',
+        'committee_group_filters' => 'array',
     ];
 
     public function creator(): BelongsTo
@@ -36,11 +36,6 @@ class Program extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(ProgramGroup::class, 'group_id');
-    }
-
-    public function committeeGroup(): BelongsTo
-    {
-        return $this->belongsTo(CommitteeGroup::class, 'committee_group_id');
     }
 
     public function attendees(): HasMany

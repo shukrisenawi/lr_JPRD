@@ -157,9 +157,7 @@ class ProgramController extends Controller
                     'tarikh' => $program->tarikh?->format('d-m-Y'),
                     'masa' => $program->masa?->format('h:i A'),
                     'group_id' => $program->group_id,
-                    'committee_group_id' => $program->committee_group_id,
-                    'committee_group_level' => $program->committee_group_level,
-                    'committee_group_name' => $program->committeeGroup?->name,
+                    'committee_group_filters' => $program->committee_group_filters,
                     'group_name' => $program->group?->name,
                     'has_laporan' => $program->has_laporan,
                     'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
@@ -182,9 +180,7 @@ class ProgramController extends Controller
                     'tarikh' => $selectedProgram->tarikh?->format('d-m-Y'),
                     'masa' => $selectedProgram->masa?->format('h:i A'),
                     'group_id' => $selectedProgram->group_id,
-                    'committee_group_id' => $selectedProgram->committee_group_id,
-                    'committee_group_level' => $selectedProgram->committee_group_level,
-                    'committee_group_name' => $selectedProgram->committeeGroup?->name,
+                    'committee_group_filters' => $selectedProgram->committee_group_filters,
                     'group_name' => $selectedProgram->group?->name,
                     'has_laporan' => $selectedProgram->has_laporan,
                     'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
@@ -342,32 +338,38 @@ class ProgramController extends Controller
             $request->user(),
         );
 
-        if ($program->committee_group_id) {
-            $positionIds = CommitteeGroup::find($program->committee_group_id)
-                ?->positions()
-                ?->pluck('committee_positions.id') ?? collect();
+        if ($filters = $program->committee_group_filters) {
+            $allVoterPemilihIds = [];
 
-            if ($positionIds->isNotEmpty()) {
-                $query = CommitteeMembership::whereIn('committee_position_id', $positionIds);
+            foreach ($filters as $filter) {
+                [$groupId, $level] = explode(':', $filter) + [null, null];
+                if (! $groupId) continue;
 
-                if ($program->committee_group_level) {
-                    $query->where('level', $program->committee_group_level);
+                $positionIds = CommitteeGroup::find((int) $groupId)
+                    ?->positions()
+                    ?->pluck('committee_positions.id') ?? collect();
+
+                if ($positionIds->isNotEmpty()) {
+                    $query = CommitteeMembership::whereIn('committee_position_id', $positionIds);
+
+                    if ($level) {
+                        $query->where('level', $level);
+                    }
+
+                    $allVoterPemilihIds = array_merge(
+                        $allVoterPemilihIds,
+                        $query->pluck('pemilih_record_id')->unique()->values()->all()
+                    );
                 }
-
-                $voterPemilihIds = $query
-                    ->pluck('pemilih_record_id')
-                    ->unique()
-                    ->values()
-                    ->all();
-
-                $suggestions = array_values(
-                    array_filter($suggestions, fn ($voter) =>
-                        in_array($voter['record_id'] ?? null, $voterPemilihIds)
-                    )
-                );
-            } else {
-                $suggestions = [];
             }
+
+            $allVoterPemilihIds = array_unique($allVoterPemilihIds);
+
+            $suggestions = array_values(
+                array_filter($suggestions, fn ($voter) =>
+                    in_array($voter['record_id'] ?? null, $allVoterPemilihIds)
+                )
+            );
         }
 
         return response()->json([
@@ -812,8 +814,8 @@ class ProgramController extends Controller
                 'integer',
                 Rule::exists('program_groups', 'id'),
             ],
-            'committee_group_id' => ['nullable', 'integer', Rule::exists('committee_groups', 'id')],
-            'committee_group_level' => ['nullable', 'string', 'max:50'],
+            'committee_group_filters' => ['nullable', 'array'],
+            'committee_group_filters.*' => ['string', 'max:50'],
             'gambar' => ['nullable', 'image', 'max:2048'],
             'has_laporan' => ['nullable', 'boolean'],
         ]);
