@@ -32,13 +32,24 @@ class ProgramController extends Controller
             ->orderBy('name')
             ->get();
         $committeeGroups = CommitteeGroup::query()
+            ->with('positions')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
+        $activeMemberships = CommitteeMembership::query()
+            ->select('committee_position_id', 'level')
+            ->distinct()
+            ->get()
+            ->groupBy('committee_position_id')
+            ->map(fn ($items) => $items->pluck('level')->unique()->values()->all());
         $committeeGroupOptions = $committeeGroups
-            ->flatMap(fn (CommitteeGroup $group) =>
+            ->flatMap(fn (CommitteeGroup $group) => 
                 $group->levels
-                    ? collect($group->levels)->map(fn (string $level) => [
+                    ? collect($group->levels)->filter(fn (string $level) =>
+                        $group->positions->contains(fn ($pos) =>
+                            isset($activeMemberships[$pos->id]) && in_array($level, $activeMemberships[$pos->id])
+                        )
+                    )->map(fn (string $level) => [
                         'value' => $group->id . ':' . $level,
                         'label' => $group->name . ' ' . ucfirst($level),
                     ])
