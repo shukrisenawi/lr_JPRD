@@ -146,7 +146,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
                     <p className="text-xs text-slate-500">{program.attendees_count} hadir</p>
                 </div>
             </div>
-            <div className="mt-2 flex flex-wrap justify-end gap-1.5">
+            <div style={{ marginTop: '10px' }} className="flex flex-wrap justify-end gap-1.5">
                 {program.has_laporan && <button onClick={() => onLaporan(program)} className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">Laporan</button>}
                 {program.can_share && <button onClick={() => onShare(program)} className="rounded-md border border-orange-300 bg-white px-2.5 py-1 text-xs font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
                 {program.can_edit && <>
