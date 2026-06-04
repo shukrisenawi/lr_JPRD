@@ -266,6 +266,8 @@ class ProgramController extends Controller
             }
 
             $payload['gambar'] = $request->file('gambar')->store('programs', 'public');
+        } else {
+            unset($payload['gambar']);
         }
 
         $program->update($payload);
