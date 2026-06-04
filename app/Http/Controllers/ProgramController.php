@@ -275,6 +275,9 @@ class ProgramController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateProgram($request);
+        $validated['committee_group_filters'] = $validated['committee_group_filters']
+            ? [$validated['committee_group_filters']]
+            : null;
         $gambarPath = $request->hasFile('gambar')
             ? $request->file('gambar')->store('programs', 'public')
             : null;
@@ -295,6 +298,9 @@ class ProgramController extends Controller
         $this->ensureOwner($request->user()->id, $program);
 
         $validated = $this->validateProgram($request);
+        $validated['committee_group_filters'] = $validated['committee_group_filters']
+            ? [$validated['committee_group_filters']]
+            : null;
         $payload = [...$validated];
 
         if ($request->hasFile('gambar')) {
@@ -357,13 +363,10 @@ class ProgramController extends Controller
             $request->user(),
         );
 
-        if ($filters = $program->committee_group_filters) {
-            $allVoterPemilihIds = [];
+        if ($filter = $program->committee_group_filters) {
+            [$groupId, $level] = explode(':', $filter) + [null, null];
 
-            foreach ($filters as $filter) {
-                [$groupId, $level] = explode(':', $filter) + [null, null];
-                if (! $groupId) continue;
-
+            if ($groupId) {
                 $positionIds = CommitteeGroup::find((int) $groupId)
                     ?->positions()
                     ?->pluck('committee_positions.id') ?? collect();
@@ -375,20 +378,15 @@ class ProgramController extends Controller
                         $query->where('level', $level);
                     }
 
-                    $allVoterPemilihIds = array_merge(
-                        $allVoterPemilihIds,
-                        $query->pluck('pemilih_record_id')->unique()->values()->all()
+                    $voterIds = $query->pluck('pemilih_record_id')->unique()->values()->all();
+
+                    $suggestions = array_values(
+                        array_filter($suggestions, fn ($voter) =>
+                            in_array($voter['record_id'] ?? null, $voterIds)
+                        )
                     );
                 }
             }
-
-            $allVoterPemilihIds = array_unique($allVoterPemilihIds);
-
-            $suggestions = array_values(
-                array_filter($suggestions, fn ($voter) =>
-                    in_array($voter['record_id'] ?? null, $allVoterPemilihIds)
-                )
-            );
         }
 
         if ($groupIds = $program->group_pemilih_filters) {
@@ -863,8 +861,7 @@ class ProgramController extends Controller
                 'integer',
                 Rule::exists('program_groups', 'id'),
             ],
-            'committee_group_filters' => ['nullable', 'array'],
-            'committee_group_filters.*' => ['string', 'max:50'],
+            'committee_group_filters' => ['nullable', 'string', 'max:50'],
             'group_pemilih_filters' => ['nullable', 'array'],
             'group_pemilih_filters.*' => ['integer', 'exists:group_pemilihs,id'],
             'gambar' => ['nullable', 'image', 'max:2048'],
