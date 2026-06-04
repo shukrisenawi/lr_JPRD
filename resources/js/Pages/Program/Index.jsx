@@ -809,8 +809,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 forceFormData: true,
                 onSuccess: () => {
                     reset();
-                    setTab('senarai-program');
-                    showProgramSavedAlert(true);
+                    Swal.fire({
+                        icon: 'success', title: 'Berjaya',
+                        text: 'Program berjaya dikemaskini.',
+                        confirmButtonText: 'OK', confirmButtonColor: '#059669',
+                        background: '#ffffff', color: '#0f172a', iconColor: '#059669',
+                    }).then(() => router.get(route('program.index')));
                 },
             });
             return;
