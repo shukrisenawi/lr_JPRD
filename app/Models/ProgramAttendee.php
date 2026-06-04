@@ -26,11 +26,20 @@ class ProgramAttendee extends Model
         'cula_display_label',
         'address',
         'attended_at',
+        'is_mesyuarat',
+        'marked',
     ];
 
     protected $casts = [
         'attended_at' => 'datetime:d-m-Y h:i A',
+        'is_mesyuarat' => 'boolean',
+        'marked' => 'boolean',
     ];
+
+    public function voter(): BelongsTo
+    {
+        return $this->belongsTo(PemilihRecord::class, 'voter_id', 'id');
+    }
 
     public function program(): BelongsTo
     {
