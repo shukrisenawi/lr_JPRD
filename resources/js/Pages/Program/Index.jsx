@@ -599,6 +599,7 @@ function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [initialIds, setInitialIds] = useState([]);
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
@@ -610,8 +611,10 @@ function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }
         .then(r => r.json())
         .then(data => {
             const ms = data.members ?? [];
+            const prechecked = ms.filter(m => existingVoterIds?.has(String(m.pemilih_record_id))).map(m => m.pemilih_record_id);
             setMembers(ms);
-            setSelectedIds(ms.filter(m => existingVoterIds?.has(String(m.pemilih_record_id))).map(m => m.pemilih_record_id));
+            setSelectedIds(prechecked);
+            setInitialIds(prechecked);
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -622,11 +625,13 @@ function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }
     };
 
     const handleAdd = () => {
-        const selectedMembers = members.filter(m => selectedIds.includes(m.pemilih_record_id));
-        if (selectedMembers.length === 0) return;
+        const addIds = selectedIds.filter(id => !initialIds.includes(id));
+        const removeIds = initialIds.filter(id => !selectedIds.includes(id));
+        if (addIds.length === 0 && removeIds.length === 0) return;
         setSaving(true);
         router.post(route('program.attendees.store-bulk', program.id), {
-            members: selectedMembers,
+            members: addIds.length > 0 ? members.filter(m => addIds.includes(m.pemilih_record_id)) : [],
+            remove_ids: removeIds,
         }, {
             preserveScroll: true,
             onSuccess: () => { onClose(); router.reload({ preserveState: true, preserveScroll: true }); },
@@ -656,7 +661,7 @@ function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }
                     <span className="text-xs font-bold text-slate-600">{selectedIds.length} dipilih</span>
                     <div className="flex gap-2">
                         <button onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-300">Batal</button>
-                        <button onClick={handleAdd} disabled={saving || selectedIds.length === 0} className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">{saving ? 'Menyimpan...' : 'Tambah'}</button>
+                        <button onClick={handleAdd} disabled={saving || (selectedIds.length === initialIds.length && selectedIds.every(id => initialIds.includes(id)))} className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">{saving ? 'Menyimpan...' : 'Kemaskini'}</button>
                     </div>
                 </div>
             </div>

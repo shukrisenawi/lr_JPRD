@@ -407,7 +407,7 @@ class ProgramController extends Controller
         $this->ensureAccessible($request->user()->id, $program);
 
         $validated = $request->validate([
-            'members' => ['required', 'array', 'min:1'],
+            'members' => ['nullable', 'array'],
             'members.*.pemilih_record_id' => ['required', 'integer'],
             'members.*.name' => ['required', 'string', 'max:255'],
             'members.*.no_kp' => ['nullable', 'string', 'max:50'],
@@ -420,12 +420,14 @@ class ProgramController extends Controller
             'members.*.cula_code' => ['nullable', 'string', 'max:50'],
             'members.*.cula_display_label' => ['nullable', 'string', 'max:255'],
             'members.*.address' => ['nullable', 'string'],
+            'remove_ids' => ['nullable', 'array'],
+            'remove_ids.*' => ['required', 'integer'],
         ]);
 
         $user = $request->user();
         $count = 0;
 
-        foreach ($validated['members'] as $member) {
+        foreach (($validated['members'] ?? []) as $member) {
             $voterId = $member['pemilih_record_id'];
             $existing = $program->attendees()->where('voter_id', (string) $voterId)->first();
 
@@ -453,9 +455,20 @@ class ProgramController extends Controller
             $count++;
         }
 
+        $removed = 0;
+        foreach (($validated['remove_ids'] ?? []) as $voterId) {
+            $deleted = $program->attendees()->where('voter_id', (string) $voterId)->delete();
+            if ($deleted) $removed++;
+        }
+
+        $msg = $count . ' orang pemilih berjaya direkodkan sebagai hadir program.';
+        if ($removed > 0) {
+            $msg .= ' ' . $removed . ' orang dikeluarkan.';
+        }
+
         return redirect()
             ->back()
-            ->with('success', $count . ' orang pemilih berjaya direkodkan sebagai hadir program.');
+            ->with('success', $msg);
     }
 
     public function search(Request $request, Program $program, PemilihReportService $reportService)
