@@ -355,6 +355,9 @@ class ProgramController extends Controller
         $this->ensureAccessible($request->user()->id, $program);
 
         $filter = $program->committee_group_filters;
+        if (is_array($filter)) {
+            $filter = $filter[0] ?? null;
+        }
         if (! $filter) {
             return response()->json(['members' => []]);
         }
@@ -468,7 +471,9 @@ class ProgramController extends Controller
             $request->user(),
         );
 
-        if ($filter = $program->committee_group_filters) {
+        $rawFilter = $program->committee_group_filters;
+        $filter = is_array($rawFilter) ? ($rawFilter[0] ?? null) : $rawFilter;
+        if ($filter) {
             [$groupId, $level] = explode(':', $filter) + [null, null];
 
             if ($groupId) {
