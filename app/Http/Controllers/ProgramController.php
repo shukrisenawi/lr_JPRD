@@ -273,7 +273,7 @@ class ProgramController extends Controller
         $program->update($payload);
 
         return redirect()
-            ->route('program.index', ['program' => $program->id])
+            ->route('program.index')
             ->with('success', 'Program berjaya dikemas kini.');
     }
 
