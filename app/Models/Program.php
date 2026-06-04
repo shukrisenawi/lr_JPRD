@@ -16,12 +16,14 @@ class Program extends Model
         'masa',
         'group_id',
         'gambar',
+        'has_laporan',
         'user_id',
     ];
 
     protected $casts = [
         'tarikh' => 'date:d-m-Y',
         'masa' => 'datetime:h:i A',
+        'has_laporan' => 'boolean',
     ];
 
     public function creator(): BelongsTo

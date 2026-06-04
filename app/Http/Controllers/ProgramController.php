@@ -143,6 +143,7 @@ class ProgramController extends Controller
                     'masa' => $program->masa?->format('h:i A'),
                     'group_id' => $program->group_id,
                     'group_name' => $program->group?->name,
+                    'has_laporan' => $program->has_laporan,
                     'gambar_url' => $program->gambar ? route('program.gambar', $program) : null,
                     'attendees_count' => $program->attendees->count(),
                     'can_edit' => (int) $program->user_id === (int) $user->id,
@@ -164,6 +165,7 @@ class ProgramController extends Controller
                     'masa' => $selectedProgram->masa?->format('h:i A'),
                     'group_id' => $selectedProgram->group_id,
                     'group_name' => $selectedProgram->group?->name,
+                    'has_laporan' => $selectedProgram->has_laporan,
                     'gambar_url' => $selectedProgram->gambar ? route('program.gambar', $selectedProgram) : null,
                     'can_edit' => (int) $selectedProgram->user_id === (int) $user->id,
                     'can_share' => (int) $selectedProgram->user_id === (int) $user->id,
@@ -755,6 +757,7 @@ class ProgramController extends Controller
                 Rule::exists('program_groups', 'id'),
             ],
             'gambar' => ['nullable', 'image', 'max:2048'],
+            'has_laporan' => ['nullable', 'boolean'],
         ]);
     }
 

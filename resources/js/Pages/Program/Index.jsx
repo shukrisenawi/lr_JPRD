@@ -147,7 +147,7 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
                 </div>
             </div>
             <div className="mt-2 flex flex-wrap justify-end gap-1.5">
-                {program.attendees_count > 0 && <button onClick={() => onLaporan(program)} className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">Laporan</button>}
+                {program.has_laporan && <button onClick={() => onLaporan(program)} className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">Laporan</button>}
                 {program.can_share && <button onClick={() => onShare(program)} className="rounded-md border border-orange-300 bg-white px-2.5 py-1 text-xs font-bold text-orange-500 transition hover:bg-orange-50">Share</button>}
                 {program.can_edit && <>
                     <button onClick={() => onEdit(program)} className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-xs font-bold text-green-700 transition hover:bg-green-50">Edit</button>
@@ -778,7 +778,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     }, [selectedProgram?.attendees, selectedProgram?.sub_programs]);
     const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
-    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', gambar: null, gambar_url: null });
+    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', has_laporan: false, gambar: null, gambar_url: null });
     const sf = useForm({ shared_user_ids: [] });
     const [previewUrl, setPreviewUrl] = useState(null);
     const showProgramSavedAlert = (isEditingMode) => Swal.fire({
@@ -801,7 +801,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const submitProgram = (e) => {
         e.preventDefault();
         const editingMode = isEditing;
-        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
+        const reset = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); if (imgRef.current) imgRef.current.value = ''; };
         if (editingMode) {
             f.transform((d) => ({ ...d, _method: 'put' }));
             f.post(route('program.update', editingId), {
@@ -826,8 +826,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     const selectProg = (id) => { setTab('senarai-program'); setSubTab(null); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
     const back = () => { setSelAttendee(null); setSubTab(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
-    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
-    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
+    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', has_laporan: p.has_laporan ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
+    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'has_laporan', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
     const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
     const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } };
@@ -883,13 +883,21 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                 <InputError className="mt-1" message={f.errors.gambar} />
                                             </div>
                                         </div>
-                                    </div>
                                 </div>
                             </div>
-                            <div className="mt-3 flex justify-center">
-                                {isEditing && <button onClick={cancelEdit} className="btn-ghost text-xs mr-2">Batal</button>}
-                                <PrimaryButton disabled={f.processing} className="px-4 py-1.5 text-xs">{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
+                        </div>
+                        <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm cursor-pointer transition hover:border-green-300 hover:bg-green-50/50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50">
+                            <input type="checkbox" checked={f.data.has_laporan} onChange={(e) => f.setData('has_laporan', e.target.checked)}
+                                className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                            <div>
+                                <p className="text-xs font-bold text-slate-800">View Laporan</p>
+                                <p className="text-xs text-slate-500">Papar butang laporan dalam senarai program</p>
                             </div>
+                        </label>
+                    <div className="mt-3 flex justify-center">
+                        {isEditing && <button onClick={cancelEdit} className="btn-ghost text-xs mr-2">Batal</button>}
+                        <PrimaryButton disabled={f.processing} className="px-4 py-1.5 text-xs">{f.processing ? '...' : isEditing ? 'Simpan' : 'Simpan Program'}</PrimaryButton>
+                    </div>
                         </form>
                     </section>
                 )}
@@ -921,7 +929,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                         <svg viewBox="0 0 24 24" className="h-3 w-3 text-green-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                         <span className="text-xs font-bold text-green-700">{filteredAttendees.length}</span>
                                     </span>
-                                    {selectedProgram.attendees.length > 0 && (
+                                    {selectedProgram.has_laporan && (
                                         <button onClick={() => router.get(route('program.laporan', selectedProgram.id))}
                                             className="rounded-md border border-violet-300 bg-white px-2.5 py-1 text-xs font-bold text-violet-600 transition hover:bg-violet-50">
                                             Laporan
