@@ -273,6 +273,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
             const data = await res.json();
             if (data.success) {
                 setAvatarUrl(data.avatar_url + '&t=' + Date.now());
+                attendee.avatar_url = data.avatar_url;
             }
         } catch {
             alert('Gagal muat naik gambar.');

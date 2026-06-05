@@ -141,14 +141,17 @@ class ProgramController extends Controller
                 ->whereIn('no_kp', $icNumbers)
                 ->orWhereIn('old_ic', $oldIcs)
                 ->get(['id', 'no_kp', 'old_ic', 'no_ahli', 'avatar', 'updated_at']);
+            $pemilihRecordsByIc = [];
             foreach ($pemilihRecords as $record) {
                 if ($record->no_kp) {
                     $icToPemilihId[$record->no_kp] = $record->id;
                     $icToNoAhli[$record->no_kp] = $record->no_ahli;
+                    $pemilihRecordsByIc[$record->no_kp] = $record;
                 }
                 if ($record->old_ic) {
                     $icToPemilihId[$record->old_ic] = $record->id;
                     $icToNoAhli[$record->old_ic] = $record->no_ahli;
+                    $pemilihRecordsByIc[$record->old_ic] = $record;
                 }
             }
         }
@@ -238,7 +241,7 @@ class ProgramController extends Controller
                             'cula_code' => $attendee->cula_code,
                             'cula_display_label' => $attendee->cula_display_label,
                             'address' => $attendee->address,
-                            'avatar_url' => ($attendee->no_kp && isset($pemilihRecords[$attendee->no_kp])) ? $pemilihRecords[$attendee->no_kp]->avatarUrl() : (($attendee->old_ic && isset($pemilihRecords[$attendee->old_ic])) ? $pemilihRecords[$attendee->old_ic]->avatarUrl() : null),
+                            'avatar_url' => ($attendee->no_kp && isset($pemilihRecordsByIc[$attendee->no_kp])) ? $pemilihRecordsByIc[$attendee->no_kp]->avatarUrl() : (($attendee->old_ic && isset($pemilihRecordsByIc[$attendee->old_ic])) ? $pemilihRecordsByIc[$attendee->old_ic]->avatarUrl() : null),
                             'group_badges' => $attendeeGroupCounts->get($attendee->voter_id, collect())->all(),
                             'committee_badges' => $committeeBadges->get($attendee->id, []),
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),

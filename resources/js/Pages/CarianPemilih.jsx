@@ -118,6 +118,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
             const data = await res.json();
             if (data.success) {
                 setAvatarUrl(data.avatar_url + '&t=' + Date.now());
+                voter.avatar_url = data.avatar_url;
             }
         } catch {
             alert('Gagal muat naik gambar.');
