@@ -352,12 +352,13 @@ class CommitteeController extends Controller
 
     public function destroyPosition(CommitteePosition $position): RedirectResponse
     {
-        if ($position->groups()->exists() || $position->memberships()->exists()) {
+        if ($position->memberships()->exists()) {
             return redirect()
                 ->route('jawatankuasa.index')
                 ->with('error', 'Jawatan yang sedang digunakan tidak boleh dipadam.');
         }
 
+        $position->groups()->detach();
         $position->delete();
 
         return redirect()
