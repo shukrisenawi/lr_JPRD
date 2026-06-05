@@ -1171,13 +1171,13 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                                <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-rose-600 hover:text-rose-800" title="Buang"><Icon name="trash" className="h-3.5 w-3.5" /></button>
                                                                                           )}
                                                                                       </div>
-                                                                                      {showMore && (
-                                                                                          <div className="mt-1 flex flex-wrap gap-1">
-                                                                                               {voterPositions.map(vp => (
-                                                                                                    <span key={vp.key} className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
-                                                                                               ))}
-                                                                                          </div>
-                                                                                      )}
+                                                      {showMore && (
+                                                          <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-3">
+                                                               {voterPositions.map(vp => (
+                                                                    <span key={vp.key} className="rounded bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium text-gray-700">{vp.groupName} - {vp.positionName} ({vp.scopeName})</span>
+                                                               ))}
+                                                          </div>
+                                                      )}
                                                                                   </div>
                                                                               ) : canRemove ? (
                                                                                   <div className="mt-1 flex items-center justify-end">
