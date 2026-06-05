@@ -440,7 +440,6 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
             <div ref={setNodeRef} style={style} className={'rounded-lg border-2 border-green-400 bg-green-50 p-3 transition ' + (isDragging ? 'z-10 opacity-50 shadow-lg' : '')}>
                 <div className="flex items-center gap-2">
                     <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
                     <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">{position.name}</p>
                     <span className="shrink-0 rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
                 </div>
@@ -475,7 +474,6 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
     return (
         <div ref={setNodeRef} style={style} className={'flex items-center gap-2.5 rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md ' + (isDragging ? 'z-10 opacity-50 shadow-lg' : '')}>
             <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="user" className="h-4 w-4" /></span>
             <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">{position.name}</p>
             <span className="shrink-0 rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
             <div className="flex shrink-0 items-center gap-1">
