@@ -1142,12 +1142,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             return;
         }
         f.post(route('program.store'), {
-            preserveScroll: true,
             forceFormData: f.data.gambar instanceof File,
-            onSuccess: () => {
-                reset();
-                showProgramSavedAlert(false);
-            },
+            onSuccess: () => reset(),
         });
     };
 
