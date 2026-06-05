@@ -415,15 +415,15 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                     </div>
                     <div>
                         <InputLabel value="Kongsi dengan (default)" />
-                        <div className="mt-1 flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md border border-slate-200 bg-white p-2">
+                        <div className="mt-1 flex flex-wrap gap-2">
                             {shareableUsers.length === 0 ? <p className="text-xs text-slate-400">Tiada pengguna</p> : shareableUsers.map((u) => {
                                 const checked = (f.data.default_shared_user_ids ?? []).includes(u.id);
                                 return (
-                                    <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-800">
+                                    <label key={u.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${checked ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/50'}`}>
                                         <input type="checkbox" checked={checked}
                                             onChange={() => { const current = f.data.default_shared_user_ids ?? []; f.setData('default_shared_user_ids', checked ? current.filter((v) => v !== u.id) : [...current, u.id]); }}
                                             className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                        <span className="truncate">{u.name}</span>
+                                        <span>{u.name}</span>
                                     </label>
                                 );
                             })}
