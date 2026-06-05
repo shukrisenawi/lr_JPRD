@@ -903,7 +903,10 @@ function MesyuaratView({ program, onClose }) {
                             {data?.members?.length > 0 ? data.members.map(m => (
                                 <div key={m.pemilih_record_id} className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs">
                                     <div className="min-w-0 flex-1">
-                                        <p className="truncate font-bold text-slate-700">{m.name}</p>
+                                        <p className="truncate font-bold text-slate-700">
+                                            {m.attended && <span className="mr-1 text-green-600">✓</span>}
+                                            {m.name}
+                                        </p>
                                         <p className="text-slate-500">{m.no_kp || '-'}{m.position_name ? ` | ${m.position_name}` : ''}</p>
                                     </div>
                                     <span className="shrink-0 rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">{m.previous_attendance} kehadiran</span>

@@ -1056,12 +1056,15 @@ class ProgramController extends Controller
                         ->selectRaw('voter_id, count(*) as total')
                         ->pluck('total', 'voter_id');
 
+                    $currentVoterIds = $program->attendees()->pluck('voter_id')->toArray();
+
                     $members = $memberships->map(fn (CommitteeMembership $m) => [
                         'pemilih_record_id' => $m->pemilih_record_id,
                         'name' => $m->voter?->name,
                         'no_kp' => $m->voter?->no_kp,
                         'position_name' => $m->position?->name,
                         'previous_attendance' => $attendanceCounts[$m->pemilih_record_id] ?? 0,
+                        'attended' => in_array($m->pemilih_record_id, $currentVoterIds),
                     ]);
                 }
             }
