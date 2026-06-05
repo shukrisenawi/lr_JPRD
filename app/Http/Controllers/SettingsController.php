@@ -189,7 +189,7 @@ class SettingsController extends Controller
         }
 
         $path = $this->which('mysqldump');
-        if ($path !== '' && file_exists($path)) {
+        if ($path !== '' && @file_exists($path)) {
             return $path;
         }
 
@@ -203,7 +203,7 @@ class SettingsController extends Controller
         $candidates[] = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysqldump.exe';
 
         foreach ($candidates as $candidate) {
-            if (file_exists($candidate)) {
+            if (@file_exists($candidate)) {
                 return $candidate;
             }
         }
@@ -218,7 +218,7 @@ class SettingsController extends Controller
         }
 
         $path = $this->which('mysql');
-        if ($path !== '' && file_exists($path)) {
+        if ($path !== '' && @file_exists($path)) {
             return $path;
         }
 
@@ -232,7 +232,7 @@ class SettingsController extends Controller
         $candidates[] = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysql.exe';
 
         foreach ($candidates as $candidate) {
-            if (file_exists($candidate)) {
+            if (@file_exists($candidate)) {
                 return $candidate;
             }
         }
