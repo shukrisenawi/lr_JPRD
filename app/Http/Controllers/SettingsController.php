@@ -11,7 +11,6 @@ use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SettingsController extends Controller
 {
@@ -89,29 +88,36 @@ class SettingsController extends Controller
             ->with('success', 'Fail pemilih berjaya dimuat naik sebagai data terkini sistem.');
     }
 
-    public function exportDatabase(Request $request): StreamedResponse
+    public function exportDatabase(Request $request): HttpResponse|RedirectResponse
     {
         abort_unless($request->user()->isMasterAdmin(), 403);
 
+        $mysqldump = $this->findMysqldumpPath();
         $db = config('database.connections.mysql');
         $filename = 'DB_PAS_' . now('Asia/Kuala_Lumpur')->format('d-m-Y_H-iA') . '.sql';
 
-        $headers = [
-            'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
         $command = sprintf(
-            'mysqldump --host=%s --user=%s --password=%s %s',
+            '%s --host=%s --user=%s --password=%s --single-transaction --routines --triggers %s 2>&1',
+            escapeshellarg($mysqldump),
             escapeshellarg($db['host'] ?? 'localhost'),
             escapeshellarg($db['username'] ?? ''),
             escapeshellarg($db['password'] ?? ''),
             escapeshellarg($db['database'] ?? '')
         );
 
-        return new StreamedResponse(function () use ($command) {
-            passthru($command);
-        }, 200, $headers);
+        exec($command, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            $errorMsg = !empty($output) ? implode("\n", $output) : 'mysqldump gagal dijalankan. Pastikan path ke mysqldump betul.';
+            return redirect()->route('settings.edit')->with('error', 'Backup gagal: ' . $errorMsg);
+        }
+
+        $headers = [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return new HttpResponse(implode("\n", $output), 200, $headers);
     }
 
     public function importDatabase(Request $request): RedirectResponse
@@ -126,10 +132,12 @@ class SettingsController extends Controller
         $tempPath = $file->storeAs('backup', 'restore-temp.sql');
         $fullPath = storage_path('app/' . $tempPath);
 
+        $mysql = $this->findMysqlPath();
         $db = config('database.connections.mysql');
 
         $command = sprintf(
-            'mysql --host=%s --user=%s --password=%s %s < %s 2>&1',
+            '%s --host=%s --user=%s --password=%s %s < %s 2>&1',
+            escapeshellarg($mysql),
             escapeshellarg($db['host'] ?? 'localhost'),
             escapeshellarg($db['username'] ?? ''),
             escapeshellarg($db['password'] ?? ''),
@@ -149,6 +157,46 @@ class SettingsController extends Controller
         return redirect()
             ->route('settings.edit')
             ->with('success', 'Database berjaya dipulihkan.');
+    }
+
+    private function findMysqldumpPath(): string
+    {
+        if ($path = env('DB_DUMP_PATH')) {
+            return $path;
+        }
+
+        $path = trim((string) shell_exec('where mysqldump 2>nul'));
+        if ($path !== '' && file_exists($path)) {
+            return $path;
+        }
+
+        $xamppRoot = dirname(PHP_BINARY, 2);
+        $candidate = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysqldump.exe';
+        if (file_exists($candidate)) {
+            return $candidate;
+        }
+
+        return 'mysqldump';
+    }
+
+    private function findMysqlPath(): string
+    {
+        if ($path = env('DB_DUMP_PATH')) {
+            return $path;
+        }
+
+        $path = trim((string) shell_exec('where mysql 2>nul'));
+        if ($path !== '' && file_exists($path)) {
+            return $path;
+        }
+
+        $xamppRoot = dirname(PHP_BINARY, 2);
+        $candidate = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysql.exe';
+        if (file_exists($candidate)) {
+            return $candidate;
+        }
+
+        return 'mysql';
     }
 
     private function pemilihReportMetadata(): array
