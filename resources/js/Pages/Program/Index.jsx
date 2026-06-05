@@ -134,11 +134,6 @@ function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewI
     return (
         <div className={`rounded-md border bg-white p-2.5 shadow-sm transition hover:border-green-200 ${isActive ? 'border-green-200' : 'border-slate-200'}`}>
             <div role="button" tabIndex={0} onClick={() => onSelect(program.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(program.id); } }} className="w-full text-left outline-none">
-                {program.gambar_url && (
-                    <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-2 block w-full overflow-hidden rounded-md">
-                        <img src={program.gambar_url} alt={program.tajuk} className="h-16 w-full object-cover transition hover:scale-[1.02]" />
-                    </button>
-                )}
                 <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">▣ {s}</p>
                 <h3 className="mt-1 text-xs font-bold leading-tight text-slate-800">{program.tajuk}</h3>
                 <p className="mt-0.5 text-xs text-slate-600">{program.tempat}</p>
@@ -1334,6 +1329,9 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 </div>
                             </div>
                         </div>
+                        {selectedProgram.gambar_url && (
+                            <img src={selectedProgram.gambar_url} alt={selectedProgram.tajuk} className="mt-1 max-h-48 w-full rounded-lg object-cover shadow-sm" />
+                        )}
                         <SearchVoterPanel selectedProgram={selectedProgram} committeeGroupOptions={committeeGroupOptions} />
                         <section className="card p-3">
                             <div className="flex items-center justify-between gap-3">
