@@ -609,7 +609,7 @@ function PositionManager({ positions }) {
                                     Belum ada jawatan.
                                 </div>
                             ) : (
-                                <div className="grid gap-2" style={{ gridAutoFlow: 'column', gridTemplateRows: 'repeat(' + Math.ceil(sortedPositions.length / 3) + ', auto)' }}>
+                                <div className="grid gap-2" style={{ gridAutoFlow: 'column', gridTemplateRows: 'repeat(' + Math.ceil(sortedPositions.length / 2) + ', auto)' }}>
                                     {sortedPositions.map((position) => (
                                         <SortablePositionRow
                                             key={position.id}
