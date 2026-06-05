@@ -445,7 +445,7 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                         </div>
                     </div>
                 </div>
-                <div className="mt-3 flex justify-end">
+                <div className="mt-3 flex justify-center">
                     {editingId && <button onClick={() => { setEditingId(null); f.reset(); f.clearErrors(); }} className="btn-ghost text-xs mr-2">Batal</button>}
                     <PrimaryButton disabled={f.processing} className="px-4 py-1.5 text-xs">{f.processing ? '...' : editingId ? 'Simpan' : 'Tambah'}</PrimaryButton>
                 </div>
