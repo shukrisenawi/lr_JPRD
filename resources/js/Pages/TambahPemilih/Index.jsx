@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 
 function UserPlusIcon({ className = 'h-5 w-5' }) {
@@ -172,6 +172,33 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
 
 function DetailModal({ voter, onClose }) {
     if (!voter) return null;
+    const avatarRef = useRef(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploading(true);
+        try {
+            const form = new FormData();
+            form.append('avatar', file);
+            const res = await fetch(route('pemilih.avatar.upload', voter.id), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: form,
+            });
+            if (!res.ok) throw new Error('Upload gagal');
+            const data = await res.json();
+            if (data.success) {
+                voter.avatar_url = data.avatar_url;
+            }
+        } catch {
+            alert('Gagal muat naik gambar.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
@@ -184,13 +211,17 @@ function DetailModal({ voter, onClose }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3" onClick={onClose}>
             <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white shadow-xl" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
-                    {voter.avatar_url ? (
-                        <img src={voter.avatar_url} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover border border-slate-200" />
-                    ) : (
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
-                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>
-                        </div>
-                    )}
+                    <div className="relative shrink-0">
+                        {voter.avatar_url ? (
+                            <img src={voter.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
+                                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>
+                            </div>
+                        )}
+                        <input ref={avatarRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleAvatarUpload} className="hidden" />
+                        <button onClick={() => avatarRef.current?.click()} disabled={uploading} className="absolute -bottom-1 -right-1 rounded-full border border-green-200 bg-white p-0.5 text-green-700 shadow-sm transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-[10px] font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
+                    </div>
                     <div className="min-w-0 flex-1">
                         <h3 className="text-sm font-bold text-slate-800 truncate">{voter.name}</h3>
                         <p className="text-xs text-slate-500">{voter.dm || '-'}</p>
