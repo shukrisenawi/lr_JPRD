@@ -955,6 +955,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     useImperativeHandle(ref, () => ({ exportToExcel }), [exportToExcel]);
 
     return (
+        <>
         <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
             <div className="rounded-t-[11px] border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1242,6 +1243,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                 )}
             </div>
         </section>
+            {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+        </>
     );
 });
 
@@ -1331,8 +1334,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
                     </div>
                 )}
             </div>
-            {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
-        </div>
+            </div>
     );
 }
 
