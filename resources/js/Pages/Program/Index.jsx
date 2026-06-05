@@ -1035,7 +1035,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     }, [f.data.gambar, f.data.gambar_url]);
 
     useEffect(() => {
-        if (!f.data.group_id || isEditing) return;
+        if (isEditing) return;
+        if (!f.data.group_id) { f.setData('has_laporan', false); f.setData('is_mesyuarat', false); return; }
         const g = groups.find((gr) => String(gr.id) === f.data.group_id);
         if (g) { f.setData('has_laporan', g.default_laporan); f.setData('is_mesyuarat', g.default_mesyuarat); }
     }, [f.data.group_id]);
