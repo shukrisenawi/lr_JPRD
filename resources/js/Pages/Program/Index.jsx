@@ -1065,7 +1065,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                         {tabs.map((t) => (
                             <button key={t.key} onClick={() => setTab(t.key)}
                                 className={`flex items-center gap-2 rounded-md border px-2.5 py-2 text-left transition ${tab === t.key ? 'border-transparent bg-gradient-to-r from-green-700 to-green-500 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/60'}`}>
-                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${tab === t.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}>{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '♧' : '☷'}</span>
+                                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${tab === t.key ? 'bg-white/90 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}>{t.key === 'tambah-program' ? '+' : t.key === 'group-program' ? '☰' : '☷'}</span>
                                 <span className={`text-xs font-bold ${tab === t.key ? 'text-white' : 'text-emerald-800'}`}>{t.label}</span>
                             </button>
                         ))}
