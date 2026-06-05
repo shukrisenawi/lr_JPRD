@@ -14,6 +14,7 @@ class ProgramGroup extends Model
         'default_laporan',
         'default_mesyuarat',
         'default_committee_group',
+        'default_group_pemilih_filters',
     ];
 
     protected function casts(): array
@@ -21,6 +22,7 @@ class ProgramGroup extends Model
         return [
             'default_laporan' => 'boolean',
             'default_mesyuarat' => 'boolean',
+            'default_group_pemilih_filters' => 'array',
         ];
     }
 

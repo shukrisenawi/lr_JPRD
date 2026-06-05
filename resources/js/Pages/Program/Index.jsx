@@ -353,9 +353,9 @@ function committeeScopeLabel(badge) {
     return badge.scope_name;
 }
 
-function ProgramGroupManager({ groups, committeeGroupOptions }) {
+function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOptions }) {
     const [editingId, setEditingId] = useState(null);
-    const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false, default_committee_group: '' });
+    const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false, default_committee_group: '', default_group_pemilih_filters: [] });
     const submit = (e) => {
         e.preventDefault();
         if (editingId) { f.put(route('program.groups.update', editingId), { preserveScroll: true, onSuccess: () => { setEditingId(null); f.reset(); } }); return; }
@@ -363,11 +363,13 @@ function ProgramGroupManager({ groups, committeeGroupOptions }) {
     };
     const del = (g) => { if (window.confirm(`Padam group "${g.name}"?`)) router.delete(route('program.groups.destroy', g.id), { preserveScroll: true, onSuccess: () => { if (editingId === g.id) { setEditingId(null); f.reset(); } } }); };
 
-    const toggleDefault = (g, field) => {
-        router.put(route('program.groups.update', g.id), { name: g.name, [field]: !g[field] }, { preserveScroll: true });
+    const toggleDefault = (g, field, val) => {
+        router.put(route('program.groups.update', g.id), { name: g.name, [field]: field === 'default_group_pemilih_filters' ? val : !g[field] }, { preserveScroll: true });
     };
 
     const ajkLabel = (val) => val ? (committeeGroupOptions.find((o) => o.value === val)?.label ?? val) : '';
+    const gpemilihLocked = f.data.default_committee_group !== '';
+    const ajkLocked = (f.data.default_group_pemilih_filters ?? []).length > 0;
 
     return (
         <section className="grid gap-3 xl:grid-cols-[1fr_1fr]">
@@ -390,10 +392,26 @@ function ProgramGroupManager({ groups, committeeGroupOptions }) {
                     </label>
                     <div>
                         <InputLabel value="Kumpulan AJK (default)" />
-                        <select value={f.data.default_committee_group} onChange={(e) => f.setData('default_committee_group', e.target.value)} className="input-field mt-1 text-xs">
+                        <select value={f.data.default_committee_group} onChange={(e) => f.setData('default_committee_group', e.target.value)} disabled={ajkLocked} className="input-field mt-1 text-xs">
                             <option value="">Pilih</option>
                             {committeeGroupOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
+                    </div>
+                    <div>
+                        <InputLabel value="Group Pemilih (default)" />
+                        <div className="mt-1 flex flex-wrap gap-2">
+                            {groupPemilihOptions.map((opt) => {
+                                const checked = (f.data.default_group_pemilih_filters ?? []).includes(opt.id);
+                                return (
+                                    <label key={opt.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${gpemilihLocked ? 'cursor-not-allowed opacity-50' : ''} ${checked ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:bg-green-50/50'}`}>
+                                        <input type="checkbox" checked={checked}
+                                            onChange={() => { const current = f.data.default_group_pemilih_filters ?? []; f.setData('default_group_pemilih_filters', checked ? current.filter((v) => v !== opt.id) : [...current, opt.id]); }}
+                                            disabled={gpemilihLocked} className="h-3.5 w-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                        <span>{opt.nama_group}</span>
+                                    </label>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
                 <div className="mt-3 flex justify-end">
@@ -427,10 +445,15 @@ function ProgramGroupManager({ groups, committeeGroupOptions }) {
                                             AJK: {ajkLabel(g.default_committee_group)}
                                         </span>
                                     )}
+                                    {(g.default_group_pemilih_filters ?? []).length > 0 && (
+                                        <span className="inline-flex items-center gap-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-700">
+                                            Pemilih: {(g.default_group_pemilih_filters ?? []).length} group
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex shrink-0 gap-1.5">
-                                <button onClick={() => { setEditingId(g.id); f.setData({ name: g.name, default_laporan: g.default_laporan, default_mesyuarat: g.default_mesyuarat, default_committee_group: g.default_committee_group ?? '' }); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
+                                <button onClick={() => { setEditingId(g.id); f.setData({ name: g.name, default_laporan: g.default_laporan, default_mesyuarat: g.default_mesyuarat, default_committee_group: g.default_committee_group ?? '', default_group_pemilih_filters: g.default_group_pemilih_filters ?? [] }); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
                                 <button onClick={() => del(g)} className="rounded-md bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition hover:from-rose-500 hover:to-red-400">Padam</button>
                             </div>
                         </div>
@@ -1050,12 +1073,13 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     useEffect(() => {
         if (isEditing) return;
-        if (!f.data.group_id) { f.setData('has_laporan', false); f.setData('is_mesyuarat', false); f.setData('committee_group_filters', ''); return; }
+        if (!f.data.group_id) { f.setData('has_laporan', false); f.setData('is_mesyuarat', false); f.setData('committee_group_filters', ''); f.setData('group_pemilih_filters', []); return; }
         const g = groups.find((gr) => String(gr.id) === f.data.group_id);
         if (g) {
             f.setData('has_laporan', g.default_laporan);
             f.setData('is_mesyuarat', g.default_mesyuarat);
             f.setData('committee_group_filters', g.default_committee_group ?? '');
+            f.setData('group_pemilih_filters', g.default_group_pemilih_filters ?? []);
         }
     }, [f.data.group_id]);
 
@@ -1181,7 +1205,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                     </section>
                 )}
 
-                {tab === 'group-program' && <ProgramGroupManager groups={groups} committeeGroupOptions={committeeGroupOptions} />}
+                {tab === 'group-program' && <ProgramGroupManager groups={groups} committeeGroupOptions={committeeGroupOptions} groupPemilihOptions={groupPemilihOptions} />}
 
 {tab === 'senarai-program' && (selectedProgram ? (
                     <section className="space-y-3">

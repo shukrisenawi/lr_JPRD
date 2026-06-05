@@ -260,6 +260,7 @@ class ProgramController extends Controller
                     'default_laporan' => $group->default_laporan,
                     'default_mesyuarat' => $group->default_mesyuarat,
                     'default_committee_group' => $group->default_committee_group,
+                    'default_group_pemilih_filters' => $group->default_group_pemilih_filters ?? [],
                     'programs_count' => $group->programs()->count(),
                 ])
                 ->values(),
@@ -718,6 +719,8 @@ class ProgramController extends Controller
             'default_laporan' => ['nullable', 'boolean'],
             'default_mesyuarat' => ['nullable', 'boolean'],
             'default_committee_group' => ['nullable', 'string', 'max:50'],
+            'default_group_pemilih_filters' => ['nullable', 'array'],
+            'default_group_pemilih_filters.*' => ['integer', 'exists:group_pemilihs,id'],
         ]);
 
         ProgramGroup::query()->create([
@@ -726,6 +729,7 @@ class ProgramController extends Controller
             'default_laporan' => $validated['default_laporan'] ?? false,
             'default_mesyuarat' => $validated['default_mesyuarat'] ?? false,
             'default_committee_group' => $validated['default_committee_group'] ?? null,
+            'default_group_pemilih_filters' => $validated['default_group_pemilih_filters'] ?? [],
         ]);
 
         return redirect()
@@ -742,6 +746,8 @@ class ProgramController extends Controller
             'default_laporan' => ['nullable', 'boolean'],
             'default_mesyuarat' => ['nullable', 'boolean'],
             'default_committee_group' => ['nullable', 'string', 'max:50'],
+            'default_group_pemilih_filters' => ['nullable', 'array'],
+            'default_group_pemilih_filters.*' => ['integer', 'exists:group_pemilihs,id'],
         ]);
 
         $group->update([
@@ -749,6 +755,7 @@ class ProgramController extends Controller
             'default_laporan' => $validated['default_laporan'] ?? $group->default_laporan,
             'default_mesyuarat' => $validated['default_mesyuarat'] ?? $group->default_mesyuarat,
             'default_committee_group' => $validated['default_committee_group'] ?? $group->default_committee_group,
+            'default_group_pemilih_filters' => $validated['default_group_pemilih_filters'] ?? $group->default_group_pemilih_filters,
         ]);
 
         return redirect()
