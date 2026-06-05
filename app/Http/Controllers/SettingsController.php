@@ -105,14 +105,22 @@ class SettingsController extends Controller
             escapeshellarg($db['database'] ?? '')
         );
 
+        $output = [];
+        $returnVar = -1;
+
         try {
+            if (!function_exists('exec')) {
+                throw new \RuntimeException('Fungsi exec() tidak tersedia pada server.');
+            }
             exec($command, $output, $returnVar);
         } catch (\Throwable $e) {
-            return redirect()->route('settings.edit')->with('error', 'Backup gagal: fungsi exec() tidak tersedia pada server. Hubungi admin.');
+            logger()->error('Backup database gagal: ' . $e->getMessage(), ['command' => $command]);
+            return redirect()->route('settings.edit')->with('error', 'Backup gagal: ' . $e->getMessage());
         }
 
         if ($returnVar !== 0) {
-            $errorMsg = !empty($output) ? implode("\n", $output) : 'mysqldump gagal dijalankan. Pastikan path ke mysqldump betul.';
+            $errorMsg = !empty($output) ? implode("\n", $output) : 'mysqldump gagal dijalankan. Pastikan mysqldump dipasang atau set DB_DUMP_PATH dalam .env.';
+            logger()->error('Backup database gagal (exit ' . $returnVar . '): ' . $errorMsg);
             return redirect()->route('settings.edit')->with('error', 'Backup gagal: ' . $errorMsg);
         }
 
@@ -149,11 +157,17 @@ class SettingsController extends Controller
             escapeshellarg($fullPath)
         );
 
+        $output = [];
+        $returnVar = -1;
+
         try {
+            if (!function_exists('exec')) {
+                throw new \RuntimeException('Fungsi exec() tidak tersedia pada server.');
+            }
             exec($command, $output, $returnVar);
         } catch (\Throwable $e) {
             Storage::delete($tempPath);
-            return redirect()->route('settings.edit')->with('error', 'Import gagal: fungsi exec() tidak tersedia pada server. Hubungi admin.');
+            return redirect()->route('settings.edit')->with('error', 'Import gagal: ' . $e->getMessage());
         }
         Storage::delete($tempPath);
 
