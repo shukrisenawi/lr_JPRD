@@ -1143,7 +1143,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         }
         f.post(route('program.store'), {
             forceFormData: f.data.gambar instanceof File,
-            onSuccess: () => window.location.href = route('program.index').url,
+            onSuccess: () => window.location.href = route('program.index'),
         });
     };
 
