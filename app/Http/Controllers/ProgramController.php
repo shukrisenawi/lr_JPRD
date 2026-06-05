@@ -1090,6 +1090,7 @@ class ProgramController extends Controller
             'program_id' => $program->id,
             'user_id' => $userId,
             'original_name' => $originalName,
+            'stored_name' => $originalName,
             'stored_path' => $storedPath,
             'file_type' => $request->file_type ?? (str_starts_with($uploaded->getMimeType(), 'image/') ? 'image' : 'document'),
             'file_label' => $request->file_label,
