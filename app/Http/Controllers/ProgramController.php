@@ -140,7 +140,7 @@ class ProgramController extends Controller
             $pemilihRecords = PemilihRecord::query()
                 ->whereIn('no_kp', $icNumbers)
                 ->orWhereIn('old_ic', $oldIcs)
-                ->get(['id', 'no_kp', 'old_ic', 'no_ahli']);
+                ->get(['id', 'no_kp', 'old_ic', 'no_ahli', 'avatar', 'updated_at']);
             foreach ($pemilihRecords as $record) {
                 if ($record->no_kp) {
                     $icToPemilihId[$record->no_kp] = $record->id;

@@ -291,7 +291,7 @@ function SearchPanel() {
             {flash && <div className="flash-msg">{flash}</div>}
             {editNoAhli && canEditNoAhli && <NoAhliModal voter={editNoAhli} onClose={() => setEditNoAhli(null)}
                 onSaved={(val) => { setSelected(prev => prev ? { ...prev, no_ahli: val } : prev); setFlash('No. Ahli berjaya dikemaskini!'); }} />}
-            <ResultCard voter={selected} onClear={() => { clearSearch(); setOpeningTg(false); }}
+            <ResultCard key={selected?.record_id ?? 'no-voter'} voter={selected} onClear={() => { clearSearch(); setOpeningTg(false); }}
                 onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selected, 'kemascula'))}
                 onUpdateNoAhli={(v) => setEditNoAhli(v)} canEditNoAhli={canEditNoAhli} />
         </>
