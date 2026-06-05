@@ -305,9 +305,7 @@ class ProgramController extends Controller
             $program->sharedUsers()->sync($group->default_shared_user_ids);
         }
 
-        return redirect()
-            ->route('program.index', ['program' => $program->id])
-            ->with('success', 'Program baharu berjaya ditambah.');
+        return back()->with('success', 'Program baharu berjaya ditambah.');
     }
 
     public function update(Request $request, Program $program): RedirectResponse
