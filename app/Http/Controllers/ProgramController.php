@@ -1065,6 +1065,7 @@ class ProgramController extends Controller
             'original_name' => $f->original_name,
             'size' => $f->file_size,
             'uploader' => $f->uploader?->name,
+            'user_id' => $f->user_id,
             'created_at' => $f->created_at?->format('d-m-Y H:iA'),
         ]);
 
@@ -1159,8 +1160,10 @@ class ProgramController extends Controller
 
     public function destroyFile(Program $program, ProgramFile $file): RedirectResponse
     {
-        $this->ensureAccessible(request()->user()->id, $program);
+        $user = request()->user();
+        $this->ensureAccessible($user->id, $program);
         abort_unless($file->program_id === $program->id, 404);
+        abort_unless($user->isMasterAdmin() || $file->user_id === $user->id, 403);
 
         \Illuminate\Support\Facades\Storage::disk('public')->delete($file->stored_path);
         $file->delete();

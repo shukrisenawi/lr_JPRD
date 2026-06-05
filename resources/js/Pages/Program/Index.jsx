@@ -964,6 +964,9 @@ function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
 
 function MesyuaratView({ program, onClose }) {
     if (!program) return null;
+    const { auth } = usePage().props;
+    const isMasterAdmin = auth?.user?.role?.is_master_admin;
+    const currentUserId = auth?.user?.id;
     const hasCommittee = program.committee_group_filters
         && Array.isArray(program.committee_group_filters)
         && program.committee_group_filters.length > 0
@@ -1048,7 +1051,9 @@ function MesyuaratView({ program, onClose }) {
                                             </div>
                                             <div className="flex shrink-0 gap-1">
                                                 <a href={route('program.files.download', [program.id, f.id])} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 transition hover:bg-slate-200">Download</a>
-                                                <button onClick={() => handleDeleteFile(f.id)} className="rounded-md bg-red-100 px-2 py-1 text-xs font-bold text-red-600 transition hover:bg-red-200">Padam</button>
+                                                {(isMasterAdmin || currentUserId === f.user_id) && (
+                                                    <button onClick={() => handleDeleteFile(f.id)} className="rounded-md bg-red-100 px-2 py-1 text-xs font-bold text-red-600 transition hover:bg-red-200">Padam</button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
