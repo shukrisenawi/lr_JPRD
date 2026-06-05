@@ -189,7 +189,7 @@ class SettingsController extends Controller
         }
 
         $path = $this->which('mysqldump');
-        if ($path !== '' && @file_exists($path)) {
+        if ($path !== '') {
             return $path;
         }
 
@@ -218,7 +218,7 @@ class SettingsController extends Controller
         }
 
         $path = $this->which('mysql');
-        if ($path !== '' && @file_exists($path)) {
+        if ($path !== '') {
             return $path;
         }
 
