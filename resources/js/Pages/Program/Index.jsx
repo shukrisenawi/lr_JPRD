@@ -415,18 +415,33 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                     </div>
                     <div>
                         <InputLabel value="Kongsi dengan (default)" />
-                        <div className="mt-1 flex flex-wrap gap-2">
-                            {shareableUsers.length === 0 ? <p className="text-xs text-slate-400">Tiada pengguna</p> : shareableUsers.map((u) => {
-                                const checked = (f.data.default_shared_user_ids ?? []).includes(u.id);
-                                return (
-                                    <label key={u.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${checked ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/50'}`}>
-                                        <input type="checkbox" checked={checked}
-                                            onChange={() => { const current = f.data.default_shared_user_ids ?? []; f.setData('default_shared_user_ids', checked ? current.filter((v) => v !== u.id) : [...current, u.id]); }}
-                                            className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                        <span>{u.name}</span>
-                                    </label>
-                                );
-                            })}
+                        <div className="mt-1 space-y-3">
+                            {shareableUsers.length === 0 ? <p className="text-xs text-slate-400">Tiada pengguna</p> : (() => {
+                                const groups = { jprd: [], udm: [], cawangan: [] };
+                                shareableUsers.forEach((u) => { if (groups[u.access_level]) groups[u.access_level].push(u); });
+                                const labels = { jprd: 'JPRD', udm: 'UDM', cawangan: 'Cawangan' };
+                                return Object.entries(groups).map(([level, users]) => {
+                                    if (users.length === 0) return null;
+                                    return (
+                                        <div key={level}>
+                                            <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-slate-400">{labels[level]} ({users.length})</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {users.map((u) => {
+                                                    const checked = (f.data.default_shared_user_ids ?? []).includes(u.id);
+                                                    return (
+                                                        <label key={u.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${checked ? 'border-blue-300 bg-blue-50 text-blue-800' : 'border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/50'}`}>
+                                                            <input type="checkbox" checked={checked}
+                                                                onChange={() => { const current = f.data.default_shared_user_ids ?? []; f.setData('default_shared_user_ids', checked ? current.filter((v) => v !== u.id) : [...current, u.id]); }}
+                                                                className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                                            <span>{u.name}</span>
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                            })()}
                         </div>
                     </div>
                 </div>

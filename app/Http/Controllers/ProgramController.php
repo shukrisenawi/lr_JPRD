@@ -268,6 +268,7 @@ class ProgramController extends Controller
             'committeeGroupOptions' => $committeeGroupOptions,
             'groupPemilihOptions' => $groupPemilihOptions,
             'shareableUsers' => User::query()
+                ->with('role')
                 ->whereKeyNot($user->id)
                 ->get()
                 ->filter(fn (User $candidate) => $candidate->canAccessModule('program'))
@@ -275,7 +276,10 @@ class ProgramController extends Controller
                     'id' => $candidate->id,
                     'name' => $candidate->name,
                     'email' => $candidate->email,
+                    'access_level' => $candidate->access_level,
+                    'role_name' => $candidate->role?->name,
                 ])
+                ->sortBy('name')
                 ->values(),
         ]);
     }
