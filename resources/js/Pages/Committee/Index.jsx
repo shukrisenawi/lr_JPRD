@@ -72,9 +72,9 @@ function GroupManager({ groups, positions: allPositions }) {
             }
         };
         if (expandedId !== null) {
-            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('click', handleClickOutside);
         }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
     }, [expandedId, addModal]);
 
     const submitCreate = (e) => {
@@ -701,9 +701,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             }
         };
         if (expandedGroupId !== null) {
-            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('click', handleClickOutside);
         }
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
     }, [expandedGroupId]);
 
     const voterMembershipsMap = useMemo(() => {
