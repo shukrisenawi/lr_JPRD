@@ -140,14 +140,86 @@ class SettingsController extends Controller
             'backup_file' => ['required', 'file', 'max:102400'],
         ]);
 
+        $db = config('database.connections.mysql');
+        $mysql = $this->findMysqlPath();
+        $mysqldump = $this->findMysqldumpPath();
+
+        // 1. Backup current database
+        $backupFilename = 'backup_DB_PAS_' . now('Asia/Kuala_Lumpur')->format('d-m-Y_H-iA') . '.sql';
+
+        $dumpCommand = sprintf(
+            '%s --host=%s --user=%s --password=%s --single-transaction --routines --triggers %s 2>&1',
+            escapeshellarg($mysqldump),
+            escapeshellarg($db['host'] ?? 'localhost'),
+            escapeshellarg($db['username'] ?? ''),
+            escapeshellarg($db['password'] ?? ''),
+            escapeshellarg($db['database'] ?? '')
+        );
+
+        $dumpOutput = [];
+        $dumpReturnVar = -1;
+
+        try {
+            if (!function_exists('exec')) {
+                throw new \RuntimeException('Fungsi exec() tidak tersedia pada server.');
+            }
+            exec($dumpCommand, $dumpOutput, $dumpReturnVar);
+        } catch (\Throwable $e) {
+            return redirect()->route('settings.edit')->with('error', 'Backup sebelum import gagal: ' . $e->getMessage());
+        }
+
+        if ($dumpReturnVar !== 0) {
+            $errorMsg = !empty($dumpOutput) ? implode("\n", $dumpOutput) : 'mysqldump gagal dijalankan.';
+            logger()->error('Backup sebelum import gagal (exit ' . $dumpReturnVar . '): ' . $errorMsg);
+            return redirect()->route('settings.edit')->with('error', 'Backup sebelum import gagal: ' . $errorMsg);
+        }
+
+        Storage::put('backup/' . $backupFilename, implode("\n", $dumpOutput));
+
+        // 2. Drop all existing tables
+        $dbName = $db['database'] ?? '';
+        $dropSql = sprintf(
+            "SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS (SELECT GROUP_CONCAT(table_name) FROM information_schema.tables WHERE table_schema = '%s'); SET FOREIGN_KEY_CHECKS = 1;",
+            $dbName
+        );
+
+        $tablesOutput = [];
+        $tablesReturnVar = -1;
+        exec(
+            sprintf(
+                '%s --host=%s --user=%s --password=%s -N -e %s 2>&1',
+                escapeshellarg($mysql),
+                escapeshellarg($db['host'] ?? 'localhost'),
+                escapeshellarg($db['username'] ?? ''),
+                escapeshellarg($db['password'] ?? ''),
+                escapeshellarg("SELECT GROUP_CONCAT(table_name) FROM information_schema.tables WHERE table_schema = '{$dbName}'")
+            ),
+            $tablesOutput,
+            $tablesReturnVar
+        );
+
+        if ($tablesReturnVar === 0 && !empty($tablesOutput[0])) {
+            $tableList = $tablesOutput[0];
+            exec(
+                sprintf(
+                    '%s --host=%s --user=%s --password=%s -e %s 2>&1',
+                    escapeshellarg($mysql),
+                    escapeshellarg($db['host'] ?? 'localhost'),
+                    escapeshellarg($db['username'] ?? ''),
+                    escapeshellarg($db['password'] ?? ''),
+                    escapeshellarg("SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS {$tableList}; SET FOREIGN_KEY_CHECKS = 1;")
+                ),
+                $dropTableOutput,
+                $dropTableReturnVar
+            );
+        }
+
+        // 3. Import uploaded file
         $file = $validated['backup_file'];
         $tempPath = $file->storeAs('backup', 'restore-temp.sql');
         $fullPath = storage_path('app/' . $tempPath);
 
-        $mysql = $this->findMysqlPath();
-        $db = config('database.connections.mysql');
-
-        $command = sprintf(
+        $importCommand = sprintf(
             '%s --host=%s --user=%s --password=%s %s < %s 2>&1',
             escapeshellarg($mysql),
             escapeshellarg($db['host'] ?? 'localhost'),
@@ -157,29 +229,26 @@ class SettingsController extends Controller
             escapeshellarg($fullPath)
         );
 
-        $output = [];
-        $returnVar = -1;
+        $importOutput = [];
+        $importReturnVar = -1;
 
         try {
-            if (!function_exists('exec')) {
-                throw new \RuntimeException('Fungsi exec() tidak tersedia pada server.');
-            }
-            exec($command, $output, $returnVar);
+            exec($importCommand, $importOutput, $importReturnVar);
         } catch (\Throwable $e) {
             Storage::delete($tempPath);
             return redirect()->route('settings.edit')->with('error', 'Import gagal: ' . $e->getMessage());
         }
         Storage::delete($tempPath);
 
-        if ($returnVar !== 0) {
+        if ($importReturnVar !== 0) {
             return redirect()
                 ->route('settings.edit')
-                ->with('error', 'Import gagal: ' . implode("\n", $output));
+                ->with('error', 'Import gagal: ' . implode("\n", $importOutput));
         }
 
         return redirect()
             ->route('settings.edit')
-            ->with('success', 'Database berjaya dipulihkan.');
+            ->with('success', 'Backup sedia ada (' . $backupFilename . ') telah disimpan. Database berjaya dipulihkan.');
     }
 
     private function findMysqldumpPath(): string
