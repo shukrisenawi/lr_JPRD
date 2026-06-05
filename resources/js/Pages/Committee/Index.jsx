@@ -1119,12 +1119,14 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                     </button>
 
                                     {isExpanded && (
-                                        <div className="border-t border-green-100 p-3 space-y-4">
+                                        <div className="border-t border-green-100 p-3">
                                             {group.positionsWithMembers.length === 0 ? (
                                                 <p className="text-center text-xs text-slate-400">Tiada jawatan untuk kumpulan ini.</p>
                                             ) : (
-                                                group.positionsWithMembers.map((pos) => {
+                                                <div className="grid gap-3 sm:grid-cols-3">
+                                                {group.positionsWithMembers.map((pos) => {
                                                     const voterGroupPositions = {};
+                                                    const isSingle = pos.members.length <= 1;
                                                     group.positions?.forEach(p => {
                                                         const posMemberships = memberships.filter(m => m.position?.id === p.id);
                                                         posMemberships.forEach(m => {
@@ -1138,14 +1140,14 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                         });
                                                     });
                                                     return (
-                                                    <div key={pos.id}>
+                                                    <div key={pos.id} className={isSingle ? '' : 'sm:col-span-3'}>
                                                         <div className="mb-2">
                                                             <span className="rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{pos.name}</span>
                                                         </div>
                                                         {pos.members.length === 0 ? (
                                                             <p className="text-[10px] text-slate-400 ml-1">Tiada ahli.</p>
                                                         ) : (
-                                                            <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                                                            <div className={'grid gap-1.5 ' + (pos.members.length > 1 ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-3')}>
                                                                  {pos.members.map((m, i) => {
                                                                      const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
                                                                      const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.key !== `${pos.id}-${m.scope_key || ''}`);
@@ -1163,7 +1165,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                   <div className="mt-1">
                                                                                       <div className="flex items-center gap-2">
                                                                                           <button type="button" onClick={() => setMultiPosExpand(prev => ({ ...prev, [multiKey]: !showMore }))} className="text-[10px] font-medium text-green-600 hover:text-green-800">
-                                                                                              {showMore ? '− Sembunyi jawatan lain' : `+ ${voterPositions.length} jawatan lain`}
+                                                                                              {showMore ? '- Sembunyi jawatan lain' : `+ ${voterPositions.length} jawatan lain`}
                                                                                           </button>
                                                                                           {canRemove && (
                                                                                                <button type="button" onClick={() => removeMembership(m)} className="ml-auto text-rose-600 hover:text-rose-800" title="Buang"><Icon name="trash" className="h-3.5 w-3.5" /></button>
@@ -1189,7 +1191,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                         )}
                                                     </div>
                                                     );
-                                                })
+                                                })}
+                                                </div>
                                             )}
                                         </div>
                                     )}
