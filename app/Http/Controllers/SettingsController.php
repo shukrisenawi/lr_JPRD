@@ -105,7 +105,11 @@ class SettingsController extends Controller
             escapeshellarg($db['database'] ?? '')
         );
 
-        exec($command, $output, $returnVar);
+        try {
+            exec($command, $output, $returnVar);
+        } catch (\Throwable $e) {
+            return redirect()->route('settings.edit')->with('error', 'Backup gagal: fungsi exec() tidak tersedia pada server. Hubungi admin.');
+        }
 
         if ($returnVar !== 0) {
             $errorMsg = !empty($output) ? implode("\n", $output) : 'mysqldump gagal dijalankan. Pastikan path ke mysqldump betul.';
@@ -145,7 +149,12 @@ class SettingsController extends Controller
             escapeshellarg($fullPath)
         );
 
-        exec($command, $output, $returnVar);
+        try {
+            exec($command, $output, $returnVar);
+        } catch (\Throwable $e) {
+            Storage::delete($tempPath);
+            return redirect()->route('settings.edit')->with('error', 'Import gagal: fungsi exec() tidak tersedia pada server. Hubungi admin.');
+        }
         Storage::delete($tempPath);
 
         if ($returnVar !== 0) {
@@ -165,15 +174,24 @@ class SettingsController extends Controller
             return $path;
         }
 
-        $path = trim((string) shell_exec('where mysqldump 2>nul'));
+        $path = $this->which('mysqldump');
         if ($path !== '' && file_exists($path)) {
             return $path;
         }
 
+        $candidates = [
+            '/usr/bin/mysqldump',
+            '/usr/local/bin/mysqldump',
+            '/opt/homebrew/bin/mysqldump',
+        ];
+
         $xamppRoot = dirname(PHP_BINARY, 2);
-        $candidate = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysqldump.exe';
-        if (file_exists($candidate)) {
-            return $candidate;
+        $candidates[] = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysqldump.exe';
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
+            }
         }
 
         return 'mysqldump';
@@ -185,18 +203,44 @@ class SettingsController extends Controller
             return $path;
         }
 
-        $path = trim((string) shell_exec('where mysql 2>nul'));
+        $path = $this->which('mysql');
         if ($path !== '' && file_exists($path)) {
             return $path;
         }
 
+        $candidates = [
+            '/usr/bin/mysql',
+            '/usr/local/bin/mysql',
+            '/opt/homebrew/bin/mysql',
+        ];
+
         $xamppRoot = dirname(PHP_BINARY, 2);
-        $candidate = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysql.exe';
-        if (file_exists($candidate)) {
-            return $candidate;
+        $candidates[] = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysql.exe';
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
+            }
         }
 
         return 'mysql';
+    }
+
+    private function which(string $cmd): string
+    {
+        try {
+            if (PHP_OS_FAMILY === 'Windows') {
+                return trim((string) shell_exec("where {$cmd} 2>nul"));
+            }
+
+            $result = trim((string) shell_exec("command -v {$cmd} 2>/dev/null"));
+            if ($result === '') {
+                $result = trim((string) shell_exec("which {$cmd} 2>/dev/null"));
+            }
+            return $result;
+        } catch (\Throwable $e) {
+            return '';
+        }
     }
 
     private function pemilihReportMetadata(): array
