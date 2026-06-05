@@ -252,7 +252,35 @@ function NoAhliModal({ attendee, onClose, onSaved }) {
 }
 
 function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli }) {
+    const [avatarUrl, setAvatarUrl] = useState(attendee?.avatar_url || null);
+    const [uploading, setUploading] = useState(false);
+    const avatarRef = useRef(null);
     if (!attendee) return null;
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !attendee.pemilih_record_id) return;
+        setUploading(true);
+        try {
+            const form = new FormData();
+            form.append('avatar', file);
+            const res = await fetch(route('pemilih.avatar.upload', attendee.pemilih_record_id), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: form,
+            });
+            if (!res.ok) throw new Error('Upload gagal');
+            const data = await res.json();
+            if (data.success) {
+                setAvatarUrl(data.avatar_url + '&t=' + Date.now());
+            }
+        } catch {
+            alert('Gagal muat naik gambar.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const fields = [
         ['Nama', attendee.name], ['No Kp', attendee.no_kp || attendee.old_ic || '-'],
         ['No. Ahli', attendee.no_ahli || '-'], ['Tel', attendee.phone_mobile || attendee.phone_home || '-'],
@@ -263,9 +291,18 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
         <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
             <div className="rounded-xl border border-green-200 bg-green-50/50 p-3">
                 <div className="flex items-center justify-between gap-2 border-b border-green-200 pb-2">
-                    <div className="min-w-0">
-                        <p className="text-xs font-bold text-green-900 truncate">{attendee.name}</p>
-                        <p className="text-xs text-green-700">{attendee.dm || '-'}</p>
+                    <div className="flex items-center gap-2 min-w-0">
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover border border-green-200" />
+                        ) : (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 border border-green-200">
+                                <UserIcon className="h-4 w-4" />
+                            </div>
+                        )}
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold text-green-900 truncate">{attendee.name}</p>
+                            <p className="text-xs text-green-700">{attendee.dm || '-'}</p>
+                        </div>
                     </div>
                     <button onClick={onClose} className="text-green-400 hover:text-green-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
@@ -283,7 +320,9 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                         <p className="text-xs font-medium text-slate-800">{attendee.address}</p>
                     </div>
                 )}
-                <div className="mt-3 flex gap-2 border-t border-green-200 pt-2">
+                <div className="mt-3 flex flex-wrap gap-2 border-t border-green-200 pt-2">
+                    <input ref={avatarRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleAvatarUpload} className="hidden" />
+                    <button onClick={() => avatarRef.current?.click()} disabled={uploading || !attendee.pemilih_record_id} className="rounded-md border border-green-300 bg-white px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-50 disabled:opacity-50">{uploading ? 'Memuat naik...' : 'Muat Naik Avatar'}</button>
                     <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
                     {onUpdateNoAhli && (

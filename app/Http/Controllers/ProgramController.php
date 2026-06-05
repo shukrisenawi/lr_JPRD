@@ -238,6 +238,7 @@ class ProgramController extends Controller
                             'cula_code' => $attendee->cula_code,
                             'cula_display_label' => $attendee->cula_display_label,
                             'address' => $attendee->address,
+                            'avatar_url' => ($attendee->no_kp && isset($pemilihRecords[$attendee->no_kp])) ? $pemilihRecords[$attendee->no_kp]->avatarUrl() : (($attendee->old_ic && isset($pemilihRecords[$attendee->old_ic])) ? $pemilihRecords[$attendee->old_ic]->avatarUrl() : null),
                             'group_badges' => $attendeeGroupCounts->get($attendee->voter_id, collect())->all(),
                             'committee_badges' => $committeeBadges->get($attendee->id, []),
                             'joined_programs' => $attendeePrograms->get($attendee->voter_id, collect())->all(),
@@ -399,6 +400,7 @@ class ProgramController extends Controller
 
         $members = $memberships->map(fn (CommitteeMembership $m) => [
             'pemilih_record_id' => $m->pemilih_record_id,
+            'avatar_url' => $m->voter?->avatarUrl(),
             'name' => $m->voter?->name,
             'no_kp' => $m->voter?->no_kp,
             'old_ic' => $m->voter?->old_ic,
@@ -1096,6 +1098,7 @@ class ProgramController extends Controller
 
                     $members = $memberships->map(fn (CommitteeMembership $m) => [
                         'pemilih_record_id' => $m->pemilih_record_id,
+                        'avatar_url' => $m->voter?->avatarUrl(),
                         'name' => $m->voter?->name,
                         'no_kp' => $m->voter?->no_kp,
                         'position_name' => $m->position?->name,

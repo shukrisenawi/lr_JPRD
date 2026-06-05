@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\PemilihRecord;
 use App\Models\Setting;
 use App\Services\PemilihReportService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -50,5 +52,37 @@ class CarianPemilihController extends Controller
             'success' => true,
             'message' => 'No. Ahli berjaya dikemaskini.',
         ]);
+    }
+
+    public function uploadAvatar(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $validated = $request->validate([
+            'avatar' => ['required', 'image', 'max:2048'],
+        ]);
+
+        if ($pemilihRecord->avatar) {
+            Storage::disk('public')->delete($pemilihRecord->avatar);
+        }
+
+        $pemilihRecord->avatar = $request->file('avatar')->store('pemilih-avatars', 'public');
+        $pemilihRecord->save();
+
+        return response()->json([
+            'success' => true,
+            'avatar_url' => $pemilihRecord->avatarUrl(),
+        ]);
+    }
+
+    public function avatar(Request $request, PemilihRecord $pemilihRecord)
+    {
+        abort_unless($pemilihRecord->avatar, 404);
+        abort_unless(Storage::disk('public')->exists($pemilihRecord->avatar), 404);
+
+        return response()->file(
+            Storage::disk('public')->path($pemilihRecord->avatar),
+            [
+                'Cache-Control' => 'private, max-age=3600',
+            ],
+        );
     }
 }

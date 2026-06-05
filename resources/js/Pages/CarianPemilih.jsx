@@ -96,7 +96,36 @@ function NoAhliModal({ voter, onClose, onSaved }) {
 }
 
 function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli }) {
+    const [avatarUrl, setAvatarUrl] = useState(voter?.avatar_url || null);
+    const [uploading, setUploading] = useState(false);
+    const avatarRef = useRef(null);
     if (!voter) return null;
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!voter.record_id) return;
+        setUploading(true);
+        try {
+            const form = new FormData();
+            form.append('avatar', file);
+            const res = await fetch(route('pemilih.avatar.upload', voter.record_id), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: form,
+            });
+            if (!res.ok) throw new Error('Upload gagal');
+            const data = await res.json();
+            if (data.success) {
+                setAvatarUrl(data.avatar_url + '&t=' + Date.now());
+            }
+        } catch {
+            alert('Gagal muat naik gambar.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Umur', voter.age ?? '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
@@ -106,12 +135,25 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
     return (
         <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                    <p className="label-section">Detail Pemilih</p>
-                    <h3 className="truncate text-sm font-bold uppercase leading-tight text-slate-800">{voter.name}</h3>
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative shrink-0">
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
+                                <UserIcon className="h-5 w-5" />
+                            </div>
+                        )}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="label-section">Detail Pemilih</p>
+                        <h3 className="truncate text-sm font-bold uppercase leading-tight text-slate-800">{voter.name}</h3>
+                    </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                     {!voter.is_manual && <>
+                        <input ref={avatarRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleAvatarUpload} className="hidden" />
+                        <button onClick={() => avatarRef.current?.click()} disabled={uploading || !voter.record_id} className="btn-outline">{uploading ? 'Memuat naik...' : 'Muat Naik Avatar'}</button>
                         <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
                         {canEditNoAhli && <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>}

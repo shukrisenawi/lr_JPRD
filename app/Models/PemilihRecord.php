@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class PemilihRecord extends Model
 {
@@ -14,6 +15,7 @@ class PemilihRecord extends Model
         'no_kp',
         'old_ic',
         'no_ahli',
+        'avatar',
         'name',
         'dm',
         'locality',
@@ -30,11 +32,26 @@ class PemilihRecord extends Model
         'created_by',
     ];
 
+    protected $appends = [
+        'avatar_url',
+    ];
+
     protected function casts(): array
     {
         return [
             'is_manual' => 'boolean',
         ];
+    }
+
+    public function avatarUrl(): ?string
+    {
+        if (!$this->avatar) return null;
+        return route('pemilih.avatar', ['pemilihRecord' => $this->id, 't' => $this->updated_at?->timestamp]);
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatarUrl();
     }
 
     public function creator(): BelongsTo

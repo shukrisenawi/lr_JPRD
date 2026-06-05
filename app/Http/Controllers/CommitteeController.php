@@ -214,6 +214,7 @@ class CommitteeController extends Controller
             ->get()
             ->map(fn (PemilihRecord $record) => [
                 'id' => $record->id,
+                'avatar_url' => $record->avatarUrl(),
                 'name' => $record->name,
                 'no_kp' => $record->no_kp,
                 'old_ic' => $record->old_ic,

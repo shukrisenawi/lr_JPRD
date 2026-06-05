@@ -376,6 +376,7 @@ class CulaanController extends Controller
     {
         return [
             'id' => $voter->id,
+            'avatar_url' => $voter->avatarUrl(),
             'name' => $voter->name,
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,

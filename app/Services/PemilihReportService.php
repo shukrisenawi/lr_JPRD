@@ -173,6 +173,7 @@ class PemilihReportService
                     'id' => $id,
                     'record_id' => $record->id,
                     'voter_id' => $id,
+                    'avatar_url' => $record->avatarUrl(),
                     'name' => $record->name,
                     'no_kp' => $record->no_kp,
                     'old_ic' => $record->old_ic,

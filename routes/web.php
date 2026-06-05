@@ -27,6 +27,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/carian-pemilih', [CarianPemilihController::class, 'index'])->middleware('module:carian-pemilih')->name('carian-pemilih.index');
     Route::get('/carian-pemilih/search', [CarianPemilihController::class, 'search'])->middleware('module:carian-pemilih')->name('carian-pemilih.search');
     Route::post('/carian-pemilih/update-no-ahli', [CarianPemilihController::class, 'updateNoAhli'])->middleware('module:carian-pemilih')->name('carian-pemilih.update-no-ahli');
+    Route::post('/pemilih/{pemilihRecord}/avatar', [CarianPemilihController::class, 'uploadAvatar'])->name('pemilih.avatar.upload');
+    Route::get('/pemilih/{pemilihRecord}/avatar', [CarianPemilihController::class, 'avatar'])->name('pemilih.avatar');
     Route::get('/program', [ProgramController::class, 'index'])->middleware('module:program')->name('program.index');
     Route::post('/program', [ProgramController::class, 'store'])->middleware('module:program')->name('program.store');
     Route::post('/program/groups', [ProgramController::class, 'storeGroup'])->middleware('module:program')->name('program.groups.store');
