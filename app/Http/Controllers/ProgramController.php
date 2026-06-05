@@ -1018,7 +1018,56 @@ class ProgramController extends Controller
                 ]),
             ]);
 
-        return response()->json($attendees);
+        $files = $program->files()->with('uploader')->latest()->get()->map(fn (ProgramFile $f) => [
+            'id' => $f->id,
+            'type' => str_starts_with($f->mime_type ?? '', 'image/') ? 'image' : 'document',
+            'original_name' => $f->original_name,
+            'size' => $f->file_size,
+            'uploader' => $f->uploader?->name,
+            'created_at' => $f->created_at?->format('d-m-Y'),
+        ]);
+
+        $members = collect();
+        $filter = $program->committee_group_filters;
+        if (is_array($filter)) {
+            $filter = $filter[0] ?? null;
+        }
+        if ($filter) {
+            [$groupId, $level] = explode(':', $filter) + [null, null];
+            if ($groupId) {
+                $positionIds = CommitteeGroup::find((int) $groupId)
+                    ?->positions()
+                    ?->pluck('committee_positions.id') ?? collect();
+
+                if ($positionIds->isNotEmpty()) {
+                    $memberships = CommitteeMembership::whereIn('committee_position_id', $positionIds)
+                        ->when($level, fn ($q) => $q->where('level', $level))
+                        ->with('voter', 'position')
+                        ->get()
+                        ->unique('pemilih_record_id')
+                        ->values();
+
+                    $programIds = Program::where('committee_group_filters', $program->committee_group_filters)
+                        ->pluck('id');
+
+                    $attendanceCounts = ProgramAttendee::whereIn('program_id', $programIds)
+                        ->whereIn('voter_id', $memberships->pluck('pemilih_record_id'))
+                        ->groupBy('voter_id')
+                        ->selectRaw('voter_id, count(*) as total')
+                        ->pluck('total', 'voter_id');
+
+                    $members = $memberships->map(fn (CommitteeMembership $m) => [
+                        'pemilih_record_id' => $m->pemilih_record_id,
+                        'name' => $m->voter?->name,
+                        'no_kp' => $m->voter?->no_kp,
+                        'position_name' => $m->position?->name,
+                        'previous_attendance' => $attendanceCounts[$m->pemilih_record_id] ?? 0,
+                    ]);
+                }
+            }
+        }
+
+        return response()->json(compact('attendees', 'files', 'members'));
     }
 
     public function uploadFile(Request $request, Program $program): RedirectResponse
@@ -1028,9 +1077,9 @@ class ProgramController extends Controller
 
         $request->validate([
             'file' => ['required', 'file', 'max:10240'],
-            'file_type' => ['required', 'string', 'max:50'],
+            'file_type' => ['nullable', 'string', 'max:50'],
             'file_label' => ['nullable', 'string', 'max:255'],
-            'file_category' => ['required', 'string', 'max:50'],
+            'file_category' => ['nullable', 'string', 'max:50'],
         ]);
 
         $uploaded = $request->file('file');
@@ -1042,9 +1091,9 @@ class ProgramController extends Controller
             'user_id' => $userId,
             'original_name' => $originalName,
             'stored_path' => $storedPath,
-            'file_type' => $request->file_type,
+            'file_type' => $request->file_type ?? (str_starts_with($uploaded->getMimeType(), 'image/') ? 'image' : 'document'),
             'file_label' => $request->file_label,
-            'file_category' => $request->file_category,
+            'file_category' => $request->file_category ?? 'mesyuarat',
             'file_size' => $uploaded->getSize(),
             'mime_type' => $uploaded->getMimeType(),
         ]);
