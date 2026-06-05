@@ -46,6 +46,9 @@ return [
     'settings' => [
         'label' => 'Settings',
         'description' => 'Tetapan URL Google Sheet sistem.',
+        'children' => [
+            'settings.backup-database' => ['label' => 'Backup Database'],
+        ],
     ],
     'kemaskini-no-ahli' => [
         'label' => 'Kemaskini No Ahli',

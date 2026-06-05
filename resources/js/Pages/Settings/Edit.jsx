@@ -264,7 +264,7 @@ export default function Edit({ settings }) {
             <Head title="Settings" />
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
                 {allowedModules.includes('laporan') && <PemilihUploadPanel report={settings.pemilih_report} />}
-                {isMasterAdmin && <DatabaseBackupPanel isMasterAdmin={isMasterAdmin} />}
+                {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel isMasterAdmin={isMasterAdmin} />}
                 {allowedModules.includes('dashboard') && (
                     <div className="card p-4">
                         <form onSubmit={submit} className="space-y-3">

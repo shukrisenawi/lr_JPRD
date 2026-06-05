@@ -90,7 +90,7 @@ class SettingsController extends Controller
 
     public function exportDatabase(Request $request): HttpResponse|RedirectResponse
     {
-        abort_unless($request->user()->isMasterAdmin(), 403);
+        abort_unless($request->user()->canAccessModule('settings.backup-database'), 403);
 
         $mysqldump = $this->findMysqldumpPath();
         $db = config('database.connections.mysql');
@@ -122,7 +122,7 @@ class SettingsController extends Controller
 
     public function importDatabase(Request $request): RedirectResponse
     {
-        abort_unless($request->user()->isMasterAdmin(), 403);
+        abort_unless($request->user()->canAccessModule('settings.backup-database'), 403);
 
         $validated = $request->validate([
             'backup_file' => ['required', 'file', 'max:102400'],
