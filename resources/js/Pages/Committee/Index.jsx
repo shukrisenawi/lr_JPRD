@@ -695,6 +695,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const expandedGroupRef = useRef(null);
 
     const [multiPosExpand, setMultiPosExpand] = useState({});
+    const [quickAddModal, setQuickAddModal] = useState(null);
     const [uploadingAvatar, setUploadingAvatar] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
       const avatarInputRefs = useRef({});
@@ -1176,7 +1177,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                             <span className="rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{pos.name}</span>
                                                         </div>
                                                         {pos.members.length === 0 ? (
-                                                            <p className="text-[10px] text-slate-400 ml-1">Tiada ahli.</p>
+                                                            <button type="button" onClick={() => setQuickAddModal({ group, position: pos, level: resolvedTab })} className="flex items-center gap-1 rounded-md border border-dashed border-green-300 bg-green-50 px-2.5 py-1.5 text-[10px] font-bold text-green-700 transition hover:bg-green-100 hover:border-green-400">
+                                                                <Icon name="plus" className="h-3.5 w-3.5" /> Tambah Ahli
+                                                            </button>
                                                         ) : (
                                                             <div className={'grid gap-1.5 ' + (pos.members.length > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1')}>
                                                                  {pos.members.map((m, i) => {
@@ -1244,9 +1247,208 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             </div>
         </section>
             {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+            {quickAddModal && (
+                <QuickAddMemberModal
+                    group={quickAddModal.group}
+                    position={quickAddModal.position}
+                    level={quickAddModal.level}
+                    scopes={scopes}
+                    currentScopeKey={form.data.scope_key}
+                    onClose={() => setQuickAddModal(null)}
+                />
+            )}
         </>
     );
 });
+
+// ─── QuickAddMemberModal ──────────────────────────────────────────────────
+
+function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, onClose }) {
+    const [searching, setSearching] = useState(false);
+    const [suggestions, setSuggestions] = useState([]);
+    const [selectedVoter, setSelectedVoter] = useState(null);
+    const suggestionsAbort = useRef(null);
+
+    const form = useForm({
+        pemilih_record_id: '',
+        committee_position_id: position.id,
+        level: level,
+        scope_key: currentScopeKey || (scopes[level]?.[0]?.key ?? ''),
+        voter_search: '',
+        notes: '',
+    });
+
+    const currentScopes = scopes[level] ?? [];
+
+    const handleSearchChange = async (event) => {
+        const value = event.target.value;
+        form.setData('voter_search', value);
+        setSelectedVoter(null);
+        suggestionsAbort.current?.abort();
+
+        if (value.trim().length < 2) {
+            setSuggestions([]);
+            setSearching(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        suggestionsAbort.current = controller;
+        setSearching(true);
+
+        try {
+            const response = await fetch(route('jawatankuasa.search') + '?q=' + encodeURIComponent(value), {
+                headers: { Accept: 'application/json' },
+                signal: controller.signal,
+            });
+            const payload = await response.json();
+            setSuggestions(payload.suggestions ?? []);
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                setSuggestions([]);
+            }
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const selectVoter = (voter) => {
+        setSelectedVoter(voter);
+        setSuggestions([]);
+        form.setData((current) => ({
+            ...current,
+            pemilih_record_id: voter.id,
+            voter_search: voter.name ?? '',
+        }));
+    };
+
+    const submit = (event) => {
+        event.preventDefault();
+        form.post(route('jawatankuasa.memberships.store'), {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedVoter(null);
+                setSuggestions([]);
+                onClose();
+            },
+        });
+    };
+
+    if (!group || !position) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-16 sm:pt-24" onClick={onClose}>
+            <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                    <div>
+                        <p className="text-sm font-bold text-slate-800">Tambah Ahli — {position.name}</p>
+                        <p className="text-[10px] text-slate-500">Kumpulan: {group.name}</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <Icon name="x" className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={submit} className="space-y-4 p-4">
+                    <div className="relative">
+                        <InputLabel htmlFor="quick-voter-search" value="Cari Pemilih Aktif" />
+                        <div className="relative mt-1">
+                            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <TextInput
+                                id="quick-voter-search"
+                                value={form.data.voter_search}
+                                onChange={handleSearchChange}
+                                className="input-field pl-9 text-xs"
+                                placeholder="Nama, No Kp atau telefon"
+                            />
+                        </div>
+                        <InputError className="mt-1" message={form.errors.pemilih_record_id} />
+                        {(searching || suggestions.length > 0) && (
+                            <div className="absolute left-0 right-0 z-20 mt-1.5 overflow-hidden rounded-lg border border-green-200 bg-white shadow-lg">
+                                {searching ? (
+                                    <div className="px-3 py-2 text-xs text-slate-400">Mencari...</div>
+                                ) : (
+                                    suggestions.map((voter) => (
+                                        <button
+                                            key={voter.id}
+                                            type="button"
+                                            onClick={() => selectVoter(voter)}
+                                            className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
+                                        >
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-slate-800">{voter.name}</p>
+                                                <p className="text-xs text-slate-400">No Kp: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
+                                            </div>
+                                            <div className="shrink-0 text-right text-xs text-slate-500">
+                                                <p>{voter.dm || '-'}</p>
+                                                <p className="mt-0.5">{voter.locality || '-'}</p>
+                                            </div>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {selectedVoter && (
+                        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                    <Icon name="user" className="h-4 w-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-xs font-bold text-green-800">{selectedVoter.name}</p>
+                                    <p className="text-xs text-green-600">
+                                        No Kp: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div>
+                        <InputLabel htmlFor="quick-scope" value={level === 'jprd' ? 'Peringkat' : 'Scope'} />
+                        <select
+                            id="quick-scope"
+                            value={form.data.scope_key}
+                            onChange={(event) => form.setData('scope_key', event.target.value)}
+                            className="input-field mt-1 text-xs"
+                        >
+                            {currentScopes.map((scope) => (
+                                <option key={scope.key} value={scope.key}>
+                                    {scope.parent_scope_name ? scope.parent_scope_name + ' / ' + scope.name : scope.name}
+                                </option>
+                            ))}
+                        </select>
+                        <InputError className="mt-1" message={form.errors.scope_key} />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="quick-notes" value="Catatan (Optional)" />
+                        <TextInput
+                            id="quick-notes"
+                            value={form.data.notes}
+                            onChange={(event) => form.setData('notes', event.target.value)}
+                            className="input-field mt-1 text-xs"
+                            placeholder="Contoh: dilantik pada mesyuarat agung"
+                        />
+                        <InputError className="mt-1" message={form.errors.notes} />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                        <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">
+                            Batal
+                        </button>
+                        <PrimaryButton disabled={form.processing || !selectedVoter} className="rounded-lg px-4 py-2 text-xs font-bold">
+                            {form.processing ? '...' : 'Tambah Ahli'}
+                        </PrimaryButton>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 // ─── CommitteeSearchModal ─────────────────────────────────────────────────
 
