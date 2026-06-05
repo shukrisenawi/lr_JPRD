@@ -813,7 +813,11 @@ function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
 
 function MesyuaratView({ program, onClose }) {
     if (!program) return null;
-    const [tab, setTab] = useState('fail');
+    const hasCommittee = program.committee_group_filters
+        && Array.isArray(program.committee_group_filters)
+        && program.committee_group_filters.length > 0
+        && program.committee_group_filters[0];
+    const [tab, setTab] = useState(hasCommittee ? 'kehadiran' : 'fail');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -868,7 +872,9 @@ function MesyuaratView({ program, onClose }) {
                 </div>
                 <div className="mt-2 flex gap-1.5 border-b border-amber-200 pb-2">
                     <button onClick={() => setTab('fail')} className={`rounded-md px-3 py-1 text-xs font-bold transition ${tab === 'fail' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Fail Mesyuarat</button>
-                    <button onClick={() => setTab('kehadiran')} className={`rounded-md px-3 py-1 text-xs font-bold transition ${tab === 'kehadiran' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Senarai Kehadiran</button>
+                    {hasCommittee && (
+                        <button onClick={() => setTab('kehadiran')} className={`rounded-md px-3 py-1 text-xs font-bold transition ${tab === 'kehadiran' ? 'bg-amber-600 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'}`}>Senarai Kehadiran</button>
+                    )}
                 </div>
                 <div className="mt-2 max-h-96 space-y-1.5 overflow-y-auto">
                     {loading ? <p className="text-xs text-slate-500 p-2">Memuatkan...</p>
