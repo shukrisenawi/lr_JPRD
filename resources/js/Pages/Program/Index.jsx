@@ -927,7 +927,11 @@ function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
                                                 pick(v);
                                             }
                                         }} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition last:border-b-0 ${alreadyAdded ? (hasSubs ? 'cursor-pointer bg-indigo-50 opacity-100 hover:bg-indigo-100' : 'cursor-not-allowed bg-slate-50 opacity-60') : 'hover:bg-green-50'}`}>
-                                            <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
+                                            {v.avatar_url ? (
+                                                <img src={v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
+                                            ) : (
+                                                <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
+                                            )}
                                             <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">No Kp: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
                                             <div className="min-w-0 text-left">
                                                 <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? (hasSubs ? 'Klik untuk tambah sub program' : 'Pemilih ini telah dipilih') : (v.dm || '-')}</p>
@@ -1373,7 +1377,16 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                 </button>
                                                             )}
                                                             <div className="min-w-0 flex-1">
-                                                                <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">{a.no_ahli && <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-green-500" title={`No. Ahli: ${a.no_ahli}`} />}{a.name}</p>
+                                                                <p className="flex items-center gap-1.5 truncate text-xs font-bold text-slate-800">
+                                                                    {a.avatar_url ? (
+                                                                        <img src={a.avatar_url} alt="" className="h-5 w-5 shrink-0 rounded-full border border-slate-200 object-cover" />
+                                                                    ) : (
+                                                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-green-100 text-green-600">
+                                                                            <UserIcon className="h-3 w-3" />
+                                                                        </span>
+                                                                    )}
+                                                                    {a.no_ahli && <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-green-500" title={`No. Ahli: ${a.no_ahli}`} />}{a.name}
+                                                                </p>
                                                                 <p className="text-[11px] font-medium text-slate-500">{a.no_kp || a.old_ic || '-'}</p>
                                                             </div>
                                                         </div>
