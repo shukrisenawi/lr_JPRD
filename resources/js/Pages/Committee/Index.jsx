@@ -1278,8 +1278,6 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
         notes: '',
     });
 
-    const currentScopes = scopes[level] ?? [];
-
     const handleSearchChange = async (event) => {
         const value = event.target.value;
         form.setData('voter_search', value);
@@ -1407,22 +1405,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                         </div>
                     )}
 
-                    <div>
-                        <InputLabel htmlFor="quick-scope" value={level === 'jprd' ? 'Peringkat' : 'Scope'} />
-                        <select
-                            id="quick-scope"
-                            value={form.data.scope_key}
-                            onChange={(event) => form.setData('scope_key', event.target.value)}
-                            className="input-field mt-1 text-xs"
-                        >
-                            {currentScopes.map((scope) => (
-                                <option key={scope.key} value={scope.key}>
-                                    {scope.parent_scope_name ? scope.parent_scope_name + ' / ' + scope.name : scope.name}
-                                </option>
-                            ))}
-                        </select>
-                        <InputError className="mt-1" message={form.errors.scope_key} />
-                    </div>
+
 
                     <div>
                         <InputLabel htmlFor="quick-notes" value="Catatan (Optional)" />
