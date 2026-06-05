@@ -1376,13 +1376,9 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                      )}
                                                                  </button>
                                                              )}
-                                                             {a.avatar_url ? (
-                                                                 <img src={a.avatar_url} alt="" className="mt-0.5 h-9 w-9 shrink-0 self-center rounded-full border border-slate-200 object-cover" />
-                                                             ) : (
-                                                                 <span className="mt-0.5 flex h-9 w-9 shrink-0 self-center items-center justify-center rounded-full border border-slate-200 bg-green-100 text-green-600">
-                                                                     <UserIcon className="h-5 w-5" />
-                                                                 </span>
-                                                             )}
+                                                              {a.avatar_url && (
+                                                                  <img src={a.avatar_url} alt="" className="mt-0.5 h-9 w-9 shrink-0 self-center rounded-full border border-slate-200 object-cover" />
+                                                              )}
                                                              <div className="min-w-0 flex-1">
                                                                  <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">
                                                                      {a.no_ahli && <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-green-500" title={`No. Ahli: ${a.no_ahli}`} />}{a.name}
