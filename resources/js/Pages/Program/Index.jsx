@@ -384,21 +384,21 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                 <div className="mt-3 space-y-2">
                     <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-green-300 hover:bg-green-50/50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50 has-[:checked]:text-green-800">
                         <input type="checkbox" checked={f.data.default_laporan} onChange={(e) => f.setData('default_laporan', e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                        Laporan <span className="font-normal text-slate-400">(default)</span>
+                        Laporan
                     </label>
                     <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50/50 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50 has-[:checked]:text-amber-800">
                         <input type="checkbox" checked={f.data.default_mesyuarat} onChange={(e) => f.setData('default_mesyuarat', e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
-                        Mesyuarat <span className="font-normal text-slate-400">(default)</span>
+                        Mesyuarat
                     </label>
                     <div>
-                        <InputLabel value="Kumpulan AJK (default)" />
+                        <InputLabel value="Kumpulan AJK" />
                         <select value={f.data.default_committee_group} onChange={(e) => f.setData('default_committee_group', e.target.value)} disabled={ajkLocked} className="input-field mt-1 text-xs">
                             <option value="">Pilih</option>
                             {committeeGroupOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                         </select>
                     </div>
                     <div>
-                        <InputLabel value="Group Pemilih (default)" />
+                        <InputLabel value="Group Pemilih" />
                         <div className="mt-1 flex flex-wrap gap-2">
                             {groupPemilihOptions.map((opt) => {
                                 const checked = (f.data.default_group_pemilih_filters ?? []).includes(opt.id);
@@ -414,7 +414,7 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                         </div>
                     </div>
                     <div>
-                        <InputLabel value="Kongsi dengan (default)" />
+                        <InputLabel value="Kongsi dengan" />
                         <div className="mt-1 space-y-3">
                             {shareableUsers.length === 0 ? <p className="text-xs text-slate-400">Tiada pengguna</p> : (() => {
                                 const groups = { jprd: [], udm: [], cawangan: [] };
