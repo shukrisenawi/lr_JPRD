@@ -1034,6 +1034,12 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         const u = URL.createObjectURL(f.data.gambar); setPreviewUrl(u); return () => URL.revokeObjectURL(u);
     }, [f.data.gambar, f.data.gambar_url]);
 
+    useEffect(() => {
+        if (!f.data.group_id || isEditing) return;
+        const g = groups.find((gr) => String(gr.id) === f.data.group_id);
+        if (g) { f.setData('has_laporan', g.default_laporan); f.setData('is_mesyuarat', g.default_mesyuarat); }
+    }, [f.data.group_id]);
+
     const isEditing = editingId !== null;
     const submitProgram = (e) => {
         e.preventDefault();
@@ -1113,7 +1119,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                     <div><RequiredLabel htmlFor="tarikh" value="Tarikh" /><TextInput id="tarikh" type="date" required value={f.data.tarikh} onChange={(e) => f.setData('tarikh', e.target.value)} className="mt-1 w-full text-xs" /><InputError className="mt-1" message={f.errors.tarikh} /></div>
                                     <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="mt-1 w-full text-xs" /><InputError className="mt-1" message={f.errors.masa} /></div>
                                 </div>
-                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => { const gid = e.target.value; const g = groups.find((gr) => String(gr.id) === gid); f.setData({ group_id: gid, has_laporan: g ? g.default_laporan : false, is_mesyuarat: g ? g.default_mesyuarat : false }); }} className="input-field mt-1 text-xs"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.group_id} /></div>
+                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1 text-xs"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.group_id} /></div>
                                 <div><InputLabel htmlFor="committee_group_filters" value="Kumpulan AJK" /><select id="committee_group_filters" value={f.data.committee_group_filters} onChange={(e) => f.setData('committee_group_filters', e.target.value)} disabled={f.data.group_pemilih_filters.length > 0} className="input-field mt-1 text-xs"><option value="">Pilih</option>{committeeGroupOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select><InputError className="mt-1" message={f.errors.committee_group_filters} /></div>
                                 <div><InputLabel htmlFor="group_pemilih_filters" value="Group Pemilih (pilih lebih dari satu)" /><div className="mt-1 flex flex-wrap gap-2">{groupPemilihOptions.map((opt) => { const gmLocked = f.data.committee_group_filters !== ''; const checked = (f.data.group_pemilih_filters ?? []).includes(opt.id); return (<label key={opt.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${gmLocked ? 'cursor-not-allowed opacity-50' : ''} ${checked ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:bg-green-50/50'}`}><input type="checkbox" checked={checked} onChange={() => { const current = f.data.group_pemilih_filters ?? []; f.setData('group_pemilih_filters', checked ? current.filter((v) => v !== opt.id) : [...current, opt.id]); }} disabled={gmLocked} className="h-3.5 w-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500" /><span>{opt.nama_group}</span></label>); })}</div><InputError className="mt-1" message={f.errors.group_pemilih_filters} /></div>
                                 <div>
