@@ -15,6 +15,7 @@ class ProgramGroup extends Model
         'default_mesyuarat',
         'default_committee_group',
         'default_group_pemilih_filters',
+        'default_shared_user_ids',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class ProgramGroup extends Model
             'default_laporan' => 'boolean',
             'default_mesyuarat' => 'boolean',
             'default_group_pemilih_filters' => 'array',
+            'default_shared_user_ids' => 'array',
         ];
     }
 

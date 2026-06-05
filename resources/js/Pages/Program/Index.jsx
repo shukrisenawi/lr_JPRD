@@ -353,9 +353,9 @@ function committeeScopeLabel(badge) {
     return badge.scope_name;
 }
 
-function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOptions }) {
+function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOptions, shareableUsers }) {
     const [editingId, setEditingId] = useState(null);
-    const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false, default_committee_group: '', default_group_pemilih_filters: [] });
+    const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false, default_committee_group: '', default_group_pemilih_filters: [], default_shared_user_ids: [] });
     const submit = (e) => {
         e.preventDefault();
         if (editingId) { f.put(route('program.groups.update', editingId), { preserveScroll: true, onSuccess: () => { setEditingId(null); f.reset(); } }); return; }
@@ -413,6 +413,22 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                             })}
                         </div>
                     </div>
+                    <div>
+                        <InputLabel value="Kongsi dengan (default)" />
+                        <div className="mt-1 flex max-h-40 flex-col gap-1 overflow-y-auto rounded-md border border-slate-200 bg-white p-2">
+                            {shareableUsers.length === 0 ? <p className="text-xs text-slate-400">Tiada pengguna</p> : shareableUsers.map((u) => {
+                                const checked = (f.data.default_shared_user_ids ?? []).includes(u.id);
+                                return (
+                                    <label key={u.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-100 has-[:checked]:bg-blue-50 has-[:checked]:text-blue-800">
+                                        <input type="checkbox" checked={checked}
+                                            onChange={() => { const current = f.data.default_shared_user_ids ?? []; f.setData('default_shared_user_ids', checked ? current.filter((v) => v !== u.id) : [...current, u.id]); }}
+                                            className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                        <span className="truncate">{u.name}</span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
                 <div className="mt-3 flex justify-end">
                     {editingId && <button onClick={() => { setEditingId(null); f.reset(); f.clearErrors(); }} className="btn-ghost text-xs mr-2">Batal</button>}
@@ -450,10 +466,15 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                                             Pemilih: {(g.default_group_pemilih_filters ?? []).length} group
                                         </span>
                                     )}
+                                    {(g.default_shared_user_ids ?? []).length > 0 && (
+                                        <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                                            Share: {(g.default_shared_user_ids ?? []).length} org
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex shrink-0 gap-1.5">
-                                <button onClick={() => { setEditingId(g.id); f.setData({ name: g.name, default_laporan: g.default_laporan, default_mesyuarat: g.default_mesyuarat, default_committee_group: g.default_committee_group ?? '', default_group_pemilih_filters: g.default_group_pemilih_filters ?? [] }); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
+                                <button onClick={() => { setEditingId(g.id); f.setData({ name: g.name, default_laporan: g.default_laporan, default_mesyuarat: g.default_mesyuarat, default_committee_group: g.default_committee_group ?? '', default_group_pemilih_filters: g.default_group_pemilih_filters ?? [], default_shared_user_ids: g.default_shared_user_ids ?? [] }); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
                                 <button onClick={() => del(g)} className="rounded-md bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition hover:from-rose-500 hover:to-red-400">Padam</button>
                             </div>
                         </div>
@@ -1205,7 +1226,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                     </section>
                 )}
 
-                {tab === 'group-program' && <ProgramGroupManager groups={groups} committeeGroupOptions={committeeGroupOptions} groupPemilihOptions={groupPemilihOptions} />}
+                {tab === 'group-program' && <ProgramGroupManager groups={groups} committeeGroupOptions={committeeGroupOptions} groupPemilihOptions={groupPemilihOptions} shareableUsers={shareableUsers} />}
 
 {tab === 'senarai-program' && (selectedProgram ? (
                     <section className="space-y-3">

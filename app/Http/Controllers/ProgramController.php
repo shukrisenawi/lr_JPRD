@@ -261,6 +261,7 @@ class ProgramController extends Controller
                     'default_mesyuarat' => $group->default_mesyuarat,
                     'default_committee_group' => $group->default_committee_group,
                     'default_group_pemilih_filters' => $group->default_group_pemilih_filters ?? [],
+                    'default_shared_user_ids' => $group->default_shared_user_ids ?? [],
                     'programs_count' => $group->programs()->count(),
                 ])
                 ->values(),
@@ -294,6 +295,11 @@ class ProgramController extends Controller
             'gambar' => $gambarPath,
             'user_id' => $request->user()->id,
         ]);
+
+        $group = $program->group;
+        if ($group && !empty($group->default_shared_user_ids)) {
+            $program->sharedUsers()->sync($group->default_shared_user_ids);
+        }
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
@@ -721,6 +727,8 @@ class ProgramController extends Controller
             'default_committee_group' => ['nullable', 'string', 'max:50'],
             'default_group_pemilih_filters' => ['nullable', 'array'],
             'default_group_pemilih_filters.*' => ['integer', 'exists:group_pemilihs,id'],
+            'default_shared_user_ids' => ['nullable', 'array'],
+            'default_shared_user_ids.*' => ['integer'],
         ]);
 
         ProgramGroup::query()->create([
@@ -730,6 +738,7 @@ class ProgramController extends Controller
             'default_mesyuarat' => $validated['default_mesyuarat'] ?? false,
             'default_committee_group' => $validated['default_committee_group'] ?? null,
             'default_group_pemilih_filters' => $validated['default_group_pemilih_filters'] ?? [],
+            'default_shared_user_ids' => $validated['default_shared_user_ids'] ?? [],
         ]);
 
         return redirect()
@@ -748,6 +757,8 @@ class ProgramController extends Controller
             'default_committee_group' => ['nullable', 'string', 'max:50'],
             'default_group_pemilih_filters' => ['nullable', 'array'],
             'default_group_pemilih_filters.*' => ['integer', 'exists:group_pemilihs,id'],
+            'default_shared_user_ids' => ['nullable', 'array'],
+            'default_shared_user_ids.*' => ['integer'],
         ]);
 
         $group->update([
@@ -756,6 +767,7 @@ class ProgramController extends Controller
             'default_mesyuarat' => $validated['default_mesyuarat'] ?? $group->default_mesyuarat,
             'default_committee_group' => $validated['default_committee_group'] ?? $group->default_committee_group,
             'default_group_pemilih_filters' => $validated['default_group_pemilih_filters'] ?? $group->default_group_pemilih_filters,
+            'default_shared_user_ids' => $validated['default_shared_user_ids'] ?? $group->default_shared_user_ids,
         ]);
 
         return redirect()
