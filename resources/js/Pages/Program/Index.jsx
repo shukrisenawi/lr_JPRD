@@ -82,20 +82,6 @@ function IconBtn({ label, children, className = '', ...props }) {
         className={`inline-flex h-6 w-6 items-center justify-center rounded-md border transition ${className}`} {...props}>{children}</button>;
 }
 
-function ProgramImageModal({ program, onClose }) {
-    if (!program?.gambar_url) return null;
-    return (
-        <Modal show={Boolean(program?.gambar_url)} onClose={onClose} maxWidth="2xl">
-            <div className="relative">
-                <button onClick={onClose} className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70">
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                </button>
-                <img src={program.gambar_url} alt={program.tajuk} className="max-h-[70vh] w-full object-contain" />
-            </div>
-        </Modal>
-    );
-}
-
 function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
     if (!program) return null;
     return (
@@ -129,16 +115,11 @@ function ProgramShareModal({ program, users, shareForm, onClose, onSubmit }) {
     );
 }
 
-function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onPreviewImage, onSelect, onShare, onLaporan, onMesyuarat }) {
+function ProgramCard({ program, isActive, deleting, onDelete, onEdit, onSelect, onShare, onLaporan, onMesyuarat }) {
     const s = program.masa ? `${program.tarikh} • ${program.masa}` : program.tarikh;
     return (
         <div className={`rounded-md border bg-white p-2.5 shadow-sm transition hover:border-green-200 ${isActive ? 'border-green-200' : 'border-slate-200'}`}>
             <div role="button" tabIndex={0} onClick={() => onSelect(program.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(program.id); } }} className="w-full text-left outline-none">
-                {program.gambar_url && (
-                    <button onClick={(e) => { e.stopPropagation(); onPreviewImage(program); }} className="mb-2 block w-full overflow-hidden rounded-md">
-                        <img src={program.gambar_url} alt={program.tajuk} className="h-16 w-full object-cover transition hover:scale-[1.02]" />
-                    </button>
-                )}
                 <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">▣ {s}</p>
                 <h3 className="mt-1 text-xs font-bold leading-tight text-slate-800">{program.tajuk}</h3>
                 <p className="mt-0.5 text-xs text-slate-600">{program.tempat}</p>
@@ -1098,7 +1079,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [selAttendeeProgs, setSelAttendeeProgs] = useState(null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [selEditSub, setSelEditSub] = useState(null);
-    const [selImage, setSelImage] = useState(null);
     const [selShare, setSelShare] = useState(null);
     const [mesyuaratProgram, setMesyuaratProgram] = useState(null);
     const [deletingAtt, setDeletingAtt] = useState(null);
@@ -1141,11 +1121,9 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         selectedProgram.attendees.forEach((a) => (a.sub_program_ids ?? []).forEach((id) => ids.add(id)));
         return selectedProgram.sub_programs.filter((sp) => ids.has(sp.id));
     }, [selectedProgram?.attendees, selectedProgram?.sub_programs]);
-    const imgRef = useRef(null);
     const defaultTempat = 'Kompleks PAS Sg PAU';
-    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', committee_group_filters: '', group_pemilih_filters: [], has_laporan: false, is_mesyuarat: false, gambar: null, gambar_url: null });
+    const f = useForm({ tajuk: '', tempat: defaultTempat, tarikh: '', masa: '', group_id: '', committee_group_filters: '', group_pemilih_filters: [], has_laporan: false, is_mesyuarat: false });
     const sf = useForm({ shared_user_ids: [] });
-    const [previewUrl, setPreviewUrl] = useState(null);
     const showProgramSavedAlert = (isEditingMode) => Swal.fire({
         icon: 'success',
         title: 'Berjaya',
@@ -1156,11 +1134,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
         color: '#0f172a',
         iconColor: '#059669',
     });
-
-    useEffect(() => {
-        if (!(f.data.gambar instanceof File)) { setPreviewUrl(f.data.gambar_url || null); return; }
-        const u = URL.createObjectURL(f.data.gambar); setPreviewUrl(u); return () => URL.revokeObjectURL(u);
-    }, [f.data.gambar, f.data.gambar_url]);
 
     useEffect(() => {
         if (isEditing) return;
@@ -1197,15 +1170,14 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             return;
         }
         f.post(route('program.store'), {
-            forceFormData: f.data.gambar instanceof File,
             onSuccess: () => window.location.href = route('program.index'),
         });
     };
 
     const selectProg = (id) => { setTab('senarai-program'); setSubTab(null); router.get(route('program.index'), { program: id }, { preserveScroll: true, preserveState: true, replace: true }); };
     const back = () => { setSelAttendee(null); setSubTab(null); router.get(route('program.index'), {}, { preserveScroll: true, preserveState: true, replace: true }); };
-    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', committee_group_filters: Array.isArray(p.committee_group_filters) ? (p.committee_group_filters[0] ?? '') : (p.committee_group_filters ?? ''), group_pemilih_filters: p.group_pemilih_filters ?? [], has_laporan: p.has_laporan ?? false, is_mesyuarat: p.is_mesyuarat ?? false, gambar: null, gambar_url: p.gambar_url ?? null }); if (imgRef.current) imgRef.current.value = ''; setTab('tambah-program'); };
-    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'is_mesyuarat', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
+    const startEdit = (p) => { setEditingId(p.id); f.setData({ tajuk: p.tajuk ?? '', tempat: p.tempat ?? defaultTempat, tarikh: toHtmlDate(p.tarikh), masa: toHtmlTime(p.masa), group_id: p.group_id ?? '', committee_group_filters: Array.isArray(p.committee_group_filters) ? (p.committee_group_filters[0] ?? '') : (p.committee_group_filters ?? ''), group_pemilih_filters: p.group_pemilih_filters ?? [], has_laporan: p.has_laporan ?? false, is_mesyuarat: p.is_mesyuarat ?? false }); setTab('tambah-program'); };
+    const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'is_mesyuarat'); f.setData('tempat', defaultTempat); f.clearErrors(); };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
     const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
     const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } };
@@ -1252,21 +1224,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1 text-xs"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.group_id} /></div>
                                 <div><InputLabel htmlFor="committee_group_filters" value="Kumpulan AJK" /><select id="committee_group_filters" value={f.data.committee_group_filters} onChange={(e) => f.setData('committee_group_filters', e.target.value)} disabled={f.data.group_pemilih_filters.length > 0} className="input-field mt-1 text-xs"><option value="">Pilih</option>{committeeGroupOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select><InputError className="mt-1" message={f.errors.committee_group_filters} /></div>
                                 <div><InputLabel htmlFor="group_pemilih_filters" value="Group Pemilih (pilih lebih dari satu)" /><div className="mt-1 flex flex-wrap gap-2">{groupPemilihOptions.map((opt) => { const gmLocked = f.data.committee_group_filters !== ''; const checked = (f.data.group_pemilih_filters ?? []).includes(opt.id); return (<label key={opt.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${gmLocked ? 'cursor-not-allowed opacity-50' : ''} ${checked ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:bg-green-50/50'}`}><input type="checkbox" checked={checked} onChange={() => { const current = f.data.group_pemilih_filters ?? []; f.setData('group_pemilih_filters', checked ? current.filter((v) => v !== opt.id) : [...current, opt.id]); }} disabled={gmLocked} className="h-3.5 w-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500" /><span>{opt.nama_group}</span></label>); })}</div><InputError className="mt-1" message={f.errors.group_pemilih_filters} /></div>
-                                <div>
-                                    <InputLabel htmlFor="gambar" value="Gambar" />
-                                    <div className="mt-1 rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-                                            {previewUrl ? <img src={previewUrl} alt="preview" className="h-16 w-full rounded-lg object-cover sm:w-28" /> : <div className="flex h-16 w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-xs font-bold uppercase text-slate-500 sm:w-28">Tiada</div>}
-                                            <div className="min-w-0 flex-1">
-                                                <input id="gambar" ref={imgRef} type="file" accept="image/*"
-                                                    className="block w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 file:mr-2 file:rounded-md file:border file:border-slate-200 file:bg-green-50 file:px-2 file:py-0.5 file:text-xs file:font-bold file:text-green-700 hover:file:bg-green-100"
-                                                    onChange={(e) => f.setData('gambar', e.target.files?.[0] ?? null)} />
-                                                <p className="mt-1 text-xs text-slate-500">Gambar sehingga 2MB</p>
-                                                <InputError className="mt-1" message={f.errors.gambar} />
-                                            </div>
-                                        </div>
-                                </div>
-                            </div>
+
                         </div>
                         <label className="mt-2.5 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm cursor-pointer transition hover:border-green-300 hover:bg-green-50/50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50">
                             <input type="checkbox" checked={f.data.has_laporan} onChange={(e) => f.setData('has_laporan', e.target.checked)}
@@ -1454,7 +1412,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                             {programs.length === 0 ? <div className="card-dashed py-4 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
                                 <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
-                                    onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg}
+                                    onDelete={delProgram} onEdit={startEdit} onShare={openShare} onSelect={selectProg}
                                     onLaporan={(prog) => router.get(route('program.laporan', prog.id))}
                                     onMesyuarat={openMesyuarat} />
                             ))}
@@ -1466,7 +1424,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             <AttendeeDetailModal key={selAttendee?.id ?? 'no-attendee'} attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={canEditNoAhli ? (a) => setEditNoAhli(a) : null} />
             <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
             <AttendeeSubProgramEditor key={selEditSub?.id} attendee={selEditSub} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSelEditSub(null)} />
-            <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
             <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
             {editNoAhli && canEditNoAhli && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
             <MesyuaratView program={mesyuaratProgram} onClose={closeMesyuarat} />
