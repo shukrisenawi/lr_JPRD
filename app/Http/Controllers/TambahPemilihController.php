@@ -61,11 +61,18 @@ class TambahPemilihController extends Controller
         $user->applyScopeToPemilihQuery($manualQuery);
         $manualVoters = $manualQuery->paginate(20);
 
+        $createdVoterId = (int) $request->query('created');
+        $createdVoter = null;
+        if ($createdVoterId) {
+            $createdVoter = PemilihRecord::find($createdVoterId);
+        }
+
         return Inertia::render('TambahPemilih/Index', [
             'dms' => $dms,
             'localitiesByDm' => $localitiesByDm,
             'culaCodes' => $culaCodes,
             'manualVoters' => $manualVoters,
+            'created_voter' => $createdVoter,
         ]);
     }
 
@@ -129,9 +136,9 @@ class TambahPemilihController extends Controller
         $validated['is_manual'] = true;
         $validated['created_by'] = $request->user()->id;
 
-        PemilihRecord::create($validated);
+        $voter = PemilihRecord::create($validated);
 
-        return redirect()->route('tambah-pemilih.index');
+        return redirect()->route('tambah-pemilih.index', ['created' => $voter->id]);
     }
 
     public function update(Request $request, PemilihRecord $pemilihRecord): RedirectResponse

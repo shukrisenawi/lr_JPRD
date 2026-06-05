@@ -27,7 +27,7 @@ function ListIcon({ className = 'h-5 w-5' }) {
     );
 }
 
-function FormTab({ dms, localitiesByDm, culaCodes }) {
+function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', no_kp: '', old_ic: '', no_ahli: '', phone_mobile: '', phone_home: '',
         address: '', dm: '', locality: '', gender: '', race: '',
@@ -59,7 +59,35 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
         });
     };
 
+    const avatarRef = useRef(null);
+    const [uploading, setUploading] = useState(false);
+
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploading(true);
+        try {
+            const form = new FormData();
+            form.append('avatar', file);
+            const res = await fetch(route('pemilih.avatar.upload', createdVoter.id), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: form,
+            });
+            if (!res.ok) throw new Error('Upload gagal');
+            const data = await res.json();
+            if (data.success) {
+                createdVoter.avatar_url = data.avatar_url;
+            }
+        } catch {
+            alert('Gagal muat naik gambar.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     return (
+        <>
         <form onSubmit={handleSubmit} className="card space-y-3 p-3 sm:p-4">
             <div>
                 <label className="label-field" htmlFor="name">Nama Pemilih <span className="text-rose-500">*</span></label>
@@ -167,6 +195,29 @@ function FormTab({ dms, localitiesByDm, culaCodes }) {
                 </button>
             </div>
         </form>
+        {createdVoter && (
+            <div className="card mt-3 space-y-3 p-3 sm:p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-green-700">Muat Naik Avatar</p>
+                <div className="flex items-center gap-3">
+                    <div className="relative shrink-0">
+                        {createdVoter.avatar_url ? (
+                            <img src={createdVoter.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover border border-slate-200" />
+                        ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
+                                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>
+                            </div>
+                        )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-800">{createdVoter.name}</p>
+                        <p className="text-xs text-slate-500">{createdVoter.no_kp || '-'}</p>
+                    </div>
+                    <input ref={avatarRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleAvatarUpload} className="hidden" />
+                    <button onClick={() => avatarRef.current?.click()} disabled={uploading} className="shrink-0 rounded-md border border-green-300 bg-white p-2 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
+                </div>
+            </div>
+        )}
+    </>
     );
 }
 
@@ -517,7 +568,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
 }
 
 export default function TambahPemilih() {
-    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] }, culaCodes = [] } = usePage().props;
+    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] }, culaCodes = [], created_voter: createdVoter } = usePage().props;
     const [tab, setTab] = useState('tambah');
 
     const tabs = [
@@ -553,7 +604,7 @@ export default function TambahPemilih() {
                     })}
                 </div>
 
-                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} />}
+                {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} createdVoter={createdVoter} />}
                 {tab === 'senarai' && <SenaraiTab manualVoters={manualVoters} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} />}
             </div>
         </AuthenticatedLayout>
