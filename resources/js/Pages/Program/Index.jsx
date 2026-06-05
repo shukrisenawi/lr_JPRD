@@ -1103,7 +1103,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 </div>
                             </div>
                         </div>
-                        <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm cursor-pointer transition hover:border-green-300 hover:bg-green-50/50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50">
+                        <label className="mt-2.5 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm cursor-pointer transition hover:border-green-300 hover:bg-green-50/50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50">
                             <input type="checkbox" checked={f.data.has_laporan} onChange={(e) => f.setData('has_laporan', e.target.checked)}
                                 className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500" />
                             <div>
@@ -1111,7 +1111,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                 <p className="text-xs text-slate-500">Papar butang laporan dalam senarai program</p>
                             </div>
                         </label>
-                        <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm cursor-pointer transition hover:border-amber-300 hover:bg-amber-50/50 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50">
+                        <label className="mt-2.5 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm cursor-pointer transition hover:border-amber-300 hover:bg-amber-50/50 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50">
                             <input type="checkbox" checked={f.data.is_mesyuarat} onChange={(e) => f.setData('is_mesyuarat', e.target.checked)}
                                 className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
                             <div>
