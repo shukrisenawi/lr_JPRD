@@ -11,7 +11,17 @@ class ProgramGroup extends Model
     protected $fillable = [
         'name',
         'user_id',
+        'default_laporan',
+        'default_mesyuarat',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'default_laporan' => 'boolean',
+            'default_mesyuarat' => 'boolean',
+        ];
+    }
 
     public function user(): BelongsTo
     {

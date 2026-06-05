@@ -257,6 +257,8 @@ class ProgramController extends Controller
                 ->map(fn (ProgramGroup $group) => [
                     'id' => $group->id,
                     'name' => $group->name,
+                    'default_laporan' => $group->default_laporan,
+                    'default_mesyuarat' => $group->default_mesyuarat,
                     'programs_count' => $group->programs()->count(),
                 ])
                 ->values(),
@@ -712,11 +714,15 @@ class ProgramController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'default_laporan' => ['nullable', 'boolean'],
+            'default_mesyuarat' => ['nullable', 'boolean'],
         ]);
 
         ProgramGroup::query()->create([
             'name' => $validated['name'],
             'user_id' => $request->user()->id,
+            'default_laporan' => $validated['default_laporan'] ?? false,
+            'default_mesyuarat' => $validated['default_mesyuarat'] ?? false,
         ]);
 
         return redirect()
@@ -730,10 +736,14 @@ class ProgramController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'default_laporan' => ['nullable', 'boolean'],
+            'default_mesyuarat' => ['nullable', 'boolean'],
         ]);
 
         $group->update([
             'name' => $validated['name'],
+            'default_laporan' => $validated['default_laporan'] ?? $group->default_laporan,
+            'default_mesyuarat' => $validated['default_mesyuarat'] ?? $group->default_mesyuarat,
         ]);
 
         return redirect()

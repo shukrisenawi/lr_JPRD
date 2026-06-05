@@ -355,7 +355,7 @@ function committeeScopeLabel(badge) {
 
 function ProgramGroupManager({ groups }) {
     const [editingId, setEditingId] = useState(null);
-    const f = useForm({ name: '' });
+    const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false });
     const submit = (e) => {
         e.preventDefault();
         if (editingId) { f.put(route('program.groups.update', editingId), { preserveScroll: true, onSuccess: () => { setEditingId(null); f.reset(); } }); return; }
@@ -363,15 +363,29 @@ function ProgramGroupManager({ groups }) {
     };
     const del = (g) => { if (window.confirm(`Padam group "${g.name}"?`)) router.delete(route('program.groups.destroy', g.id), { preserveScroll: true, onSuccess: () => { if (editingId === g.id) { setEditingId(null); f.reset(); } } }); };
 
+    const toggleDefault = (g, field) => {
+        router.put(route('program.groups.update', g.id), { name: g.name, [field]: !g[field] }, { preserveScroll: true });
+    };
+
     return (
         <section className="grid gap-3 xl:grid-cols-[1fr_1fr]">
             <form onSubmit={submit} className="card p-3">
                 <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{editingId ? 'Edit Group' : 'Tambah Group'}</p>
-                <h3 className="mt-0.5 text-sm font-bold text-slate-800">{editingId ? 'Kemaskini nama' : 'Daftar group baru'}</h3>
+                <h3 className="mt-0.5 text-sm font-bold text-slate-800">{editingId ? 'Kemaskini tetapan' : 'Daftar group baru'}</h3>
                 <div className="mt-3">
                     <RequiredLabel htmlFor="gn" value="Nama Group" />
                     <TextInput id="gn" required value={f.data.name} onChange={(e) => f.setData('name', e.target.value)} className="mt-1 w-full text-xs" />
                     <InputError className="mt-1" message={f.errors.name} />
+                </div>
+                <div className="mt-3 space-y-2">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-green-300 hover:bg-green-50/50 has-[:checked]:border-green-300 has-[:checked]:bg-green-50 has-[:checked]:text-green-800">
+                        <input type="checkbox" checked={f.data.default_laporan} onChange={(e) => f.setData('default_laporan', e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                        Laporan <span className="font-normal text-slate-400">(default)</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-amber-300 hover:bg-amber-50/50 has-[:checked]:border-amber-300 has-[:checked]:bg-amber-50 has-[:checked]:text-amber-800">
+                        <input type="checkbox" checked={f.data.default_mesyuarat} onChange={(e) => f.setData('default_mesyuarat', e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
+                        Mesyuarat <span className="font-normal text-slate-400">(default)</span>
+                    </label>
                 </div>
                 <div className="mt-3 flex justify-end">
                     {editingId && <button onClick={() => { setEditingId(null); f.reset(); f.clearErrors(); }} className="btn-ghost text-xs mr-2">Batal</button>}
@@ -385,9 +399,24 @@ function ProgramGroupManager({ groups }) {
                 <div className="mt-3 space-y-2">
                     {groups.length === 0 ? <div className="card-dashed py-4 text-xs">Belum ada</div> : groups.map((g) => (
                         <div key={g.id} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                            <div><p className="text-xs font-bold text-slate-800">{g.name}</p><p className="text-xs text-slate-500">{g.programs_count} program</p></div>
-                            <div className="flex gap-1.5">
-                                <button onClick={() => { setEditingId(g.id); f.setData('name', g.name); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
+                            <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-800">{g.name}</p>
+                                <p className="text-xs text-slate-500">{g.programs_count} program</p>
+                                <div className="mt-1 flex gap-2">
+                                    <span role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleDefault(g, 'default_laporan'); } }}
+                                        className={`flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold transition ${g.default_laporan ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}
+                                        onClick={(e) => { e.stopPropagation(); toggleDefault(g, 'default_laporan'); }}>
+                                        {g.default_laporan ? '☑' : '☐'} Laporan
+                                    </span>
+                                    <span role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleDefault(g, 'default_mesyuarat'); } }}
+                                        className={`flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold transition ${g.default_mesyuarat ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'}`}
+                                        onClick={(e) => { e.stopPropagation(); toggleDefault(g, 'default_mesyuarat'); }}>
+                                        {g.default_mesyuarat ? '☑' : '☐'} Mesyuarat
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex shrink-0 gap-1.5">
+                                <button onClick={() => { setEditingId(g.id); f.setData({ name: g.name, default_laporan: g.default_laporan, default_mesyuarat: g.default_mesyuarat }); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
                                 <button onClick={() => del(g)} className="rounded-md bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition hover:from-rose-500 hover:to-red-400">Padam</button>
                             </div>
                         </div>
@@ -1084,7 +1113,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                     <div><RequiredLabel htmlFor="tarikh" value="Tarikh" /><TextInput id="tarikh" type="date" required value={f.data.tarikh} onChange={(e) => f.setData('tarikh', e.target.value)} className="mt-1 w-full text-xs" /><InputError className="mt-1" message={f.errors.tarikh} /></div>
                                     <div><InputLabel htmlFor="masa" value="Masa" /><TextInput id="masa" type="time" value={f.data.masa} onChange={(e) => f.setData('masa', e.target.value)} className="mt-1 w-full text-xs" /><InputError className="mt-1" message={f.errors.masa} /></div>
                                 </div>
-                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => f.setData('group_id', e.target.value)} className="input-field mt-1 text-xs"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.group_id} /></div>
+                                <div><RequiredLabel htmlFor="group_id" value="Group" /><select id="group_id" required value={f.data.group_id} onChange={(e) => { const gid = e.target.value; const g = groups.find((gr) => String(gr.id) === gid); f.setData({ group_id: gid, has_laporan: g ? g.default_laporan : false, is_mesyuarat: g ? g.default_mesyuarat : false }); }} className="input-field mt-1 text-xs"><option value="">Pilih</option>{groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select><InputError className="mt-1" message={f.errors.group_id} /></div>
                                 <div><InputLabel htmlFor="committee_group_filters" value="Kumpulan AJK" /><select id="committee_group_filters" value={f.data.committee_group_filters} onChange={(e) => f.setData('committee_group_filters', e.target.value)} disabled={f.data.group_pemilih_filters.length > 0} className="input-field mt-1 text-xs"><option value="">Pilih</option>{committeeGroupOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select><InputError className="mt-1" message={f.errors.committee_group_filters} /></div>
                                 <div><InputLabel htmlFor="group_pemilih_filters" value="Group Pemilih (pilih lebih dari satu)" /><div className="mt-1 flex flex-wrap gap-2">{groupPemilihOptions.map((opt) => { const gmLocked = f.data.committee_group_filters !== ''; const checked = (f.data.group_pemilih_filters ?? []).includes(opt.id); return (<label key={opt.id} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-bold transition ${gmLocked ? 'cursor-not-allowed opacity-50' : ''} ${checked ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:bg-green-50/50'}`}><input type="checkbox" checked={checked} onChange={() => { const current = f.data.group_pemilih_filters ?? []; f.setData('group_pemilih_filters', checked ? current.filter((v) => v !== opt.id) : [...current, opt.id]); }} disabled={gmLocked} className="h-3.5 w-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500" /><span>{opt.nama_group}</span></label>); })}</div><InputError className="mt-1" message={f.errors.group_pemilih_filters} /></div>
                                 <div>
