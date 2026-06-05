@@ -114,6 +114,7 @@ class CommitteeController extends Controller
                 ->get()
                 ->map(fn (CommitteeMembership $membership) => [
                     'id' => $membership->id,
+                    'pemilih_record_id' => $membership->pemilih_record_id,
                     'level' => $membership->level,
                     'scope_key' => $membership->scope_key,
                     'scope_name' => $membership->scope_name,
@@ -135,6 +136,9 @@ class CommitteeController extends Controller
                         'dm' => $membership->voter?->dm,
                         'locality' => $membership->voter?->locality,
                         'status' => $membership->voter?->status,
+                        'avatar' => $membership->voter?->avatar,
+                        'updated_at' => $membership->voter?->updated_at,
+                        'avatar_url' => $membership->voter?->avatarUrl(),
                     ],
                 ])
                 ->values(),
