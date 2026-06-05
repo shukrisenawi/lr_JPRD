@@ -199,6 +199,8 @@ function DatabaseBackupPanel({ isMasterAdmin }) {
         xhr.send(formData);
     };
 
+    const filenameHint = 'DB_PAS_' + new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') + '_' + new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-').replace(' ', '') + '.sql';
+
     return (
         <section className="card p-4">
             <div>
@@ -210,16 +212,17 @@ function DatabaseBackupPanel({ isMasterAdmin }) {
                 <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                     <div className="flex items-center gap-2">
                         <Icon name="database" className="h-5 w-5 text-slate-400" />
-                        <span className="text-xs font-medium text-slate-600">Eksport pangkalan data (SQL)</span>
+                        <span className="text-xs font-medium text-slate-600">Muat turun backup pangkalan data</span>
                     </div>
                     <a
                         href={route('settings.database.export')}
                         className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-blue-700 to-blue-500 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:from-blue-600 hover:to-blue-400"
                     >
                         <Icon name="download" className="h-3.5 w-3.5" />
-                        Export
+                        Backup
                     </a>
                 </div>
+                <p className="text-[10px] text-slate-400">Contoh nama fail: {filenameHint}</p>
 
                 {isMasterAdmin && (
                     <form onSubmit={handleImport} className="flex flex-col gap-2">

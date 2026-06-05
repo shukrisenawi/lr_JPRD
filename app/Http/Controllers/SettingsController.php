@@ -94,7 +94,7 @@ class SettingsController extends Controller
         abort_unless($request->user()->isMasterAdmin(), 403);
 
         $db = config('database.connections.mysql');
-        $filename = 'Pemilih_' . now('Asia/Kuala_Lumpur')->format('d-m-Y_H.iA') . '.sql';
+        $filename = 'DB_PAS_' . now('Asia/Kuala_Lumpur')->format('d-m-Y_H-iA') . '.sql';
 
         $headers = [
             'Content-Type' => 'application/octet-stream',
