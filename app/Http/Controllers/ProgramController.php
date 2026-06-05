@@ -1047,7 +1047,7 @@ class ProgramController extends Controller
                         ->unique('pemilih_record_id')
                         ->values();
 
-                    $programIds = Program::where('committee_group_filters', $program->committee_group_filters)
+                    $programIds = Program::where('committee_group_filters', $program->getRawOriginal('committee_group_filters'))
                         ->pluck('id');
 
                     $attendanceCounts = ProgramAttendee::whereIn('program_id', $programIds)
