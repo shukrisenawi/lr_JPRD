@@ -353,9 +353,9 @@ function committeeScopeLabel(badge) {
     return badge.scope_name;
 }
 
-function ProgramGroupManager({ groups }) {
+function ProgramGroupManager({ groups, committeeGroupOptions }) {
     const [editingId, setEditingId] = useState(null);
-    const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false });
+    const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false, default_committee_group: '' });
     const submit = (e) => {
         e.preventDefault();
         if (editingId) { f.put(route('program.groups.update', editingId), { preserveScroll: true, onSuccess: () => { setEditingId(null); f.reset(); } }); return; }
@@ -366,6 +366,8 @@ function ProgramGroupManager({ groups }) {
     const toggleDefault = (g, field) => {
         router.put(route('program.groups.update', g.id), { name: g.name, [field]: !g[field] }, { preserveScroll: true });
     };
+
+    const ajkLabel = (val) => val ? (committeeGroupOptions.find((o) => o.value === val)?.label ?? val) : '';
 
     return (
         <section className="grid gap-3 xl:grid-cols-[1fr_1fr]">
@@ -386,6 +388,13 @@ function ProgramGroupManager({ groups }) {
                         <input type="checkbox" checked={f.data.default_mesyuarat} onChange={(e) => f.setData('default_mesyuarat', e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
                         Mesyuarat <span className="font-normal text-slate-400">(default)</span>
                     </label>
+                    <div>
+                        <InputLabel value="Kumpulan AJK (default)" />
+                        <select value={f.data.default_committee_group} onChange={(e) => f.setData('default_committee_group', e.target.value)} className="input-field mt-1 text-xs">
+                            <option value="">Pilih</option>
+                            {committeeGroupOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                    </div>
                 </div>
                 <div className="mt-3 flex justify-end">
                     {editingId && <button onClick={() => { setEditingId(null); f.reset(); f.clearErrors(); }} className="btn-ghost text-xs mr-2">Batal</button>}
@@ -402,7 +411,7 @@ function ProgramGroupManager({ groups }) {
                             <div className="min-w-0">
                                 <p className="text-xs font-bold text-slate-800">{g.name}</p>
                                 <p className="text-xs text-slate-500">{g.programs_count} program</p>
-                                <div className="mt-1 flex gap-2">
+                                <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1">
                                     <span role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleDefault(g, 'default_laporan'); } }}
                                         className={`flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold transition ${g.default_laporan ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}
                                         onClick={(e) => { e.stopPropagation(); toggleDefault(g, 'default_laporan'); }}>
@@ -413,10 +422,15 @@ function ProgramGroupManager({ groups }) {
                                         onClick={(e) => { e.stopPropagation(); toggleDefault(g, 'default_mesyuarat'); }}>
                                         {g.default_mesyuarat ? '☑' : '☐'} Mesyuarat
                                     </span>
+                                    {g.default_committee_group && (
+                                        <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                                            AJK: {ajkLabel(g.default_committee_group)}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex shrink-0 gap-1.5">
-                                <button onClick={() => { setEditingId(g.id); f.setData({ name: g.name, default_laporan: g.default_laporan, default_mesyuarat: g.default_mesyuarat }); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
+                                <button onClick={() => { setEditingId(g.id); f.setData({ name: g.name, default_laporan: g.default_laporan, default_mesyuarat: g.default_mesyuarat, default_committee_group: g.default_committee_group ?? '' }); f.clearErrors(); }} className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 hover:text-green-700">Edit</button>
                                 <button onClick={() => del(g)} className="rounded-md bg-gradient-to-r from-rose-600 to-pink-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition hover:from-rose-500 hover:to-red-400">Padam</button>
                             </div>
                         </div>
@@ -1036,9 +1050,13 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
 
     useEffect(() => {
         if (isEditing) return;
-        if (!f.data.group_id) { f.setData('has_laporan', false); f.setData('is_mesyuarat', false); return; }
+        if (!f.data.group_id) { f.setData('has_laporan', false); f.setData('is_mesyuarat', false); f.setData('committee_group_filters', ''); return; }
         const g = groups.find((gr) => String(gr.id) === f.data.group_id);
-        if (g) { f.setData('has_laporan', g.default_laporan); f.setData('is_mesyuarat', g.default_mesyuarat); }
+        if (g) {
+            f.setData('has_laporan', g.default_laporan);
+            f.setData('is_mesyuarat', g.default_mesyuarat);
+            f.setData('committee_group_filters', g.default_committee_group ?? '');
+        }
     }, [f.data.group_id]);
 
     const isEditing = editingId !== null;
@@ -1163,7 +1181,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                     </section>
                 )}
 
-                {tab === 'group-program' && <ProgramGroupManager groups={groups} />}
+                {tab === 'group-program' && <ProgramGroupManager groups={groups} committeeGroupOptions={committeeGroupOptions} />}
 
 {tab === 'senarai-program' && (selectedProgram ? (
                     <section className="space-y-3">

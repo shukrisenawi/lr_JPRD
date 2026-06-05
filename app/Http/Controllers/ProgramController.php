@@ -259,6 +259,7 @@ class ProgramController extends Controller
                     'name' => $group->name,
                     'default_laporan' => $group->default_laporan,
                     'default_mesyuarat' => $group->default_mesyuarat,
+                    'default_committee_group' => $group->default_committee_group,
                     'programs_count' => $group->programs()->count(),
                 ])
                 ->values(),
@@ -716,6 +717,7 @@ class ProgramController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'default_laporan' => ['nullable', 'boolean'],
             'default_mesyuarat' => ['nullable', 'boolean'],
+            'default_committee_group' => ['nullable', 'string', 'max:50'],
         ]);
 
         ProgramGroup::query()->create([
@@ -723,6 +725,7 @@ class ProgramController extends Controller
             'user_id' => $request->user()->id,
             'default_laporan' => $validated['default_laporan'] ?? false,
             'default_mesyuarat' => $validated['default_mesyuarat'] ?? false,
+            'default_committee_group' => $validated['default_committee_group'] ?? null,
         ]);
 
         return redirect()
@@ -738,12 +741,14 @@ class ProgramController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'default_laporan' => ['nullable', 'boolean'],
             'default_mesyuarat' => ['nullable', 'boolean'],
+            'default_committee_group' => ['nullable', 'string', 'max:50'],
         ]);
 
         $group->update([
             'name' => $validated['name'],
             'default_laporan' => $validated['default_laporan'] ?? $group->default_laporan,
             'default_mesyuarat' => $validated['default_mesyuarat'] ?? $group->default_mesyuarat,
+            'default_committee_group' => $validated['default_committee_group'] ?? $group->default_committee_group,
         ]);
 
         return redirect()

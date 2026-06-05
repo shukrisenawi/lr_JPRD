@@ -13,6 +13,7 @@ class ProgramGroup extends Model
         'user_id',
         'default_laporan',
         'default_mesyuarat',
+        'default_committee_group',
     ];
 
     protected function casts(): array
