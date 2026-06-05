@@ -817,7 +817,7 @@ function MesyuaratView({ program, onClose }) {
         && Array.isArray(program.committee_group_filters)
         && program.committee_group_filters.length > 0
         && program.committee_group_filters[0];
-    const [tab, setTab] = useState(hasCommittee ? 'kehadiran' : 'fail');
+    const [tab, setTab] = useState('fail');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
