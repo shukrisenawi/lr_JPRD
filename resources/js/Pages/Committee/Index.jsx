@@ -693,6 +693,33 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const expandedGroupRef = useRef(null);
 
     const [multiPosExpand, setMultiPosExpand] = useState({});
+    const [uploadingAvatar, setUploadingAvatar] = useState({});
+    const avatarInputRefs = useRef({});
+
+    const handleAvatarUpload = async (m, e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const id = m.id;
+        setUploadingAvatar(prev => ({ ...prev, [id]: true }));
+        try {
+            const form = new FormData();
+            form.append('avatar', file);
+            const res = await fetch(route('pemilih.avatar.upload', m.pemilih_record_id), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: form,
+            });
+            if (!res.ok) throw new Error('Upload gagal');
+            const data = await res.json();
+            if (data.success) {
+                m.voter.avatar_url = data.avatar_url;
+            }
+        } catch {
+            alert('Gagal muat naik gambar.');
+        } finally {
+            setUploadingAvatar(prev => ({ ...prev, [id]: false }));
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -1152,14 +1179,26 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                      const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
                                                                      const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.key !== `${pos.id}-${m.scope_key || ''}`);
                                                                      const multiKey = `${pos.id}-${m.id}`;
-                                                                     const showMore = multiPosExpand[multiKey];
-                                                                     return (
-                                                                         <div key={m.id} className="rounded-md border border-green-50 bg-green-50/50 px-2.5 py-2">
-                                                                             <p className="text-xs font-bold text-slate-800">{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
-                                                                             <div className="mt-0.5 space-y-0.5">
-                                                                                 <p className="text-[10px] text-slate-400">No Kp: {m.voter.no_kp || m.voter.old_ic || '-'}</p>
-                                                                                 <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
-                                                                             </div>
+                                                                      const showMore = multiPosExpand[multiKey];
+                                                                      const avatarId = m.id;
+                                                                      return (
+                                                                          <div key={m.id} className="rounded-md border border-green-50 bg-green-50/50 px-2.5 py-2">
+                                                                              <div className="flex items-start gap-2.5">
+                                                                                  {m.voter.avatar_url ? (
+                                                                                      <img src={m.voter.avatar_url} alt="" className="mt-0.5 h-10 w-10 shrink-0 self-center rounded-full border border-slate-200 object-cover" />
+                                                                                  ) : null}
+                                                                                  <div className="min-w-0 flex-1">
+                                                                                      <p className="text-xs font-bold text-slate-800">{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
+                                                                                      <div className="mt-0.5 space-y-0.5">
+                                                                                          <p className="text-[10px] text-slate-400">No Kp: {m.voter.no_kp || m.voter.old_ic || '-'}</p>
+                                                                                          <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
+                                                                                      </div>
+                                                                                  </div>
+                                                                                  <div className="flex shrink-0 items-start gap-1">
+                                                                                      <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={(e) => handleAvatarUpload(m, e)} className="hidden" />
+                                                                                      <button onClick={() => avatarInputRefs.current[avatarId]?.click()} disabled={uploadingAvatar[avatarId]} className="shrink-0 rounded border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50 disabled:opacity-50">{uploadingAvatar[avatarId] ? '...' : 'Muat Naik Avatar'}</button>
+                                                                                  </div>
+                                                                              </div>
                                                                              {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}
                                                                               {voterPositions.length > 0 ? (
                                                                                   <div className="mt-1">
