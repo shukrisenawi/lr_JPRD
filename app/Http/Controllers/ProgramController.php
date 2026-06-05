@@ -493,7 +493,8 @@ class ProgramController extends Controller
 
     public function search(Request $request, Program $program, PemilihReportService $reportService)
     {
-        $this->ensureAccessible($request->user()->id, $program);
+        $user = $request->user();
+        $this->ensureAccessible($user->id, $program);
 
         $path = Setting::valueOf('pemilih_report_file_path', PemilihReportService::DEFAULT_SAMPLE_PATH);
 
@@ -501,65 +502,67 @@ class ProgramController extends Controller
             (string) $request->query('q', ''),
             $path,
             8,
-            $request->user(),
+            $user,
         );
 
-        $rawFilter = $program->committee_group_filters;
-        $filter = is_array($rawFilter) ? ($rawFilter[0] ?? null) : $rawFilter;
-        if ($filter) {
-            [$groupId, $level] = explode(':', $filter) + [null, null];
+        if (! $user->isMasterAdmin()) {
+            $rawFilter = $program->committee_group_filters;
+            $filter = is_array($rawFilter) ? ($rawFilter[0] ?? null) : $rawFilter;
+            if ($filter) {
+                [$groupId, $level] = explode(':', $filter) + [null, null];
 
-            if ($groupId) {
-                $positionIds = CommitteeGroup::find((int) $groupId)
-                    ?->positions()
-                    ?->pluck('committee_positions.id') ?? collect();
+                if ($groupId) {
+                    $positionIds = CommitteeGroup::find((int) $groupId)
+                        ?->positions()
+                        ?->pluck('committee_positions.id') ?? collect();
 
-                if ($positionIds->isNotEmpty()) {
-                    $query = CommitteeMembership::whereIn('committee_position_id', $positionIds);
+                    if ($positionIds->isNotEmpty()) {
+                        $query = CommitteeMembership::whereIn('committee_position_id', $positionIds);
 
-                    if ($level) {
-                        $query->where('level', $level);
+                        if ($level) {
+                            $query->where('level', $level);
+                        }
+
+                        $voterIds = $query->pluck('pemilih_record_id')->unique()->values()->all();
+
+                        $suggestions = array_values(
+                            array_filter($suggestions, fn ($voter) =>
+                                in_array($voter['record_id'] ?? null, $voterIds)
+                            )
+                        );
                     }
-
-                    $voterIds = $query->pluck('pemilih_record_id')->unique()->values()->all();
-
-                    $suggestions = array_values(
-                        array_filter($suggestions, fn ($voter) =>
-                            in_array($voter['record_id'] ?? null, $voterIds)
-                        )
-                    );
                 }
             }
-        }
 
-        if ($groupIds = $program->group_pemilih_filters) {
-            $groups = GroupPemilih::with('kodCulas')->whereIn('id', $groupIds)->get();
+            if ($groupIds = $program->group_pemilih_filters) {
+                $groups = GroupPemilih::with('kodCulas')->whereIn('id', $groupIds)->get();
 
-            $suggestions = array_values(
-                array_filter($suggestions, function ($voter) use ($groups) {
-                    foreach ($groups as $group) {
-                        $kodCulas = $group->kodCulas->pluck('kod_cula')->filter()->values()->all();
-                        $culaOk = empty($kodCulas) || in_array($voter['cula_code'] ?? null, $kodCulas);
-                        if (! $culaOk) continue;
+                $suggestions = array_values(
+                    array_filter($suggestions, function ($voter) use ($groups) {
+                        foreach ($groups as $group) {
+                            $kodCulas = $group->kodCulas->pluck('kod_cula')->filter()->values()->all();
+                            $culaOk = empty($kodCulas) || in_array($voter['cula_code'] ?? null, $kodCulas);
+                            if (! $culaOk) continue;
 
-                        $raceOk = ! $group->keturunan || ($voter['race'] ?? null) === $group->keturunan;
-                        if (! $raceOk) continue;
+                            $raceOk = ! $group->keturunan || ($voter['race'] ?? null) === $group->keturunan;
+                            if (! $raceOk) continue;
 
-                        $genderOk = ! $group->jantina || ($voter['gender'] ?? null) === $group->jantina;
-                        if (! $genderOk) continue;
+                            $genderOk = ! $group->jantina || ($voter['gender'] ?? null) === $group->jantina;
+                            if (! $genderOk) continue;
 
-                        $age = $voter['age'] ?? null;
-                        $ageOk = ($group->umur_dari === null && $group->umur_akhir === null)
-                            || ($age !== null
-                                && ($group->umur_dari === null || $age >= $group->umur_dari)
-                                && ($group->umur_akhir === null || $age <= $group->umur_akhir));
-                        if (! $ageOk) continue;
+                            $age = $voter['age'] ?? null;
+                            $ageOk = ($group->umur_dari === null && $group->umur_akhir === null)
+                                || ($age !== null
+                                    && ($group->umur_dari === null || $age >= $group->umur_dari)
+                                    && ($group->umur_akhir === null || $age <= $group->umur_akhir));
+                            if (! $ageOk) continue;
 
-                        return true;
-                    }
-                    return false;
-                })
-            );
+                            return true;
+                        }
+                        return false;
+                    })
+                );
+            }
         }
 
         return response()->json([
