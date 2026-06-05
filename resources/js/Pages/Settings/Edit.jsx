@@ -255,7 +255,7 @@ export default function Edit({ settings }) {
     const submit = (e) => { e.preventDefault(); put(route('settings.update')); };
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
-    const isMasterAdmin = auth.user?.is_master_admin ?? false;
+    const isMasterAdmin = auth.user?.role?.is_master_admin ?? false;
 
     return (
         <AuthenticatedLayout header={
