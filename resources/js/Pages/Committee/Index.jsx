@@ -27,6 +27,7 @@ function Icon({ name, className = 'h-5 w-5' }) {
         eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
         link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></>,
         x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
+        camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></>,
     };
 
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -1196,7 +1197,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                   </div>
                                                                                   <div className="flex shrink-0 items-start gap-1">
                                                                                       <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={(e) => handleAvatarUpload(m, e)} className="hidden" />
-                                                                                      <button onClick={() => avatarInputRefs.current[avatarId]?.click()} disabled={uploadingAvatar[avatarId]} className="shrink-0 rounded border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50 disabled:opacity-50">{uploadingAvatar[avatarId] ? '...' : 'Muat Naik Avatar'}</button>
+                                                                                       <button onClick={() => avatarInputRefs.current[avatarId]?.click()} disabled={uploadingAvatar[avatarId]} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploadingAvatar[avatarId] ? <span className="text-[10px] font-bold">...</span> : <Icon name="camera" className="h-3.5 w-3.5" />}</button>
                                                                                   </div>
                                                                               </div>
                                                                              {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}
