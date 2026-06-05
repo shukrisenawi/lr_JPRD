@@ -1,3 +1,4 @@
+import AvatarLightbox from '@/Components/AvatarLightbox';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
@@ -97,6 +98,7 @@ function NoAhliModal({ voter, onClose, onSaved }) {
 
 function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli }) {
     const [avatarUrl, setAvatarUrl] = useState(voter?.avatar_url || null);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
     const avatarRef = useRef(null);
     if (!voter) return null;
@@ -139,12 +141,13 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                 <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
                         {avatarUrl ? (
-                            <img src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                            <img src={avatarUrl} alt="" className="h-10 w-10 cursor-pointer rounded-full object-cover border border-slate-200" onClick={() => setLightboxSrc(avatarUrl)} />
                         ) : (
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
                                 <UserIcon className="h-5 w-5" />
                             </div>
                         )}
+                        {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
                     </div>
                     <div className="min-w-0">
                         <p className="label-section">Detail Pemilih</p>
@@ -153,7 +156,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                     {!voter.is_manual && <>
-                        <input ref={avatarRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleAvatarUpload} className="hidden" />
+                        <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                         <button onClick={() => avatarRef.current?.click()} disabled={uploading || !voter.record_id} className="btn-outline" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                         <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>

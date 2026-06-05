@@ -1,3 +1,4 @@
+import AvatarLightbox from '@/Components/AvatarLightbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -17,6 +18,7 @@ function Icon({ name, className = 'h-4 w-4' }) {
 export default function UpdateProfileInformation({ mustVerifyEmail, status, className = '' }) {
     const user = usePage().props.auth.user;
     const [preview, setPreview] = useState(user.avatar_url);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm({ name: user.name, email: user.email, avatar: null, _method: 'patch' });
 
     useEffect(() => {
@@ -36,16 +38,17 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                 <div className="border-t border-slate-200 pt-3">
                     <InputLabel htmlFor="avatar" value="Avatar" />
                     <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-start">
-                        {preview ? <img src={preview} alt="" className="h-20 w-20 rounded-lg object-cover shadow-sm" /> : <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-lg font-black text-white">{user.name.charAt(0).toUpperCase()}</div>}
+                        {preview ? <img src={preview} alt="" className="h-20 w-20 cursor-pointer rounded-lg object-cover shadow-sm" onClick={() => setLightboxSrc(preview)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLightboxSrc(preview); } }} role="button" tabIndex={0} /> : <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-lg font-black text-white">{user.name.charAt(0).toUpperCase()}</div>}
                         <label className="flex min-h-[5rem] min-w-0 flex-1 cursor-pointer items-center rounded-lg border border-dashed border-indigo-200 bg-white px-3 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/40">
-                            <input id="avatar" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" className="sr-only" onChange={(e) => setData('avatar', e.target.files?.[0] ?? null)} />
+                            <input id="avatar" type="file" accept="image/*" className="sr-only" onChange={(e) => setData('avatar', e.target.files?.[0] ?? null)} />
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                                 <span className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-violet-700 to-violet-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm">Choose File</span>
                                 <span className="min-w-0 truncate text-xs text-slate-500">{data.avatar?.name ?? 'No file chosen'}</span>
                             </div>
                         </label>
                     </div>
-                    <p className="mt-2 text-xs text-slate-400">PNG/JPG/WEBP max 2MB</p>
+                    <p className="mt-2 text-xs text-slate-400">Gambar (max 2MB)</p>
+                    {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
                     <InputError className="mt-1" message={errors.avatar} />
                 </div>
                 <div>

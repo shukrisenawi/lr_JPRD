@@ -1,3 +1,4 @@
+import AvatarLightbox from '@/Components/AvatarLightbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -695,9 +696,10 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
     const [multiPosExpand, setMultiPosExpand] = useState({});
     const [uploadingAvatar, setUploadingAvatar] = useState({});
-    const avatarInputRefs = useRef({});
-
-    const handleAvatarUpload = async (m, e) => {
+    const [lightboxSrc, setLightboxSrc] = useState(null);
+      const avatarInputRefs = useRef({});
+  
+      const handleAvatarUpload = async (m, e) => {
         const file = e.target.files?.[0];
         if (!file) return;
         const id = m.id;
@@ -1185,18 +1187,15 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                       return (
                                                                           <div key={m.id} className="rounded-md border border-green-50 bg-green-50/50 px-2.5 py-2">
                                                                               <div className="flex items-start gap-2.5">
-                                                                                  {m.voter.avatar_url ? (
-                                                                                      <img src={m.voter.avatar_url} alt="" className="mt-0.5 h-10 w-10 shrink-0 self-center rounded-full border border-slate-200 object-cover" />
-                                                                                  ) : null}
-                                                                                  <div className="min-w-0 flex-1">
-                                                                                      <p className="text-xs font-bold text-slate-800">{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
-                                                                                      <div className="mt-0.5 space-y-0.5">
-                                                                                          <p className="text-[10px] text-slate-400">No Kp: {m.voter.no_kp || m.voter.old_ic || '-'}</p>
-                                                                                          <p className="text-[10px] text-slate-400">Tel: {m.voter.phone_mobile || m.voter.phone_home || '-'}</p>
-                                                                                      </div>
-                                                                                  </div>
-                                                                                  <div className="flex shrink-0 items-start gap-1">
-                                                                                      <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={(e) => handleAvatarUpload(m, e)} className="hidden" />
+{m.voter.avatar_url ? (
+                                                                                        <img src={m.voter.avatar_url} alt="" className="mt-0.5 h-10 w-10 shrink-0 cursor-pointer self-center rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
+                                                                                    ) : null}
+                                                                                    <div className="min-w-0 flex-1">
+                                                                                        <p className="text-xs font-bold text-slate-800">{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
+                                                                                        <p className="text-xs text-slate-500">{m.voter.no_kp || m.voter.old_ic || '-'}</p>
+                                                                                    </div>
+                                                                                    <div className="flex shrink-0 items-center gap-1">
+                                                                                        <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/*" onChange={(e) => handleAvatarUpload(m, e)} className="hidden" />
                                                                                        <button onClick={() => avatarInputRefs.current[avatarId]?.click()} disabled={uploadingAvatar[avatarId]} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploadingAvatar[avatarId] ? <span className="text-[10px] font-bold">...</span> : <Icon name="camera" className="h-3.5 w-3.5" />}</button>
                                                                                   </div>
                                                                               </div>
@@ -1332,6 +1331,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
                     </div>
                 )}
             </div>
+            {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
         </div>
     );
 }

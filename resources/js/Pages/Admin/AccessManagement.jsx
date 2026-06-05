@@ -1,3 +1,4 @@
+import AvatarLightbox from '@/Components/AvatarLightbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -168,6 +169,7 @@ function ScopeSelect({ data, setData, errors, udms, cawangans, prefix = '' }) {
 
 function UserCard({ user, roles, currentUserId, udms, cawangans }) {
     const [editing, setEditing] = useState(false);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const isMe = currentUserId === user.id;
     const init = user.name?.charAt(0)?.toUpperCase() ?? '?';
     const fmtDate = (d) => d ? d.split('-').reverse().join('/') : '';
@@ -204,7 +206,8 @@ function UserCard({ user, roles, currentUserId, udms, cawangans }) {
         <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 shadow-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-3">
-                    {user.avatar_url ? <img src={user.avatar_url} alt={user.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-50" /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-green-400 text-sm font-black text-white shadow-sm">{init}</div>}
+                    {user.avatar_url ? <img src={user.avatar_url} alt={user.name} className="h-10 w-10 cursor-pointer rounded-full object-cover ring-2 ring-emerald-50" onClick={() => setLightboxSrc(user.avatar_url)} /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-green-600 to-green-400 text-sm font-black text-white shadow-sm">{init}</div>}
+                    {lightboxSrc && <AvatarLightbox src={lightboxSrc} alt={user.name} onClose={() => setLightboxSrc(null)} />}
                     <div>
                         <p className="text-sm font-bold text-slate-950">{user.name}</p>
                         <p className="text-xs text-slate-500">{user.email}</p>

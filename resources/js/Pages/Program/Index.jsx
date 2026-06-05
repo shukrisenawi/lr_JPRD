@@ -1,3 +1,4 @@
+import AvatarLightbox from '@/Components/AvatarLightbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
@@ -253,6 +254,7 @@ function NoAhliModal({ attendee, onClose, onSaved }) {
 
 function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli }) {
     const [avatarUrl, setAvatarUrl] = useState(attendee?.avatar_url || null);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
     const avatarRef = useRef(null);
     if (!attendee) return null;
@@ -294,7 +296,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                 <div className="flex items-center justify-between gap-2 border-b border-green-200 pb-2">
                     <div className="flex items-center gap-2 min-w-0">
                         {avatarUrl ? (
-                            <img src={avatarUrl} alt="" className="h-8 w-8 shrink-0 rounded-full object-cover border border-green-200" />
+                            <img src={avatarUrl} alt="" className="h-8 w-8 shrink-0 cursor-pointer rounded-full object-cover border border-green-200" onClick={() => setLightboxSrc(avatarUrl)} />
                         ) : (
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700 border border-green-200">
                                 <UserIcon className="h-4 w-4" />
@@ -307,6 +309,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                     </div>
                     <button onClick={onClose} className="text-green-400 hover:text-green-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
                 </div>
+                {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
                 <div className="mt-2 grid grid-cols-2 gap-1.5">
                     {fields.map(([l, v]) => (
                         <div key={l} className="rounded border border-green-100 bg-white px-2 py-1.5">
@@ -322,7 +325,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                     </div>
                 )}
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-green-200 pt-2">
-                    <input ref={avatarRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleAvatarUpload} className="hidden" />
+                    <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                     <button onClick={() => avatarRef.current?.click()} disabled={uploading || !attendee.pemilih_record_id} className="rounded-md border border-green-300 bg-white p-1.5 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                     <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
@@ -818,6 +821,7 @@ function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
     const [selectedSubIds, setSelectedSubIds] = useState([]);
     const [subEditorAttendee, setSubEditorAttendee] = useState(null);
     const [ajkPickerOpen, setAjkPickerOpen] = useState(false);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const ac = useRef(null); const rid = useRef(0);
 
     const hasAjkFilter = selectedProgram?.committee_group_filters
@@ -928,7 +932,7 @@ function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
                                             }
                                         }} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(6rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-2.5 py-2 text-left transition last:border-b-0 ${alreadyAdded ? (hasSubs ? 'cursor-pointer bg-indigo-50 opacity-100 hover:bg-indigo-100' : 'cursor-not-allowed bg-slate-50 opacity-60') : 'hover:bg-green-50'}`}>
                                             {v.avatar_url ? (
-                                                <img src={v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
+                                                <img src={v.avatar_url} alt="" className="h-7 w-7 shrink-0 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={(e) => { e.stopPropagation(); setLightboxSrc(v.avatar_url); }} />
                                             ) : (
                                                 <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
                                             )}
@@ -953,6 +957,7 @@ function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
                 selectedSubIds={selectedSubIds} onToggleSub={toggleSub} />
             <AttendeeSubProgramEditor key={subEditorAttendee?.id ?? 'sub-editor'} attendee={subEditorAttendee} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSubEditorAttendee(null)} />
             <CommitteeMemberPickerModal show={ajkPickerOpen} program={selectedProgram} existingVoterIds={existingVoterIds?.voterIdSet} onClose={() => setAjkPickerOpen(false)} />
+            {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
         </div>
     );
 }
@@ -1086,6 +1091,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [deletingId, setDeletingId] = useState(null);
     const [selAttendee, setSelAttendee] = useState(null);
     const [selAttendeeProgs, setSelAttendeeProgs] = useState(null);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const [selEditSub, setSelEditSub] = useState(null);
     const [selImage, setSelImage] = useState(null);
     const [selShare, setSelShare] = useState(null);
@@ -1247,10 +1253,10 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
                                             {previewUrl ? <img src={previewUrl} alt="preview" className="h-16 w-full rounded-lg object-cover sm:w-28" /> : <div className="flex h-16 w-full items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white text-xs font-bold uppercase text-slate-500 sm:w-28">Tiada</div>}
                                             <div className="min-w-0 flex-1">
-                                                <input id="gambar" ref={imgRef} type="file" accept="image/png,image/jpeg,image/jpg,image/webp"
+                                                <input id="gambar" ref={imgRef} type="file" accept="image/*"
                                                     className="block w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 file:mr-2 file:rounded-md file:border file:border-slate-200 file:bg-green-50 file:px-2 file:py-0.5 file:text-xs file:font-bold file:text-green-700 hover:file:bg-green-100"
                                                     onChange={(e) => f.setData('gambar', e.target.files?.[0] ?? null)} />
-                                                <p className="mt-1 text-xs text-slate-500">PNG/JPG/WEBP sehingga 2MB</p>
+                                                <p className="mt-1 text-xs text-slate-500">Gambar sehingga 2MB</p>
                                                 <InputError className="mt-1" message={f.errors.gambar} />
                                             </div>
                                         </div>
@@ -1377,7 +1383,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                  </button>
                                                              )}
                                                               {a.avatar_url && (
-                                                                  <img src={a.avatar_url} alt="" className="mt-0.5 h-9 w-9 shrink-0 self-center rounded-full border border-slate-200 object-cover" />
+                                                                  <img src={a.avatar_url} alt="" className="mt-0.5 h-9 w-9 shrink-0 cursor-pointer self-center rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(a.avatar_url)} />
                                                               )}
                                                              <div className="min-w-0 flex-1">
                                                                  <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">
@@ -1459,6 +1465,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
             {editNoAhli && canEditNoAhli && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
             <MesyuaratView program={mesyuaratProgram} onClose={closeMesyuarat} />
+            {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
         </AuthenticatedLayout>
     );
 }
