@@ -1065,7 +1065,7 @@ class ProgramController extends Controller
             'original_name' => $f->original_name,
             'size' => $f->file_size,
             'uploader' => $f->uploader?->name,
-            'created_at' => $f->created_at?->format('d-m-Y'),
+            'created_at' => $f->created_at?->format('d-m-Y H:iA'),
         ]);
 
         $members = collect();
