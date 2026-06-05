@@ -799,7 +799,7 @@ function CommitteeMemberPickerModal({ show, program, existingVoterIds, onClose }
                     : members.map(m => (
                         <label key={m.pemilih_record_id} className={`flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs transition ${selectedIds.includes(m.pemilih_record_id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200'}`}>
                             <input type="checkbox" checked={selectedIds.includes(m.pemilih_record_id)} onChange={() => toggleMember(m.pemilih_record_id)} className="h-3.5 w-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                            <div className="min-w-0 flex-1"><p className="truncate font-bold">{m.name}</p><p className="text-slate-500">No KP: {m.no_kp || '-'} {m.scope_name ? `| ${m.scope_name}` : ''}</p></div>
+                            <div className="min-w-0 flex-1"><p className="truncate font-bold">{m.name}</p><p className="text-slate-500">No KP: {m.no_kp || '-'}{m.position_name ? ` | ${m.position_name}` : ''}</p></div>
                         </label>
                     ))}
                 </div>
