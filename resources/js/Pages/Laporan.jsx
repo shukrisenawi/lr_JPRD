@@ -11,6 +11,19 @@ const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2
 
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
+function getRaceCount(breakdown, names) {
+    for (const r of breakdown ?? []) {
+        if (names.includes(r.code.toUpperCase())) return r.total;
+    }
+    return 0;
+}
+function getCulaSum(breakdown, codes) {
+    const byCode = {};
+    for (const c of breakdown ?? []) byCode[c.code] = c.total;
+    let sum = 0;
+    for (const code of codes) sum += byCode[code] ?? 0;
+    return sum;
+}
 
 function getBarColor(entry, i) {
     const c = entry?.code, l = entry?.display_label ?? '';
@@ -109,7 +122,43 @@ export default function Laporan({ report, pemilih_report = null }) {
     const dmChartRows = useMemo(() => [...report.by_dm].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 12), [report.by_dm]);
     const dmDetails = report.dm_details ?? [];
     const dmCulaRows = report.cula_by_dm ?? [];
-    const udmTableRows = useMemo(() => [...report.by_dm].sort((a, b) => (b.coverage_percent ?? 0) - (a.coverage_percent ?? 0)).slice(0, 25), [report.by_dm]);
+    const dmDetailsMap = useMemo(() => {
+        const map = {};
+        for (const d of dmDetails) map[d.key] = d;
+        return map;
+    }, [dmDetails]);
+    const culaByDmMap = useMemo(() => {
+        const map = {};
+        for (const d of dmCulaRows) map[d.key] = d;
+        return map;
+    }, [dmCulaRows]);
+    const udmTableRows = useMemo(() => [...report.by_dm]
+        .sort((a, b) => (b.coverage_percent ?? 0) - (a.coverage_percent ?? 0))
+        .slice(0, 25)
+        .map(row => {
+            const dtl = dmDetailsMap[row.key];
+            const cula = culaByDmMap[row.key];
+            const raceB = dtl?.race_breakdown ?? [];
+            const culaB = cula?.cula_breakdown ?? [];
+            return {
+                ...row,
+                L: row.male ?? 0,
+                P: row.female ?? 0,
+                M: getRaceCount(raceB, ['MELAYU', 'M']),
+                C: getRaceCount(raceB, ['CINA', 'C']),
+                I: getRaceCount(raceB, ['INDIA', 'I']),
+                S: getRaceCount(raceB, ['SIAM', 'S']),
+                PAS: getCulaSum(culaB, ['2']),
+                PBBM: getCulaSum(culaB, ['10']),
+                BN: getCulaSum(culaB, ['1', '1A', '1B', '1P']),
+                PH: getCulaSum(culaB, ['5']),
+                GTA: 0,
+                PLK: getCulaSum(culaB, ['3B', '3D', '3K', '3M', '3P', '3U']),
+                'Atas Pagar': getCulaSum(culaB, ['4']),
+                'Tak Kenal': getCulaSum(culaB, ['7']),
+                'Mati': getCulaSum(culaB, ['8']),
+            };
+        }), [report.by_dm, dmDetailsMap, culaByDmMap]);
     const localityRows = filteredLocs.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((r) => r.total > 0);
@@ -127,10 +176,21 @@ export default function Laporan({ report, pemilih_report = null }) {
 
     const dmCols = [
         { key: 'name', label: 'UDM' },
-        { key: 'total', label: 'Pemilih', format: fmt },
-        { key: 'with_cula', label: 'Sudah Dicula', format: fmt },
-        { key: 'belum_dicula', label: 'Belum', format: fmt },
-        { key: 'coverage_percent', label: 'Siap', format: fmtP },
+        { key: 'L', label: 'L', format: fmt },
+        { key: 'P', label: 'P', format: fmt },
+        { key: 'M', label: 'M', format: fmt },
+        { key: 'C', label: 'C', format: fmt },
+        { key: 'I', label: 'I', format: fmt },
+        { key: 'S', label: 'S', format: fmt },
+        { key: 'PAS', label: 'PAS', format: fmt },
+        { key: 'PBBM', label: 'PBBM', format: fmt },
+        { key: 'BN', label: 'BN', format: fmt },
+        { key: 'PH', label: 'PH', format: fmt },
+        { key: 'GTA', label: 'GTA', format: fmt },
+        { key: 'PLK', label: 'PLK', format: fmt },
+        { key: 'Atas Pagar', label: 'Atas Pagar', format: fmt },
+        { key: 'Tak Kenal', label: 'Tak Kenal', format: fmt },
+        { key: 'Mati', label: 'Mati', format: fmt },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
