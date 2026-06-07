@@ -191,8 +191,8 @@ export default function Laporan({ report, pemilih_report = null }) {
         { key: 'PH', label: 'PH', format: fmt },
         { key: 'GTA', label: 'GTA', format: fmt },
         { key: 'PLK', label: 'PLK', format: fmt },
-        { key: 'Atas Pagar', label: 'Atas Pagar', format: fmt },
-        { key: 'Tak Kenal', label: 'Tak Kenal', format: fmt },
+        { key: 'Atas Pagar', label: 'AP', format: fmt },
+        { key: 'Tak Kenal', label: 'TK', format: fmt },
         { key: 'Mati', label: 'Mati', format: fmt },
         { key: 'Jumlah', label: 'Jumlah', format: fmt },
     ];
