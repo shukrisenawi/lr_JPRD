@@ -142,7 +142,7 @@ export default function Laporan({ report, pemilih_report = null }) {
             const culaB = cula?.cula_breakdown ?? [];
             return {
                 ...row,
-                JP: row.total ?? 0,
+                JP: (row.total ?? 0) - getCulaSum(culaB, ['8']),
                 L: row.male ?? 0,
                 P: row.female ?? 0,
                 M: getRaceCount(raceB, ['MELAYU', 'M']),
@@ -158,6 +158,7 @@ export default function Laporan({ report, pemilih_report = null }) {
                 'Atas Pagar': getCulaSum(culaB, ['4']),
                 'Tak Kenal': getCulaSum(culaB, ['7']),
                 'Mati': getCulaSum(culaB, ['8']),
+                Jumlah: row.total ?? 0,
             };
         }), [report.by_dm, dmDetailsMap, culaByDmMap]);
     const localityRows = filteredLocs.slice(0, 20);
@@ -193,6 +194,7 @@ export default function Laporan({ report, pemilih_report = null }) {
         { key: 'Atas Pagar', label: 'Atas Pagar', format: fmt },
         { key: 'Tak Kenal', label: 'Tak Kenal', format: fmt },
         { key: 'Mati', label: 'Mati', format: fmt },
+        { key: 'Jumlah', label: 'Jumlah', format: fmt },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
