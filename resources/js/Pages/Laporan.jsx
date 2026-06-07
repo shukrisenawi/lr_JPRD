@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
 const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
@@ -112,6 +112,26 @@ export default function Laporan({ report, pemilih_report = null }) {
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
+    const [jmlDiffMap, setJmlDiffMap] = useState({});
+
+    useEffect(() => {
+        const srcName = report.source?.name;
+        if (!srcName) return;
+        const key = `udm_prev_${srcName}`;
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                const prev = JSON.parse(raw);
+                const diffs = {};
+                for (const row of report.by_dm) {
+                    const p = prev.find(r => r.key === row.key);
+                    if (p) diffs[row.key] = (row.total ?? 0) - (p.total ?? 0);
+                }
+                setJmlDiffMap(diffs);
+            }
+        } catch {}
+        localStorage.setItem(key, JSON.stringify(report.by_dm.map(r => ({ key: r.key, total: r.total }))));
+    }, [report.by_dm, report.source?.name]);
 
     const filteredLocs = useMemo(() => {
         const kw = search.trim().toLowerCase();
@@ -194,7 +214,11 @@ export default function Laporan({ report, pemilih_report = null }) {
         { key: 'Atas Pagar', label: 'AP', format: fmt },
         { key: 'Tak Kenal', label: 'TK', format: fmt },
         { key: 'Mati', label: 'Mati', format: fmt },
-        { key: 'Jumlah', label: 'Jumlah', format: fmt },
+        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => {
+            const diff = jmlDiffMap[r.key];
+            if (diff === undefined || diff === 0) return fmt(v);
+            return <span className={diff > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>{fmt(v)}</span>;
+        } },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
