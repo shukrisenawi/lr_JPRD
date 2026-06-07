@@ -142,6 +142,7 @@ export default function Laporan({ report, pemilih_report = null }) {
             const culaB = cula?.cula_breakdown ?? [];
             return {
                 ...row,
+                JP: row.total ?? 0,
                 L: row.male ?? 0,
                 P: row.female ?? 0,
                 M: getRaceCount(raceB, ['MELAYU', 'M']),
@@ -176,6 +177,7 @@ export default function Laporan({ report, pemilih_report = null }) {
 
     const dmCols = [
         { key: 'name', label: 'UDM' },
+        { key: 'JP', label: 'JP', format: fmt },
         { key: 'L', label: 'L', format: fmt },
         { key: 'P', label: 'P', format: fmt },
         { key: 'M', label: 'M', format: fmt },
