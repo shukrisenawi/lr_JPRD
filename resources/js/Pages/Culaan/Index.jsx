@@ -524,19 +524,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         }
 
         const titleRows = [];
-        const headers = ['No', 'No Kp', 'Nama', 'Alamat', 'Telefon', 'Cula', 'No. Ahli'];
-        const align = ['center', 'center', 'left', 'left', 'center', 'center', 'center'];
-        const columnWidths = [30, 100, 120, 200, 100, 40, 60];
+        const headers = ['No', 'No Kp', 'Nama', 'Alamat', 'Telefon', 'Cula'];
+        const align = ['center', 'center', 'left', 'left', 'center', 'center'];
+        const columnWidths = [37, 100, 278, 369, 90, 46];
 
         const dataRows = exportRows.map((voter, index) => {
             const cells = [
                 { value: index + 1, type: 'Number', align: 'center' },
                 { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
-                { value: voter.name || '-', type: 'String', align: 'left' },
-                { value: voter.address || '-', type: 'String', align: 'left' },
+                { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
+                { value: voter.address || '-', type: 'String', align: 'left', wrap: true },
                 { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
                 { value: '', type: 'String', align: 'center' },
-                { value: voter.no_ahli || '-', type: 'String', align: 'center' },
             ];
 
             return cells;
@@ -591,11 +590,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const bodyRowsXml = dataRows
             .map((cells) => `
                 <Row>
-                    ${cells.map((cell) => `
-                        <Cell ss:StyleID="${cell.align === 'center' ? 'cellCenter' : 'cell'}">
+                    ${cells.map((cell) => {
+                        let styleId = cell.align === 'center' ? 'cellCenter' : 'cell';
+                        if (cell.wrap) styleId += 'Wrap';
+                        return `<Cell ss:StyleID="${styleId}">
                             <Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data>
-                        </Cell>
-                    `).join('')}
+                        </Cell>`;
+                    }).join('')}
                 </Row>
             `)
             .join('');
@@ -659,6 +660,26 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         </Style>
         <Style ss:ID="cellCenter">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+        <Style ss:ID="cellWrap">
+            <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+        <Style ss:ID="cellCenterWrap">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
             <Borders>
                 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
                 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
