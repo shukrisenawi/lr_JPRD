@@ -391,7 +391,7 @@ function committeeScopeLabel(badge) {
     return badge.scope_name;
 }
 
-function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOptions, shareableUsers }) {
+function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOptions, shareableUsers, onSelectGroup }) {
     const [editingId, setEditingId] = useState(null);
     const f = useForm({ name: '', default_laporan: false, default_mesyuarat: false, default_committee_group: '', default_group_pemilih_filters: [], default_shared_user_ids: [] });
     const submit = (e) => {
@@ -496,8 +496,8 @@ function ProgramGroupManager({ groups, committeeGroupOptions, groupPemilihOption
                     {groups.length === 0 ? <div className="card-dashed py-4 text-xs">Belum ada</div> : groups.map((g) => (
                         <div key={g.id} className="flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
                             <div className="min-w-0">
-                                <p className="text-xs font-bold text-slate-800">{g.name}</p>
-                                <p className="text-xs text-slate-500">{g.programs_count} program</p>
+                                <button onClick={() => onSelectGroup?.(g.id)} className="text-left text-xs font-bold text-slate-800 hover:text-green-700 transition">{g.name}</button>
+                                <button onClick={() => onSelectGroup?.(g.id)} className="block text-left text-xs text-slate-500 hover:text-green-600 transition">{g.programs_count} program</button>
                                 <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1">
                                     <span role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleDefault(g, 'default_laporan'); } }}
                                         className={`flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold transition ${g.default_laporan ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}
@@ -1088,6 +1088,11 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     ];
     const [tab, setTab] = useState('senarai-program');
     const [editingId, setEditingId] = useState(null);
+    const [selectedGroupId, setSelectedGroupId] = useState(null);
+    const filteredPrograms = useMemo(() => {
+        if (!selectedGroupId) return programs;
+        return programs.filter((p) => String(p.group_id) === String(selectedGroupId));
+    }, [programs, selectedGroupId]);
     const [deletingId, setDeletingId] = useState(null);
     const [selAttendee, setSelAttendee] = useState(null);
     const [selAttendeeProgs, setSelAttendeeProgs] = useState(null);
@@ -1287,7 +1292,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                     </section>
                 )}
 
-                {tab === 'group-program' && <ProgramGroupManager groups={groups} committeeGroupOptions={committeeGroupOptions} groupPemilihOptions={groupPemilihOptions} shareableUsers={shareableUsers} />}
+                {tab === 'group-program' && <ProgramGroupManager groups={groups} committeeGroupOptions={committeeGroupOptions} groupPemilihOptions={groupPemilihOptions} shareableUsers={shareableUsers} onSelectGroup={(gid) => { setSelectedGroupId(gid); setTab('senarai-program'); }} />}
 
 {tab === 'senarai-program' && (selectedProgram ? (
                     <section className="space-y-3">
@@ -1449,8 +1454,22 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 ) : (
                     <div className="card p-3">
                         <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Senarai Program</p>
+                        {groups.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                                <button onClick={() => setSelectedGroupId(null)}
+                                    className={`rounded-md px-2 py-1 text-xs font-bold transition ${selectedGroupId === null ? 'bg-green-700 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:text-green-700'}`}>
+                                    Semua
+                                </button>
+                                {groups.map((g) => (
+                                    <button key={g.id} onClick={() => setSelectedGroupId(g.id)}
+                                        className={`rounded-md px-2 py-1 text-xs font-bold transition ${String(selectedGroupId) === String(g.id) ? 'bg-green-700 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-200 hover:text-green-700'}`}>
+                                        {g.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                            {programs.length === 0 ? <div className="card-dashed py-4 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : programs.map((p) => (
+                            {filteredPrograms.length === 0 ? <div className="card-dashed py-4 text-xs sm:col-span-2 xl:col-span-3">Belum ada</div> : filteredPrograms.map((p) => (
                                 <ProgramCard key={p.id} program={p} isActive={selectedProgram?.id === p.id} deleting={deletingId === p.id}
                                     onDelete={delProgram} onEdit={startEdit} onPreviewImage={setSelImage} onShare={openShare} onSelect={selectProg}
                                     onLaporan={(prog) => router.get(route('program.laporan', prog.id))}
