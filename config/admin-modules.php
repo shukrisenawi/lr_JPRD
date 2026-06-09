@@ -2,7 +2,7 @@
 
 return [
     'dashboard' => [
-        'label' => 'Dashboard',
+        'label' => 'Cula Manual',
         'description' => 'Paparan utama dan ringkasan status semasa.',
     ],
     'laporan' => [

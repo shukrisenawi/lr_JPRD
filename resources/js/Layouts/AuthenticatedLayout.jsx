@@ -33,7 +33,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const isLight = variant === 'light';
 
     const navItems = [
-        { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Dashboard', icon: '⌂' },
+        { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual', icon: '⌂' },
         { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Laporan', icon: '▤' },
         { key: 'carian-pemilih', href: 'carian-pemilih.index', routePattern: 'carian-pemilih.*', label: 'Carian', icon: '⌕' },
         { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program', icon: '⌘' },
