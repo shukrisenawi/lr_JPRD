@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 function Icon({ name, className = 'h-4 w-4' }) {
     const paths = {
@@ -241,10 +241,28 @@ function UserCard({ user, roles, currentUserId, udms, cawangans }) {
     );
 }
 
+const levelMeta = {
+    jprd: { label: 'JPRD', bg: 'bg-green-100', text: 'text-green-700' },
+    udm: { label: 'UDM', bg: 'bg-sky-100', text: 'text-sky-700' },
+    cawangan: { label: 'Cawangan', bg: 'bg-purple-100', text: 'text-purple-700' },
+};
+
+const levelOrder = ['jprd', 'udm', 'cawangan'];
+
 export default function AccessManagement({ roles, users, modules, udms, cawangans }) {
     const { auth } = usePage().props;
     const myId = auth.user?.id ?? null;
     const [tab, setTab] = useState('cipta-pengguna');
+
+    const groupedUsers = useMemo(() => {
+        const groups = {};
+        users.forEach((u) => {
+            const lvl = u.access_level ?? 'jprd';
+            if (!groups[lvl]) groups[lvl] = [];
+            groups[lvl].push(u);
+        });
+        return groups;
+    }, [users]);
     const uf = useForm({
         name: '',
         email: '',
@@ -301,7 +319,24 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                         <div className="card p-3">
                             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Pengguna</p>
                             <h3 className="mt-0.5 text-sm font-bold text-slate-950">Akaun sedia ada</h3>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{users.map((u) => <UserCard key={u.id} user={u} roles={roles} currentUserId={myId} udms={udms} cawangans={cawangans} />)}</div>
+                            <div className="mt-3 space-y-4">
+                                {levelOrder.map((lvl) => {
+                                    const list = groupedUsers[lvl];
+                                    if (!list?.length) return null;
+                                    const meta = levelMeta[lvl];
+                                    return (
+                                        <div key={lvl}>
+                                            <div className="mb-2 flex items-center gap-2">
+                                                <span className={'inline-block rounded-md px-2 py-0.5 text-xs font-bold ' + meta.bg + ' ' + meta.text}>{meta.label}</span>
+                                                <span className="text-xs text-slate-400">({list.length} pengguna)</span>
+                                            </div>
+                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                                {list.map((u) => <UserCard key={u.id} user={u} roles={roles} currentUserId={myId} udms={udms} cawangans={cawangans} />)}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </section>
                 )}
