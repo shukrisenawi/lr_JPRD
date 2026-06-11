@@ -64,6 +64,7 @@ function GroupManager({ groups, positions: allPositions }) {
     const expandedRef = useRef(null);
     const [animExpandId, setAnimExpandId] = useState(null);
     const [positionSearch, setPositionSearch] = useState('');
+    const [modalPositionSearch, setModalPositionSearch] = useState('');
 
     useEffect(() => {
         if (expandedId === null) setPositionSearch('');
@@ -171,7 +172,7 @@ function GroupManager({ groups, positions: allPositions }) {
     const closeAddModal = () => {
         setAddModal(null);
         setSelectedPositionIds([]);
-        setPositionSearch('');
+        setModalPositionSearch('');
     };
 
     const toggleSelectedPosition = (positionId) => {
@@ -381,8 +382,8 @@ function GroupManager({ groups, positions: allPositions }) {
                         <div className="border-b border-slate-100 px-4 py-2">
                             <input
                                 type="text"
-                                value={positionSearch}
-                                onChange={(e) => setPositionSearch(e.target.value)}
+                                value={modalPositionSearch}
+                                onChange={(e) => setModalPositionSearch(e.target.value)}
                                 placeholder="Cari jawatan..."
                                 className="input-field w-full text-xs"
                             />
@@ -391,7 +392,7 @@ function GroupManager({ groups, positions: allPositions }) {
                         <div className="max-h-72 overflow-y-auto p-4 space-y-1.5">
                             {(() => {
                                 const available = availablePositionsForLevel(addModal.groupId, addModal.level)
-                                    .filter((p) => !positionSearch || p.name.toLowerCase().includes(positionSearch.toLowerCase()));
+                                    .filter((p) => !modalPositionSearch || p.name.toLowerCase().includes(modalPositionSearch.toLowerCase()));
                                 if (available.length === 0) {
                                     return <p className="py-4 text-center text-xs text-slate-400">Semua jawatan telah ditambah.</p>;
                                 }
