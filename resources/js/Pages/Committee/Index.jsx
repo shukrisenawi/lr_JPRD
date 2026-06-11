@@ -63,8 +63,10 @@ function GroupManager({ groups, positions: allPositions }) {
     const [selectedPositionIds, setSelectedPositionIds] = useState([]);
     const expandedRef = useRef(null);
     const [animExpandId, setAnimExpandId] = useState(null);
+    const [positionSearch, setPositionSearch] = useState('');
 
     useEffect(() => {
+        if (expandedId === null) setPositionSearch('');
         const handleClickOutside = (event) => {
             if (expandedRef.current && !expandedRef.current.contains(event.target)) {
                 if (addModal) return;
@@ -169,6 +171,7 @@ function GroupManager({ groups, positions: allPositions }) {
     const closeAddModal = () => {
         setAddModal(null);
         setSelectedPositionIds([]);
+        setPositionSearch('');
     };
 
     const toggleSelectedPosition = (positionId) => {
@@ -303,11 +306,22 @@ function GroupManager({ groups, positions: allPositions }) {
                                     {animExpandId === group.id && (
                                         <div
                                             className="border-t border-green-100 overflow-hidden transition-all duration-300 ease-in-out"
-                                            style={{ maxHeight: isExpanded ? '600px' : '0px', opacity: isExpanded ? 1 : 0 }}
+                                            style={{ maxHeight: isExpanded ? '800px' : '0px', opacity: isExpanded ? 1 : 0 }}
                                         >
+                                            <div className="border-b border-green-100 px-2.5 py-2">
+                                                <input
+                                                    type="text"
+                                                    value={positionSearch}
+                                                    onChange={(e) => setPositionSearch(e.target.value)}
+                                                    placeholder="Cari jawatan..."
+                                                    className="input-field w-full text-xs"
+                                                />
+                                            </div>
                                             <div className="p-2.5 space-y-3">
                                                 {(group.levels || []).map((level) => {
-                                                    const assigned = positionsByLevel(group, level);
+                                                    const assigned = positionsByLevel(group, level).filter((p) =>
+                                                        !positionSearch || p.name.toLowerCase().includes(positionSearch.toLowerCase())
+                                                    );
 
                                                     return (
                                                         <div key={level}>
@@ -364,9 +378,20 @@ function GroupManager({ groups, positions: allPositions }) {
                             </button>
                         </div>
 
-                        <div className="max-h-80 overflow-y-auto p-4 space-y-1.5">
+                        <div className="border-b border-slate-100 px-4 py-2">
+                            <input
+                                type="text"
+                                value={positionSearch}
+                                onChange={(e) => setPositionSearch(e.target.value)}
+                                placeholder="Cari jawatan..."
+                                className="input-field w-full text-xs"
+                            />
+                        </div>
+
+                        <div className="max-h-72 overflow-y-auto p-4 space-y-1.5">
                             {(() => {
-                                const available = availablePositionsForLevel(addModal.groupId, addModal.level);
+                                const available = availablePositionsForLevel(addModal.groupId, addModal.level)
+                                    .filter((p) => !positionSearch || p.name.toLowerCase().includes(positionSearch.toLowerCase()));
                                 if (available.length === 0) {
                                     return <p className="py-4 text-center text-xs text-slate-400">Semua jawatan telah ditambah.</p>;
                                 }
