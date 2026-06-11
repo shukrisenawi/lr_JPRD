@@ -710,6 +710,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             level: resolvedTab,
             scope_key: scopes[resolvedTab]?.[0]?.key ?? '',
         }));
+        setSelectedGroupId('');
         setSelectedVoter(null);
         setSuggestions([]);
     }, [resolvedTab]);
@@ -1081,7 +1082,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                     className="input-field mt-1 text-xs"
                                 >
                                 <option value="">Pilih kumpulan</option>
-                                {groups.map((group) => (
+                                {groups.filter(g => g.levels && g.levels.includes(resolvedTab)).map((group) => (
                                     <option key={group.id} value={group.id}>{group.name}</option>
                                 ))}
                             </select>
