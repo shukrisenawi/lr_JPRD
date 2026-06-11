@@ -14,6 +14,7 @@ use App\Models\ProgramGroup;
 use App\Models\ProgramSubProgram;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\ImageService;
 use App\Services\PemilihReportService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -295,7 +296,7 @@ class ProgramController extends Controller
             ? [$validated['committee_group_filters']]
             : null;
         $gambarPath = $request->hasFile('gambar')
-            ? $request->file('gambar')->store('programs', 'public')
+            ? ImageService::resizeIfNeeded($request->file('gambar'), 'programs')
             : null;
 
         $program = Program::query()->create([
@@ -327,7 +328,7 @@ class ProgramController extends Controller
                 Storage::disk('public')->delete($program->gambar);
             }
 
-            $payload['gambar'] = $request->file('gambar')->store('programs', 'public');
+            $payload['gambar'] = ImageService::resizeIfNeeded($request->file('gambar'), 'programs');
         } else {
             unset($payload['gambar']);
         }
@@ -1133,7 +1134,9 @@ class ProgramController extends Controller
 
         $uploaded = $request->file('file');
         $originalName = $uploaded->getClientOriginalName();
-        $storedPath = $uploaded->store('program-files', 'public');
+        $storedPath = str_starts_with($uploaded->getMimeType(), 'image/')
+            ? ImageService::resizeIfNeeded($uploaded, 'program-files')
+            : $uploaded->store('program-files', 'public');
 
         ProgramFile::create([
             'program_id' => $program->id,

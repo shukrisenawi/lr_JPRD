@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PemilihRecord;
 use App\Models\Setting;
+use App\Services\ImageService;
 use App\Services\PemilihReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,7 +65,7 @@ class CarianPemilihController extends Controller
             Storage::disk('public')->delete($pemilihRecord->avatar);
         }
 
-        $pemilihRecord->avatar = $request->file('avatar')->store('pemilih-avatars', 'public');
+        $pemilihRecord->avatar = ImageService::resizeIfNeeded($request->file('avatar'), 'pemilih-avatars');
         $pemilihRecord->save();
 
         return response()->json([
