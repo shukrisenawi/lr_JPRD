@@ -1087,7 +1087,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     type="button"
                                                     onClick={() => markVoter(voter)}
                                                     disabled={pendingIds.includes(voter.id)}
-                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    className="inline-flex w-7 items-center justify-center rounded-md bg-green-600 py-1.5 text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
                                                 >
                                                     {pendingIds.includes(voter.id) ? '...' : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>}
                                                 </button>
