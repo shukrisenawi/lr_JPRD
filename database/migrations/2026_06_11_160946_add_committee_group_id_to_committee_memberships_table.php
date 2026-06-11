@@ -22,6 +22,12 @@ return new class extends Migration
                   AND cgp.level = cm.level
                 LIMIT 1
             )
+            WHERE (
+                SELECT COUNT(*)
+                FROM committee_group_position cgp
+                WHERE cgp.committee_position_id = cm.committee_position_id
+                  AND cgp.level = cm.level
+            ) = 1
         ');
     }
 

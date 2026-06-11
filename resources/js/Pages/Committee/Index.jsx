@@ -796,7 +796,10 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
                 const positionsWithMembers = levelPositions.map(pos => ({
                     ...pos,
-                    members: filteredMemberships.filter(m => m.position?.id === pos.id && m.committee_group_id === group.id)
+                    members: filteredMemberships.filter(m =>
+                        m.position?.id === pos.id &&
+                        (m.committee_group_id === null || m.committee_group_id === group.id)
+                    )
                 }));
 
                 const totalMembers = positionsWithMembers.reduce((sum, p) => sum + p.members.length, 0);
