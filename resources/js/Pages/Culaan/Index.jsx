@@ -208,7 +208,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [suggestions, setSuggestions] = useState([]);
     const [searchError, setSearchError] = useState('');
     const [actionError, setActionError] = useState('');
-    const [selectedVoterId, setSelectedVoterId] = useState(null);
     const [pendingIds, setPendingIds] = useState([]);
     const [localVoters, setLocalVoters] = useState(voters);
     const [localSummary, setLocalSummary] = useState(summary);
@@ -944,11 +943,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 {rows.map((voter, index) => (
                                     <div
                                         key={voter.id}
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={() => setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id)}
-                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id); } }}
-                                        className={`rounded-xl border bg-white p-3 shadow-sm overflow-hidden cursor-pointer transition-colors duration-300 ease-in-out hover:shadow-md ${voter.id === selectedVoterId ? 'border-2 border-slate-800 shadow-slate-800/20' : 'border-green-600 shadow-green-600/20'}`}
+                                        className="rounded-xl border border-green-600 bg-white p-3 shadow-sm overflow-hidden transition-colors duration-300 ease-in-out hover:shadow-md"
                                     >
                                         <div className="flex items-start justify-between gap-2">
                                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
