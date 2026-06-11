@@ -951,38 +951,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         className={`rounded-xl border bg-white p-3 shadow-sm overflow-hidden cursor-pointer transition-colors duration-300 ease-in-out hover:shadow-md ${voter.id === selectedVoterId ? 'border-2 border-slate-800 shadow-slate-800/20' : 'border-green-600 shadow-green-600/20'}`}
                                     >
                                         <div className="flex items-start justify-between gap-2">
-                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
-                                                {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
-                                            </span>
-                                            <div className="relative shrink-0">
+                                            <div className="shrink-0">
                                                 {avatarUpdates[voter.id] || voter.avatar_url ? (
-                                                    <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 cursor-pointer rounded-full object-cover border border-slate-200" onClick={(e) => { e.stopPropagation(); }} />
+                                                    <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200" />
                                                 ) : (
                                                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                                     </div>
                                                 )}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    id={`avatar-upload-${voter.id}`}
-                                                    onChange={(e) => handleAvatarUpload(e, voter.id)}
-                                                    className="hidden"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); document.getElementById(`avatar-upload-${voter.id}`)?.click(); }}
-                                                    disabled={uploadingAvatarIds[voter.id]}
-                                                    className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white border border-slate-300 text-slate-500 shadow-sm hover:text-green-700 hover:border-green-400 transition disabled:opacity-40"
-                                                    title="Muat naik gambar"
-                                                >
-                                                    {uploadingAvatarIds[voter.id] ? (
-                                                        <span className="text-[8px] font-bold">...</span>
-                                                    ) : (
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
-                                                    )}
-                                                </button>
                                             </div>
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
+                                                {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
+                                            </span>
                                             <div className="min-w-0 flex-1">
                                                 <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
@@ -1060,6 +1040,26 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </div>
                                         <div className="mt-3 flex flex-wrap gap-1.5">
                                             {!voter.is_manual && <>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    id={`avatar-upload-${voter.id}`}
+                                                    onChange={(e) => handleAvatarUpload(e, voter.id)}
+                                                    className="hidden"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); document.getElementById(`avatar-upload-${voter.id}`)?.click(); }}
+                                                    disabled={uploadingAvatarIds[voter.id]}
+                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700 disabled:opacity-40"
+                                                    title="Muat naik gambar"
+                                                >
+                                                    {uploadingAvatarIds[voter.id] ? (
+                                                        <span className="text-xs font-bold">...</span>
+                                                    ) : (
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
+                                                    )}
+                                                </button>
                                                 <a
                                                     href={buildTelegramLink('kemascula', voter.telegram_identity)}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
@@ -1089,7 +1089,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     disabled={pendingIds.includes(voter.id)}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
                                                 >
-                                                    {pendingIds.includes(voter.id) ? '...' : 'Dah Cula'}
+                                                    {pendingIds.includes(voter.id) ? '...' : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>}
                                                 </button>
                                             )}
                                         </div>
