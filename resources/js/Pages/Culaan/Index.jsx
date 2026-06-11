@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AvatarLightbox from '@/Components/AvatarLightbox';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -209,6 +210,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [searchError, setSearchError] = useState('');
     const [actionError, setActionError] = useState('');
     const [selectedVoterId, setSelectedVoterId] = useState(null);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const [pendingIds, setPendingIds] = useState([]);
     const [localVoters, setLocalVoters] = useState(voters);
     const [localSummary, setLocalSummary] = useState(summary);
@@ -989,7 +991,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <div className="flex items-center gap-2">
                                                     <div className="shrink-0">
                                                         {avatarUpdates[voter.id] || voter.avatar_url ? (
-                                                            <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                                                            <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 cursor-pointer rounded-full object-cover border border-slate-200" onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
                                                         ) : (
                                                             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
                                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -1191,6 +1193,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     </section>
                 )}
             </div>
+            {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
         </AuthenticatedLayout>
     );
 }
