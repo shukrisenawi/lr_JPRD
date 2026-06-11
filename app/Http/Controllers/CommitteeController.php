@@ -212,22 +212,14 @@ class CommitteeController extends Controller
                 }
             });
 
-        $request->user()?->applyScopeToPemilihQuery($builder);
-
         $suggestions = $builder
             ->limit(8)
             ->get()
             ->map(fn (PemilihRecord $record) => [
                 'id' => $record->id,
-                'avatar_url' => $record->avatarUrl(),
                 'name' => $record->name,
-                'no_kp' => $record->no_kp,
-                'old_ic' => $record->old_ic,
-                'phone_mobile' => $record->phone_mobile,
-                'phone_home' => $record->phone_home,
                 'dm' => $record->dm,
                 'locality' => $record->locality,
-                'status' => $record->status,
             ])
             ->values();
 

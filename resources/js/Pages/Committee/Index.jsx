@@ -1045,7 +1045,6 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                             >
                                                 <div className="min-w-0">
                                                     <p className="text-xs font-bold text-slate-800">{voter.name}</p>
-                                                    <p className="text-xs text-slate-400">No Kp: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
                                                 </div>
                                                 <div className="shrink-0 text-right text-xs text-slate-500">
                                                     <p>{voter.dm || '-'}</p>
@@ -1116,7 +1115,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                 <div className="min-w-0 flex-1">
                                     <p className="text-xs font-bold text-green-800">{selectedVoter.name}</p>
                                     <p className="text-xs text-green-600">
-                                        No Kp: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
+                                        UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
                                     </p>
                                 </div>
                             </div>
@@ -1404,7 +1403,6 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                                         >
                                             <div className="min-w-0">
                                                 <p className="text-xs font-bold text-slate-800">{voter.name}</p>
-                                                <p className="text-xs text-slate-400">No Kp: {voter.no_kp || '-'} | HP: {voter.phone_mobile || '-'}</p>
                                             </div>
                                             <div className="shrink-0 text-right text-xs text-slate-500">
                                                 <p>{voter.dm || '-'}</p>
@@ -1426,14 +1424,12 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                                 <div className="min-w-0 flex-1">
                                     <p className="text-xs font-bold text-green-800">{selectedVoter.name}</p>
                                     <p className="text-xs text-green-600">
-                                        No Kp: {selectedVoter.no_kp || '-'} | UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
+                                        UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
                                     </p>
                                 </div>
                             </div>
                         </div>
                     )}
-
-
 
                     <div>
                         <InputLabel htmlFor="quick-notes" value="Catatan (Optional)" />
