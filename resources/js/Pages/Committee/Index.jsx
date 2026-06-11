@@ -445,7 +445,7 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
                     {position.level && <LevelBadge level={position.level} />}
                 </div>
                 <form onSubmit={submitEdit} className="mt-2 space-y-2">
-                    <div className="grid grid-cols-[1fr_5rem_8rem] gap-2">
+                    <div className="grid grid-cols-[1fr_5rem] gap-2">
                         <TextInput
                             id={'position-edit-name-' + position.id}
                             value={editingData.name}
@@ -460,16 +460,6 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
                             onChange={handleEditingDataChange('sort_order')}
                             className="input-field text-xs"
                         />
-                        <select
-                            value={editingData.level}
-                            onChange={handleEditingDataChange('level')}
-                            className="input-field text-xs"
-                        >
-                            <option value="">Semua Peringkat</option>
-                            {levelOptions.map((opt) => (
-                                <option key={opt.key} value={opt.key}>{opt.label}</option>
-                            ))}
-                        </select>
                     </div>
                     <InputError className="mt-1" message={editingErrors.name} />
                     <InputError className="mt-1" message={editingErrors.sort_order} />
