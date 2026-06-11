@@ -108,6 +108,7 @@ class CommitteeController extends Controller
                     'name' => $p->name,
                     'slug' => $p->slug,
                     'sort_order' => $p->sort_order,
+                    'level' => $p->level,
                 ])
                 ->values(),
             'memberships' => $membershipsQuery
@@ -300,6 +301,7 @@ class CommitteeController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:1000'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
         ]);
 
         $names = array_values(array_filter(array_map(
@@ -323,6 +325,7 @@ class CommitteeController extends Controller
                 'name' => $name,
                 'slug' => Str::slug($name),
                 'sort_order' => $baseSortOrder + $index,
+                'level' => $validated['level'] ?? null,
             ]);
         }
 
@@ -342,12 +345,14 @@ class CommitteeController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('committee_positions', 'name')->ignore($position->id)],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
         ]);
 
         $position->update([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'sort_order' => $validated['sort_order'] ?? 0,
+            'level' => $validated['level'] ?? null,
         ]);
 
         return redirect()

@@ -12,6 +12,7 @@ class CommitteePosition extends Model
         'name',
         'slug',
         'sort_order',
+        'level',
     ];
 
     public function groups(): BelongsToMany

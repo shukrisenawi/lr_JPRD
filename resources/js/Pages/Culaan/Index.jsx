@@ -987,8 +987,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                                         </div>
                                         <div className="mt-3 space-y-2 text-xs">
-                                            <div className="grid grid-cols-3 gap-2">
-                                                <div className="flex items-center gap-2 mr-[10px]">
+                                            <div className="grid gap-2" style={{gridTemplateColumns: 'auto auto 1fr'}}>
+                                                <div className="flex items-center gap-2">
                                                     {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                                         <div className="shrink-0">
                                                             <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 cursor-pointer rounded-full object-cover border border-slate-200" onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
@@ -999,7 +999,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
                                                     </div>
                                                 </div>
-                                                <div className="ml-[30px]">
+                                                <div>
                                                     <span className="font-semibold text-green-700">Telefon</span>
                                                     {(() => {
                                                         const phone = voter.phone_mobile || voter.phone_home;

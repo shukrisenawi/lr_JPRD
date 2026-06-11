@@ -158,7 +158,7 @@ function GroupManager({ groups, positions: allPositions }) {
         if (!group) return [];
         const assigned = positionsByLevel(group, level);
         const assignedIds = new Set(assigned.map((p) => p.id));
-        return allPositions.filter((p) => !assignedIds.has(p.id));
+        return allPositions.filter((p) => !assignedIds.has(p.id) && (!p.level || p.level === level));
     };
 
     const openAddModal = (groupId, level) => {
@@ -442,9 +442,10 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
                     <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
                     <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">{position.name}</p>
                     <span className="shrink-0 rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
+                    {position.level && <LevelBadge level={position.level} />}
                 </div>
                 <form onSubmit={submitEdit} className="mt-2 space-y-2">
-                    <div className="grid grid-cols-[1fr_5rem] gap-2">
+                    <div className="grid grid-cols-[1fr_5rem_8rem] gap-2">
                         <TextInput
                             id={'position-edit-name-' + position.id}
                             value={editingData.name}
@@ -459,6 +460,16 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
                             onChange={handleEditingDataChange('sort_order')}
                             className="input-field text-xs"
                         />
+                        <select
+                            value={editingData.level}
+                            onChange={handleEditingDataChange('level')}
+                            className="input-field text-xs"
+                        >
+                            <option value="">Semua Peringkat</option>
+                            {levelOptions.map((opt) => (
+                                <option key={opt.key} value={opt.key}>{opt.label}</option>
+                            ))}
+                        </select>
                     </div>
                     <InputError className="mt-1" message={editingErrors.name} />
                     <InputError className="mt-1" message={editingErrors.sort_order} />
@@ -475,6 +486,7 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
         <div ref={setNodeRef} style={style} className={'flex items-center gap-2.5 rounded-lg border border-green-100 bg-white p-2.5 shadow-sm transition hover:border-green-300 hover:shadow-md ' + (isDragging ? 'z-10 opacity-50 shadow-lg' : '')}>
             <span {...attributes} {...listeners} className="cursor-grab shrink-0 text-slate-400 hover:text-slate-600"><DragHandle /></span>
             <p className="min-w-0 flex-1 truncate text-xs font-bold text-slate-800">{position.name}</p>
+            {position.level && <LevelBadge level={position.level} />}
             <span className="shrink-0 rounded-md bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700">{position.sort_order ?? 0}</span>
             <div className="flex shrink-0 items-center gap-1">
                 <button type="button" onClick={() => onStartEdit(position)} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50">Edit</button>
@@ -485,9 +497,9 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
 }
 
 function PositionManager({ positions }) {
-    const createForm = useForm({ name: '', sort_order: 0 });
+    const createForm = useForm({ name: '', sort_order: 0, level: '' });
     const [editingId, setEditingId] = useState(null);
-    const [editingData, setEditingData] = useState({ name: '', sort_order: 0 });
+    const [editingData, setEditingData] = useState({ name: '', sort_order: 0, level: '' });
     const [editingErrors, setEditingErrors] = useState({});
 
     const [items, setItems] = useState([]);
@@ -513,6 +525,7 @@ function PositionManager({ positions }) {
         setEditingData({
             name: position.name,
             sort_order: position.sort_order ?? 0,
+            level: position.level ?? '',
         });
         setEditingErrors({});
     };
@@ -580,7 +593,7 @@ function PositionManager({ positions }) {
             </div>
 
             <div className="p-3 space-y-3">
-                <form onSubmit={submitCreate} className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
+                <form onSubmit={submitCreate} className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
                     <div>
                         <InputLabel htmlFor="position-name" value="Nama Jawatan (asingkan dengan koma)" />
                         <TextInput
@@ -592,6 +605,20 @@ function PositionManager({ positions }) {
                         />
                         <p className="mt-0.5 text-[10px] text-slate-400">Susunan jawatan mengikut turutan yang ditaip.</p>
                         <InputError className="mt-1" message={createForm.errors.name} />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="position-level" value="Peringkat" />
+                        <select
+                            id="position-level"
+                            value={createForm.data.level}
+                            onChange={(event) => createForm.setData('level', event.target.value)}
+                            className="input-field mt-1 text-xs"
+                        >
+                            <option value="">Semua Peringkat</option>
+                            {levelOptions.map((opt) => (
+                                <option key={opt.key} value={opt.key}>{opt.label}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="flex items-end">
                         <PrimaryButton className="w-full justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold" disabled={createForm.processing}>
