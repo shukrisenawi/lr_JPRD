@@ -603,7 +603,6 @@ function PositionManager({ positions }) {
                             className="input-field mt-1 text-xs"
                             placeholder="Contoh: Pengerusi, Timbalan Pengerusi, Setiausaha, Bendahari"
                         />
-                        <p className="mt-0.5 text-[10px] text-slate-400">Susunan jawatan mengikut turutan yang ditaip.</p>
                         <InputError className="mt-1" message={createForm.errors.name} />
                     </div>
 
