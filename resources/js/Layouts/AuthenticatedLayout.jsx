@@ -172,6 +172,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             )}
 
             {flash.success && <div className="mx-auto mt-2 max-w-7xl px-3 sm:px-4 lg:px-6"><div className="flash-success">{flash.success}</div></div>}
+            {flash.warning && <div className="mx-auto mt-2 max-w-7xl px-3 sm:px-4 lg:px-6"><div className="flash-warning">{flash.warning}</div></div>}
             {flash.error && <div className="mx-auto mt-2 max-w-7xl px-3 sm:px-4 lg:px-6"><div className="flash-error">{flash.error}</div></div>}
 
             {header && (

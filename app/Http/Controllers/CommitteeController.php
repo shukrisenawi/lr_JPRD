@@ -324,6 +324,8 @@ class CommitteeController extends Controller
 
         $baseSortOrder = $validated['sort_order'] ?? CommitteePosition::query()->max('sort_order') + 1;
 
+        $inserted = 0;
+
         foreach ($names as $index => $name) {
             if (in_array(strtolower($name), $existingLower)) {
                 continue;
@@ -334,17 +336,24 @@ class CommitteeController extends Controller
                 'sort_order' => $baseSortOrder + $index,
                 'level' => $validated['level'] ?? null,
             ]);
+            $inserted++;
         }
 
         if ($existing !== []) {
             return redirect()
                 ->route('jawatankuasa.index')
-                ->with('warning', 'Jawatan sudah wujud: '.implode(', ', $existing).'. Jawatan baru berjaya ditambah.');
+                ->with('warning', 'Jawatan sudah wujud: '.implode(', ', $existing).'.');
+        }
+
+        if ($inserted > 0) {
+            return redirect()
+                ->route('jawatankuasa.index')
+                ->with('success', $inserted.' jawatan berjaya ditambah.');
         }
 
         return redirect()
             ->route('jawatankuasa.index')
-            ->with('success', 'Jawatan berjaya ditambah.');
+            ->with('warning', 'Tiada jawatan baru ditambah. Semua nama jawatan sudah wujud.');
     }
 
     public function updatePosition(Request $request, CommitteePosition $position): RedirectResponse
