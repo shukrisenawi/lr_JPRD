@@ -497,7 +497,7 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
 }
 
 function PositionManager({ positions }) {
-    const createForm = useForm({ name: '', sort_order: 0, level: '' });
+    const createForm = useForm({ name: '', sort_order: 0, level: 'jprd' });
     const [editingId, setEditingId] = useState(null);
     const [editingData, setEditingData] = useState({ name: '', sort_order: 0, level: '' });
     const [editingErrors, setEditingErrors] = useState({});
@@ -606,20 +606,7 @@ function PositionManager({ positions }) {
                         <p className="mt-0.5 text-[10px] text-slate-400">Susunan jawatan mengikut turutan yang ditaip.</p>
                         <InputError className="mt-1" message={createForm.errors.name} />
                     </div>
-                    <div>
-                        <InputLabel htmlFor="position-level" value="Peringkat" />
-                        <select
-                            id="position-level"
-                            value={createForm.data.level}
-                            onChange={(event) => createForm.setData('level', event.target.value)}
-                            className="input-field mt-1 text-xs"
-                        >
-                            <option value="">Semua Peringkat</option>
-                            {levelOptions.map((opt) => (
-                                <option key={opt.key} value={opt.key}>{opt.label}</option>
-                            ))}
-                        </select>
-                    </div>
+
                     <div className="flex items-end">
                         <PrimaryButton className="w-full justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold" disabled={createForm.processing}>
                             <Icon name="plus" className="h-4 w-4" />
