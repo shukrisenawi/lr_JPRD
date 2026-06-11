@@ -695,6 +695,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const form = useForm({
         pemilih_record_id: '',
         committee_position_id: '',
+        committee_group_id: '',
         level: 'jprd',
         scope_key: scopes.jprd?.[0]?.key ?? 'jprd',
         voter_search: '',
@@ -795,7 +796,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
                 const positionsWithMembers = levelPositions.map(pos => ({
                     ...pos,
-                    members: filteredMemberships.filter(m => m.position?.id === pos.id)
+                    members: filteredMemberships.filter(m => m.position?.id === pos.id && m.committee_group_id === group.id)
                 }));
 
                 const totalMembers = positionsWithMembers.reduce((sum, p) => sum + p.members.length, 0);
@@ -859,6 +860,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                 form.setData((current) => ({
                     ...current,
                     committee_position_id: positionsForForm[0]?.id ?? '',
+                    committee_group_id: selectedGroupId || '',
                     level: resolvedTab,
                     scope_key: scopes[resolvedTab]?.[0]?.key ?? '',
                 }));
@@ -1058,13 +1060,17 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="membership-group" value="Kumpulan" />
-                            <select
-                                id="membership-group"
-                                value={selectedGroupId}
-                                onChange={(e) => setSelectedGroupId(Number(e.target.value))}
-                                className="input-field mt-1 text-xs"
-                            >
+                                <InputLabel htmlFor="membership-group" value="Kumpulan" />
+                                <select
+                                    id="membership-group"
+                                    value={selectedGroupId}
+                                    onChange={(e) => {
+                                        const gid = Number(e.target.value);
+                                        setSelectedGroupId(gid);
+                                        form.setData('committee_group_id', gid || '');
+                                    }}
+                                    className="input-field mt-1 text-xs"
+                                >
                                 <option value="">Pilih kumpulan</option>
                                 {groups.map((group) => (
                                     <option key={group.id} value={group.id}>{group.name}</option>
@@ -1299,6 +1305,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
     const form = useForm({
         pemilih_record_id: '',
         committee_position_id: position.id,
+        committee_group_id: group.id,
         level: level,
         scope_key: currentScopeKey || (scopes[level]?.[0]?.key ?? ''),
         voter_search: '',

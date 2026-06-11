@@ -116,6 +116,7 @@ class CommitteeController extends Controller
                 ->map(fn (CommitteeMembership $membership) => [
                     'id' => $membership->id,
                     'pemilih_record_id' => $membership->pemilih_record_id,
+                    'committee_group_id' => $membership->committee_group_id,
                     'level' => $membership->level,
                     'scope_key' => $membership->scope_key,
                     'scope_name' => $membership->scope_name,
@@ -532,6 +533,7 @@ class CommitteeController extends Controller
         $validated = $request->validate([
             'pemilih_record_id' => ['required', 'integer', Rule::exists('pemilih_records', 'id')],
             'committee_position_id' => ['required', 'integer', Rule::exists('committee_positions', 'id')],
+            'committee_group_id' => ['required', 'integer', Rule::exists('committee_groups', 'id')],
             'level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
             'scope_key' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -554,6 +556,7 @@ class CommitteeController extends Controller
         $exists = CommitteeMembership::query()
             ->where('pemilih_record_id', $voter->id)
             ->where('committee_position_id', $validated['committee_position_id'])
+            ->where('committee_group_id', $validated['committee_group_id'])
             ->where('level', $validated['level'])
             ->where('scope_key', $validated['scope_key'])
             ->exists();
@@ -565,6 +568,7 @@ class CommitteeController extends Controller
         }
 
         CommitteeMembership::query()->create([
+            'committee_group_id' => $validated['committee_group_id'],
             'pemilih_record_id' => $voter->id,
             'committee_position_id' => $validated['committee_position_id'],
             'level' => $validated['level'],
