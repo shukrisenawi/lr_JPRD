@@ -788,6 +788,10 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         });
     }, [resolvedTab, form.data.scope_key, memberships]);
 
+    const unassignedMemberships = useMemo(() => {
+        return filteredMemberships.filter(m => !m.committee_group_id);
+    }, [filteredMemberships]);
+
     const groupsWithMembers = useMemo(() => {
         return groups
             .filter(g => g.levels && g.levels.includes(resolvedTab))
@@ -800,7 +804,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     ...pos,
                     members: filteredMemberships.filter(m =>
                         m.position?.id === pos.id &&
-                        (m.committee_group_id === null || m.committee_group_id === group.id)
+                        m.committee_group_id === group.id
                     )
                 }));
 
