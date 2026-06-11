@@ -1,1 +1,0 @@
-import{j as t}from"./app-BQuEdSRj.js";const r="/build/assets/logo-pas-sik-CGzbDh_l.png";function p({className:o="",alt:s="Logo PAS Sik",...i}){return t.jsx("img",{...i,src:r,alt:s,className:o})}export{p as A};

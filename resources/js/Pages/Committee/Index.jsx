@@ -1578,7 +1578,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
                     <div>
                         <p className="label-section">Jawatankuasa</p>
                         <h2 className="mt-0.5 heading-lg">Urus jawatan dan pelantikan</h2>
-                        <p className="text-muted mt-0.5">Semak jawatankuasa JPRD, UDM dan Cawangan dalam satu modul.</p>
+
                     </div>
                     <div className="mt-1 flex shrink-0 items-center gap-2">
                         <button type="button" onClick={() => setSearchOpen(true)}
