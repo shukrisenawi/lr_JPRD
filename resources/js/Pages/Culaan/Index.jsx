@@ -951,15 +951,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         className={`rounded-xl border bg-white p-3 shadow-sm overflow-hidden cursor-pointer transition-colors duration-300 ease-in-out hover:shadow-md ${voter.id === selectedVoterId ? 'border-2 border-slate-800 shadow-slate-800/20' : 'border-green-600 shadow-green-600/20'}`}
                                     >
                                         <div className="flex items-start justify-between gap-2">
-                                            <div className="shrink-0">
-                                                {avatarUpdates[voter.id] || voter.avatar_url ? (
-                                                    <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200" />
-                                                ) : (
-                                                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                                    </div>
-                                                )}
-                                            </div>
                                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
                                                 {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
@@ -995,9 +986,20 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </div>
                                         <div className="mt-3 space-y-2 text-xs">
                                             <div className="grid grid-cols-3 gap-2">
-                                                <div>
-                                                    <span className="font-semibold text-green-700">No Kp</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="shrink-0">
+                                                        {avatarUpdates[voter.id] || voter.avatar_url ? (
+                                                            <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                                                        ) : (
+                                                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-green-700 border border-slate-200">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">No Kp</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
+                                                    </div>
                                                 </div>
                                                 <div className="ml-[30px]">
                                                     <span className="font-semibold text-green-700">Telefon</span>
