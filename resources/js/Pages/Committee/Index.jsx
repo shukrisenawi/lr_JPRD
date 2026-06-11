@@ -513,7 +513,7 @@ function SortablePositionRow({ position, editingId, editingData, editingErrors, 
 }
 
 function PositionManager({ positions }) {
-    const createForm = useForm({ name: '', sort_order: 0, level: 'jprd' });
+    const createForm = useForm({ name: '', sort_order: 0 });
     const [editingId, setEditingId] = useState(null);
     const [editingData, setEditingData] = useState({ name: '', sort_order: 0, level: '' });
     const [editingErrors, setEditingErrors] = useState({});
