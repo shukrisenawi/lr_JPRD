@@ -306,8 +306,8 @@ function GroupManager({ groups, positions: allPositions }) {
 
                                     {animExpandId === group.id && (
                                         <div
-                                            className="border-t border-green-100 overflow-hidden transition-all duration-300 ease-in-out"
-                                            style={{ maxHeight: isExpanded ? '800px' : '0px', opacity: isExpanded ? 1 : 0 }}
+                                            className="border-t border-green-100 transition-all duration-300 ease-in-out"
+                                            style={{ opacity: isExpanded ? 1 : 0 }}
                                         >
                                             <div className="border-b border-green-100 px-2.5 py-2">
                                                 <input
