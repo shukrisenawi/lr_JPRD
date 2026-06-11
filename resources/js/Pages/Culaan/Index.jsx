@@ -988,7 +988,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </div>
                                         <div className="mt-3 space-y-2 text-xs">
                                             <div className="grid grid-cols-3 gap-2">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 mr-[10px]">
                                                     {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                                         <div className="shrink-0">
                                                             <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 cursor-pointer rounded-full object-cover border border-slate-200" onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
