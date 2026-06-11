@@ -672,8 +672,10 @@ const committeeTabs = [
 ];
 
 const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, activeTab, onTabChange }, ref) {
-    const tabs = committeeTabs;
-    const [activeTabLocal, setActiveTabLocal] = useState('jprd');
+    const userLevel = auth?.user?.access_level ?? 'jprd';
+    const tabs = committeeTabs.filter(t => t.key === userLevel || userLevel === 'jprd');
+    const defaultTab = userLevel === 'jprd' ? 'jprd' : userLevel;
+    const [activeTabLocal, setActiveTabLocal] = useState(defaultTab);
     const resolvedTab = activeTab ?? activeTabLocal;
     const setResolvedTab = onTabChange ?? setActiveTabLocal;
     const suggestionsAbort = useRef(null);
