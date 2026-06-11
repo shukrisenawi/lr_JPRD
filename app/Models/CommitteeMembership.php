@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CommitteeMembership extends Model
 {
     protected $fillable = [
+        'committee_group_id',
         'pemilih_record_id',
         'committee_position_id',
         'level',
