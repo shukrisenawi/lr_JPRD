@@ -23,7 +23,7 @@ class GroupPemilihSeeder extends Seeder
         foreach ($groups as $group) {
             GroupPemilih::query()->firstOrCreate(
                 ['nama_group' => $group['nama_group']],
-                $group,
+                array_merge($group, ['user_id' => 1]),
             );
         }
     }
