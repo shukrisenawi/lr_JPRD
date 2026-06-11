@@ -212,6 +212,18 @@ class CommitteeController extends Controller
                 }
             });
 
+        $user = $request->user();
+        $scope = $user?->accessScope();
+
+        if ($scope !== null && filled($scope['dm'])) {
+            $dm = $scope['dm'];
+            if (filled($scope['locality'])) {
+                $builder->orderByRaw("CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END", [$dm, $scope['locality']]);
+            } else {
+                $builder->orderByRaw("CASE WHEN dm = ? THEN 0 ELSE 1 END", [$dm]);
+            }
+        }
+
         $suggestions = $builder
             ->limit(8)
             ->get()
