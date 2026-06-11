@@ -320,10 +320,12 @@ class CommitteeController extends Controller
 
         $existing = CommitteePosition::query()->whereIn('name', $names)->pluck('name')->all();
 
+        $existingLower = array_map('strtolower', $existing);
+
         $baseSortOrder = $validated['sort_order'] ?? CommitteePosition::query()->max('sort_order') + 1;
 
         foreach ($names as $index => $name) {
-            if (in_array($name, $existing)) {
+            if (in_array(strtolower($name), $existingLower)) {
                 continue;
             }
             CommitteePosition::query()->create([
@@ -337,7 +339,7 @@ class CommitteeController extends Controller
         if ($existing !== []) {
             return redirect()
                 ->route('jawatankuasa.index')
-                ->with('warning', 'Sebahagian jawatan sudah wujud: '.implode(', ', $existing).'. Jawatan baru berjaya ditambah.');
+                ->with('warning', 'Jawatan sudah wujud: '.implode(', ', $existing).'. Jawatan baru berjaya ditambah.');
         }
 
         return redirect()
