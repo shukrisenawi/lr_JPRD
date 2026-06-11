@@ -1158,7 +1158,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             </div>
 
             <div className="border-t border-green-100 p-3">
-                {groupsWithMembers.length === 0 ? (
+                {groupsWithMembers.length === 0 && unassignedMemberships.length === 0 ? (
                     <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">Belum ada kumpulan atau ahli untuk peringkat ini.</div>
                 ) : (
                     <div className="space-y-2">
@@ -1271,10 +1271,23 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                               ) : null}
                                                                          </div>
                                                                      );
-                                                                 })}
-                                                            </div>
-                                                        )}
-                                                    </div>
+                        })}
+                    </div>
+                )}
+
+                {unassignedMemberships.length > 0 && (
+                    <div className="mt-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3">
+                        <p className="mb-2 text-xs font-bold text-amber-700">Ahli tanpa kumpulan</p>
+                        <div className="flex flex-wrap gap-1">
+                            {unassignedMemberships.map((m) => (
+                                <span key={m.id} className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
+                                    {m.voter?.name} — {m.position?.name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
                                                     );
                                                 })}
                                                 </div>
