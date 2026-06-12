@@ -1579,7 +1579,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
 
 // ─── CommitteeDetailPopup ─────────────────────────────────────────────────
 
-function CommitteeDetailPopup({ scope, members, level, groups, onClose }) {
+function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClose }) {
     if (!scope) return null;
 
     const groupedByGroup = {};
@@ -1589,6 +1589,11 @@ function CommitteeDetailPopup({ scope, members, level, groups, onClose }) {
         if (!groupedByGroup[gid]) groupedByGroup[gid] = { groupName: grp?.name || 'Tanpa Kumpulan', members: [] };
         groupedByGroup[gid].members.push(m);
     });
+
+    const isMatching = (name) => {
+        if (!highlight || !highlight.trim()) return false;
+        return name?.toLowerCase().includes(highlight.toLowerCase());
+    };
 
     return (
         <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 pt-8 sm:pt-16" onClick={onClose}>
@@ -1616,13 +1621,15 @@ function CommitteeDetailPopup({ scope, members, level, groups, onClose }) {
                                         <p className="text-[10px] text-slate-400">{g.members.length} ahli</p>
                                     </div>
                                     <div className="divide-y divide-slate-100">
-                                        {g.members.map((m) => (
-                                            <div key={m.id} className="flex items-center gap-3 px-3 py-2">
-                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                        {g.members.map((m) => {
+                                            const match = isMatching(m.voter?.name);
+                                            return (
+                                            <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : '')}>
+                                                <div className={'flex h-8 w-8 shrink-0 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
                                                     <Icon name="user" className="h-4 w-4" />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-bold text-slate-800">{m.voter?.name}</p>
+                                                    <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
                                                     <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
                                                 </div>
                                                 <div className="shrink-0 text-right">
@@ -1630,7 +1637,8 @@ function CommitteeDetailPopup({ scope, members, level, groups, onClose }) {
                                                     {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ))}
@@ -1775,6 +1783,7 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
                 members={memberships.filter((m) => m.level === activeTab && m.scope_key === detailScope.key)}
                 level={activeTab}
                 groups={groups}
+                highlight={searchQuery}
                 onClose={() => setDetailScope(null)}
             />
         )}
