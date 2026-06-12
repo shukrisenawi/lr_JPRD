@@ -34,11 +34,6 @@ function UserGroupIcon({ className = 'h-4 w-4' }) {
     );
 }
 
-function buildTelegramLink(command, identity) {
-    const payload = identity ? `/${command} ${identity}` : `/${command}`;
-    return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(payload)}`;
-}
-
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -335,6 +330,25 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: false }));
             e.target.value = '';
         }
+    };
+
+    const logCommunication = async (voterId, type, notes = '') => {
+        try {
+            await fetch(route('vcc.communication.log'), {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ voter_id: voterId, type, notes }),
+            });
+        } catch (_) {}
+    };
+
+    const whatsappBirthdayMessage = (name) => {
+        return `Assalamualaikum ${name}, kami dari PAS Sik mengucapkan Selamat Hari Lahir! Semoga dipanjangkan umur dan dimurahkan rezeki.`;
     };
 
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
@@ -706,6 +720,14 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         <div className="min-w-0 flex-1">
                                             <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                 {voter.name}
+                                                {voter.date_of_birth && (() => {
+                                                    const today = new Date();
+                                                    const dob = new Date(voter.date_of_birth + 'T00:00:00');
+                                                    if (dob.getMonth() === today.getMonth() && dob.getDate() === today.getDate()) {
+                                                        return <span className="rounded-full bg-pink-100 px-1.5 py-0.5 text-[10px] font-bold text-pink-600">🎂</span>;
+                                                    }
+                                                    return null;
+                                                })()}
                                                 {(() => {
                                                     const namaAyah = extractNamaAyah(voter.name);
                                                     if (!namaAyah) return null;
@@ -749,9 +771,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     const phone = voter.phone_mobile || voter.phone_home;
                                                     if (!phone) return <p className="mt-0.5 font-bold text-slate-800">-</p>;
                                                     return (
-                                                        <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => e.stopPropagation()}>
-                                                            {phone}
-                                                        </a>
+                                                            <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => { e.stopPropagation(); logCommunication(voter.id, 'call'); }}>
+                                                                {phone}
+                                                            </a>
                                                     );
                                                 })()}
                                             </div>
@@ -789,24 +811,38 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} onClick={(e) => e.stopPropagation()} disabled={uploadingAvatarIds[voter.id]} />
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                                 </label>
-                                                <a
-                                                    href={buildTelegramLink('kemascula', voter.telegram_identity)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 transition hover:border-green-300 hover:text-green-700"
-                                                >
-                                                    Kemas Cula
-                                                </a>
-                                                <a
-                                                    href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 transition hover:border-green-300 hover:text-green-700"
-                                                >
-                                                    Kemas Tel
-                                                </a>
+                                                {voter.whatsapp_link && (
+                                                    <a
+                                                        href={voter.whatsapp_link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => { e.stopPropagation(); logCommunication(voter.id, 'whatsapp'); }}
+                                                        className="rounded-md border border-green-200 bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
+                                                    >
+                                                        WhatsApp
+                                                    </a>
+                                                )}
+                                                {voter.date_of_birth && (() => {
+                                                    const today = new Date();
+                                                    const dob = new Date(voter.date_of_birth + 'T00:00:00');
+                                                    if (dob.getMonth() === today.getMonth() && dob.getDate() === today.getDate()) {
+                                                        const phone = (voter.phone_mobile || '').replace(/^0+/, '');
+                                                        const waLink = phone ? `https://wa.me/60${phone}?text=${encodeURIComponent(whatsappBirthdayMessage(voter.name))}` : null;
+                                                        if (!waLink) return null;
+                                                        return (
+                                                            <a
+                                                                href={waLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                onClick={(e) => { e.stopPropagation(); logCommunication(voter.id, 'birthday', 'Ucapan hari jadi'); }}
+                                                                className="rounded-md border border-pink-200 bg-pink-50 px-2 py-1.5 text-xs font-bold text-pink-600 transition hover:bg-pink-100"
+                                                            >
+                                                                🎂 Ucap Selamat
+                                                            </a>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
                                             </>
                                         )}
                                         <div className="ml-auto">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
+use App\Models\VoterCommunication;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
@@ -124,6 +125,24 @@ class VccController extends Controller
         return redirect()
             ->route('vcc.index')
             ->with('success', 'Tanda culaan berjaya dibuka semula.');
+    }
+
+    public function logCommunication(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'voter_id' => 'required|exists:pemilih_records,id',
+            'type' => 'required|in:call,whatsapp,birthday',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        VoterCommunication::create([
+            'voter_id' => $data['voter_id'],
+            'user_id' => $request->user()->id,
+            'type' => $data['type'],
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        return response()->json(['message' => 'Komunikasi direkodkan.']);
     }
 
     private function buildEligibleVotersQuery(array $filters, bool $skipMarkedFilter = false): Builder
@@ -322,8 +341,10 @@ class VccController extends Controller
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,
             'no_ahli' => $voter->no_ahli,
+            'date_of_birth' => $voter->date_of_birth,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
+            'whatsapp_link' => $this->generateWhatsAppLink($voter->phone_mobile),
             'address' => $voter->address,
             'age' => $this->calculateAge($voter->no_kp),
             'dm' => $voter->dm,
@@ -336,6 +357,27 @@ class VccController extends Controller
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,
             'is_manual' => $voter->is_manual,
         ];
+    }
+
+    private function generateWhatsAppLink(?string $phone): ?string
+    {
+        if (! $phone) {
+            return null;
+        }
+
+        $clean = preg_replace('/\D+/', '', $phone);
+
+        if ($clean === '') {
+            return null;
+        }
+
+        if (str_starts_with($clean, '0')) {
+            $clean = '60'.substr($clean, 1);
+        } elseif (! str_starts_with($clean, '60')) {
+            $clean = '60'.$clean;
+        }
+
+        return "https://wa.me/{$clean}";
     }
 
     private function calculateAge(?string $noKp): ?int
