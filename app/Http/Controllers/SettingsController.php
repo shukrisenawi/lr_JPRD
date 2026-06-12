@@ -93,34 +93,14 @@ class SettingsController extends Controller
         abort_unless($request->user()->canAccessModule('settings.backup-database'), 403);
 
         $mysqldump = $this->findMysqldumpPath();
-        $db = config('database.connections.mysql');
+        $db = config('database.connections.mysql') ?? [];
         $filename = 'DB_PAS_' . now('Asia/Kuala_Lumpur')->format('d-m-Y_H-iA') . '.sql';
 
-        $command = sprintf(
-            '%s --host=%s --user=%s --password=%s --single-transaction --routines --triggers %s 2>&1',
-            escapeshellarg($mysqldump),
-            escapeshellarg($db['host'] ?? 'localhost'),
-            escapeshellarg($db['username'] ?? ''),
-            escapeshellarg($db['password'] ?? ''),
-            escapeshellarg($db['database'] ?? '')
-        );
+        $result = $this->runMysqldump($mysqldump, $db);
 
-        $output = [];
-        $returnVar = -1;
-
-        try {
-            if (!function_exists('exec')) {
-                throw new \RuntimeException('Fungsi exec() tidak tersedia pada server.');
-            }
-            exec($command, $output, $returnVar);
-        } catch (\Throwable $e) {
-            logger()->error('Backup database gagal: ' . $e->getMessage(), ['command' => $command]);
-            return redirect()->route('settings.edit')->with('error', 'Backup gagal: ' . $e->getMessage());
-        }
-
-        if ($returnVar !== 0) {
-            $errorMsg = !empty($output) ? implode("\n", $output) : 'mysqldump gagal dijalankan. Pastikan mysqldump dipasang atau set DB_DUMP_PATH dalam .env.';
-            logger()->error('Backup database gagal (exit ' . $returnVar . '): ' . $errorMsg);
+        if ($result['returnVar'] !== 0) {
+            $errorMsg = $result['stderr'] ?: ($result['stdout'] ?: 'mysqldump gagal dijalankan. Pastikan mysqldump dipasang atau set DB_DUMP_PATH dalam .env.');
+            logger()->error('Backup database gagal (exit ' . $result['returnVar'] . '): ' . $errorMsg);
             return redirect()->route('settings.edit')->with('error', 'Backup gagal: ' . $errorMsg);
         }
 
@@ -129,7 +109,47 @@ class SettingsController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        return new HttpResponse(implode("\n", $output), 200, $headers);
+        return new HttpResponse($result['stdout'], 200, $headers);
+    }
+
+    private function runMysqldump(string $mysqldump, array $db): array
+    {
+        $command = sprintf(
+            '%s --host=%s --port=%s --user=%s --password=%s --single-transaction --no-tablespaces --routines --triggers %s',
+            escapeshellarg($mysqldump),
+            escapeshellarg($db['host'] ?? '127.0.0.1'),
+            escapeshellarg($db['port'] ?? '3306'),
+            escapeshellarg($db['username'] ?? 'root'),
+            escapeshellarg($db['password'] ?? ''),
+            escapeshellarg($db['database'] ?? '')
+        );
+
+        $descriptors = [
+            0 => ['pipe', 'r'],
+            1 => ['pipe', 'w'],
+            2 => ['pipe', 'w'],
+        ];
+
+        $process = @proc_open($command, $descriptors, $pipes);
+
+        if (!is_resource($process)) {
+            return ['stdout' => '', 'stderr' => 'proc_open gagal', 'returnVar' => -1];
+        }
+
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+
+        fclose($pipes[0]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $returnVar = proc_close($process);
+
+        return [
+            'stdout' => $stdout !== false ? $stdout : '',
+            'stderr' => $stderr !== false ? $stderr : '',
+            'returnVar' => $returnVar,
+        ];
     }
 
     public function importDatabase(Request $request): RedirectResponse
@@ -140,57 +160,35 @@ class SettingsController extends Controller
             'backup_file' => ['required', 'file', 'max:102400'],
         ]);
 
-        $db = config('database.connections.mysql');
+        $db = config('database.connections.mysql') ?? [];
         $mysql = $this->findMysqlPath();
         $mysqldump = $this->findMysqldumpPath();
 
         // 1. Backup current database
         $backupFilename = 'backup_DB_PAS_' . now('Asia/Kuala_Lumpur')->format('d-m-Y_H-iA') . '.sql';
 
-        $dumpCommand = sprintf(
-            '%s --host=%s --user=%s --password=%s --single-transaction --routines --triggers %s 2>&1',
-            escapeshellarg($mysqldump),
-            escapeshellarg($db['host'] ?? 'localhost'),
-            escapeshellarg($db['username'] ?? ''),
-            escapeshellarg($db['password'] ?? ''),
-            escapeshellarg($db['database'] ?? '')
-        );
+        $dumpResult = $this->runMysqldump($mysqldump, $db);
 
-        $dumpOutput = [];
-        $dumpReturnVar = -1;
-
-        try {
-            if (!function_exists('exec')) {
-                throw new \RuntimeException('Fungsi exec() tidak tersedia pada server.');
-            }
-            exec($dumpCommand, $dumpOutput, $dumpReturnVar);
-        } catch (\Throwable $e) {
-            return redirect()->route('settings.edit')->with('error', 'Backup sebelum import gagal: ' . $e->getMessage());
-        }
-
-        if ($dumpReturnVar !== 0) {
-            $errorMsg = !empty($dumpOutput) ? implode("\n", $dumpOutput) : 'mysqldump gagal dijalankan.';
-            logger()->error('Backup sebelum import gagal (exit ' . $dumpReturnVar . '): ' . $errorMsg);
+        if ($dumpResult['returnVar'] !== 0) {
+            $errorMsg = $dumpResult['stderr'] ?: ($dumpResult['stdout'] ?: 'mysqldump gagal dijalankan.');
+            logger()->error('Backup sebelum import gagal (exit ' . $dumpResult['returnVar'] . '): ' . $errorMsg);
             return redirect()->route('settings.edit')->with('error', 'Backup sebelum import gagal: ' . $errorMsg);
         }
 
-        Storage::put('backup/' . $backupFilename, implode("\n", $dumpOutput));
+        Storage::put('backup/' . $backupFilename, $dumpResult['stdout']);
 
         // 2. Drop all existing tables
         $dbName = $db['database'] ?? '';
-        $dropSql = sprintf(
-            "SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS (SELECT GROUP_CONCAT(table_name) FROM information_schema.tables WHERE table_schema = '%s'); SET FOREIGN_KEY_CHECKS = 1;",
-            $dbName
-        );
 
         $tablesOutput = [];
         $tablesReturnVar = -1;
         exec(
             sprintf(
-                '%s --host=%s --user=%s --password=%s -N -e %s 2>&1',
+                '%s --host=%s --port=%s --user=%s --password=%s -N -e %s 2>&1',
                 escapeshellarg($mysql),
-                escapeshellarg($db['host'] ?? 'localhost'),
-                escapeshellarg($db['username'] ?? ''),
+                escapeshellarg($db['host'] ?? '127.0.0.1'),
+                escapeshellarg($db['port'] ?? '3306'),
+                escapeshellarg($db['username'] ?? 'root'),
                 escapeshellarg($db['password'] ?? ''),
                 escapeshellarg("SELECT GROUP_CONCAT(table_name) FROM information_schema.tables WHERE table_schema = '{$dbName}'")
             ),
@@ -202,10 +200,11 @@ class SettingsController extends Controller
             $tableList = $tablesOutput[0];
             exec(
                 sprintf(
-                    '%s --host=%s --user=%s --password=%s -e %s 2>&1',
+                    '%s --host=%s --port=%s --user=%s --password=%s -e %s 2>&1',
                     escapeshellarg($mysql),
-                    escapeshellarg($db['host'] ?? 'localhost'),
-                    escapeshellarg($db['username'] ?? ''),
+                    escapeshellarg($db['host'] ?? '127.0.0.1'),
+                    escapeshellarg($db['port'] ?? '3306'),
+                    escapeshellarg($db['username'] ?? 'root'),
                     escapeshellarg($db['password'] ?? ''),
                     escapeshellarg("SET FOREIGN_KEY_CHECKS = 0; DROP TABLE IF EXISTS {$tableList}; SET FOREIGN_KEY_CHECKS = 1;")
                 ),
@@ -220,10 +219,11 @@ class SettingsController extends Controller
         $fullPath = storage_path('app/' . $tempPath);
 
         $importCommand = sprintf(
-            '%s --host=%s --user=%s --password=%s %s < %s 2>&1',
+            '%s --host=%s --port=%s --user=%s --password=%s %s < %s 2>&1',
             escapeshellarg($mysql),
-            escapeshellarg($db['host'] ?? 'localhost'),
-            escapeshellarg($db['username'] ?? ''),
+            escapeshellarg($db['host'] ?? '127.0.0.1'),
+            escapeshellarg($db['port'] ?? '3306'),
+            escapeshellarg($db['username'] ?? 'root'),
             escapeshellarg($db['password'] ?? ''),
             escapeshellarg($db['database'] ?? ''),
             escapeshellarg($fullPath)
