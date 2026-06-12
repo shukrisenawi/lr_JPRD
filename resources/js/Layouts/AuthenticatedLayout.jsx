@@ -89,7 +89,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                                     </button>
                                                 </Dropdown.Trigger>
                                                 <Dropdown.Content align="left" widthClasses="w-52">
-                                                    {item.items.filter(i => canAccess(i.key)).map(sub => (
+                                                    {item.items.filter(i => canAccess(i.key) || i.key === 'akses').map(sub => (
                                                         <Dropdown.Link key={sub.key} href={route(sub.href)}>
                                                             {sub.label}
                                                         </Dropdown.Link>
