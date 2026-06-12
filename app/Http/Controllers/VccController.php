@@ -154,6 +154,11 @@ class VccController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
+        $query->where(function (Builder $q) {
+            $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
+              ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
+        });
+
         $query->when($groupKodCulas !== null, fn (Builder $builder) => $builder->whereIn('cula_code', $groupKodCulas))
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
