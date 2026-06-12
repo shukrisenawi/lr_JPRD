@@ -1,0 +1,850 @@
+import InputError from '@/Components/InputError';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AvatarLightbox from '@/Components/AvatarLightbox';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+const nf = new Intl.NumberFormat('ms-MY');
+const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
+function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
+function fmt(v) { return nf.format(v ?? 0); }
+
+function extractNamaAyah(name) {
+    if (!name) return null;
+    const lowerName = name.toLowerCase();
+    const connectors = [' bin ', ' binti ', ' bt ', ' a/p ', ' a/l '];
+    for (const connector of connectors) {
+        const idx = lowerName.lastIndexOf(connector);
+        if (idx !== -1) {
+            const result = name.substring(idx + connector.length).trim();
+            return result || null;
+        }
+    }
+    return null;
+}
+
+function UserGroupIcon({ className = 'h-4 w-4' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    );
+}
+
+function buildTelegramLink(command, identity) {
+    const payload = identity ? `/${command} ${identity}` : `/${command}`;
+    return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(payload)}`;
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function escapeXml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+function estimateExcelWidth(value) {
+    const text = String(value ?? '').trim();
+    if (text === '') return 8;
+    return Array.from(text).reduce((total, character) => {
+        if (/[A-Z0-9]/.test(character)) return total + 1.15;
+        if (/[a-z]/.test(character)) return total + 1;
+        if (character === ' ') return total + 0.55;
+        return total + 1.05;
+    }, 2);
+}
+
+function excelTextCell(value) {
+    return { value: value ?? '-', type: 'String' };
+}
+
+function Pagination({ voters, onNavigate }) {
+    if (!voters || voters.last_page <= 1) return null;
+
+    return (
+        <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 px-1 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-medium text-slate-500">
+                Papar {voters.from ?? 0} - {voters.to ?? 0} daripada {voters.total} rekod
+            </p>
+            <div className="flex flex-wrap gap-2">
+                <button
+                    type="button"
+                    onClick={() => onNavigate(voters.current_page - 1)}
+                    disabled={!voters.prev_page_url}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Sebelum
+                </button>
+                {voters.links
+                    ?.filter((link) => /^\d+$/.test(String(link.label)))
+                    .map((link) => (
+                        <button
+                            key={link.label}
+                            type="button"
+                            onClick={() => onNavigate(Number(link.label))}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${link.active ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:text-green-700'}`}
+                        >
+                            {link.label}
+                        </button>
+                    ))}
+                <button
+                    type="button"
+                    onClick={() => onNavigate(voters.current_page + 1)}
+                    disabled={!voters.next_page_url}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                    Seterusnya
+                </button>
+            </div>
+        </div>
+    );
+}
+
+export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [] }) {
+    const { auth } = usePage().props;
+    const suggestionsAbort = useRef(null);
+    const [search, setSearch] = useState('');
+    const [searching, setSearching] = useState(false);
+    const [suggestions, setSuggestions] = useState([]);
+    const [searchError, setSearchError] = useState('');
+    const [actionError, setActionError] = useState('');
+    const [selectedVoterId, setSelectedVoterId] = useState(null);
+    const [lightboxSrc, setLightboxSrc] = useState(null);
+    const [pendingIds, setPendingIds] = useState([]);
+    const [localVoters, setLocalVoters] = useState(voters);
+    const [localSummary, setLocalSummary] = useState(summary);
+    const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
+    const [avatarUpdates, setAvatarUpdates] = useState({});
+    const [formState, setFormState] = useState({
+        udm: filters.udm ?? '',
+        locality: filters.locality ?? '',
+        show_marked: Boolean(filters.show_marked),
+        group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
+        keturunan: filters.keturunan || 'M',
+        jantina: filters.jantina ?? '',
+        umur_dari: filters.umur_dari ?? '',
+        umur_hingga: filters.umur_hingga ?? '',
+    });
+
+    useEffect(() => {
+        setFormState({
+            udm: filters.udm ?? '',
+            locality: filters.locality ?? '',
+            show_marked: Boolean(filters.show_marked),
+            group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
+            keturunan: filters.keturunan || 'M',
+            jantina: filters.jantina ?? '',
+            umur_dari: filters.umur_dari ?? '',
+            umur_hingga: filters.umur_hingga ?? '',
+        });
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga]);
+
+    useEffect(() => {
+        setLocalVoters(voters);
+        setLocalSummary(summary);
+        setActionError('');
+        setPendingIds([]);
+    }, [summary, voters]);
+
+    const rows = useMemo(() => {
+        if (search.trim().length >= 2 && suggestions.length > 0) return suggestions;
+        if (search.trim().length >= 2 && !searching) return suggestions;
+        return localVoters.data ?? [];
+    }, [localVoters.data, search, searching, suggestions]);
+
+    const applyFilters = (nextState, options = {}) => {
+        router.get(route('vcc.index'), nextState, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            ...options,
+        });
+    };
+
+    const goToPage = (page) => {
+        applyFilters({ ...formState, page }, {
+            onFinish: () => {
+                const el = document.getElementById('senarai-grid');
+                if (el) {
+                    const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                }
+            },
+        });
+    };
+
+    const updateFilter = (key, value) => {
+        const nextState = { ...formState, [key]: value };
+        if (key === 'udm' && value !== formState.udm) {
+            nextState.locality = '';
+        }
+        setFormState(nextState);
+        applyFilters(nextState);
+    };
+
+    const doSearch = async (value) => {
+        setSearch(value);
+        setSearchError('');
+        suggestionsAbort.current?.abort();
+
+        if (value.trim().length < 2) {
+            setSuggestions([]);
+            setSearching(false);
+            return;
+        }
+
+        if (!formState.udm) {
+            setSuggestions([]);
+            setSearching(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        suggestionsAbort.current = controller;
+        setSearching(true);
+
+        const params = new URLSearchParams({
+            q: value,
+            udm: formState.udm,
+            locality: formState.locality,
+            show_marked: formState.show_marked ? '1' : '0',
+            group_id: formState.group_id || '',
+            keturunan: formState.keturunan,
+            jantina: formState.jantina,
+            umur_dari: formState.umur_dari ?? '',
+            umur_hingga: formState.umur_hingga ?? '',
+        });
+
+        try {
+            const response = await fetch(`${route('vcc.search')}?${params.toString()}`, {
+                headers: { Accept: 'application/json' },
+                signal: controller.signal,
+            });
+
+            if (!response.ok) throw new Error('Search failed');
+
+            const payload = await response.json();
+            setSuggestions(payload.suggestions ?? []);
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                setSuggestions([]);
+                setSearchError('Carian tidak berjaya dimuatkan.');
+            }
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleSearchChange = async (event) => {
+        await doSearch(event.target.value);
+    };
+
+    const clearSearch = () => {
+        suggestionsAbort.current?.abort();
+        setSearch('');
+        setSuggestions([]);
+        setSearching(false);
+        setSearchError('');
+    };
+
+    const updateLocalCollections = (voter, marked) => {
+        setSuggestions((current) => current.filter((item) => item.id !== voter.id));
+
+        setLocalVoters((current) => {
+            const nextData = (current.data ?? []).filter((item) => item.id !== voter.id);
+            return {
+                ...current,
+                data: nextData,
+                total: Math.max(0, (current.total ?? 0) + (marked ? -1 : -1)),
+                to: nextData.length > 0 ? ((current.from ?? 1) + nextData.length - 1) : null,
+            };
+        });
+
+        setLocalSummary((current) => ({
+            ...current,
+            total: Math.max(0, (current.total ?? 0) - 1),
+        }));
+    };
+
+    const sendMarkRequest = async (voter, method) => {
+        setActionError('');
+        setPendingIds((current) => [...current, voter.id]);
+
+        try {
+            const response = await fetch(
+                method === 'POST' ? route('vcc.mark.store', voter.id) : route('vcc.mark.destroy', voter.id),
+                {
+                    method,
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                },
+            );
+
+            if (!response.ok) throw new Error('Request failed');
+
+            await response.json();
+            updateLocalCollections(voter, method === 'POST');
+        } catch (error) {
+            setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
+        } finally {
+            setPendingIds((current) => current.filter((id) => id !== voter.id));
+        }
+    };
+
+    const markVoter = (voter) => sendMarkRequest(voter, 'POST');
+    const unmarkVoter = (voter) => sendMarkRequest(voter, 'DELETE');
+
+    const handleAvatarUpload = async (e, voterId) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: true }));
+        try {
+            const form = new FormData();
+            form.append('avatar', file);
+            const res = await fetch(route('pemilih.avatar.upload', voterId), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: form,
+            });
+            if (!res.ok) throw new Error('Upload gagal');
+            const data = await res.json();
+            if (data.avatar_url) {
+                setAvatarUpdates((prev) => ({ ...prev, [voterId]: data.avatar_url + '&t=' + Date.now() }));
+            }
+        } catch {
+            alert('Gagal muat naik gambar.');
+        } finally {
+            setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: false }));
+            e.target.value = '';
+        }
+    };
+
+    const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
+    const shouldPromptUdm = requires_udm && !formState.udm;
+    const showLocalityColumn = formState.locality === '';
+    const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
+    const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group})` : '';
+    const headerTitle = `Senarai Semua Pemilih${groupSuffix}`;
+
+    const exportToExcel = async () => {
+        let exportRows = rows;
+
+        if (search.trim().length < 2) {
+            const params = new URLSearchParams({
+                udm: formState.udm,
+                locality: formState.locality,
+                show_marked: formState.show_marked ? '1' : '0',
+                group_id: formState.group_id || '',
+                keturunan: formState.keturunan,
+                jantina: formState.jantina,
+                umur_dari: formState.umur_dari ?? '',
+                umur_hingga: formState.umur_hingga ?? '',
+            });
+
+            try {
+                const resp = await fetch(`${route('vcc.search')}?${params.toString()}&all=1`, {
+                    headers: { Accept: 'application/json' },
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.voters) exportRows = data.voters;
+                }
+            } catch (_) {}
+        }
+
+        const headers = ['No', 'No Kp', 'Nama', 'Alamat', 'Telefon', 'Cula'];
+        const align = ['center', 'center', 'left', 'left', 'center', 'center'];
+        const columnWidths = [37, 100, 278, 369, 90, 46];
+
+        const dataRows = exportRows.map((voter, index) => [
+            { value: index + 1, type: 'Number', align: 'center' },
+            { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
+            { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
+            { value: voter.address || '-', type: 'String', align: 'left', wrap: true },
+            { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
+            { value: '', type: 'String', align: 'center' },
+        ]);
+
+        const titleRows = [];
+        if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
+        if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
+        if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
+
+        const columnXml = columnWidths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
+
+        const titleRowXml = titleRows.map((title) => `
+            <Row>
+                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="${title.styleId}">
+                    <Data ss:Type="String">${escapeXml(title.value)}</Data>
+                </Cell>
+            </Row>
+        `).join('');
+
+        const headerRowXml = `
+            <Row>
+                ${headers.map((header, i) => {
+                    const hStyle = align[i] === 'center' ? 'headerCenter' : 'header';
+                    return `<Cell ss:StyleID="${hStyle}"><Data ss:Type="String">${escapeXml(header)}</Data></Cell>`;
+                }).join('')}
+            </Row>
+        `;
+
+        const bodyRowsXml = dataRows.map((cells) => `
+            <Row>
+                ${cells.map((cell) => {
+                    let styleId = cell.align === 'center' ? 'cellCenter' : 'cell';
+                    if (cell.wrap) styleId += 'Wrap';
+                    return `<Cell ss:StyleID="${styleId}"><Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data></Cell>`;
+                }).join('')}
+            </Row>
+        `).join('');
+
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+    <Styles>
+        <Style ss:ID="Default" ss:Name="Normal">
+            <Alignment ss:Vertical="Center"/>
+            <Borders/>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+            <Interior/>
+            <NumberFormat/>
+            <Protection/>
+        </Style>
+        <Style ss:ID="titleMain">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Font ss:FontName="Calibri" ss:Size="26" ss:Bold="1"/>
+            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="titleSub">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/>
+            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="header">
+            <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="headerCenter">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="cell">
+            <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+        <Style ss:ID="cellCenter">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+        <Style ss:ID="cellWrap">
+            <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+        <Style ss:ID="cellCenterWrap">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+            <Borders>
+                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            </Borders>
+            <Font ss:FontName="Calibri" ss:Size="11"/>
+        </Style>
+    </Styles>
+    <Worksheet ss:Name="VCC">
+        <Table>
+            ${columnXml}
+            ${titleRowXml}
+            ${headerRowXml}
+            ${bodyRowsXml}
+        </Table>
+    </Worksheet>
+</Workbook>`;
+
+        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `vcc_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <AuthenticatedLayout
+            variant="light"
+            header={
+                <div className="relative z-10 flex items-start justify-between gap-4">
+                    <div>
+                        <p className="label-section">VCC</p>
+                        {formState.udm && <p className="mt-0.5 text-xl font-black uppercase tracking-[0.15em] text-slate-800">{formState.udm}</p>}
+                        <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">{headerTitle}</h2>
+                        <p className="mt-1 text-xs font-medium text-slate-500">Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={exportToExcel}
+                        className="hidden shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex"
+                    >
+                        <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
+                        Export Excel
+                    </button>
+                </div>
+            }
+        >
+            <Head title="VCC" />
+
+            <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
+                <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
+                    <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)] xl:items-end">
+                            <div>
+                                <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
+                                <select
+                                    id="vcc-udm"
+                                    value={formState.udm}
+                                    onChange={(event) => updateFilter('udm', event.target.value)}
+                                    className="input-field mt-1.5"
+                                >
+                                    <option value="">Pilih UDM dahulu</option>
+                                    {udms.map((udm) => (
+                                        <option key={udm} value={udm}>{udm}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="vcc-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
+                                <select
+                                    id="vcc-locality"
+                                    value={formState.locality}
+                                    onChange={(event) => updateFilter('locality', event.target.value)}
+                                    className="input-field mt-1.5"
+                                    disabled={!formState.udm}
+                                >
+                                    <option value="">Semua Lokaliti</option>
+                                    {localities.map((locality) => (
+                                        <option key={locality} value={locality}>{locality}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="vcc-group" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Group Pemilih</label>
+                                <select
+                                    id="vcc-group"
+                                    value={formState.group_id}
+                                    onChange={(event) => updateFilter('group_id', event.target.value)}
+                                    className="input-field mt-1.5"
+                                >
+                                    <option value="">Semua Group</option>
+                                    <option value="custom">Custom</option>
+                                    {groups.map((g) => (
+                                        <option key={g.id} value={g.id}>{g.nama_group}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Cula</label>
+                                <label
+                                    htmlFor="vcc-dah-cula"
+                                    className="input-field mt-1.5 inline-flex items-center px-3 py-2"
+                                >
+                                    <input
+                                        id="vcc-dah-cula"
+                                        type="checkbox"
+                                        checked={formState.show_marked}
+                                        onChange={(event) => updateFilter('show_marked', event.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
+                                    />
+                                </label>
+                            </div>
+
+                            <div>
+                                <label htmlFor="vcc-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
+                                <div className="relative mt-1.5">
+                                    <input
+                                        id="vcc-search"
+                                        value={search}
+                                        onChange={handleSearchChange}
+                                        className="input-field pr-10"
+                                        placeholder="Nama, No Kp, telefon..."
+                                        disabled={!formState.udm}
+                                    />
+                                    {search ? (
+                                        <button
+                                            type="button"
+                                            onClick={clearSearch}
+                                            className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100"
+                                        >
+                                            <span className="text-sm leading-none">×</span>
+                                        </button>
+                                    ) : (
+                                        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
+                                    )}
+                                </div>
+                                {searchError && <InputError className="mt-1" message={searchError} />}
+                                {actionError && <InputError className="mt-1" message={actionError} />}
+                            </div>
+                        </div>
+
+                        {formState.group_id === 'custom' && (
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
+                                <div>
+                                    <label htmlFor="vcc-keturunan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Keturunan</label>
+                                    <select id="vcc-keturunan" value={formState.keturunan} onChange={(e) => updateFilter('keturunan', e.target.value)} className="input-field mt-1.5">
+                                        <option value="">Semua</option>
+                                        {available_races.map((r) => <option key={r} value={r}>{r}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="vcc-jantina" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Jantina</label>
+                                    <select id="vcc-jantina" value={formState.jantina} onChange={(e) => updateFilter('jantina', e.target.value)} className="input-field mt-1.5">
+                                        <option value="">Semua</option>
+                                        <option value="L">Lelaki</option>
+                                        <option value="P">Perempuan</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="vcc-umur-dari" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Umur Dari</label>
+                                    <input id="vcc-umur-dari" type="number" min="0" max="150" value={formState.umur_dari} onChange={(e) => updateFilter('umur_dari', e.target.value)} className="input-field mt-1.5" placeholder="cth: 21" />
+                                </div>
+                                <div>
+                                    <label htmlFor="vcc-umur-hingga" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Umur Hingga</label>
+                                    <input id="vcc-umur-hingga" type="number" min="0" max="150" value={formState.umur_hingga} onChange={(e) => updateFilter('umur_hingga', e.target.value)} className="input-field mt-1.5" placeholder="cth: 60" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-3 rounded-xl border border-green-600 bg-white px-4 py-3 shadow-sm shadow-green-600/20 overflow-hidden">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
+                        <div className="min-w-0 flex-1 text-right">
+                            <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
+                            <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    {rows.length === 0 ? (
+                        <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
+                            {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai pemilih.' : 'Tiada pemilih untuk paparan ini.'}
+                        </p>
+                    ) : (
+                        <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            {rows.map((voter, index) => (
+                                <div
+                                    key={voter.id}
+                                    onClick={() => setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id); } }}
+                                    role="button"
+                                    tabIndex={0}
+                                    className={`rounded-xl border bg-white p-3 shadow-sm overflow-hidden cursor-default transition-colors duration-300 ease-in-out hover:shadow-md ${voter.id === selectedVoterId ? 'border-black' : 'border-green-600'}`}
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
+                                            {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
+                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
+                                                {voter.name}
+                                                {(() => {
+                                                    const namaAyah = extractNamaAyah(voter.name);
+                                                    if (!namaAyah) return null;
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                doSearch(namaAyah);
+                                                                const el = document.getElementById('vcc-search');
+                                                                if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                                                            }}
+                                                            className="inline-flex shrink-0 items-center justify-center rounded-md border border-white bg-white px-1 py-0.5 text-slate-400 transition hover:border-slate-200 hover:text-green-600"
+                                                            title={`Cari keluarga: ${namaAyah}`}
+                                                        >
+                                                            <UserGroupIcon className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    );
+                                                })()}
+                                            </p>
+                                            <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-3 space-y-2 text-xs">
+                                        <div className="grid gap-2" style={{gridTemplateColumns: 'auto auto 1fr'}}>
+                                            <div className="flex items-center gap-2">
+                                                {(avatarUpdates[voter.id] || voter.avatar_url) && (
+                                                    <div className="shrink-0">
+                                                        <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 cursor-pointer rounded-full object-cover border border-slate-200" onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <span className="font-semibold text-green-700">No Kp</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="font-semibold text-green-700">Telefon</span>
+                                                {(() => {
+                                                    const phone = voter.phone_mobile || voter.phone_home;
+                                                    if (!phone) return <p className="mt-0.5 font-bold text-slate-800">-</p>;
+                                                    return (
+                                                        <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                            {phone}
+                                                        </a>
+                                                    );
+                                                })()}
+                                            </div>
+                                            {!showLocalityColumn && (
+                                                <div>
+                                                    <span className="font-semibold text-green-700">Umur</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {showLocalityColumn && (
+                                            <div className="grid gap-2" style={{gridTemplateColumns: 'auto 1fr'}}>
+                                                <div>
+                                                    <span className="font-semibold text-green-700">Lokaliti</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="font-semibold text-green-700">Umur</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {voter.cula_display_label && (
+                                            <div>
+                                                <span className="font-semibold text-green-700">Cula</span>
+                                                <p className="mt-0.5 font-bold text-slate-800">{voter.cula_display_label}</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3">
+                                        {!voter.is_manual && (
+                                            <>
+                                                <label className="flex cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-400 transition hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
+                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} onClick={(e) => e.stopPropagation()} disabled={uploadingAvatarIds[voter.id]} />
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                </label>
+                                                <a
+                                                    href={buildTelegramLink('kemascula', voter.telegram_identity)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 transition hover:border-green-300 hover:text-green-700"
+                                                >
+                                                    Kemas Cula
+                                                </a>
+                                                <a
+                                                    href={buildTelegramLink('kemastel', voter.telegram_identity)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 transition hover:border-green-300 hover:text-green-700"
+                                                >
+                                                    Kemas Tel
+                                                </a>
+                                            </>
+                                        )}
+                                        <div className="ml-auto">
+                                            {voter.is_marked ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); unmarkVoter(voter); }}
+                                                    disabled={pendingIds.includes(voter.id)}
+                                                    className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+                                                >
+                                                    {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); markVoter(voter); }}
+                                                    disabled={pendingIds.includes(voter.id)}
+                                                    className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100 disabled:opacity-50"
+                                                >
+                                                    {pendingIds.includes(voter.id) ? '...' : '✓ Tanda Siap'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <Pagination voters={localVoters} onNavigate={goToPage} />
+                </section>
+            </div>
+
+            {lightboxSrc && (
+                <AvatarLightbox
+                    src={lightboxSrc}
+                    onClose={() => setLightboxSrc(null)}
+                />
+            )}
+        </AuthenticatedLayout>
+    );
+}

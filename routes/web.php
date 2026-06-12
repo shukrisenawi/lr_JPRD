@@ -5,6 +5,7 @@ use App\Http\Controllers\CarianPemilihController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CopiedRecordController;
 use App\Http\Controllers\CulaanController;
+use App\Http\Controllers\VccController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupPemilihController;
 use App\Http\Controllers\LaporanController;
@@ -84,6 +85,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/culaan/search', [CulaanController::class, 'search'])->middleware('module:culaan.senarai')->name('culaan.search');
     Route::post('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'storeMark'])->middleware('module:culaan.senarai')->name('culaan.mark.store');
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');
+
+    Route::get('/vcc', [VccController::class, 'index'])->middleware('module:vcc')->name('vcc.index');
+    Route::get('/vcc/search', [VccController::class, 'search'])->middleware('module:vcc')->name('vcc.search');
+    Route::post('/vcc/{pemilihRecord}/mark', [VccController::class, 'storeMark'])->middleware('module:vcc')->name('vcc.mark.store');
+    Route::delete('/vcc/{pemilihRecord}/mark', [VccController::class, 'destroyMark'])->middleware('module:vcc')->name('vcc.mark.destroy');
+
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
     Route::post('/settings/pemilih-upload', [SettingsController::class, 'uploadPemilih'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-upload');

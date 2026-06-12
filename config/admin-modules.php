@@ -52,6 +52,10 @@ return [
             'settings.google-sheet' => ['label' => 'URL Google Sheet'],
         ],
     ],
+    'vcc' => [
+        'label' => 'VCC',
+        'description' => 'Senarai semua pemilih VCC.',
+    ],
     'kemaskini-no-ahli' => [
         'label' => 'Kemaskini No Ahli',
         'description' => 'Benarkan kemaskini nombor ahli pemilih.',

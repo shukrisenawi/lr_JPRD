@@ -49,6 +49,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
                 { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
                 { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan' },
+                { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
             ],
         },
         { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Laporan', icon: '▤' },
@@ -175,6 +176,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {canAccess('dashboard') && <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')} variant={variant}>Cula Manual</ResponsiveNavLink>}
                         {canAccess('program') && <ResponsiveNavLink href={route('program.index')} active={route().current('program.*')} variant={variant}>Program</ResponsiveNavLink>}
                         {canAccess('culaan') && <ResponsiveNavLink href={route('culaan.index')} active={route().current('culaan.*')} variant={variant}>Culaan</ResponsiveNavLink>}
+                        {canAccess('vcc') && <ResponsiveNavLink href={route('vcc.index')} active={route().current('vcc.*')} variant={variant}>VCC</ResponsiveNavLink>}
                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Laporan</div>
                         {canAccess('laporan') && <ResponsiveNavLink href={route('laporan.index')} active={route().current('laporan.*')} variant={variant}>Laporan</ResponsiveNavLink>}
                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
