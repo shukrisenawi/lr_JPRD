@@ -348,7 +348,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const showLocalityColumn = formState.locality === '';
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
-    const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group})` : '';
+    const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group}${selectedGroup.kod_culas?.length ? ` — ${selectedGroup.kod_culas.join(', ')}` : ''})` : '';
     const headerTitle = `Senarai Semua Pemilih${groupSuffix}`;
 
     const exportToExcel = async () => {
@@ -602,7 +602,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     <option value="">Semua Group</option>
                                     <option value="custom">Custom</option>
                                     {groups.map((g) => (
-                                        <option key={g.id} value={g.id}>{g.nama_group}</option>
+                                        <option key={g.id} value={g.id}>{g.nama_group}{g.kod_culas?.length ? ` (${g.kod_culas.join(', ')})` : ''}</option>
                                     ))}
                                 </select>
                             </div>
