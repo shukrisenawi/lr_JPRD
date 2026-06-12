@@ -1577,6 +1577,186 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
     );
 }
 
+// ─── CommitteeDetailPopup ─────────────────────────────────────────────────
+
+function CommitteeDetailPopup({ scope, members, level, groups, onClose }) {
+    if (!scope) return null;
+
+    const groupedByGroup = {};
+    members.forEach((m) => {
+        const gid = m.committee_group_id || 'tanpa-kumpulan';
+        const grp = groups.find((g) => g.id === m.committee_group_id);
+        if (!groupedByGroup[gid]) groupedByGroup[gid] = { groupName: grp?.name || 'Tanpa Kumpulan', members: [] };
+        groupedByGroup[gid].members.push(m);
+    });
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 pt-8 sm:pt-16" onClick={onClose}>
+            <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
+                    <div>
+                        <p className="text-sm font-bold text-slate-800">
+                            {levelMeta[level]?.label ?? level} — {scope.parent_scope_name ? `${scope.parent_scope_name} / ` : ''}{scope.name}
+                        </p>
+                        <p className="text-xs text-slate-500">{members.length} orang ahli jawatankuasa</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <Icon name="x" className="h-5 w-5" />
+                    </button>
+                </div>
+                <div className="overflow-y-auto p-4">
+                    {members.length === 0 ? (
+                        <p className="py-8 text-center text-xs text-slate-400">Tiada ahli jawatankuasa.</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {Object.entries(groupedByGroup).map(([gid, g]) => (
+                                <div key={gid} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+                                    <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
+                                        <p className="text-xs font-bold text-slate-700">{g.groupName}</p>
+                                        <p className="text-[10px] text-slate-400">{g.members.length} ahli</p>
+                                    </div>
+                                    <div className="divide-y divide-slate-100">
+                                        {g.members.map((m) => (
+                                            <div key={m.id} className="flex items-center gap-3 px-3 py-2">
+                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                                    <Icon name="user" className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-bold text-slate-800">{m.voter?.name}</p>
+                                                    <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
+                                                </div>
+                                                <div className="shrink-0 text-right">
+                                                    <span className="inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
+                                                    {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── CommitteeLaporanModal ─────────────────────────────────────────────────
+
+function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose }) {
+    const [activeTab, setActiveTab] = useState('jprd');
+    const [detailScope, setDetailScope] = useState(null);
+
+    const currentScopes = scopes[activeTab] ?? [];
+
+    const scopeStats = useMemo(() => {
+        return currentScopes.map((scope) => {
+            const scopeMembers = memberships.filter((m) => m.level === activeTab && m.scope_key === scope.key);
+            const groupSet = new Set();
+            scopeMembers.forEach((m) => {
+                const g = groups.find((g) => g.id === m.committee_group_id);
+                groupSet.add(g?.name ?? 'Tanpa Kumpulan');
+            });
+            return {
+                ...scope,
+                totalMembers: scopeMembers.length,
+                groupNames: [...groupSet],
+                members: scopeMembers,
+            };
+        });
+    }, [currentScopes, memberships, activeTab]);
+
+    const detailMembers = detailScope ? memberships.filter((m) => m.level === activeTab && m.scope_key === detailScope.key) : [];
+
+    if (!isOpen) return null;
+
+    return (
+        <>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-10 sm:pt-16" onClick={onClose}>
+            <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
+                    <div>
+                        <p className="text-sm font-bold text-slate-800">Laporan Jawatankuasa</p>
+                        <p className="text-xs text-slate-500">Senarai kumpulan mengikut peringkat</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <Icon name="x" className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div className="flex gap-1 border-b border-slate-200 px-4 py-2 shrink-0">
+                    {levelOptions.map((opt) => (
+                        <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setActiveTab(opt.key)}
+                            className={'rounded-lg px-3 py-1.5 text-xs font-bold transition ' + (activeTab === opt.key ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-green-50 hover:text-green-700')}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="overflow-y-auto p-4">
+                    {scopeStats.length === 0 ? (
+                        <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
+                    ) : (
+                        <div className="space-y-1.5">
+                            {scopeStats.map((scope) => {
+                                const hasMembers = scope.totalMembers > 0;
+                                return (
+                                    <div key={scope.key} className="flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-slate-50">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold text-slate-800">
+                                                {scope.parent_scope_name && (
+                                                    <span className="text-slate-400">{scope.parent_scope_name} / </span>
+                                                )}
+                                                {scope.name}
+                                            </p>
+                                            {hasMembers ? (
+                                                <p className="mt-0.5 text-[10px] text-green-600">
+                                                    {scope.totalMembers} ahli — {scope.groupNames.join(', ')}
+                                                </p>
+                                            ) : (
+                                                <p className="mt-0.5 text-[10px] text-amber-600">Belum ada ahli</p>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {hasMembers && (
+                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{scope.totalMembers}</span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setDetailScope(hasMembers ? scope : null)}
+                                                disabled={!hasMembers}
+                                                className={'rounded-lg border px-3 py-1.5 text-xs font-bold transition ' + (hasMembers ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100' : 'border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed')}
+                                            >
+                                                Jawatankuasa
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {detailScope && (
+            <CommitteeDetailPopup
+                scope={detailScope}
+                members={memberships.filter((m) => m.level === activeTab && m.scope_key === detailScope.key)}
+                level={activeTab}
+                groups={groups}
+                onClose={() => setDetailScope(null)}
+            />
+        )}
+        </>
+    );
+}
+
 // ─── Main Export ──────────────────────────────────────────────────────────
 
 export default function CommitteeIndex({ groups, positions, memberships, scopes }) {
@@ -1587,6 +1767,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
     const canSenarai = allowedModules.includes('jawatankuasa.senarai');
 
     const [searchOpen, setSearchOpen] = useState(false);
+    const [laporanOpen, setLaporanOpen] = useState(false);
     const membershipRef = useRef(null);
 
     const sectionTabs = [
@@ -1615,6 +1796,11 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
                             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                             <Icon name="search" className="h-4 w-4" />
                             Cari Ahli
+                        </button>
+                        <button type="button" onClick={() => setLaporanOpen(true)}
+                            className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 shadow-sm transition hover:border-amber-400 hover:bg-amber-100">
+                            <Icon name="layers" className="h-4 w-4" />
+                            Laporan
                         </button>
                     </div>
                 </div>
@@ -1653,6 +1839,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
             </div>
 
             <CommitteeSearchModal memberships={memberships} isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+            <CommitteeLaporanModal memberships={memberships} scopes={scopes} groups={groups} isOpen={laporanOpen} onClose={() => setLaporanOpen(false)} />
         </AuthenticatedLayout>
     );
 }
