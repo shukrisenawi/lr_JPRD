@@ -202,12 +202,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             return;
         }
 
-        if (!formState.udm) {
-            setSuggestions([]);
-            setSearching(false);
-            return;
-        }
-
         const controller = new AbortController();
         suggestionsAbort.current = controller;
         setSearching(true);
@@ -352,7 +346,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     };
 
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
-    const shouldPromptUdm = requires_udm && !formState.udm;
     const showLocalityColumn = formState.locality === '';
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
     const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group})` : '';
@@ -576,7 +569,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     onChange={(event) => updateFilter('udm', event.target.value)}
                                     className="input-field mt-1.5"
                                 >
-                                    <option value="">Pilih UDM dahulu</option>
+                                    <option value="">Semua UDM</option>
                                     {udms.map((udm) => (
                                         <option key={udm} value={udm}>{udm}</option>
                                     ))}
@@ -590,7 +583,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     value={formState.locality}
                                     onChange={(event) => updateFilter('locality', event.target.value)}
                                     className="input-field mt-1.5"
-                                    disabled={!formState.udm}
                                 >
                                     <option value="">Semua Lokaliti</option>
                                     {localities.map((locality) => (
@@ -640,7 +632,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         onChange={handleSearchChange}
                                         className="input-field pr-10"
                                         placeholder="Nama, No Kp, telefon..."
-                                        disabled={!formState.udm}
                                     />
                                     {search ? (
                                         <button
@@ -700,7 +691,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 <section>
                     {rows.length === 0 ? (
                         <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
-                            {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai pemilih.' : 'Tiada pemilih untuk paparan ini.'}
+                            {searching ? 'Mencari...' : 'Tiada pemilih untuk paparan ini.'}
                         </p>
                     ) : (
                         <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

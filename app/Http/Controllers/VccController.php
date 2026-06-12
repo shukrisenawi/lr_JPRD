@@ -24,7 +24,7 @@ class VccController extends Controller
 
         return Inertia::render('Vcc/Index', [
             'filters' => $filters,
-            'requires_udm' => true,
+            'requires_udm' => false,
             'summary' => [
                 'total' => $voters->total(),
             ],
@@ -45,10 +45,6 @@ class VccController extends Controller
         }
 
         $filters = $this->resolveFilters($request);
-
-        if ($filters['udm'] === '') {
-            return response()->json(['suggestions' => []]);
-        }
 
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
@@ -195,19 +191,6 @@ class VccController extends Controller
 
     private function paginateVoters(array $filters): LengthAwarePaginator
     {
-        if ($filters['udm'] === '') {
-            return new LengthAwarePaginator(
-                collect(),
-                0,
-                20,
-                LengthAwarePaginator::resolveCurrentPage(),
-                [
-                    'path' => request()->url(),
-                    'query' => request()->query(),
-                ]
-            );
-        }
-
         return $this->buildEligibleVotersQuery($filters)
             ->with('culaWorkItem.marker')
             ->orderByRaw("
@@ -245,10 +228,6 @@ class VccController extends Controller
 
     private function availableLocalities(string $udm, string $selectedLocality = ''): array
     {
-        if ($udm === '') {
-            return [];
-        }
-
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->when($udm !== '', fn (Builder $builder) => $builder->where('dm', $udm))
