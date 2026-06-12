@@ -75,6 +75,7 @@ class GroupPemilihController extends Controller
         ]);
 
         $group = GroupPemilih::query()->create([
+            'user_id' => $request->user()->id,
             'nama_group' => $validated['nama_group'],
             'keturunan' => $validated['keturunan'] ?: null,
             'jantina' => $validated['jantina'] ?: null,
