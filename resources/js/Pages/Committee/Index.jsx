@@ -1647,6 +1647,7 @@ function CommitteeDetailPopup({ scope, members, level, groups, onClose }) {
 function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose }) {
     const [activeTab, setActiveTab] = useState('jprd');
     const [detailScope, setDetailScope] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const currentScopes = scopes[activeTab] ?? [];
 
@@ -1666,6 +1667,18 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
             };
         });
     }, [currentScopes, memberships, activeTab]);
+
+    const filteredScopeStats = useMemo(() => {
+        if (!searchQuery.trim()) return scopeStats;
+        const q = searchQuery.toLowerCase();
+        return scopeStats.filter((scope) => {
+            if (scope.name.toLowerCase().includes(q)) return true;
+            if (scope.parent_scope_name && scope.parent_scope_name.toLowerCase().includes(q)) return true;
+            if (scope.members.some((m) => m.voter?.name?.toLowerCase().includes(q))) return true;
+            if (scope.groupNames.some((g) => g.toLowerCase().includes(q))) return true;
+            return false;
+        });
+    }, [scopeStats, searchQuery]);
 
     const detailMembers = detailScope ? memberships.filter((m) => m.level === activeTab && m.scope_key === detailScope.key) : [];
 
@@ -1698,12 +1711,24 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
                     ))}
                 </div>
 
+                <div className="border-b border-slate-200 px-4 py-2 shrink-0">
+                    <div className="relative">
+                        <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Cari nama ahli, peringkat atau kumpulan..."
+                            className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400 focus:border-green-300 focus:ring-1 focus:ring-green-300"
+                        />
+                    </div>
+                </div>
                 <div className="overflow-y-auto p-4">
-                    {scopeStats.length === 0 ? (
+                    {filteredScopeStats.length === 0 ? (
                         <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                     ) : (
                         <div className="space-y-1.5">
-                            {scopeStats.map((scope) => {
+                            {filteredScopeStats.map((scope) => {
                                 const hasMembers = scope.totalMembers > 0;
                                 return (
                                     <div key={scope.key} className="flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-slate-50">
