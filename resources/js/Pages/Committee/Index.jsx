@@ -1619,7 +1619,17 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
                                     <div className="flex items-center justify-between bg-slate-50 px-3 py-2 border-b border-slate-200">
                                         <div>
                                             <p className="text-xs font-bold text-slate-700">{g.groupName}</p>
-                                            <p className="text-[10px] text-slate-400">{g.members.length} ahli</p>
+                                            <p className="text-[10px] text-slate-400">{g.members.length} ahli{(() => {
+                                                const latest = Math.max(...g.members.map((m) => new Date(m.updated_at).getTime()), 0);
+                                                if (!latest) return '';
+                                                const d = new Date(latest);
+                                                const dd = String(d.getDate()).padStart(2, '0');
+                                                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                                const yy = d.getFullYear();
+                                                const hh = String(d.getHours()).padStart(2, '0');
+                                                const mi = String(d.getMinutes()).padStart(2, '0');
+                                                return ' — kemaskini: ' + dd + '/' + mm + '/' + yy + ' ' + hh + ':' + mi;
+                                            })()}</p>
                                         </div>
                                         <button
                                             type="button"
