@@ -37,6 +37,8 @@ class SettingsController extends Controller
 
     public function uploadPemilih(Request $request, PemilihReportService $reportService): RedirectResponse|\Illuminate\Http\JsonResponse
     {
+        abort_unless($request->user()->canAccessModule('settings.upload-pemilih'), 403);
+
         ini_set('max_execution_time', '300');
         ini_set('memory_limit', '512M');
 

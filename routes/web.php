@@ -86,7 +86,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
-    Route::post('/settings/pemilih-upload', [SettingsController::class, 'uploadPemilih'])->middleware('module:settings')->name('settings.pemilih-upload');
+    Route::post('/settings/pemilih-upload', [SettingsController::class, 'uploadPemilih'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-upload');
     Route::get('/settings/database/export', [SettingsController::class, 'exportDatabase'])->middleware('module:settings.backup-database')->name('settings.database.export');
     Route::post('/settings/database/import', [SettingsController::class, 'importDatabase'])->middleware('module:settings.backup-database')->name('settings.database.import');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->middleware('module:dashboard')->name('copied-records.store');

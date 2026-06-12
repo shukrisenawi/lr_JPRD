@@ -48,6 +48,7 @@ return [
         'description' => 'Tetapan URL Google Sheet sistem.',
         'children' => [
             'settings.backup-database' => ['label' => 'Backup Database'],
+            'settings.upload-pemilih' => ['label' => 'Upload Data Pemilih'],
         ],
     ],
     'kemaskini-no-ahli' => [
