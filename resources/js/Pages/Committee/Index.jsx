@@ -1677,15 +1677,18 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
     }, [currentScopes, memberships, activeTab]);
 
     const filteredScopeStats = useMemo(() => {
-        if (!searchQuery.trim()) return scopeStats;
-        const q = searchQuery.toLowerCase();
-        return scopeStats.filter((scope) => {
-            if (scope.name.toLowerCase().includes(q)) return true;
-            if (scope.parent_scope_name && scope.parent_scope_name.toLowerCase().includes(q)) return true;
-            if (scope.members.some((m) => m.voter?.name?.toLowerCase().includes(q))) return true;
-            if (scope.groupNames.some((g) => g.toLowerCase().includes(q))) return true;
-            return false;
-        });
+        let list = scopeStats;
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            list = list.filter((scope) => {
+                if (scope.name.toLowerCase().includes(q)) return true;
+                if (scope.parent_scope_name && scope.parent_scope_name.toLowerCase().includes(q)) return true;
+                if (scope.members.some((m) => m.voter?.name?.toLowerCase().includes(q))) return true;
+                if (scope.groupNames.some((g) => g.toLowerCase().includes(q))) return true;
+                return false;
+            });
+        }
+        return [...list].sort((a, b) => b.totalMembers - a.totalMembers);
     }, [scopeStats, searchQuery]);
 
     const detailMembers = detailScope ? memberships.filter((m) => m.level === activeTab && m.scope_key === detailScope.key) : [];
