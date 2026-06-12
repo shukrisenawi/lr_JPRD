@@ -1688,7 +1688,11 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
                 return false;
             });
         }
-        return [...list].sort((a, b) => b.totalMembers - a.totalMembers);
+        return [...list].sort((a, b) => {
+            const aLatest = Math.max(...a.members.map((m) => new Date(m.updated_at).getTime()), 0);
+            const bLatest = Math.max(...b.members.map((m) => new Date(m.updated_at).getTime()), 0);
+            return bLatest - aLatest;
+        });
     }, [scopeStats, searchQuery]);
 
     const detailMembers = detailScope ? memberships.filter((m) => m.level === activeTab && m.scope_key === detailScope.key) : [];

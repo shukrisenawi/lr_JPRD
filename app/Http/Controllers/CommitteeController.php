@@ -117,6 +117,7 @@ class CommitteeController extends Controller
                     'id' => $membership->id,
                     'pemilih_record_id' => $membership->pemilih_record_id,
                     'committee_group_id' => $membership->committee_group_id,
+                    'updated_at' => $membership->updated_at,
                     'level' => $membership->level,
                     'scope_key' => $membership->scope_key,
                     'scope_name' => $membership->scope_name,
