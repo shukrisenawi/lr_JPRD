@@ -32,16 +32,35 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const isLight = variant === 'light';
 
-    const navItems = [
-        { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual', icon: '⌂' },
+    const navGroups = [
+        {
+            label: 'Pemilih',
+            icon: '⊕',
+            items: [
+                { key: 'carian-pemilih', href: 'carian-pemilih.index', routePattern: 'carian-pemilih.*', label: 'Carian Pemilih' },
+                { key: 'tambah-pemilih', href: 'tambah-pemilih.index', routePattern: 'tambah-pemilih.*', label: 'Tambah Pemilih' },
+                { key: 'group-pemilih', href: 'group-pemilih.index', routePattern: 'group-pemilih.*', label: 'Group Pemilih' },
+            ],
+        },
+        {
+            label: 'Program',
+            icon: '⌘',
+            items: [
+                { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
+                { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
+                { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan' },
+            ],
+        },
         { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Laporan', icon: '▤' },
-        { key: 'carian-pemilih', href: 'carian-pemilih.index', routePattern: 'carian-pemilih.*', label: 'Carian', icon: '⌕' },
-        { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program', icon: '⌘' },
-        { key: 'tambah-pemilih', href: 'tambah-pemilih.index', routePattern: 'tambah-pemilih.*', label: 'Pemilih', icon: '⊕' },
-        { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'AJK', icon: '♙' },
-        { key: 'group-pemilih', href: 'group-pemilih.index', routePattern: 'group-pemilih.*', label: 'Group', icon: '☰' },
-        { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan', icon: '⊙' },
-        { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings', icon: '⚙' },
+        {
+            label: 'Pentadbiran',
+            icon: '⚙',
+            items: [
+                { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'Jawatankuasa' },
+                { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
+                ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
+            ],
+        },
     ];
 
     return (
@@ -56,20 +75,37 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             </Link>
 
                             <div className="ml-2 hidden items-stretch sm:flex">
-                                {navItems.map((item) =>
-                                    canAccess(item.key) && (
+                                {navGroups.map((item) => {
+                                    if (item.items) {
+                                        const hasAccess = item.items.some(i => canAccess(i.key));
+                                        if (!hasAccess) return null;
+                                        return (
+                                            <Dropdown key={item.label}>
+                                                <Dropdown.Trigger>
+                                                    <button type="button" className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition mx-[2px] text-slate-600 hover:bg-green-100 hover:text-green-700">
+                                                        <NavIcon>{item.icon}</NavIcon>
+                                                        <span>{item.label}</span>
+                                                        <HeaderIcon name="down" className="h-3 w-3" />
+                                                    </button>
+                                                </Dropdown.Trigger>
+                                                <Dropdown.Content align="left" widthClasses="w-52">
+                                                    {item.items.filter(i => canAccess(i.key)).map(sub => (
+                                                        <Dropdown.Link key={sub.key} href={route(sub.href)}>
+                                                            {sub.label}
+                                                        </Dropdown.Link>
+                                                    ))}
+                                                </Dropdown.Content>
+                                            </Dropdown>
+                                        );
+                                    }
+                                    if (!canAccess(item.key)) return null;
+                                    return (
                                         <NavLink key={item.key} href={route(item.href)} active={route().current(item.routePattern)} variant={variant}>
                                             <NavIcon>{item.icon}</NavIcon>
                                             <span>{item.label}</span>
                                         </NavLink>
-                                    )
-                                )}
-                                {isMasterAdmin && (
-                                    <NavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>
-                                        <NavIcon>▣</NavIcon>
-                                        <span>Akses</span>
-                                    </NavLink>
-                                )}
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -131,16 +167,20 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
 
                 <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' border-t border-green-200 bg-white sm:hidden'}>
                     <div className="space-y-0.5 px-2 py-2">
-                        {navItems.map((item) =>
-                            canAccess(item.key) && (
-                                <ResponsiveNavLink key={item.key} href={route(item.href)} active={route().current(item.routePattern)} variant={variant}>
-                                    {item.label}
-                                </ResponsiveNavLink>
-                            )
-                        )}
-                        {isMasterAdmin && (
-                            <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>
-                        )}
+                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pemilih</div>
+                        {canAccess('carian-pemilih') && <ResponsiveNavLink href={route('carian-pemilih.index')} active={route().current('carian-pemilih.*')} variant={variant}>Carian Pemilih</ResponsiveNavLink>}
+                        {canAccess('tambah-pemilih') && <ResponsiveNavLink href={route('tambah-pemilih.index')} active={route().current('tambah-pemilih.*')} variant={variant}>Tambah Pemilih</ResponsiveNavLink>}
+                        {canAccess('group-pemilih') && <ResponsiveNavLink href={route('group-pemilih.index')} active={route().current('group-pemilih.*')} variant={variant}>Group Pemilih</ResponsiveNavLink>}
+                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Program</div>
+                        {canAccess('dashboard') && <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')} variant={variant}>Cula Manual</ResponsiveNavLink>}
+                        {canAccess('program') && <ResponsiveNavLink href={route('program.index')} active={route().current('program.*')} variant={variant}>Program</ResponsiveNavLink>}
+                        {canAccess('culaan') && <ResponsiveNavLink href={route('culaan.index')} active={route().current('culaan.*')} variant={variant}>Culaan</ResponsiveNavLink>}
+                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Laporan</div>
+                        {canAccess('laporan') && <ResponsiveNavLink href={route('laporan.index')} active={route().current('laporan.*')} variant={variant}>Laporan</ResponsiveNavLink>}
+                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
+                        {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index')} active={route().current('jawatankuasa.*')} variant={variant}>Jawatankuasa</ResponsiveNavLink>}
+                        {canAccess('settings') && <ResponsiveNavLink href={route('settings.edit')} active={route().current('settings.edit')} variant={variant}>Settings</ResponsiveNavLink>}
+                        {isMasterAdmin && <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>}
                     </div>
                     <div className="border-t border-green-100 px-3 py-2">
                         <div className="flex items-center gap-2.5">
