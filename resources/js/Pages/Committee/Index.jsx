@@ -1797,11 +1797,13 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
                             <Icon name="search" className="h-4 w-4" />
                             Cari Ahli
                         </button>
+                        {auth?.user?.access_level === 'jprd' && (
                         <button type="button" onClick={() => setLaporanOpen(true)}
                             className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 shadow-sm transition hover:border-amber-400 hover:bg-amber-100">
                             <Icon name="layers" className="h-4 w-4" />
                             Laporan
                         </button>
+                        )}
                     </div>
                 </div>
             }
