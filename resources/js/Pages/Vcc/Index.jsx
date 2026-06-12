@@ -757,7 +757,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                 </div>
                                             </div>
                                             <div>
-                                                <span className="font-semibold text-green-700">Telefon</span>
+                                                <p className="font-semibold text-green-700">Telefon</p>
                                                 {(() => {
                                                     const phone = voter.phone_mobile || voter.phone_home;
                                                     if (!phone) return <p className="mt-0.5 font-bold text-slate-800">-</p>;
