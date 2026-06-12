@@ -49,6 +49,7 @@ return [
         'children' => [
             'settings.backup-database' => ['label' => 'Backup Database'],
             'settings.upload-pemilih' => ['label' => 'Upload Data Pemilih'],
+            'settings.google-sheet' => ['label' => 'URL Google Sheet'],
         ],
     ],
     'kemaskini-no-ahli' => [

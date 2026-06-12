@@ -26,6 +26,8 @@ class SettingsController extends Controller
 
     public function update(Request $request, GoogleSheetService $googleSheetService): RedirectResponse
     {
+        abort_unless($request->user()->canAccessModule('settings.google-sheet'), 403);
+
         $validated = $request->validate([
             'google_sheet_url' => ['required', 'url'],
         ]);

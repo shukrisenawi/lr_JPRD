@@ -265,7 +265,7 @@ export default function Edit({ settings }) {
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
                 {(allowedModules.includes('settings.upload-pemilih') || isMasterAdmin) && <PemilihUploadPanel report={settings.pemilih_report} />}
                 {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel isMasterAdmin={isMasterAdmin} />}
-                {allowedModules.includes('dashboard') && (
+                {(allowedModules.includes('settings.google-sheet') || isMasterAdmin) && (
                     <div className="card p-4">
                         <form onSubmit={submit} className="space-y-3">
                             <p className="label-section">URL Google Sheet</p>
