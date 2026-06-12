@@ -1678,6 +1678,9 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
 
     const filteredScopeStats = useMemo(() => {
         let list = scopeStats;
+        if (activeTab === 'cawangan') {
+            list = list.filter((scope) => scope.totalMembers > 0);
+        }
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             list = list.filter((scope) => {
@@ -1693,7 +1696,7 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
             const bLatest = Math.max(...b.members.map((m) => new Date(m.updated_at).getTime()), 0);
             return bLatest - aLatest;
         });
-    }, [scopeStats, searchQuery]);
+    }, [scopeStats, searchQuery, activeTab]);
 
     const detailMembers = detailScope ? memberships.filter((m) => m.level === activeTab && m.scope_key === detailScope.key) : [];
 
