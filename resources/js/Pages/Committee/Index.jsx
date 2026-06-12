@@ -1727,8 +1727,13 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Cari nama ahli, peringkat atau kumpulan..."
-                            className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400 focus:border-green-300 focus:ring-1 focus:ring-green-300"
+                            className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-8 text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400 focus:border-green-300 focus:ring-1 focus:ring-green-300"
                         />
+                        {searchQuery && (
+                            <button type="button" onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                                <Icon name="x" className="h-4 w-4" />
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="overflow-y-auto p-4">
