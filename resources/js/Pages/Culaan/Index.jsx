@@ -1206,7 +1206,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     >
                                                         Siap Cula
                                                     </button>
-                                                ) : (
+                                                ) : !formState.show_marked && (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
