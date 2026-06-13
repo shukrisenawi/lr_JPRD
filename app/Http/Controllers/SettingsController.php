@@ -118,6 +118,16 @@ class SettingsController extends Controller
             'backed_up_at' => now('Asia/Kuala_Lumpur'),
         ]);
 
+        BackupLog::query()
+            ->whereKey(
+                BackupLog::query()
+                    ->orderByDesc('backed_up_at')
+                    ->skip(4)
+                    ->take(PHP_INT_MAX)
+                    ->pluck('id')
+            )
+            ->delete();
+
         $headers = [
             'Content-Type' => 'application/octet-stream',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
