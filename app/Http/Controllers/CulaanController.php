@@ -660,6 +660,10 @@ class CulaanController extends Controller
 
     private function countDataErrorVoters(array $filters): int
     {
+        if ($filters['udm'] === '') {
+            return 0;
+        }
+
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->whereNotNull('cula_remark')
