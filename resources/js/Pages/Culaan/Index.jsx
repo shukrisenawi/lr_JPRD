@@ -296,6 +296,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         });
     };
 
+    const refreshPage = () => {
+        router.get(window.location.href, {}, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
     const goToPage = (page) => {
         applyFilters(
             {
@@ -516,7 +524,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             if (!response.ok) throw new Error('Request failed');
 
             await response.json();
-            updateLocalCollections(voter, false);
+            updateLocalCollections(voter, method === 'POST');
+            refreshPage();
         } catch (error) {
             setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
         } finally {
@@ -554,6 +563,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             await response.json();
             updateLocalCollections(selectedVoterForCula, true);
             setSelectedVoterForCula(null);
+            refreshPage();
         } catch (error) {
             setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
         }
