@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'storeMark'])->middleware('module:culaan.senarai')->name('culaan.mark.store');
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');
     Route::post('/culaan/{pemilihRecord}/approve-error', [CulaanController::class, 'approveDataError'])->middleware('module:culaan.senarai')->name('culaan.approve-error');
+    Route::post('/culaan/{pemilihRecord}/update-cula-mark', [CulaanController::class, 'updateCulaAndMark'])->middleware('module:culaan.senarai')->name('culaan.update-cula-mark');
 
     Route::get('/vcc', [VccController::class, 'index'])->middleware('module:vcc')->name('vcc.index');
     Route::get('/vcc/search', [VccController::class, 'search'])->middleware('module:vcc')->name('vcc.search');

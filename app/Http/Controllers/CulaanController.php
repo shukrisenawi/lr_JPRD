@@ -177,6 +177,33 @@ class CulaanController extends Controller
             ->with('success', 'Pemilih ditanda sebagai sudah diproses.');
     }
 
+    public function updateCulaAndMark(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $request->validate([
+            'cula_code' => 'required|string',
+            'cula_display_label' => 'required|string',
+        ]);
+
+        $pemilihRecord->update([
+            'cula_code' => $request->input('cula_code'),
+            'cula_display_label' => $request->input('cula_display_label'),
+        ]);
+
+        CulaWorkItem::query()->firstOrCreate(
+            ['pemilih_record_id' => $pemilihRecord->id],
+            [
+                'marked_by' => $request->user()->id,
+                'marked_at' => now(),
+                'notes' => null,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Kod culaan dikemaskini dan pemilih ditanda sebagai sudah diproses.',
+            'voter_id' => $pemilihRecord->id,
+        ]);
+    }
+
     public function export(Request $request): JsonResponse
     {
         $filters = $this->resolveFilters($request);

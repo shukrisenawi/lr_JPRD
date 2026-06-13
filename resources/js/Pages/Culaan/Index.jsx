@@ -221,6 +221,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [culaSemulaIds, setCulaSemulaIds] = useState(new Set());
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
+    const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -513,7 +514,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         setActionError('');
         setShowCulaModal(false);
         try {
-            const response = await fetch(route('culaan.approve-error', selectedVoterForCula.id), {
+            const endpoint = isCulaFromDataError
+                ? route('culaan.approve-error', selectedVoterForCula.id)
+                : route('culaan.update-cula-mark', selectedVoterForCula.id);
+
+            const body = isCulaFromDataError
+                ? { action: 'update', cula_code: code, cula_display_label: label }
+                : { cula_code: code, cula_display_label: label };
+
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -521,17 +530,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                body: JSON.stringify({
-                    action: 'update',
-                    cula_code: code,
-                    cula_display_label: label,
-                }),
+                body: JSON.stringify(body),
             });
 
             if (!response.ok) throw new Error('Request failed');
 
             await response.json();
-            updateLocalCollections(selectedVoterForCula, false);
+            updateLocalCollections(selectedVoterForCula, true);
             setSelectedVoterForCula(null);
         } catch (error) {
             setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
@@ -1188,12 +1193,32 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                                     )}
                                                 </button>
-                                                <a
-                                                    href={buildTelegramLink('kemascula', voter.telegram_identity)}
-                                                    className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
-                                                >
-                                                    Kemas Cula
-                                                </a>
+                                                {culaSemulaIds.has(voter.id) ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedVoterForCula(voter);
+                                                            setIsCulaFromDataError(false);
+                                                            setShowCulaModal(true);
+                                                        }}
+                                                        className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500"
+                                                    >
+                                                        Siap Cula
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setCulaSemulaIds((prev) => new Set([...prev, voter.id]));
+                                                            window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank');
+                                                        }}
+                                                        className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                                    >
+                                                        Cula Semula
+                                                    </button>
+                                                )}
                                                 <a
                                                     href={buildTelegramLink('kemastel', voter.telegram_identity)}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
@@ -1201,7 +1226,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     Kemas Tel
                                                 </a>
                                             </>}
-                                            {voter.is_marked ? (
+                                            {voter.is_marked && (
                                                 <button
                                                     type="button"
                                                     onClick={() => unmarkVoter(voter)}
@@ -1209,15 +1234,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     className="inline-flex flex-1 items-center justify-center rounded-md bg-rose-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                                                 >
                                                     {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => markVoter(voter)}
-                                                    disabled={pendingIds.includes(voter.id)}
-                                                    className="inline-flex w-7 items-center justify-center rounded-md bg-green-600 py-1.5 text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                    {pendingIds.includes(voter.id) ? '...' : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>}
                                                 </button>
                                             )}
                                         </div>
@@ -1301,6 +1317,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setSelectedVoterForCula(voter);
+                                                        setIsCulaFromDataError(true);
                                                         setShowCulaModal(true);
                                                     }}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500"
