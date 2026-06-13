@@ -918,7 +918,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     {available_cula_codes.map((kc) => {
                                         const checked = (formState.cula_codes ?? []).includes(kc.code);
                                         return (
-                                            <label key={kc.code} className={`inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold transition ${checked ? 'border-green-400 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200'}`}>
+                                            <label key={kc.code} title={kc.label || kc.code} className={`inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold transition ${checked ? 'border-green-400 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200'}`}>
                                                 <input type="checkbox" checked={checked} onChange={() => toggleCulaCode(kc.code)} className="sr-only" />
                                                 {kc.code}
                                             </label>
