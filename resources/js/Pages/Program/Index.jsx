@@ -1406,9 +1406,8 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                 <div className="p-2.5">
                                                     <div className="flex items-start justify-between gap-2">
                                                         <div className="flex min-w-0 flex-1 items-start gap-2">
-                                                        {(a.cula_code === '?' || a.cula_code === '0') && (
-                                                                 <button type="button" onClick={() => toggleCula(a)} disabled={processingCulaIds.includes(a.id)}
-                                                                     className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${processingCulaIds.includes(a.id) ? 'border-slate-300 bg-slate-100 text-slate-400' : a.is_marked ? 'border-green-500 bg-green-500 text-white' : 'border-slate-300 bg-white text-transparent hover:border-green-400 hover:text-green-400'}`}>
+                                                        <button type="button" onClick={() => toggleCula(a)} disabled={processingCulaIds.includes(a.id)}
+                                                                 className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${processingCulaIds.includes(a.id) ? 'border-slate-300 bg-slate-100 text-slate-400' : a.is_marked ? 'border-green-500 bg-green-500 text-white' : a.cula_code && a.cula_code !== '?' && a.cula_code !== '0' ? 'border-green-300 bg-green-50 text-green-500' : 'border-slate-300 bg-white text-transparent hover:border-green-400 hover:text-green-400'}`}>
                                                                      {processingCulaIds.includes(a.id) ? (
                                                                          <svg className="h-3 w-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -1418,7 +1417,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                                          <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 12 5 5L20 7" /></svg>
                                                                      )}
                                                                  </button>
-                                                             )}
                                                               {a.avatar_url && (
                                                                   <img src={a.avatar_url} alt="" className="mt-0.5 h-9 w-9 shrink-0 cursor-pointer self-center rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(a.avatar_url)} />
                                                               )}
