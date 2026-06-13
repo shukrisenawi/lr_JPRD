@@ -10,6 +10,16 @@ const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
+function fmtDiff(v, diff) {
+    if (diff === undefined || diff === 0) return fmt(v);
+    const isPos = diff > 0;
+    return (
+        <span className={`inline-flex items-center gap-1 rounded px-1 py-0.5 ${isPos ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <span className="text-xs font-semibold">{fmt(v)}</span>
+            <span className="text-[10px] font-bold opacity-80">{isPos ? '+' : ''}{fmt(diff)}</span>
+        </span>
+    );
+}
 
 function extractNamaAyah(name) {
     if (!name) return null;
@@ -222,6 +232,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
+    const [jadualDiffMap, setJadualDiffMap] = useState({});
+    const jadualBaselineSaved = useRef(false);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -623,6 +635,43 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             return { nama_group: rg.group.nama_group, breakdownMap: bm, jumlah: rg.report.total ?? 0 };
         });
     }, [report_by_group, selectedGroup, report, filters.custom_mode]);
+
+    const jadualBaselineKey = useMemo(() => {
+        const p = { udm: formState.udm, locality: formState.locality, group_id: formState.group_id, keturunan: formState.keturunan, jantina: formState.jantina, umur_dari: formState.umur_dari, umur_hingga: formState.umur_hingga, custom_mode: filters.custom_mode };
+        return `cula_jadual_baseline_v1_${JSON.stringify(p)}`;
+    }, [formState.udm, formState.locality, formState.group_id, formState.keturunan, formState.jantina, formState.umur_dari, formState.umur_hingga, filters.custom_mode]);
+
+    useEffect(() => {
+        if (!tableRows.length || tab !== 'jadual') return;
+        jadualBaselineSaved.current = false;
+        try {
+            const raw = localStorage.getItem(jadualBaselineKey);
+            if (raw) {
+                const prev = JSON.parse(raw);
+                const diffs = {};
+                for (const row of tableRows) {
+                    const p = prev.find(r => r.nama_group === row.nama_group);
+                    if (!p) continue;
+                    const rowDiffs = {};
+                    for (const code of tableColumns) {
+                        const d = (row.breakdownMap[code] ?? 0) - (p.breakdownMap[code] ?? 0);
+                        if (d !== 0) rowDiffs[code] = d;
+                    }
+                    const jd = (row.jumlah ?? 0) - (p.jumlah ?? 0);
+                    if (jd !== 0) rowDiffs.jumlah = jd;
+                    if (Object.keys(rowDiffs).length > 0) diffs[row.nama_group] = rowDiffs;
+                }
+                setJadualDiffMap(diffs);
+            } else {
+                localStorage.setItem(jadualBaselineKey, JSON.stringify(tableRows.map(r => ({
+                    nama_group: r.nama_group,
+                    breakdownMap: r.breakdownMap,
+                    jumlah: r.jumlah,
+                }))));
+                setJadualDiffMap({});
+            }
+        } catch {}
+    }, [tableRows, jadualBaselineKey, tab, tableColumns]);
 
     const exportToExcel = async () => {
         let exportRows = rows;
@@ -1434,9 +1483,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         <tr key={i} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
                                             <td className="whitespace-nowrap px-3 py-2 font-bold text-slate-800">{row.nama_group}</td>
                                             {tableColumns.map((code) => (
-                                                <td key={code} className="whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800">{fmt(row.breakdownMap[code] ?? 0)}</td>
+                                                <td key={code} className="whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800">{fmtDiff(row.breakdownMap[code] ?? 0, jadualDiffMap[row.nama_group]?.[code])}</td>
                                             ))}
-                                            <td className="whitespace-nowrap px-3 py-2 text-right font-bold text-slate-800">{fmt(row.jumlah)}</td>
+                                            <td className="whitespace-nowrap px-3 py-2 text-right font-bold text-slate-800">{fmtDiff(row.jumlah, jadualDiffMap[row.nama_group]?.jumlah)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
