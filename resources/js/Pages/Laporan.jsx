@@ -221,7 +221,7 @@ export default function Laporan({ report, pemilih_report = null }) {
     const locChartRows = localityRows.slice(0, 12);
 
     const dmCols = [
-        { key: 'name', label: 'UDM' },
+        { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span> },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP) },
         { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L) },
         { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P) },
