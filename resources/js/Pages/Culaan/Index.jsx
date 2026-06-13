@@ -192,7 +192,7 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
-export default function CulaanIndex({ filters, summary, udms, localities, groups, voters, requires_udm, report, report_by_group = [], available_cula_codes = [], available_races = [], pemilih_report = null }) {
+export default function CulaanIndex({ filters, summary, udms, localities, groups, voters, requires_udm, report, report_by_group = [], available_cula_codes = [], available_races = [], pemilih_report = null, data_error_count = 0 }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canSenarai = allowedModules.includes('culaan.senarai');
@@ -200,10 +200,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const canJadual = allowedModules.includes('culaan.jadual');
     const suggestionsAbort = useRef(null);
     const [tab, setTab] = useState(() => {
+        if (filters.data_error) return 'data_error';
         if ((canJadual || canLaporan) && !canSenarai) return 'laporan';
         return 'senarai';
     });
     const isLaporanLike = tab === 'laporan' || tab === 'jadual';
+    const isDataErrorTab = tab === 'data_error';
     const [search, setSearch] = useState('');
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
@@ -220,6 +222,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
         show_marked: Boolean(filters.show_marked),
+        data_error: Boolean(filters.data_error),
         group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
         cula_codes: filters.cula_codes ?? [],
         keturunan: filters.keturunan || 'M',
@@ -233,6 +236,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             udm: filters.udm ?? '',
             locality: filters.locality ?? '',
             show_marked: Boolean(filters.show_marked),
+            data_error: Boolean(filters.data_error),
             group_id: filters.custom_mode ? 'custom' : (filters.group_id ?? ''),
             cula_codes: filters.cula_codes ?? [],
             keturunan: filters.keturunan || 'M',
@@ -240,7 +244,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             umur_dari: filters.umur_dari ?? '',
             umur_hingga: filters.umur_hingga ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error]);
+
+    useEffect(() => {
+        if (filters.data_error) {
+            setTab('data_error');
+        } else if (tab === 'data_error') {
+            setTab('senarai');
+        }
+    }, [filters.data_error]);
 
     useEffect(() => {
         setLocalVoters(voters);
@@ -308,6 +320,19 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             ? current.filter((c) => c !== code)
             : [...current, code];
         updateFilter('cula_codes', next);
+    };
+
+    const resetCustomFilters = () => {
+        const nextState = {
+            ...formState,
+            keturunan: '',
+            jantina: '',
+            umur_dari: '',
+            umur_hingga: '',
+            cula_codes: [],
+        };
+        setFormState(nextState);
+        applyFilters(nextState);
     };
 
     const doSearch = async (value) => {
@@ -458,15 +483,44 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         }
     };
 
+    const handleApproveError = async (voter, action) => {
+        setActionError('');
+        setPendingIds((current) => [...current, voter.id]);
+
+        try {
+            const response = await fetch(route('culaan.approve-error', voter.id), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ action }),
+            });
+
+            if (!response.ok) throw new Error('Request failed');
+
+            await response.json();
+            updateLocalCollections(voter, false);
+        } catch (error) {
+            setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
+        } finally {
+            setPendingIds((current) => current.filter((id) => id !== voter.id));
+        }
+    };
+
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const shouldPromptUdm = requires_udm && !formState.udm;
     const showLocalityColumn = formState.locality === '';
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
     const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group})` : '';
-    const headerTitle = isLaporanLike ? `Laporan Pemilih${groupSuffix}` : `Pemilih Belum Cula${groupSuffix}`;
-    const headerDesc = isLaporanLike
-        ? 'Statistik dan pecahan status culaan pemilih.'
-        : 'Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.';
+    const headerTitle = isDataErrorTab ? `Data Error Culaan${groupSuffix}` : (isLaporanLike ? `Laporan Pemilih${groupSuffix}` : `Pemilih Belum Cula${groupSuffix}`);
+    const headerDesc = isDataErrorTab
+        ? 'Senarai pemilih yang mempunyai data culaan lama tetapi tiada kod cula dalam import terbaru.'
+        : (isLaporanLike
+            ? 'Statistik dan pecahan status culaan pemilih.'
+            : 'Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.');
 
     const tableColumns = useMemo(() => {
         if (report_by_group?.length > 0) {
@@ -758,7 +812,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">{headerTitle}</h2>
                         <p className="mt-1 text-xs font-medium text-slate-500">{headerDesc}</p>
                     </div>
-                    {tab === 'senarai' && (
+                    {(tab === 'senarai' || tab === 'data_error') && (
                         <button
                             type="button"
                             onClick={exportToExcel}
@@ -790,7 +844,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 )}
                 <section className={`grid gap-3 xl:items-stretch ${isLaporanLike ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_14rem]'}`}>
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className={`grid gap-3 sm:grid-cols-2 xl:items-end ${isLaporanLike ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : 'xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)]'}`}>
+                        <div className={`grid gap-3 sm:grid-cols-2 xl:items-end ${isLaporanLike ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : isDataErrorTab ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : 'xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)]'}`}>
                             <div>
                                 <label htmlFor="culaan-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
@@ -838,7 +892,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </select>
                             </div>
 
-                            {tab === 'senarai' && (
+                            {tab === 'senarai' && !isDataErrorTab && (
                                 <div>
                                     <label htmlFor="culaan-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Cula</label>
                                     <label
@@ -926,14 +980,32 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     })}
                                 </div>
                             </div>
+                            <div className="mt-3 flex justify-end">
+                                <button
+                                    type="button"
+                                    onClick={resetCustomFilters}
+                                    className="rounded-lg border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-600 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                                >
+                                    Reset Filter
+                                </button>
+                            </div>
                         </>)}
                     </div>
 
-                    {tab === 'senarai' && (
+                    {tab === 'senarai' && !isDataErrorTab && (
                         <div className="flex items-center gap-3 rounded-xl border border-green-600 bg-white px-4 py-3 shadow-sm shadow-green-600/20 overflow-hidden">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
                             <div className="min-w-0 flex-1 text-right">
                                 <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
+                                <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
+                            </div>
+                        </div>
+                    )}
+                    {tab === 'data_error' && (
+                        <div className="flex items-center gap-3 rounded-xl border border-amber-400 bg-white px-4 py-3 shadow-sm shadow-amber-400/20 overflow-hidden">
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-lg text-amber-600">!!</div>
+                            <div className="min-w-0 flex-1 text-right">
+                                <p className="text-xs font-bold uppercase tracking-[0.1em] text-amber-600">Data Error</p>
                                 <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
                             </div>
                         </div>
@@ -943,13 +1015,20 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 {(() => {
                     const tabs = [];
                     if (canSenarai) tabs.push({ k: 'senarai', l: 'Senarai Belum Cula' });
+                    if (canSenarai) tabs.push({ k: 'data_error', l: `Data Error${data_error_count > 0 ? ` (${data_error_count})` : ''}` });
                     if (canLaporan) tabs.push({ k: 'laporan', l: 'Laporan (Graf)' });
                     if (canJadual) tabs.push({ k: 'jadual', l: 'Laporan (Jadual)' });
                     if (tabs.length < 2) return null;
                     return (
                         <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
                             {tabs.map((t) => (
-                                <button key={t.k} onClick={() => setTab(t.k)}
+                                <button key={t.k} onClick={() => {
+                                    if (t.k === 'data_error' || t.k === 'senarai') {
+                                        updateFilter('data_error', t.k === 'data_error');
+                                    } else {
+                                        setTab(t.k);
+                                    }
+                                }}
                                     className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${tab === t.k ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
                                     {t.l}
                                 </button>
@@ -1115,6 +1194,97 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     {pendingIds.includes(voter.id) ? '...' : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>}
                                                 </button>
                                             )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        {!shouldPromptUdm && search.trim().length < 2 && (
+                            <Pagination voters={localVoters} onNavigate={goToPage} />
+                        )}
+                    </section>
+                )}
+
+                {tab === 'data_error' && (
+                    <section>
+                        {rows.length === 0 ? (
+                            <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
+                                {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai data error.' : 'Tiada data error untuk paparan ini.'}
+                            </p>
+                        ) : (
+                            <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {rows.map((voter, index) => (
+                                    <div
+                                        key={voter.id}
+                                        onClick={() => setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id); } }}
+                                        role="button"
+                                        tabIndex={0}
+                                        className={`rounded-xl border bg-white p-3 shadow-sm overflow-hidden cursor-default transition-colors duration-300 ease-in-out hover:shadow-md ${voter.id === selectedVoterId ? 'border-black' : 'border-amber-400'}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-amber-500 to-orange-400 text-xs font-black text-white shadow-sm">
+                                                {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
+                                            </span>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
+                                                    {voter.name}
+                                                </p>
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 space-y-2 text-xs">
+                                            <div className="grid gap-2" style={{gridTemplateColumns: 'auto 1fr'}}>
+                                                <div>
+                                                    <span className="font-semibold text-amber-600">No Kp</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
+                                                </div>
+                                            </div>
+                                            {showLocalityColumn && (
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div>
+                                                        <span className="font-semibold text-amber-600">Lokaliti</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-semibold text-amber-600">Umur</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="grid grid-cols-2 gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2">
+                                                <div>
+                                                    <span className="font-semibold text-amber-700">Cula Lama</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.cula_display_label || voter.cula_code || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="font-semibold text-amber-700">Cula Baru (Import)</span>
+                                                    <p className="mt-0.5 font-bold text-slate-600 italic">Tiada</p>
+                                                </div>
+                                            </div>
+                                            {voter.cula_remark && (
+                                                <div className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                                                    {voter.cula_remark}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="mt-3 flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); handleApproveError(voter, 'keep'); }}
+                                                disabled={pendingIds.includes(voter.id)}
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                            >
+                                                {pendingIds.includes(voter.id) ? '...' : 'Guna Cula Lama'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); handleApproveError(voter, 'clear'); }}
+                                                disabled={pendingIds.includes(voter.id)}
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-slate-500 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-slate-400 disabled:cursor-not-allowed disabled:opacity-40"
+                                            >
+                                                {pendingIds.includes(voter.id) ? '...' : 'Tiada Cula'}
+                                            </button>
                                         </div>
                                     </div>
                                 ))}

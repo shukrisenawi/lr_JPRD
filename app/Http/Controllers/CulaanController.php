@@ -20,9 +20,16 @@ class CulaanController extends Controller
     public function index(Request $request, PemilihReportService $reportService): Response
     {
         $filters = $this->resolveFilters($request);
-        $voters = $this->paginateVoters($filters);
+
+        if ($filters['data_error']) {
+            $voters = $this->paginateDataErrorVoters($filters);
+        } else {
+            $voters = $this->paginateVoters($filters);
+        }
+
         $groups = $this->availableGroups();
         $report = $this->buildReportData($filters);
+        $dataErrorCount = $this->countDataErrorVoters($filters);
 
         $reportByGroup = [];
         if ($filters['group_id'] === null && ! $filters['custom_mode']) {
@@ -51,7 +58,43 @@ class CulaanController extends Controller
             'voters' => $voters,
             'available_cula_codes' => $this->availableCulaCodes(),
             'available_races' => $this->availableRaces(),
+            'data_error_count' => $dataErrorCount,
         ]);
+    }
+
+    public function approveDataError(Request $request, PemilihRecord $pemilihRecord): RedirectResponse|JsonResponse
+    {
+        if (! $pemilihRecord->cula_remark) {
+            abort(422, 'Rekod ini tiada isu data error.');
+        }
+
+        $action = $request->input('action', 'keep');
+
+        if ($action === 'clear') {
+            $pemilihRecord->update([
+                'cula_code' => null,
+                'cula_display_label' => null,
+                'cula_remark' => null,
+            ]);
+        } else {
+            $pemilihRecord->update([
+                'cula_remark' => null,
+            ]);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $action === 'clear'
+                    ? 'Data culaan dikosongkan dan remark diluluskan.'
+                    : 'Kod culaan lama dikekalkan dan remark diluluskan.',
+                'approved' => true,
+                'voter_id' => $pemilihRecord->id,
+            ]);
+        }
+
+        return redirect()
+            ->route('culaan.index')
+            ->with('success', 'Data error berjaya diluluskan.');
     }
 
     public function search(Request $request): JsonResponse
@@ -344,6 +387,7 @@ class CulaanController extends Controller
             'show_marked' => $request->boolean('show_marked'),
             'group_id' => $groupId,
             'custom_mode' => $customMode,
+            'data_error' => $request->boolean('data_error'),
             'cula_codes' => $request->query('cula_codes'),
             'keturunan' => trim((string) $request->query('keturunan', '')),
             'jantina' => trim((string) $request->query('jantina', '')),
@@ -390,6 +434,7 @@ class CulaanController extends Controller
             'status' => $voter->status,
             'cula_code' => $voter->cula_code,
             'cula_display_label' => $voter->cula_display_label,
+            'cula_remark' => $voter->cula_remark,
             'is_marked' => $voter->culaWorkItem !== null,
             'marked_by_name' => $voter->culaWorkItem?->marker?->name,
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,
@@ -407,7 +452,9 @@ class CulaanController extends Controller
         $currentYear = (int) now()->format('y');
         $century = $yy > $currentYear ? 1900 : 2000;
 
-        return (int) now()->year - ($century + $yy);
+        $age = (int) now()->year - ($century + $yy);
+
+        return $age < 18 ? null : $age;
     }
 
     private function isEligibleForCulaan(PemilihRecord $voter): bool
@@ -609,5 +656,69 @@ class CulaanController extends Controller
             'peratus_siap' => $total > 0 ? round(($sudahDicula / $total) * 100, 1) : 0,
             'cula_breakdown' => $culaBreakdown,
         ];
+    }
+
+    private function countDataErrorVoters(array $filters): int
+    {
+        $query = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('cula_remark')
+            ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
+            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        $this->applyGroupDemographicFilters($query, $filters['group_id']);
+
+        if ($filters['custom_mode']) {
+            $this->applyCustomDemographicFilters($query, $filters);
+        }
+
+        return $query->count();
+    }
+
+    private function paginateDataErrorVoters(array $filters): LengthAwarePaginator
+    {
+        if ($filters['udm'] === '') {
+            return new LengthAwarePaginator(
+                collect(),
+                0,
+                20,
+                LengthAwarePaginator::resolveCurrentPage(),
+                [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ]
+            );
+        }
+
+        $query = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('cula_remark')
+            ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
+            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        $this->applyGroupDemographicFilters($query, $filters['group_id']);
+
+        if ($filters['custom_mode']) {
+            $this->applyCustomDemographicFilters($query, $filters);
+        }
+
+        return $query
+            ->orderByRaw("
+                CASE
+                    WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
+                        THEN 1900 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
+                    WHEN LENGTH(no_kp) >= 2
+                        THEN 2000 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
+                    ELSE 9999
+                END DESC
+            ")
+            ->orderBy('no_kp')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
     }
 }

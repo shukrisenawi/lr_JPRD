@@ -374,7 +374,9 @@ class VccController extends Controller
         $currentYear = (int) now()->format('y');
         $century = $yy > $currentYear ? 1900 : 2000;
 
-        return (int) now()->year - ($century + $yy);
+        $age = (int) now()->year - ($century + $yy);
+
+        return $age < 18 ? null : $age;
     }
 
     private function applyGroupDemographicFilters(Builder $query, ?int $groupId): void

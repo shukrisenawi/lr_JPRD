@@ -30,6 +30,7 @@ class PemilihRecord extends Model
         'source_file',
         'is_manual',
         'created_by',
+        'cula_remark',
     ];
 
     protected $appends = [

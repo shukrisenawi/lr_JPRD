@@ -203,6 +203,13 @@ class PemilihReportService
         $identityNumbers = array_values(array_filter(array_column($voters, 'identity_number')));
 
         foreach ($voters as $voter) {
+            $existing = PemilihRecord::query()->where('identity_number', $voter['identity_number'])->first();
+
+            if ($existing && $existing->cula_code && $existing->cula_code !== '?' && ($voter['cula_code'] ?? '') === '?') {
+                unset($voter['cula_code'], $voter['cula_display_label']);
+                $voter['cula_remark'] = 'Data import ' . ($voter['source_file'] ?? 'fail') . ' pada ' . now()->format('d-m-Y') . ' - tiada kod cula';
+            }
+
             $record = PemilihRecord::query()->updateOrCreate(
                 ['identity_number' => $voter['identity_number']],
                 $voter,
@@ -1016,6 +1023,8 @@ class PemilihReportService
         $currentYear = (int) now()->format('y');
         $century = $yy > $currentYear ? 1900 : 2000;
 
-        return (int) now()->year - ($century + $yy);
+        $age = (int) now()->year - ($century + $yy);
+
+        return $age < 18 ? null : $age;
     }
 }
