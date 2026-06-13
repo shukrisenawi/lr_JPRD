@@ -110,12 +110,12 @@ function DataTable({ rows, columns }) {
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-xs">
                     <thead className="table-header">
-                        <tr>{columns.map((c) => <th key={c.key} className="px-2.5 py-1.5">{c.label}</th>)}</tr>
+                        <tr>{columns.map((c) => <th key={c.key} className={`px-2.5 py-1.5 ${c.headerClass ?? ''}`}>{c.label}</th>)}</tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
                         {rows.map((row, i) => (
                             <tr key={row.key ?? `${row.name}-${i}`} className="hover:bg-green-50/50">
-                                {columns.map((c) => <td key={c.key} className="px-2.5 py-2 align-top leading-4">{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
+                                {columns.map((c) => <td key={c.key} className={`px-2.5 py-2 align-top leading-4 ${c.cellClass ?? ''}`}>{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
                             </tr>
                         ))}
                     </tbody>
@@ -227,25 +227,38 @@ export default function Laporan({ report, pemilih_report = null }) {
     }, [selUdm]);
     const locChartRows = localityRows.slice(0, 12);
 
+    const groupH = {
+        jp: 'bg-blue-100 text-blue-900',
+        demo: 'bg-emerald-100 text-emerald-900',
+        party: 'bg-amber-100 text-amber-900',
+        total: 'bg-violet-100 text-violet-900',
+    };
+    const groupC = {
+        jp: 'bg-blue-50/40',
+        demo: 'bg-emerald-50/40',
+        party: 'bg-amber-50/40',
+        total: 'bg-violet-50/40',
+    };
+
     const dmCols = [
         { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span> },
-        { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP) },
-        { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L) },
-        { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P) },
-        { key: 'M', label: 'M', format: (v, r) => fmtDiff(v, diffMap[r.key]?.M) },
-        { key: 'C', label: 'C', format: (v, r) => fmtDiff(v, diffMap[r.key]?.C) },
-        { key: 'I', label: 'I', format: (v, r) => fmtDiff(v, diffMap[r.key]?.I) },
-        { key: 'S', label: 'S', format: (v, r) => fmtDiff(v, diffMap[r.key]?.S) },
-        { key: 'PAS', label: 'PAS', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PAS) },
-        { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PBBM) },
-        { key: 'BN', label: 'BN', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN) },
-        { key: 'PH', label: 'PH', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PH) },
-        { key: 'GTA', label: 'GTA', format: (v, r) => fmtDiff(v, diffMap[r.key]?.GTA) },
-        { key: 'PLK', label: 'PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PLK) },
-        { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Atas Pagar']) },
-        { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Tak Kenal']) },
-        { key: 'Mati', label: 'Mati', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Mati) },
-        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Jumlah) },
+        { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
+        { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L), headerClass: groupH.demo, cellClass: groupC.demo },
+        { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P), headerClass: groupH.demo, cellClass: groupC.demo },
+        { key: 'M', label: 'M', format: (v, r) => fmtDiff(v, diffMap[r.key]?.M), headerClass: groupH.demo, cellClass: groupC.demo },
+        { key: 'C', label: 'C', format: (v, r) => fmtDiff(v, diffMap[r.key]?.C), headerClass: groupH.demo, cellClass: groupC.demo },
+        { key: 'I', label: 'I', format: (v, r) => fmtDiff(v, diffMap[r.key]?.I), headerClass: groupH.demo, cellClass: groupC.demo },
+        { key: 'S', label: 'S', format: (v, r) => fmtDiff(v, diffMap[r.key]?.S), headerClass: groupH.demo, cellClass: groupC.demo },
+        { key: 'PAS', label: 'PAS', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PAS), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PBBM), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'BN', label: 'BN', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PH', label: 'PH', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PH), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'GTA', label: 'GTA', format: (v, r) => fmtDiff(v, diffMap[r.key]?.GTA), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PLK', label: 'PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PLK), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Atas Pagar']), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Tak Kenal']), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Mati', label: 'Mati', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Mati), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Jumlah), headerClass: groupH.total, cellClass: groupC.total },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
