@@ -312,6 +312,9 @@ class CulaanController extends Controller
     {
         return $this->buildEligibleVotersQuery($filters)
             ->with('culaWorkItem.marker')
+            ->when($filters['show_marked'], fn (Builder $q) => $q->orderByDesc(
+                CulaWorkItem::select('marked_at')->whereColumn('pemilih_record_id', 'pemilih_records.id')
+            ))
             ->orderByRaw("
                 CASE
                     WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
