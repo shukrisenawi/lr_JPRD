@@ -1049,21 +1049,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     <input id="culaan-umur-hingga" type="number" min="0" max="150" value={formState.umur_hingga} onChange={(e) => updateFilter('umur_hingga', e.target.value)} className="input-field mt-1.5" placeholder="cth: 60" />
                                 </div>
                             </div>
-                            <div className="mt-3">
-                                <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Kod Cula</label>
-                                <div className="mt-1.5 flex flex-wrap gap-1.5 rounded-lg border border-slate-200 bg-white p-2">
-                                    {available_cula_codes.length === 0 && <p className="text-xs text-slate-400">Tiada kod cula</p>}
-                                    {available_cula_codes.map((kc) => {
-                                        const checked = (formState.cula_codes ?? []).includes(kc.code);
-                                        return (
-                                            <label key={kc.code} title={kc.label || kc.code} className={`inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold transition ${checked ? 'border-green-400 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200'}`}>
-                                                <input type="checkbox" checked={checked} onChange={() => toggleCulaCode(kc.code)} className="sr-only" />
-                                                {kc.code}
-                                            </label>
-                                        );
-                                    })}
-                                </div>
-                            </div>
                             <div className="mt-3 flex justify-end">
                                 <button
                                     type="button"
