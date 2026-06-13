@@ -1153,7 +1153,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             </div>
                                             {showLocalityColumn && (
                                                 <div className="grid grid-cols-3 gap-2">
-                                                    <div className={voter.is_marked && voter.marked_by_name ? 'col-span-1' : 'col-span-2'}>
+                                                    <div className={voter.is_marked && voter.marked_by_name && voter.marked_by_id !== auth.user.id ? 'col-span-1' : 'col-span-2'}>
                                                         <span className="font-semibold text-green-700">Lokaliti</span>
                                                         <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
                                                     </div>
@@ -1161,7 +1161,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <span className="font-semibold text-green-700">Umur</span>
                                                         <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
                                                     </div>
-                                                    {voter.is_marked && voter.marked_by_name && (
+                                                    {voter.is_marked && voter.marked_by_name && voter.marked_by_id !== auth.user.id && (
                                                         <div className="flex items-end">
                                                             <span className="rounded bg-lime-100 px-2 py-0.5 text-xs font-bold text-lime-700">
                                                                 {voter.marked_by_name}
