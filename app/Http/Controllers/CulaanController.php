@@ -76,6 +76,12 @@ class CulaanController extends Controller
                 'cula_display_label' => null,
                 'cula_remark' => null,
             ]);
+        } elseif ($action === 'update') {
+            $pemilihRecord->update([
+                'cula_code' => $request->input('cula_code'),
+                'cula_display_label' => $request->input('cula_display_label'),
+                'cula_remark' => null,
+            ]);
         } else {
             $pemilihRecord->update([
                 'cula_remark' => null,
@@ -83,10 +89,14 @@ class CulaanController extends Controller
         }
 
         if ($request->expectsJson()) {
+            $message = match ($action) {
+                'clear' => 'Data culaan dikosongkan dan remark diluluskan.',
+                'update' => 'Kod culaan dikemaskini dan remark diluluskan.',
+                default => 'Kod culaan lama dikekalkan dan remark diluluskan.',
+            };
+
             return response()->json([
-                'message' => $action === 'clear'
-                    ? 'Data culaan dikosongkan dan remark diluluskan.'
-                    : 'Kod culaan lama dikekalkan dan remark diluluskan.',
+                'message' => $message,
                 'approved' => true,
                 'voter_id' => $pemilihRecord->id,
             ]);

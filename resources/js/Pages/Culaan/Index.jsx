@@ -218,6 +218,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [localSummary, setLocalSummary] = useState(summary);
     const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
     const [avatarUpdates, setAvatarUpdates] = useState({});
+    const [culaSemulaIds, setCulaSemulaIds] = useState(new Set());
+    const [showCulaModal, setShowCulaModal] = useState(false);
+    const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
+    const [selectedCulaCode, setSelectedCulaCode] = useState('');
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -501,6 +505,40 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
         } finally {
             setPendingIds((current) => current.filter((id) => id !== voter.id));
+        }
+    };
+
+    const handleCulaSiap = async () => {
+        if (!selectedVoterForCula || !selectedCulaCode) return;
+
+        const codeLabel = available_cula_codes.find((c) => c.code === selectedCulaCode);
+
+        setActionError('');
+        try {
+            const response = await fetch(route('culaan.approve-error', selectedVoterForCula.id), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    action: 'update',
+                    cula_code: selectedCulaCode,
+                    cula_display_label: codeLabel?.label ?? selectedCulaCode,
+                }),
+            });
+
+            if (!response.ok) throw new Error('Request failed');
+
+            await response.json();
+            updateLocalCollections(selectedVoterForCula, false);
+            setShowCulaModal(false);
+            setSelectedVoterForCula(null);
+            setSelectedCulaCode('');
+        } catch (error) {
+            setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
         }
     };
 
@@ -1261,14 +1299,32 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             )}
                                         </div>
                                         <div className="mt-3 flex gap-2">
-                                            <a
-                                                href={buildTelegramLink('kemascula', voter.telegram_identity)}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500"
-                                            >
-                                                Cula Semula
-                                            </a>
+                                            {culaSemulaIds.has(voter.id) ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedVoterForCula(voter);
+                                                        setSelectedCulaCode(voter.cula_code || '');
+                                                        setShowCulaModal(true);
+                                                    }}
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500"
+                                                >
+                                                    Siap Cula
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCulaSemulaIds((prev) => new Set([...prev, voter.id]));
+                                                        window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank');
+                                                    }}
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500"
+                                                >
+                                                    Cula Semula
+                                                </button>
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); handleApproveError(voter, 'clear'); }}
@@ -1375,6 +1431,41 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 )}
             </div>
             {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+            {showCulaModal && selectedVoterForCula && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>
+                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
+                        <div className="mt-3">
+                            <label className="block text-xs font-semibold text-slate-600">Kod Cula</label>
+                            <select
+                                value={selectedCulaCode}
+                                onChange={(e) => setSelectedCulaCode(e.target.value)}
+                                className="input-field mt-1 w-full"
+                            >
+                                {available_cula_codes.map((c) => (
+                                    <option key={c.code} value={c.code}>{c.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowCulaModal(false)}
+                                className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleCulaSiap}
+                                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-500"
+                            >
+                                Simpan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }
