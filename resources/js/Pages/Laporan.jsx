@@ -301,6 +301,8 @@ export default function Laporan({ report, pemilih_report = null }) {
                             <StatCard label="Peratus Siap" value={report.summary.coverage_percent} detail={`${fmt(report.summary.total_localities)} lokaliti`} color="cyan" />
                         </div>
 
+                        <DataTable rows={udmTableRows} columns={dmCols} />
+
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Top UDM">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -404,7 +406,6 @@ export default function Laporan({ report, pemilih_report = null }) {
                                 </div>
 
                                 <DataTable rows={selLocTable} columns={dmLocCols} />
-                                <DataTable rows={udmTableRows} columns={dmCols} />
                             </section>
                         )}
 
