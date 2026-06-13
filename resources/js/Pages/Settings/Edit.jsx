@@ -153,52 +153,7 @@ function PemilihUploadPanel({ report }) {
     );
 }
 
-function DatabaseBackupPanel({ isMasterAdmin, logs }) {
-    const [file, setFile] = useState(null);
-    const [importing, setImporting] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleImport = (e) => {
-        e.preventDefault();
-        if (!file) return;
-
-        setError('');
-        setImporting(true);
-
-        const formData = new FormData();
-        formData.append('backup_file', file);
-
-        const xhr = new XMLHttpRequest();
-
-        xhr.addEventListener('load', () => {
-            setImporting(false);
-            if (xhr.status >= 200 && xhr.status < 300) {
-                window.location.reload();
-            } else {
-                let msg = 'Import gagal. Sila cuba lagi.';
-                try {
-                    const res = JSON.parse(xhr.responseText);
-                    msg = res.message ?? msg;
-                } catch (_) {}
-                setError(msg);
-            }
-        });
-
-        xhr.addEventListener('error', () => {
-            setImporting(false);
-            setError('Sambungan gagal. Sila cuba lagi.');
-        });
-
-        xhr.open('POST', route('settings.database.import'));
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.setRequestHeader('Accept', 'application/json');
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        if (token) {
-            xhr.setRequestHeader('X-CSRF-TOKEN', token);
-        }
-        xhr.send(formData);
-    };
-
+function DatabaseBackupPanel({ logs }) {
     const filenameHint = 'DB_PAS_' + new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') + '_' + new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-').replace(' ', '') + '.sql';
 
     return (
@@ -237,28 +192,6 @@ function DatabaseBackupPanel({ isMasterAdmin, logs }) {
                         </div>
                     </div>
                 )}
-
-                {isMasterAdmin && (
-                    <form onSubmit={handleImport} className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2">
-                            <input
-                                type="file"
-                                accept=".sql"
-                                onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(''); }}
-                                className="text-xs"
-                            />
-                            <button
-                                type="submit"
-                                disabled={!file || importing}
-                                className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-amber-400 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:from-amber-500 hover:to-amber-300 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <Icon name="upload" />
-                                {importing ? 'Memulihkan...' : 'Import'}
-                            </button>
-                        </div>
-                        {error && <p className="text-xs font-medium text-rose-600">{error}</p>}
-                    </form>
-                )}
             </div>
         </section>
     );
@@ -278,7 +211,7 @@ export default function Edit({ settings, backup_logs }) {
             <Head title="Settings" />
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
                 {(allowedModules.includes('settings.upload-pemilih') || isMasterAdmin) && <PemilihUploadPanel report={settings.pemilih_report} />}
-                {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel isMasterAdmin={isMasterAdmin} logs={backup_logs} />}
+                {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel logs={backup_logs} />}
                 {(allowedModules.includes('settings.google-sheet') || isMasterAdmin) && (
                     <div className="card p-4">
                         <form onSubmit={submit} className="space-y-3">

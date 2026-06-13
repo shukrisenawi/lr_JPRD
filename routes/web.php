@@ -101,7 +101,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
     Route::post('/settings/pemilih-upload', [SettingsController::class, 'uploadPemilih'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-upload');
     Route::get('/settings/database/export', [SettingsController::class, 'exportDatabase'])->middleware('module:settings.backup-database')->name('settings.database.export');
-    Route::post('/settings/database/import', [SettingsController::class, 'importDatabase'])->middleware('module:settings.backup-database')->name('settings.database.import');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->middleware('module:dashboard')->name('copied-records.store');
     Route::post('/sheet-pages', [SheetPageController::class, 'store'])->middleware('module:dashboard')->name('sheet-pages.store');
     Route::get('/sheet-pages/on-off-status', [SheetPageController::class, 'onOffStatus'])->middleware('module:dashboard')->name('sheet-pages.on-off-status');
