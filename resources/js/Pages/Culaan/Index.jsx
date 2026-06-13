@@ -234,6 +234,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
     const [jadualDiffMap, setJadualDiffMap] = useState({});
     const jadualBaselineRef = useRef(null);
+    const jadualSessionKeyRef = useRef(null);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -652,6 +653,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     useEffect(() => {
         if (!tableRows.length) return;
+        if (jadualSessionKeyRef.current !== jadualSessionKey) {
+            jadualBaselineRef.current = null;
+            jadualSessionKeyRef.current = jadualSessionKey;
+        }
         const baselineData = tableRows.map(r => ({
             nama_group: r.nama_group,
             breakdownMap: { ...r.breakdownMap },
