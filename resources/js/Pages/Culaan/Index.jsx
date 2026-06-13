@@ -417,6 +417,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             ...current,
             total: Math.max(0, (current.total ?? 0) - 1),
         }));
+
+        setCulaSemulaIds((prev) => {
+            const next = new Set(prev);
+            next.delete(voter.id);
+            return next;
+        });
     };
 
     const sendMarkRequest = async (voter, method) => {
