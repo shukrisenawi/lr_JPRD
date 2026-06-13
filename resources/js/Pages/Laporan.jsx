@@ -11,6 +11,16 @@ const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2
 
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
+function fmtDiff(v, diff) {
+    if (diff === undefined || diff === 0) return fmt(v);
+    const isPos = diff > 0;
+    return (
+        <span className={`inline-flex items-center gap-1 rounded px-1 py-0.5 ${isPos ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <span className="text-xs font-semibold">{fmt(v)}</span>
+            <span className="text-[10px] font-bold opacity-80">{isPos ? '+' : ''}{fmt(diff)}</span>
+        </span>
+    );
+}
 function getRaceCount(breakdown, names) {
     for (const r of breakdown ?? []) {
         if (names.includes(r.code.toUpperCase())) return r.total;
@@ -112,26 +122,9 @@ export default function Laporan({ report, pemilih_report = null }) {
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
-    const [jmlDiffMap, setJmlDiffMap] = useState({});
+    const [diffMap, setDiffMap] = useState({});
 
-    useEffect(() => {
-        const srcName = report.source?.name;
-        if (!srcName) return;
-        const key = `udm_prev_${srcName}`;
-        try {
-            const raw = localStorage.getItem(key);
-            if (raw) {
-                const prev = JSON.parse(raw);
-                const diffs = {};
-                for (const row of report.by_dm) {
-                    const p = prev.find(r => r.key === row.key);
-                    if (p) diffs[row.key] = (row.total ?? 0) - (p.total ?? 0);
-                }
-                setJmlDiffMap(diffs);
-            }
-        } catch {}
-        localStorage.setItem(key, JSON.stringify(report.by_dm.map(r => ({ key: r.key, total: r.total }))));
-    }, [report.by_dm, report.source?.name]);
+    const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'Jumlah'];
 
     const filteredLocs = useMemo(() => {
         const kw = search.trim().toLowerCase();
@@ -181,6 +174,35 @@ export default function Laporan({ report, pemilih_report = null }) {
                 Jumlah: row.total ?? 0,
             };
         }), [report.by_dm, dmDetailsMap, culaByDmMap]);
+
+    useEffect(() => {
+        const srcName = report.source?.name;
+        if (!srcName || !udmTableRows.length) return;
+        const key = `udm_prev_v2_${srcName}`;
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                const prev = JSON.parse(raw);
+                const diffs = {};
+                for (const row of udmTableRows) {
+                    const p = prev.find(r => r.key === row.key);
+                    if (!p) continue;
+                    const rowDiffs = {};
+                    for (const col of diffCols) {
+                        const d = (row[col] ?? 0) - (p[col] ?? 0);
+                        if (d !== 0) rowDiffs[col] = d;
+                    }
+                    if (Object.keys(rowDiffs).length > 0) diffs[row.key] = rowDiffs;
+                }
+                setDiffMap(diffs);
+            }
+        } catch {}
+        localStorage.setItem(key, JSON.stringify(udmTableRows.map(r => {
+            const o = { key: r.key };
+            for (const col of diffCols) o[col] = r[col];
+            return o;
+        })));
+    }, [udmTableRows, report.source?.name]);
     const localityRows = filteredLocs.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((r) => r.total > 0);
@@ -198,27 +220,23 @@ export default function Laporan({ report, pemilih_report = null }) {
 
     const dmCols = [
         { key: 'name', label: 'UDM' },
-        { key: 'JP', label: 'JP', format: fmt },
-        { key: 'L', label: 'L', format: fmt },
-        { key: 'P', label: 'P', format: fmt },
-        { key: 'M', label: 'M', format: fmt },
-        { key: 'C', label: 'C', format: fmt },
-        { key: 'I', label: 'I', format: fmt },
-        { key: 'S', label: 'S', format: fmt },
-        { key: 'PAS', label: 'PAS', format: fmt },
-        { key: 'PBBM', label: 'PBBM', format: fmt },
-        { key: 'BN', label: 'BN', format: fmt },
-        { key: 'PH', label: 'PH', format: fmt },
-        { key: 'GTA', label: 'GTA', format: fmt },
-        { key: 'PLK', label: 'PLK', format: fmt },
-        { key: 'Atas Pagar', label: 'AP', format: fmt },
-        { key: 'Tak Kenal', label: 'TK', format: fmt },
-        { key: 'Mati', label: 'Mati', format: fmt },
-        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => {
-            const diff = jmlDiffMap[r.key];
-            if (diff === undefined || diff === 0) return fmt(v);
-            return <span className={diff > 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>{fmt(v)}</span>;
-        } },
+        { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP) },
+        { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L) },
+        { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P) },
+        { key: 'M', label: 'M', format: (v, r) => fmtDiff(v, diffMap[r.key]?.M) },
+        { key: 'C', label: 'C', format: (v, r) => fmtDiff(v, diffMap[r.key]?.C) },
+        { key: 'I', label: 'I', format: (v, r) => fmtDiff(v, diffMap[r.key]?.I) },
+        { key: 'S', label: 'S', format: (v, r) => fmtDiff(v, diffMap[r.key]?.S) },
+        { key: 'PAS', label: 'PAS', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PAS) },
+        { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PBBM) },
+        { key: 'BN', label: 'BN', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN) },
+        { key: 'PH', label: 'PH', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PH) },
+        { key: 'GTA', label: 'GTA', format: (v, r) => fmtDiff(v, diffMap[r.key]?.GTA) },
+        { key: 'PLK', label: 'PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PLK) },
+        { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Atas Pagar']) },
+        { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Tak Kenal']) },
+        { key: 'Mati', label: 'Mati', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Mati) },
+        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Jumlah) },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
