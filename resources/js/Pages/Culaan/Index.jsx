@@ -221,7 +221,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [culaSemulaIds, setCulaSemulaIds] = useState(new Set());
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
-    const [selectedCulaCode, setSelectedCulaCode] = useState('');
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -508,12 +507,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         }
     };
 
-    const handleCulaSiap = async () => {
-        if (!selectedVoterForCula || !selectedCulaCode) return;
-
-        const codeLabel = available_cula_codes.find((c) => c.code === selectedCulaCode);
+    const handleCulaSiap = async (code, label) => {
+        if (!selectedVoterForCula || !code) return;
 
         setActionError('');
+        setShowCulaModal(false);
         try {
             const response = await fetch(route('culaan.approve-error', selectedVoterForCula.id), {
                 method: 'POST',
@@ -525,8 +523,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 },
                 body: JSON.stringify({
                     action: 'update',
-                    cula_code: selectedCulaCode,
-                    cula_display_label: codeLabel?.label ?? selectedCulaCode,
+                    cula_code: code,
+                    cula_display_label: label,
                 }),
             });
 
@@ -534,9 +532,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
             await response.json();
             updateLocalCollections(selectedVoterForCula, false);
-            setShowCulaModal(false);
             setSelectedVoterForCula(null);
-            setSelectedCulaCode('');
         } catch (error) {
             setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
         }
@@ -1305,7 +1301,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setSelectedVoterForCula(voter);
-                                                        setSelectedCulaCode(voter.cula_code || '');
                                                         setShowCulaModal(true);
                                                     }}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500"
@@ -1433,35 +1428,33 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
             {showCulaModal && selectedVoterForCula && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>
-                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
-                        <div className="mt-3">
-                            <label className="block text-xs font-semibold text-slate-600">Kod Cula</label>
-                            <select
-                                value={selectedCulaCode}
-                                onChange={(e) => setSelectedCulaCode(e.target.value)}
-                                className="input-field mt-1 w-full"
-                            >
-                                {available_cula_codes.map((c) => (
-                                    <option key={c.code} value={c.code}>{c.label}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="mt-4 flex justify-end gap-2">
+                    <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between gap-2">
+                            <h3 className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
                             <button
                                 type="button"
                                 onClick={() => setShowCulaModal(false)}
-                                className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
+                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50"
                             >
-                                Batal
+                                Tutup
                             </button>
-                            <button
-                                type="button"
-                                onClick={handleCulaSiap}
-                                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-blue-500"
-                            >
-                                Simpan
-                            </button>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">Pilih kod cula untuk dikemaskini:</p>
+                        <div className="mt-3 flex max-h-64 flex-wrap gap-1.5 overflow-y-auto">
+                            {[...available_cula_codes].sort((a, b) => {
+                                const na = parseInt(a.code, 10);
+                                const nb = parseInt(b.code, 10);
+                                return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
+                            }).map((c) => (
+                                <button
+                                    key={c.code}
+                                    type="button"
+                                    onClick={() => handleCulaSiap(c.code, c.label)}
+                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${c.code === (selectedVoterForCula.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}
+                                >
+                                    {c.label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
