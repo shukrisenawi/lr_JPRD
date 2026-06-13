@@ -153,7 +153,7 @@ function PemilihUploadPanel({ report }) {
     );
 }
 
-function DatabaseBackupPanel({ isMasterAdmin }) {
+function DatabaseBackupPanel({ isMasterAdmin, logs }) {
     const [file, setFile] = useState(null);
     const [importing, setImporting] = useState(false);
     const [error, setError] = useState('');
@@ -224,6 +224,20 @@ function DatabaseBackupPanel({ isMasterAdmin }) {
                 </div>
                 <p className="text-[10px] text-slate-400">Contoh nama fail: {filenameHint}</p>
 
+                {logs?.length > 0 && (
+                    <div className="rounded-lg border border-slate-200 bg-white">
+                        <div className="border-b border-slate-100 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Log Backup</div>
+                        <div className="divide-y divide-slate-100">
+                            {logs.map((log) => (
+                                <div key={log.id} className="flex items-center justify-between px-3 py-1.5 text-xs">
+                                    <span className="font-medium text-slate-700">{log.user_name}</span>
+                                    <span className="text-slate-400">{log.backed_up_at}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {isMasterAdmin && (
                     <form onSubmit={handleImport} className="flex flex-col gap-2">
                         <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2">
@@ -250,7 +264,7 @@ function DatabaseBackupPanel({ isMasterAdmin }) {
     );
 }
 
-export default function Edit({ settings }) {
+export default function Edit({ settings, backup_logs }) {
     const { data, setData, put, processing, errors } = useForm({ google_sheet_url: settings.google_sheet_url ?? '' });
     const submit = (e) => { e.preventDefault(); put(route('settings.update')); };
     const { auth } = usePage().props;
@@ -264,7 +278,7 @@ export default function Edit({ settings }) {
             <Head title="Settings" />
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
                 {(allowedModules.includes('settings.upload-pemilih') || isMasterAdmin) && <PemilihUploadPanel report={settings.pemilih_report} />}
-                {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel isMasterAdmin={isMasterAdmin} />}
+                {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel isMasterAdmin={isMasterAdmin} logs={backup_logs} />}
                 {(allowedModules.includes('settings.google-sheet') || isMasterAdmin) && (
                     <div className="card p-4">
                         <form onSubmit={submit} className="space-y-3">

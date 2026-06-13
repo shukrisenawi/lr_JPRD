@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BackupLog;
 use App\Models\Setting;
 use App\Services\GoogleSheetService;
 use App\Services\PemilihReportService;
@@ -21,6 +22,10 @@ class SettingsController extends Controller
                 'google_sheet_url' => $googleSheetService->getSheetUrl(),
                 'pemilih_report' => $this->pemilihReportMetadata(),
             ],
+            'backup_logs' => BackupLog::query()
+                ->orderByDesc('backed_up_at')
+                ->take(10)
+                ->get(),
         ]);
     }
 
@@ -107,6 +112,11 @@ class SettingsController extends Controller
             logger()->error('Backup database gagal (exit ' . $result['returnVar'] . '): ' . $errorMsg);
             return redirect()->route('settings.edit')->with('error', 'Backup gagal: ' . $errorMsg);
         }
+
+        BackupLog::create([
+            'user_name' => $request->user()->name,
+            'backed_up_at' => now('Asia/Kuala_Lumpur'),
+        ]);
 
         $headers = [
             'Content-Type' => 'application/octet-stream',
