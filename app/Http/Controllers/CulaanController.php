@@ -278,7 +278,13 @@ class CulaanController extends Controller
         if (! $skipMarkedFilter) {
             $query->when(
                 $filters['show_marked'],
-                fn (Builder $builder) => $builder->whereHas('culaWorkItem'),
+                fn (Builder $builder) => $builder->where(function (Builder $q) {
+                    $q->whereNotNull('cula_code')
+                        ->where('cula_code', '!=', '')
+                        ->where('cula_code', '!=', '?')
+                        ->where('cula_code', '!=', 'TIADA')
+                        ->whereRaw('UPPER(COALESCE(cula_display_label, \'\')) not like ?', ['%BELUM DICULA%']);
+                }),
                 fn (Builder $builder) => $builder->whereDoesntHave('culaWorkItem')
             );
         }
