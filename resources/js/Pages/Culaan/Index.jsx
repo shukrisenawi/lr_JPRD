@@ -645,17 +645,33 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         });
     }, [report_by_group, selectedGroup, report, filters.custom_mode]);
 
+    const jadualSessionKey = useMemo(() => {
+        const p = { udm: formState.udm, locality: formState.locality, group_id: formState.group_id };
+        return `cula_jadual_baseline_v3_${JSON.stringify(p)}`;
+    }, [formState.udm, formState.locality, formState.group_id]);
+
     useEffect(() => {
         if (!tableRows.length) return;
-        if (!jadualBaselineRef.current) {
-            jadualBaselineRef.current = tableRows.map(r => ({
-                nama_group: r.nama_group,
-                breakdownMap: { ...r.breakdownMap },
-                jumlah: r.jumlah,
-            }));
+        const baselineData = tableRows.map(r => ({
+            nama_group: r.nama_group,
+            breakdownMap: { ...r.breakdownMap },
+            jumlah: r.jumlah,
+        }));
+        let prev = jadualBaselineRef.current;
+        if (!prev) {
+            try {
+                const raw = sessionStorage.getItem(jadualSessionKey);
+                if (raw) {
+                    prev = JSON.parse(raw);
+                    jadualBaselineRef.current = prev;
+                }
+            } catch {}
         }
-        if (tab === 'jadual') {
-            const prev = jadualBaselineRef.current;
+        if (!prev) {
+            jadualBaselineRef.current = baselineData;
+            try { sessionStorage.setItem(jadualSessionKey, JSON.stringify(baselineData)); } catch {}
+        }
+        if (tab === 'jadual' && prev) {
             const diffs = {};
             for (const row of tableRows) {
                 const p = prev.find(r => r.nama_group === row.nama_group);
@@ -671,7 +687,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             }
             setJadualDiffMap(diffs);
         }
-    }, [tableRows, tab, tableColumns]);
+    }, [tableRows, tab, tableColumns, jadualSessionKey]);
 
     const exportToExcel = async () => {
         let exportRows = rows;
