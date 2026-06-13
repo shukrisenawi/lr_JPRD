@@ -1,1 +1,0 @@
-import{j as a}from"./app--H0N2RMp.js";function o({value:t,className:e="",children:s,...r}){return a.jsx("label",{...r,className:"block text-xs font-bold uppercase tracking-[0.08em] text-slate-600 "+e,children:t||s})}export{o as I};

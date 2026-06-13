@@ -8,6 +8,7 @@ use App\Support\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -42,6 +43,32 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        $user = $request->user();
+        $user->update(['last_login_at' => now()]);
+
+        if ($request->boolean('remember')) {
+            $sevenDays = 7 * 24 * 60;
+            $sessionId = $request->session()->getId();
+
+            Cookie::queue(
+                Cookie::make(
+                    config('session.cookie'),
+                    $sessionId,
+                    $sevenDays,
+                    config('session.path', '/'),
+                    config('session.domain'),
+                    config('session.secure', false),
+                    config('session.http_only', true),
+                    false,
+                    config('session.same_site', 'lax'),
+                )
+            );
+
+            Cookie::queue(
+                Cookie::make('rm_7d', now()->addDays(7)->timestamp, $sevenDays)
+            );
+        }
 
         return redirect()->intended($this->firstAccessibleRoute($request));
     }

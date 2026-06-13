@@ -48,6 +48,7 @@ class AccessManagementController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'avatar_url' => $user->avatarUrl(),
+                    'last_login_at' => $user->last_login_at?->format('d-m-Y'),
                     'expires_at' => $user->expires_at?->format('Y-m-d'),
                     'can_impersonate' => ! request()->user()->is($user),
                     'access_level' => $user->access_level ?? 'jprd',

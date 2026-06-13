@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnforceRememberMeExpiry;
 use App\Http\Middleware\EnsureModuleAccess;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectIfMustChangePassword;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             RedirectIfMustChangePassword::class,
+            EnforceRememberMeExpiry::class,
         ]);
 
         $middleware->alias([

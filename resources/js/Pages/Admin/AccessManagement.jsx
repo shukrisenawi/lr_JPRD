@@ -211,9 +211,12 @@ function UserCard({ user, roles, currentUserId, udms, cawangans }) {
                     <div>
                         <p className="text-sm font-bold text-slate-950">{user.name}</p>
                         <p className="text-xs text-slate-500">{user.email}</p>
-                        <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700"><Icon name={user.role?.is_master_admin ? 'crown' : 'shield'} className="h-3 w-3" />{user.role?.name ?? 'Tiada'}</span>
-                        <ScopeDisplay accessLevel={user.access_level} scopeKey={user.scope_key} udms={udms} cawangans={cawangans} />
-                        {user.expires_at && <span className={`mt-1 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${isExpired ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}><Icon name="clock" className="h-3 w-3" />{isExpired ? 'Luput' : fmtDate(user.expires_at)}</span>}
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700"><Icon name={user.role?.is_master_admin ? 'crown' : 'shield'} className="h-3 w-3" />{user.role?.name ?? 'Tiada'}</span>
+                            <ScopeDisplay accessLevel={user.access_level} scopeKey={user.scope_key} udms={udms} cawangans={cawangans} />
+                            {user.last_login_at && <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700"><Icon name="login" className="h-3 w-3" />{user.last_login_at}</span>}
+                            {user.expires_at && <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-bold ${isExpired ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}><Icon name="clock" className="h-3 w-3" />{isExpired ? 'Luput' : fmtDate(user.expires_at)}</span>}
+                        </div>
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
