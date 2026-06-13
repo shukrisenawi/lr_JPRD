@@ -329,7 +329,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                     )}
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
                     {onUpdateNoAhli && (
-                        <button onClick={() => onUpdateNoAhli(attendee)} className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500">No Ahli</button>
+                        <button onClick={() => onUpdateNoAhli(attendee)} className="flex-1 rounded-md bg-yellow-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-yellow-400">No Ahli</button>
                     )}
                 </div>
             </div>
