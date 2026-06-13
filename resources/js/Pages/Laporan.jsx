@@ -177,8 +177,9 @@ export default function Laporan({ report, pemilih_report = null }) {
 
     useEffect(() => {
         const srcName = report.source?.name;
-        if (!srcName || !udmTableRows.length) return;
-        const key = `udm_prev_v2_${srcName}`;
+        const uploadTs = pemilih_report?.uploaded_at;
+        if (!srcName || !uploadTs || !udmTableRows.length) return;
+        const key = `udm_baseline_${srcName}_${uploadTs}`;
         try {
             const raw = localStorage.getItem(key);
             if (raw) {
@@ -195,14 +196,15 @@ export default function Laporan({ report, pemilih_report = null }) {
                     if (Object.keys(rowDiffs).length > 0) diffs[row.key] = rowDiffs;
                 }
                 setDiffMap(diffs);
+            } else {
+                localStorage.setItem(key, JSON.stringify(udmTableRows.map(r => {
+                    const o = { key: r.key };
+                    for (const col of diffCols) o[col] = r[col];
+                    return o;
+                })));
             }
         } catch {}
-        localStorage.setItem(key, JSON.stringify(udmTableRows.map(r => {
-            const o = { key: r.key };
-            for (const col of diffCols) o[col] = r[col];
-            return o;
-        })));
-    }, [udmTableRows, report.source?.name]);
+    }, [udmTableRows, report.source?.name, pemilih_report?.uploaded_at]);
     const localityRows = filteredLocs.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((r) => r.total > 0);
