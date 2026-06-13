@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\PemilihRecord;
 use App\Models\Setting;
+use App\Models\CulaWorkItem;
 use App\Services\ImageService;
 use App\Services\PemilihReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,7 +18,33 @@ class CarianPemilihController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('CarianPemilih');
+        return Inertia::render('CarianPemilih', [
+            'available_cula_codes' => $this->availableCulaCodes(),
+        ]);
+    }
+
+    private function availableCulaCodes(): array
+    {
+        $query = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA');
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        return $query
+            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
+            ->groupBy('cula_code')
+            ->orderBy('cula_code')
+            ->get()
+            ->map(fn ($r) => [
+                'code' => $r->cula_code,
+                'label' => $r->display_label,
+            ])
+            ->values()
+            ->all();
     }
 
     public function search(Request $request, PemilihReportService $reportService)
@@ -71,6 +99,33 @@ class CarianPemilihController extends Controller
         return response()->json([
             'success' => true,
             'avatar_url' => $pemilihRecord->avatarUrl(),
+        ]);
+    }
+
+    public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $request->validate([
+            'cula_code' => 'required|string',
+            'cula_display_label' => 'required|string',
+        ]);
+
+        $pemilihRecord->update([
+            'cula_code' => $request->input('cula_code'),
+            'cula_display_label' => $request->input('cula_display_label'),
+        ]);
+
+        CulaWorkItem::query()->firstOrCreate(
+            ['pemilih_record_id' => $pemilihRecord->id],
+            [
+                'marked_by' => $request->user()->id,
+                'marked_at' => now(),
+                'notes' => null,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Kod culaan dikemaskini.',
+            'voter_id' => $pemilihRecord->id,
         ]);
     }
 

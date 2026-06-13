@@ -96,7 +96,7 @@ function NoAhliModal({ voter, onClose, onSaved }) {
     );
 }
 
-function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli }) {
+function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli, isCulaPending, onCulaSiap }) {
     const [avatarUrl, setAvatarUrl] = useState(voter?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -158,7 +158,11 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                     {!voter.is_manual && <>
                         <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                         <button onClick={() => avatarRef.current?.click()} disabled={uploading || !voter.record_id} className="btn-outline" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
-                        <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
+                        {isCulaPending ? (
+                            <button onClick={() => onCulaSiap(voter)} className="btn-primary">Siap Cula</button>
+                        ) : (
+                            <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
+                        )}
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
                         {canEditNoAhli && <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>}
                     </>}
@@ -178,7 +182,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
 }
 
 function SearchPanel() {
-        const { auth } = usePage().props;
+        const { auth, available_cula_codes: initialCulaCodes } = usePage().props;
         const canEditNoAhli = auth.user?.allowed_modules?.includes('kemaskini-no-ahli');
 
     const [q, setQ] = useState('');
@@ -189,6 +193,9 @@ function SearchPanel() {
     const [openingTg, setOpeningTg] = useState(false);
     const [editNoAhli, setEditNoAhli] = useState(null);
     const [flash, setFlash] = useState('');
+    const [culaPendingIds, setCulaPendingIds] = useState(new Set());
+    const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
+    const [showCulaModal, setShowCulaModal] = useState(false);
     const ac = useRef(null);
     const rid = useRef(0);
     useEffect(() => () => ac.current?.abort(), []);
@@ -227,6 +234,32 @@ function SearchPanel() {
         setOpeningTg(true);
         try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); setErr('Telegram gagal dibuka.'); }
         finally { setOpeningTg(false); }
+        if (prefix === 'kemascula') {
+            setCulaPendingIds((prev) => new Set([...prev, voter.id]));
+        }
+    };
+
+    const handleCulaSiap = async (code, label) => {
+        if (!selectedVoterForCula) return;
+        const voterId = selectedVoterForCula.id;
+        setShowCulaModal(false);
+        try {
+            const res = await fetch(route('carian-pemilih.update-cula', voterId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ cula_code: code, cula_display_label: label }),
+            });
+            if (!res.ok) throw new Error();
+            setSelected((prev) => prev?.id === voterId ? { ...prev, cula_code: code, cula_display_label: label } : prev);
+        } catch {
+            setErr('Gagal menyimpan kod culaan.');
+        }
+        setCulaPendingIds((prev) => { const n = new Set(prev); n.delete(voterId); return n; });
+        setSelectedVoterForCula(null);
     };
 
     const clearSearch = () => {
@@ -297,7 +330,30 @@ function SearchPanel() {
                 onSaved={(val) => { setSelected(prev => prev ? { ...prev, no_ahli: val } : prev); setFlash('No. Ahli berjaya dikemaskini!'); }} />}
             <ResultCard key={selected?.record_id ?? 'no-voter'} voter={selected} onClear={() => { clearSearch(); setOpeningTg(false); }}
                 onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selected, 'kemascula'))}
-                onUpdateNoAhli={(v) => setEditNoAhli(v)} canEditNoAhli={canEditNoAhli} />
+                onUpdateNoAhli={(v) => setEditNoAhli(v)} canEditNoAhli={canEditNoAhli}
+                isCulaPending={culaPendingIds.has(selected?.id)} onCulaSiap={(v) => { setSelectedVoterForCula(v); setShowCulaModal(true); }} />
+
+            {showCulaModal && selectedVoterForCula && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>
+                    <div className="mx-4 w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
+                            <button onClick={() => setShowCulaModal(false)} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200">Tutup</button>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                            {(initialCulaCodes ?? []).map((c) => (
+                                <button key={c.code} onClick={() => handleCulaSiap(c.code, c.label)}
+                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${c.code === (selectedVoterForCula.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}>
+                                    {c.label}
+                                </button>
+                            ))}
+                            {(!initialCulaCodes || initialCulaCodes.length === 0) && (
+                                <p className="text-xs text-slate-400">Tiada kod culaan tersedia.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
