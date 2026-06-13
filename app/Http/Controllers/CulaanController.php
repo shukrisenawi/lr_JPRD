@@ -45,7 +45,7 @@ class CulaanController extends Controller
 
         return Inertia::render('Culaan/Index', [
             'filters' => $filters,
-            'requires_udm' => true,
+            'requires_udm' => false,
             'summary' => [
                 'total' => $voters->total(),
             ],

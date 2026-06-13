@@ -346,12 +346,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             return;
         }
 
-        if (!formState.udm) {
-            setSuggestions([]);
-            setSearching(false);
-            return;
-        }
-
         const controller = new AbortController();
         suggestionsAbort.current = controller;
         setSearching(true);
@@ -853,7 +847,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     onChange={(event) => updateFilter('udm', event.target.value)}
                                     className="input-field mt-1.5"
                                 >
-                                    <option value="">Pilih UDM dahulu</option>
+                                    <option value="">Semua UDM</option>
                                     {udms.map((udm) => (
                                         <option key={udm} value={udm}>{udm}</option>
                                     ))}
@@ -867,7 +861,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     value={formState.locality}
                                     onChange={(event) => updateFilter('locality', event.target.value)}
                                     className="input-field mt-1.5"
-                                    disabled={!formState.udm}
                                 >
                                     <option value="">Semua Lokaliti</option>
                                     {localities.map((locality) => (
@@ -919,7 +912,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         onChange={handleSearchChange}
                                         className="input-field pr-10"
                                         placeholder="Nama, No Kp, telefon..."
-                                        disabled={!formState.udm}
                                     />
                                     {search ? (
                                         <button
