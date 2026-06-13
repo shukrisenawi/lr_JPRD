@@ -229,6 +229,11 @@ class CulaanController extends Controller
             ->where('pemilih_record_id', $pemilihRecord->id)
             ->delete();
 
+        $pemilihRecord->update([
+            'cula_code' => '?',
+            'cula_display_label' => null,
+        ]);
+
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Tanda culaan berjaya dibuka semula.',
