@@ -253,8 +253,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     useEffect(() => {
         if (filters.data_error) {
             setTab('data_error');
-        } else if (tab !== 'senarai') {
-            setTab('senarai');
         }
     }, [filters.data_error]);
 
@@ -1052,14 +1050,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     if (tabs.length < 2) return null;
                     return (
                         <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-                            {tabs.map((t) => (
-                                <button key={t.k} onClick={() => {
-                                    if (t.k === 'data_error' || t.k === 'senarai') {
-                                        updateFilter('data_error', t.k === 'data_error');
-                                    } else {
-                                        setTab(t.k);
-                                    }
-                                }}
+                                                    {tabs.map((t) => (
+                                                        <button key={t.k} onClick={() => {
+                                                            setTab(t.k);
+                                                            if (t.k === 'data_error' || t.k === 'senarai') {
+                                                                updateFilter('data_error', t.k === 'data_error');
+                                                            }
+                                                        }}
                                     className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${tab === t.k ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
                                     {t.l}
                                 </button>
