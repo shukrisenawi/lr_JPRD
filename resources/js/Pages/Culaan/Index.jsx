@@ -1471,7 +1471,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         {tableColumns.map((code) => (
                                             <th key={code} title={codeLabels[code] ?? code} className="whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-slate-600">{code}</th>
                                         ))}
-                                        <th className="whitespace-nowrap px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-slate-600">Jumlah Keseluruhan</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-slate-600">Jumlah</th>
                                     </tr>
                                 </thead>
                                 <tbody>
