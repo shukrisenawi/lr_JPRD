@@ -241,10 +241,12 @@ function SearchPanel() {
 
     const handleCulaSiap = async (code, label) => {
         if (!selectedVoterForCula) return;
+        const recordId = selectedVoterForCula.record_id;
+        if (!recordId) { setErr('Rekod pemilih tidak dijumpai.'); setShowCulaModal(false); setSelectedVoterForCula(null); return; }
         const voterId = selectedVoterForCula.id;
         setShowCulaModal(false);
         try {
-            const res = await fetch(route('carian-pemilih.update-cula', voterId), {
+            const res = await fetch(route('carian-pemilih.update-cula', recordId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
