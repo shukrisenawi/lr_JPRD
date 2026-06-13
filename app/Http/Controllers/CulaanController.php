@@ -251,10 +251,6 @@ class CulaanController extends Controller
     {
         $groupKodCulas = $this->resolveGroupKodCulas($filters['group_id']);
 
-        $usingCustomCulaCodes = $filters['custom_mode']
-            && is_array($filters['cula_codes'])
-            && count($filters['cula_codes']) > 0;
-
         $query = PemilihRecord::query()
             ->where('status', 'aktif');
 
@@ -262,20 +258,16 @@ class CulaanController extends Controller
 
         $query->when(
                 ! $filters['show_marked'],
-                function (Builder $builder) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
-                    $builder->where(function (Builder $q) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
+                function (Builder $builder) use ($groupKodCulas) {
+                    $builder->where(function (Builder $q) use ($groupKodCulas) {
+                        $q->whereNull('cula_code')
+                            ->orWhere('cula_code', '')
+                            ->orWhere('cula_code', '?')
+                            ->orWhere('cula_code', 'TIADA')
+                            ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+
                         if ($groupKodCulas !== null) {
-                            $q->whereIn('cula_code', $groupKodCulas);
-                        } elseif ($usingCustomCulaCodes) {
-                            $q->whereIn('cula_code', $filters['cula_codes']);
-                        } else {
-                            $q->whereNull('cula_code')
-                                ->orWhere('cula_code', '')
-                                ->orWhere('cula_code', '?')
-                                ->orWhere('cula_code', 'TIADA');
-                        }
-                        if (! $usingCustomCulaCodes) {
-                            $q->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                            $q->orWhereIn('cula_code', $groupKodCulas);
                         }
                     });
                 }
