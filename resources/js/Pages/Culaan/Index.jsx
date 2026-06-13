@@ -1482,9 +1482,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     <tr className="border-b border-slate-200 bg-slate-50">
                                         <th className="whitespace-nowrap px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Nama Group</th>
                                         {tableColumns.map((code) => (
-                                            <th key={code} title={codeLabels[code] ?? code} className="whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-slate-600">{code}</th>
+                                            <th key={code} title={codeLabels[code] ?? code} className={`whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-amber-900 bg-amber-100`}>{code}</th>
                                         ))}
-                                        <th className="whitespace-nowrap px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-slate-600">Jumlah</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-violet-900 bg-violet-100">Jumlah</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1493,12 +1493,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             <td colSpan={tableColumns.length + 2} className="px-3 py-6 text-center text-slate-500">Tiada data untuk paparan ini.</td>
                                         </tr>
                                     ) : tableRows.map((row, i) => (
-                                        <tr key={i} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                                        <tr key={i} className={`border-b border-slate-100 last:border-b-0 ${i % 2 === 1 ? 'bg-slate-50/70' : ''} hover:bg-slate-50`}>
                                             <td className="whitespace-nowrap px-3 py-2 font-bold text-slate-800">{row.nama_group}</td>
                                             {tableColumns.map((code) => (
-                                                <td key={code} className="whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800">{fmtDiff(row.breakdownMap[code] ?? 0, jadualDiffMap[row.nama_group]?.[code])}</td>
+                                                <td key={code} className={`whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800 bg-amber-50/40`}>{fmtDiff(row.breakdownMap[code] ?? 0, jadualDiffMap[row.nama_group]?.[code])}</td>
                                             ))}
-                                            <td className="whitespace-nowrap px-3 py-2 text-right font-bold text-slate-800">{fmtDiff(row.jumlah, jadualDiffMap[row.nama_group]?.jumlah)}</td>
+                                            <td className={`whitespace-nowrap px-3 py-2 text-right font-bold text-slate-800 bg-violet-50/40`}>{fmtDiff(row.jumlah, jadualDiffMap[row.nama_group]?.jumlah)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
