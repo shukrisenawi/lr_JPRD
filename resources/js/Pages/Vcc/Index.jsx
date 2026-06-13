@@ -34,6 +34,11 @@ function UserGroupIcon({ className = 'h-4 w-4' }) {
     );
 }
 
+function buildTelegramLink(command, identity) {
+    const payload = identity ? `/${command} ${identity}` : `/${command}`;
+    return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(payload)}`;
+}
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -109,7 +114,7 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
-export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [] }) {
+export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [], available_cula_codes: initialCulaCodes = [] }) {
     const { auth } = usePage().props;
     const suggestionsAbort = useRef(null);
     const [search, setSearch] = useState('');
@@ -124,6 +129,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [localSummary, setLocalSummary] = useState(summary);
     const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
     const [avatarUpdates, setAvatarUpdates] = useState({});
+    const [culaPendingIds, setCulaPendingIds] = useState(new Set());
+    const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
+    const [showCulaModal, setShowCulaModal] = useState(false);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -300,6 +308,28 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
     const markVoter = (voter) => sendMarkRequest(voter, 'POST');
     const unmarkVoter = (voter) => sendMarkRequest(voter, 'DELETE');
+
+    const handleCulaSiap = async (code, label) => {
+        const voter = selectedVoterForCula;
+        if (!voter) return;
+        setShowCulaModal(false);
+        setSelectedVoterForCula(null);
+        setPendingIds((prev) => [...prev, voter.id]);
+        try {
+            const res = await fetch(route('vcc.update-cula', voter.id), {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ cula_code: code, cula_display_label: label }),
+            });
+            if (!res.ok) throw new Error();
+            updateLocalCollections(voter, true);
+        } catch {
+            setActionError('Kod culaan tidak berjaya disimpan.');
+        } finally {
+            setPendingIds((prev) => prev.filter((id) => id !== voter.id));
+            setCulaPendingIds((prev) => { const n = new Set(prev); n.delete(voter.id); return n; });
+        }
+    };
 
     const handleAvatarUpload = async (e, voterId) => {
         const file = e.target.files?.[0];
@@ -836,7 +866,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                 })()}
                                             </>
                                         )}
-                                        <div className="ml-auto">
+                                        <div className="ml-auto flex items-center gap-1.5">
                                             {voter.is_marked ? (
                                                 <button
                                                     type="button"
@@ -847,14 +877,30 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
                                                 </button>
                                             ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); markVoter(voter); }}
-                                                    disabled={pendingIds.includes(voter.id)}
-                                                    className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100 disabled:opacity-50"
-                                                >
-                                                    {pendingIds.includes(voter.id) ? '...' : '✓ Tanda Siap'}
-                                                </button>
+                                                (voter.cula_code === '?' || voter.cula_code === '0') ? (
+                                                    <>
+                                                        <button type="button"
+                                                            onClick={(e) => { e.stopPropagation(); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
+                                                            className="rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white transition hover:bg-green-500">
+                                                            Kemas Cula
+                                                        </button>
+                                                        {culaPendingIds.has(voter.id) && (
+                                                            <button type="button"
+                                                                onClick={(e) => { e.stopPropagation(); setSelectedVoterForCula(voter); setShowCulaModal(true); }}
+                                                                disabled={pendingIds.includes(voter.id)}
+                                                                className="rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500 disabled:opacity-50">
+                                                                {pendingIds.includes(voter.id) ? '...' : 'Siap Cula'}
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <button type="button"
+                                                        onClick={(e) => { e.stopPropagation(); markVoter(voter); }}
+                                                        disabled={pendingIds.includes(voter.id)}
+                                                        className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100 disabled:opacity-50">
+                                                        {pendingIds.includes(voter.id) ? '...' : '✓ Tanda Siap'}
+                                                    </button>
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -871,6 +917,28 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                     src={lightboxSrc}
                     onClose={() => setLightboxSrc(null)}
                 />
+            )}
+
+            {showCulaModal && selectedVoterForCula && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>
+                    <div className="mx-4 w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
+                            <button onClick={() => setShowCulaModal(false)} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200">Tutup</button>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                            {(initialCulaCodes ?? []).map((c) => (
+                                <button key={c.code} onClick={() => handleCulaSiap(c.code, c.label)}
+                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${c.code === (selectedVoterForCula.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}>
+                                    {c.label}
+                                </button>
+                            ))}
+                            {(!initialCulaCodes || initialCulaCodes.length === 0) && (
+                                <p className="text-xs text-slate-400">Tiada kod culaan tersedia.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
         </AuthenticatedLayout>
     );

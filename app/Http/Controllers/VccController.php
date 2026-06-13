@@ -33,6 +33,7 @@ class VccController extends Controller
             'groups' => $groups,
             'voters' => $voters,
             'available_races' => $this->availableRaces(),
+            'available_cula_codes' => $this->availableCulaCodes(),
         ]);
     }
 
@@ -121,6 +122,31 @@ class VccController extends Controller
         return redirect()
             ->route('vcc.index')
             ->with('success', 'Tanda culaan berjaya dibuka semula.');
+    }
+
+    public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $data = $request->validate([
+            'cula_code' => 'required|string|max:10',
+            'cula_display_label' => 'nullable|string|max:100',
+        ]);
+
+        $pemilihRecord->update([
+            'cula_code' => $data['cula_code'],
+            'cula_display_label' => $data['cula_display_label'] ?? $data['cula_code'],
+            'cula_remark' => null,
+        ]);
+
+        CulaWorkItem::query()->firstOrCreate(
+            ['pemilih_record_id' => $pemilihRecord->id],
+            [
+                'marked_by' => $request->user()->id,
+                'marked_at' => now(),
+                'notes' => null,
+            ]
+        );
+
+        return response()->json(['message' => 'Kod culaan berjaya disimpan.', 'cula_code' => $data['cula_code']]);
     }
 
     public function logCommunication(Request $request): JsonResponse
@@ -488,5 +514,56 @@ class VccController extends Controller
             ->pluck('race')
             ->values()
             ->all();
+    }
+
+    private function availableCulaCodes(): array
+    {
+        $codes = [];
+        $codeRanges = [
+            range(1, 10),
+            [13],
+            ['1A', '1B', '1P'],
+            range(3, 9),
+            ['3B', '3D', '3K', '3M', '3P', '3U'],
+            ['7P'],
+            [97, 98, 99],
+        ];
+
+        foreach ($codeRanges as $range) {
+            foreach ($range as $code) {
+                $label = match (true) {
+                    $code === 1 => 'UMNO',
+                    $code === 2 => 'PAS',
+                    $code === 3 => 'PAS LUAR',
+                    $code === 4 => 'ATAS PAGAR',
+                    $code === 5 => 'PKR',
+                    $code === 6 => 'DHPP',
+                    $code === 7 => 'TIDAK DIKENALI',
+                    $code === 8 => 'MATI',
+                    $code === 9 => 'PAN DAP',
+                    $code === 10 => 'PPBM',
+                    $code === 13 => 'MCA',
+                    $code === '1A' => 'UMNO - SASARAN / LEMAH / ATAS PAGAR',
+                    $code === '1B' => 'UMNO SOKONG PAS',
+                    $code === '1P' => 'UMNO SOKONG PN (TIDAK SOKONG PAS)',
+                    $code === '3B' => 'PAS LUAR KEDAH (BORNEO)',
+                    $code === '3D' => 'PAS LUAR DUN',
+                    $code === '3K' => 'PAS LUAR KEDAH (SEMENANJUNG)',
+                    $code === '3M' => 'PAS LUAR MALAYSIA',
+                    $code === '3P' => 'PAS LUAR PARLIMEN',
+                    $code === '3U' => 'PAS LUAR UDM',
+                    $code === '7P' => 'TIDAK DIKENALI (POLIS / TENTERA)',
+                    $code === 97 => 'LAIN-LAIN BANGSA',
+                    $code === 98 => 'INDIA',
+                    $code === 99 => 'CINA',
+                    default => null,
+                };
+                if ($label !== null) {
+                    $codes[] = ['code' => (string) $code, 'label' => "$code - $label"];
+                }
+            }
+        }
+
+        return $codes;
     }
 }

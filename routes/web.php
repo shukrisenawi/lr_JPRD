@@ -94,6 +94,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/vcc/search', [VccController::class, 'search'])->middleware('module:vcc')->name('vcc.search');
     Route::post('/vcc/{pemilihRecord}/mark', [VccController::class, 'storeMark'])->middleware('module:vcc')->name('vcc.mark.store');
     Route::delete('/vcc/{pemilihRecord}/mark', [VccController::class, 'destroyMark'])->middleware('module:vcc')->name('vcc.mark.destroy');
+    Route::post('/vcc/{pemilihRecord}/update-cula', [VccController::class, 'updateCula'])->middleware('module:vcc')->name('vcc.update-cula');
     Route::post('/vcc/communication/log', [VccController::class, 'logCommunication'])->middleware('module:vcc')->name('vcc.communication.log');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
