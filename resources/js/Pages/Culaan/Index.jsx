@@ -1193,7 +1193,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                                     )}
                                                 </button>
-                                                {culaSemulaIds.has(voter.id) ? (
+                                                {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
@@ -1206,7 +1206,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     >
                                                         Siap Cula
                                                     </button>
-                                                ) : !formState.show_marked && (
+                                                ) : (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
@@ -1218,7 +1218,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     >
                                                     Kemas Cula
                                                 </button>
-                                                )}
+                                                ))}
                                                 <a
                                                     href={buildTelegramLink('kemastel', voter.telegram_identity)}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
