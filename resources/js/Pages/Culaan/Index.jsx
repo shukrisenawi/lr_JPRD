@@ -233,7 +233,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
     const [jadualDiffMap, setJadualDiffMap] = useState({});
-    const jadualBaselineSaved = useRef(false);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -653,8 +652,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     }, [formState.udm, formState.locality, formState.group_id, formState.keturunan, formState.jantina, formState.umur_dari, formState.umur_hingga, filters.custom_mode, pemilih_report?.uploaded_at]);
 
     useEffect(() => {
-        if (!tableRows.length || tab !== 'jadual') return;
-        jadualBaselineSaved.current = false;
+        if (!tableRows.length) return;
         try {
             const baseline = tableRows.map(r => ({
                 nama_group: r.nama_group,
@@ -662,25 +660,29 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 jumlah: r.jumlah,
             }));
             const raw = localStorage.getItem(jadualBaselineKey);
-            if (raw) {
-                const prev = JSON.parse(raw);
-                const diffs = {};
-                for (const row of tableRows) {
-                    const p = prev.find(r => r.nama_group === row.nama_group);
-                    if (!p) continue;
-                    const rowDiffs = {};
-                    for (const code of tableColumns) {
-                        const d = (row.breakdownMap[code] ?? 0) - (p.breakdownMap[code] ?? 0);
-                        if (d !== 0) rowDiffs[code] = d;
-                    }
-                    const jd = (row.jumlah ?? 0) - (p.jumlah ?? 0);
-                    if (jd !== 0) rowDiffs.jumlah = jd;
-                    if (Object.keys(rowDiffs).length > 0) diffs[row.nama_group] = rowDiffs;
-                }
-                setJadualDiffMap(diffs);
-            } else {
+            if (!raw) {
                 localStorage.setItem(jadualBaselineKey, JSON.stringify(baseline));
-                setJadualDiffMap({});
+            }
+            if (tab === 'jadual') {
+                if (raw) {
+                    const prev = JSON.parse(raw);
+                    const diffs = {};
+                    for (const row of tableRows) {
+                        const p = prev.find(r => r.nama_group === row.nama_group);
+                        if (!p) continue;
+                        const rowDiffs = {};
+                        for (const code of tableColumns) {
+                            const d = (row.breakdownMap[code] ?? 0) - (p.breakdownMap[code] ?? 0);
+                            if (d !== 0) rowDiffs[code] = d;
+                        }
+                        const jd = (row.jumlah ?? 0) - (p.jumlah ?? 0);
+                        if (jd !== 0) rowDiffs.jumlah = jd;
+                        if (Object.keys(rowDiffs).length > 0) diffs[row.nama_group] = rowDiffs;
+                    }
+                    setJadualDiffMap(diffs);
+                } else {
+                    setJadualDiffMap({});
+                }
             }
         } catch {}
     }, [tableRows, jadualBaselineKey, tab, tableColumns]);
