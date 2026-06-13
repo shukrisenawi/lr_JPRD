@@ -233,6 +233,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
     const [jadualDiffMap, setJadualDiffMap] = useState({});
+    const jadualBaselineRef = useRef(null);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -296,10 +297,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     };
 
     const refreshPage = () => {
-        router.get(window.location.href, {}, {
+        router.reload({
             preserveState: true,
             preserveScroll: true,
-            replace: true,
         });
     };
 
@@ -645,47 +645,33 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         });
     }, [report_by_group, selectedGroup, report, filters.custom_mode]);
 
-    const jadualBaselineKey = useMemo(() => {
-        const p = { udm: formState.udm, locality: formState.locality, group_id: formState.group_id, keturunan: formState.keturunan, jantina: formState.jantina, umur_dari: formState.umur_dari, umur_hingga: formState.umur_hingga, custom_mode: filters.custom_mode };
-        const uploadTs = pemilih_report?.uploaded_at ?? '';
-        return `cula_jadual_baseline_v1_${uploadTs}_${JSON.stringify(p)}`;
-    }, [formState.udm, formState.locality, formState.group_id, formState.keturunan, formState.jantina, formState.umur_dari, formState.umur_hingga, filters.custom_mode, pemilih_report?.uploaded_at]);
-
     useEffect(() => {
         if (!tableRows.length) return;
-        try {
-            const baseline = tableRows.map(r => ({
+        if (!jadualBaselineRef.current) {
+            jadualBaselineRef.current = tableRows.map(r => ({
                 nama_group: r.nama_group,
-                breakdownMap: r.breakdownMap,
+                breakdownMap: { ...r.breakdownMap },
                 jumlah: r.jumlah,
             }));
-            const raw = localStorage.getItem(jadualBaselineKey);
-            if (!raw) {
-                localStorage.setItem(jadualBaselineKey, JSON.stringify(baseline));
-            }
-            if (tab === 'jadual') {
-                if (raw) {
-                    const prev = JSON.parse(raw);
-                    const diffs = {};
-                    for (const row of tableRows) {
-                        const p = prev.find(r => r.nama_group === row.nama_group);
-                        if (!p) continue;
-                        const rowDiffs = {};
-                        for (const code of tableColumns) {
-                            const d = (row.breakdownMap[code] ?? 0) - (p.breakdownMap[code] ?? 0);
-                            if (d !== 0) rowDiffs[code] = d;
-                        }
-                        const jd = (row.jumlah ?? 0) - (p.jumlah ?? 0);
-                        if (jd !== 0) rowDiffs.jumlah = jd;
-                        if (Object.keys(rowDiffs).length > 0) diffs[row.nama_group] = rowDiffs;
-                    }
-                    setJadualDiffMap(diffs);
-                } else {
-                    setJadualDiffMap({});
+        }
+        if (tab === 'jadual') {
+            const prev = jadualBaselineRef.current;
+            const diffs = {};
+            for (const row of tableRows) {
+                const p = prev.find(r => r.nama_group === row.nama_group);
+                if (!p) continue;
+                const rowDiffs = {};
+                for (const code of tableColumns) {
+                    const d = (row.breakdownMap[code] ?? 0) - (p.breakdownMap[code] ?? 0);
+                    if (d !== 0) rowDiffs[code] = d;
                 }
+                const jd = (row.jumlah ?? 0) - (p.jumlah ?? 0);
+                if (jd !== 0) rowDiffs.jumlah = jd;
+                if (Object.keys(rowDiffs).length > 0) diffs[row.nama_group] = rowDiffs;
             }
-        } catch {}
-    }, [tableRows, jadualBaselineKey, tab, tableColumns]);
+            setJadualDiffMap(diffs);
+        }
+    }, [tableRows, tab, tableColumns]);
 
     const exportToExcel = async () => {
         let exportRows = rows;
