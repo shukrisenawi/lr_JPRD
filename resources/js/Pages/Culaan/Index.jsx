@@ -16,7 +16,14 @@ function fmtDiff(v, diff) {
     return (
         <span className={`inline-flex items-center gap-1 rounded px-1 py-0.5 ${isPos ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             <span className="text-xs font-semibold">{fmt(v)}</span>
-            <span className="text-[10px] font-bold opacity-80">{isPos ? '+' : ''}{fmt(diff)}</span>
+            <span className="text-[10px] font-bold opacity-80 inline-flex items-center">
+                {isPos ? (
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+                ) : (
+                    <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                )}
+                <span>{fmt(diff)}</span>
+            </span>
         </span>
     );
 }
