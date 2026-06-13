@@ -114,7 +114,7 @@ function DataTable({ rows, columns }) {
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
                         {rows.map((row, i) => (
-                            <tr key={row.key ?? `${row.name}-${i}`} className="hover:bg-green-50/50">
+                            <tr key={row.key ?? `${row.name}-${i}`} className={`${i % 2 === 1 ? 'bg-slate-50/70' : ''} hover:bg-green-50/50`}>
                                 {columns.map((c) => <td key={c.key} className={`px-2.5 py-2 align-top leading-4 ${c.cellClass ?? ''}`}>{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
                             </tr>
                         ))}
