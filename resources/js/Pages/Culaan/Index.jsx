@@ -646,9 +646,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     }, [report_by_group, selectedGroup, report, filters.custom_mode]);
 
     const jadualSessionKey = useMemo(() => {
-        const p = { udm: formState.udm, locality: formState.locality, group_id: formState.group_id };
+        const p = { udm: filters.udm, locality: filters.locality, group_id: filters.group_id };
         return `cula_jadual_baseline_v3_${JSON.stringify(p)}`;
-    }, [formState.udm, formState.locality, formState.group_id]);
+    }, [filters.udm, filters.locality, filters.group_id]);
 
     useEffect(() => {
         if (!tableRows.length) return;
