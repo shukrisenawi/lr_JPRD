@@ -253,7 +253,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     useEffect(() => {
         if (filters.data_error) {
             setTab('data_error');
-        } else if (tab === 'data_error') {
+        } else if (tab !== 'senarai') {
             setTab('senarai');
         }
     }, [filters.data_error]);
