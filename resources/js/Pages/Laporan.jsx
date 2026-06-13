@@ -258,7 +258,7 @@ export default function Laporan({ report, pemilih_report = null }) {
         { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Atas Pagar']), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Tak Kenal']), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Mati', label: 'Mati', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Mati), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Jumlah), headerClass: groupH.total, cellClass: groupC.total },
+        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Jumlah), headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },

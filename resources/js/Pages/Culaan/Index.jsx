@@ -1484,7 +1484,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         {tableColumns.map((code) => (
                                             <th key={code} title={codeLabels[code] ?? code} className={`whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-amber-900 bg-amber-100`}>{code}</th>
                                         ))}
-                                        <th className="whitespace-nowrap px-3 py-2 text-right font-bold uppercase tracking-[0.08em] text-violet-900 bg-violet-100">Jumlah</th>
+                                        <th className="whitespace-nowrap px-3 py-2 text-center font-bold uppercase tracking-[0.08em] text-violet-900 bg-violet-100">Jumlah</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1498,7 +1498,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             {tableColumns.map((code) => (
                                                 <td key={code} className={`whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800 bg-amber-50/40`}>{fmtDiff(row.breakdownMap[code] ?? 0, jadualDiffMap[row.nama_group]?.[code])}</td>
                                             ))}
-                                            <td className={`whitespace-nowrap px-3 py-2 text-right font-bold text-slate-800 bg-violet-50/40`}>{fmtDiff(row.jumlah, jadualDiffMap[row.nama_group]?.jumlah)}</td>
+                                            <td className={`whitespace-nowrap px-3 py-2 text-center font-bold text-slate-800 bg-violet-50/40`}>{fmtDiff(row.jumlah, jadualDiffMap[row.nama_group]?.jumlah)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
