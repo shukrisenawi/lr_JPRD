@@ -78,8 +78,17 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
-                                        const hasAccess = item.items.some(i => canAccess(i.key));
-                                        if (!hasAccess) return null;
+                                        const accessibleItems = item.items.filter(i => canAccess(i.key) || i.key === 'akses');
+                                        if (accessibleItems.length === 0) return null;
+                                        if (accessibleItems.length === 1) {
+                                            const sub = accessibleItems[0];
+                                            return (
+                                                <NavLink key={sub.key} href={route(sub.href)} active={route().current(sub.routePattern)} variant={variant}>
+                                                    <NavIcon>{item.icon}</NavIcon>
+                                                    <span>{sub.label}</span>
+                                                </NavLink>
+                                            );
+                                        }
                                         return (
                                             <Dropdown key={item.label}>
                                                 <Dropdown.Trigger>
@@ -90,7 +99,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                                     </button>
                                                 </Dropdown.Trigger>
                                                 <Dropdown.Content align="left" widthClasses="w-52">
-                                                    {item.items.filter(i => canAccess(i.key) || i.key === 'akses').map(sub => (
+                                                    {accessibleItems.map(sub => (
                                                         <Dropdown.Link key={sub.key} href={route(sub.href)}>
                                                             {sub.label}
                                                         </Dropdown.Link>
