@@ -1518,7 +1518,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             <MesyuaratView program={mesyuaratProgram} onClose={closeMesyuarat} />
             {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
             {showCulaModal && selectedVoterForCula && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>
                     <div className="mx-4 w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
