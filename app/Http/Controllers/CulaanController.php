@@ -255,21 +255,26 @@ class CulaanController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
-        $query->where(function (Builder $builder) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
-                if ($groupKodCulas !== null) {
-                    $builder->whereIn('cula_code', $groupKodCulas);
-                } elseif ($usingCustomCulaCodes) {
-                    $builder->whereIn('cula_code', $filters['cula_codes']);
-                } else {
-                    $builder->whereNull('cula_code')
-                        ->orWhere('cula_code', '')
-                        ->orWhere('cula_code', '?')
-                        ->orWhere('cula_code', 'TIADA');
+        $query->when(
+                ! $filters['show_marked'],
+                function (Builder $builder) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
+                    $builder->where(function (Builder $q) use ($groupKodCulas, $usingCustomCulaCodes, $filters) {
+                        if ($groupKodCulas !== null) {
+                            $q->whereIn('cula_code', $groupKodCulas);
+                        } elseif ($usingCustomCulaCodes) {
+                            $q->whereIn('cula_code', $filters['cula_codes']);
+                        } else {
+                            $q->whereNull('cula_code')
+                                ->orWhere('cula_code', '')
+                                ->orWhere('cula_code', '?')
+                                ->orWhere('cula_code', 'TIADA');
+                        }
+                        if (! $usingCustomCulaCodes) {
+                            $q->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                        }
+                    });
                 }
-                if (! $usingCustomCulaCodes) {
-                    $builder->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
-                }
-            })
+            )
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
