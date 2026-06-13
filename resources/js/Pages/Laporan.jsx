@@ -23,7 +23,7 @@ function fmtDiff(v, diff) {
                 ) : (
                     <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                 )}
-                <span>{fmt(diff)}</span>
+                <span>{fmt(Math.abs(diff))}</span>
             </span>
         </span>
     );
