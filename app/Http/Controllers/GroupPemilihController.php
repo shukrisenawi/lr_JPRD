@@ -34,7 +34,8 @@ class GroupPemilihController extends Controller
         $kodCulaQuery = PemilihRecord::query()
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?');
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA');
         $user->applyScopeToPemilihQuery($kodCulaQuery);
         $availableKodCulas = $kodCulaQuery
             ->select('cula_code')

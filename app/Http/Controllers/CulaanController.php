@@ -226,7 +226,8 @@ class CulaanController extends Controller
                 } else {
                     $builder->whereNull('cula_code')
                         ->orWhere('cula_code', '')
-                        ->orWhere('cula_code', '?');
+                        ->orWhere('cula_code', '?')
+                        ->orWhere('cula_code', 'TIADA');
                 }
                 if (! $usingCustomCulaCodes) {
                     $builder->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
@@ -445,7 +446,7 @@ class CulaanController extends Controller
         $label = mb_strtoupper((string) $voter->cula_display_label);
         $code = (string) ($voter->cula_code ?? '');
 
-        return $code === '' || $code === '?' || str_contains($label, 'BELUM DICULA');
+        return $code === '' || $code === '?' || $code === 'TIADA' || str_contains($label, 'BELUM DICULA');
     }
 
     private function applyGroupDemographicFilters(Builder $query, ?int $groupId): void
@@ -547,7 +548,8 @@ class CulaanController extends Controller
             ->where('status', 'aktif')
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?');
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA');
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
@@ -607,6 +609,7 @@ class CulaanController extends Controller
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
             ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA')
             ->count();
 
         $belumDicula = $total - $sudahDicula;
@@ -615,6 +618,7 @@ class CulaanController extends Controller
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
             ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA')
             ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'), DB::raw('COUNT(*) as total'))
             ->groupBy('cula_code')
             ->orderByDesc('total')

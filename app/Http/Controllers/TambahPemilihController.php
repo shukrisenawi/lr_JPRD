@@ -49,6 +49,7 @@ class TambahPemilihController extends Controller
 
         $culaCodes = PemilihRecord::whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', 'TIADA')
             ->select('cula_code', 'cula_display_label')
             ->distinct()
             ->orderBy('cula_code')

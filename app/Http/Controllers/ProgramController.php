@@ -855,8 +855,8 @@ class ProgramController extends Controller
                 ->map(fn ($g, $loc) => [
                     'name' => $loc,
                     'total' => $g->count(),
-                    'with_cula' => $g->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
-                    'belum_dicula' => $g->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
+                    'with_cula' => $g->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?' && $a->cula_code !== 'TIADA')->count(),
+                    'belum_dicula' => $g->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?' || $a->cula_code === 'TIADA')->count(),
                 ])
                 ->sortByDesc('total')
                 ->values();
@@ -869,8 +869,8 @@ class ProgramController extends Controller
                 'summary' => [
                     'total_voters' => $dm['total'],
                     'total_localities' => $localities->count(),
-                    'with_cula' => $filtered->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
-                    'belum_dicula' => $filtered->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
+                    'with_cula' => $filtered->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?' && $a->cula_code !== 'TIADA')->count(),
+                    'belum_dicula' => $filtered->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?' || $a->cula_code === 'TIADA')->count(),
                 ],
             ];
         });
@@ -925,8 +925,8 @@ class ProgramController extends Controller
                     'total_voters' => $total,
                     'total_dm' => $byDm->count(),
                     'total_localities' => $byLocality->count(),
-                    'with_cula' => $attendees->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?')->count(),
-                    'belum_dicula' => $attendees->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?')->count(),
+                    'with_cula' => $attendees->filter(fn ($a) => $a->cula_code && $a->cula_code !== '?' && $a->cula_code !== 'TIADA')->count(),
+                    'belum_dicula' => $attendees->filter(fn ($a) => ! $a->cula_code || $a->cula_code === '?' || $a->cula_code === 'TIADA')->count(),
                 ],
                 'by_dm' => $byDm,
                 'by_locality' => $byLocality,
