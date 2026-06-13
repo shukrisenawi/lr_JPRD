@@ -251,6 +251,10 @@ class CulaanController extends Controller
     {
         $groupKodCulas = $this->resolveGroupKodCulas($filters['group_id']);
 
+        $usingCustomCulaCodes = $filters['custom_mode']
+            && is_array($filters['cula_codes'])
+            && count($filters['cula_codes']) > 0;
+
         $query = PemilihRecord::query()
             ->where('status', 'aktif');
 
@@ -271,6 +275,10 @@ class CulaanController extends Controller
                         }
                     });
                 }
+            )
+            ->when(
+                $usingCustomCulaCodes && ! $filters['show_marked'],
+                fn (Builder $builder) => $builder->whereIn('cula_code', $filters['cula_codes'])
             )
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
@@ -590,9 +598,7 @@ class CulaanController extends Controller
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->whereNotNull('cula_code')
-            ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?')
-            ->where('cula_code', '!=', 'TIADA');
+            ->where('cula_code', '!=', '');
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
