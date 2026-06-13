@@ -234,6 +234,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
     const [jadualDiffMap, setJadualDiffMap] = useState({});
     const jadualBaselineSaved = useRef(false);
+    const jadualRefreshAfterMutation = useRef(false);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -297,6 +298,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     };
 
     const refreshPage = () => {
+        jadualRefreshAfterMutation.current = true;
         router.get(window.location.href, {}, {
             preserveState: true,
             preserveScroll: true,
@@ -656,6 +658,17 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (!tableRows.length || tab !== 'jadual') return;
         jadualBaselineSaved.current = false;
         try {
+            const baseline = tableRows.map(r => ({
+                nama_group: r.nama_group,
+                breakdownMap: r.breakdownMap,
+                jumlah: r.jumlah,
+            }));
+            if (jadualRefreshAfterMutation.current) {
+                jadualRefreshAfterMutation.current = false;
+                localStorage.setItem(jadualBaselineKey, JSON.stringify(baseline));
+                setJadualDiffMap({});
+                return;
+            }
             const raw = localStorage.getItem(jadualBaselineKey);
             if (raw) {
                 const prev = JSON.parse(raw);
@@ -674,11 +687,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 }
                 setJadualDiffMap(diffs);
             } else {
-                localStorage.setItem(jadualBaselineKey, JSON.stringify(tableRows.map(r => ({
-                    nama_group: r.nama_group,
-                    breakdownMap: r.breakdownMap,
-                    jumlah: r.jumlah,
-                }))));
+                localStorage.setItem(jadualBaselineKey, JSON.stringify(baseline));
                 setJadualDiffMap({});
             }
         } catch {}
