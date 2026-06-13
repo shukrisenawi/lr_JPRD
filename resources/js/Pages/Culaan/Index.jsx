@@ -1440,7 +1440,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             </button>
                         </div>
                         <p className="mt-1 text-xs text-slate-500">Pilih kod cula untuk dikemaskini:</p>
-                        <div className="mt-3 flex max-h-64 flex-wrap gap-1.5 overflow-y-auto">
+                        <div className="mt-3 flex flex-wrap gap-1.5">
                             {[...available_cula_codes].sort((a, b) => {
                                 const na = parseInt(a.code, 10);
                                 const nb = parseInt(b.code, 10);
