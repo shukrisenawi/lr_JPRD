@@ -302,6 +302,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         applyFilters(nextState);
     };
 
+    const toggleCulaCode = (code) => {
+        const current = formState.cula_codes ?? [];
+        const next = current.includes(code)
+            ? current.filter((c) => c !== code)
+            : [...current, code];
+        updateFilter('cula_codes', next);
+    };
+
     const doSearch = async (value) => {
         setSearch(value);
         setSearchError('');
@@ -878,7 +886,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </div>
 
                         {formState.group_id === 'custom' && (
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
+                            <><div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
                                 <div>
                                     <label htmlFor="culaan-keturunan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Keturunan</label>
                                     <select id="culaan-keturunan" value={formState.keturunan} onChange={(e) => updateFilter('keturunan', e.target.value)} className="input-field mt-1.5">
@@ -903,7 +911,22 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     <input id="culaan-umur-hingga" type="number" min="0" max="150" value={formState.umur_hingga} onChange={(e) => updateFilter('umur_hingga', e.target.value)} className="input-field mt-1.5" placeholder="cth: 60" />
                                 </div>
                             </div>
-                        )}
+                            <div className="mt-3">
+                                <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Kod Cula</label>
+                                <div className="mt-1.5 flex flex-wrap gap-1.5 rounded-lg border border-slate-200 bg-white p-2">
+                                    {available_cula_codes.length === 0 && <p className="text-xs text-slate-400">Tiada kod cula</p>}
+                                    {available_cula_codes.map((kc) => {
+                                        const checked = (formState.cula_codes ?? []).includes(kc.code);
+                                        return (
+                                            <label key={kc.code} className={`inline-flex cursor-pointer items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold transition ${checked ? 'border-green-400 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-200'}`}>
+                                                <input type="checkbox" checked={checked} onChange={() => toggleCulaCode(kc.code)} className="sr-only" />
+                                                {kc.code}
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </>)}
                     </div>
 
                     {tab === 'senarai' && (
