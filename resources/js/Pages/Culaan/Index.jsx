@@ -531,7 +531,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             if (!response.ok) throw new Error('Request failed');
 
             await response.json();
-            updateLocalCollections(voter, method === 'POST');
+            updateLocalCollections(voter, true);
             refreshPage();
         } catch (error) {
             setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.');
