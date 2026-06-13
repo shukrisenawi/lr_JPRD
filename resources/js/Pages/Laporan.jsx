@@ -125,7 +125,7 @@ function DataTable({ rows, columns }) {
     );
 }
 
-export default function Laporan({ report, pemilih_report = null }) {
+export default function Laporan({ report, pemilih_report = null, recent_logins = [] }) {
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
@@ -322,6 +322,22 @@ export default function Laporan({ report, pemilih_report = null }) {
                         </div>
 
                         <DataTable rows={udmTableRows} columns={dmCols} />
+
+                        <div className="card p-3">
+                            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Log Masuk Terkini</p>
+                            <h3 className="mt-0.5 text-sm font-bold text-slate-950">Akses pengguna terkini</h3>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                                {recent_logins.map((r) => (
+                                    <span key={r.name} className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-200/50">
+                                        <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                                        {r.name}
+                                        <span className="text-blue-400">•</span>
+                                        {r.last_login_at}
+                                    </span>
+                                ))}
+                                {recent_logins.length === 0 && <p className="text-xs text-slate-500">Tiada rekod log masuk.</p>}
+                            </div>
+                        </div>
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Top UDM">
