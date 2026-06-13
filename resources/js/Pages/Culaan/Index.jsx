@@ -638,8 +638,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     const jadualBaselineKey = useMemo(() => {
         const p = { udm: formState.udm, locality: formState.locality, group_id: formState.group_id, keturunan: formState.keturunan, jantina: formState.jantina, umur_dari: formState.umur_dari, umur_hingga: formState.umur_hingga, custom_mode: filters.custom_mode };
-        return `cula_jadual_baseline_v1_${JSON.stringify(p)}`;
-    }, [formState.udm, formState.locality, formState.group_id, formState.keturunan, formState.jantina, formState.umur_dari, formState.umur_hingga, filters.custom_mode]);
+        const uploadTs = pemilih_report?.uploaded_at ?? '';
+        return `cula_jadual_baseline_v1_${uploadTs}_${JSON.stringify(p)}`;
+    }, [formState.udm, formState.locality, formState.group_id, formState.keturunan, formState.jantina, formState.umur_dari, formState.umur_hingga, filters.custom_mode, pemilih_report?.uploaded_at]);
 
     useEffect(() => {
         if (!tableRows.length || tab !== 'jadual') return;
