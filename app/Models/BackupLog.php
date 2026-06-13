@@ -10,4 +10,8 @@ class BackupLog extends Model
         'user_name',
         'backed_up_at',
     ];
+
+    protected $casts = [
+        'backed_up_at' => 'datetime',
+    ];
 }

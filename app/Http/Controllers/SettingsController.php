@@ -25,7 +25,14 @@ class SettingsController extends Controller
             'backup_logs' => BackupLog::query()
                 ->orderByDesc('backed_up_at')
                 ->take(10)
-                ->get(),
+                ->get()
+                ->map(fn (BackupLog $log) => [
+                    'id' => $log->id,
+                    'user_name' => $log->user_name,
+                    'backed_up_at' => $log->backed_up_at
+                        ->locale('ms')
+                        ->isoFormat('dddd, DD-MM-YYYY h:mmA'),
+                ]),
         ]);
     }
 
