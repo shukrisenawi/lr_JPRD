@@ -1261,19 +1261,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             )}
                                         </div>
                                         <div className="mt-3 flex gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (window.confirm('Anda pasti mahu menghantar permintaan cula semula melalui Telegram?')) {
-                                                        window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank');
-                                                    }
-                                                }}
-                                                disabled={pendingIds.includes(voter.id)}
-                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                            <a
+                                                href={buildTelegramLink('kemascula', voter.telegram_identity)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500"
                                             >
-                                                {pendingIds.includes(voter.id) ? '...' : 'Cula Semula'}
-                                            </button>
+                                                Cula Semula
+                                            </a>
                                             <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); handleApproveError(voter, 'clear'); }}
