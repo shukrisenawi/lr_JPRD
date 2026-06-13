@@ -31,7 +31,7 @@ class SettingsController extends Controller
                     'user_name' => $log->user_name,
                     'backed_up_at' => $log->backed_up_at
                         ->locale('ms')
-                        ->isoFormat('dddd, DD-MM-YYYY h:mmA'),
+                        ->isoFormat('dddd, DD-MM-YYYY h:mm A'),
                 ]),
         ]);
     }
