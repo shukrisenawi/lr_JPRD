@@ -52,6 +52,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/program/{program}/attendees/{attendee}/sub-programs', [ProgramController::class, 'updateAttendeeSubPrograms'])->middleware('module:program')->name('program.attendees.sub-programs.update');
     Route::post('/program/{program}/attendees/{attendee}/mark', [ProgramController::class, 'storeMarkAttendee'])->middleware('module:program')->name('program.attendees.mark.store');
     Route::delete('/program/{program}/attendees/{attendee}/mark', [ProgramController::class, 'destroyMarkAttendee'])->middleware('module:program')->name('program.attendees.mark.destroy');
+    Route::post('/program/{program}/attendees/{attendee}/update-cula', [ProgramController::class, 'updateCulaAttendee'])->middleware('module:program')->name('program.attendees.update-cula');
     Route::get('/program/{program}/mesyuarat', [ProgramController::class, 'mesyuarat'])->middleware('module:program')->name('program.mesyuarat');
     Route::post('/program/{program}/files', [ProgramController::class, 'uploadFile'])->middleware('module:program')->name('program.files.upload');
     Route::get('/program/{program}/files/{file}/download', [ProgramController::class, 'downloadFile'])->middleware('module:program')->name('program.files.download');

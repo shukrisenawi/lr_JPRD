@@ -247,7 +247,7 @@ function NoAhliModal({ attendee, onClose, onSaved }) {
     );
 }
 
-function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli }) {
+function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli, isCulaPending, onCulaSiap }) {
     const [avatarUrl, setAvatarUrl] = useState(attendee?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -322,7 +322,11 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-green-200 pt-2">
                     <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                     <button onClick={() => avatarRef.current?.click()} disabled={uploading || !attendee.pemilih_record_id} className="rounded-md border border-green-300 bg-white p-1.5 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
-                    <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
+                    {isCulaPending ? (
+                        <button onClick={() => onCulaSiap(attendee)} className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500">Siap Cula</button>
+                    ) : (
+                        <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
+                    )}
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Kemaskini Tel</button>
                     {onUpdateNoAhli && (
                         <button onClick={() => onUpdateNoAhli(attendee)} className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500">No Ahli</button>
@@ -1077,7 +1081,7 @@ function MesyuaratView({ program, onClose }) {
     );
 }
 
-export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups, committeeGroupOptions, groupPemilihOptions }) {
+export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups, committeeGroupOptions, groupPemilihOptions, available_cula_codes: initialCulaCodes }) {
     const { auth } = usePage().props;
     const isAdmin = auth?.user?.role?.is_master_admin;
     const canEditNoAhli = auth?.user?.allowed_modules?.includes('kemaskini-no-ahli');
@@ -1107,6 +1111,9 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [attendeeSearch, setAttendeeSearch] = useState('');
     const [subTab, setSubTab] = useState(null);
     const [processingCulaIds, setProcessingCulaIds] = useState([]);
+    const [culaPendingIds, setCulaPendingIds] = useState(new Set());
+    const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
+    const [showCulaModal, setShowCulaModal] = useState(false);
     const toggleCula = async (a) => {
         if (!selectedProgram) return;
         if (processingCulaIds.includes(a.id)) return;
@@ -1208,7 +1215,29 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'is_mesyuarat', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
     const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
-    const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } };
+    const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } if (prefix === 'kemascula') { setCulaPendingIds((prev) => new Set([...prev, v.id])); } };
+    const handleCulaSiap = async (code, label) => {
+        if (!selectedVoterForCula || !selectedProgram) return;
+        const attendee = selectedVoterForCula;
+        setShowCulaModal(false);
+        try {
+            const res = await fetch(route('program.attendees.update-cula', [selectedProgram.id, attendee.id]), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ cula_code: code, cula_display_label: label }),
+            });
+            if (!res.ok) throw new Error();
+            router.reload({ preserveState: true, preserveScroll: true });
+        } catch {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal menyimpan kod culaan.', confirmButtonText: 'OK', confirmButtonColor: '#059669', background: '#ffffff', color: '#0f172a', iconColor: '#dc2626' });
+        }
+        setCulaPendingIds((prev) => { const n = new Set(prev); n.delete(attendee.id); return n; });
+        setSelectedVoterForCula(null);
+    };
     const openShare = (p) => { setSelShare(p); sf.setData('shared_user_ids', (p.shared_users ?? []).map((u) => u.id)); sf.clearErrors(); };
     const openMesyuarat = (p) => setMesyuaratProgram(p);
     const closeMesyuarat = () => setMesyuaratProgram(null);
@@ -1480,7 +1509,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 ))}
             </div>
 
-            <AttendeeDetailModal key={selAttendee?.id ?? 'no-attendee'} attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={canEditNoAhli ? (a) => setEditNoAhli(a) : null} />
+            <AttendeeDetailModal key={selAttendee?.id ?? 'no-attendee'} attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={canEditNoAhli ? (a) => setEditNoAhli(a) : null} isCulaPending={culaPendingIds.has(selAttendee?.id)} onCulaSiap={(a) => { setSelectedVoterForCula(a); setShowCulaModal(true); }} />
             <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
             <AttendeeSubProgramEditor key={selEditSub?.id} attendee={selEditSub} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSelEditSub(null)} />
             <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
@@ -1488,6 +1517,27 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
             {editNoAhli && canEditNoAhli && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
             <MesyuaratView program={mesyuaratProgram} onClose={closeMesyuarat} />
             {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+            {showCulaModal && selectedVoterForCula && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>
+                    <div className="mx-4 w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
+                            <button onClick={() => setShowCulaModal(false)} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200">Tutup</button>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                            {(initialCulaCodes ?? []).map((c) => (
+                                <button key={c.code} onClick={() => handleCulaSiap(c.code, c.label)}
+                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${c.code === (selectedVoterForCula.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}>
+                                    {c.label}
+                                </button>
+                            ))}
+                            {(!initialCulaCodes || initialCulaCodes.length === 0) && (
+                                <p className="text-xs text-slate-400">Tiada kod culaan tersedia.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

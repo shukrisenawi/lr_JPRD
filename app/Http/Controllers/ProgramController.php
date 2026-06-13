@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -286,7 +287,32 @@ class ProgramController extends Controller
                 ])
                 ->sortBy('name')
                 ->values(),
+            'available_cula_codes' => $this->availableCulaCodes(),
         ]);
+    }
+
+    private function availableCulaCodes(): array
+    {
+        $query = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA');
+
+        request()->user()?->applyScopeToPemilihQuery($query);
+
+        return $query
+            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
+            ->groupBy('cula_code')
+            ->orderBy('cula_code')
+            ->get()
+            ->map(fn ($r) => [
+                'code' => $r->cula_code,
+                'label' => $r->display_label,
+            ])
+            ->values()
+            ->all();
     }
 
     public function store(Request $request): RedirectResponse
@@ -695,6 +721,55 @@ class ProgramController extends Controller
         }
 
         return response()->json(['marked' => false]);
+    }
+
+    public function updateCulaAttendee(Request $request, Program $program, ProgramAttendee $attendee): JsonResponse
+    {
+        $this->ensureAccessible($request->user()->id, $program);
+
+        if ($attendee->program_id !== $program->id) {
+            throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
+        }
+
+        $request->validate([
+            'cula_code' => 'required|string',
+            'cula_display_label' => 'required|string',
+        ]);
+
+        $attendee->update([
+            'cula_code' => $request->input('cula_code'),
+            'cula_display_label' => $request->input('cula_display_label'),
+        ]);
+
+        $pemilihRecord = PemilihRecord::query()
+            ->where(function ($q) use ($attendee) {
+                $q->where('no_kp', $attendee->no_kp);
+                if ($attendee->old_ic) {
+                    $q->orWhere('old_ic', $attendee->old_ic);
+                }
+            })
+            ->first();
+
+        if ($pemilihRecord) {
+            $pemilihRecord->update([
+                'cula_code' => $request->input('cula_code'),
+                'cula_display_label' => $request->input('cula_display_label'),
+            ]);
+
+            CulaWorkItem::query()->firstOrCreate(
+                ['pemilih_record_id' => $pemilihRecord->id],
+                [
+                    'marked_by' => $request->user()->id,
+                    'marked_at' => now(),
+                    'notes' => null,
+                ]
+            );
+        }
+
+        return response()->json([
+            'message' => 'Kod culaan dikemaskini.',
+            'attendee_id' => $attendee->id,
+        ]);
     }
 
     public function storeShare(Request $request, Program $program): RedirectResponse
