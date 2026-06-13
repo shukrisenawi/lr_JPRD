@@ -83,6 +83,38 @@ class PemilihReportService
         return $report;
     }
 
+    public function buildFromDatabase(): array
+    {
+        $records = PemilihRecord::query()->where('status', '!=', 'xaktif')->get();
+
+        if ($records->isEmpty()) {
+            return $this->emptyReport('database');
+        }
+
+        $rows = $records->map(function (PemilihRecord $r) {
+            $dm = $r->dm ?: 'Tanpa DM';
+            $loc = $r->locality ?: 'Tanpa Lokaliti';
+
+            return [
+                'Kod DM' => $dm,
+                'Nama DM' => $dm,
+                'Kod Lokaliti' => $loc,
+                'Nama Lokaliti' => $loc,
+                'Jantina' => $r->gender ?? '',
+                'Bangsa' => $r->race ?? '',
+                'Kod Cula' => $r->cula_code ?? '',
+            ];
+        })->all();
+
+        $report = $this->summarize($rows, 'database');
+        $report['source'] = [
+            'name' => 'Pangkalan Data',
+            'exists' => true,
+        ];
+
+        return $report;
+    }
+
     public function searchVoters(string $query, ?string $path = null, int $limit = 8, ?\App\Models\User $user = null): array
     {
         $normalizedQuery = $this->normalizeSearch($query);
