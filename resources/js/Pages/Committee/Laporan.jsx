@@ -40,15 +40,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
     });
 
     Object.values(groupedByGroup).forEach((g) => {
-        const levelPositions = g.group?.positions.filter(p => p.pivot_level === level) ?? [];
-        g.members.sort((a, b) => {
-            const posA = levelPositions.find(p => p.id === a.position?.id);
-            const posB = levelPositions.find(p => p.id === b.position?.id);
-            const orderA = posA?.pivot_sort_order ?? posA?.sort_order ?? 999;
-            const orderB = posB?.pivot_sort_order ?? posB?.sort_order ?? 999;
-            if (orderA !== orderB) return orderA - orderB;
-            return (a.position?.name ?? '').localeCompare(b.position?.name ?? '');
-        });
+        g.members.sort((a, b) => (a.position?.id ?? 999) - (b.position?.id ?? 999));
     });
 
     const sortedGroups = Object.entries(groupedByGroup).sort(([, a], [, b]) => a.sortOrder - b.sortOrder);
