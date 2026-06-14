@@ -63,7 +63,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             icon: '⚙',
             items: [
                 { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'Jawatankuasa' },
-                { key: 'jawatankuasa.laporan', href: 'jawatankuasa.index', params: { laporan: 1 }, routePattern: 'jawatankuasa.*', label: 'Laporan Jawatankuasa' },
+                { key: 'jawatankuasa.laporan', href: 'jawatankuasa.index', params: { laporan: 1 }, routePattern: 'jawatankuasa.*', label: 'Senarai AJK' },
                 { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
                 ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
             ],
@@ -196,7 +196,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {canAccess('vcc') && <ResponsiveNavLink href={route('vcc.index')} active={route().current('vcc.*')} variant={variant}>VCC</ResponsiveNavLink>}
                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
                         {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index')} active={route().current('jawatankuasa.*')} variant={variant}>Jawatankuasa</ResponsiveNavLink>}
-                        {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index', { laporan: 1 })} active={route().current('jawatankuasa.*')} variant={variant}>Laporan Jawatankuasa</ResponsiveNavLink>}
+                        {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index', { laporan: 1 })} active={route().current('jawatankuasa.*')} variant={variant}>Senarai AJK</ResponsiveNavLink>}
                         {canAccess('settings') && <ResponsiveNavLink href={route('settings.edit')} active={route().current('settings.edit')} variant={variant}>Settings</ResponsiveNavLink>}
                         {isMasterAdmin && <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>}
                     </div>
