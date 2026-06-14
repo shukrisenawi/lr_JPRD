@@ -681,12 +681,30 @@ class CulaanController extends Controller
             ->values()
             ->all();
 
+        $completedCulaBreakdown = (clone $query)
+            ->whereHas('culaWorkItem')
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA')
+            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'), DB::raw('COUNT(*) as total'))
+            ->groupBy('cula_code')
+            ->get()
+            ->map(fn ($r) => [
+                'code' => $r->cula_code,
+                'display_label' => $r->display_label,
+                'total' => (int) $r->total,
+            ])
+            ->values()
+            ->all();
+
         return [
             'total' => $total,
             'sudah_dicula' => $sudahDicula,
             'belum_dicula' => $belumDicula,
             'peratus_siap' => $total > 0 ? round(($sudahDicula / $total) * 100, 1) : 0,
             'cula_breakdown' => $culaBreakdown,
+            'completed_cula_breakdown' => $completedCulaBreakdown,
         ];
     }
 

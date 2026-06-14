@@ -113,17 +113,6 @@ class PemilihReportService
             'exists' => true,
         ];
 
-        $completedCounts = PemilihRecord::query()
-            ->where('status', '!=', 'xaktif')
-            ->whereHas('culaWorkItem')
-            ->select('dm')
-            ->selectRaw('COUNT(*) as total')
-            ->groupBy('dm')
-            ->pluck('total', 'dm')
-            ->toArray();
-
-        $report['completed_by_dm'] = $completedCounts;
-
         $completedCulaByDm = PemilihRecord::query()
             ->where('status', '!=', 'xaktif')
             ->whereHas('culaWorkItem')

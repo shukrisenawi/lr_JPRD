@@ -24,6 +24,14 @@ function fmtDiff(v, diff) {
         </span>
     );
 }
+function fmtCulaJadual(total, completed) {
+    return (
+        <span className="inline-flex items-center gap-1.5">
+            <span className="text-xs font-semibold">{fmt(total)}</span>
+            {completed > 0 && <span className="rounded bg-green-100 px-1 text-[10px] font-bold leading-tight text-green-700">+{completed}</span>}
+        </span>
+    );
+}
 
 function extractNamaAyah(name) {
     if (!name) return null;
@@ -635,34 +643,43 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const groups = report_by_group?.length > 0 ? report_by_group : [];
         if (groups.length === 0 && selectedGroup) {
             const bm = {};
+            const cm = {};
             (report?.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
+            (report?.completed_cula_breakdown ?? []).forEach((e) => { cm[e.code] = e.total; });
             return [{
                 nama_group: selectedGroup.nama_group,
                 umur_dari: selectedGroup.umur_dari,
                 umur_akhir: selectedGroup.umur_akhir,
                 breakdownMap: bm,
+                completedMap: cm,
                 jumlah: report?.total ?? 0
             }];
         }
         if (groups.length === 0 && filters.custom_mode) {
             const bm = {};
+            const cm = {};
             (report?.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
+            (report?.completed_cula_breakdown ?? []).forEach((e) => { cm[e.code] = e.total; });
             return [{
                 nama_group: 'Custom',
                 umur_dari: filters.umur_dari,
                 umur_akhir: filters.umur_hingga,
                 breakdownMap: bm,
+                completedMap: cm,
                 jumlah: report?.total ?? 0
             }];
         }
         return groups.map((rg) => {
             const bm = {};
+            const cm = {};
             (rg.report.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
+            (rg.report.completed_cula_breakdown ?? []).forEach((e) => { cm[e.code] = e.total; });
             return {
                 nama_group: rg.group.nama_group,
                 umur_dari: rg.group.umur_dari,
                 umur_akhir: rg.group.umur_akhir,
                 breakdownMap: bm,
+                completedMap: cm,
                 jumlah: rg.report.total ?? 0
             };
         });
@@ -1525,9 +1542,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             )}
                                         </td>
                                             {tableColumns.map((code) => (
-                                                <td key={code} className={`whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800 bg-amber-50/40`}>{fmtDiff(row.breakdownMap[code] ?? 0, jadualDiffMap[row.nama_group]?.[code])}</td>
+                                                <td key={code} className={`whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800 bg-amber-50/40`}>{fmtCulaJadual(row.breakdownMap[code] ?? 0, row.completedMap?.[code] ?? 0)}</td>
                                             ))}
-                                            <td className={`whitespace-nowrap px-3 py-2 text-center font-bold text-slate-800 bg-violet-50/40`}>{fmtDiff(row.jumlah, jadualDiffMap[row.nama_group]?.jumlah)}</td>
+                                            <td className={`whitespace-nowrap px-3 py-2 text-center font-bold text-slate-800 bg-violet-50/40`}>{fmt(row.jumlah)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
