@@ -214,15 +214,27 @@ class CommitteeController extends Controller
                 }
             });
 
-        $user = $request->user();
-        $scope = $user?->accessScope();
+        $selectedScopeKey = $request->query('scope_key');
+        $selectedLevel = $request->query('level');
 
-        if ($scope !== null && filled($scope['dm'])) {
-            $dm = $scope['dm'];
-            if (filled($scope['locality'])) {
-                $builder->orderByRaw("CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END", [$dm, $scope['locality']]);
-            } else {
-                $builder->orderByRaw("CASE WHEN dm = ? THEN 0 ELSE 1 END", [$dm]);
+        if ($selectedLevel === 'udm' && filled($selectedScopeKey)) {
+            $builder->orderByRaw("CASE WHEN dm = ? THEN 0 ELSE 1 END", [$selectedScopeKey]);
+        } elseif ($selectedLevel === 'cawangan' && filled($selectedScopeKey)) {
+            $parts = explode('|', $selectedScopeKey);
+            $dm = $parts[0] ?? '';
+            $locality = $parts[1] ?? '';
+            $builder->orderByRaw("CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END", [$dm, $locality]);
+        } else {
+            $user = $request->user();
+            $scope = $user?->accessScope();
+
+            if ($scope !== null && filled($scope['dm'])) {
+                $dm = $scope['dm'];
+                if (filled($scope['locality'])) {
+                    $builder->orderByRaw("CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END", [$dm, $scope['locality']]);
+                } else {
+                    $builder->orderByRaw("CASE WHEN dm = ? THEN 0 ELSE 1 END", [$dm]);
+                }
             }
         }
 

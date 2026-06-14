@@ -833,7 +833,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         setSearching(true);
 
         try {
-            const response = await fetch(route('jawatankuasa.search') + '?q=' + encodeURIComponent(value), {
+            const params = new URLSearchParams({ q: value, scope_key: form.data.scope_key, level: resolvedTab });
+            const response = await fetch(route('jawatankuasa.search') + '?' + params.toString(), {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
             });
@@ -1351,7 +1352,8 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
         setSearching(true);
 
         try {
-            const response = await fetch(route('jawatankuasa.search') + '?q=' + encodeURIComponent(value), {
+            const params = new URLSearchParams({ q: value, scope_key: form.data.scope_key, level: form.data.level });
+            const response = await fetch(route('jawatankuasa.search') + '?' + params.toString(), {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
             });
