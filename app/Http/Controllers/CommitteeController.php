@@ -128,6 +128,7 @@ class CommitteeController extends Controller
                     'position' => [
                         'id' => $membership->position?->id,
                         'name' => $membership->position?->name,
+                        'sort_order' => $membership->position?->sort_order,
                     ],
                     'voter' => [
                         'id' => $membership->voter?->id,
@@ -279,6 +280,7 @@ class CommitteeController extends Controller
                     'position' => [
                         'id' => $membership->position?->id,
                         'name' => $membership->position?->name,
+                        'sort_order' => $membership->position?->sort_order,
                     ],
                     'voter' => [
                         'id' => $membership->voter?->id,

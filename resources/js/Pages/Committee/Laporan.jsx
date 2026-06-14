@@ -40,7 +40,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
     });
 
     Object.values(groupedByGroup).forEach((g) => {
-        g.members.sort((a, b) => (a.position?.id ?? 999) - (b.position?.id ?? 999));
+        g.members.sort((a, b) => (a.position?.sort_order ?? 999) - (b.position?.sort_order ?? 999));
     });
 
     const sortedGroups = Object.entries(groupedByGroup).sort(([, a], [, b]) => a.sortOrder - b.sortOrder);
