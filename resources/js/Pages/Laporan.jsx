@@ -12,18 +12,13 @@ const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
 function fmtDiff(v, diff) {
-    if (diff === undefined || diff === 0) return fmt(v);
-    const isPos = diff > 0;
+    if (diff === undefined || diff === 0 || diff < 0) return fmt(v);
     return (
-        <span className={`inline-flex items-center gap-1 rounded px-1 py-0.5 ${isPos ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1 py-0.5 text-green-800">
             <span className="text-xs font-semibold">{fmt(v)}</span>
             <span className="text-[10px] font-bold opacity-80 inline-flex items-center">
-                {isPos ? (
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
-                ) : (
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                )}
-                <span>{fmt(Math.abs(diff))}</span>
+                <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+                <span>{fmt(diff)}</span>
             </span>
         </span>
     );
