@@ -13,15 +13,12 @@ function fmtP(v) { return `${fmt(v ?? 0)}%`; }
 function fmtDiff(v, diff) {
     if (diff === undefined || diff === 0) return fmt(v);
     const isPos = diff > 0;
+    if (!isPos) return fmt(v);
     return (
-        <span className={`inline-flex items-center gap-1 rounded px-1 py-0.5 ${isPos ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+        <span className="inline-flex items-center gap-1 rounded px-1 py-0.5 bg-green-100 text-green-800">
             <span className="text-xs font-semibold">{fmt(v)}</span>
             <span className="text-[10px] font-bold opacity-80 inline-flex items-center">
-                {isPos ? (
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
-                ) : (
-                    <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                )}
+                <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
                 <span>{fmt(Math.abs(diff))}</span>
             </span>
         </span>
@@ -1157,6 +1154,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             <div className="min-w-0 flex-1">
                                                 <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
+                                                    {voter.is_marked && (
+                                                        <span className="inline-flex items-center gap-0.5 rounded bg-green-100 px-1 py-0.5 text-green-800">
+                                                            <span className="text-[10px] font-bold">{voter.cula_code || 'OK'}</span>
+                                                            <span className="inline-flex items-center text-[8px] font-black opacity-80">
+                                                                <svg className="h-2 w-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
+                                                                <span>1</span>
+                                                            </span>
+                                                        </span>
+                                                    )}
                                                     {(() => {
                                                         const namaAyah = extractNamaAyah(voter.name);
                                                         if (!namaAyah) return null;
