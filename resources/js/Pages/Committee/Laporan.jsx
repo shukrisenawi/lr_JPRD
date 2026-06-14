@@ -339,7 +339,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                             filteredPositionStats.length === 0 ? (
                                 <p className="py-8 text-center text-xs text-slate-400">Tiada jawatan dengan ahli UDM.</p>
                             ) : (
-                                <div className="space-y-1.5">
+                                <div className="grid grid-cols-2 gap-1.5">
                                     {filteredPositionStats.map((pos) => (
                                         <div key={pos.id} className="flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-slate-50">
                                             <div className="min-w-0 flex-1">
@@ -362,7 +362,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                         ) : filteredScopeStats.length === 0 ? (
                             <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                         ) : (
-                            <div className="space-y-1.5">
+                            <div className="grid grid-cols-2 gap-1.5">
                                 {filteredScopeStats.map((scope) => {
                                     const hasMembers = scope.totalMembers > 0;
                                     return (
