@@ -135,7 +135,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
     const [diffMap, setDiffMap] = useState({});
 
-    const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'Jumlah'];
+    const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
 
     const filteredLocs = useMemo(() => {
         const kw = search.trim().toLowerCase();
@@ -201,7 +201,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
                 'Atas Pagar': getCulaSum(culaB, ['4']),
                 'Tak Kenal': getCulaSum(culaB, ['7']),
                 'Mati': getCulaSum(culaB, ['8']),
-                Jumlah: row.total ?? 0,
+                CULA: row.belum_dicula ?? 0,
                 completed_PAS: completedSum(['2']),
                 completed_PBBM: completedSum(['10']),
                 completed_BN: completedSum(['1', '1A', '1B', '1P']),
@@ -292,7 +292,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
         { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtCulaParty(v, r.completed_AP), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtCulaParty(v, r.completed_TK), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Mati', label: 'Mati', format: (v, r) => fmtCulaParty(v, r.completed_Mati), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Jumlah', label: 'Jumlah', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Jumlah), headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
+        { key: 'CULA', label: 'CULA', format: (v) => <span className="font-bold text-slate-800">{fmt(v)}</span>, headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
