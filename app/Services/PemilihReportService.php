@@ -124,6 +124,23 @@ class PemilihReportService
 
         $report['completed_by_dm'] = $completedCounts;
 
+        $completedCulaByDm = PemilihRecord::query()
+            ->where('status', '!=', 'xaktif')
+            ->whereHas('culaWorkItem')
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA')
+            ->select('dm', 'cula_code')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('dm', 'cula_code')
+            ->get()
+            ->groupBy('dm')
+            ->map(fn ($items) => $items->pluck('total', 'cula_code')->map(fn ($v) => (int) $v)->toArray())
+            ->toArray();
+
+        $report['completed_cula_by_dm'] = $completedCulaByDm;
+
         return $report;
     }
 

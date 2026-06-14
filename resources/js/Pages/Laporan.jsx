@@ -42,6 +42,15 @@ function getCulaSum(breakdown, codes) {
     return sum;
 }
 
+function fmtCulaParty(total, completed) {
+    return (
+        <span className="inline-flex items-center gap-1.5">
+            <span className="text-xs font-semibold">{fmt(total)}</span>
+            {completed > 0 && <span className="rounded bg-green-100 px-1 text-[10px] font-bold leading-tight text-green-700">+{completed}</span>}
+        </span>
+    );
+}
+
 function getBarColor(entry, i) {
     const c = entry?.code, l = entry?.display_label ?? '';
     if (c === '?' || l.includes('BELUM DICULA')) return '#475569';
@@ -160,6 +169,14 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
         }
         return map;
     }, [report.completed_by_dm]);
+    const culaCompletedByDmMap = useMemo(() => {
+        const raw = report.completed_cula_by_dm ?? {};
+        const map = {};
+        for (const [dm, codes] of Object.entries(raw)) {
+            map[`${dm}|${dm}`] = codes;
+        }
+        return map;
+    }, [report.completed_cula_by_dm]);
     const udmTableRows = useMemo(() => [...report.by_dm]
         .sort((a, b) => (b.coverage_percent ?? 0) - (a.coverage_percent ?? 0))
         .slice(0, 25)
@@ -168,6 +185,8 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
             const cula = culaByDmMap[row.key];
             const raceB = dtl?.race_breakdown ?? [];
             const culaB = cula?.cula_breakdown ?? [];
+            const culaCompleted = culaCompletedByDmMap[row.key] ?? {};
+            const completedSum = (codes) => { let s = 0; for (const c of codes) s += culaCompleted[c] ?? 0; return s; };
             return {
                 ...row,
                 siap_cula: completedByDmMap[row.key] ?? 0,
@@ -188,8 +207,17 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
                 'Tak Kenal': getCulaSum(culaB, ['7']),
                 'Mati': getCulaSum(culaB, ['8']),
                 Jumlah: row.total ?? 0,
+                completed_PAS: completedSum(['2']),
+                completed_PBBM: completedSum(['10']),
+                completed_BN: completedSum(['1', '1A', '1B', '1P']),
+                completed_PH: completedSum(['5']),
+                completed_GTA: 0,
+                completed_PLK: completedSum(['3B', '3D', '3K', '3M', '3P', '3U']),
+                completed_AP: completedSum(['4']),
+                completed_TK: completedSum(['7']),
+                completed_Mati: completedSum(['8']),
             };
-        }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap]);
+        }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
 
     useEffect(() => {
         const srcName = report.source?.name;
@@ -259,15 +287,15 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
         { key: 'C', label: 'C', format: (v, r) => fmtDiff(v, diffMap[r.key]?.C), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'I', label: 'I', format: (v, r) => fmtDiff(v, diffMap[r.key]?.I), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'S', label: 'S', format: (v, r) => fmtDiff(v, diffMap[r.key]?.S), headerClass: groupH.demo, cellClass: groupC.demo },
-        { key: 'PAS', label: 'PAS', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PAS), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PBBM), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'BN', label: 'BN', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'PH', label: 'PH', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PH), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'GTA', label: 'GTA', format: (v, r) => fmtDiff(v, diffMap[r.key]?.GTA), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'PLK', label: 'PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PLK), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Atas Pagar']), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Tak Kenal']), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Mati', label: 'Mati', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Mati), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PAS', label: 'PAS', format: (v, r) => fmtCulaParty(v, r.completed_PAS), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtCulaParty(v, r.completed_PBBM), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'BN', label: 'BN', format: (v, r) => fmtCulaParty(v, r.completed_BN), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PH', label: 'PH', format: (v, r) => fmtCulaParty(v, r.completed_PH), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'GTA', label: 'GTA', format: (v, r) => fmtCulaParty(v, r.completed_GTA), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PLK', label: 'PLK', format: (v, r) => fmtCulaParty(v, r.completed_PLK), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtCulaParty(v, r.completed_AP), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtCulaParty(v, r.completed_TK), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Mati', label: 'Mati', format: (v, r) => fmtCulaParty(v, r.completed_Mati), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Jumlah', label: 'Jumlah', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Jumlah), headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
     ];
     const locCols = [
