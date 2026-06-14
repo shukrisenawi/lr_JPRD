@@ -1857,18 +1857,13 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
 // ─── Main Export ──────────────────────────────────────────────────────────
 
 export default function CommitteeIndex({ groups, positions, memberships, scopes }) {
-    const { auth, url } = usePage().props;
+    const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canKumpulan = allowedModules.includes('jawatankuasa.kumpulan');
     const canJawatan = allowedModules.includes('jawatankuasa.jawatan');
     const canSenarai = allowedModules.includes('jawatankuasa.senarai');
 
     const [searchOpen, setSearchOpen] = useState(false);
-    const [laporanOpen, setLaporanOpen] = useState(() => {
-        if (typeof url === 'string' && url.includes('laporan=1')) return true;
-        if (typeof window !== 'undefined' && window.location.search.includes('laporan=1')) return true;
-        return false;
-    });
     const membershipRef = useRef(null);
 
     const sectionTabs = [
@@ -1936,7 +1931,6 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
             </div>
 
             <CommitteeSearchModal memberships={memberships} isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
-            <CommitteeLaporanModal memberships={memberships} scopes={scopes} groups={groups} isOpen={laporanOpen} onClose={() => setLaporanOpen(false)} />
         </AuthenticatedLayout>
     );
 }

@@ -180,6 +180,157 @@ class CommitteeController extends Controller
         ]);
     }
 
+    public function laporan(Request $request): Response
+    {
+        $user = $request->user();
+        $scope = $user->accessScope();
+
+        $membershipsQuery = CommitteeMembership::query()
+            ->with(['position', 'voter', 'creator'])
+            ->orderBy('level')
+            ->orderBy('scope_name')
+            ->latest('id');
+
+        if ($scope !== null) {
+            if (filled($scope['dm']) && filled($scope['locality'])) {
+                $membershipsQuery->where(function ($q) use ($scope) {
+                    $q->where('level', 'jprd')
+                      ->orWhere(function ($sq) use ($scope) {
+                          $sq->where('level', 'cawangan')
+                             ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
+                      });
+                });
+            } elseif (filled($scope['dm'])) {
+                $membershipsQuery->where(function ($q) use ($scope) {
+                    $q->where('level', 'jprd')
+                      ->orWhere(function ($sq) use ($scope) {
+                          $sq->where('level', 'udm')
+                             ->where('scope_key', $scope['dm']);
+                      })
+                      ->orWhere(function ($sq) use ($scope) {
+                          $sq->where('level', 'cawangan')
+                             ->where('parent_scope_name', $scope['dm']);
+                      });
+                });
+            }
+        }
+
+        $udmQuery = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '');
+        if ($scope !== null && filled($scope['dm'])) {
+            $udmQuery->where('dm', $scope['dm']);
+        }
+
+        $cawanganQuery = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->whereNotNull('locality')
+            ->where('locality', '!=', '');
+        if ($scope !== null && filled($scope['dm'])) {
+            $cawanganQuery->where('dm', $scope['dm']);
+        }
+        if ($scope !== null && filled($scope['locality'])) {
+            $cawanganQuery->where('locality', $scope['locality']);
+        }
+
+        return Inertia::render('Committee/Laporan', [
+            'groups' => CommitteeGroup::query()
+                ->with(['positions' => function ($q) {
+                    $q->orderBy('committee_group_position.sort_order');
+                }])
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (CommitteeGroup $group) => [
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'levels' => $group->levels,
+                    'sort_order' => $group->sort_order,
+                    'description' => $group->description,
+                    'positions' => $group->positions
+                        ->map(fn (CommitteePosition $position) => [
+                            'id' => $position->id,
+                            'name' => $position->name,
+                            'slug' => $position->slug,
+                            'sort_order' => $position->sort_order,
+                            'pivot_level' => $position->pivot->level,
+                            'pivot_sort_order' => $position->pivot->sort_order,
+                        ])
+                        ->values(),
+                ])
+                ->values(),
+            'memberships' => $membershipsQuery
+                ->get()
+                ->map(fn (CommitteeMembership $membership) => [
+                    'id' => $membership->id,
+                    'pemilih_record_id' => $membership->pemilih_record_id,
+                    'committee_group_id' => $membership->committee_group_id,
+                    'updated_at' => $membership->updated_at,
+                    'level' => $membership->level,
+                    'scope_key' => $membership->scope_key,
+                    'scope_name' => $membership->scope_name,
+                    'parent_scope_name' => $membership->parent_scope_name,
+                    'notes' => $membership->notes,
+                    'created_by' => $membership->created_by,
+                    'creator_name' => $membership->creator?->name,
+                    'position' => [
+                        'id' => $membership->position?->id,
+                        'name' => $membership->position?->name,
+                    ],
+                    'voter' => [
+                        'id' => $membership->voter?->id,
+                        'name' => $membership->voter?->name,
+                        'no_kp' => $membership->voter?->no_kp,
+                        'old_ic' => $membership->voter?->old_ic,
+                        'phone_mobile' => $membership->voter?->phone_mobile,
+                        'phone_home' => $membership->voter?->phone_home,
+                        'dm' => $membership->voter?->dm,
+                        'locality' => $membership->voter?->locality,
+                        'status' => $membership->voter?->status,
+                        'avatar' => $membership->voter?->avatar,
+                        'updated_at' => $membership->voter?->updated_at,
+                        'avatar_url' => $membership->voter?->avatarUrl(),
+                    ],
+                ])
+                ->values(),
+            'scopes' => [
+                'jprd' => [
+                    [
+                        'key' => 'jprd',
+                        'name' => 'JPRD',
+                        'parent_scope_name' => null,
+                    ],
+                ],
+                'udm' => $udmQuery
+                    ->select('dm')
+                    ->distinct()
+                    ->orderBy('dm')
+                    ->get()
+                    ->map(fn (PemilihRecord $record) => [
+                        'key' => $record->dm,
+                        'name' => $record->dm,
+                        'parent_scope_name' => null,
+                    ])
+                    ->values(),
+                'cawangan' => $cawanganQuery
+                    ->select('dm', 'locality')
+                    ->distinct()
+                    ->orderBy('dm')
+                    ->orderBy('locality')
+                    ->get()
+                    ->map(fn (PemilihRecord $record) => [
+                        'key' => $record->dm.'|'.$record->locality,
+                        'name' => $record->locality,
+                        'parent_scope_name' => $record->dm,
+                    ])
+                    ->values(),
+            ],
+        ]);
+    }
+
     public function search(Request $request): JsonResponse
     {
         $query = trim((string) $request->query('q', ''));
