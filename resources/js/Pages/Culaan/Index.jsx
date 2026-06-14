@@ -636,19 +636,37 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (groups.length === 0 && selectedGroup) {
             const bm = {};
             (report?.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
-            return [{ nama_group: selectedGroup.nama_group, breakdownMap: bm, jumlah: report?.total ?? 0 }];
+            return [{
+                nama_group: selectedGroup.nama_group,
+                umur_dari: selectedGroup.umur_dari,
+                umur_akhir: selectedGroup.umur_akhir,
+                breakdownMap: bm,
+                jumlah: report?.total ?? 0
+            }];
         }
         if (groups.length === 0 && filters.custom_mode) {
             const bm = {};
             (report?.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
-            return [{ nama_group: 'Custom', breakdownMap: bm, jumlah: report?.total ?? 0 }];
+            return [{
+                nama_group: 'Custom',
+                umur_dari: filters.umur_dari,
+                umur_akhir: filters.umur_hingga,
+                breakdownMap: bm,
+                jumlah: report?.total ?? 0
+            }];
         }
         return groups.map((rg) => {
             const bm = {};
             (rg.report.cula_breakdown ?? []).forEach((e) => { bm[e.code] = e.total; });
-            return { nama_group: rg.group.nama_group, breakdownMap: bm, jumlah: rg.report.total ?? 0 };
+            return {
+                nama_group: rg.group.nama_group,
+                umur_dari: rg.group.umur_dari,
+                umur_akhir: rg.group.umur_akhir,
+                breakdownMap: bm,
+                jumlah: rg.report.total ?? 0
+            };
         });
-    }, [report_by_group, selectedGroup, report, filters.custom_mode]);
+    }, [report_by_group, selectedGroup, report, filters.custom_mode, filters.umur_dari, filters.umur_hingga]);
 
     const jadualSessionKey = useMemo(() => {
         const p = { udm: filters.udm, locality: filters.locality, group_id: filters.group_id, v: pemilih_report?.uploaded_at ?? '0' };
@@ -1500,7 +1518,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </tr>
                                     ) : tableRows.map((row, i) => (
                                         <tr key={i} className={`border-b border-slate-100 last:border-b-0 ${i % 2 === 1 ? 'bg-slate-50/70' : ''} hover:bg-slate-50`}>
-                                            <td className="whitespace-nowrap px-3 py-2 font-bold text-slate-800">{row.nama_group}</td>
+                                        <td className="whitespace-nowrap px-3 py-2 font-bold text-slate-800">
+                                            {row.nama_group}
+                                            {row.umur_dari !== null && row.umur_dari !== undefined && row.umur_akhir !== null && row.umur_akhir !== undefined && (
+                                                <span className="ml-1 text-slate-400 text-[10px] font-normal">(umur {row.umur_dari}-{row.umur_akhir})</span>
+                                            )}
+                                        </td>
                                             {tableColumns.map((code) => (
                                                 <td key={code} className={`whitespace-nowrap px-2 py-2 text-center font-bold text-slate-800 bg-amber-50/40`}>{fmtDiff(row.breakdownMap[code] ?? 0, jadualDiffMap[row.nama_group]?.[code])}</td>
                                             ))}
