@@ -292,7 +292,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
         { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtCulaParty(v, r.completed_AP), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtCulaParty(v, r.completed_TK), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Mati', label: 'Mati', format: (v, r) => fmtCulaParty(v, r.completed_Mati), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'CULA', label: 'CULA', format: (v) => <span className="font-bold text-slate-800">{fmt(v)}</span>, headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
+        { key: 'CULA', label: 'BAKI', format: (v) => <span className="font-bold text-slate-800">{fmt(v)}</span>, headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
