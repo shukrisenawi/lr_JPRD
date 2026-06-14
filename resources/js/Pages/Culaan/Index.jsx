@@ -641,6 +641,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     const tableRows = useMemo(() => {
         const groups = report_by_group?.length > 0 ? report_by_group : [];
+        const sumBreakdown = (bm) => Object.values(bm).reduce((s, v) => s + v, 0);
         if (groups.length === 0 && selectedGroup) {
             const bm = {};
             const cm = {};
@@ -652,7 +653,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 umur_akhir: selectedGroup.umur_akhir,
                 breakdownMap: bm,
                 completedMap: cm,
-                jumlah: report?.total ?? 0
+                jumlah: sumBreakdown(bm)
             }];
         }
         if (groups.length === 0 && filters.custom_mode) {
@@ -666,7 +667,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 umur_akhir: filters.umur_hingga,
                 breakdownMap: bm,
                 completedMap: cm,
-                jumlah: report?.total ?? 0
+                jumlah: sumBreakdown(bm)
             }];
         }
         return groups.map((rg) => {
@@ -680,7 +681,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 umur_akhir: rg.group.umur_akhir,
                 breakdownMap: bm,
                 completedMap: cm,
-                jumlah: rg.report.total ?? 0
+                jumlah: sumBreakdown(bm)
             };
         });
     }, [report_by_group, selectedGroup, report, filters.custom_mode, filters.umur_dari, filters.umur_hingga]);
