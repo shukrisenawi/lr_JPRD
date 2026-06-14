@@ -355,7 +355,6 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                 <p className="mt-0.5 text-[10px] text-green-600">{pos.members.length} orang</p>
                                             </div>
                                             <div className="flex items-center gap-2 shrink-0">
-                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{pos.members.length}</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => setDetailPosition(pos)}
