@@ -28,8 +28,11 @@ return [
             'jawatankuasa.kumpulan' => ['label' => 'Kumpulan'],
             'jawatankuasa.jawatan' => ['label' => 'Jawatan'],
             'jawatankuasa.senarai' => ['label' => 'Senarai Jawatankuasa'],
-            'jawatankuasa.laporan' => ['label' => 'Senarai AJK'],
         ],
+    ],
+    'jawatankuasa.laporan' => [
+        'label' => 'Senarai AJK',
+        'description' => 'Senarai AJK mengikut peringkat.',
     ],
     'group-pemilih' => [
         'label' => 'Group Pemilih',
