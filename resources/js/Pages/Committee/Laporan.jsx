@@ -188,9 +188,8 @@ function UdmPositionPopup({ position, members, onClose }) {
                         <div className="space-y-3">
                             {sortedUdms.map((g) => (
                                 <div key={g.udm} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-                                    <div className="flex items-center justify-between bg-slate-50 px-3 py-2 border-b border-slate-200">
+                                    <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
                                         <p className="text-xs font-bold text-slate-700">{g.udm}</p>
-                                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{g.members.length}</span>
                                     </div>
                                     <div className="divide-y divide-slate-100">
                                         {g.members.map((m) => (
