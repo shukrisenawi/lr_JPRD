@@ -1461,7 +1461,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         return Math.max(m, g);
                                     }, 0);
                                     return report_by_group.map((rg) => (
-                                        <ChartPanel key={`grp-chart-${rg.group.id}`} title={`Status Culaan — ${rg.group.nama_group}`}>
+                                        <ChartPanel key={`grp-chart-${rg.group.id}`} title={`Status Culaan — ${rg.group.nama_group} ${rg.group.umur_dari !== null && rg.group.umur_dari !== undefined && rg.group.umur_akhir !== null && rg.group.umur_akhir !== undefined ? `(umur ${rg.group.umur_dari}-${rg.group.umur_akhir})` : ''}`}>
                                             <div className="w-full" style={{ height: '12rem' }}>
                                                 <ResponsiveContainer width="100%" height="100%">
                                                     <BarChart data={rg.report.cula_breakdown ?? []} margin={{ top: 4, right: 8, bottom: 56, left: 0 }}>
