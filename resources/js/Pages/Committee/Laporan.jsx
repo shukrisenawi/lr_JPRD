@@ -25,6 +25,7 @@ const levelOptions = [
     { key: 'jprd', label: 'JPRD' },
     { key: 'udm', label: 'UDM' },
     { key: 'cawangan', label: 'Cawangan' },
+    { key: 'udm-jawatan', label: 'Kumpulan Jawatan UDM' },
 ];
 
 function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
@@ -156,12 +157,89 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
     );
 }
 
+function UdmPositionPopup({ position, members, onClose }) {
+    if (!position) return null;
+
+    const groupedByUdm = {};
+    members.forEach((m) => {
+        const udm = m.scope_name || 'Tiada UDM';
+        if (!groupedByUdm[udm]) groupedByUdm[udm] = { udm, members: [] };
+        groupedByUdm[udm].members.push(m);
+    });
+
+    const sortedUdms = Object.values(groupedByUdm).sort((a, b) => a.udm.localeCompare(b.udm));
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 pt-8 sm:pt-16" onClick={onClose}>
+            <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
+                    <div>
+                        <p className="text-sm font-bold text-slate-800">UDM — {position.name}</p>
+                        <p className="text-xs text-slate-500">{members.length} orang ahli</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <Icon name="x" className="h-5 w-5" />
+                    </button>
+                </div>
+                <div className="overflow-y-auto p-4">
+                    {sortedUdms.length === 0 ? (
+                        <p className="py-8 text-center text-xs text-slate-400">Tiada ahli.</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {sortedUdms.map((g) => (
+                                <div key={g.udm} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+                                    <div className="flex items-center justify-between bg-slate-50 px-3 py-2 border-b border-slate-200">
+                                        <p className="text-xs font-bold text-slate-700">{g.udm}</p>
+                                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{g.members.length}</span>
+                                    </div>
+                                    <div className="divide-y divide-slate-100">
+                                        {g.members.map((m) => (
+                                            <div key={m.id} className="flex items-center gap-3 px-3 py-2 transition hover:bg-slate-50">
+                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                                    <Icon name="user" className="h-4 w-4" />
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-bold text-slate-800">{m.voter?.name}</p>
+                                                    <p className="text-[10px] text-slate-400">{m.voter?.phone_mobile || m.voter?.phone_home || '-'}</p>
+                                                </div>
+                                                <div className="shrink-0 text-right">
+                                                    <span className="inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.scope_name}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function CommitteeLaporan({ memberships, scopes, groups }) {
     const [activeTab, setActiveTab] = useState('jprd');
     const [detailScope, setDetailScope] = useState(null);
+    const [detailPosition, setDetailPosition] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     const currentScopes = scopes[activeTab] ?? [];
+
+    const udmMembers = useMemo(() => {
+        return memberships.filter((m) => m.level === 'udm');
+    }, [memberships]);
+
+    const positionStats = useMemo(() => {
+        const posMap = {};
+        udmMembers.forEach((m) => {
+            const pid = m.position?.id || 'tanpa-jawatan';
+            const pname = m.position?.name || 'Tanpa Jawatan';
+            if (!posMap[pid]) posMap[pid] = { id: pid, name: pname, members: [] };
+            posMap[pid].members.push(m);
+        });
+        return Object.values(posMap).sort((a, b) => a.name.localeCompare(b.name));
+    }, [udmMembers]);
 
     const scopeStats = useMemo(() => {
         return currentScopes.map((scope) => {
@@ -181,6 +259,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
     }, [currentScopes, memberships, activeTab]);
 
     const filteredScopeStats = useMemo(() => {
+        if (activeTab === 'udm-jawatan') return [];
         let list = scopeStats;
         if (activeTab === 'cawangan') {
             list = list.filter((scope) => scope.totalMembers > 0);
@@ -201,6 +280,21 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
             return bLatest - aLatest;
         });
     }, [scopeStats, searchQuery, activeTab]);
+
+    const filteredPositionStats = useMemo(() => {
+        if (activeTab !== 'udm-jawatan') return [];
+        let list = positionStats.filter((p) => p.members.length > 0);
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            list = list.filter((p) => {
+                if (p.name.toLowerCase().includes(q)) return true;
+                if (p.members.some((m) => m.voter?.name?.toLowerCase().includes(q))) return true;
+                if (p.members.some((m) => m.scope_name?.toLowerCase().includes(q))) return true;
+                return false;
+            });
+        }
+        return list;
+    }, [positionStats, searchQuery, activeTab]);
 
     return (
         <AuthenticatedLayout
@@ -249,7 +343,32 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     </div>
 
                     <div className="p-4">
-                        {filteredScopeStats.length === 0 ? (
+                        {activeTab === 'udm-jawatan' ? (
+                            filteredPositionStats.length === 0 ? (
+                                <p className="py-8 text-center text-xs text-slate-400">Tiada jawatan dengan ahli UDM.</p>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    {filteredPositionStats.map((pos) => (
+                                        <div key={pos.id} className="flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-slate-50">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-bold text-slate-800">{pos.name}</p>
+                                                <p className="mt-0.5 text-[10px] text-green-600">{pos.members.length} orang</p>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{pos.members.length}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDetailPosition(pos)}
+                                                    className="rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
+                                                >
+                                                    Jawatankuasa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        ) : filteredScopeStats.length === 0 ? (
                             <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                         ) : (
                             <div className="space-y-1.5">
@@ -302,6 +421,14 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     groups={groups}
                     highlight={searchQuery}
                     onClose={() => setDetailScope(null)}
+                />
+            )}
+
+            {detailPosition && (
+                <UdmPositionPopup
+                    position={detailPosition}
+                    members={detailPosition.members}
+                    onClose={() => setDetailPosition(null)}
                 />
             )}
         </AuthenticatedLayout>
