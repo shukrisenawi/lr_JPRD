@@ -161,6 +161,14 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
         for (const d of dmCulaRows) map[d.key] = d;
         return map;
     }, [dmCulaRows]);
+    const completedByDmMap = useMemo(() => {
+        const raw = report.completed_by_dm ?? {};
+        const map = {};
+        for (const dm of Object.keys(raw)) {
+            map[`${dm}|${dm}`] = raw[dm];
+        }
+        return map;
+    }, [report.completed_by_dm]);
     const culaCompletedByDmMap = useMemo(() => {
         const raw = report.completed_cula_by_dm ?? {};
         const map = {};
@@ -181,6 +189,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
             const completedSum = (codes) => { let s = 0; for (const c of codes) s += culaCompleted[c] ?? 0; return s; };
             return {
                 ...row,
+                siap_cula: completedByDmMap[row.key] ?? 0,
                 JP: (row.total ?? 0) - getCulaSum(culaB, ['8']),
                 L: row.male ?? 0,
                 P: row.female ?? 0,
@@ -208,7 +217,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
                 completed_TK: completedSum(['7']),
                 completed_Mati: completedSum(['8']),
             };
-        }), [report.by_dm, dmDetailsMap, culaByDmMap, culaCompletedByDmMap]);
+        }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
 
     useEffect(() => {
         const srcName = report.source?.name;
@@ -271,6 +280,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
     const dmCols = [
         { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span> },
 
+        { key: 'siap_cula', label: 'Siap', format: (v) => v > 0 ? <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-800">{v}</span> : <span className="text-slate-400">-</span>, headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
         { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P), headerClass: groupH.demo, cellClass: groupC.demo },
