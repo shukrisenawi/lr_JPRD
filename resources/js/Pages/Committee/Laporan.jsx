@@ -194,17 +194,10 @@ function UdmPositionPopup({ position, members, onClose }) {
                                     </div>
                                     <div className="divide-y divide-slate-100">
                                         {g.members.map((m) => (
-                                            <div key={m.id} className="flex items-center gap-3 px-3 py-2 transition hover:bg-slate-50">
-                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
-                                                    <Icon name="user" className="h-4 w-4" />
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-xs font-bold text-slate-800">{m.voter?.name}</p>
-                                                    <p className="text-[10px] text-slate-400">{m.voter?.phone_mobile || m.voter?.phone_home || '-'}</p>
-                                                </div>
-                                                <div className="shrink-0 text-right">
-                                                    <span className="inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.scope_name}</span>
-                                                </div>
+                                            <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+                                                <span className="font-medium">{m.voter?.name}</span>
+                                                <span className="text-slate-400">—</span>
+                                                <span className="text-slate-400">{m.voter?.phone_mobile || m.voter?.phone_home || '-'}</span>
                                             </div>
                                         ))}
                                     </div>
