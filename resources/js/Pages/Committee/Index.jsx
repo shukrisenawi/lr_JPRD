@@ -872,7 +872,6 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     committee_position_id: positionsForForm[0]?.id ?? '',
                     committee_group_id: selectedGroupId || '',
                     level: resolvedTab,
-                    scope_key: scopes[resolvedTab]?.[0]?.key ?? '',
                 }));
             },
         });
