@@ -32,6 +32,11 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const isLight = variant === 'light';
 
+    const navHref = (item) => {
+        if (item.params) return route(item.href, item.params);
+        return route(item.href);
+    };
+
     const navGroups = [
         { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Laporan', icon: '▤' },
         {
@@ -58,6 +63,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             icon: '⚙',
             items: [
                 { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'Jawatankuasa' },
+                { key: 'jawatankuasa.laporan', href: 'jawatankuasa.index', params: { laporan: 1 }, routePattern: 'jawatankuasa.*', label: 'Laporan Jawatankuasa' },
                 { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
                 ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
             ],
@@ -83,7 +89,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                         if (accessibleItems.length === 1) {
                                             const sub = accessibleItems[0];
                                             return (
-                                                <NavLink key={sub.key} href={route(sub.href)} active={route().current(sub.routePattern)} variant={variant}>
+                                                <NavLink key={sub.key} href={navHref(sub)} active={route().current(sub.routePattern)} variant={variant}>
                                                     <NavIcon>{item.icon}</NavIcon>
                                                     <span>{sub.label}</span>
                                                 </NavLink>
@@ -100,7 +106,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                                 </Dropdown.Trigger>
                                                 <Dropdown.Content align="left" widthClasses="w-52">
                                                     {accessibleItems.map(sub => (
-                                                        <Dropdown.Link key={sub.key} href={route(sub.href)}>
+                                                        <Dropdown.Link key={sub.key} href={navHref(sub)}>
                                                             {sub.label}
                                                         </Dropdown.Link>
                                                     ))}
@@ -110,10 +116,10 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     }
                                     if (!canAccess(item.key)) return null;
                                     return (
-                                        <NavLink key={item.key} href={route(item.href)} active={route().current(item.routePattern)} variant={variant}>
-                                            <NavIcon>{item.icon}</NavIcon>
-                                            <span>{item.label}</span>
-                                        </NavLink>
+                                    <NavLink key={item.key} href={navHref(item)} active={route().current(item.routePattern)} variant={variant}>
+                                        <NavIcon>{item.icon}</NavIcon>
+                                        <span>{item.label}</span>
+                                    </NavLink>
                                     );
                                 })}
                             </div>
@@ -190,6 +196,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {canAccess('vcc') && <ResponsiveNavLink href={route('vcc.index')} active={route().current('vcc.*')} variant={variant}>VCC</ResponsiveNavLink>}
                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
                         {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index')} active={route().current('jawatankuasa.*')} variant={variant}>Jawatankuasa</ResponsiveNavLink>}
+                        {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index', { laporan: 1 })} active={route().current('jawatankuasa.*')} variant={variant}>Laporan Jawatankuasa</ResponsiveNavLink>}
                         {canAccess('settings') && <ResponsiveNavLink href={route('settings.edit')} active={route().current('settings.edit')} variant={variant}>Settings</ResponsiveNavLink>}
                         {isMasterAdmin && <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>}
                     </div>

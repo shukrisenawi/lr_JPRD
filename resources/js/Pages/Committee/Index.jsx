@@ -1857,14 +1857,18 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
 // ─── Main Export ──────────────────────────────────────────────────────────
 
 export default function CommitteeIndex({ groups, positions, memberships, scopes }) {
-    const { auth } = usePage().props;
+    const { auth, url } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canKumpulan = allowedModules.includes('jawatankuasa.kumpulan');
     const canJawatan = allowedModules.includes('jawatankuasa.jawatan');
     const canSenarai = allowedModules.includes('jawatankuasa.senarai');
 
     const [searchOpen, setSearchOpen] = useState(false);
-    const [laporanOpen, setLaporanOpen] = useState(false);
+    const [laporanOpen, setLaporanOpen] = useState(() => {
+        if (typeof url === 'string' && url.includes('laporan=1')) return true;
+        if (typeof window !== 'undefined' && window.location.search.includes('laporan=1')) return true;
+        return false;
+    });
     const membershipRef = useRef(null);
 
     const sectionTabs = [
@@ -1894,13 +1898,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
                             <Icon name="search" className="h-4 w-4" />
                             Cari Ahli
                         </button>
-                        {auth?.user?.access_level === 'jprd' && (
-                        <button type="button" onClick={() => setLaporanOpen(true)}
-                            className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 shadow-sm transition hover:border-amber-400 hover:bg-amber-100">
-                            <Icon name="layers" className="h-4 w-4" />
-                            Laporan
-                        </button>
-                        )}
+
                     </div>
                 </div>
             }
