@@ -51,6 +51,14 @@ class Role extends Model
             }
         }
 
+        $parts = explode('.', $module);
+        while (count($parts) > 1) {
+            array_pop($parts);
+            if (in_array(implode('.', $parts), $access, true)) {
+                return true;
+            }
+        }
+
         return false;
     }
 }
