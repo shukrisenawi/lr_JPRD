@@ -34,9 +34,22 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
     members.forEach((m) => {
         const gid = m.committee_group_id || 'tanpa-kumpulan';
         const grp = groups.find((g) => g.id === m.committee_group_id);
-        if (!groupedByGroup[gid]) groupedByGroup[gid] = { groupName: grp?.name || 'Tanpa Kumpulan', members: [] };
+        if (!groupedByGroup[gid]) groupedByGroup[gid] = { groupName: grp?.name || 'Tanpa Kumpulan', members: [], sortOrder: grp?.sort_order ?? 999, group: grp };
         groupedByGroup[gid].members.push(m);
     });
+
+    Object.values(groupedByGroup).forEach((g) => {
+        if (g.group) {
+            const levelPositions = g.group.positions.filter(p => p.pivot_level === level);
+            g.members.sort((a, b) => {
+                const posA = levelPositions.find(p => p.id === a.position?.id);
+                const posB = levelPositions.find(p => p.id === b.position?.id);
+                return (posA?.pivot_sort_order ?? 999) - (posB?.pivot_sort_order ?? 999);
+            });
+        }
+    });
+
+    const sortedGroups = Object.entries(groupedByGroup).sort(([, a], [, b]) => a.sortOrder - b.sortOrder);
 
     const isMatching = (name) => {
         if (!highlight || !highlight.trim()) return false;
@@ -62,7 +75,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
                         <p className="py-8 text-center text-xs text-slate-400">Tiada ahli jawatankuasa.</p>
                     ) : (
                         <div className="space-y-3">
-                            {Object.entries(groupedByGroup).map(([gid, g]) => (
+                            {sortedGroups.map(([gid, g]) => (
                                 <div key={gid} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
                                     <div className="flex items-center justify-between bg-slate-50 px-3 py-2 border-b border-slate-200">
                                         <div>
