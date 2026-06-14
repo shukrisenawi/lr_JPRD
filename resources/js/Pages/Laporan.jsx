@@ -201,7 +201,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
                 'Atas Pagar': getCulaSum(culaB, ['4']),
                 'Tak Kenal': getCulaSum(culaB, ['7']),
                 'Mati': getCulaSum(culaB, ['8']),
-                CULA: (row.belum_dicula ?? 0) + (completedByDmMap[row.key] ?? 0),
+                CULA: row.belum_dicula ?? 0,
                 completed_PAS: completedSum(['2']),
                 completed_PBBM: completedSum(['10']),
                 completed_BN: completedSum(['1', '1A', '1B', '1P']),
