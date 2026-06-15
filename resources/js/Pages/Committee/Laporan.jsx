@@ -209,10 +209,10 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
     const [detailScope, setDetailScope] = useState(null);
     const [detailPosition, setDetailPosition] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+    const [selectedPositionIds, setSelectedPositionIds] = useState([]);
 
     useEffect(() => {
-        setSelectedGroupIds([]);
+        setSelectedPositionIds([]);
     }, [activeTab]);
 
     const currentScopes = scopes[activeTab] ?? [];
@@ -232,30 +232,23 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
         return Object.values(posMap).sort((a, b) => a.name.localeCompare(b.name));
     }, [udmMembers]);
 
-    const udmGroupStats = useMemo(() => {
-        const groupMap = {};
+    const udmPositionStats = useMemo(() => {
+        const posMap = {};
         udmMembers.forEach((m) => {
-            const gid = m.committee_group_id || 'tanpa-kumpulan';
-            const grp = groups.find((g) => g.id === m.committee_group_id);
-            if (!groupMap[gid]) groupMap[gid] = {
-                id: gid,
-                name: grp?.name || 'Tanpa Kumpulan',
-                sort_order: grp?.sort_order ?? 999,
-                totalMembers: 0,
-                members: [],
-            };
-            groupMap[gid].members.push(m);
-            groupMap[gid].totalMembers = groupMap[gid].members.length;
+            const pid = m.position?.id || 'tanpa-jawatan';
+            const pname = m.position?.name || 'Tanpa Jawatan';
+            if (!posMap[pid]) posMap[pid] = { id: pid, name: pname, members: [] };
+            posMap[pid].members.push(m);
         });
-        return Object.values(groupMap).sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
-    }, [udmMembers, groups]);
+        return Object.values(posMap).sort((a, b) => a.name.localeCompare(b.name));
+    }, [udmMembers]);
 
-    const mergedUdmMembers = useMemo(() => {
-        if (selectedGroupIds.length === 0) return [];
+    const mergedPositionMembers = useMemo(() => {
+        if (selectedPositionIds.length === 0) return [];
         const result = [];
-        selectedGroupIds.forEach((gid) => {
-            const grp = udmGroupStats.find((g) => String(g.id) === String(gid));
-            if (grp) result.push(...grp.members);
+        selectedPositionIds.forEach((pid) => {
+            const pos = udmPositionStats.find((p) => String(p.id) === String(pid));
+            if (pos) result.push(...pos.members);
         });
         const seen = new Set();
         return result.filter((m) => {
@@ -263,12 +256,12 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
             seen.add(m.id);
             return true;
         });
-    }, [selectedGroupIds, udmGroupStats]);
+    }, [selectedPositionIds, udmPositionStats]);
 
     const filteredMergedMembers = useMemo(() => {
-        if (activeTab !== 'udm-kumpulan' || !searchQuery.trim()) return mergedUdmMembers;
+        if (activeTab !== 'udm-kumpulan' || !searchQuery.trim()) return mergedPositionMembers;
         const q = searchQuery.toLowerCase();
-        return mergedUdmMembers.filter((m) => {
+        return mergedPositionMembers.filter((m) => {
             if (m.voter?.name?.toLowerCase().includes(q)) return true;
             if ((m.voter?.no_kp || m.voter?.old_ic || '').includes(q)) return true;
             if (m.voter?.phone_mobile?.includes(q)) return true;
@@ -277,7 +270,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
             if (m.scope_name?.toLowerCase().includes(q)) return true;
             return false;
         });
-    }, [mergedUdmMembers, searchQuery, activeTab]);
+    }, [mergedPositionMembers, searchQuery, activeTab]);
 
     const scopeStats = useMemo(() => {
         return currentScopes.map((scope) => {
@@ -407,41 +400,41 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                             )
                         ) : activeTab === 'udm-kumpulan' ? (
                             <div>
-                                <p className="mb-3 text-xs font-bold text-slate-700">Pilih satu atau lebih kumpulan untuk melihat ahli gabungan:</p>
+                                <p className="mb-3 text-xs font-bold text-slate-700">Pilih satu atau lebih jawatan untuk melihat ahli gabungan:</p>
                                 <div className="mb-6 flex flex-wrap gap-2">
-                                    {udmGroupStats.map((g) => {
-                                        const isSelected = selectedGroupIds.includes(String(g.id));
+                                    {udmPositionStats.map((p) => {
+                                        const isSelected = selectedPositionIds.includes(String(p.id));
                                         return (
                                             <label
-                                                key={g.id}
+                                                key={p.id}
                                                 className={'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 transition ' + (isSelected ? 'border-sky-300 bg-sky-50 ring-1 ring-sky-200' : 'hover:bg-slate-50')}
                                             >
                                                 <input
                                                     type="checkbox"
                                                     checked={isSelected}
                                                     onChange={() => {
-                                                        setSelectedGroupIds((prev) =>
-                                                            prev.includes(String(g.id))
-                                                                ? prev.filter((id) => id !== String(g.id))
-                                                                : [...prev, String(g.id)]
+                                                        setSelectedPositionIds((prev) =>
+                                                            prev.includes(String(p.id))
+                                                                ? prev.filter((id) => id !== String(p.id))
+                                                                : [...prev, String(p.id)]
                                                         );
                                                     }}
                                                     className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                                                 />
-                                                <span className="text-xs font-bold text-slate-700">{g.name}</span>
-                                                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700">{g.totalMembers}</span>
+                                                <span className="text-xs font-bold text-slate-700">{p.name}</span>
+                                                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700">{p.members.length}</span>
                                             </label>
                                         );
                                     })}
                                 </div>
-                                {selectedGroupIds.length > 0 ? (
+                                {selectedPositionIds.length > 0 ? (
                                     filteredMergedMembers.length > 0 ? (
                                         <div>
                                             <p className="mb-2 text-xs font-bold text-slate-700">
                                                 Senarai Ahli Gabungan ({filteredMergedMembers.length} orang)
-                                                {selectedGroupIds.length > 1 && (
+                                                {selectedPositionIds.length > 1 && (
                                                     <span className="ml-2 font-normal text-slate-400">
-                                                        — {selectedGroupIds.length} kumpulan
+                                                        — {selectedPositionIds.length} jawatan
                                                     </span>
                                                 )}
                                             </p>
@@ -471,10 +464,10 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                             </div>
                                         </div>
                                     ) : (
-                                        <p className="py-8 text-center text-xs text-slate-400">Tiada ahli dalam kumpulan yang dipilih.</p>
+                                        <p className="py-8 text-center text-xs text-slate-400">Tiada ahli dalam jawatan yang dipilih.</p>
                                     )
                                 ) : (
-                                    <p className="py-8 text-center text-xs text-slate-400">Sila pilih satu atau lebih kumpulan untuk melihat senarai ahli gabungan.</p>
+                                    <p className="py-8 text-center text-xs text-slate-400">Sila pilih satu atau lebih jawatan untuk melihat senarai ahli gabungan.</p>
                                 )}
                             </div>
                         ) : filteredScopeStats.length === 0 ? (
