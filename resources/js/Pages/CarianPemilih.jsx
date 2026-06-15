@@ -347,16 +347,16 @@ function SearchPanel() {
                                 const matchFilter = (selectedDm && voter.dm === selectedDm) || (selectedLocality && voter.locality === selectedLocality);
                                 return (
                                 <button key={voter.id} onClick={() => pick(voter)}
-                                    className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(8rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-3 py-2.5 text-left transition last:border-b-0 ${matchFilter ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-green-50'}`}>
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(8rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 bg-white px-3 py-2.5 text-left transition hover:bg-green-50 last:border-b-0">
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${matchFilter ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700'}`}>
                                         <UserIcon className="h-4 w-4" />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="truncate text-xs font-bold text-slate-800">{voter.name}</p>
+                                        <p className={`truncate text-xs font-bold ${matchFilter ? 'text-green-700' : 'text-slate-800'}`}>{voter.name}</p>
                                         <p className="text-xs font-medium text-slate-500">No Kp: {voter.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {voter.phone_mobile || '-'}</p>
                                     </div>
                                     <div className="min-w-0 text-left">
-                                        <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">{voter.dm || '-'}</p>
+                                        <p className={`flex items-center gap-1 truncate text-xs font-bold ${matchFilter ? 'text-green-700' : 'text-slate-800'}`}>{voter.dm || '-'}</p>
                                         <p className="truncate text-xs font-medium text-slate-500">{voter.locality || '-'}</p>
                                     </div>
                                     <ChevronRightIcon className="h-3.5 w-3.5 text-slate-400" />
