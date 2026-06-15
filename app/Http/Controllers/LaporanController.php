@@ -21,7 +21,7 @@ class LaporanController extends Controller
                 ->get(['name', 'last_login_at'])
                 ->map(fn (User $user) => [
                     'name' => $user->name,
-                    'last_login_at' => $user->last_login_at->format('d-m-Y h:iA'),
+                    'last_login_at' => $user->last_login_at->setTimezone('Asia/Kuala_Lumpur')->format('d-m-Y h:iA'),
                 ]),
         ]);
     }
