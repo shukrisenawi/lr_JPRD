@@ -320,7 +320,7 @@ function SearchPanel() {
                     </div>
                     <div className="relative mt-2">
                         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789, A0001" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
+                        <input type="search" value={q} onChange={handleChange} onFocus={(e) => e.target.select()} placeholder="Ali, 900101025555, 0123456789, A0001" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
                         {q ? (
                             <button
                                 type="button"
