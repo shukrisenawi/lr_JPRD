@@ -1,5 +1,5 @@
 import { Head, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 function Icon({ name, className = 'h-5 w-5' }) {
@@ -26,6 +26,7 @@ const levelOptions = [
     { key: 'udm', label: 'UDM' },
     { key: 'cawangan', label: 'Cawangan' },
     { key: 'udm-jawatan', label: 'Kumpulan Jawatan UDM' },
+    { key: 'udm-kumpulan', label: 'Pilih Kumpulan UDM' },
 ];
 
 function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
@@ -208,6 +209,11 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
     const [detailScope, setDetailScope] = useState(null);
     const [detailPosition, setDetailPosition] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+
+    useEffect(() => {
+        setSelectedGroupIds([]);
+    }, [activeTab]);
 
     const currentScopes = scopes[activeTab] ?? [];
 
@@ -225,6 +231,53 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
         });
         return Object.values(posMap).sort((a, b) => a.name.localeCompare(b.name));
     }, [udmMembers]);
+
+    const udmGroupStats = useMemo(() => {
+        const groupMap = {};
+        udmMembers.forEach((m) => {
+            const gid = m.committee_group_id || 'tanpa-kumpulan';
+            const grp = groups.find((g) => g.id === m.committee_group_id);
+            if (!groupMap[gid]) groupMap[gid] = {
+                id: gid,
+                name: grp?.name || 'Tanpa Kumpulan',
+                sort_order: grp?.sort_order ?? 999,
+                totalMembers: 0,
+                members: [],
+            };
+            groupMap[gid].members.push(m);
+            groupMap[gid].totalMembers = groupMap[gid].members.length;
+        });
+        return Object.values(groupMap).sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+    }, [udmMembers, groups]);
+
+    const mergedUdmMembers = useMemo(() => {
+        if (selectedGroupIds.length === 0) return [];
+        const result = [];
+        selectedGroupIds.forEach((gid) => {
+            const grp = udmGroupStats.find((g) => String(g.id) === String(gid));
+            if (grp) result.push(...grp.members);
+        });
+        const seen = new Set();
+        return result.filter((m) => {
+            if (seen.has(m.id)) return false;
+            seen.add(m.id);
+            return true;
+        });
+    }, [selectedGroupIds, udmGroupStats]);
+
+    const filteredMergedMembers = useMemo(() => {
+        if (activeTab !== 'udm-kumpulan' || !searchQuery.trim()) return mergedUdmMembers;
+        const q = searchQuery.toLowerCase();
+        return mergedUdmMembers.filter((m) => {
+            if (m.voter?.name?.toLowerCase().includes(q)) return true;
+            if ((m.voter?.no_kp || m.voter?.old_ic || '').includes(q)) return true;
+            if (m.voter?.phone_mobile?.includes(q)) return true;
+            if (m.voter?.phone_home?.includes(q)) return true;
+            if (m.position?.name?.toLowerCase().includes(q)) return true;
+            if (m.scope_name?.toLowerCase().includes(q)) return true;
+            return false;
+        });
+    }, [mergedUdmMembers, searchQuery, activeTab]);
 
     const scopeStats = useMemo(() => {
         return currentScopes.map((scope) => {
@@ -244,7 +297,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
     }, [currentScopes, memberships, activeTab]);
 
     const filteredScopeStats = useMemo(() => {
-        if (activeTab === 'udm-jawatan') return [];
+        if (activeTab === 'udm-jawatan' || activeTab === 'udm-kumpulan') return [];
         let list = scopeStats;
         if (activeTab === 'cawangan') {
             list = list.filter((scope) => scope.totalMembers > 0);
@@ -352,6 +405,78 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                     ))}
                                 </div>
                             )
+                        ) : activeTab === 'udm-kumpulan' ? (
+                            <div>
+                                <p className="mb-3 text-xs font-bold text-slate-700">Pilih satu atau lebih kumpulan untuk melihat ahli gabungan:</p>
+                                <div className="mb-6 flex flex-wrap gap-2">
+                                    {udmGroupStats.map((g) => {
+                                        const isSelected = selectedGroupIds.includes(String(g.id));
+                                        return (
+                                            <label
+                                                key={g.id}
+                                                className={'flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 transition ' + (isSelected ? 'border-sky-300 bg-sky-50 ring-1 ring-sky-200' : 'hover:bg-slate-50')}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={() => {
+                                                        setSelectedGroupIds((prev) =>
+                                                            prev.includes(String(g.id))
+                                                                ? prev.filter((id) => id !== String(g.id))
+                                                                : [...prev, String(g.id)]
+                                                        );
+                                                    }}
+                                                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                                                />
+                                                <span className="text-xs font-bold text-slate-700">{g.name}</span>
+                                                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700">{g.totalMembers}</span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                {selectedGroupIds.length > 0 ? (
+                                    filteredMergedMembers.length > 0 ? (
+                                        <div>
+                                            <p className="mb-2 text-xs font-bold text-slate-700">
+                                                Senarai Ahli Gabungan ({filteredMergedMembers.length} orang)
+                                                {selectedGroupIds.length > 1 && (
+                                                    <span className="ml-2 font-normal text-slate-400">
+                                                        — {selectedGroupIds.length} kumpulan
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                                                {filteredMergedMembers.map((m) => {
+                                                    const grp = groups.find((g) => g.id === m.committee_group_id);
+                                                    return (
+                                                        <div key={m.id} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50">
+                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                                                                <Icon name="user" className="h-4 w-4" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-xs font-bold text-slate-800">{m.voter?.name}</p>
+                                                                <p className="text-[10px] text-slate-400">
+                                                                    {m.voter?.no_kp || m.voter?.old_ic || '-'}
+                                                                    {m.scope_name ? <span className="text-sky-500"> — {m.scope_name}</span> : ''}
+                                                                </p>
+                                                            </div>
+                                                            <div className="shrink-0 text-right">
+                                                                <span className="inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.position?.name}</span>
+                                                                <p className="text-[9px] text-slate-400">{grp?.name}</p>
+                                                                {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="py-8 text-center text-xs text-slate-400">Tiada ahli dalam kumpulan yang dipilih.</p>
+                                    )
+                                ) : (
+                                    <p className="py-8 text-center text-xs text-slate-400">Sila pilih satu atau lebih kumpulan untuk melihat senarai ahli gabungan.</p>
+                                )}
+                            </div>
                         ) : filteredScopeStats.length === 0 ? (
                             <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                         ) : (
