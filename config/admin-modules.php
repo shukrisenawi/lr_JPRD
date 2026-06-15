@@ -1,13 +1,13 @@
 <?php
 
 return [
-    'dashboard' => [
-        'label' => 'Cula Manual',
-        'description' => 'Paparan utama dan ringkasan status semasa.',
-    ],
     'laporan' => [
         'label' => 'Laporan',
         'description' => 'Lihat dan muat naik laporan pemilih.',
+    ],
+    'dashboard' => [
+        'label' => 'Cula Manual',
+        'description' => 'Paparan utama dan ringkasan status semasa.',
     ],
     'carian-pemilih' => [
         'label' => 'Carian Pemilih',
