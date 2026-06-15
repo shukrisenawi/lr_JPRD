@@ -347,8 +347,8 @@ function SearchPanel() {
                                 const matchFilter = (selectedDm && voter.dm === selectedDm) || (selectedLocality && voter.locality === selectedLocality);
                                 return (
                                 <button key={voter.id} onClick={() => pick(voter)}
-                                    className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(8rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-3 py-2.5 text-left transition last:border-b-0 ${matchFilter ? 'bg-green-100 hover:bg-green-200' : 'hover:bg-green-50'}`}>
-                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${matchFilter ? 'bg-green-200 text-green-800' : 'bg-green-100 text-green-700'}`}>
+                                    className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(8rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-3 py-2.5 text-left transition last:border-b-0 ${matchFilter ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-green-50'}`}>
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
                                         <UserIcon className="h-4 w-4" />
                                     </div>
                                     <div className="min-w-0">
