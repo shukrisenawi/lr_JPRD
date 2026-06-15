@@ -203,11 +203,9 @@ function SearchPanel() {
     useEffect(() => () => ac.current?.abort(), []);
     useEffect(() => { if (flash) { const t = setTimeout(() => setFlash(''), 2000); return () => clearTimeout(t); } }, [flash]);
 
-    const handleChange = async (e) => {
-        const nq = e.target.value;
-        setQ(nq); setSelected(null); setErr('');
+    const fetchSuggestions = async (searchQ, dm, locality) => {
         ac.current?.abort();
-        if (nq.trim().length < 2) { setSuggestions([]); setSearching(false); return; }
+        if (searchQ.trim().length < 2) { setSuggestions([]); setSearching(false); return; }
 
         const reqId = ++rid.current;
         const c = new AbortController();
@@ -215,9 +213,9 @@ function SearchPanel() {
         setSearching(true);
 
         try {
-            const params = new URLSearchParams({ q: nq });
-            if (selectedDm) params.set('dm', selectedDm);
-            if (selectedLocality) params.set('locality', selectedLocality);
+            const params = new URLSearchParams({ q: searchQ });
+            if (dm) params.set('dm', dm);
+            if (locality) params.set('locality', locality);
             const res = await fetch(`${route('carian-pemilih.search')}?${params.toString()}`, { headers: { Accept: 'application/json' }, signal: c.signal });
             const ct = res.headers.get('content-type') ?? '';
             if (res.redirected || !res.ok || !ct.includes('application/json')) throw new Error();
@@ -227,6 +225,19 @@ function SearchPanel() {
             if (error.name !== 'AbortError') { setSuggestions([]); setErr('Carian gagal. Sila cuba lagi.'); }
         } finally { if (rid.current === reqId) setSearching(false); }
     };
+
+    const handleChange = async (e) => {
+        const nq = e.target.value;
+        setQ(nq); setSelected(null); setErr('');
+        fetchSuggestions(nq, selectedDm, selectedLocality);
+    };
+
+    useEffect(() => {
+        if (q.trim().length >= 2) {
+            setSelected(null);
+            fetchSuggestions(q, selectedDm, selectedLocality);
+        }
+    }, [selectedDm, selectedLocality]);
 
     const pick = (voter) => {
         ac.current?.abort(); rid.current += 1; setSearching(false); setSuggestions([]); setQ(voter.name ?? ''); setSelected(voter);
