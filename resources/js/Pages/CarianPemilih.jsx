@@ -343,10 +343,12 @@ function SearchPanel() {
                         {searching ? (
                             <div className="px-3 py-2 text-xs font-medium text-slate-500">Mencari...</div>
                         ) : (
-                            suggestions.map((voter) => (
+                            suggestions.map((voter) => {
+                                const matchFilter = (selectedDm && voter.dm === selectedDm) || (selectedLocality && voter.locality === selectedLocality);
+                                return (
                                 <button key={voter.id} onClick={() => pick(voter)}
-                                    className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(8rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-3 py-2.5 text-left transition hover:bg-green-50 last:border-b-0">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                    className={`grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(8rem,0.9fr)_auto] items-center gap-2 border-b border-slate-200 px-3 py-2.5 text-left transition last:border-b-0 ${matchFilter ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-green-50'}`}>
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-full ${matchFilter ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700'}`}>
                                         <UserIcon className="h-4 w-4" />
                                     </div>
                                     <div className="min-w-0">
@@ -359,7 +361,8 @@ function SearchPanel() {
                                     </div>
                                     <ChevronRightIcon className="h-3.5 w-3.5 text-slate-400" />
                                 </button>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 )}
