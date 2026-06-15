@@ -18,8 +18,41 @@ class CarianPemilihController extends Controller
 {
     public function index(): Response
     {
+        $user = request()->user();
+        $base = PemilihRecord::query()->where('status', 'aktif');
+
+        $user?->applyScopeToPemilihQuery($base);
+
+        $availableDms = (clone $base)
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->where('dm', '!=', '-')
+            ->select('dm')
+            ->distinct()
+            ->orderBy('dm')
+            ->pluck('dm')
+            ->values()
+            ->all();
+
+        $localitiesByDm = (clone $base)
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->where('dm', '!=', '-')
+            ->whereNotNull('locality')
+            ->where('locality', '!=', '')
+            ->where('locality', '!=', '-')
+            ->select('dm', 'locality')
+            ->distinct()
+            ->orderBy('locality')
+            ->get()
+            ->groupBy('dm')
+            ->map(fn ($items) => $items->pluck('locality')->values()->all())
+            ->all();
+
         return Inertia::render('CarianPemilih', [
             'available_cula_codes' => $this->availableCulaCodes(),
+            'available_dms' => $availableDms,
+            'localities_by_dm' => $localitiesByDm,
         ]);
     }
 
@@ -57,6 +90,8 @@ class CarianPemilihController extends Controller
                 $path,
                 8,
                 $request->user(),
+                $request->query('dm', '') ?: null,
+                $request->query('locality', '') ?: null,
             ),
         ]);
     }

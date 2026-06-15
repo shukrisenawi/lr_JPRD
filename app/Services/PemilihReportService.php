@@ -144,7 +144,7 @@ class PemilihReportService
         return $report;
     }
 
-    public function searchVoters(string $query, ?string $path = null, int $limit = 8, ?\App\Models\User $user = null): array
+    public function searchVoters(string $query, ?string $path = null, int $limit = 8, ?\App\Models\User $user = null, ?string $dm = null, ?string $locality = null): array
     {
         $normalizedQuery = $this->normalizeSearch($query);
 
@@ -153,7 +153,7 @@ class PemilihReportService
         }
 
         if (PemilihRecord::query()->count() > 0) {
-            return $this->searchVotersFromDb($normalizedQuery, $query, $limit, $user);
+            return $this->searchVotersFromDb($normalizedQuery, $query, $limit, $user, $dm, $locality);
         }
 
         $voters = $this->searchIndexForPath($path);
@@ -191,7 +191,7 @@ class PemilihReportService
         return $matches;
     }
 
-    private function searchVotersFromDb(string $normalizedQuery, string $rawQuery, int $limit, ?\App\Models\User $user = null): array
+    private function searchVotersFromDb(string $normalizedQuery, string $rawQuery, int $limit, ?\App\Models\User $user = null, ?string $dm = null, ?string $locality = null): array
     {
         $keywords = preg_split('/\s+/', $normalizedQuery);
         $keywords = array_values(array_filter($keywords));
@@ -215,6 +215,13 @@ class PemilihReportService
             });
 
         $user?->applyScopeToPemilihQuery($query);
+
+        if ($dm) {
+            $query->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$dm]);
+        }
+        if ($locality) {
+            $query->orderByRaw('CASE WHEN locality = ? THEN 0 ELSE 1 END', [$locality]);
+        }
 
         $records = $query
             ->limit($limit)

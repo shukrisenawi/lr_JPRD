@@ -182,7 +182,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
 }
 
 function SearchPanel() {
-        const { auth, available_cula_codes: initialCulaCodes } = usePage().props;
+        const { auth, available_cula_codes: initialCulaCodes, available_dms, localities_by_dm } = usePage().props;
         const canEditNoAhli = auth.user?.allowed_modules?.includes('kemaskini-no-ahli');
 
     const [q, setQ] = useState('');
@@ -190,6 +190,8 @@ function SearchPanel() {
     const [suggestions, setSuggestions] = useState([]);
     const [selected, setSelected] = useState(null);
     const [err, setErr] = useState('');
+    const [selectedDm, setSelectedDm] = useState('');
+    const [selectedLocality, setSelectedLocality] = useState('');
     const [openingTg, setOpeningTg] = useState(false);
     const [editNoAhli, setEditNoAhli] = useState(null);
     const [flash, setFlash] = useState('');
@@ -213,7 +215,10 @@ function SearchPanel() {
         setSearching(true);
 
         try {
-            const res = await fetch(`${route('carian-pemilih.search')}?q=${encodeURIComponent(nq)}`, { headers: { Accept: 'application/json' }, signal: c.signal });
+            const params = new URLSearchParams({ q: nq });
+            if (selectedDm) params.set('dm', selectedDm);
+            if (selectedLocality) params.set('locality', selectedLocality);
+            const res = await fetch(`${route('carian-pemilih.search')}?${params.toString()}`, { headers: { Accept: 'application/json' }, signal: c.signal });
             const ct = res.headers.get('content-type') ?? '';
             if (res.redirected || !res.ok || !ct.includes('application/json')) throw new Error();
             const p = await res.json();
@@ -280,6 +285,24 @@ function SearchPanel() {
                 <div className="px-4 py-3">
                     <p className="label-section">Carian Pemilih</p>
                     <p className="text-muted mt-0.5">Cari nama, No Kp, nombor telefon atau No. Ahli.</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                        <div className="relative flex-1 basis-full sm:basis-[180px]">
+                            <select value={selectedDm} onChange={(e) => { setSelectedDm(e.target.value); setSelectedLocality(''); }}
+                                className="input-field py-2 pl-3 pr-8 text-xs">
+                                <option value="">Semua UDM</option>
+                                {available_dms.map((dm) => <option key={dm} value={dm}>{dm}</option>)}
+                            </select>
+                        </div>
+                        {selectedDm && (
+                            <div className="relative flex-1 basis-full sm:basis-[180px]">
+                                <select value={selectedLocality} onChange={(e) => setSelectedLocality(e.target.value)}
+                                    className="input-field py-2 pl-3 pr-8 text-xs">
+                                    <option value="">Semua Lokaliti</option>
+                                    {(localities_by_dm[selectedDm] || []).map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                                </select>
+                            </div>
+                        )}
+                    </div>
                     <div className="relative mt-2">
                         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input type="search" value={q} onChange={handleChange} placeholder="Ali, 900101025555, 0123456789, A0001" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
