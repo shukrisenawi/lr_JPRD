@@ -1,4 +1,3 @@
-import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -10,7 +9,7 @@ export default function Login({ status, canResetPassword, defaultCredentials }) 
     const { data, setData, post, processing, errors, reset } = useForm({
         email: defaultCredentials?.email ?? '',
         password: defaultCredentials?.password ?? '',
-        remember: false,
+
     });
 
     const submit = (e) => {
@@ -60,26 +59,16 @@ export default function Login({ status, canResetPassword, defaultCredentials }) 
                     <InputError message={errors.password} className="mt-1.5" />
                 </div>
 
-                <div className="flex items-center justify-between pt-1">
-                    <label className="flex items-center gap-2">
-                        <Checkbox
-                            name="remember"
-                            checked={data.remember}
-                            onChange={(e) => setData('remember', e.target.checked)}
-                            className="rounded border-slate-300 text-green-600 focus:ring-green-500"
-                        />
-                        <span className="text-xs text-slate-500">Kekalkan log masuk</span>
-                    </label>
-
-                    {canResetPassword && (
+                {canResetPassword && (
+                    <div className="flex justify-end pt-1">
                         <Link
                             href={route('password.request')}
                             className="text-xs font-medium text-green-600 transition hover:text-green-700 hover:underline"
                         >
                             Lupa kata laluan?
                         </Link>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 <div className="pt-2">
                     <PrimaryButton
