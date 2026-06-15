@@ -190,6 +190,8 @@ function SearchPanel() {
     const [suggestions, setSuggestions] = useState([]);
     const [selected, setSelected] = useState(null);
     const [err, setErr] = useState('');
+    const isUdmLevel = auth.user?.access_level === 'udm';
+    const isCawanganLevel = auth.user?.access_level === 'cawangan';
     const [selectedDm, setSelectedDm] = useState('');
     const [selectedLocality, setSelectedLocality] = useState('');
     const [openingTg, setOpeningTg] = useState(false);
@@ -297,19 +299,21 @@ function SearchPanel() {
                     <p className="label-section">Carian Pemilih</p>
                     <p className="text-muted mt-0.5">Cari nama, No Kp, nombor telefon atau No. Ahli.</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                        <div className="relative flex-1 basis-full sm:basis-[180px]">
-                            <select value={selectedDm} onChange={(e) => { setSelectedDm(e.target.value); setSelectedLocality(''); }}
-                                className="input-field py-2 pl-3 pr-8 text-xs">
-                                <option value="">Semua UDM</option>
-                                {available_dms.map((dm) => <option key={dm} value={dm}>{dm}</option>)}
-                            </select>
-                        </div>
-                        {selectedDm && (
+                        {!isUdmLevel && (
+                            <div className="relative flex-1 basis-full sm:basis-[180px]">
+                                <select value={selectedDm} onChange={(e) => { setSelectedDm(e.target.value); setSelectedLocality(''); }}
+                                    className="input-field py-2 pl-3 pr-8 text-xs">
+                                    <option value="">Semua UDM</option>
+                                    {available_dms.map((dm) => <option key={dm} value={dm}>{dm}</option>)}
+                                </select>
+                            </div>
+                        )}
+                        {(selectedDm || isUdmLevel) && !isCawanganLevel && (
                             <div className="relative flex-1 basis-full sm:basis-[180px]">
                                 <select value={selectedLocality} onChange={(e) => setSelectedLocality(e.target.value)}
                                     className="input-field py-2 pl-3 pr-8 text-xs">
                                     <option value="">Semua Lokaliti</option>
-                                    {(localities_by_dm[selectedDm] || []).map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                                    {(selectedDm ? (localities_by_dm[selectedDm] || []) : Object.values(localities_by_dm).flat()).map((loc) => <option key={loc} value={loc}>{loc}</option>)}
                                 </select>
                             </div>
                         )}
