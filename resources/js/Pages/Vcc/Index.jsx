@@ -633,7 +633,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
                         <div className="space-y-3">
-                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem] xl:items-end">
+                            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[12rem_12rem_10rem] xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                     <select
@@ -681,7 +681,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
-                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[7rem_7rem_5rem_5rem_5rem] xl:items-end">
+                            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_7rem_5rem_5rem_5rem] xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-per-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
