@@ -683,7 +683,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
                             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_7rem_5rem_5rem_5rem] xl:items-end">
                                 <div>
-                                    <label htmlFor="vcc-per-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
+                                    <label htmlFor="vcc-per-udm" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
                                         id="vcc-per-udm"
                                         type="number"
