@@ -140,6 +140,7 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
 
     const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
+    const partyCols = ['PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati'];
 
     const filteredLocs = useMemo(() => {
         const kw = search.trim().toLowerCase();
@@ -230,13 +231,15 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
                 const d = (row[col] ?? 0) - (p[col] ?? 0);
                 if (d !== 0) rowDiffs[col] = d;
             }
-            if (Object.keys(rowDiffs).length > 0) diffs[row.key] = rowDiffs;
 
-            const siapDiff = (row.siap_cula ?? 0) - (p.siap_cula ?? 0);
-            if (siapDiff !== 0) {
-                if (!diffs[row.key]) diffs[row.key] = {};
-                diffs[row.key].siap_cula = siapDiff;
+            let siapSum = 0;
+            for (const col of partyCols) {
+                const d = (row[col] ?? 0) - (p[col] ?? 0);
+                if (d > 0) siapSum += d;
             }
+            if (siapSum > 0) rowDiffs.siap_increase = siapSum;
+
+            if (Object.keys(rowDiffs).length > 0) diffs[row.key] = rowDiffs;
         }
         return diffs;
     }, [udm_snapshot, udmTableRows]);
@@ -271,7 +274,7 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
     const dmCols = [
         { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span>, headerClass: 'sticky-th', cellClass: 'sticky-td' },
 
-        { key: 'siap_cula', label: 'Siap', format: (v, r) => fmtSiapDiff(v, diffMap[r.key]?.siap_cula), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
+        { key: 'siap_cula', label: 'Siap', format: (v, r) => fmtSiapDiff(v, diffMap[r.key]?.siap_increase), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
         { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P), headerClass: groupH.demo, cellClass: groupC.demo },
