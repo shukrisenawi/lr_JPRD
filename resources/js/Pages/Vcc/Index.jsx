@@ -599,7 +599,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_7rem_7rem_5rem_minmax(0,1fr)] xl:items-end">
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_7rem_7rem] xl:items-end">
                             <div>
                                 <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
@@ -674,47 +674,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </select>
                             </div>
 
-                            <div>
-                                <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Cula</label>
-                                <label
-                                    htmlFor="vcc-dah-cula"
-                                    className="input-field mt-1.5 inline-flex items-center px-3 py-2"
-                                >
-                                    <input
-                                        id="vcc-dah-cula"
-                                        type="checkbox"
-                                        checked={formState.show_marked}
-                                        onChange={(event) => updateFilter('show_marked', event.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
-                                    />
-                                </label>
-                            </div>
-
-                            <div>
-                                <label htmlFor="vcc-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
-                                <div className="relative mt-1.5">
-                                    <input
-                                        id="vcc-search"
-                                        value={search}
-                                        onChange={handleSearchChange}
-                                        className="input-field pr-10"
-                                        placeholder="Nama, No Kp, telefon..."
-                                    />
-                                    {search ? (
-                                        <button
-                                            type="button"
-                                            onClick={clearSearch}
-                                            className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100"
-                                        >
-                                            <span className="text-sm leading-none">×</span>
-                                        </button>
-                                    ) : (
-                                        <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
-                                    )}
-                                </div>
-                                {searchError && <InputError className="mt-1" message={searchError} />}
-                                {actionError && <InputError className="mt-1" message={actionError} />}
-                            </div>
+                            {actionError && <InputError className="mt-1" message={actionError} />}
                         </div>
 
                         {formState.group_id === 'custom' && (
