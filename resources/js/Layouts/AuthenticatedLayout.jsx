@@ -53,7 +53,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             ],
         },
         {
-            label: 'Program',
+            label: 'Operasi',
             icon: <HeaderIcon name="calendar" className="h-4 w-4" />,
             items: [
                 { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
@@ -193,7 +193,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {canAccess('carian-pemilih') && <ResponsiveNavLink href={route('carian-pemilih.index')} active={route().current('carian-pemilih.*')} variant={variant}>Carian Pemilih</ResponsiveNavLink>}
                         {canAccess('tambah-pemilih') && <ResponsiveNavLink href={route('tambah-pemilih.index')} active={route().current('tambah-pemilih.*')} variant={variant}>Tambah Pemilih</ResponsiveNavLink>}
                         {canAccess('group-pemilih') && <ResponsiveNavLink href={route('group-pemilih.index')} active={route().current('group-pemilih.*')} variant={variant}>Group Pemilih</ResponsiveNavLink>}
-                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Program</div>
+                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Operasi</div>
                         {canAccess('dashboard') && <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')} variant={variant}>Cula Manual</ResponsiveNavLink>}
                         {canAccess('program') && <ResponsiveNavLink href={route('program.index')} active={route().current('program.*')} variant={variant}>Program</ResponsiveNavLink>}
                         {canAccess('culaan') && <ResponsiveNavLink href={route('culaan.index')} active={route().current('culaan.*')} variant={variant}>Culaan</ResponsiveNavLink>}
