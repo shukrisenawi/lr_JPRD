@@ -919,12 +919,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                                 {pendingIds.includes(voter.id) ? '...' : 'Siap'}
                                                                             </button>
                                                                         )}
-                                                                        {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' && (
-                                                                            <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                        <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
                                                                                 className="rounded bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
                                                                                 {pendingIds.includes(voter.id) ? '...' : '✓'}
                                                                             </button>
-                                                                        )}
                                                                     </>
                                                                 )}
                                                             </div>
@@ -1005,12 +1003,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                             {pendingIds.includes(voter.id) ? '...' : 'Siap'}
                                                                         </button>
                                                                     )}
-                                                                    {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' && (
-                                                                        <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                            className="rounded bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
-                                                                            {pendingIds.includes(voter.id) ? '...' : '✓'}
-                                                                        </button>
-                                                                    )}
+                                                                    <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                        className="rounded bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                        {pendingIds.includes(voter.id) ? '...' : '✓'}
+                                                                    </button>
                                                                 </>
                                                             )}
                                                         </div>
