@@ -416,7 +416,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
                                             {dmDetails.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
                                         </select>
                                     }>
-                                    <div className="grid gap-2 sm:grid-cols-4">
+                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                         <StatCard label="Jumlah" value={selUdm?.summary.total_voters ?? 0} detail={`${fmt(selUdm?.summary.total_localities ?? 0)} lokaliti`} color="violet" />
                                         <StatCard label="Sudah" value={selUdm?.summary.with_cula ?? 0} detail="Dicula" color="emerald" />
                                         <StatCard label="Belum" value={selUdm?.summary.belum_dicula ?? 0} detail="Dicula" color="amber" />
