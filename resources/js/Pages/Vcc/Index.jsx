@@ -9,6 +9,21 @@ const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 function fmt(v) { return nf.format(v ?? 0); }
 
+function dobFromIc(noKp) {
+    if (!noKp) return '-';
+    const digits = noKp.replace(/\D/g, '');
+    if (digits.length < 6) return '-';
+    const yy = parseInt(digits.substring(0, 2), 10);
+    const mm = parseInt(digits.substring(2, 4), 10);
+    const dd = parseInt(digits.substring(4, 6), 10);
+    if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return '-';
+    const curYy = new Date().getFullYear() % 100;
+    const year = (yy > curYy ? 1900 : 2000) + yy;
+    const d = new Date(year, mm - 1, dd);
+    if (d.getDate() !== dd || d.getMonth() + 1 !== mm || d.getFullYear() !== year) return '-';
+    return `${String(dd).padStart(2, '0')}-${String(mm).padStart(2, '0')}-${year}`;
+}
+
 function buildTelegramLink(command, identity) {
     const payload = identity ? `/${command} ${identity}` : `/${command}`;
     return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(payload)}`;
@@ -786,7 +801,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                         </td>
                                                         {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
                                                         {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
-                                                        <td className="whitespace-nowrap px-2 py-2 text-center font-mono text-slate-600">{voter.date_of_birth ? voter.date_of_birth.split('-').reverse().join('-') : '-'}</td>
+                                                        <td className="whitespace-nowrap px-2 py-2 text-center font-mono text-slate-600">{dobFromIc(voter.no_kp)}</td>
                                                         <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
                                                             {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
@@ -870,7 +885,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     </td>
                                                     {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
                                                     {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
-                                                    <td className="whitespace-nowrap px-2 py-2 text-center font-mono text-slate-600">{voter.date_of_birth ? voter.date_of_birth.split('-').reverse().join('-') : '-'}</td>
+                                                    <td className="whitespace-nowrap px-2 py-2 text-center font-mono text-slate-600">{dobFromIc(voter.no_kp)}</td>
                                                     <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
                                                     <td className="whitespace-nowrap px-2 py-2">
                                                         {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
