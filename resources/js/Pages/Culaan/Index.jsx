@@ -1176,8 +1176,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             </div>
                             {tab === 'senarai' && canSenarai && (
                                 <div className="ml-auto flex gap-1">
-                                    <button type="button" onClick={() => { setViewMode('card'); savePreference('culaan_view_mode', 'card'); }} className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>Kad</button>
-                                    <button type="button" onClick={() => { setViewMode('table'); savePreference('culaan_view_mode', 'table'); }} className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${viewMode === 'table' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>Jadual</button>
+                                    <button type="button" onClick={() => { setViewMode('card'); savePreference('culaan_view_mode', 'card'); }} className={`rounded-md p-1.5 transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'text-black hover:bg-green-50 hover:text-green-700'}`}>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                                    </button>
+                                    <button type="button" onClick={() => { setViewMode('table'); savePreference('culaan_view_mode', 'table'); }} className={`rounded-md p-1.5 transition ${viewMode === 'table' ? 'bg-green-600 text-white shadow-sm' : 'text-black hover:bg-green-50 hover:text-green-700'}`}>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                                    </button>
                                 </div>
                             )}
                         </div>
