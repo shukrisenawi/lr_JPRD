@@ -9,31 +9,6 @@ const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 function fmt(v) { return nf.format(v ?? 0); }
 
-function extractNamaAyah(name) {
-    if (!name) return null;
-    const lowerName = name.toLowerCase();
-    const connectors = [' bin ', ' binti ', ' bt ', ' a/p ', ' a/l '];
-    for (const connector of connectors) {
-        const idx = lowerName.lastIndexOf(connector);
-        if (idx !== -1) {
-            const result = name.substring(idx + connector.length).trim();
-            return result || null;
-        }
-    }
-    return null;
-}
-
-function UserGroupIcon({ className = 'h-4 w-4' }) {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-    );
-}
-
 function buildTelegramLink(command, identity) {
     const payload = identity ? `/${command} ${identity}` : `/${command}`;
     return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(payload)}`;
@@ -784,20 +759,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
                                                         <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
                                                         <td className="px-2 py-2">
-                                                            <div className="flex items-center gap-1">
-                                                                <span className="font-semibold text-slate-800">{voter.name}</span>
-                                                                {(() => {
-                                                                    const namaAyah = extractNamaAyah(voter.name);
-                                                                    if (!namaAyah) return null;
-                                                                    return (
-                                                                        <button type="button" onClick={() => doSearch(namaAyah)}
-                                                                            className="flex shrink-0 items-center justify-center rounded border border-slate-200 bg-white p-0.5 text-slate-400 hover:border-green-300 hover:text-green-600"
-                                                                            title={`Cari keluarga: ${namaAyah}`}>
-                                                                            <UserGroupIcon className="h-3 w-3" />
-                                                                        </button>
-                                                                    );
-                                                                })()}
-                                                            </div>
+                                                            <span className="font-semibold text-slate-800">{voter.name}</span>
                                                         </td>
                                                         <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
@@ -873,17 +835,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     <td className="px-2 py-2">
                                                         <div className="flex items-center gap-1">
                                                             <span className="font-semibold text-slate-800">{voter.name}</span>
-                                                            {(() => {
-                                                                const namaAyah = extractNamaAyah(voter.name);
-                                                                if (!namaAyah) return null;
-                                                                return (
-                                                                    <button type="button" onClick={() => doSearch(namaAyah)}
-                                                                        className="flex shrink-0 items-center justify-center rounded border border-slate-200 bg-white p-0.5 text-slate-400 hover:border-green-300 hover:text-green-600"
-                                                                        title={`Cari keluarga: ${namaAyah}`}>
-                                                                        <UserGroupIcon className="h-3 w-3" />
-                                                                    </button>
-                                                                );
-                                                            })()}
                                                         </div>
                                                     </td>
                                                     <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
