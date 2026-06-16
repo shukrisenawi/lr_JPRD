@@ -356,7 +356,7 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
 
                         <DataTable rows={udmTableRows} columns={dmCols} />
                         {udm_snapshot_meta && (
-                            <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira dari tarikh {udm_snapshot_meta.snapshot_time}</p>
+                            <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula hari, {udm_snapshot_meta.snapshot_time}</p>
                         )}
 
                         <div className="card p-3">
