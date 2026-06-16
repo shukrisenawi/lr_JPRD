@@ -356,7 +356,7 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
 
                         <DataTable rows={udmTableRows} columns={dmCols} />
                         {udm_snapshot_meta && (
-                            <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula value, {udm_snapshot_meta.snapshot_time}</p>
+                            <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula {(()=>{const m=udm_snapshot_meta.snapshot_time.match(/^(\d{2})-(\d{2})-(\d{4})/);if(!m)return'';const dt=new Date(+m[3],+m[2]-1,+m[1]);return isNaN(dt.getTime())?'':hari[dt.getDay()]})()}, {udm_snapshot_meta.snapshot_time}</p>
                         )}
 
                         <div className="card p-3">
