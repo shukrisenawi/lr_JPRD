@@ -466,7 +466,14 @@ class VccController extends Controller
             }
         }
 
-        $rawPerUdm = $request->query('per_udm_count', '');
+        $rawPerUdm = $request->query('per_udm_count');
+        if ($rawPerUdm === null) {
+            $perUdmCount = 20;
+        } elseif ($rawPerUdm === '' || ! ctype_digit($rawPerUdm)) {
+            $perUdmCount = 0;
+        } else {
+            $perUdmCount = (int) $rawPerUdm;
+        }
 
         return [
             'udm' => $requestedUdm,
@@ -478,7 +485,7 @@ class VccController extends Controller
             'jantina' => trim((string) $request->query('jantina', '')),
             'umur_dari' => $request->query('umur_dari') !== null && $request->query('umur_dari') !== '' ? (int) $request->query('umur_dari') : null,
             'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
-            'per_udm_count' => $rawPerUdm !== '' && ctype_digit($rawPerUdm) ? (int) $rawPerUdm : 0,
+            'per_udm_count' => $perUdmCount,
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
             'has_phone' => $request->boolean('has_phone'),
