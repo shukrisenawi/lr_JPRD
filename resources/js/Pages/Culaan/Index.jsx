@@ -1462,13 +1462,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                             </button>
                                                                         </>
                                                                     )}
-                                                                     {voter.is_marked && (
-                                                                        <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                            className="rounded bg-red-50 px-1 py-0.5 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
-                                                                            {pendingIds.includes(voter.id) ? '...' : 'Buka'}
-                                                                        </button>
-                                                                    )}
-                                                                </div>
+                                                                 </div>
                                                             </td>
                                                         </tr>
                                                     );
@@ -1529,18 +1523,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                         </button>
                                                                     </>
                                                                 )}
-                                                                {voter.is_marked ? (
-                                                                    <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                        className="rounded bg-red-50 px-1 py-0.5 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
-                                                                        {pendingIds.includes(voter.id) ? '...' : 'Buka'}
-                                                                    </button>
-                                                                ) : (
-                                                                    <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                        className="rounded bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
-                                                                        {pendingIds.includes(voter.id) ? '...' : '✓'}
-                                                                    </button>
-                                                                )}
-                                                            </div>
+                                                             </div>
                                                         </td>
                                                     </tr>
                                                 );
