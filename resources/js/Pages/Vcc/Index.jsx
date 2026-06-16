@@ -136,6 +136,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         per_udm_count: filters.per_udm_count ?? '',
         bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
         cula_codes: filters.cula_codes ?? '',
+        has_phone: Boolean(filters.has_phone),
     });
 
     useEffect(() => {
@@ -151,8 +152,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             per_udm_count: filters.per_udm_count ?? '',
             bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
             cula_codes: filters.cula_codes ?? '',
+            has_phone: Boolean(filters.has_phone),
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes, filters.has_phone]);
 
     const initialMonth = useRef(true);
     useEffect(() => {
@@ -233,6 +235,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             per_udm_count: formState.per_udm_count ?? '',
             bulan_lahir: formState.bulan_lahir ?? '',
             cula_codes: formState.cula_codes ?? '',
+            has_phone: formState.has_phone ? '1' : '0',
         });
 
         try {
@@ -408,6 +411,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 per_udm_count: formState.per_udm_count ?? '',
                 bulan_lahir: formState.bulan_lahir ?? '',
                 cula_codes: formState.cula_codes ?? '',
+                has_phone: formState.has_phone ? '1' : '0',
             });
 
             try {
@@ -453,6 +457,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         }).join('');
 
         let bodyRowsXml = '';
+        let titleRowXml = '';
         const showUdmInExport = formState.udm === '';
 
         if (showUdmInExport) {
@@ -584,7 +589,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         <Table>
             ${columnXml}
             ${titleRowXml}
-            ${headerRowXml}
             ${bodyRowsXml}
         </Table>
     </Worksheet>
@@ -714,6 +718,22 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         type="checkbox"
                                         checked={formState.show_marked}
                                         onChange={(event) => updateFilter('show_marked', event.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
+                                    />
+                                </label>
+                            </div>
+
+                            <div>
+                                <label htmlFor="vcc-ada-tel" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Ada Tel</label>
+                                <label
+                                    htmlFor="vcc-ada-tel"
+                                    className="input-field mt-1.5 inline-flex items-center px-3 py-2"
+                                >
+                                    <input
+                                        id="vcc-ada-tel"
+                                        type="checkbox"
+                                        checked={formState.has_phone}
+                                        onChange={(event) => updateFilter('has_phone', event.target.checked)}
                                         className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
                                     />
                                 </label>

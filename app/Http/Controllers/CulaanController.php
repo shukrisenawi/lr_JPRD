@@ -283,7 +283,11 @@ class CulaanController extends Controller
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
-            ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters));
+            ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
+            ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
+                $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
+                  ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
+            }));
 
         if (! $skipMarkedFilter) {
             $query->when(
@@ -423,6 +427,7 @@ class CulaanController extends Controller
             'jantina' => trim((string) $request->query('jantina', '')),
             'umur_dari' => $request->query('umur_dari') !== null && $request->query('umur_dari') !== '' ? (int) $request->query('umur_dari') : null,
             'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
+            'has_phone' => $request->boolean('has_phone'),
         ];
     }
 

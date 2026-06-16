@@ -190,18 +190,17 @@ class VccController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
-        $query->where(function (Builder $q) {
-            $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
-              ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
-        });
-
         $query->when($groupKodCulas !== null, fn (Builder $builder) => $builder->whereIn('cula_code', $groupKodCulas))
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
             ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
             ->when($filters['bulan_lahir'] !== '', fn (Builder $builder) => $builder->whereRaw('LENGTH(no_kp) >= 6 AND CAST(SUBSTRING(no_kp, 3, 2) AS UNSIGNED) = ?', [(int) $filters['bulan_lahir']]))
-            ->when($filters['cula_codes'] !== '', fn (Builder $builder) => $builder->whereIn('cula_code', explode(',', $filters['cula_codes'])));
+            ->when($filters['cula_codes'] !== '', fn (Builder $builder) => $builder->whereIn('cula_code', explode(',', $filters['cula_codes'])))
+            ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
+                $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
+                  ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
+            }));
 
         if (! $skipMarkedFilter) {
             $query->when(
@@ -475,6 +474,7 @@ class VccController extends Controller
             'per_udm_count' => $rawPerUdm !== '' && ctype_digit($rawPerUdm) ? (int) $rawPerUdm : 0,
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
+            'has_phone' => $request->boolean('has_phone'),
         ];
     }
 
