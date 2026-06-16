@@ -11,6 +11,17 @@ use RuntimeException;
 
 class PemilihReportService
 {
+    private const CULA_GROUPS = [
+        'PAS' => ['2'],
+        'PBBM' => ['10'],
+        'BN' => ['1', '1A', '1B', '1P'],
+        'PH' => ['5'],
+        'GTA' => [],
+        'PLK' => ['3B', '3D', '3K', '3M', '3P', '3U'],
+        'AP' => ['4'],
+        'TK' => ['7'],
+        'Mati' => ['8'],
+    ];
     public const DEFAULT_SAMPLE_PATH = 'F:\\OneDrive\\PAS\\pemilih.xls';
 
     private const REPORT_SCHEMA_VERSION = 3;
@@ -328,6 +339,204 @@ class PemilihReportService
             'uploaded_by' => Setting::valueOf('pemilih_report_uploaded_by'),
             'uploaded_at' => $uploadedAt,
         ];
+    }
+
+    public function buildUdmSnapshotRows(): array
+    {
+        $records = PemilihRecord::query()->where('status', '!=', 'xaktif')->get();
+
+        if ($records->isEmpty()) {
+            return [];
+        }
+
+        $rows = $records->map(function (PemilihRecord $r) {
+            $dm = $r->dm ?: 'Tanpa DM';
+            $loc = $r->locality ?: 'Tanpa Lokaliti';
+
+            return [
+                'Kod DM' => $dm,
+                'Nama DM' => $dm,
+                'Kod Lokaliti' => $loc,
+                'Nama Lokaliti' => $loc,
+                'Jantina' => $r->gender ?? '',
+                'Bangsa' => $r->race ?? '',
+                'Kod Cula' => $r->cula_code ?? '',
+            ];
+        })->all();
+
+        $report = $this->summarize($rows, 'database');
+
+        $completedCounts = PemilihRecord::query()
+            ->where('status', '!=', 'xaktif')
+            ->whereHas('culaWorkItem')
+            ->select('dm')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('dm')
+            ->pluck('total', 'dm')
+            ->toArray();
+
+        $completedCulaByDm = PemilihRecord::query()
+            ->where('status', '!=', 'xaktif')
+            ->whereHas('culaWorkItem')
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA')
+            ->select('dm', 'cula_code')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('dm', 'cula_code')
+            ->get()
+            ->groupBy('dm')
+            ->map(fn ($items) => $items->pluck('total', 'cula_code')->map(fn ($v) => (int) $v)->toArray())
+            ->toArray();
+
+        $dmDetailsMap = [];
+        foreach ($report['dm_details'] as $d) {
+            $dmDetailsMap[$d['key']] = $d;
+        }
+
+        $culaByDmMap = [];
+        foreach ($report['cula_by_dm'] as $d) {
+            $culaByDmMap[$d['key']] = $d;
+        }
+
+        $snapshotRows = [];
+
+        foreach ($report['by_dm'] as $dm) {
+            $key = $dm['key'];
+            $dtl = $dmDetailsMap[$key] ?? null;
+            $cula = $culaByDmMap[$key] ?? null;
+            $raceB = $dtl['race_breakdown'] ?? [];
+            $culaB = $cula['cula_breakdown'] ?? [];
+            $dmCode = explode('|', $key)[0];
+            $dmCulaCompleted = $completedCulaByDm[$dmCode] ?? [];
+
+            $getRaceCount = function (array $breakdown, array $names): int {
+                foreach ($breakdown as $r) {
+                    if (in_array(strtoupper($r['code']), $names)) {
+                        return $r['total'];
+                    }
+                }
+                return 0;
+            };
+
+            $getCulaSum = function (array $breakdown, array $codes): int {
+                $byCode = [];
+                foreach ($breakdown as $c) {
+                    $byCode[$c['code']] = $c['total'];
+                }
+                $sum = 0;
+                foreach ($codes as $code) {
+                    $sum += $byCode[$code] ?? 0;
+                }
+                return $sum;
+            };
+
+            $completedSum = function (array $codes) use ($dmCulaCompleted): int {
+                $s = 0;
+                foreach ($codes as $c) {
+                    $s += $dmCulaCompleted[$c] ?? 0;
+                }
+                return $s;
+            };
+
+            $row = [
+                'key' => $key,
+                'name' => $dm['name'],
+                'siap_cula' => $completedCounts[$dmCode] ?? 0,
+                'JP' => ($dm['total'] ?? 0) - $getCulaSum($culaB, ['8']),
+                'L' => $dm['male'] ?? 0,
+                'P' => $dm['female'] ?? 0,
+                'M' => $getRaceCount($raceB, ['MELAYU', 'M']),
+                'C' => $getRaceCount($raceB, ['CINA', 'C']),
+                'I' => $getRaceCount($raceB, ['INDIA', 'I']),
+                'S' => $getRaceCount($raceB, ['SIAM', 'S']),
+                'PAS' => $getCulaSum($culaB, ['2']),
+                'PBBM' => $getCulaSum($culaB, ['10']),
+                'BN' => $getCulaSum($culaB, ['1', '1A', '1B', '1P']),
+                'PH' => $getCulaSum($culaB, ['5']),
+                'GTA' => 0,
+                'PLK' => $getCulaSum($culaB, ['3B', '3D', '3K', '3M', '3P', '3U']),
+                'Atas Pagar' => $getCulaSum($culaB, ['4']),
+                'Tak Kenal' => $getCulaSum($culaB, ['7']),
+                'Mati' => $getCulaSum($culaB, ['8']),
+                'CULA' => $dm['belum_dicula'] ?? 0,
+                'completed_PAS' => $completedSum(['2']),
+                'completed_PBBM' => $completedSum(['10']),
+                'completed_BN' => $completedSum(['1', '1A', '1B', '1P']),
+                'completed_PH' => $completedSum(['5']),
+                'completed_GTA' => 0,
+                'completed_PLK' => $completedSum(['3B', '3D', '3K', '3M', '3P', '3U']),
+                'completed_AP' => $completedSum(['4']),
+                'completed_TK' => $completedSum(['7']),
+                'completed_Mati' => $completedSum(['8']),
+            ];
+
+            $snapshotRows[] = $row;
+        }
+
+        return $snapshotRows;
+    }
+
+    public function saveUdmSnapshotOnImport(?string $uploadedBy = null): ?\App\Models\UdmSnapshot
+    {
+        $cutoffDay = (int) Setting::valueOf('udm_cutoff_day', 1);
+        $today = now('Asia/Kuala_Lumpur');
+        $todayDay = (int) $today->format('d');
+
+        if ($todayDay < $cutoffDay) {
+            return null;
+        }
+
+        $periodStart = $today->copy()->day($cutoffDay)->startOfDay();
+        $periodEnd = $today->copy()->endOfDay();
+
+        $exists = \App\Models\UdmSnapshot::query()
+            ->where('cutoff_day', $cutoffDay)
+            ->where('period_start', '>=', $periodStart->toDateString())
+            ->where('period_end', '<=', $periodEnd->toDateString())
+            ->exists();
+
+        if ($exists) {
+            return null;
+        }
+
+        $rows = $this->buildUdmSnapshotRows();
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        return \App\Models\UdmSnapshot::create([
+            'cutoff_day' => $cutoffDay,
+            'period_start' => $periodStart->toDateString(),
+            'period_end' => $periodEnd->toDateString(),
+            'snapshot_date' => $today->toDateString(),
+            'uploaded_by' => $uploadedBy,
+            'uploaded_at' => $today,
+            'rows' => $rows,
+        ]);
+    }
+
+    public function getLatestUdmSnapshot(): ?\App\Models\UdmSnapshot
+    {
+        $cutoffDay = (int) Setting::valueOf('udm_cutoff_day', 1);
+        $today = now('Asia/Kuala_Lumpur');
+
+        if ((int) $today->format('d') < $cutoffDay) {
+            return \App\Models\UdmSnapshot::query()
+                ->where('cutoff_day', $cutoffDay)
+                ->orderByDesc('created_at')
+                ->first();
+        }
+
+        $periodStart = $today->copy()->day($cutoffDay)->startOfDay();
+
+        return \App\Models\UdmSnapshot::query()
+            ->where('cutoff_day', $cutoffDay)
+            ->where('period_start', '>=', $periodStart->toDateString())
+            ->orderByDesc('created_at')
+            ->first();
     }
 
     private function searchIndexForPath(?string $path = null): array

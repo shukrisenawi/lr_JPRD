@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
 const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
@@ -129,11 +129,10 @@ function DataTable({ rows, columns }) {
     );
 }
 
-export default function Laporan({ report, pemilih_report = null, recent_logins = [] }) {
+export default function Laporan({ report, pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [] }) {
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
-    const [diffMap, setDiffMap] = useState({});
 
     const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
 
@@ -214,36 +213,28 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
             };
         }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
 
-    useEffect(() => {
-        const srcName = report.source?.name;
-        const uploadTs = pemilih_report?.uploaded_at;
-        if (!srcName || !uploadTs || !udmTableRows.length) return;
-        const key = `udm_baseline_${srcName}_${uploadTs}`;
-        try {
-            const raw = localStorage.getItem(key);
-            if (raw) {
-                const prev = JSON.parse(raw);
-                const diffs = {};
-                for (const row of udmTableRows) {
-                    const p = prev.find(r => r.key === row.key);
-                    if (!p) continue;
-                    const rowDiffs = {};
-                    for (const col of diffCols) {
-                        const d = (row[col] ?? 0) - (p[col] ?? 0);
-                        if (d !== 0) rowDiffs[col] = d;
-                    }
-                    if (Object.keys(rowDiffs).length > 0) diffs[row.key] = rowDiffs;
-                }
-                setDiffMap(diffs);
-            } else {
-                localStorage.setItem(key, JSON.stringify(udmTableRows.map(r => {
-                    const o = { key: r.key };
-                    for (const col of diffCols) o[col] = r[col];
-                    return o;
-                })));
+    const diffMap = useMemo(() => {
+        if (!udm_snapshot || !udmTableRows.length) return {};
+        const snapshotRows = udm_snapshot;
+        const diffs = {};
+        for (const row of udmTableRows) {
+            const p = snapshotRows.find(r => r.key === row.key);
+            if (!p) continue;
+            const rowDiffs = {};
+            for (const col of diffCols) {
+                const d = (row[col] ?? 0) - (p[col] ?? 0);
+                if (d !== 0) rowDiffs[col] = d;
             }
-        } catch {}
-    }, [udmTableRows, report.source?.name, pemilih_report?.uploaded_at]);
+            if (Object.keys(rowDiffs).length > 0) diffs[row.key] = rowDiffs;
+
+            const siapDiff = (row.siap_cula ?? 0) - (p.siap_cula ?? 0);
+            if (siapDiff !== 0) {
+                if (!diffs[row.key]) diffs[row.key] = {};
+                diffs[row.key].siap_cula = siapDiff;
+            }
+        }
+        return diffs;
+    }, [udm_snapshot, udmTableRows]);
     const localityRows = filteredLocs.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((r) => r.total > 0);
@@ -275,7 +266,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
     const dmCols = [
         { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span>, headerClass: 'sticky-th', cellClass: 'sticky-td' },
 
-        { key: 'siap_cula', label: 'Siap', format: (v) => v > 0 ? <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-800">{v}</span> : <span className="text-slate-400">-</span>, headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
+        { key: 'siap_cula', label: 'Siap', format: (v, r) => fmtDiff(v, diffMap[r.key]?.siap_cula), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
         { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P), headerClass: groupH.demo, cellClass: groupC.demo },
@@ -283,16 +274,16 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
         { key: 'C', label: 'C', format: (v, r) => fmtDiff(v, diffMap[r.key]?.C), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'I', label: 'I', format: (v, r) => fmtDiff(v, diffMap[r.key]?.I), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'S', label: 'S', format: (v, r) => fmtDiff(v, diffMap[r.key]?.S), headerClass: groupH.demo, cellClass: groupC.demo },
-        { key: 'PAS', label: 'PAS', format: (v, r) => fmtCulaParty(v, r.completed_PAS), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtCulaParty(v, r.completed_PBBM), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'BN', label: 'BN', format: (v, r) => fmtCulaParty(v, r.completed_BN), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'PH', label: 'PH', format: (v, r) => fmtCulaParty(v, r.completed_PH), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'GTA', label: 'GTA', format: (v, r) => fmtCulaParty(v, r.completed_GTA), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'PLK', label: 'PLK', format: (v, r) => fmtCulaParty(v, r.completed_PLK), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtCulaParty(v, r.completed_AP), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtCulaParty(v, r.completed_TK), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'Mati', label: 'Mati', format: (v, r) => fmtCulaParty(v, r.completed_Mati), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'CULA', label: 'BAKI', format: (v) => <span className="font-bold text-slate-800">{fmt(v)}</span>, headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
+        { key: 'PAS', label: 'PAS', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PAS), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PBBM), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'BN', label: 'BN', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PH', label: 'PH', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PH), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'GTA', label: 'GTA', format: (v, r) => fmtDiff(v, diffMap[r.key]?.GTA), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'PLK', label: 'PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PLK), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Atas Pagar']), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Tak Kenal']), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'Mati', label: 'Mati', format: (v, r) => fmtDiff(v, diffMap[r.key]?.Mati), headerClass: groupH.party, cellClass: groupC.party },
+        { key: 'CULA', label: 'BAKI', format: (v, r) => fmtDiff(v, diffMap[r.key]?.CULA), headerClass: `${groupH.total} text-center`, cellClass: `${groupC.total} text-center` },
     ];
     const locCols = [
         { key: 'name', label: 'Lokaliti' }, { key: 'dm', label: 'UDM' },
@@ -354,6 +345,12 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
                             <StatCard label="Peratus Siap" value={report.summary.coverage_percent} detail={`${fmt(report.summary.total_localities)} lokaliti`} color="cyan" />
                         </div>
 
+                        {udm_snapshot_meta && (
+                            <div className="flex items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs text-sky-700">
+                                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                <span>Snapshot UDM disimpan pada <strong>{udm_snapshot_meta.snapshot_date}</strong> (hari potong: <strong>{udm_snapshot_meta.cutoff_day}</strong>). Nilai hijau = pertambahan dari snapshot.</span>
+                            </div>
+                        )}
                         <DataTable rows={udmTableRows} columns={dmCols} />
 
                         <div className="card p-3">

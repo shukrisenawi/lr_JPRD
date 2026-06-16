@@ -11,9 +11,18 @@ class LaporanController extends Controller
 {
     public function index(PemilihReportService $reportService): Response
     {
+        $snapshot = $reportService->getLatestUdmSnapshot();
+
         return Inertia::render('Laporan', [
             'report' => $reportService->buildFromDatabase(),
             'pemilih_report' => $reportService->getMetadata(),
+            'udm_snapshot' => $snapshot ? $snapshot->rows : null,
+            'udm_snapshot_meta' => $snapshot ? [
+                'cutoff_day' => $snapshot->cutoff_day,
+                'period_start' => $snapshot->period_start->format('d-m-Y'),
+                'period_end' => $snapshot->period_end->format('d-m-Y'),
+                'snapshot_date' => $snapshot->snapshot_date->format('d-m-Y'),
+            ] : null,
             'recent_logins' => User::query()
                 ->whereNotNull('last_login_at')
                 ->orderByDesc('last_login_at')

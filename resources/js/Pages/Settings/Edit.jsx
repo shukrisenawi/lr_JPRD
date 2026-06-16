@@ -197,21 +197,47 @@ function DatabaseBackupPanel({ logs }) {
     );
 }
 
+function UdmCutoffPanel({ value, onChange }) {
+    return (
+        <section className="card p-4">
+            <div>
+                <p className="label-section">UDM Snapshot</p>
+                <h3 className="mt-1 text-sm font-bold text-slate-800">Hari Potong UDM</h3>
+                <p className="mt-1 text-xs text-slate-500">Nilai UDM akan disimpan sebagai snapshot pada import pertama selepas tarikh ini setiap bulan.</p>
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+                <label className="text-xs font-semibold text-slate-700">Hari:</label>
+                <select value={value} onChange={(e) => onChange(e.target.value)} className="input-field w-auto py-1.5 text-xs">
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                    ))}
+                </select>
+                <span className="text-xs text-slate-500">hari setiap bulan</span>
+            </div>
+        </section>
+    );
+}
+
 export default function Edit({ settings, backup_logs }) {
-    const { data, setData, put, processing, errors } = useForm({ google_sheet_url: settings.google_sheet_url ?? '' });
+    const { data, setData, put, processing, errors } = useForm({
+        google_sheet_url: settings.google_sheet_url ?? '',
+        udm_cutoff_day: settings.udm_cutoff_day ?? 1,
+    });
     const submit = (e) => { e.preventDefault(); put(route('settings.update')); };
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const isMasterAdmin = auth.user?.role?.is_master_admin ?? false;
+    const canSettings = allowedModules.includes('settings') || isMasterAdmin;
 
     return (
         <AuthenticatedLayout header={
-            <div><p className="label-section">Settings</p><h2 className="mt-0.5 heading-lg">Tetapan Sistem</h2><p className="text-muted mt-0.5">Urus tetapan Google Sheet dan data pemilih semasa.</p></div>
+            <div><p className="label-section">Settings</p><h2 className="mt-0.5 heading-lg">Tetapan Sistem</h2><p className="text-muted mt-0.5">Urus tetapan Google Sheet, data pemilih, dan snapshot UDM.</p></div>
         }>
             <Head title="Settings" />
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
                 {(allowedModules.includes('settings.upload-pemilih') || isMasterAdmin) && <PemilihUploadPanel report={settings.pemilih_report} />}
                 {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel logs={backup_logs} />}
+                {canSettings && <UdmCutoffPanel value={data.udm_cutoff_day} onChange={(v) => setData('udm_cutoff_day', v)} />}
                 {(allowedModules.includes('settings.google-sheet') || isMasterAdmin) && (
                     <div className="card p-4">
                         <form onSubmit={submit} className="space-y-3">

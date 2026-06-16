@@ -21,6 +21,7 @@ class SettingsController extends Controller
             'settings' => [
                 'google_sheet_url' => $googleSheetService->getSheetUrl(),
                 'pemilih_report' => $this->pemilihReportMetadata(),
+                'udm_cutoff_day' => Setting::valueOf('udm_cutoff_day', 1),
             ],
             'backup_logs' => BackupLog::query()
                 ->orderByDesc('backed_up_at')
@@ -38,15 +39,31 @@ class SettingsController extends Controller
 
     public function update(Request $request, GoogleSheetService $googleSheetService): RedirectResponse
     {
-        abort_unless($request->user()->canAccessModule('settings.google-sheet'), 403);
+        $canSheet = $request->user()->canAccessModule('settings.google-sheet');
+        $canSettings = $request->user()->canAccessModule('settings');
+        $isMaster = $request->user()->role?->is_master_admin ?? false;
 
-        $validated = $request->validate([
-            'google_sheet_url' => ['required', 'url'],
-        ]);
+        $rules = [];
 
-        $googleSheetService->updateSheetUrl($validated['google_sheet_url']);
+        if ($canSheet || $isMaster) {
+            $rules['google_sheet_url'] = ['required', 'url'];
+        }
 
-        return back()->with('success', 'Tetapan URL Google Sheet berjaya dikemaskini.');
+        if ($canSettings || $isMaster) {
+            $rules['udm_cutoff_day'] = ['nullable', 'integer', 'min:1', 'max:31'];
+        }
+
+        $validated = $request->validate($rules);
+
+        if (isset($validated['google_sheet_url'])) {
+            $googleSheetService->updateSheetUrl($validated['google_sheet_url']);
+        }
+
+        if (isset($validated['udm_cutoff_day'])) {
+            Setting::setValue('udm_cutoff_day', (int) $validated['udm_cutoff_day']);
+        }
+
+        return back()->with('success', 'Tetapan berjaya dikemaskini.');
     }
 
     public function uploadPemilih(Request $request, PemilihReportService $reportService): RedirectResponse|\Illuminate\Http\JsonResponse
@@ -79,6 +96,7 @@ class SettingsController extends Controller
             Setting::setValue('pemilih_report_uploaded_at', now('Asia/Kuala_Lumpur')->format('d-m-Y h:i A'));
             $reportService->syncUploadedVoters($storedPath);
             $reportService->buildFromPath($storedPath);
+            $reportService->saveUdmSnapshotOnImport($request->user()->name);
         } catch (\Throwable $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
