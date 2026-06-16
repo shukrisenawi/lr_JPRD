@@ -8,9 +8,11 @@ use App\Models\PemilihRecord;
 use App\Models\VoterCommunication;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -185,7 +187,8 @@ class VccController extends Controller
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
-            ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters));
+            ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
+            ->when($filters['bulan_lahir'] !== '', fn (Builder $builder) => $builder->whereMonth('date_of_birth', (int) $filters['bulan_lahir']));
 
         if (! $skipMarkedFilter) {
             $query->when(
@@ -217,7 +220,13 @@ class VccController extends Controller
 
     private function paginateVoters(array $filters): LengthAwarePaginator
     {
-        return $this->buildEligibleVotersQuery($filters)
+        $query = $this->buildEligibleVotersQuery($filters);
+
+        if ($filters['per_udm_count'] > 0) {
+            return $this->paginateDistributedVoters($filters);
+        }
+
+        return $query
             ->with('culaWorkItem.marker')
             ->orderByRaw("
                 CASE
@@ -232,6 +241,116 @@ class VccController extends Controller
             ->paginate(20)
             ->withQueryString()
             ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
+    }
+
+    private function paginateDistributedVoters(array $filters): LengthAwarePaginator
+    {
+        $perUdmCount = $filters['per_udm_count'];
+        $selectedUdm = $filters['udm'];
+
+        if ($selectedUdm === '') {
+            $udms = request()->user()
+                ? PemilihRecord::where('status', 'aktif')->whereNotNull('dm')->where('dm', '!=', '')
+                    ->select('dm')->distinct()->orderBy('dm')->pluck('dm')->all()
+                : [];
+
+            $allIds = collect();
+            foreach ($udms as $udm) {
+                $udmFilters = array_merge($filters, ['udm' => $udm]);
+                $ids = $this->distributeIdsForUdm($udmFilters);
+                $allIds = $allIds->merge($ids);
+            }
+
+            $page = Paginator::resolveCurrentPage();
+            $perPage = 20;
+            $total = $allIds->count();
+            $offset = ($page - 1) * $perPage;
+            $sliceIds = $allIds->slice($offset, $perPage)->values();
+
+            $items = PemilihRecord::with('culaWorkItem.marker')
+                ->whereIn('id', $sliceIds)
+                ->orderBy('dm')
+                ->orderBy('locality')
+                ->orderBy('no_kp')
+                ->get()
+                ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter));
+
+            return new LengthAwarePaginator(
+                $items,
+                $total,
+                $perPage,
+                $page,
+                ['path' => Paginator::resolveCurrentPath(), 'query' => request()->query()]
+            );
+        }
+
+        $ids = $this->distributeIdsForUdm($filters);
+
+        $page = Paginator::resolveCurrentPage();
+        $perPage = 20;
+        $total = $ids->count();
+        $offset = ($page - 1) * $perPage;
+        $sliceIds = $ids->slice($offset, $perPage)->values();
+
+        $items = PemilihRecord::with('culaWorkItem.marker')
+            ->whereIn('id', $sliceIds)
+            ->orderBy('locality')
+            ->orderBy('no_kp')
+            ->get()
+            ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter));
+
+        return new LengthAwarePaginator(
+            $items,
+            $total,
+            $perPage,
+            $page,
+            ['path' => Paginator::resolveCurrentPath(), 'query' => request()->query()]
+        );
+    }
+
+    private function distributeIdsForUdm(array $filters): \Illuminate\Support\Collection
+    {
+        $perUdmCount = $filters['per_udm_count'];
+        $selectedUdm = $filters['udm'];
+
+        $localityCounts = $this->buildEligibleVotersQuery($filters)
+            ->where('dm', $selectedUdm)
+            ->select('locality', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('locality')
+            ->orderByDesc('cnt')
+            ->pluck('cnt', 'locality');
+
+        if ($localityCounts->isEmpty()) {
+            return collect();
+        }
+
+        $numLocalities = $localityCounts->count();
+        $base = intdiv($perUdmCount, $numLocalities);
+        $remainder = $perUdmCount % $numLocalities;
+
+        $allocations = [];
+        $i = 0;
+        foreach ($localityCounts as $locality => $cnt) {
+            $allocated = ($i < $remainder ? $base + 1 : $base);
+            $allocations[$locality] = max(min($allocated, $cnt), 0);
+            $i++;
+        }
+
+        $ids = collect();
+        foreach ($allocations as $locality => $limit) {
+            if ($limit <= 0) continue;
+
+            $localityIds = $this->buildEligibleVotersQuery($filters)
+                ->where('dm', $selectedUdm)
+                ->where('locality', $locality)
+                ->orderBy('no_kp')
+                ->limit($limit)
+                ->pluck('id');
+
+            $ids = $ids->merge($localityIds);
+        }
+
+        return $ids;
     }
 
     private function availableUdms(): array
@@ -309,6 +428,8 @@ class VccController extends Controller
             }
         }
 
+        $rawPerUdm = $request->query('per_udm_count', '');
+
         return [
             'udm' => $requestedUdm,
             'locality' => $requestedLocality,
@@ -319,6 +440,8 @@ class VccController extends Controller
             'jantina' => trim((string) $request->query('jantina', '')),
             'umur_dari' => $request->query('umur_dari') !== null && $request->query('umur_dari') !== '' ? (int) $request->query('umur_dari') : null,
             'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
+            'per_udm_count' => $rawPerUdm !== '' && ctype_digit($rawPerUdm) ? (int) $rawPerUdm : 0,
+            'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
         ];
     }
 

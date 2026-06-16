@@ -141,6 +141,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         jantina: filters.jantina ?? '',
         umur_dari: filters.umur_dari ?? '',
         umur_hingga: filters.umur_hingga ?? '',
+        per_udm_count: filters.per_udm_count ?? '',
+        bulan_lahir: filters.bulan_lahir ?? '',
     });
 
     useEffect(() => {
@@ -153,8 +155,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             jantina: filters.jantina ?? '',
             umur_dari: filters.umur_dari ?? '',
             umur_hingga: filters.umur_hingga ?? '',
+            per_udm_count: filters.per_udm_count ?? '',
+            bulan_lahir: filters.bulan_lahir ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir]);
 
     useEffect(() => {
         setLocalVoters(voters);
@@ -224,6 +228,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             jantina: formState.jantina,
             umur_dari: formState.umur_dari ?? '',
             umur_hingga: formState.umur_hingga ?? '',
+            per_udm_count: formState.per_udm_count ?? '',
+            bulan_lahir: formState.bulan_lahir ?? '',
         });
 
         try {
@@ -377,6 +383,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const showLocalityColumn = formState.locality === '';
+    const showUdmColumn = formState.udm === '';
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
     const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group}${selectedGroup.kod_culas?.length ? ` — ${selectedGroup.kod_culas.join(', ')}` : ''})` : '';
     const headerTitle = `Senarai Semua Pemilih${groupSuffix}`;
@@ -394,6 +401,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 jantina: formState.jantina,
                 umur_dari: formState.umur_dari ?? '',
                 umur_hingga: formState.umur_hingga ?? '',
+                per_udm_count: formState.per_udm_count ?? '',
+                bulan_lahir: formState.bulan_lahir ?? '',
             });
 
             try {
@@ -590,7 +599,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)] xl:items-end">
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_7rem_7rem_5rem_minmax(0,1fr)] xl:items-end">
                             <div>
                                 <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
@@ -633,6 +642,34 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     <option value="custom">Custom</option>
                                     {groups.map((g) => (
                                         <option key={g.id} value={g.id}>{g.nama_group}{g.kod_culas?.length ? ` (${g.kod_culas.join(', ')})` : ''}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="vcc-per-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
+                                <input
+                                    id="vcc-per-udm"
+                                    type="number"
+                                    min="0"
+                                    value={formState.per_udm_count}
+                                    onChange={(event) => updateFilter('per_udm_count', event.target.value)}
+                                    className="input-field mt-1.5"
+                                    placeholder="cth: 20"
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="vcc-bulan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
+                                <select
+                                    id="vcc-bulan"
+                                    value={formState.bulan_lahir}
+                                    onChange={(event) => updateFilter('bulan_lahir', event.target.value)}
+                                    className="input-field mt-1.5"
+                                >
+                                    <option value="">Semua</option>
+                                    {['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'].map((nama, i) => (
+                                        <option key={i + 1} value={i + 1}>{nama}</option>
                                     ))}
                                 </select>
                             </div>
@@ -805,8 +842,20 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                 </div>
                                             )}
                                         </div>
+                                        {showUdmColumn && !showLocalityColumn && (
+                                            <div>
+                                                <span className="font-semibold text-green-700">UDM</span>
+                                                <p className="mt-0.5 font-bold text-slate-800">{voter.dm || '-'}</p>
+                                            </div>
+                                        )}
                                         {showLocalityColumn && (
                                             <div className="grid gap-2" style={{gridTemplateColumns: 'auto 1fr'}}>
+                                                {showUdmColumn && (
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">UDM</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.dm || '-'}</p>
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <span className="font-semibold text-green-700">Lokaliti</span>
                                                     <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>

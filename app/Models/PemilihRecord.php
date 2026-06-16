@@ -21,6 +21,7 @@ class PemilihRecord extends Model
         'locality',
         'gender',
         'race',
+        'date_of_birth',
         'cula_code',
         'cula_display_label',
         'address',
