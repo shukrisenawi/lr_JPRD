@@ -14,10 +14,10 @@ function fmtP(v) { return `${fmt(v ?? 0)}%`; }
 function fmtDiff(v, diff) {
     if (diff === undefined || diff === 0 || diff < 0) return fmt(v);
     return (
-        <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1 py-0.5 text-green-800">
+        <span className="inline-flex items-center gap-1">
             <span className="text-xs font-semibold">{fmt(v)}</span>
-            <span className="text-[10px] font-bold opacity-80 inline-flex items-center">
-                <span className="leading-none mr-px">+</span>
+            <span className="inline-flex items-center gap-0.5 rounded bg-green-100 px-1 py-0.5 text-[10px] font-bold leading-tight text-green-800">
+                <span className="leading-none">+</span>
                 <span>{fmt(diff)}</span>
             </span>
         </span>
