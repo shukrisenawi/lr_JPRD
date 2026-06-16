@@ -631,16 +631,16 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
-                    <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className="space-y-3">
-                            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[12rem_12rem_10rem] xl:items-end">
+                    <div className="rounded-xl border border-green-600 bg-white p-3 shadow-sm shadow-green-600/20 overflow-hidden">
+                        <div className="space-y-2">
+                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[12rem_12rem_10rem] xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                     <select
                                         id="vcc-udm"
                                         value={formState.udm}
                                         onChange={(event) => updateFilter('udm', event.target.value)}
-                                        className="input-field mt-1.5"
+                                        className="input-field mt-1"
                                     >
                                         <option value="">Semua UDM</option>
                                         {udms.map((udm) => (
@@ -655,7 +655,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         id="vcc-locality"
                                         value={formState.locality}
                                         onChange={(event) => updateFilter('locality', event.target.value)}
-                                        className="input-field mt-1.5"
+                                        className="input-field mt-1"
                                     >
                                         <option value="">Semua Lokaliti</option>
                                         {localities.map((locality) => (
@@ -670,7 +670,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         id="vcc-group"
                                         value={formState.group_id}
                                         onChange={(event) => updateFilter('group_id', event.target.value)}
-                                        className="input-field mt-1.5"
+                                        className="input-field mt-1"
                                     >
                                         <option value="">Semua Group</option>
                                         <option value="custom">Custom</option>
@@ -681,7 +681,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
-                            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_7rem_5rem_5rem_5rem] xl:items-end">
+                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_7rem_5rem_5rem_5rem] xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-per-udm" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
@@ -690,7 +690,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         min="0"
                                         value={formState.per_udm_count}
                                         onChange={(event) => updateFilter('per_udm_count', event.target.value)}
-                                        className="input-field mt-1.5"
+                                        className="input-field mt-1"
                                         placeholder="cth: 20"
                                     />
                                 </div>
@@ -701,7 +701,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         id="vcc-bulan"
                                         value={formState.bulan_lahir}
                                         onChange={(event) => updateFilter('bulan_lahir', event.target.value)}
-                                        className="input-field mt-1.5"
+                                        className="input-field mt-1"
                                     >
                                         <option value="">Semua</option>
                                         {['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'].map((nama, i) => (
@@ -714,7 +714,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Siap</label>
                                     <label
                                         htmlFor="vcc-dah-cula"
-                                        className="input-field mt-1.5 inline-flex items-center px-3 py-2"
+                                        className="input-field mt-1 inline-flex items-center px-3 py-1.5"
                                     >
                                         <input
                                             id="vcc-dah-cula"
@@ -730,7 +730,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     <label htmlFor="vcc-ada-tel" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Ada Tel</label>
                                     <label
                                         htmlFor="vcc-ada-tel"
-                                        className="input-field mt-1.5 inline-flex items-center px-3 py-2"
+                                        className="input-field mt-1 inline-flex items-center px-3 py-1.5"
                                     >
                                         <input
                                             id="vcc-ada-tel"
@@ -745,7 +745,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-[0.08em] text-transparent">Reset</label>
                                     <button type="button" onClick={() => window.location.assign(route('vcc.index'))}
-                                        className="input-field mt-1.5 inline-flex items-center justify-center bg-white px-2 py-2 text-xs font-bold text-black hover:bg-slate-100">
+                                        className="input-field mt-1 inline-flex items-center justify-center bg-white px-2 py-1.5 text-xs font-bold text-black hover:bg-slate-100">
                                         Reset
                                     </button>
                                 </div>
@@ -758,14 +758,14 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-keturunan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Keturunan</label>
-                                    <select id="vcc-keturunan" value={formState.keturunan} onChange={(e) => updateFilter('keturunan', e.target.value)} className="input-field mt-1.5">
+                                    <select id="vcc-keturunan" value={formState.keturunan} onChange={(e) => updateFilter('keturunan', e.target.value)} className="input-field mt-1">
                                         <option value="">Semua</option>
                                         {available_races.map((r) => <option key={r} value={r}>{r}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label htmlFor="vcc-jantina" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Jantina</label>
-                                    <select id="vcc-jantina" value={formState.jantina} onChange={(e) => updateFilter('jantina', e.target.value)} className="input-field mt-1.5">
+                                    <select id="vcc-jantina" value={formState.jantina} onChange={(e) => updateFilter('jantina', e.target.value)} className="input-field mt-1">
                                         <option value="">Semua</option>
                                         <option value="L">Lelaki</option>
                                         <option value="P">Perempuan</option>
@@ -773,11 +773,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                                 <div>
                                     <label htmlFor="vcc-umur-dari" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Umur Dari</label>
-                                    <input id="vcc-umur-dari" type="number" min="0" max="150" value={formState.umur_dari} onChange={(e) => updateFilter('umur_dari', e.target.value)} className="input-field mt-1.5" placeholder="cth: 21" />
+                                    <input id="vcc-umur-dari" type="number" min="0" max="150" value={formState.umur_dari} onChange={(e) => updateFilter('umur_dari', e.target.value)} className="input-field mt-1" placeholder="cth: 21" />
                                 </div>
                                 <div>
                                     <label htmlFor="vcc-umur-hingga" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Umur Hingga</label>
-                                    <input id="vcc-umur-hingga" type="number" min="0" max="150" value={formState.umur_hingga} onChange={(e) => updateFilter('umur_hingga', e.target.value)} className="input-field mt-1.5" placeholder="cth: 60" />
+                                    <input id="vcc-umur-hingga" type="number" min="0" max="150" value={formState.umur_hingga} onChange={(e) => updateFilter('umur_hingga', e.target.value)} className="input-field mt-1" placeholder="cth: 60" />
                                 </div>
                             </div>
                         )}
@@ -785,7 +785,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                         {initialCulaCodes?.length > 0 && (
                             <div className="mt-3">
                                 <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Kod Cula</label>
-                                <div className="mt-1.5 flex max-h-28 flex-wrap gap-1 overflow-y-auto">
+                                <div className="mt-1 flex max-h-28 flex-wrap gap-1 overflow-y-auto">
                                     {initialCulaCodes.map((c) => {
                                         const selected = formState.cula_codes.split(',').includes(c.code);
                                         return (
