@@ -721,7 +721,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-[0.08em] text-transparent">Reset</label>
                                 <button type="button" onClick={() => window.location.assign(route('vcc.index'))}
-                                    className="input-field mt-1.5 inline-flex items-center justify-center bg-white px-2 py-2 text-xs font-bold text-red-600 hover:bg-red-50">
+                                    className="input-field mt-1.5 inline-flex items-center justify-center bg-white px-2 py-2 text-xs font-bold text-black hover:bg-slate-100">
                                     Reset
                                 </button>
                             </div>
