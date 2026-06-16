@@ -724,7 +724,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                 }}
                                                 className={`rounded-md border px-2 py-1 text-[11px] font-bold leading-tight transition ${selected ? 'border-green-600 bg-green-100 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'}`}
                                             >
-                                                {c.label}
+                                                {c.code}
                                             </button>
                                         );
                                     })}
