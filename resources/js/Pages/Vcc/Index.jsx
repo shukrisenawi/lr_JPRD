@@ -134,7 +134,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         umur_dari: filters.umur_dari ?? '',
         umur_hingga: filters.umur_hingga ?? '',
         per_udm_count: filters.per_udm_count ?? '',
-        bulan_lahir: filters.bulan_lahir || String(new Date().getMonth() + 1),
+        bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
         cula_codes: filters.cula_codes ?? '',
     });
 
@@ -149,14 +149,14 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             umur_dari: filters.umur_dari ?? '',
             umur_hingga: filters.umur_hingga ?? '',
             per_udm_count: filters.per_udm_count ?? '',
-            bulan_lahir: filters.bulan_lahir || String(new Date().getMonth() + 1),
+            bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
             cula_codes: filters.cula_codes ?? '',
         });
     }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes]);
 
     const initialMonth = useRef(true);
     useEffect(() => {
-        if (initialMonth.current && !filters.bulan_lahir) {
+        if (initialMonth.current && filters.bulan_lahir === undefined) {
             initialMonth.current = false;
             applyFilters({ ...formState, bulan_lahir: String(new Date().getMonth() + 1) }, { preserveState: false });
         }
