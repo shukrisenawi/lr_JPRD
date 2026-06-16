@@ -58,15 +58,6 @@ function UserGroupIcon({ className = 'h-4 w-4' }) {
     );
 }
 
-function UserIcon({ className = 'h-4 w-4' }) {
-    return (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-        </svg>
-    );
-}
-
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
 
 function getBarColor(entry, i) {
@@ -1336,28 +1327,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                                     )}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const nama = voter.name.replace(/\s+BIN\s+|\s+BINTI\s+.*$/i, '').trim();
-                                                        if (nama) {
-                                                            doSearch(nama);
-                                                            const el = document.getElementById('culaan-search');
-                                                            if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-                                                        }
-                                                    }}
-                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
-                                                    title="Cari nama ini"
-                                                >
-                                                    <UserIcon className="h-3.5 w-3.5" />
-                                                </button>
                                                 {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             setSelectedVoterForCula(voter);
+                                                            setIsCulaFromDataError(false);
                                                             setShowCulaModal(true);
                                                         }}
                                                         className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500"
