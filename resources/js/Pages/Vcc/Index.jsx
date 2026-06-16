@@ -632,119 +632,123 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_7rem_7rem_5rem_3rem] xl:items-end">
-                            <div>
-                                <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
-                                <select
-                                    id="vcc-udm"
-                                    value={formState.udm}
-                                    onChange={(event) => updateFilter('udm', event.target.value)}
-                                    className="input-field mt-1.5"
-                                >
-                                    <option value="">Semua UDM</option>
-                                    {udms.map((udm) => (
-                                        <option key={udm} value={udm}>{udm}</option>
-                                    ))}
-                                </select>
+                        <div className="space-y-3">
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem] xl:items-end">
+                                <div>
+                                    <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
+                                    <select
+                                        id="vcc-udm"
+                                        value={formState.udm}
+                                        onChange={(event) => updateFilter('udm', event.target.value)}
+                                        className="input-field mt-1.5"
+                                    >
+                                        <option value="">Semua UDM</option>
+                                        {udms.map((udm) => (
+                                            <option key={udm} value={udm}>{udm}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="vcc-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
+                                    <select
+                                        id="vcc-locality"
+                                        value={formState.locality}
+                                        onChange={(event) => updateFilter('locality', event.target.value)}
+                                        className="input-field mt-1.5"
+                                    >
+                                        <option value="">Semua Lokaliti</option>
+                                        {localities.map((locality) => (
+                                            <option key={locality} value={locality}>{locality}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="vcc-group" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Group Pemilih</label>
+                                    <select
+                                        id="vcc-group"
+                                        value={formState.group_id}
+                                        onChange={(event) => updateFilter('group_id', event.target.value)}
+                                        className="input-field mt-1.5"
+                                    >
+                                        <option value="">Semua Group</option>
+                                        <option value="custom">Custom</option>
+                                        {groups.map((g) => (
+                                            <option key={g.id} value={g.id}>{g.nama_group}{g.kod_culas?.length ? ` (${g.kod_culas.join(', ')})` : ''}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
-                            <div>
-                                <label htmlFor="vcc-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
-                                <select
-                                    id="vcc-locality"
-                                    value={formState.locality}
-                                    onChange={(event) => updateFilter('locality', event.target.value)}
-                                    className="input-field mt-1.5"
-                                >
-                                    <option value="">Semua Lokaliti</option>
-                                    {localities.map((locality) => (
-                                        <option key={locality} value={locality}>{locality}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label htmlFor="vcc-group" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Group Pemilih</label>
-                                <select
-                                    id="vcc-group"
-                                    value={formState.group_id}
-                                    onChange={(event) => updateFilter('group_id', event.target.value)}
-                                    className="input-field mt-1.5"
-                                >
-                                    <option value="">Semua Group</option>
-                                    <option value="custom">Custom</option>
-                                    {groups.map((g) => (
-                                        <option key={g.id} value={g.id}>{g.nama_group}{g.kod_culas?.length ? ` (${g.kod_culas.join(', ')})` : ''}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label htmlFor="vcc-per-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
-                                <input
-                                    id="vcc-per-udm"
-                                    type="number"
-                                    min="0"
-                                    value={formState.per_udm_count}
-                                    onChange={(event) => updateFilter('per_udm_count', event.target.value)}
-                                    className="input-field mt-1.5"
-                                    placeholder="cth: 20"
-                                />
-                            </div>
-
-                            <div>
-                                <label htmlFor="vcc-bulan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
-                                <select
-                                    id="vcc-bulan"
-                                    value={formState.bulan_lahir}
-                                    onChange={(event) => updateFilter('bulan_lahir', event.target.value)}
-                                    className="input-field mt-1.5"
-                                >
-                                    <option value="">Semua</option>
-                                    {['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'].map((nama, i) => (
-                                        <option key={i + 1} value={i + 1}>{nama}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Siap</label>
-                                <label
-                                    htmlFor="vcc-dah-cula"
-                                    className="input-field mt-1.5 inline-flex items-center px-3 py-2"
-                                >
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[7rem_7rem_5rem_5rem_5rem] xl:items-end">
+                                <div>
+                                    <label htmlFor="vcc-per-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
-                                        id="vcc-dah-cula"
-                                        type="checkbox"
-                                        checked={formState.show_marked}
-                                        onChange={(event) => updateFilter('show_marked', event.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
+                                        id="vcc-per-udm"
+                                        type="number"
+                                        min="0"
+                                        value={formState.per_udm_count}
+                                        onChange={(event) => updateFilter('per_udm_count', event.target.value)}
+                                        className="input-field mt-1.5"
+                                        placeholder="cth: 20"
                                     />
-                                </label>
-                            </div>
+                                </div>
 
-                            <div>
-                                <label htmlFor="vcc-ada-tel" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Ada Tel</label>
-                                <label
-                                    htmlFor="vcc-ada-tel"
-                                    className="input-field mt-1.5 inline-flex items-center px-3 py-2"
-                                >
-                                    <input
-                                        id="vcc-ada-tel"
-                                        type="checkbox"
-                                        checked={formState.has_phone}
-                                        onChange={(event) => updateFilter('has_phone', event.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
-                                    />
-                                </label>
-                            </div>
+                                <div>
+                                    <label htmlFor="vcc-bulan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
+                                    <select
+                                        id="vcc-bulan"
+                                        value={formState.bulan_lahir}
+                                        onChange={(event) => updateFilter('bulan_lahir', event.target.value)}
+                                        className="input-field mt-1.5"
+                                    >
+                                        <option value="">Semua</option>
+                                        {['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'].map((nama, i) => (
+                                            <option key={i + 1} value={i + 1}>{nama}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-[0.08em] text-transparent">Reset</label>
-                                <button type="button" onClick={() => window.location.assign(route('vcc.index'))}
-                                    className="input-field mt-1.5 inline-flex items-center justify-center bg-white px-2 py-2 text-xs font-bold text-black hover:bg-slate-100">
-                                    Reset
-                                </button>
+                                <div>
+                                    <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Siap</label>
+                                    <label
+                                        htmlFor="vcc-dah-cula"
+                                        className="input-field mt-1.5 inline-flex items-center px-3 py-2"
+                                    >
+                                        <input
+                                            id="vcc-dah-cula"
+                                            type="checkbox"
+                                            checked={formState.show_marked}
+                                            onChange={(event) => updateFilter('show_marked', event.target.checked)}
+                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="vcc-ada-tel" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Ada Tel</label>
+                                    <label
+                                        htmlFor="vcc-ada-tel"
+                                        className="input-field mt-1.5 inline-flex items-center px-3 py-2"
+                                    >
+                                        <input
+                                            id="vcc-ada-tel"
+                                            type="checkbox"
+                                            checked={formState.has_phone}
+                                            onChange={(event) => updateFilter('has_phone', event.target.checked)}
+                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase tracking-[0.08em] text-transparent">Reset</label>
+                                    <button type="button" onClick={() => window.location.assign(route('vcc.index'))}
+                                        className="input-field mt-1.5 inline-flex items-center justify-center bg-white px-2 py-2 text-xs font-bold text-black hover:bg-slate-100">
+                                        Reset
+                                    </button>
+                                </div>
                             </div>
 
                             {actionError && <InputError className="mt-1" message={actionError} />}
