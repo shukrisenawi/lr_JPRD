@@ -835,7 +835,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                             <>
                                                                                 <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
                                                                                     className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
-                                                                                    Cul
+                                                                                    Cula
                                                                                 </button>
                                                                                 <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
                                                                                     className="rounded bg-amber-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-amber-500">
@@ -919,7 +919,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                         <>
                                                                             <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
                                                                                 className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
-                                                                                Cul
+                                                                                Cula
                                                                             </button>
                                                                             <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
                                                                                 className="rounded bg-amber-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-amber-500">
