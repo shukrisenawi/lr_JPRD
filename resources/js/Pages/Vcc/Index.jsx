@@ -430,7 +430,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
             { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
             { value: voter.address || '-', type: 'String', align: 'left', wrap: true },
-            { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
+            { value: fmtPhone(voter.phone_mobile || voter.phone_home), type: 'String', align: 'center' },
             { value: '', type: 'String', align: 'center' },
         ]);
 
