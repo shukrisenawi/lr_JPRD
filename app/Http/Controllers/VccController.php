@@ -677,6 +677,7 @@ class VccController extends Controller
     {
         $codes = [];
         $codeRanges = [
+            ['?', '0'],
             range(1, 10),
             [13],
             ['1A', '1B', '1P'],
@@ -687,9 +688,11 @@ class VccController extends Controller
 
         foreach ($codeRanges as $range) {
             foreach ($range as $code) {
-                $label = match (true) {
-                    $code === 1 => 'UMNO',
-                    $code === 2 => 'PAS',
+            $label = match (true) {
+                $code === '?' => 'BELUM CULA',
+                $code === '0' => 'BELUM CULA',
+                $code === 1 => 'UMNO',
+                $code === 2 => 'PAS',
                     $code === 3 => 'PAS LUAR',
                     $code === 4 => 'ATAS PAGAR',
                     $code === 5 => 'PKR',
