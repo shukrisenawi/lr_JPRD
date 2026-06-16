@@ -350,12 +350,7 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
                             <StatCard label="Peratus Siap" value={report.summary.coverage_percent} detail={`${fmt(report.summary.total_localities)} lokaliti`} color="cyan" />
                         </div>
 
-                        {udm_snapshot_meta && (
-                            <div className="flex items-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs text-sky-700">
-                                <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                                <span>Data dikira bermula pada <strong>{udm_snapshot_meta.snapshot_time}</strong> — sistem GMT +8. Nilai hijau = pertambahan dari snapshot.</span>
-                            </div>
-                        )}
+
                         <DataTable rows={udmTableRows} columns={dmCols} />
 
                         <div className="card p-3">
