@@ -1522,7 +1522,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             <table className="w-full text-xs">
                                 <thead>
                                     <tr className="border-b border-slate-200 bg-slate-50">
-                                        <th className="whitespace-nowrap px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Nama Group</th>
+                                        <th className="jadual-sticky-th whitespace-nowrap px-3 py-2 text-left font-bold uppercase tracking-[0.08em] text-slate-600">Nama Group</th>
                                         {tableColumns.map((code) => (
                                             <th key={code} title={codeLabels[code] ?? code} className={`whitespace-nowrap px-2 py-2 text-center font-bold uppercase tracking-[0.08em] text-amber-900 bg-amber-100`}>{code}</th>
                                         ))}
@@ -1536,10 +1536,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </tr>
                                     ) : tableRows.map((row, i) => (
                                         <tr key={i} className={`border-b border-slate-100 last:border-b-0 ${i % 2 === 1 ? 'bg-slate-50/70' : ''} hover:bg-slate-50`}>
-                                        <td className="whitespace-nowrap px-3 py-2 font-bold text-slate-800">
+                                        <td className="jadual-sticky-td whitespace-nowrap px-3 py-2 font-bold text-slate-800">
                                             {row.nama_group}
                                             {row.umur_dari !== null && row.umur_dari !== undefined && row.umur_akhir !== null && row.umur_akhir !== undefined && (
-                                                <span className="ml-1 text-slate-400 text-[10px] font-normal">(umur {row.umur_dari}-{row.umur_akhir})</span>
+                                                <span className="hidden sm:inline ml-1 text-slate-400 text-[10px] font-normal">(umur {row.umur_dari}-{row.umur_akhir})</span>
                                             )}
                                         </td>
                                             {tableColumns.map((code) => (
