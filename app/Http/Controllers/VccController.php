@@ -40,13 +40,26 @@ class VccController extends Controller
 
     public function search(Request $request): JsonResponse
     {
+        $filters = $this->resolveFilters($request);
         $query = trim((string) $request->query('q', ''));
+        $exportAll = $request->boolean('all');
+
+        if ($exportAll) {
+            $voters = $this->buildEligibleVotersQuery($filters)
+                ->with('culaWorkItem.marker')
+                ->orderBy('dm')
+                ->orderBy('locality')
+                ->orderBy('no_kp')
+                ->get()
+                ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
+                ->values();
+
+            return response()->json(['voters' => $voters]);
+        }
 
         if (mb_strlen($query) < 2) {
             return response()->json(['suggestions' => []]);
         }
-
-        $filters = $this->resolveFilters($request);
 
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 

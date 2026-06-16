@@ -459,7 +459,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             const groups = {};
             for (const v of exportRows) {
                 const k = v.dm || 'Tanpa UDM';
-                (groups[k] ??= []).push(v);
+                if (!groups[k]) groups[k] = [];
+                groups[k].push(v);
             }
             let globalIdx = 0;
             for (const [udm, udmVoters] of Object.entries(groups)) {
@@ -816,7 +817,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     Object.entries(
                                         rows.reduce((acc, v) => {
                                             const k = v.dm || 'Tanpa UDM';
-                                            (acc[k] ??= []).push(v);
+                                            if (!acc[k]) acc[k] = [];
+                                            acc[k].push(v);
                                             return acc;
                                         }, {})
                                     ).map(([udm, udmVoters]) => (
