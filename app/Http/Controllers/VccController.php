@@ -238,8 +238,13 @@ class VccController extends Controller
             return $this->paginateDistributedVoters($filters);
         }
 
+        $query->with('culaWorkItem.marker');
+
+        if ($filters['udm'] === '') {
+            $query->orderBy('dm');
+        }
+
         return $query
-            ->with('culaWorkItem.marker')
             ->orderByRaw("
                 CASE
                     WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
@@ -398,6 +403,8 @@ class VccController extends Controller
             ->distinct()
             ->orderBy('dm')
             ->pluck('dm')
+            ->map(fn ($v) => trim($v))
+            ->unique()
             ->values()
             ->all();
     }
@@ -527,7 +534,7 @@ class VccController extends Controller
             'whatsapp_link' => $this->generateWhatsAppLink($voter->phone_mobile),
             'address' => $voter->address,
             'age' => $this->calculateAge($voter->no_kp),
-            'dm' => $voter->dm,
+            'dm' => trim($voter->dm),
             'locality' => $voter->locality,
             'status' => $voter->status,
             'cula_code' => $voter->cula_code,

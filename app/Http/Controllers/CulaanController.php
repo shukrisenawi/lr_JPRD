@@ -353,6 +353,8 @@ class CulaanController extends Controller
             ->distinct()
             ->orderBy('dm')
             ->pluck('dm')
+            ->map(fn ($v) => trim($v))
+            ->unique()
             ->values()
             ->all();
     }
@@ -464,7 +466,7 @@ class CulaanController extends Controller
             'phone_home' => $voter->phone_home,
             'address' => $voter->address,
             'age' => $this->calculateAge($voter->no_kp),
-            'dm' => $voter->dm,
+            'dm' => trim($voter->dm),
             'locality' => $voter->locality,
             'status' => $voter->status,
             'cula_code' => $voter->cula_code,
