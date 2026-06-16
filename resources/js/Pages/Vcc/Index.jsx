@@ -654,7 +654,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                             </div>
 
                             <div>
-                                <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Cula</label>
+                                <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Siap</label>
                                 <label
                                     htmlFor="vcc-dah-cula"
                                     className="input-field mt-1.5 inline-flex items-center px-3 py-2"
