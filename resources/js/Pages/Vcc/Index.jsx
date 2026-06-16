@@ -747,8 +747,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         <th className="px-2 py-2.5">Nama</th>
                                         <th className="px-2 py-2.5">No KP</th>
                                         <th className="px-2 py-2.5">Telefon</th>
-                                        {showLocalityColumn && <th className="px-2 py-2.5">Lokaliti</th>}
                                         {showUdmColumn && <th className="px-2 py-2.5">UDM</th>}
+                                        {showLocalityColumn && <th className="px-2 py-2.5">Lokaliti</th>}
                                         <th className="w-12 px-2 py-2.5 text-center">Umur</th>
                                         <th className="px-2 py-2.5">Cula</th>
                                         <th className="w-48 px-2 py-2.5 text-center">Tindakan</th>
@@ -783,8 +783,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                 <a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a>
                                                             ) : '-'}
                                                         </td>
-                                                        {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                         {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
+                                                        {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                         <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
                                                             {voter.cula_display_label ? (
@@ -859,8 +859,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                             <a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a>
                                                         ) : '-'}
                                                     </td>
-                                                    {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                     {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
+                                                    {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                     <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
                                                     <td className="whitespace-nowrap px-2 py-2">
                                                         {voter.cula_display_label ? (
