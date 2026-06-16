@@ -249,7 +249,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
     const genderRows = report.gender.filter((r) => r.total > 0);
     const selUdm = dmDetails.find((r) => r.key === udmKey) ?? dmDetails[0] ?? null;
     const selCula = dmCulaRows.find((r) => r.key === udmKey) ?? dmCulaRows[0] ?? null;
-    const selCulaChart = selCula?.cula_breakdown.slice(0, 12) ?? [];
+    const selCulaChart = (selCula?.cula_breakdown ?? []).filter((e) => e.code !== '?' && !e.display_label?.includes('BELUM DICULA')).slice(0, 12);
     const selLoc = selUdm?.localities.slice(0, 12) ?? [];
     const selRace = selUdm?.race_breakdown.slice(0, 8) ?? [];
     const selLocTable = selUdm?.localities.slice(0, 20) ?? [];
