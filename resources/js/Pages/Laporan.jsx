@@ -273,7 +273,7 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
     };
 
     const dmCols = [
-        { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span> },
+        { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span>, headerClass: 'sticky-th', cellClass: 'sticky-td' },
 
         { key: 'siap_cula', label: 'Siap', format: (v) => v > 0 ? <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-800">{v}</span> : <span className="text-slate-400">-</span>, headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
