@@ -627,7 +627,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_7rem_7rem_5rem] xl:items-end">
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_12rem_10rem_7rem_7rem_5rem_3rem] xl:items-end">
                             <div>
                                 <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
@@ -716,6 +716,14 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
                                     />
                                 </label>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-[0.08em] text-transparent">Reset</label>
+                                <button type="button" onClick={() => window.location.assign(route('vcc.index'))}
+                                    className="input-field mt-1.5 inline-flex items-center justify-center bg-white px-2 py-2 text-xs font-bold text-red-600 hover:bg-red-50">
+                                    ↺
+                                </button>
                             </div>
 
                             {actionError && <InputError className="mt-1" message={actionError} />}
