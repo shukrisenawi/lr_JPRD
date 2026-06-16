@@ -17,7 +17,7 @@ function fmtDiff(v, diff) {
         <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1 py-0.5 text-green-800">
             <span className="text-xs font-semibold">{fmt(v)}</span>
             <span className="text-[10px] font-bold opacity-80 inline-flex items-center">
-                <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+                <span className="leading-none mr-px">+</span>
                 <span>{fmt(diff)}</span>
             </span>
         </span>
