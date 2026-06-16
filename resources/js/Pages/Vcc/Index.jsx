@@ -721,200 +721,208 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                             {searching ? 'Mencari...' : 'Tiada pemilih untuk paparan ini.'}
                         </p>
                     ) : (
-                        <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            {rows.map((voter, index) => (
-                                <div
-                                    key={voter.id}
-                                    onClick={() => setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedVoterId(voter.id === selectedVoterId ? null : voter.id); } }}
-                                    role="button"
-                                    tabIndex={0}
-                                    className={`rounded-xl border bg-white p-3 shadow-sm overflow-hidden cursor-default transition-colors duration-300 ease-in-out hover:shadow-md ${voter.id === selectedVoterId ? 'border-black' : 'border-green-600'}`}
-                                >
-                                    <div className="flex items-start justify-between gap-2">
-                                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
-                                            {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
-                                        </span>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
-                                                {voter.name}
-                                                {voter.date_of_birth && (() => {
-                                                    const today = new Date();
-                                                    const dob = new Date(voter.date_of_birth + 'T00:00:00');
-                                                    if (dob.getMonth() === today.getMonth() && dob.getDate() === today.getDate()) {
-                                                        return <span className="rounded-full bg-pink-100 px-1.5 py-0.5 text-[10px] font-bold text-pink-600">🎂</span>;
-                                                    }
-                                                    return null;
-                                                })()}
-                                                {(() => {
-                                                    const namaAyah = extractNamaAyah(voter.name);
-                                                    if (!namaAyah) return null;
-                                                    return (
-                                                        <button
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                doSearch(namaAyah);
-                                                                const el = document.getElementById('vcc-search');
-                                                                if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-                                                            }}
-                                                            className="inline-flex shrink-0 items-center justify-center rounded-md border border-white bg-white px-1 py-0.5 text-slate-400 transition hover:border-slate-200 hover:text-green-600"
-                                                            title={`Cari keluarga: ${namaAyah}`}
-                                                        >
-                                                            <UserGroupIcon className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    );
-                                                })()}
-                                            </p>
-                                            <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3 space-y-2 text-xs">
-                                        <div className="grid gap-2" style={{gridTemplateColumns: 'auto auto 1fr'}}>
-                                            <div className="flex items-center gap-2">
-                                                {(avatarUpdates[voter.id] || voter.avatar_url) && (
-                                                    <div className="shrink-0">
-                                                        <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 cursor-pointer rounded-full object-cover border border-slate-200" onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <span className="font-semibold text-green-700">No Kp</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-green-700">Telefon</p>
-                                                {(() => {
-                                                    const phone = voter.phone_mobile || voter.phone_home;
-                                                    if (!phone) return <p className="mt-0.5 font-bold text-slate-800">-</p>;
-                                                    return (
-                                                            <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => { e.stopPropagation(); logCommunication(voter.id, 'call'); }}>
-                                                                {phone}
-                                                            </a>
-                                                    );
-                                                })()}
-                                            </div>
-                                            {!showLocalityColumn && (
-                                                <div>
-                                                    <span className="font-semibold text-green-700">Umur</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {showUdmColumn && !showLocalityColumn && (
-                                            <div>
-                                                <span className="font-semibold text-green-700">UDM</span>
-                                                <p className="mt-0.5 font-bold text-slate-800">{voter.dm || '-'}</p>
-                                            </div>
-                                        )}
-                                        {showLocalityColumn && (
-                                            <div className="grid gap-2" style={{gridTemplateColumns: 'auto 1fr'}}>
-                                                {showUdmColumn && (
-                                                    <div>
-                                                        <span className="font-semibold text-green-700">UDM</span>
-                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.dm || '-'}</p>
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <span className="font-semibold text-green-700">Lokaliti</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="font-semibold text-green-700">Umur</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {voter.cula_display_label && (
-                                            <div>
-                                                <span className="font-semibold text-green-700">Cula</span>
-                                                <p className="mt-0.5 font-bold text-slate-800">{voter.cula_display_label}</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3">
-                                        {!voter.is_manual && (
-                                            <>
-                                                <label className="flex cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white p-1.5 text-slate-400 transition hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
-                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} onClick={(e) => e.stopPropagation()} disabled={uploadingAvatarIds[voter.id]} />
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                                </label>
-                                                {voter.whatsapp_link && (
-                                                    <a
-                                                        href={voter.whatsapp_link}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        onClick={(e) => { e.stopPropagation(); logCommunication(voter.id, 'whatsapp'); }}
-                                                        className="rounded-md border border-green-200 bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
-                                                    >
-                                                        WhatsApp
-                                                    </a>
-                                                )}
-                                                {voter.date_of_birth && (() => {
-                                                    const today = new Date();
-                                                    const dob = new Date(voter.date_of_birth + 'T00:00:00');
-                                                    if (dob.getMonth() === today.getMonth() && dob.getDate() === today.getDate()) {
-                                                        const phone = (voter.phone_mobile || '').replace(/^0+/, '');
-                                                        const waLink = phone ? `https://wa.me/60${phone}?text=${encodeURIComponent(whatsappBirthdayMessage(voter.name))}` : null;
-                                                        if (!waLink) return null;
-                                                        return (
-                                                            <a
-                                                                href={waLink}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                onClick={(e) => { e.stopPropagation(); logCommunication(voter.id, 'birthday', 'Ucapan hari jadi'); }}
-                                                                className="rounded-md border border-pink-200 bg-pink-50 px-2 py-1.5 text-xs font-bold text-pink-600 transition hover:bg-pink-100"
-                                                            >
-                                                                🎂 Ucap Selamat
-                                                            </a>
-                                                        );
-                                                    }
-                                                    return null;
-                                                })()}
-                                            </>
-                                        )}
-                                        <div className="ml-auto flex items-center gap-1.5">
-                                            {voter.is_marked ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); unmarkVoter(voter); }}
-                                                    disabled={pendingIds.includes(voter.id)}
-                                                    className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1.5 text-xs font-bold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
-                                                >
-                                                    {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
-                                                </button>
-                                            ) : (
-                                                (voter.cula_code === '?' || voter.cula_code === '0') ? (
-                                                    <>
-                                                        <button type="button"
-                                                            onClick={(e) => { e.stopPropagation(); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
-                                                            className="rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white transition hover:bg-green-500">
-                                                            Kemas Cula
-                                                        </button>
-                                                        {culaPendingIds.has(voter.id) && (
-                                                            <button type="button"
-                                                                onClick={(e) => { e.stopPropagation(); setSelectedVoterForCula(voter); setShowCulaModal(true); }}
-                                                                disabled={pendingIds.includes(voter.id)}
-                                                                className="rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500 disabled:opacity-50">
-                                                                {pendingIds.includes(voter.id) ? '...' : 'Siap Cula'}
-                                                            </button>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <button type="button"
-                                                        onClick={(e) => { e.stopPropagation(); markVoter(voter); }}
-                                                        disabled={pendingIds.includes(voter.id)}
-                                                        className="inline-flex items-center gap-1 rounded-md bg-green-50 px-2 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100 disabled:opacity-50">
-                                                        {pendingIds.includes(voter.id) ? '...' : '✓ Tanda Siap'}
-                                                    </button>
-                                                )
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                        <div id="senarai-grid" className="w-full overflow-x-auto rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
+                            <table className="w-full text-xs">
+                                <thead>
+                                    <tr className="bg-green-50 text-left text-xs font-bold uppercase tracking-[0.05em] text-green-700">
+                                        <th className="w-10 px-2 py-2.5 text-center">#</th>
+                                        <th className="px-2 py-2.5">Nama</th>
+                                        <th className="px-2 py-2.5">No KP</th>
+                                        <th className="px-2 py-2.5">Telefon</th>
+                                        {showLocalityColumn && <th className="px-2 py-2.5">Lokaliti</th>}
+                                        {showUdmColumn && <th className="px-2 py-2.5">UDM</th>}
+                                        <th className="w-12 px-2 py-2.5 text-center">Umur</th>
+                                        <th className="px-2 py-2.5">Cula</th>
+                                        <th className="w-48 px-2 py-2.5 text-center">Tindakan</th>
+                                    </tr>
+                                </thead>
+                                {showUdmColumn ? (
+                                    Object.entries(
+                                        rows.reduce((acc, v) => {
+                                            const k = v.dm || 'Tanpa UDM';
+                                            (acc[k] ??= []).push(v);
+                                            return acc;
+                                        }, {})
+                                    ).map(([udm, udmVoters]) => (
+                                        <tbody key={udm}>
+                                            <tr className="border-t border-slate-200 bg-slate-100">
+                                                <td colSpan={5 + (showLocalityColumn ? 1 : 0) + (showUdmColumn ? 1 : 0) + 2} className="px-3 py-2 text-sm font-black uppercase tracking-wider text-slate-700">
+                                                    {udm}
+                                                </td>
+                                            </tr>
+                                            {udmVoters.map((voter, i) => {
+                                                const globalIdx = search.trim().length >= 2 ? i : (localVoters.from ?? 0) + i;
+                                                const phone = voter.phone_mobile || voter.phone_home;
+                                                return (
+                                                    <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
+                                                        <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
+                                                        <td className="px-2 py-2">
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                                {(() => {
+                                                                    const namaAyah = extractNamaAyah(voter.name);
+                                                                    if (!namaAyah) return null;
+                                                                    return (
+                                                                        <button type="button" onClick={() => doSearch(namaAyah)}
+                                                                            className="flex shrink-0 items-center justify-center rounded border border-slate-200 bg-white p-0.5 text-slate-400 hover:border-green-300 hover:text-green-600"
+                                                                            title={`Cari keluarga: ${namaAyah}`}>
+                                                                            <UserGroupIcon className="h-3 w-3" />
+                                                                        </button>
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
+                                                        <td className="whitespace-nowrap px-2 py-2">
+                                                            {phone ? (
+                                                                <a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a>
+                                                            ) : '-'}
+                                                        </td>
+                                                        {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
+                                                        {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
+                                                        <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
+                                                        <td className="whitespace-nowrap px-2 py-2">
+                                                            {voter.cula_display_label ? (
+                                                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{voter.cula_display_label}</span>
+                                                            ) : '-'}
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-2 py-2">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                {!voter.is_manual && (
+                                                                    <>
+                                                                        <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
+                                                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
+                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                        </label>
+                                                                        {voter.whatsapp_link && (
+                                                                            <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
+                                                                                className="rounded border border-green-200 bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100">
+                                                                                WA
+                                                                            </a>
+                                                                        )}
+                                                                    </>
+                                                                )}
+                                                                {voter.is_marked ? (
+                                                                    <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                        className="rounded bg-red-50 px-1.5 py-1 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
+                                                                        {pendingIds.includes(voter.id) ? '...' : 'Buka'}
+                                                                    </button>
+                                                                ) : (
+                                                                    (voter.cula_code === '?' || voter.cula_code === '0') ? (
+                                                                        <>
+                                                                            <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
+                                                                                className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
+                                                                                Kemas
+                                                                            </button>
+                                                                            {culaPendingIds.has(voter.id) && (
+                                                                                <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
+                                                                                    className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
+                                                                                    {pendingIds.includes(voter.id) ? '...' : 'Siap'}
+                                                                                </button>
+                                                                            )}
+                                                                        </>
+                                                                    ) : (
+                                                                        <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                            className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                            {pendingIds.includes(voter.id) ? '...' : '✓'}
+                                                                        </button>
+                                                                    )
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    ))
+                                ) : (
+                                    <tbody>
+                                        {rows.map((voter, index) => {
+                                            const globalIdx = search.trim().length >= 2 ? index : (localVoters.from ?? 0) + index;
+                                            const phone = voter.phone_mobile || voter.phone_home;
+                                            return (
+                                                <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
+                                                    <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
+                                                    <td className="px-2 py-2">
+                                                        <div className="flex items-center gap-1">
+                                                            <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                            {(() => {
+                                                                const namaAyah = extractNamaAyah(voter.name);
+                                                                if (!namaAyah) return null;
+                                                                return (
+                                                                    <button type="button" onClick={() => doSearch(namaAyah)}
+                                                                        className="flex shrink-0 items-center justify-center rounded border border-slate-200 bg-white p-0.5 text-slate-400 hover:border-green-300 hover:text-green-600"
+                                                                        title={`Cari keluarga: ${namaAyah}`}>
+                                                                        <UserGroupIcon className="h-3 w-3" />
+                                                                    </button>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    </td>
+                                                    <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
+                                                    <td className="whitespace-nowrap px-2 py-2">
+                                                        {phone ? (
+                                                            <a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a>
+                                                        ) : '-'}
+                                                    </td>
+                                                    {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
+                                                    {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
+                                                    <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
+                                                    <td className="whitespace-nowrap px-2 py-2">
+                                                        {voter.cula_display_label ? (
+                                                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{voter.cula_display_label}</span>
+                                                        ) : '-'}
+                                                    </td>
+                                                    <td className="whitespace-nowrap px-2 py-2">
+                                                        <div className="flex items-center justify-end gap-1">
+                                                            {!voter.is_manual && (
+                                                                <>
+                                                                    <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
+                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
+                                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                    </label>
+                                                                    {voter.whatsapp_link && (
+                                                                        <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
+                                                                            className="rounded border border-green-200 bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100">
+                                                                            WA
+                                                                        </a>
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                            {voter.is_marked ? (
+                                                                <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                    className="rounded bg-red-50 px-1.5 py-1 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
+                                                                    {pendingIds.includes(voter.id) ? '...' : 'Buka'}
+                                                                </button>
+                                                            ) : (
+                                                                (voter.cula_code === '?' || voter.cula_code === '0') ? (
+                                                                    <>
+                                                                        <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
+                                                                            className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
+                                                                            Kemas
+                                                                        </button>
+                                                                        {culaPendingIds.has(voter.id) && (
+                                                                            <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
+                                                                                className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
+                                                                                {pendingIds.includes(voter.id) ? '...' : 'Siap'}
+                                                                            </button>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                        className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                        {pendingIds.includes(voter.id) ? '...' : '✓'}
+                                                                    </button>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                )}
+                            </table>
                         </div>
                     )}
                     <Pagination voters={localVoters} onNavigate={goToPage} />
