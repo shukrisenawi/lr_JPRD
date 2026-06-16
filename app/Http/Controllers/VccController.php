@@ -331,23 +331,42 @@ class VccController extends Controller
         $allocations = [];
         $i = 0;
         foreach ($localityCounts as $locality => $cnt) {
-            $allocated = ($i < $remainder ? $base + 1 : $base);
-            $allocations[$locality] = max(min($allocated, $cnt), 0);
+            $allocated = $i < $remainder ? $base + 1 : $base;
+            $allocations[$locality] = ['wanted' => $allocated, 'available' => $cnt];
             $i++;
         }
 
         $ids = collect();
-        foreach ($allocations as $locality => $limit) {
-            if ($limit <= 0) continue;
+        $shortfall = 0;
+
+        foreach ($allocations as $locality => $alloc) {
+            $take = min($alloc['wanted'], $alloc['available']);
+            if ($take <= 0) {
+                $shortfall += $alloc['wanted'];
+                continue;
+            }
 
             $localityIds = $this->buildEligibleVotersQuery($filters)
                 ->where('dm', $selectedUdm)
                 ->where('locality', $locality)
                 ->orderBy('no_kp')
-                ->limit($limit)
+                ->limit($take)
                 ->pluck('id');
 
             $ids = $ids->merge($localityIds);
+            $shortfall += $alloc['wanted'] - $localityIds->count();
+        }
+
+        if ($shortfall > 0) {
+            $takenIds = $ids->toArray();
+            $remaining = $this->buildEligibleVotersQuery($filters)
+                ->where('dm', $selectedUdm)
+                ->whereNotIn('id', $takenIds)
+                ->orderBy('no_kp')
+                ->limit($shortfall)
+                ->pluck('id');
+
+            $ids = $ids->merge($remaining);
         }
 
         return $ids;
