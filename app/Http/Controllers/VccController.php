@@ -22,7 +22,6 @@ class VccController extends Controller
     {
         $filters = $this->resolveFilters($request);
         $voters = $this->paginateVoters($filters);
-        $groups = $this->availableGroups();
 
         return Inertia::render('Vcc/Index', [
             'filters' => $filters,
@@ -32,7 +31,7 @@ class VccController extends Controller
             ],
             'udms' => $this->availableUdms(),
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
-            'groups' => $groups,
+            'groups' => $this->availableGroups($filters['udm']),
             'voters' => $voters,
             'available_races' => $this->availableRaces(),
             'available_cula_codes' => $this->availableCulaCodes(),
@@ -464,13 +463,27 @@ class VccController extends Controller
         ];
     }
 
-    private function availableGroups(): array
+    private function availableGroups(string $udm = ''): array
     {
-        return GroupPemilih::query()
+        $query = GroupPemilih::query()
             ->with('kodCulas')
             ->orderBy('sort_order')
-            ->orderBy('nama_group')
-            ->get()
+            ->orderBy('nama_group');
+
+        if ($udm !== '') {
+            $availableCulaCodes = PemilihRecord::where('status', 'aktif')
+                ->where('dm', $udm)
+                ->whereNotNull('cula_code')
+                ->where('cula_code', '!=', '')
+                ->select('cula_code')
+                ->distinct()
+                ->pluck('cula_code')
+                ->toArray();
+
+            $query->whereHas('kodCulas', fn ($q) => $q->whereIn('kod_cula', $availableCulaCodes));
+        }
+
+        return $query->get()
             ->map(fn (GroupPemilih $group) => [
                 'id' => $group->id,
                 'nama_group' => $group->nama_group,
