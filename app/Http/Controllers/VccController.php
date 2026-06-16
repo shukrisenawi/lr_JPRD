@@ -680,7 +680,6 @@ class VccController extends Controller
             range(1, 10),
             [13],
             ['1A', '1B', '1P'],
-            range(3, 9),
             ['3B', '3D', '3K', '3M', '3P', '3U'],
             ['7P'],
             [97, 98, 99],
