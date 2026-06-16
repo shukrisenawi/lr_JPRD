@@ -1391,12 +1391,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     </thead>
                                     {showUdmColumn ? (
                                         Object.entries(
-                                            rows.reduce((acc, v) => {
-                                                const k = v.dm || 'Tanpa UDM';
-                                                if (!acc[k]) acc[k] = [];
-                                                acc[k].push(v);
-                                                return acc;
-                                            }, {})
+                                        rows.reduce((acc, v) => {
+                                            const k = (v.dm || '').trim() || 'Tanpa UDM';
+                                            if (!acc[k]) acc[k] = [];
+                                            acc[k].push(v);
+                                            return acc;
+                                        }, {})
                                         ).map(([udm, udmVoters]) => (
                                             <tbody key={udm}>
                                                 <tr className="border-t border-slate-200 bg-slate-100">
