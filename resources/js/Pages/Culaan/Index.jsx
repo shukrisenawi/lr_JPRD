@@ -245,13 +245,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
     const [jadualDiffMap, setJadualDiffMap] = useState({});
-    const [viewMode, setViewMode] = useState(() => auth.user?.preferences?.culaan_view_mode ?? 'card');
+    const [viewMode, setViewMode] = useState(() => {
+        const saved = localStorage.getItem('culaan_view_mode');
+        if (saved) return saved;
+        return auth.user?.preferences?.culaan_view_mode ?? 'card';
+    });
     const jadualBaselineRef = useRef(null);
 
     const savePreference = (key, value) => {
+        localStorage.setItem(key, value);
         fetch(route('preferences.save'), {
             method: 'POST',
-            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '' },
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify({ key, value }),
         }).catch(() => {});
     };
