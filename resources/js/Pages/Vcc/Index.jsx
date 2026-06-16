@@ -143,6 +143,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         umur_hingga: filters.umur_hingga ?? '',
         per_udm_count: filters.per_udm_count ?? '',
         bulan_lahir: filters.bulan_lahir ?? '',
+        cula_codes: filters.cula_codes ?? '',
     });
 
     useEffect(() => {
@@ -157,8 +158,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             umur_hingga: filters.umur_hingga ?? '',
             per_udm_count: filters.per_udm_count ?? '',
             bulan_lahir: filters.bulan_lahir ?? '',
+            cula_codes: filters.cula_codes ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes]);
 
     useEffect(() => {
         setLocalVoters(voters);
@@ -230,6 +232,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             umur_hingga: formState.umur_hingga ?? '',
             per_udm_count: formState.per_udm_count ?? '',
             bulan_lahir: formState.bulan_lahir ?? '',
+            cula_codes: formState.cula_codes ?? '',
         });
 
         try {
@@ -403,6 +406,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 umur_hingga: formState.umur_hingga ?? '',
                 per_udm_count: formState.per_udm_count ?? '',
                 bulan_lahir: formState.bulan_lahir ?? '',
+                cula_codes: formState.cula_codes ?? '',
             });
 
             try {
@@ -701,6 +705,29 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 <div>
                                     <label htmlFor="vcc-umur-hingga" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Umur Hingga</label>
                                     <input id="vcc-umur-hingga" type="number" min="0" max="150" value={formState.umur_hingga} onChange={(e) => updateFilter('umur_hingga', e.target.value)} className="input-field mt-1.5" placeholder="cth: 60" />
+                                </div>
+                            </div>
+                        )}
+
+                        {initialCulaCodes?.length > 0 && (
+                            <div className="mt-3">
+                                <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Kod Cula</label>
+                                <div className="mt-1.5 flex max-h-28 flex-wrap gap-1 overflow-y-auto">
+                                    {initialCulaCodes.map((c) => {
+                                        const selected = formState.cula_codes.split(',').includes(c.code);
+                                        return (
+                                            <button key={c.code} type="button"
+                                                onClick={() => {
+                                                    const current = formState.cula_codes ? formState.cula_codes.split(',').filter(Boolean) : [];
+                                                    const next = selected ? current.filter(x => x !== c.code) : [...current, c.code];
+                                                    updateFilter('cula_codes', next.join(','));
+                                                }}
+                                                className={`rounded-md border px-2 py-1 text-[11px] font-bold leading-tight transition ${selected ? 'border-green-600 bg-green-100 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'}`}
+                                            >
+                                                {c.label}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}

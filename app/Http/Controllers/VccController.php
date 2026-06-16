@@ -187,7 +187,8 @@ class VccController extends Controller
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
             ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
-            ->when($filters['bulan_lahir'] !== '', fn (Builder $builder) => $builder->whereRaw('LENGTH(no_kp) >= 6 AND CAST(SUBSTRING(no_kp, 3, 2) AS UNSIGNED) = ?', [(int) $filters['bulan_lahir']]));
+            ->when($filters['bulan_lahir'] !== '', fn (Builder $builder) => $builder->whereRaw('LENGTH(no_kp) >= 6 AND CAST(SUBSTRING(no_kp, 3, 2) AS UNSIGNED) = ?', [(int) $filters['bulan_lahir']]))
+            ->when($filters['cula_codes'] !== '', fn (Builder $builder) => $builder->whereIn('cula_code', explode(',', $filters['cula_codes'])));
 
         if (! $skipMarkedFilter) {
             $query->when(
@@ -460,6 +461,7 @@ class VccController extends Controller
             'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
             'per_udm_count' => $rawPerUdm !== '' && ctype_digit($rawPerUdm) ? (int) $rawPerUdm : 0,
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
+            'cula_codes' => trim((string) $request->query('cula_codes', '')),
         ];
     }
 
