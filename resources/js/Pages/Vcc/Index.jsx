@@ -787,8 +787,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                         {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                         <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
-                                                            {voter.cula_display_label ? (
-                                                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{voter.cula_display_label}</span>
+                                                            {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
+                                                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600" title={voter.cula_display_label || ''}>{voter.cula_code}</span>
                                                             ) : '-'}
                                                         </td>
                                                         <td className="whitespace-nowrap px-2 py-2">
@@ -863,8 +863,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                     <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
                                                     <td className="whitespace-nowrap px-2 py-2">
-                                                        {voter.cula_display_label ? (
-                                                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">{voter.cula_display_label}</span>
+                                                        {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
+                                                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600" title={voter.cula_display_label || ''}>{voter.cula_code}</span>
                                                         ) : '-'}
                                                     </td>
                                                     <td className="whitespace-nowrap px-2 py-2">
