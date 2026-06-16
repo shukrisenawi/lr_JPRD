@@ -25,7 +25,7 @@ function fmtDiff(v, diff) {
 }
 function fmtSiapDiff(v, diff) {
     if (diff === undefined || diff === 0) return <span className="text-slate-400">-</span>;
-    if (diff > 0) return <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-800">+{fmt(diff)}</span>;
+    if (diff > 0) return <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-800">{fmt(diff)}</span>;
     return <span className="text-slate-400">-</span>;
 }
 function getRaceCount(breakdown, names) {
