@@ -355,6 +355,9 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
 
 
                         <DataTable rows={udmTableRows} columns={dmCols} />
+                        {udm_snapshot_meta && (
+                            <p className="text-right text-[10px] text-slate-400">Data dikira dari tarikh {udm_snapshot_meta.snapshot_time}</p>
+                        )}
 
                         <div className="card p-3">
                             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Log Masuk Terkini</p>
