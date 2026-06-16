@@ -22,6 +22,9 @@ class LaporanController extends Controller
                 'period_start' => $snapshot->period_start->format('d-m-Y'),
                 'period_end' => $snapshot->period_end->format('d-m-Y'),
                 'snapshot_date' => $snapshot->snapshot_date->format('d-m-Y'),
+                'snapshot_time' => $snapshot->uploaded_at
+                    ? \Carbon\Carbon::parse($snapshot->uploaded_at, 'Asia/Kuala_Lumpur')->format('d-m-Y h:iA')
+                    : $snapshot->created_at?->setTimezone('Asia/Kuala_Lumpur')->format('d-m-Y h:iA'),
             ] : null,
             'recent_logins' => User::query()
                 ->whereNotNull('last_login_at')
