@@ -347,9 +347,8 @@ export default function Laporan({ report, pemilih_report = null, recent_logins =
                     <div className="card-dashed"><p className="text-xs font-bold text-slate-800">Tiada fail</p><p className="mt-1 text-xs text-slate-600">Muat naik fail pemilih di Settings untuk mula.</p></div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             <StatCard label="Jumlah Pemilih" value={report.summary.total_voters} detail="Dalam fail semasa" color="violet" />
-                            <StatCard label="Jumlah UDM" value={report.summary.total_dm} detail="Aktif" color="slate" />
                             <StatCard label="Sudah Dicula" value={report.summary.with_cula} detail="Ada status culaan" color="emerald" />
                             <StatCard label="Belum Dicula" value={report.summary.belum_dicula} detail="Kod kosong/?" color="amber" />
                             <StatCard label="Peratus Siap" value={report.summary.coverage_percent} detail={`${fmt(report.summary.total_localities)} lokaliti`} color="cyan" />
