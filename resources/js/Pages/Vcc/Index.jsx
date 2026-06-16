@@ -377,6 +377,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const showLocalityColumn = formState.locality === '';
     const showUdmColumn = formState.udm === '';
+    const showCulaColumn = !formState.cula_codes || formState.cula_codes.split(',').filter(Boolean).length !== 1;
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
     const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group}${selectedGroup.kod_culas?.length ? ` — ${selectedGroup.kod_culas.join(', ')}` : ''})` : '';
     const headerTitle = `Senarai Semua Pemilih${groupSuffix}`;
@@ -766,7 +767,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         {showLocalityColumn && <th className="px-2 py-2.5">Lokaliti</th>}
                                         <th className="w-20 px-2 py-2.5 text-center">T. Lahir</th>
                                         <th className="w-12 px-2 py-2.5 text-center">Umur</th>
-                                        <th className="px-2 py-2.5">Cula</th>
+                                        {showCulaColumn && <th className="px-2 py-2.5">Cula</th>}
                                         <th className="w-48 px-2 py-2.5 text-center">Tindakan</th>
                                     </tr>
                                 </thead>
@@ -780,7 +781,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     ).map(([udm, udmVoters]) => (
                                         <tbody key={udm}>
                                             <tr className="border-t border-slate-200 bg-slate-100">
-                                                <td colSpan={6 + (showLocalityColumn ? 1 : 0) + (showUdmColumn ? 1 : 0) + 2} className="px-3 py-2 text-sm font-black uppercase tracking-wider text-slate-700">
+                                                <td colSpan={6 + (showLocalityColumn ? 1 : 0) + (showUdmColumn ? 1 : 0) + (showCulaColumn ? 1 : 0) + 2} className="px-3 py-2 text-sm font-black uppercase tracking-wider text-slate-700">
                                                     {udm}
                                                 </td>
                                             </tr>
@@ -803,11 +804,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                         {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                         <td className="whitespace-nowrap px-2 py-2 text-center font-mono text-slate-600">{dobFromIc(voter.no_kp)}</td>
                                                         <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
-                                                        <td className="whitespace-nowrap px-2 py-2">
-                                                            {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
-                                                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600" title={voter.cula_display_label || ''}>{voter.cula_code}</span>
-                                                            ) : '-'}
-                                                        </td>
+                                                        {showCulaColumn && (
+                                                            <td className="whitespace-nowrap px-2 py-2">
+                                                                {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
+                                                                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600" title={voter.cula_display_label || ''}>{voter.cula_code}</span>
+                                                                ) : '-'}
+                                                            </td>
+                                                        )}
                                                         <td className="whitespace-nowrap px-2 py-2">
                                                             <div className="flex items-center justify-end gap-1">
                                                                 {!voter.is_manual && (
@@ -887,11 +890,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
                                                     <td className="whitespace-nowrap px-2 py-2 text-center font-mono text-slate-600">{dobFromIc(voter.no_kp)}</td>
                                                     <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
-                                                    <td className="whitespace-nowrap px-2 py-2">
-                                                        {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
-                                                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600" title={voter.cula_display_label || ''}>{voter.cula_code}</span>
-                                                        ) : '-'}
-                                                    </td>
+                                                    {showCulaColumn && (
+                                                        <td className="whitespace-nowrap px-2 py-2">
+                                                            {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' ? (
+                                                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600" title={voter.cula_display_label || ''}>{voter.cula_code}</span>
+                                                            ) : '-'}
+                                                        </td>
+                                                    )}
                                                     <td className="whitespace-nowrap px-2 py-2">
                                                         <div className="flex items-center justify-end gap-1">
                                                             {!voter.is_manual && (
