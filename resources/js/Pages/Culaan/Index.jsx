@@ -1406,7 +1406,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         {udm}
                                                     </td>
                                                 </tr>
-                                                {udmVoters.map((voter, i) => {
+                                                {[...udmVoters].sort((a, b) => {
+                                                    const icA = (a.no_kp || a.old_ic || '').padStart(20, '0');
+                                                    const icB = (b.no_kp || b.old_ic || '').padStart(20, '0');
+                                                    return icA.localeCompare(icB);
+                                                }).map((voter, i) => {
                                                     const globalIdx = search.trim().length >= 2 ? i : (localVoters.from ?? 0) + i;
                                                     return (
                                                         <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
