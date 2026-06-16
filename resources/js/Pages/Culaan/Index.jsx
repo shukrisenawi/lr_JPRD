@@ -248,7 +248,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [viewMode, setViewMode] = useState(() => {
         const saved = localStorage.getItem('culaan_view_mode');
         if (saved) return saved;
-        return auth.user?.preferences?.culaan_view_mode ?? 'card';
+        return auth.user?.preferences?.culaan_view_mode ?? 'table';
     });
     const jadualBaselineRef = useRef(null);
 
