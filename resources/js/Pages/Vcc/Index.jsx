@@ -425,31 +425,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const align = ['center', 'center', 'left', 'left', 'center', 'center'];
         const columnWidths = [37, 100, 278, 369, 90, 46];
 
-        const dataRows = exportRows.map((voter, index) => [
-            { value: index + 1, type: 'Number', align: 'center' },
-            { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
-            { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
-            { value: voter.address || '-', type: 'String', align: 'left', wrap: true },
-            { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
-            { value: '', type: 'String', align: 'center' },
-        ]);
-
-        const titleRows = [];
-        if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
-        if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
-        if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
-
         const columnXml = columnWidths.map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`).join('');
 
-        const titleRowXml = titleRows.map((title) => `
-            <Row>
-                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="${title.styleId}">
-                    <Data ss:Type="String">${escapeXml(title.value)}</Data>
-                </Cell>
-            </Row>
-        `).join('');
-
-        const headerRowXml = `
+        const makeHeaderRowXml = () => `
             <Row>
                 ${headers.map((header, i) => {
                     const hStyle = align[i] === 'center' ? 'headerCenter' : 'header';
@@ -458,15 +436,60 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             </Row>
         `;
 
-        const bodyRowsXml = dataRows.map((cells) => `
+        const makeBodyRowsXml = (rows, startIdx) => rows.map((voter, i) => {
+            const cells = [
+                { value: startIdx + i + 1, type: 'Number', align: 'center' },
+                { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
+                { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
+                { value: voter.address || '-', type: 'String', align: 'left', wrap: true },
+                { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
+                { value: '', type: 'String', align: 'center' },
+            ];
+            return `<Row>${cells.map((cell) => {
+                let styleId = cell.align === 'center' ? 'cellCenter' : 'cell';
+                if (cell.wrap) styleId += 'Wrap';
+                return `<Cell ss:StyleID="${styleId}"><Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data></Cell>`;
+            }).join('')}</Row>`;
+        }).join('');
+
+        let bodyRowsXml = '';
+        const showUdmInExport = formState.udm === '';
+
+        if (showUdmInExport) {
+            const groups = {};
+            for (const v of exportRows) {
+                const k = v.dm || 'Tanpa UDM';
+                (groups[k] ??= []).push(v);
+            }
+            let globalIdx = 0;
+            for (const [udm, udmVoters] of Object.entries(groups)) {
+                bodyRowsXml += `
             <Row>
-                ${cells.map((cell) => {
-                    let styleId = cell.align === 'center' ? 'cellCenter' : 'cell';
-                    if (cell.wrap) styleId += 'Wrap';
-                    return `<Cell ss:StyleID="${styleId}"><Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data></Cell>`;
-                }).join('')}
-            </Row>
-        `).join('');
+                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMain">
+                    <Data ss:Type="String">${escapeXml(udm)}</Data>
+                </Cell>
+            </Row>`;
+                bodyRowsXml += makeHeaderRowXml();
+                bodyRowsXml += makeBodyRowsXml(udmVoters, globalIdx);
+                globalIdx += udmVoters.length;
+            }
+        } else {
+            const titleRows = [];
+            if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
+            if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
+            if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
+
+            const titleRowXml = titleRows.map((title) => `
+            <Row>
+                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="${title.styleId}">
+                    <Data ss:Type="String">${escapeXml(title.value)}</Data>
+                </Cell>
+            </Row>`).join('');
+
+            bodyRowsXml = titleRowXml;
+            bodyRowsXml += makeHeaderRowXml();
+            bodyRowsXml += makeBodyRowsXml(exportRows, 0);
+        }
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
