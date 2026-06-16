@@ -1411,7 +1411,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     const icB = (b.no_kp || b.old_ic || '').padStart(20, '0');
                                                     return icA.localeCompare(icB);
                                                 }).map((voter, i) => {
-                                                    const globalIdx = search.trim().length >= 2 ? i : (localVoters.from ?? 0) + i;
+                                                    const globalIdx = search.trim().length >= 2 ? i + 1 : (localVoters.from ?? 0) + i;
                                                     return (
                                                         <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
                                                             <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
@@ -1472,7 +1472,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     ) : (
                                         <tbody>
                                             {rows.map((voter, index) => {
-                                                const globalIdx = search.trim().length >= 2 ? index : (localVoters.from ?? 0) + index;
+                                                const globalIdx = search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index;
                                                 return (
                                                     <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
                                                         <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
