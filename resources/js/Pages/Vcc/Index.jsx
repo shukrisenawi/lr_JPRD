@@ -813,25 +813,32 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                         {pendingIds.includes(voter.id) ? '...' : 'Buka'}
                                                                     </button>
                                                                 ) : (
-                                                                    (voter.cula_code === '?' || voter.cula_code === '0') ? (
-                                                                        <>
-                                                                            <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
-                                                                                className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
-                                                                                Kemas
-                                                                            </button>
-                                                                            {culaPendingIds.has(voter.id) && (
-                                                                                <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
-                                                                                    className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
-                                                                                    {pendingIds.includes(voter.id) ? '...' : 'Siap'}
+                                                                    <>
+                                                                        {!voter.is_manual && (
+                                                                            <>
+                                                                                <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
+                                                                                    className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
+                                                                                    Cul
                                                                                 </button>
-                                                                            )}
-                                                                        </>
-                                                                    ) : (
-                                                                        <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                            className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
-                                                                            {pendingIds.includes(voter.id) ? '...' : '✓'}
-                                                                        </button>
-                                                                    )
+                                                                                <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                                    className="rounded bg-amber-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-amber-500">
+                                                                                    Tel
+                                                                                </button>
+                                                                            </>
+                                                                        )}
+                                                                        {culaPendingIds.has(voter.id) && (
+                                                                            <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
+                                                                                className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
+                                                                                {pendingIds.includes(voter.id) ? '...' : 'Siap'}
+                                                                            </button>
+                                                                        )}
+                                                                        {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' && (
+                                                                            <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                                className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                                {pendingIds.includes(voter.id) ? '...' : '✓'}
+                                                                            </button>
+                                                                        )}
+                                                                    </>
                                                                 )}
                                                             </div>
                                                         </td>
@@ -889,25 +896,32 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                     {pendingIds.includes(voter.id) ? '...' : 'Buka'}
                                                                 </button>
                                                             ) : (
-                                                                (voter.cula_code === '?' || voter.cula_code === '0') ? (
-                                                                    <>
-                                                                        <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
-                                                                            className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
-                                                                            Kemas
-                                                                        </button>
-                                                                        {culaPendingIds.has(voter.id) && (
-                                                                            <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
-                                                                                className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
-                                                                                {pendingIds.includes(voter.id) ? '...' : 'Siap'}
+                                                                <>
+                                                                    {!voter.is_manual && (
+                                                                        <>
+                                                                            <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
+                                                                                className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
+                                                                                Cul
                                                                             </button>
-                                                                        )}
-                                                                    </>
-                                                                ) : (
-                                                                    <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                        className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
-                                                                        {pendingIds.includes(voter.id) ? '...' : '✓'}
-                                                                    </button>
-                                                                )
+                                                                            <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                                className="rounded bg-amber-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-amber-500">
+                                                                                Tel
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                    {culaPendingIds.has(voter.id) && (
+                                                                        <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
+                                                                            className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
+                                                                            {pendingIds.includes(voter.id) ? '...' : 'Siap'}
+                                                                        </button>
+                                                                    )}
+                                                                    {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' && (
+                                                                        <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                            className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                            {pendingIds.includes(voter.id) ? '...' : '✓'}
+                                                                        </button>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </div>
                                                     </td>
