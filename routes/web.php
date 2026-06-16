@@ -116,6 +116,19 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/access/roles', [AccessManagementController::class, 'storeRole'])->name('admin.access.roles.store');
     Route::put('/admin/access/roles/{role}', [AccessManagementController::class, 'updateRole'])->name('admin.access.roles.update');
 
+    Route::post('/preferences', function (\Illuminate\Http\Request $request) {
+        $request->validate([
+            'key' => 'required|string',
+            'value' => 'nullable',
+        ]);
+        $request->user()->update([
+            'preferences' => array_merge($request->user()->preferences ?? [], [
+                $request->key => $request->value,
+            ]),
+        ]);
+        return response()->json(['ok' => true]);
+    })->name('preferences.save');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('/profile/avatar/{user}', [ProfileController::class, 'avatar'])->name('profile.avatar');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

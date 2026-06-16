@@ -32,6 +32,7 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'expires_at' => 'datetime',
             'password' => 'hashed',
+            'preferences' => 'array',
         ];
     }
 

@@ -245,7 +245,16 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
     const [jadualDiffMap, setJadualDiffMap] = useState({});
+    const [viewMode, setViewMode] = useState(() => auth.user?.preferences?.culaan_view_mode ?? 'card');
     const jadualBaselineRef = useRef(null);
+
+    const savePreference = (key, value) => {
+        fetch(route('preferences.save'), {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '' },
+            body: JSON.stringify({ key, value }),
+        }).catch(() => {});
+    };
     const jadualSessionKeyRef = useRef(null);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
@@ -584,6 +593,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
     const shouldPromptUdm = requires_udm && !formState.udm;
     const showLocalityColumn = formState.locality === '';
+    const showUdmColumn = formState.udm === '';
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
     const groupSuffix = selectedGroup?.nama_group ? ` (${selectedGroup.nama_group})` : '';
     const headerTitle = isDataErrorTab ? `Data Error Culaan${groupSuffix}` : (isLaporanLike ? `Laporan Pemilih${groupSuffix}` : `Pemilih Belum Cula${groupSuffix}`);
@@ -1150,18 +1160,26 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     if (canJadual) tabs.push({ k: 'jadual', l: 'Laporan (Jadual)' });
                     if (tabs.length < 2) return null;
                     return (
-                        <div className="flex gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-                                                    {tabs.map((t) => (
-                                                        <button key={t.k} onClick={() => {
-                                                            setTab(t.k);
-                                                            if (t.k === 'data_error' || t.k === 'senarai') {
-                                                                updateFilter('data_error', t.k === 'data_error');
-                                                            }
-                                                        }}
+                        <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+                            <div className="flex gap-1">
+                                {tabs.map((t) => (
+                                    <button key={t.k} type="button" onClick={() => {
+                                        setTab(t.k);
+                                        if (t.k === 'data_error' || t.k === 'senarai') {
+                                            updateFilter('data_error', t.k === 'data_error');
+                                        }
+                                    }}
                                     className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${tab === t.k ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
                                     {t.l}
                                 </button>
-                            ))}
+                                ))}
+                            </div>
+                            {tab === 'senarai' && canSenarai && (
+                                <div className="ml-auto flex gap-1">
+                                    <button type="button" onClick={() => { setViewMode('card'); savePreference('culaan_view_mode', 'card'); }} className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>Kad</button>
+                                    <button type="button" onClick={() => { setViewMode('table'); savePreference('culaan_view_mode', 'table'); }} className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${viewMode === 'table' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>Jadual</button>
+                                </div>
+                            )}
                         </div>
                     );
                 })()}
@@ -1172,7 +1190,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                                 {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                             </p>
-                        ) : (
+                        ) : viewMode === 'card' ? (
                             <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 {rows.map((voter, index) => (
                                     <div
@@ -1346,6 +1364,175 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        ) : (
+                            <div id="senarai-grid" className="w-full overflow-x-auto rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="bg-green-50 text-left text-xs font-bold uppercase tracking-[0.05em] text-green-700">
+                                            <th className="w-10 px-2 py-2.5 text-center">#</th>
+                                            <th className="sticky left-0 z-20 bg-green-50 px-2 py-2.5">Nama</th>
+                                            <th className="px-2 py-2.5">No KP</th>
+                                            <th className="px-2 py-2.5">Telefon</th>
+                                            {showUdmColumn && <th className="px-2 py-2.5">UDM</th>}
+                                            {showLocalityColumn && <th className="px-2 py-2.5">Lokaliti</th>}
+                                            <th className="w-12 px-2 py-2.5 text-center">Umur</th>
+                                            <th className="w-48 px-2 py-2.5 text-center">Tindakan</th>
+                                        </tr>
+                                    </thead>
+                                    {showUdmColumn ? (
+                                        Object.entries(
+                                            rows.reduce((acc, v) => {
+                                                const k = v.dm || 'Tanpa UDM';
+                                                if (!acc[k]) acc[k] = [];
+                                                acc[k].push(v);
+                                                return acc;
+                                            }, {})
+                                        ).map(([udm, udmVoters]) => (
+                                            <tbody key={udm}>
+                                                <tr className="border-t border-slate-200 bg-slate-100">
+                                                    <td colSpan={5 + (showLocalityColumn ? 1 : 0) + (showUdmColumn ? 1 : 0) + 2} className="px-3 py-2 text-sm font-black uppercase tracking-wider text-slate-700">
+                                                        {udm}
+                                                    </td>
+                                                </tr>
+                                                {udmVoters.map((voter, i) => {
+                                                    const globalIdx = search.trim().length >= 2 ? i : (localVoters.from ?? 0) + i;
+                                                    return (
+                                                        <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
+                                                            <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
+                                                            <td className="sticky left-0 z-10 bg-white px-2 py-2">
+                                                                <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                            </td>
+                                                            <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
+                                                            <td className="whitespace-nowrap px-2 py-2">
+                                                                {(() => {
+                                                                    const phone = voter.phone_mobile || voter.phone_home;
+                                                                    return phone ? <a href={`tel:${phone}`} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a> : '-';
+                                                                })()}
+                                                            </td>
+                                                            {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
+                                                            {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
+                                                            <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
+                                                            <td className="whitespace-nowrap px-2 py-2">
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    {!voter.is_manual && (
+                                                                        <>
+                                                                            <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
+                                                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
+                                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                            </label>
+                                                                            {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => { setSelectedVoterForCula(voter); setIsCulaFromDataError(false); setShowCulaModal(true); }}
+                                                                                    className="rounded bg-blue-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-blue-500"
+                                                                                >
+                                                                                    Siap
+                                                                                </button>
+                                                                            ) : (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                                                    className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500"
+                                                                                >
+                                                                                    Cula
+                                                                                </button>
+                                                                            ))}
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                                className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
+                                                                            >
+                                                                                Tel
+                                                                            </button>
+                                                                        </>
+                                                                    )}
+                                                                     {voter.is_marked && (
+                                                                        <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                            className="rounded bg-red-50 px-1 py-0.5 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
+                                                                            {pendingIds.includes(voter.id) ? '...' : 'Buka'}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        ))
+                                    ) : (
+                                        <tbody>
+                                            {rows.map((voter, index) => {
+                                                const globalIdx = search.trim().length >= 2 ? index : (localVoters.from ?? 0) + index;
+                                                return (
+                                                    <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
+                                                        <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
+                                                        <td className="sticky left-0 z-10 bg-white px-2 py-2">
+                                                            <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
+                                                        <td className="whitespace-nowrap px-2 py-2">
+                                                            {(() => {
+                                                                const phone = voter.phone_mobile || voter.phone_home;
+                                                                return phone ? <a href={`tel:${phone}`} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a> : '-';
+                                                            })()}
+                                                        </td>
+                                                        {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
+                                                        {showLocalityColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.locality || '-'}</td>}
+                                                        <td className="px-2 py-2 text-center font-bold text-slate-600">{voter.age ?? '-'}</td>
+                                                        <td className="whitespace-nowrap px-2 py-2">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                {!voter.is_manual && (
+                                                                    <>
+                                                                        <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
+                                                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
+                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                        </label>
+                                                                        {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => { setSelectedVoterForCula(voter); setIsCulaFromDataError(false); setShowCulaModal(true); }}
+                                                                                className="rounded bg-blue-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-blue-500"
+                                                                            >
+                                                                                Siap
+                                                                            </button>
+                                                                        ) : (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                                                className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500"
+                                                                            >
+                                                                                Cula
+                                                                            </button>
+                                                                        ))}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                            className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
+                                                                        >
+                                                                            Tel
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                                {voter.is_marked ? (
+                                                                    <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                        className="rounded bg-red-50 px-1 py-0.5 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
+                                                                        {pendingIds.includes(voter.id) ? '...' : 'Buka'}
+                                                                    </button>
+                                                                ) : (
+                                                                    <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
+                                                                        className="rounded bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                        {pendingIds.includes(voter.id) ? '...' : '✓'}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    )}
+                                </table>
                             </div>
                         )}
                         {!shouldPromptUdm && search.trim().length < 2 && (

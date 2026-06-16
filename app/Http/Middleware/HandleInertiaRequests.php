@@ -56,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                             ->all(),
                         'must_change_password' => (bool) $request->user()->must_change_password,
                         'is_expired' => $request->user()->isExpired(),
+                        'preferences' => $request->user()->preferences ?? [],
                     ]
                     : null,
                 'impersonation' => [
