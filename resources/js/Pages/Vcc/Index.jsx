@@ -829,7 +829,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                         </label>
                                                                         {voter.whatsapp_link && (
                                                                             <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
-                                                                                className="rounded border border-green-200 bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100">
+                                                                                className="min-w-[2.5rem] rounded border border-green-200 bg-green-50 px-1.5 py-1 text-center text-xs font-bold text-green-700 hover:bg-green-100">
                                                                                 WA
                                                                             </a>
                                                                         )}
@@ -837,7 +837,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                 )}
                                                                 {voter.is_marked ? (
                                                                     <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                        className="rounded bg-red-50 px-1.5 py-1 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
+                                                                        className="min-w-[2.5rem] rounded bg-red-50 px-1.5 py-1 text-center text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
                                                                         {pendingIds.includes(voter.id) ? '...' : 'Buka'}
                                                                     </button>
                                                                 ) : (
@@ -845,24 +845,24 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                         {!voter.is_manual && (
                                                                             <>
                                                                                 <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
-                                                                                    className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
+                                                                                    className="min-w-[2.5rem] rounded bg-green-600 px-1.5 py-1 text-center text-xs font-bold text-white hover:bg-green-500">
                                                                                     Cula
                                                                                 </button>
                                                                                 <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
-                                                                                    className="rounded bg-amber-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-amber-500">
+                                                                                    className="min-w-[2.5rem] rounded bg-amber-600 px-1.5 py-1 text-center text-xs font-bold text-white hover:bg-amber-500">
                                                                                     Tel
                                                                                 </button>
                                                                             </>
                                                                         )}
                                                                         {culaPendingIds.has(voter.id) && (
                                                                             <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
-                                                                                className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
+                                                                                className="min-w-[2.5rem] rounded bg-blue-600 px-1.5 py-1 text-center text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
                                                                                 {pendingIds.includes(voter.id) ? '...' : 'Siap'}
                                                                             </button>
                                                                         )}
                                                                         {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' && (
                                                                             <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                                className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                                className="min-w-[2.5rem] rounded bg-green-50 px-1.5 py-1 text-center text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
                                                                                 {pendingIds.includes(voter.id) ? '...' : '✓'}
                                                                             </button>
                                                                         )}
@@ -915,7 +915,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                     </label>
                                                                     {voter.whatsapp_link && (
                                                                         <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
-                                                                            className="rounded border border-green-200 bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100">
+                                                                            className="min-w-[2.5rem] rounded border border-green-200 bg-green-50 px-1.5 py-1 text-center text-xs font-bold text-green-700 hover:bg-green-100">
                                                                             WA
                                                                         </a>
                                                                     )}
@@ -923,7 +923,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                             )}
                                                             {voter.is_marked ? (
                                                                 <button type="button" onClick={() => unmarkVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                    className="rounded bg-red-50 px-1.5 py-1 text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
+                                                                    className="min-w-[2.5rem] rounded bg-red-50 px-1.5 py-1 text-center text-xs font-bold text-red-600 hover:bg-red-100 disabled:opacity-50">
                                                                     {pendingIds.includes(voter.id) ? '...' : 'Buka'}
                                                                 </button>
                                                             ) : (
@@ -931,24 +931,24 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                     {!voter.is_manual && (
                                                                         <>
                                                                             <button type="button" onClick={() => { window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); setCulaPendingIds((prev) => new Set([...prev, voter.id])); }}
-                                                                                className="rounded bg-green-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-green-500">
+                                                                                className="min-w-[2.5rem] rounded bg-green-600 px-1.5 py-1 text-center text-xs font-bold text-white hover:bg-green-500">
                                                                                 Cula
                                                                             </button>
                                                                             <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
-                                                                                className="rounded bg-amber-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-amber-500">
+                                                                                className="min-w-[2.5rem] rounded bg-amber-600 px-1.5 py-1 text-center text-xs font-bold text-white hover:bg-amber-500">
                                                                                 Tel
                                                                             </button>
                                                                         </>
                                                                     )}
                                                                     {culaPendingIds.has(voter.id) && (
                                                                         <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }} disabled={pendingIds.includes(voter.id)}
-                                                                            className="rounded bg-blue-600 px-1.5 py-1 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
+                                                                            className="min-w-[2.5rem] rounded bg-blue-600 px-1.5 py-1 text-center text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">
                                                                             {pendingIds.includes(voter.id) ? '...' : 'Siap'}
                                                                         </button>
                                                                     )}
                                                                     {voter.cula_code && voter.cula_code !== '?' && voter.cula_code !== '0' && (
                                                                         <button type="button" onClick={() => markVoter(voter)} disabled={pendingIds.includes(voter.id)}
-                                                                            className="rounded bg-green-50 px-1.5 py-1 text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
+                                                                            className="min-w-[2.5rem] rounded bg-green-50 px-1.5 py-1 text-center text-xs font-bold text-green-700 hover:bg-green-100 disabled:opacity-50">
                                                                             {pendingIds.includes(voter.id) ? '...' : '✓'}
                                                                         </button>
                                                                     )}
