@@ -9,6 +9,8 @@ const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 function fmt(v) { return nf.format(v ?? 0); }
 
+function fmtPhone(p) { if (!p) return '-'; const d = p.replace(/\D/g, ''); return d.length < 10 ? p : d.slice(0,3)+'-'+d.slice(3); }
+
 function dobFromIc(noKp) {
     if (!noKp) return '-';
     const digits = noKp.replace(/\D/g, '');
@@ -891,7 +893,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                     <td className="whitespace-nowrap px-2 py-2">
                                                         {phone ? (
-                                                            <a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a>
+                                                            <a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{fmtPhone(phone)}</a>
                                                         ) : '-'}
                                                     </td>
                                                     {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
