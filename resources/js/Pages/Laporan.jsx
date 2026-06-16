@@ -23,6 +23,11 @@ function fmtDiff(v, diff) {
         </span>
     );
 }
+function fmtSiapDiff(v, diff) {
+    if (diff === undefined || diff === 0) return <span className="text-slate-400">-</span>;
+    if (diff > 0) return <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-800">+{fmt(diff)}</span>;
+    return <span className="text-slate-400">-</span>;
+}
 function getRaceCount(breakdown, names) {
     for (const r of breakdown ?? []) {
         if (names.includes(r.code.toUpperCase())) return r.total;
@@ -266,7 +271,7 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
     const dmCols = [
         { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span>, headerClass: 'sticky-th', cellClass: 'sticky-td' },
 
-        { key: 'siap_cula', label: 'Siap', format: (v, r) => fmtDiff(v, diffMap[r.key]?.siap_cula), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
+        { key: 'siap_cula', label: 'Siap', format: (v, r) => fmtSiapDiff(v, diffMap[r.key]?.siap_cula), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
         { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P), headerClass: groupH.demo, cellClass: groupC.demo },
