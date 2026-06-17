@@ -795,7 +795,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         });
 
         const nowTitle = new Date();
-        const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
+        const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
 
         if (formState.udm) {
             titleRows.push({

@@ -459,6 +459,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         let bodyRowsXml = '';
         let titleRowXml = '';
         const showUdmInExport = formState.udm === '';
+        const nowTitle = new Date();
+        const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
 
         if (showUdmInExport) {
             const groups = {};
@@ -477,7 +479,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             </Row>
             <Row>
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleDate">
-                    <Data ss:Type="String">${dateStr}</Data>
+                    <Data ss:Type="String">Tarikh : ${dateStr}</Data>
                 </Cell>
             </Row>`;
                 bodyRowsXml += makeHeaderRowXml();
@@ -486,10 +488,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             }
         } else {
             const titleRows = [];
-            const nowTitle = new Date();
-            const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
             if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
-            titleRows.push({ value: dateStr, styleId: 'titleDate' });
+            titleRows.push({ value: 'Tarikh : ' + dateStr, styleId: 'titleDate' });
             if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
             if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
 
