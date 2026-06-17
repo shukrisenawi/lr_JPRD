@@ -956,7 +956,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `culaan_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xls`;
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        link.download = `CULA_${formState.udm || 'semua'}_${dd}-${mm}-${yyyy}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
