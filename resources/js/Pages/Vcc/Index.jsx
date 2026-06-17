@@ -463,7 +463,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const nowTitle = new Date();
         const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
         const monthNames = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
-        const bulanLahirStr = formState.bulan_lahir ? monthNames[parseInt(formState.bulan_lahir) - 1] : '';
+        const bulanLahirStr = formState.bulan_lahir ? formState.bulan_lahir.split(',').filter(Boolean).map(m => monthNames[parseInt(m) - 1]).filter(Boolean).join(', ') : '';
 
         if (showUdmInExport) {
             const groups = {};
@@ -719,18 +719,27 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
 
                                 <div>
-                                    <label htmlFor="vcc-bulan" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
-                                    <select
-                                        id="vcc-bulan"
-                                        value={formState.bulan_lahir}
-                                        onChange={(event) => updateFilter('bulan_lahir', event.target.value)}
-                                        className="input-field mt-1"
-                                    >
-                                        <option value="">Semua</option>
-                                        {['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'].map((nama, i) => (
-                                            <option key={i + 1} value={i + 1}>{nama}</option>
-                                        ))}
-                                    </select>
+                                    <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
+                                    <div className="mt-1 flex max-h-28 flex-wrap gap-1 overflow-y-auto">
+                                        {['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'].map((nama, i) => {
+                                            const monthVal = String(i + 1);
+                                            const selected = formState.bulan_lahir.split(',').includes(monthVal);
+                                            return (
+                                                <button
+                                                    key={monthVal}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current = formState.bulan_lahir ? formState.bulan_lahir.split(',').filter(Boolean) : [];
+                                                        const next = selected ? current.filter(x => x !== monthVal) : [...current, monthVal];
+                                                        updateFilter('bulan_lahir', next.join(','));
+                                                    }}
+                                                    className={`rounded-md border px-2 py-1 text-[11px] font-bold leading-tight transition ${selected ? 'border-green-600 bg-green-100 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300'}`}
+                                                >
+                                                    {nama}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
                                 <div>
