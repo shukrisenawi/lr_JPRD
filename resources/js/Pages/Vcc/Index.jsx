@@ -481,7 +481,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleDate">
                     <Data ss:Type="String">Tarikh : ${dateStr}</Data>
                 </Cell>
-            </Row>`;
+            </Row>
+            <Row></Row>`;
                 bodyRowsXml += makeHeaderRowXml();
                 bodyRowsXml += makeBodyRowsXml(udmVoters, globalIdx);
                 globalIdx += udmVoters.length;
@@ -501,6 +502,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             </Row>`).join('');
 
             bodyRowsXml = titleRowXml;
+            bodyRowsXml += '<Row></Row>';
             bodyRowsXml += makeHeaderRowXml();
             bodyRowsXml += makeBodyRowsXml(exportRows, 0);
         }

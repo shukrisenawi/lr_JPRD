@@ -958,6 +958,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         <Table>
             ${columnXml}
             ${titleRowXml}
+            <Row></Row>
             ${headerRowXml}
             ${bodyRowsXml}
         </Table>
