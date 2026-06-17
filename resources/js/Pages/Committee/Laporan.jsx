@@ -126,8 +126,14 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
                                             const match = isMatching(m.voter?.name);
                                             return (
                                             <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : '')}>
-                                                <div className={'flex h-8 w-8 shrink-0 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
-                                                    <Icon name="user" className="h-4 w-4" />
+                                                <div className="h-8 w-8 shrink-0">
+                                                    {m.voter?.avatar_url ? (
+                                                        <img src={m.voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
+                                                    ) : (
+                                                        <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
+                                                            <Icon name="user" className="h-4 w-4" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
@@ -188,6 +194,15 @@ function UdmPositionPopup({ position, members, onClose }) {
                                     <div className="divide-y divide-slate-100">
                                         {g.members.map((m) => (
                                             <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+                                                <div className="h-6 w-6 shrink-0">
+                                                    {m.voter?.avatar_url ? (
+                                                        <img src={m.voter.avatar_url} alt="" className="h-6 w-6 rounded-full border border-slate-200 object-cover" />
+                                                    ) : (
+                                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                                                            <Icon name="user" className="h-3 w-3" />
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 <span className="font-medium">{m.voter?.name}</span>
                                                 <span className="text-slate-400">—</span>
                                                 <span className="text-slate-400">{m.voter?.phone_mobile || m.voter?.phone_home || '-'}</span>
@@ -443,8 +458,14 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                     const grp = groups.find((g) => g.id === m.committee_group_id);
                                                     return (
                                                         <div key={m.id} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50">
-                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
-                                                                <Icon name="user" className="h-4 w-4" />
+                                                            <div className="h-8 w-8 shrink-0">
+                                                                {m.voter?.avatar_url ? (
+                                                                    <img src={m.voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
+                                                                ) : (
+                                                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                                                                        <Icon name="user" className="h-4 w-4" />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="min-w-0 flex-1">
                                                                 <p className="text-xs font-bold text-slate-800">{m.voter?.name}</p>
