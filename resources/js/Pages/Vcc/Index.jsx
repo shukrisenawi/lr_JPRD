@@ -512,6 +512,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleSub">
                     <Data ss:Type="String">${escapeXml(udm)}</Data>
                 </Cell>
+            </Row>
+            <Row>
+                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleDate">
+                    <Data ss:Type="String">Tarikh : ${dateStr}</Data>
+                </Cell>
             </Row>`;
                     bodyRowsXml += makeBodyRowsXml(udmVoters, globalIdx);
                     globalIdx += udmVoters.length;
