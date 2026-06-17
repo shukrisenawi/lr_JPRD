@@ -529,6 +529,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
         const titleRows = [];
         if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
+        titleRows.push({ value: 'Tarikh : ' + dateStr, styleId: 'titleDate' });
         if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
         if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
 
