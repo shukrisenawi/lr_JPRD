@@ -1,6 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AvatarLightbox from '@/Components/AvatarLightbox';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -29,7 +30,7 @@ const levelOptions = [
     { key: 'udm-kumpulan', label: 'Pilih Kumpulan UDM' },
 ];
 
-function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
+function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvatarClick }) {
     if (!scope) return null;
 
     const groupedByGroup = {};
@@ -128,7 +129,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
                                             <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : '')}>
                                                 <div className="h-8 w-8 shrink-0">
                                                     {m.voter?.avatar_url ? (
-                                                        <img src={m.voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
+                                                        <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
                                                     ) : (
                                                         <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
                                                             <Icon name="user" className="h-4 w-4" />
@@ -157,7 +158,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose }) {
     );
 }
 
-function UdmPositionPopup({ position, members, onClose }) {
+function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
     if (!position) return null;
 
     const groupedByUdm = {};
@@ -196,7 +197,7 @@ function UdmPositionPopup({ position, members, onClose }) {
                                             <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
                                                 <div className="h-6 w-6 shrink-0">
                                                     {m.voter?.avatar_url ? (
-                                                        <img src={m.voter.avatar_url} alt="" className="h-6 w-6 rounded-full border border-slate-200 object-cover" />
+                                                        <img src={m.voter.avatar_url} alt="" className="h-6 w-6 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
                                                     ) : (
                                                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-sky-600">
                                                             <Icon name="user" className="h-3 w-3" />
@@ -221,6 +222,7 @@ function UdmPositionPopup({ position, members, onClose }) {
 
 export default function CommitteeLaporan({ memberships, scopes, groups }) {
     const [activeTab, setActiveTab] = useState('jprd');
+    const [lightboxSrc, setLightboxSrc] = useState(null);
     const [detailScope, setDetailScope] = useState(null);
     const [detailPosition, setDetailPosition] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -460,7 +462,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                         <div key={m.id} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50">
                                                             <div className="h-8 w-8 shrink-0">
                                                                 {m.voter?.avatar_url ? (
-                                                                    <img src={m.voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
+                                                                    <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
                                                                 ) : (
                                                                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700">
                                                                         <Icon name="user" className="h-4 w-4" />
@@ -547,6 +549,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     groups={groups}
                     highlight={searchQuery}
                     onClose={() => setDetailScope(null)}
+                    onAvatarClick={setLightboxSrc}
                 />
             )}
 
@@ -555,7 +558,12 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     position={detailPosition}
                     members={detailPosition.members}
                     onClose={() => setDetailPosition(null)}
+                    onAvatarClick={setLightboxSrc}
                 />
+            )}
+
+            {lightboxSrc && (
+                <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
             )}
         </AuthenticatedLayout>
     );
