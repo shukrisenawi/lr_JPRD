@@ -495,7 +495,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             bodyRowsXml += `
             <Row>
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMain">
-                    <Data ss:Type="String">${escapeXml('Bulan ' + monthLabel)}</Data>
+                    <Data ss:Type="String">${escapeXml('Bulan Lahir ' + monthLabel)}</Data>
                 </Cell>
             </Row>`;
 
