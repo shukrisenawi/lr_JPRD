@@ -462,7 +462,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const showUdmInExport = formState.udm === '';
         const nowTitle = new Date();
         const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
-        const monthNames = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
+        const monthNames = ['JANUARI','FEBRUARI','MAC','APRIL','MEI','JUN','JULAI','OGOS','SEPTEMBER','OKTOBER','NOVEMBER','DISEMBER'];
         const bulanLahirStr = formState.bulan_lahir ? formState.bulan_lahir.split(',').filter(Boolean).map(m => monthNames[parseInt(m) - 1]).filter(Boolean).join(', ') : '';
 
         const getMonthFromVoter = (voter) => {
@@ -794,7 +794,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                             <div className="mt-3">
                                 <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
                                 <div className="mt-1 flex flex-wrap gap-1">
-                                    {['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'].map((nama, i) => {
+                                    {['JANUARI','FEBRUARI','MAC','APRIL','MEI','JUN','JULAI','OGOS','SEPTEMBER','OKTOBER','NOVEMBER','DISEMBER'].map((nama, i) => {
                                         const monthVal = String(i + 1);
                                         const selected = formState.bulan_lahir.split(',').includes(monthVal);
                                         return (
