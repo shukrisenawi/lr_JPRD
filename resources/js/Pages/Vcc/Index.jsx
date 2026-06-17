@@ -461,6 +461,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const showUdmInExport = formState.udm === '';
         const nowTitle = new Date();
         const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
+        const monthNames = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
+        const bulanLahirStr = formState.bulan_lahir ? monthNames[parseInt(formState.bulan_lahir) - 1] : '';
 
         if (showUdmInExport) {
             const groups = {};
@@ -479,7 +481,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             </Row>
             <Row>
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleDate">
-                    <Data ss:Type="String">Tarikh : ${dateStr}</Data>
+                    <Data ss:Type="String">Tarikh : ${dateStr}${bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : ''}</Data>
                 </Cell>
             </Row>
             <Row></Row>`;
@@ -490,7 +492,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         } else {
             const titleRows = [];
             if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
-            titleRows.push({ value: 'Tarikh : ' + dateStr, styleId: 'titleDate' });
+            titleRows.push({ value: 'Tarikh : ' + dateStr + (bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : ''), styleId: 'titleDate' });
             if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
             if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
 
@@ -613,8 +615,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        const monthNames = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
-        const bulanNama = formState.bulan_lahir ? monthNames[parseInt(formState.bulan_lahir) - 1] : 'semua';
+        const bulanNama = bulanLahirStr || 'semua';
         const now = new Date();
         const dd = String(now.getDate()).padStart(2, '0');
         const mm = String(now.getMonth() + 1).padStart(2, '0');
