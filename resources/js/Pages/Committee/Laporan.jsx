@@ -225,6 +225,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [detailScope, setDetailScope] = useState(null);
     const [detailPosition, setDetailPosition] = useState(null);
+    const [detailGroup, setDetailGroup] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPositionIds, setSelectedPositionIds] = useState([]);
 
@@ -524,38 +525,29 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                             jprdGroupStats.length === 0 ? (
                                 <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-1.5">
                                     {jprdGroupStats.map((g) => (
-                                        <div key={g.groupName} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-                                            <div className="flex items-center justify-between bg-slate-50 px-3 py-2 border-b border-slate-200">
-                                                <p className="text-xs font-bold text-slate-700">{g.groupName}</p>
-                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{g.members.length} ahli</span>
+                                        <div key={g.groupName} className="flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-slate-50">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-bold text-slate-800">{g.groupName}</p>
+                                                {g.members.length > 0 ? (
+                                                    <p className="mt-0.5 text-[10px] text-green-600">{g.members.length} ahli</p>
+                                                ) : (
+                                                    <p className="mt-0.5 text-[10px] text-amber-600">Belum ada ahli</p>
+                                                )}
                                             </div>
-                                            <div className="divide-y divide-slate-100">
-                                                {g.members.map((m) => {
-                                                    const match = searchQuery.trim() && m.voter?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-                                                    return (
-                                                    <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : 'hover:bg-slate-50')}>
-                                                        <div className="h-8 w-8 shrink-0">
-                                                            {m.voter?.avatar_url ? (
-                                                                <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
-                                                            ) : (
-                                                                <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
-                                                                    <Icon name="user" className="h-4 w-4" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
-                                                            <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
-                                                        </div>
-                                                        <div className="shrink-0 text-right">
-                                                            <span className="inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
-                                                            {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
-                                                        </div>
-                                                    </div>
-                                                    );
-                                                })}
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                {g.members.length > 0 && (
+                                                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{g.members.length}</span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setDetailGroup(g.members.length > 0 ? g : null)}
+                                                    disabled={g.members.length === 0}
+                                                    className={'rounded-lg border px-3 py-1.5 text-xs font-bold transition ' + (g.members.length > 0 ? 'border-green-300 bg-green-50 text-green-700 hover:bg-green-100' : 'border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed')}
+                                                >
+                                                    Jawatankuasa
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -625,6 +617,54 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     onClose={() => setDetailPosition(null)}
                     onAvatarClick={setLightboxSrc}
                 />
+            )}
+
+            {detailGroup && (
+                <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 pt-8 sm:pt-16" onClick={() => setDetailGroup(null)}>
+                    <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
+                            <div>
+                                <p className="text-sm font-bold text-slate-800">JPRD — {detailGroup.groupName}</p>
+                                <p className="text-xs text-slate-500">{detailGroup.members.length} orang ahli jawatankuasa</p>
+                            </div>
+                            <button type="button" onClick={() => setDetailGroup(null)} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                                <Icon name="x" className="h-5 w-5" />
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto p-4">
+                            {detailGroup.members.length === 0 ? (
+                                <p className="py-8 text-center text-xs text-slate-400">Tiada ahli jawatankuasa.</p>
+                            ) : (
+                                <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                                    {detailGroup.members.map((m) => {
+                                        const match = searchQuery.trim() && m.voter?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+                                        return (
+                                        <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : 'hover:bg-slate-50')}>
+                                            <div className="h-8 w-8 shrink-0">
+                                                {m.voter?.avatar_url ? (
+                                                    <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
+                                                ) : (
+                                                    <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
+                                                        <Icon name="user" className="h-4 w-4" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
+                                                <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
+                                            </div>
+                                            <div className="shrink-0 text-right">
+                                                <span className="inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
+                                                {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
+                                            </div>
+                                        </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             )}
 
             {lightboxSrc && (
