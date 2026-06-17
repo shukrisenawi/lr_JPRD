@@ -794,10 +794,17 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             return cells;
         });
 
+        const nowTitle = new Date();
+        const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
+
         if (formState.udm) {
             titleRows.push({
                 value: formState.udm,
                 styleId: 'titleMain',
+            });
+            titleRows.push({
+                value: dateStr,
+                styleId: 'titleDate',
             });
         }
 
@@ -877,6 +884,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         <Style ss:ID="titleSub">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
             <Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/>
+            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="titleDate">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Font ss:FontName="Calibri" ss:Size="14" ss:Bold="0"/>
             <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
         </Style>
         <Style ss:ID="header">

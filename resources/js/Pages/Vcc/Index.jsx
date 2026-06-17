@@ -474,6 +474,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMain">
                     <Data ss:Type="String">${escapeXml(udm)}</Data>
                 </Cell>
+            </Row>
+            <Row>
+                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleDate">
+                    <Data ss:Type="String">${dateStr}</Data>
+                </Cell>
             </Row>`;
                 bodyRowsXml += makeHeaderRowXml();
                 bodyRowsXml += makeBodyRowsXml(udmVoters, globalIdx);
@@ -481,7 +486,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             }
         } else {
             const titleRows = [];
+            const nowTitle = new Date();
+            const dateStr = String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
             if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
+            titleRows.push({ value: dateStr, styleId: 'titleDate' });
             if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
             if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
 
@@ -520,6 +528,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         <Style ss:ID="titleSub">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
             <Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/>
+            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="titleDate">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Font ss:FontName="Calibri" ss:Size="14" ss:Bold="0"/>
             <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
         </Style>
         <Style ss:ID="header">
