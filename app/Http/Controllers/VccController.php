@@ -509,7 +509,10 @@ class VccController extends Controller
                 ->pluck('cula_code')
                 ->toArray();
 
-            $query->whereHas('kodCulas', fn ($q) => $q->whereIn('kod_cula', $availableCulaCodes));
+            $query->where(function ($q) use ($availableCulaCodes) {
+                $q->whereDoesntHave('kodCulas')
+                  ->orWhereHas('kodCulas', fn ($sub) => $sub->whereIn('kod_cula', $availableCulaCodes));
+            });
         }
 
         return $query->get()

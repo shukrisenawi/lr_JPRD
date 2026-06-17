@@ -202,6 +202,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const nextState = { ...formState, [key]: value };
         if (key === 'udm' && value !== formState.udm) {
             nextState.locality = '';
+            nextState.group_id = '';
         }
         setFormState(nextState);
         applyFilters(nextState);
