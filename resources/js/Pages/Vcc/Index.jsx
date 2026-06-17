@@ -492,11 +492,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             const monthVoters = monthGroups[monthKey];
             const monthLabel = monthKey === 'Lain' ? 'Lain-lain' : monthNames[parseInt(monthKey, 10) - 1];
 
-            const dateInfo = dateStr + (bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : '');
             bodyRowsXml += `
             <Row>
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMain">
-                    <Data ss:Type="String">${escapeXml(monthLabel + ' — ' + dateInfo)}</Data>
+                    <Data ss:Type="String">${escapeXml('Bulan ' + monthLabel)}</Data>
                 </Cell>
             </Row>`;
 
