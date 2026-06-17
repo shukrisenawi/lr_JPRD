@@ -306,8 +306,32 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
         });
     }, [currentScopes, memberships, activeTab]);
 
+    const jprdGroupStats = useMemo(() => {
+        const jprdMembers = memberships.filter((m) => m.level === 'jprd');
+        const groupMap = {};
+        jprdMembers.forEach((m) => {
+            const gid = m.committee_group_id || 'tanpa-kumpulan';
+            const grp = groups.find((g) => g.id === m.committee_group_id);
+            if (!groupMap[gid]) {
+                groupMap[gid] = { groupName: grp?.name || 'Tanpa Kumpulan', members: [], sortOrder: grp?.sort_order ?? 999 };
+            }
+            groupMap[gid].members.push(m);
+        });
+        Object.values(groupMap).forEach((g) => {
+            g.members.sort((a, b) => (a.position?.sort_order ?? 999) - (b.position?.sort_order ?? 999));
+        });
+        let result = Object.entries(groupMap)
+            .sort(([, a], [, b]) => a.sortOrder - b.sortOrder)
+            .map(([, v]) => v);
+        if (activeTab === 'jprd' && searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.map((g) => ({ ...g, members: g.members.filter((m) => m.voter?.name?.toLowerCase().includes(q) || (m.voter?.no_kp || m.voter?.old_ic || '').includes(q) || m.voter?.phone_mobile?.includes(q) || m.voter?.phone_home?.includes(q) || m.position?.name?.toLowerCase().includes(q)) })).filter((g) => g.members.length > 0);
+        }
+        return result;
+    }, [memberships, groups, searchQuery, activeTab]);
+
     const filteredScopeStats = useMemo(() => {
-        if (activeTab === 'udm-jawatan' || activeTab === 'udm-kumpulan') return [];
+        if (activeTab === 'jprd' || activeTab === 'udm-jawatan' || activeTab === 'udm-kumpulan') return [];
         let list = scopeStats;
         if (activeTab === 'cawangan') {
             list = list.filter((scope) => scope.totalMembers > 0);
@@ -496,6 +520,47 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                     <p className="py-8 text-center text-xs text-slate-400">Sila pilih satu atau lebih jawatan untuk melihat senarai ahli gabungan.</p>
                                 )}
                             </div>
+                        ) : activeTab === 'jprd' ? (
+                            jprdGroupStats.length === 0 ? (
+                                <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {jprdGroupStats.map((g) => (
+                                        <div key={g.groupName} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+                                            <div className="flex items-center justify-between bg-slate-50 px-3 py-2 border-b border-slate-200">
+                                                <p className="text-xs font-bold text-slate-700">{g.groupName}</p>
+                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{g.members.length} ahli</span>
+                                            </div>
+                                            <div className="divide-y divide-slate-100">
+                                                {g.members.map((m) => {
+                                                    const match = searchQuery.trim() && m.voter?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+                                                    return (
+                                                    <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : 'hover:bg-slate-50')}>
+                                                        <div className="h-8 w-8 shrink-0">
+                                                            {m.voter?.avatar_url ? (
+                                                                <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
+                                                            ) : (
+                                                                <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
+                                                                    <Icon name="user" className="h-4 w-4" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
+                                                            <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
+                                                        </div>
+                                                        <div className="shrink-0 text-right">
+                                                            <span className="inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
+                                                            {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
+                                                        </div>
+                                                    </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
                         ) : filteredScopeStats.length === 0 ? (
                             <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                         ) : (
