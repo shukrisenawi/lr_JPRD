@@ -487,7 +487,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             return parseInt(a, 10) - parseInt(b, 10);
         });
 
-        let globalIdx = 0;
         for (const monthKey of sortedMonths) {
             const monthVoters = monthGroups[monthKey];
             const monthLabel = monthKey === 'Lain' ? 'Lain-lain' : monthNames[parseInt(monthKey, 10) - 1];
@@ -518,12 +517,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                     <Data ss:Type="String">Tarikh : ${dateStr}</Data>
                 </Cell>
             </Row>`;
-                    bodyRowsXml += makeBodyRowsXml(udmVoters, globalIdx);
-                    globalIdx += udmVoters.length;
+                    bodyRowsXml += makeBodyRowsXml(udmVoters, 0);
                 }
             } else {
-                bodyRowsXml += makeBodyRowsXml(monthVoters, globalIdx);
-                globalIdx += monthVoters.length;
+                bodyRowsXml += makeBodyRowsXml(monthVoters, 0);
             }
         }
 
