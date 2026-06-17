@@ -494,7 +494,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
             bodyRowsXml += `
             <Row>
-                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMain">
+                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMonth">
                     <Data ss:Type="String">${escapeXml('Bulan Lahir ' + monthLabel)}</Data>
                 </Cell>
             </Row>`;
@@ -563,6 +563,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         <Style ss:ID="titleSub">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
             <Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/>
+            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
+        </Style>
+        <Style ss:ID="titleMonth">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+            <Font ss:FontName="Calibri" ss:Size="20" ss:Bold="1"/>
             <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
         </Style>
         <Style ss:ID="titleDate">
