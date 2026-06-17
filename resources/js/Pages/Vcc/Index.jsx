@@ -465,50 +465,75 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const monthNames = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
         const bulanLahirStr = formState.bulan_lahir ? formState.bulan_lahir.split(',').filter(Boolean).map(m => monthNames[parseInt(m) - 1]).filter(Boolean).join(', ') : '';
 
-        if (showUdmInExport) {
-            const groups = {};
-            for (const v of exportRows) {
-                const k = v.dm || 'Tanpa UDM';
-                if (!groups[k]) groups[k] = [];
-                groups[k].push(v);
+        const getMonthFromVoter = (voter) => {
+            if (voter.no_kp && voter.no_kp.length >= 6) {
+                const m = parseInt(voter.no_kp.substring(2, 4), 10);
+                if (m >= 1 && m <= 12) return m;
             }
-            let globalIdx = 0;
-            for (const [udm, udmVoters] of Object.entries(groups)) {
-                bodyRowsXml += `
+            return null;
+        };
+
+        const monthGroups = {};
+        for (const v of exportRows) {
+            const m = getMonthFromVoter(v);
+            const mk = m != null ? String(m) : 'Lain';
+            if (!monthGroups[mk]) monthGroups[mk] = [];
+            monthGroups[mk].push(v);
+        }
+
+        const sortedMonths = Object.keys(monthGroups).sort((a, b) => {
+            if (a === 'Lain') return 1;
+            if (b === 'Lain') return -1;
+            return parseInt(a, 10) - parseInt(b, 10);
+        });
+
+        let globalIdx = 0;
+        for (const monthKey of sortedMonths) {
+            const monthVoters = monthGroups[monthKey];
+            const monthLabel = monthKey === 'Lain' ? 'Lain-lain' : monthNames[parseInt(monthKey, 10) - 1];
+
+            bodyRowsXml += `
             <Row>
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMain">
+                    <Data ss:Type="String">${escapeXml(monthLabel)}</Data>
+                </Cell>
+            </Row>`;
+
+            if (showUdmInExport) {
+                const udmSubGroups = {};
+                for (const v of monthVoters) {
+                    const k = v.dm || 'Tanpa UDM';
+                    if (!udmSubGroups[k]) udmSubGroups[k] = [];
+                    udmSubGroups[k].push(v);
+                }
+                for (const [udm, udmVoters] of Object.entries(udmSubGroups)) {
+                    bodyRowsXml += `
+            <Row>
+                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleSub">
                     <Data ss:Type="String">${escapeXml(udm)}</Data>
                 </Cell>
-            </Row>
-            <Row>
-                <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleDate">
-                    <Data ss:Type="String">Tarikh : ${dateStr}${bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : ''}</Data>
-                </Cell>
-            </Row>
-            <Row></Row>`;
-                bodyRowsXml += makeHeaderRowXml();
-                bodyRowsXml += makeBodyRowsXml(udmVoters, globalIdx);
-                globalIdx += udmVoters.length;
+            </Row>`;
+                    bodyRowsXml += makeBodyRowsXml(udmVoters, globalIdx);
+                    globalIdx += udmVoters.length;
+                }
+            } else {
+                bodyRowsXml += makeBodyRowsXml(monthVoters, globalIdx);
+                globalIdx += monthVoters.length;
             }
-        } else {
-            const titleRows = [];
-            if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
-            titleRows.push({ value: 'Tarikh : ' + dateStr + (bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : ''), styleId: 'titleDate' });
-            if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
-            if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
+        }
 
-            const titleRowXml = titleRows.map((title) => `
+        const titleRows = [];
+        if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
+        titleRows.push({ value: 'Tarikh : ' + dateStr + (bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : ''), styleId: 'titleDate' });
+        if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
+        if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
+
+        titleRowXml = titleRows.map((title) => `
             <Row>
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="${title.styleId}">
                     <Data ss:Type="String">${escapeXml(title.value)}</Data>
                 </Cell>
             </Row>`).join('');
-
-            bodyRowsXml = titleRowXml;
-            bodyRowsXml += '<Row></Row>';
-            bodyRowsXml += makeHeaderRowXml();
-            bodyRowsXml += makeBodyRowsXml(exportRows, 0);
-        }
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
