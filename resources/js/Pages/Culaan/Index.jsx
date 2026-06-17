@@ -974,7 +974,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">{headerTitle}</h2>
                         <p className="mt-1 text-xs font-medium text-slate-500">{headerDesc}</p>
                     </div>
-                    {(tab === 'senarai' || tab === 'data_error') && (
+                    {(tab === 'senarai' || tab === 'data_error') && formState.udm && (
                         <button
                             type="button"
                             onClick={exportToExcel}
