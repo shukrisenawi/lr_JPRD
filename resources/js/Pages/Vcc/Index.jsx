@@ -598,7 +598,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `vcc_${formState.udm || 'semua'}_${new Date().toISOString().slice(0, 10)}.xls`;
+        const monthNames = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
+        const bulanNama = formState.bulan_lahir ? monthNames[parseInt(formState.bulan_lahir) - 1] : 'semua';
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+        link.download = `VCC_${formState.udm || 'semua'}_${bulanNama}_${dd}-${mm}-${yyyy}.xls`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
