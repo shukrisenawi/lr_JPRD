@@ -492,10 +492,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             const monthVoters = monthGroups[monthKey];
             const monthLabel = monthKey === 'Lain' ? 'Lain-lain' : monthNames[parseInt(monthKey, 10) - 1];
 
+            const dateInfo = dateStr + (bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : '');
             bodyRowsXml += `
             <Row>
                 <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleMain">
-                    <Data ss:Type="String">${escapeXml(monthLabel)}</Data>
+                    <Data ss:Type="String">${escapeXml(monthLabel + ' — ' + dateInfo)}</Data>
                 </Cell>
             </Row>`;
 
@@ -524,7 +525,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
         const titleRows = [];
         if (formState.udm) titleRows.push({ value: formState.udm, styleId: 'titleMain' });
-        titleRows.push({ value: 'Tarikh : ' + dateStr + (bulanLahirStr ? ', Bulan Lahir : ' + bulanLahirStr : ''), styleId: 'titleDate' });
         if (formState.locality) titleRows.push({ value: formState.locality, styleId: 'titleSub' });
         if (selectedGroup?.nama_group) titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, styleId: 'titleSub' });
 
