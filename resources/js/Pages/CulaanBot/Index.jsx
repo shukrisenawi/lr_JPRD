@@ -109,7 +109,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const goToPage = (page) => {
-        const listEl = document.getElementById('voter-list');
+        const listEl = document.getElementById('voter-count');
         if (listEl) listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         applyFilters({ ...formState, page });
     };
@@ -323,7 +323,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                     )}
                 </section>
 
-                <div className="flex items-center justify-between rounded-lg bg-white px-4 py-3 border border-green-600 shadow-sm shadow-green-600/20">
+                <div id="voter-count" className="flex items-center justify-between rounded-lg bg-white px-4 py-3 border border-green-600 shadow-sm shadow-green-600/20">
                     <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah</p>
                     <p className="text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</p>
                 </div>
