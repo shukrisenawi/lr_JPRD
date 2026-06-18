@@ -127,22 +127,22 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
                                             const match = isMatching(m.voter?.name);
                                             return (
                                             <div key={m.id} className={'flex items-center gap-3 rounded-lg px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300' : 'bg-slate-50 hover:bg-slate-100')}>
-                                                <div className="h-8 w-8 shrink-0">
-                                                    {m.voter?.avatar_url ? (
-                                                        <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
-                                                    ) : (
-                                                        <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
-                                                            <Icon name="user" className="h-4 w-4" />
-                                                        </div>
-                                                    )}
+                                                <div className="flex flex-col items-center gap-1 shrink-0">
+                                                    <div className="h-8 w-8">
+                                                        {m.voter?.avatar_url ? (
+                                                            <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
+                                                        ) : (
+                                                            <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
+                                                                <Icon name="user" className="h-4 w-4" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[9px] font-bold text-green-700 leading-tight text-center">{m.position?.name}</span>
+                                                    {m.notes && <span className="text-[8px] text-amber-600 leading-tight text-center">{m.notes}</span>}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
                                                     <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
-                                                </div>
-                                                <div className="shrink-0 text-right">
-                                                    <span className="inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
-                                                    {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                 </div>
                                             </div>
                                             );
@@ -195,18 +195,22 @@ function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
                                     <div className="grid grid-cols-2 gap-2 p-2">
                                         {g.members.map((m) => (
                                             <div key={m.id} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-slate-700 bg-slate-50 hover:bg-slate-100">
-                                                <div className="h-6 w-6 shrink-0">
-                                                    {m.voter?.avatar_url ? (
-                                                        <img src={m.voter.avatar_url} alt="" className="h-6 w-6 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
-                                                    ) : (
-                                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-sky-600">
-                                                            <Icon name="user" className="h-3 w-3" />
-                                                        </div>
-                                                    )}
+                                                <div className="flex flex-col items-center gap-0.5 shrink-0">
+                                                    <div className="h-6 w-6">
+                                                        {m.voter?.avatar_url ? (
+                                                            <img src={m.voter.avatar_url} alt="" className="h-6 w-6 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
+                                                        ) : (
+                                                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                                                                <Icon name="user" className="h-3 w-3" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="rounded-md bg-sky-50 px-1 py-0.5 text-[8px] font-bold text-sky-700 leading-tight text-center">{m.position?.name}</span>
                                                 </div>
-                                                <span className="font-medium">{m.voter?.name}</span>
-                                                <span className="text-slate-400">—</span>
-                                                <span className="text-slate-400">{m.voter?.phone_mobile || m.voter?.phone_home || '-'}</span>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-medium text-slate-700">{m.voter?.name}</p>
+                                                    <p className="text-slate-400">{m.voter?.phone_mobile || m.voter?.phone_home || '-'}</p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -674,22 +678,22 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                         const match = searchQuery.trim() && m.voter?.name?.toLowerCase().includes(searchQuery.toLowerCase());
                                         return (
                                         <div key={m.id} className={'flex items-center gap-3 rounded-lg px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300' : 'bg-slate-50 hover:bg-slate-100')}>
-                                            <div className="h-8 w-8 shrink-0">
-                                                {m.voter?.avatar_url ? (
-                                                    <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
-                                                ) : (
-                                                    <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
-                                                        <Icon name="user" className="h-4 w-4" />
-                                                    </div>
-                                                )}
+                                            <div className="flex flex-col items-center gap-1 shrink-0">
+                                                <div className="h-8 w-8">
+                                                    {m.voter?.avatar_url ? (
+                                                        <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
+                                                    ) : (
+                                                        <div className={'flex h-8 w-8 items-center justify-center rounded-full ' + (match ? 'bg-amber-200 text-amber-800' : 'bg-green-100 text-green-700')}>
+                                                            <Icon name="user" className="h-4 w-4" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <span className="rounded-md bg-green-50 px-1.5 py-0.5 text-[9px] font-bold text-green-700 leading-tight text-center">{m.position?.name}</span>
+                                                {m.notes && <span className="text-[8px] text-amber-600 leading-tight text-center">{m.notes}</span>}
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
                                                 <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
-                                            </div>
-                                            <div className="shrink-0 text-right">
-                                                <span className="inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
-                                                {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                             </div>
                                         </div>
                                         );
