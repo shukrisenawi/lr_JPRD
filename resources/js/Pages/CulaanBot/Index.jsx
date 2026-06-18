@@ -318,7 +318,12 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             <span className="shrink-0 text-xs font-bold text-slate-800 min-w-[1.2rem] text-right">
                                                 {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}.
                                             </span>
-                                            <div className="min-w-0 flex-1">
+                                            <div className="min-w-0 flex-1 flex items-center gap-2">
+                                                {(avatarUpdates[voter.id] || voter.avatar_url) && (
+                                                    <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
+                                                        className="h-6 w-6 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200"
+                                                        onClick={() => setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url)} />
+                                                )}
                                                 <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                     {voter.name}
                                                     {voter.is_marked && (
