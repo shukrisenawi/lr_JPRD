@@ -487,11 +487,11 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                     </span>
                                                 )}
                                             </p>
-                                            <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                                            <div className="grid grid-cols-2 gap-2">
                                                 {filteredMergedMembers.map((m) => {
                                                     const grp = groups.find((g) => g.id === m.committee_group_id);
                                                     return (
-                                                        <div key={m.id} className="flex items-center gap-3 px-3 py-2 hover:bg-slate-50">
+                                                        <div key={m.id} className="flex items-center gap-3 rounded-lg px-3 py-2 bg-slate-50 hover:bg-slate-100">
                                                             <div className="h-8 w-8 shrink-0">
                                                                 {m.voter?.avatar_url ? (
                                                                     <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
