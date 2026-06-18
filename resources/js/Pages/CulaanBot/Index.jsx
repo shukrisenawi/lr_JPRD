@@ -439,8 +439,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             ) : (
                                                 <button type="button" onClick={() => unmarkVoter(voter)}
                                                     disabled={pendingIds.includes(voter.id)}
-                                                    className="flex-1 rounded bg-rose-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40">
-                                                    {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
+                                                    className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40">
+                                                    {pendingIds.includes(voter.id) ? '...' : 'Tukar Cula'}
                                                 </button>
                                             )}
                                             <button type="button" onClick={() => setDetailVoter(voter)}
@@ -555,8 +555,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 ) : (
                                     <button type="button" onClick={() => { unmarkVoter(detailVoter); setDetailVoter(null); }}
                                         disabled={pendingIds.includes(detailVoter.id)}
-                                        className="flex-1 rounded bg-rose-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40">
-                                        {pendingIds.includes(detailVoter.id) ? '...' : 'Buka Semula'}
+                                        className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40">
+                                        {pendingIds.includes(detailVoter.id) ? '...' : 'Tukar Cula'}
                                     </button>
                                 )}
                             </div>
