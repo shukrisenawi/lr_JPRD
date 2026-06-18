@@ -122,11 +122,11 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
                                             Excel
                                         </button>
                                     </div>
-                                    <div className="divide-y divide-slate-100">
+                                    <div className="grid grid-cols-2 gap-2 p-2">
                                         {g.members.map((m) => {
                                             const match = isMatching(m.voter?.name);
                                             return (
-                                            <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : '')}>
+                                            <div key={m.id} className={'flex items-center gap-3 rounded-lg px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300' : 'bg-slate-50 hover:bg-slate-100')}>
                                                 <div className="h-8 w-8 shrink-0">
                                                     {m.voter?.avatar_url ? (
                                                         <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
@@ -192,9 +192,9 @@ function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
                                     <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
                                         <p className="text-xs font-bold text-slate-700">{g.udm}</p>
                                     </div>
-                                    <div className="divide-y divide-slate-100">
+                                    <div className="grid grid-cols-2 gap-2 p-2">
                                         {g.members.map((m) => (
-                                            <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+                                            <div key={m.id} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-slate-700 bg-slate-50 hover:bg-slate-100">
                                                 <div className="h-6 w-6 shrink-0">
                                                     {m.voter?.avatar_url ? (
                                                         <img src={m.voter.avatar_url} alt="" className="h-6 w-6 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
@@ -669,11 +669,11 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                             {detailGroup.members.length === 0 ? (
                                 <p className="py-8 text-center text-xs text-slate-400">Tiada ahli jawatankuasa.</p>
                             ) : (
-                                <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                                <div className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 p-2">
                                     {detailGroup.members.map((m) => {
                                         const match = searchQuery.trim() && m.voter?.name?.toLowerCase().includes(searchQuery.toLowerCase());
                                         return (
-                                        <div key={m.id} className={'flex items-center gap-3 px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300 rounded-md' : 'hover:bg-slate-50')}>
+                                        <div key={m.id} className={'flex items-center gap-3 rounded-lg px-3 py-2 transition ' + (match ? 'bg-amber-50 ring-1 ring-amber-300' : 'bg-slate-50 hover:bg-slate-100')}>
                                             <div className="h-8 w-8 shrink-0">
                                                 {m.voter?.avatar_url ? (
                                                     <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
