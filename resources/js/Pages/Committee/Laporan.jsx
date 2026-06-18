@@ -508,7 +508,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                                     {m.scope_name ? <span className="text-sky-500"> — {m.scope_name}</span> : ''}
                                                                 </p>
                                                                 {(m.voter?.phone_mobile || m.voter?.phone_home) && (
-                                                                    <p className="text-[10px] text-slate-500">{m.voter?.phone_mobile || m.voter?.phone_home}</p>
+                                                                    <p className="text-[10px] text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</p>
                                                                 )}
                                                             </div>
                                                             <div className="shrink-0 text-right">
