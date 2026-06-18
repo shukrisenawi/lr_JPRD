@@ -332,7 +332,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk paparan.' : 'Tiada pemilih.'}
                         </p>
                     ) : (
-                        <div className="grid gap-3">
+                        <div className="grid gap-[3px]">
                             {rows.map((voter, index) => {
                                 const namaAyah = extractNamaAyah(voter.name);
                                 const isSearchResult = search.trim().length >= 2;
