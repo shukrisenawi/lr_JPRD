@@ -230,6 +230,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             if (!response.ok) throw new Error('Request failed');
             await response.json();
             updateLocalCollections(selectedVoterForCula);
+            if (detailVoter?.id === selectedVoterForCula.id) closeDetail();
             setSelectedVoterForCula(null);
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
@@ -557,10 +558,17 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 )}
                                 {!detailVoter.is_marked ? (
                                     <>
-                                        <button type="button" onClick={() => { setDetailVoter(null); setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
-                                            className="flex-1 rounded bg-green-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-green-500">
-                                            Cula
-                                        </button>
+                                        {culaSemulaIds.has(detailVoter.id) ? (
+                                            <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
+                                                className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
+                                                Siap Cula
+                                            </button>
+                                        ) : (
+                                            <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
+                                                className="flex-1 rounded bg-green-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-green-500">
+                                                Cula
+                                            </button>
+                                        )}
                                         <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
                                             className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
                                             Tel
@@ -568,10 +576,17 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     </>
                                 ) : (
                                     <>
-                                        <button type="button" onClick={() => { closeDetail(); setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
-                                            className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
-                                            Tukar Cula
-                                        </button>
+                                        {culaSemulaIds.has(detailVoter.id) ? (
+                                            <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
+                                                className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
+                                                Siap Cula
+                                            </button>
+                                        ) : (
+                                            <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
+                                                className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
+                                                Tukar Cula
+                                            </button>
+                                        )}
                                         <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
                                             className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
                                             Tel
