@@ -37,7 +37,9 @@ class CulaanBotController extends Controller
         $filters = $this->resolveFilters($request);
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
-        $suggestions = $this->buildEligibleVotersQuery($filters)
+        $suggestions = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->tap(fn (Builder $b) => $request->user()?->applyScopeToPemilihQuery($b))
             ->with('culaWorkItem.marker')
             ->where(function (Builder $builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
@@ -55,6 +57,8 @@ class CulaanBotController extends Controller
                     });
                 }
             })
+            ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
+            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']))
             ->orderBy('name')
             ->limit(8)
             ->get()
