@@ -163,15 +163,6 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
 function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
     if (!position) return null;
 
-    const groupedByUdm = {};
-    members.forEach((m) => {
-        const udm = m.scope_name || 'Tiada UDM';
-        if (!groupedByUdm[udm]) groupedByUdm[udm] = { udm, members: [] };
-        groupedByUdm[udm].members.push(m);
-    });
-
-    const sortedUdms = Object.values(groupedByUdm).sort((a, b) => a.udm.localeCompare(b.udm));
-
     return (
         <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 pt-8 sm:pt-16" onClick={onClose}>
             <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
@@ -185,37 +176,28 @@ function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
                     </button>
                 </div>
                 <div className="overflow-y-auto p-4">
-                    {sortedUdms.length === 0 ? (
+                    {members.length === 0 ? (
                         <p className="py-8 text-center text-xs text-slate-400">Tiada ahli.</p>
                     ) : (
-                        <div className="space-y-3">
-                            {sortedUdms.map((g) => (
-                                <div key={g.udm} className="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-                                    <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
-                                        <p className="text-xs font-bold text-slate-700">{g.udm}</p>
-                                    </div>
-                                    <div className="divide-y divide-slate-100">
-                                        {g.members.map((m) => (
-                                            <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
-                                                <div className="h-6 w-6 shrink-0">
-                                                    {m.voter?.avatar_url ? (
-                                                        <img src={m.voter.avatar_url} alt="" className="h-6 w-6 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
-                                                    ) : (
-                                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-sky-600">
-                                                            <Icon name="user" className="h-2 w-2" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="font-medium text-slate-700">{m.voter?.name}</p>
-                                                    <p className="text-slate-400">
-                                                        <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
-                                                        {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
-                                                    </p>
-                                                    <span className="mt-0.5 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.position?.name}</span>
-                                                </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {members.map((m) => (
+                                <div key={m.id} className="flex items-center gap-3 rounded-lg px-3 py-2 bg-slate-50 hover:bg-slate-100 transition">
+                                    <div className="h-8 w-8 shrink-0">
+                                        {m.voter?.avatar_url ? (
+                                            <img src={m.voter.avatar_url} alt="" className="h-8 w-8 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
+                                        ) : (
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+                                                <Icon name="user" className="h-4 w-4" />
                                             </div>
-                                        ))}
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-slate-800">{m.voter?.name}</p>
+                                        <p className="text-[10px] text-slate-400">
+                                            <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
+                                            {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
+                                        </p>
+                                        <span className="mt-0.5 inline-block rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">{m.scope_name || 'Tiada UDM'}</span>
                                     </div>
                                 </div>
                             ))}
