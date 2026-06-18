@@ -109,8 +109,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const goToPage = (page) => {
-        const listEl = document.getElementById('voter-count');
-        if (listEl) listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const el = document.getElementById('card-carian');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         applyFilters({ ...formState, page });
     };
 
@@ -255,7 +255,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             <Head title="Culaan Bot" />
 
             <div className="mx-auto max-w-2xl space-y-3 px-3 sm:px-4">
-                <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
+                <section id="card-carian" className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
                     <button type="button" onClick={() => setFilterOpen(!filterOpen)}
                         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left">
                         <div className="flex items-center gap-2">
