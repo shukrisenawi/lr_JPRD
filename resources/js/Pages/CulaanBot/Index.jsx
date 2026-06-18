@@ -353,7 +353,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                         {voter.name}
                                                         <span className="inline-flex items-center rounded ml-1 bg-green-100 px-1 py-0.5 text-[9px] font-bold text-green-800 align-middle">
-                                                            {voter.cula_code || 'OK'}
+                                                            {voter.cula_display_label || voter.cula_code || 'OK'}
                                                         </span>
                                                     </p>
                                                 </div>
@@ -382,7 +382,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     {voter.name}
                                                     {voter.is_marked && (
                                                         <span className="inline-flex items-center rounded ml-1 bg-green-100 px-1 py-0.5 text-[9px] font-bold text-green-800 align-middle">
-                                                            {voter.cula_code || 'OK'}
+                                                            {voter.cula_display_label || voter.cula_code || 'OK'}
                                                         </span>
                                                     )}
                                                 </p>
