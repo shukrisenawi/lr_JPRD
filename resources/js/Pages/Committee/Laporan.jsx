@@ -194,9 +194,9 @@ function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
                                     <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
                                         <p className="text-xs font-bold text-slate-700">{g.udm}</p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 p-2">
+                                    <div className="divide-y divide-slate-100">
                                         {g.members.map((m) => (
-                                            <div key={m.id} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-slate-700 bg-slate-50 hover:bg-slate-100">
+                                            <div key={m.id} className="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
                                                 <div className="h-6 w-6 shrink-0">
                                                     {m.voter?.avatar_url ? (
                                                         <img src={m.voter.avatar_url} alt="" className="h-6 w-6 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => onAvatarClick?.(m.voter.avatar_url)} />
