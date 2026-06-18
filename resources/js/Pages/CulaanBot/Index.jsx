@@ -315,8 +315,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     <div key={voter.id}
                                         className="relative rounded-xl border border-green-600 bg-white p-3 shadow-sm overflow-hidden">
                                         <div className="flex items-center gap-2">
-                                            <span className="shrink-0 text-xs font-bold text-slate-400 min-w-[1.2rem] text-right">
-                                                {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
+                                            <span className="shrink-0 text-xs font-bold text-slate-800 min-w-[1.2rem] text-right">
+                                                {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}.
                                             </span>
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-sm font-bold leading-5 text-slate-800 break-words">
