@@ -81,6 +81,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
     const [avatarUpdates, setAvatarUpdates] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
+    const [detailVoter, setDetailVoter] = useState(null);
     const suggestionsAbort = useRef(null);
 
     useEffect(() => {
@@ -410,6 +411,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
                                                 </button>
                                             )}
+                                            <button type="button" onClick={() => setDetailVoter(voter)}
+                                                className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                                title="Detail">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                                            </button>
                                         </div>
                                     </div>
                                 );
@@ -425,6 +431,66 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             {lightboxSrc && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setLightboxSrc(null)} onKeyDown={(e) => { if (e.key === 'Escape') setLightboxSrc(null); }} role="presentation">
                     <img src={lightboxSrc} alt="Avatar" className="max-h-[80vh] max-w-[80vw] rounded-lg object-contain shadow-2xl" />
+                </div>
+            )}
+
+            {detailVoter && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDetailVoter(null)} onKeyDown={(e) => { if (e.key === 'Escape') setDetailVoter(null); }} role="presentation">
+                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                {detailVoter.avatar_url && (
+                                    <img src={detailVoter.avatar_url} alt=""
+                                        className="h-10 w-10 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200"
+                                        onClick={() => setLightboxSrc(detailVoter.avatar_url)} />
+                                )}
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-800">{detailVoter.name}</h3>
+                                    <p className="text-[11px] font-medium text-slate-500">{detailVoter.no_kp || detailVoter.old_ic || '-'}</p>
+                                </div>
+                            </div>
+                            <button type="button" onClick={() => setDetailVoter(null)}
+                                className="shrink-0 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
+                                Tutup
+                            </button>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Umur</p>
+                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.age ?? '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Telegram</p>
+                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.telegram_identity || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">UDM</p>
+                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.dm || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lokaliti</p>
+                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
+                            </div>
+                            {detailVoter.is_marked && (
+                                <>
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Kod Cula</p>
+                                        <p className="mt-0.5 font-semibold text-green-700">{detailVoter.cula_code || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Label Cula</p>
+                                        <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.cula_display_label || '-'}</p>
+                                    </div>
+                                    {detailVoter.marked_by_name && (
+                                        <div className="col-span-2">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dikemas oleh</p>
+                                            <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.marked_by_name}</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 
