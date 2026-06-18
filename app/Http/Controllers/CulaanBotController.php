@@ -158,6 +158,7 @@ class CulaanBotController extends Controller
         return $this->buildEligibleVotersQuery($filters)
             ->with('culaWorkItem.marker')
             ->when($filters['udm'] === '', fn (Builder $q) => $q->orderBy('dm'))
+            ->orderByRaw("CONCAT(IF(CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ?, '19', '20'), SUBSTR(no_kp, 1, 2)) ASC", [now()->format('y')])
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString()
