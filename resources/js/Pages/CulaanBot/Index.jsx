@@ -72,6 +72,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [searchError, setSearchError] = useState('');
     const [actionError, setActionError] = useState('');
     const [showMarked, setShowMarked] = useState(Boolean(filters.show_marked));
+    const [ageFrom, setAgeFrom] = useState(filters.age_from ?? '');
+    const [ageTo, setAgeTo] = useState(filters.age_to ?? '');
     const [pendingIds, setPendingIds] = useState([]);
     const [culaSemulaIds, setCulaSemulaIds] = useState(new Set());
     const [showCulaModal, setShowCulaModal] = useState(false);
@@ -98,6 +100,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
         show_marked: showMarked,
+        age_from: ageFrom,
+        age_to: ageTo,
     };
 
     const applyFilters = (nextState) => {
@@ -139,7 +143,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         suggestionsAbort.current = controller;
         setSearching(true);
         try {
-            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality });
+            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to });
             const response = await fetch(`${route('culaan-bot.search')}?${params.toString()}`, {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
@@ -236,8 +240,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
 
-    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked));
-    const hasFilterValue = filters.udm || filters.locality || showMarked;
+    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || ageFrom || ageTo));
+    const hasFilterValue = filters.udm || filters.locality || showMarked || ageFrom || ageTo;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
     return (
@@ -291,6 +295,24 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             <option value="">Semua</option>
                                             {localities.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
                                         </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label htmlFor="bot-age-from" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dari Umur</label>
+                                        <input id="bot-age-from" type="number" min="0" max="150" value={ageFrom}
+                                            onChange={(e) => setAgeFrom(e.target.value)}
+                                            onBlur={(e) => updateFilter('age_from', e.target.value)}
+                                            className="input-field mt-1.5" placeholder="cth: 18"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="bot-age-to" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Sehingga Umur</label>
+                                        <input id="bot-age-to" type="number" min="0" max="150" value={ageTo}
+                                            onChange={(e) => setAgeTo(e.target.value)}
+                                            onBlur={(e) => updateFilter('age_to', e.target.value)}
+                                            className="input-field mt-1.5" placeholder="cth: 60"
+                                        />
                                     </div>
                                 </div>
                                 <div>

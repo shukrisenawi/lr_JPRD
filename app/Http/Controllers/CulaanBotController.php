@@ -59,6 +59,14 @@ class CulaanBotController extends Controller
             })
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']))
+            ->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
+                $maxBirthYear = now()->year - (int) $filters['age_from'];
+                $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END <= ?", [(int) now()->format('y'), $maxBirthYear]);
+            })
+            ->when($filters['age_to'] !== '', function (Builder $b) use ($filters) {
+                $minBirthYear = now()->year - (int) $filters['age_to'];
+                $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?", [(int) now()->format('y'), $minBirthYear]);
+            })
             ->orderBy('name')
             ->limit(8)
             ->get()
@@ -150,6 +158,18 @@ class CulaanBotController extends Controller
                 })
         );
 
+        $query->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
+            $maxBirthYear = now()->year - (int) $filters['age_from'];
+            $currentYY = (int) now()->format('y');
+            $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END <= ?", [$currentYY, $maxBirthYear]);
+        });
+
+        $query->when($filters['age_to'] !== '', function (Builder $b) use ($filters) {
+            $minBirthYear = now()->year - (int) $filters['age_to'];
+            $currentYY = (int) now()->format('y');
+            $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?", [$currentYY, $minBirthYear]);
+        });
+
         return $query;
     }
 
@@ -228,6 +248,8 @@ class CulaanBotController extends Controller
             'udm' => $requestedUdm,
             'locality' => $requestedLocality,
             'show_marked' => $request->boolean('show_marked'),
+            'age_from' => trim((string) $request->query('age_from', '')),
+            'age_to' => trim((string) $request->query('age_to', '')),
         ];
     }
 
