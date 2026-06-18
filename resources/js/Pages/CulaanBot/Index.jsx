@@ -439,11 +439,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     </a>
                                                 </>
                                             ) : (
-                                                <button type="button" onClick={() => unmarkVoter(voter)}
-                                                    disabled={pendingIds.includes(voter.id)}
-                                                    className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40">
-                                                    {pendingIds.includes(voter.id) ? '...' : 'Tukar Cula'}
-                                                </button>
+                                                <>
+                                                    {culaSemulaIds.has(voter.id) ? (
+                                                        <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }}
+                                                            className="flex-1 min-w-[60px] rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
+                                                            Siap Cula
+                                                        </button>
+                                                    ) : (
+                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                            className="flex-1 min-w-[60px] rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
+                                                            Tukar Cula
+                                                        </button>
+                                                    )}
+                                                    <a href={buildTelegramLink('kemastel', voter.telegram_identity)}
+                                                        className="flex-1 min-w-[60px] inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
+                                                        Tel
+                                                    </a>
+                                                </>
                                             )}
                                             <button type="button" onClick={() => setDetailVoter(voter)}
                                                 className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
@@ -555,11 +567,16 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         </a>
                                     </>
                                 ) : (
-                                    <button type="button" onClick={() => { unmarkVoter(detailVoter); setDetailVoter(null); }}
-                                        disabled={pendingIds.includes(detailVoter.id)}
-                                        className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40">
-                                        {pendingIds.includes(detailVoter.id) ? '...' : 'Tukar Cula'}
-                                    </button>
+                                    <>
+                                        <button type="button" onClick={() => { closeDetail(); setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
+                                            className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
+                                            Tukar Cula
+                                        </button>
+                                        <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
+                                            className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
+                                            Tel
+                                        </a>
+                                    </>
                                 )}
                             </div>
                         )}
