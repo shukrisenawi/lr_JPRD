@@ -138,7 +138,10 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
-                                                    <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
+                                                    <p className="text-[10px] text-slate-400">
+                                                        <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
+                                                        {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500">{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
+                                                    </p>
                                                     <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
                                                     {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                 </div>
@@ -204,7 +207,10 @@ function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <p className="font-medium text-slate-700">{m.voter?.name}</p>
-                                                    <p className="text-slate-400">{m.voter?.phone_mobile || m.voter?.phone_home || '-'}</p>
+                                                    <p className="text-slate-400">
+                                                        <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
+                                                        {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500">{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
+                                                    </p>
                                                     <span className="mt-0.5 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.position?.name}</span>
                                                 </div>
                                             </div>
@@ -685,7 +691,10 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : 'text-slate-800')}>{m.voter?.name}</p>
-                                                <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
+                                                <p className="text-[10px] text-slate-400">
+                                                    <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
+                                                    {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500">{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
+                                                </p>
                                                 <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
                                                 {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                             </div>
