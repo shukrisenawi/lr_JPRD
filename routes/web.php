@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AccessManagementController;
 use App\Http\Controllers\CarianPemilihController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CopiedRecordController;
+use App\Http\Controllers\CulaanBotController;
 use App\Http\Controllers\CulaanController;
 use App\Http\Controllers\VccController;
 use App\Http\Controllers\DashboardController;
@@ -90,6 +91,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');
     Route::post('/culaan/{pemilihRecord}/approve-error', [CulaanController::class, 'approveDataError'])->middleware('module:culaan.senarai')->name('culaan.approve-error');
     Route::post('/culaan/{pemilihRecord}/update-cula-mark', [CulaanController::class, 'updateCulaAndMark'])->middleware('module:culaan.senarai')->name('culaan.update-cula-mark');
+
+    Route::get('/culaan-bot', [CulaanBotController::class, 'index'])->middleware('module:culaan-bot')->name('culaan-bot.index');
+    Route::get('/culaan-bot/search', [CulaanBotController::class, 'search'])->middleware('module:culaan-bot')->name('culaan-bot.search');
+    Route::post('/culaan-bot/{pemilihRecord}/mark', [CulaanBotController::class, 'storeMark'])->middleware('module:culaan-bot')->name('culaan-bot.mark.store');
+    Route::delete('/culaan-bot/{pemilihRecord}/mark', [CulaanBotController::class, 'destroyMark'])->middleware('module:culaan-bot')->name('culaan-bot.mark.destroy');
+    Route::post('/culaan-bot/{pemilihRecord}/update-cula', [CulaanBotController::class, 'updateCula'])->middleware('module:culaan-bot')->name('culaan-bot.update-cula');
 
     Route::get('/vcc', [VccController::class, 'index'])->middleware('module:vcc')->name('vcc.index');
     Route::get('/vcc/search', [VccController::class, 'search'])->middleware('module:vcc')->name('vcc.search');

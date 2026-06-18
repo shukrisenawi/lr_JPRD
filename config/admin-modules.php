@@ -47,6 +47,10 @@ return [
             'culaan.jadual' => ['label' => 'Laporan (Jadual)'],
         ],
     ],
+    'culaan-bot' => [
+        'label' => 'Culaan Bot',
+        'description' => 'Kemas data culaan pemilih melalui Telegram Bot secara ringkas.',
+    ],
     'settings' => [
         'label' => 'Settings',
         'description' => 'Tetapan URL Google Sheet sistem.',

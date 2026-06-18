@@ -59,6 +59,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
                 { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
                 { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan' },
+                { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
             ],
         },
@@ -197,6 +198,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {canAccess('dashboard') && <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')} variant={variant}>Cula Manual</ResponsiveNavLink>}
                         {canAccess('program') && <ResponsiveNavLink href={route('program.index')} active={route().current('program.*')} variant={variant}>Program</ResponsiveNavLink>}
                         {canAccess('culaan') && <ResponsiveNavLink href={route('culaan.index')} active={route().current('culaan.*')} variant={variant}>Culaan</ResponsiveNavLink>}
+                        {canAccess('culaan-bot') && <ResponsiveNavLink href={route('culaan-bot.index')} active={route().current('culaan-bot.*')} variant={variant}>Culaan Bot</ResponsiveNavLink>}
                         {canAccess('vcc') && <ResponsiveNavLink href={route('vcc.index')} active={route().current('vcc.*')} variant={variant}>VCC</ResponsiveNavLink>}
                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
                         {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index')} active={route().current('jawatankuasa.*')} variant={variant}>Jawatankuasa</ResponsiveNavLink>}
