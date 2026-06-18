@@ -231,6 +231,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
 
+    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.udm || filters.locality || showMarked));
+    const hasFilterValue = filters.udm || filters.locality || showMarked;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
     return (
@@ -248,53 +250,72 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             <Head title="Culaan Bot" />
 
             <div className="mx-auto max-w-2xl space-y-3 px-3 sm:px-4">
-                <section className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden">
-                    <div className="flex flex-col gap-3">
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label htmlFor="bot-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
-                                <select id="bot-udm" value={formState.udm}
-                                    onChange={(e) => updateFilter('udm', e.target.value)}
-                                    className="input-field mt-1.5">
-                                    <option value="">Semua</option>
-                                    {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label htmlFor="bot-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
-                                <select id="bot-locality" value={formState.locality}
-                                    onChange={(e) => updateFilter('locality', e.target.value)}
-                                    className="input-field mt-1.5">
-                                    <option value="">Semua</option>
-                                    {localities.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
-                                </select>
-                            </div>
+                <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
+                    <button type="button" onClick={() => setFilterOpen(!filterOpen)}
+                        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left">
+                        <div className="flex items-center gap-2">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 text-green-600 transition-transform duration-200 ${filterOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+                            <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tapisan</span>
+                            {hasFilterValue && <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">Aktif</span>}
                         </div>
-                        <div>
-                            <label htmlFor="bot-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
-                            <div className="relative mt-1.5">
-                                <input id="bot-search" value={search}
-                                    onChange={(e) => doSearch(e.target.value)}
-                                    className="input-field pr-10" placeholder="Nama, No Kp..."
-                                />
-                                {search ? (
-                                    <button type="button" onClick={clearSearch}
-                                        className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
-                                        <span className="text-sm leading-none">×</span>
-                                    </button>
-                                ) : (
-                                    <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
-                                )}
+                        {!filterOpen && hasFilterValue && (
+                            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                                {filters.udm && <span>{filters.udm}</span>}
+                                {filters.locality && <span>{filters.locality}</span>}
+                                {showMarked && <span className="rounded bg-slate-100 px-1 py-0.5">Siap</span>}
                             </div>
+                        )}
+                    </button>
+                    {filterOpen && (
+                        <div className="border-t border-green-100 px-4 pb-4 pt-3">
+                            <div className="flex flex-col gap-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label htmlFor="bot-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
+                                        <select id="bot-udm" value={formState.udm}
+                                            onChange={(e) => updateFilter('udm', e.target.value)}
+                                            className="input-field mt-1.5">
+                                            <option value="">Semua</option>
+                                            {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="bot-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
+                                        <select id="bot-locality" value={formState.locality}
+                                            onChange={(e) => updateFilter('locality', e.target.value)}
+                                            className="input-field mt-1.5">
+                                            <option value="">Semua</option>
+                                            {localities.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label htmlFor="bot-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
+                                    <div className="relative mt-1.5">
+                                        <input id="bot-search" value={search}
+                                            onChange={(e) => doSearch(e.target.value)}
+                                            className="input-field pr-10" placeholder="Nama, No Kp..."
+                                        />
+                                        {search ? (
+                                            <button type="button" onClick={clearSearch}
+                                                className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
+                                                <span className="text-sm leading-none">×</span>
+                                            </button>
+                                        ) : (
+                                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={showMarked} onChange={toggleShowMarked}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Tunjuk yang sudah siap cula</span>
+                                </label>
+                            </div>
+                            {actionError && <InputError className="mt-2" message={actionError} />}
+                            {searchError && <InputError className="mt-1" message={searchError} />}
                         </div>
-                        <label className="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" checked={showMarked} onChange={toggleShowMarked}
-                                className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                            <span className="text-xs font-bold text-slate-600">Tunjuk yang sudah siap cula</span>
-                        </label>
-                    </div>
-                    {actionError && <InputError className="mt-2" message={actionError} />}
-                    {searchError && <InputError className="mt-1" message={searchError} />}
+                    )}
                 </section>
 
                 <div className="flex items-center justify-between rounded-lg bg-white px-4 py-3 border border-green-600 shadow-sm shadow-green-600/20">
