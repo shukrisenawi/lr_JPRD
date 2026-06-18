@@ -313,31 +313,24 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 const namaAyah = extractNamaAyah(voter.name);
                                 return (
                                     <div key={voter.id}
-                                        className="rounded-xl border border-green-600 bg-white p-4 shadow-sm overflow-hidden">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                {(avatarUpdates[voter.id] || voter.avatar_url) && (
-                                                    <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
-                                                        className="h-9 w-9 cursor-pointer rounded-full object-cover border border-slate-200"
-                                                        onClick={() => setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url)} />
-                                                )}
-                                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
-                                                    {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
-                                                </span>
-                                            </div>
+                                        className="relative rounded-xl border border-green-600 bg-white p-3 shadow-sm overflow-hidden">
+                                        <div className="flex items-center gap-2">
+                                            <span className="shrink-0 text-xs font-bold text-slate-400 min-w-[1.2rem] text-right">
+                                                {search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index}
+                                            </span>
                                             <div className="min-w-0 flex-1">
-                                                <p className="text-base font-bold leading-5 text-slate-800 break-words">
+                                                <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                     {voter.name}
                                                     {voter.is_marked && (
-                                                        <span className="inline-flex items-center gap-0.5 rounded ml-1.5 bg-green-100 px-1 py-0.5 text-[10px] font-bold text-green-800 align-middle">
+                                                        <span className="inline-flex items-center rounded ml-1 bg-green-100 px-1 py-0.5 text-[9px] font-bold text-green-800 align-middle">
                                                             {voter.cula_code || 'OK'}
                                                         </span>
                                                     )}
                                                 </p>
-                                                <p className="mt-0.5 text-sm font-medium text-slate-500">
-                                                    Umur: <span className="font-bold text-slate-700">{voter.age ?? '-'}</span>
-                                                </p>
                                             </div>
+                                            <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
+                                                {voter.age ?? '-'}
+                                            </span>
                                         </div>
 
                                         <div className="mt-4 flex flex-wrap gap-2">
