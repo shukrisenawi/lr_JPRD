@@ -165,6 +165,7 @@ class CulaanBotController extends Controller
     {
         return [
             'id' => $voter->id,
+            'avatar_url' => $voter->avatarUrl(),
             'name' => $voter->name,
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,
@@ -176,6 +177,7 @@ class CulaanBotController extends Controller
             'is_marked' => $voter->culaWorkItem !== null,
             'marked_by_name' => $voter->culaWorkItem?->marker?->name,
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,
+            'is_manual' => $voter->is_manual,
         ];
     }
 
