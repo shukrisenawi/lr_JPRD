@@ -109,6 +109,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const goToPage = (page) => {
+        const listEl = document.getElementById('voter-list');
+        if (listEl) listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         applyFilters({ ...formState, page });
     };
 
@@ -326,7 +328,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                     <p className="text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</p>
                 </div>
 
-                <section>
+                <section id="voter-list">
                     {rows.length === 0 ? (
                         <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20">
                             {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk paparan.' : 'Tiada pemilih.'}
