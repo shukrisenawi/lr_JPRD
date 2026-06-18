@@ -384,7 +384,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 )}
                                                 <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                     {voter.name}
-                                                    {voter.is_marked && (voter.cula_display_label || voter.cula_code) && (
+                                                    {(voter.cula_display_label || voter.cula_code) && (
                                                         <span className="ml-1 text-[10px] font-semibold text-slate-500">
                                                             {voter.cula_display_label || voter.cula_code}
                                                         </span>
@@ -450,7 +450,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lokaliti</p>
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
                             </div>
-                            {detailVoter.is_marked && (
+                            {(detailVoter.cula_code || detailVoter.cula_display_label) && (
                                 <>
                                     <div>
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Kod Cula</p>
