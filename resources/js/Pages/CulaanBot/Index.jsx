@@ -354,9 +354,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     )}
                                                     <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                         {voter.name}
-                                                        {(voter.cula_display_label && voter.cula_display_label !== '? - BELUM DICULA') || (voter.cula_code && voter.cula_code !== '0') ? (
+                                                        {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
                                                             <span className="ml-1 text-[10px] font-semibold text-slate-500">
-                                                                {voter.cula_display_label && voter.cula_display_label !== '? - BELUM DICULA' ? voter.cula_display_label : voter.cula_code}
+                                                                {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
                                                             </span>
                                                         ) : null}
                                                     </p>
@@ -384,9 +384,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 )}
                                                 <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                     {voter.name}
-                                                    {(voter.cula_display_label && voter.cula_display_label !== '? - BELUM DICULA') || (voter.cula_code && voter.cula_code !== '0') ? (
+                                                    {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
                                                         <span className="ml-1 text-[10px] font-semibold text-slate-500">
-                                                            {voter.cula_display_label && voter.cula_display_label !== '? - BELUM DICULA' ? voter.cula_display_label : voter.cula_code}
+                                                            {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
                                                         </span>
                                                     ) : null}
                                                 </p>
@@ -450,19 +450,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lokaliti</p>
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
                             </div>
-                            {((detailVoter.cula_display_label && detailVoter.cula_display_label !== '? - BELUM DICULA') || (detailVoter.cula_code && detailVoter.cula_code !== '0')) && (
-                                <>
-                                    <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cula</p>
-                                        <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.cula_display_label && detailVoter.cula_display_label !== '? - BELUM DICULA' ? detailVoter.cula_display_label : detailVoter.cula_code}</p>
-                                    </div>
-                                    {detailVoter.marked_by_name && (
-                                        <div className="col-span-2">
-                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dikemas oleh</p>
-                                            <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.marked_by_name}</p>
-                                        </div>
-                                    )}
-                                </>
+                            {detailVoter.marked_by_name && (
+                                <div className="col-span-2">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dikemas oleh</p>
+                                    <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.marked_by_name}</p>
+                                </div>
                             )}
                         </div>
                         <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
