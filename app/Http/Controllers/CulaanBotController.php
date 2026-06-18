@@ -130,14 +130,6 @@ class CulaanBotController extends Controller
         $query = PemilihRecord::query()->where('status', 'aktif');
         request()->user()?->applyScopeToPemilihQuery($query);
 
-        $query->where(function (Builder $q) {
-            $q->whereNull('cula_code')
-              ->orWhere('cula_code', '')
-              ->orWhere('cula_code', '?')
-              ->orWhere('cula_code', 'TIADA')
-              ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
-        });
-
         $query->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
@@ -145,6 +137,13 @@ class CulaanBotController extends Controller
             $filters['show_marked'],
             fn (Builder $b) => $b->whereHas('culaWorkItem'),
             fn (Builder $b) => $b->whereDoesntHave('culaWorkItem')
+                ->where(function (Builder $q) {
+                    $q->whereNull('cula_code')
+                      ->orWhere('cula_code', '')
+                      ->orWhere('cula_code', '?')
+                      ->orWhere('cula_code', 'TIADA')
+                      ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                })
         );
 
         return $query;
