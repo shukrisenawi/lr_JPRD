@@ -92,7 +92,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         setPendingIds([]);
     }, [summary, voters]);
 
-    const rows = suggestions.length > 0 && search.trim().length >= 2 ? suggestions : localVoters.data ?? [];
+    const rows = search.trim().length >= 2 ? suggestions : localVoters.data ?? [];
 
     const formState = {
         udm: filters.udm ?? '',
