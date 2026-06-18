@@ -236,7 +236,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
 
-    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.udm || filters.locality || showMarked));
+    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked));
     const hasFilterValue = filters.udm || filters.locality || showMarked;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
