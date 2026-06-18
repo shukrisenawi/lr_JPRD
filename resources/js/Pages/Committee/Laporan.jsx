@@ -197,7 +197,7 @@ function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
                                             <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
                                             {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
                                         </p>
-                                        <span className="mt-0.5 inline-block rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">{m.scope_name || 'Tiada UDM'}</span>
+                                        <span className="mt-0.5 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.scope_name || 'Tiada UDM'}</span>
                                     </div>
                                 </div>
                             ))}
