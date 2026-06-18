@@ -352,9 +352,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     )}
                                                     <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                         {voter.name}
-                                                        <span className="inline-flex items-center rounded ml-1 bg-green-100 px-1 py-0.5 text-[9px] font-bold text-green-800 align-middle">
-                                                            {voter.cula_display_label || voter.cula_code || 'OK'}
-                                                        </span>
+                                                        {(voter.cula_display_label || voter.cula_code) && (
+                                                            <span className="ml-1 text-[10px] font-semibold text-slate-500">
+                                                                {voter.cula_display_label || voter.cula_code}
+                                                            </span>
+                                                        )}
                                                     </p>
                                                 </div>
                                                 <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
@@ -380,9 +382,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 )}
                                                 <p className="text-sm font-bold leading-5 text-slate-800 break-words">
                                                     {voter.name}
-                                                    {voter.is_marked && (
-                                                        <span className="inline-flex items-center rounded ml-1 bg-green-100 px-1 py-0.5 text-[9px] font-bold text-green-800 align-middle">
-                                                            {voter.cula_display_label || voter.cula_code || 'OK'}
+                                                    {voter.is_marked && (voter.cula_display_label || voter.cula_code) && (
+                                                        <span className="ml-1 text-[10px] font-semibold text-slate-500">
+                                                            {voter.cula_display_label || voter.cula_code}
                                                         </span>
                                                     )}
                                                 </p>
