@@ -455,17 +455,18 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             {rows.map((voter, index) => {
                                 const isSearchResult = search.trim().length >= 2;
                                 const phone = voter.phone_mobile || voter.phone_home;
+                                const namaAyah = extractNamaAyah(voter.name);
                                 return (
-                                    <button key={voter.id} type="button" onClick={() => { setDetailVoter(voter); }}
-                                        className="rounded-xl border border-green-600 bg-white p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 hover:shadow-md cursor-pointer">
+                                    <div key={voter.id}
+                                        className="rounded-xl border border-green-600 bg-white p-3 shadow-sm overflow-hidden">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-bold text-slate-500 min-w-[1.2rem] text-right">
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
                                             {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                                 <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
-                                                    className="h-7 w-7 shrink-0 rounded-full object-cover border border-slate-200"
-                                                    onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
+                                                    className="h-7 w-7 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200"
+                                                    onClick={() => setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url)} />
                                             )}
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-sm font-bold leading-5 text-slate-800 break-words">
@@ -502,7 +503,71 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 </div>
                                             )}
                                         </div>
-                                    </button>
+                                        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+                                            {!voter.is_manual && (
+                                                <>
+                                                    <input type="file" accept="image/*" id={`card-avatar-${voter.id}`}
+                                                        onChange={(e) => handleFileSelect(e, voter.id)} className="hidden" />
+                                                    <button type="button"
+                                                        onClick={(e) => { e.stopPropagation(); document.getElementById(`card-avatar-${voter.id}`)?.click(); }}
+                                                        disabled={uploadingAvatarIds[voter.id]}
+                                                        className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700 disabled:opacity-40"
+                                                        title="Muat naik gambar">
+                                                        {uploadingAvatarIds[voter.id] ? (
+                                                            <span className="text-[10px] font-bold">...</span>
+                                                        ) : (
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
+                                                        )}
+                                                    </button>
+                                                </>
+                                            )}
+                                            {namaAyah && (
+                                                <button type="button"
+                                                    onClick={() => { doSearchNamaAyah(namaAyah); }}
+                                                    className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-400 shadow-sm transition hover:border-green-300 hover:text-green-600"
+                                                    title={`Cari keluarga: ${namaAyah}`}>
+                                                    <UserGroupIcon className="h-3.5 w-3.5" />
+                                                </button>
+                                            )}
+                                            {!voter.is_marked ? (
+                                                <>
+                                                    {culaSemulaIds.has(voter.id) ? (
+                                                        <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }}
+                                                            className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
+                                                            Siap Cula
+                                                        </button>
+                                                    ) : (
+                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                            className="flex-1 rounded bg-green-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-green-500">
+                                                            Cula
+                                                        </button>
+                                                    )}
+                                                    <a href={buildTelegramLink('kemastel', voter.telegram_identity)}
+                                                        className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
+                                                        Tel
+                                                    </a>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {culaSemulaIds.has(voter.id) ? (
+                                                        <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }}
+                                                            className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
+                                                            Siap Cula
+                                                        </button>
+                                                    ) : (
+                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                            className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
+                                                            Tukar Cula
+                                                        </button>
+                                                    )}
+                                                    <a href={buildTelegramLink('kemastel', voter.telegram_identity)}
+                                                        className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
+                                                        Tel
+                                                    </a>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 );
                             })}
                         </div>
