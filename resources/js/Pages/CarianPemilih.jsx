@@ -1,5 +1,6 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import CropModal from '@/Components/CropModal';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -100,14 +101,21 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
     const [avatarUrl, setAvatarUrl] = useState(voter?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
+    const [cropFile, setCropFile] = useState(null);
     const avatarRef = useRef(null);
     if (!voter) return null;
 
-    const handleAvatarUpload = async (e) => {
+    const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setCropFile(file);
+        e.target.value = '';
+    };
+
+    const handleAvatarUpload = async (file) => {
         if (!voter.record_id) return;
         setUploading(true);
+        setCropFile(null);
         try {
             const form = new FormData();
             form.append('avatar', file);
@@ -159,7 +167,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
                     {!voter.is_manual && <>
-                        <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                        <input ref={avatarRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                         <button onClick={() => avatarRef.current?.click()} disabled={uploading || !voter.record_id} className="btn-outline" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                         {isCulaPending ? (
                             <button onClick={() => onCulaSiap(voter)} className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500">Siap Cula</button>
@@ -180,6 +188,9 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                     </div>
                 ))}
             </div>
+            {cropFile && (
+                <CropModal file={cropFile} onCrop={handleAvatarUpload} onClose={() => setCropFile(null)} />
+            )}
         </section>
     );
 }
