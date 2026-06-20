@@ -565,7 +565,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             )}
                                             {namaAyah && (
                                                 <button type="button"
-                                                    onClick={() => { doSearchNamaAyah(namaAyah); }}
+                                                    onClick={() => { doSearchNamaAyah(namaAyah); setFilterOpen(true); }}
                                                     className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-400 shadow-sm transition hover:border-green-300 hover:text-green-600"
                                                     title={`Cari keluarga: ${namaAyah}`}>
                                                     <UserGroupIcon className="h-3.5 w-3.5" />
