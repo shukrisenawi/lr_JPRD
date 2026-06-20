@@ -761,7 +761,12 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             if (!res.ok) throw new Error('Upload gagal');
             const data = await res.json();
             if (data.success) {
-                m.voter.avatar_url = data.avatar_url;
+                const voterId = m.pemilih_record_id;
+                memberships.forEach(mem => {
+                    if (mem.pemilih_record_id === voterId) {
+                        mem.voter.avatar_url = data.avatar_url;
+                    }
+                });
             }
         } catch {
             alert('Gagal muat naik gambar.');
