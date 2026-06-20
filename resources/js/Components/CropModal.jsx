@@ -11,10 +11,11 @@ export default function CropModal({ file, onCrop, onClose }) {
         if (!imgRef.current) return;
         cropperRef.current = new Cropper(imgRef.current, {
             aspectRatio: 1,
-            viewMode: 1,
+            viewMode: 2,
             dragMode: 'move',
             cropBoxMovable: true,
             cropBoxResizable: true,
+            autoCropArea: 1,
             guides: true,
             center: true,
             responsive: true,

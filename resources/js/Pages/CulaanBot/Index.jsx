@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
+import CropModal from '@/Components/CropModal';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -80,6 +81,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [localVoters, setLocalVoters] = useState(voters);
     const [localSummary, setLocalSummary] = useState(summary);
+    const [cropFile, setCropFile] = useState(null);
+    const [cropVoterId, setCropVoterId] = useState(null);
     const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
     const [avatarUpdates, setAvatarUpdates] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
@@ -180,8 +183,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; });
     };
 
-    const handleAvatarUpload = async (e, voterId) => {
-        const file = e.target.files?.[0];
+    const handleAvatarUpload = async (file, voterId) => {
         if (!file) return;
         setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: true }));
         try {
@@ -198,7 +200,21 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                 setAvatarUpdates((prev) => ({ ...prev, [voterId]: data.avatar_url + '&t=' + Date.now() }));
             }
         } catch { alert('Gagal muat naik gambar.'); }
-        finally { setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: false })); e.target.value = ''; }
+        finally { setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: false })); }
+    };
+
+    const handleFileSelect = (e, voterId) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        setCropVoterId(voterId);
+        setCropFile(file);
+    };
+
+    const handleCropUpload = (croppedFile) => {
+        handleAvatarUpload(croppedFile, cropVoterId);
+        setCropFile(null);
+        setCropVoterId(null);
     };
 
     const unmarkVoter = async (voter) => {
@@ -460,8 +476,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.age ?? '-'}</p>
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Telegram</p>
-                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.telegram_identity || '-'}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">No Kp</p>
+                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.no_kp || detailVoter.old_ic || '-'}</p>
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">UDM</p>
@@ -488,7 +504,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             {!detailVoter.is_manual && (
                                 <>
                                     <input type="file" accept="image/*" id={`detail-avatar-${detailVoter.id}`}
-                                        onChange={(e) => handleAvatarUpload(e, detailVoter.id)} className="hidden" />
+                                        onChange={(e) => handleFileSelect(e, detailVoter.id)} className="hidden" />
                                     <button type="button"
                                         onClick={(e) => { e.stopPropagation(); document.getElementById(`detail-avatar-${detailVoter.id}`)?.click(); }}
                                         disabled={uploadingAvatarIds[detailVoter.id]}
@@ -513,10 +529,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             {!detailVoter.is_marked ? (
                                 <>
                                     {culaSemulaIds.has(detailVoter.id) ? (
+                                        <>
                                         <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
                                             className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
                                             Siap Cula
                                         </button>
+                                        <button type="button" onClick={() => {
+                                            setCulaSemulaIds((prev) => {
+                                                const next = new Set(prev);
+                                                next.delete(detailVoter.id);
+                                                return next;
+                                            });
+                                        }}
+                                            className="inline-flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                            title="Kembali ke asal">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                        </button>
+                                        </>
                                     ) : (
                                         <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
                                             className="flex-1 rounded bg-green-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-green-500">
@@ -531,10 +560,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             ) : (
                                 <>
                                     {culaSemulaIds.has(detailVoter.id) ? (
+                                        <>
                                         <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
                                             className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
                                             Siap Cula
                                         </button>
+                                        <button type="button" onClick={() => {
+                                            setCulaSemulaIds((prev) => {
+                                                const next = new Set(prev);
+                                                next.delete(detailVoter.id);
+                                                return next;
+                                            });
+                                        }}
+                                            className="inline-flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                            title="Kembali ke asal">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                        </button>
+                                        </>
                                     ) : (
                                         <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
                                             className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
@@ -583,6 +625,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         </div>
                     </div>
                 </div>
+            )}
+
+            {cropFile && (
+                <CropModal file={cropFile} onCrop={handleCropUpload} onClose={() => { setCropFile(null); setCropVoterId(null); }} />
             )}
         </AuthenticatedLayout>
     );

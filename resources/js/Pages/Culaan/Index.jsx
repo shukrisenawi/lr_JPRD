@@ -1,6 +1,7 @@
 import InputError from '@/Components/InputError';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import CropModal from '@/Components/CropModal';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -238,6 +239,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [pendingIds, setPendingIds] = useState([]);
     const [localVoters, setLocalVoters] = useState(voters);
     const [localSummary, setLocalSummary] = useState(summary);
+    const [cropFile, setCropFile] = useState(null);
+    const [cropVoterId, setCropVoterId] = useState(null);
     const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
     const [avatarUpdates, setAvatarUpdates] = useState({});
     const [culaSemulaIds, setCulaSemulaIds] = useState(new Set());
@@ -506,8 +509,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     const unmarkVoter = (voter) => sendMarkRequest(voter, 'DELETE');
 
-    const handleAvatarUpload = async (e, voterId) => {
-        const file = e.target.files?.[0];
+    const handleAvatarUpload = async (file, voterId) => {
         if (!file) return;
         setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: true }));
         try {
@@ -527,8 +529,21 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             alert('Gagal muat naik gambar.');
         } finally {
             setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: false }));
-            e.target.value = '';
         }
+    };
+
+    const handleFileSelect = (e, voterId) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        setCropVoterId(voterId);
+        setCropFile(file);
+    };
+
+    const handleCropUpload = (croppedFile) => {
+        handleAvatarUpload(croppedFile, cropVoterId);
+        setCropFile(null);
+        setCropVoterId(null);
     };
 
     const handleApproveError = async (voter, action) => {
@@ -1328,7 +1343,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     type="file"
                                                     accept="image/*"
                                                     id={`avatar-upload-${voter.id}`}
-                                                    onChange={(e) => handleAvatarUpload(e, voter.id)}
+                                                    onChange={(e) => handleFileSelect(e, voter.id)}
                                                     className="hidden"
                                                 />
                                                 <button
@@ -1345,6 +1360,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     )}
                                                 </button>
                                                 {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
+                                                    <>
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
@@ -1357,6 +1373,22 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     >
                                                         Siap Cula
                                                     </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setCulaSemulaIds((prev) => {
+                                                                const next = new Set(prev);
+                                                                next.delete(voter.id);
+                                                                return next;
+                                                            });
+                                                        }}
+                                                        className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                        title="Kembali ke asal"
+                                                    >
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                    </button>
+                                                    </>
                                                 ) : (
                                                     <button
                                                         type="button"
@@ -1455,7 +1487,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                     {!voter.is_manual && (
                                                                         <>
                                                                             <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
-                                                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
+                                                                                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
                                                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                                                              </label>
                                                                              {(() => {
@@ -1477,30 +1509,46 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                                      </button>
                                                                                  );
                                                                              })()}
-                                                                             {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => { setSelectedVoterForCula(voter); setIsCulaFromDataError(false); setShowCulaModal(true); }}
-                                                                                    className="rounded bg-blue-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-blue-500"
-                                                                                >
-                                                                                    Siap
-                                                                                </button>
-                                                                            ) : (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
-                                                                                    className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500"
-                                                                                >
-                                                                                    Cula
-                                                                                </button>
-                                                                            ))}
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
-                                                                                className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
-                                                                            >
-                                                                                Tel
-                                                                            </button>
+                                                                              {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
+                                                                                 <>
+<button
+                                                                                      type="button"
+                                                                                      onClick={() => { setSelectedVoterForCula(voter); setIsCulaFromDataError(false); setShowCulaModal(true); }}
+                                                                                      className="rounded bg-blue-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-blue-500"
+                                                                                  >
+                                                                                      Siap
+                                                                                  </button>
+                                                                                  <button
+                                                                                      type="button"
+                                                                                      onClick={() => {
+                                                                                          setCulaSemulaIds((prev) => {
+                                                                                              const next = new Set(prev);
+                                                                                              next.delete(voter.id);
+                                                                                              return next;
+                                                                                          });
+                                                                                      }}
+                                                                                      className="rounded border border-slate-200 bg-white px-1 py-0.5 text-xs font-bold text-slate-500 hover:border-red-300 hover:text-red-600"
+                                                                                      title="Kembali ke asal"
+                                                                                  >
+                                                                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                                  </button>
+                                                                                 </>
+                                                                             ) : (
+                                                                                 <button
+                                                                                     type="button"
+                                                                                     onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                                                     className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500"
+                                                                                 >
+                                                                                     Cula
+                                                                                 </button>
+                                                                             ))}
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                                 className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
+                                                                             >
+                                                                                 Tel
+                                                                             </button>
                                                                         </>
                                                                     )}
                                                                  </div>
@@ -1535,7 +1583,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                 {!voter.is_manual && (
                                                                     <>
                                                                         <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
-                                                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
+                                                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                                                          </label>
                                                                          {(() => {
@@ -1557,30 +1605,46 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                                  </button>
                                                                              );
                                                                          })()}
-                                                                         {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => { setSelectedVoterForCula(voter); setIsCulaFromDataError(false); setShowCulaModal(true); }}
-                                                                                className="rounded bg-blue-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-blue-500"
-                                                                            >
-                                                                                Siap
-                                                                            </button>
-                                                                        ) : (
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
-                                                                                className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500"
-                                                                            >
-                                                                                Cula
-                                                                            </button>
-                                                                        ))}
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
-                                                                            className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
-                                                                        >
-                                                                            Tel
-                                                                        </button>
+                                                                          {!formState.show_marked && (culaSemulaIds.has(voter.id) ? (
+                                                                              <>
+                                                                              <button
+                                                                                  type="button"
+                                                                                  onClick={() => { setSelectedVoterForCula(voter); setIsCulaFromDataError(false); setShowCulaModal(true); }}
+                                                                                  className="rounded bg-blue-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-blue-500"
+                                                                              >
+                                                                                  Siap
+                                                                              </button>
+                                                                              <button
+                                                                                  type="button"
+                                                                                  onClick={() => {
+                                                                                      setCulaSemulaIds((prev) => {
+                                                                                          const next = new Set(prev);
+                                                                                          next.delete(voter.id);
+                                                                                          return next;
+                                                                                      });
+                                                                                  }}
+                                                                                  className="rounded border border-slate-200 bg-white px-1 py-0.5 text-xs font-bold text-slate-500 hover:border-red-300 hover:text-red-600"
+                                                                                  title="Kembali ke asal"
+                                                                              >
+                                                                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                              </button>
+                                                                              </>
+                                                                          ) : (
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                                                 className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500"
+                                                                             >
+                                                                                 Cula
+                                                                             </button>
+                                                                         ))}
+                                                                         <button
+                                                                             type="button"
+                                                                             onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                             className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
+                                                                         >
+                                                                             Tel
+                                                                         </button>
                                                                     </>
                                                                 )}
                                                              </div>
@@ -1664,6 +1728,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </div>
                                         <div className="mt-3 flex gap-2">
                                             {culaSemulaIds.has(voter.id) ? (
+                                                <>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
@@ -1676,6 +1741,22 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 >
                                                     Siap Cula
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCulaSemulaIds((prev) => {
+                                                            const next = new Set(prev);
+                                                            next.delete(voter.id);
+                                                            return next;
+                                                        });
+                                                    }}
+                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                    title="Kembali ke asal"
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                </button>
+                                                </>
                                             ) : (
                                                 <button
                                                     type="button"
@@ -1832,6 +1913,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </div>
                     </div>
                 </div>
+            )}
+
+            {cropFile && (
+                <CropModal file={cropFile} onCrop={handleCropUpload} onClose={() => { setCropFile(null); setCropVoterId(null); }} />
             )}
         </AuthenticatedLayout>
     );

@@ -248,7 +248,7 @@ function NoAhliModal({ attendee, onClose, onSaved }) {
     );
 }
 
-function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli, isCulaPending, onCulaSiap }) {
+function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli, isCulaPending, onCulaSiap, onRestoreCula }) {
     const [avatarUrl, setAvatarUrl] = useState(attendee?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -332,7 +332,12 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                     <input ref={avatarRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                     <button onClick={() => avatarRef.current?.click()} disabled={uploading || !attendee.pemilih_record_id} className="rounded-md border border-green-300 bg-white p-1.5 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                     {isCulaPending ? (
+                        <>
                         <button onClick={() => onCulaSiap(attendee)} className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500">Siap Cula</button>
+                        <button onClick={() => onRestoreCula?.(attendee)} className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600" title="Kembali ke asal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </button>
+                        </>
                     ) : (
                         <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Kemas Cula</button>
                     )}
@@ -1513,7 +1518,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 ))}
             </div>
 
-            <AttendeeDetailModal key={selAttendee?.id ?? 'no-attendee'} attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={canEditNoAhli ? (a) => setEditNoAhli(a) : null} isCulaPending={culaPendingIds.has(selAttendee?.id)} onCulaSiap={(a) => { setSelectedVoterForCula(a); setShowCulaModal(true); }} />
+            <AttendeeDetailModal key={selAttendee?.id ?? 'no-attendee'} attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={canEditNoAhli ? (a) => setEditNoAhli(a) : null} isCulaPending={culaPendingIds.has(selAttendee?.id)} onCulaSiap={(a) => { setSelectedVoterForCula(a); setShowCulaModal(true); }} onRestoreCula={(a) => { setCulaPendingIds((prev) => { const n = new Set(prev); n.delete(a.id); return n; }); }} />
             <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
             <AttendeeSubProgramEditor key={selEditSub?.id} attendee={selEditSub} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSelEditSub(null)} />
             <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
