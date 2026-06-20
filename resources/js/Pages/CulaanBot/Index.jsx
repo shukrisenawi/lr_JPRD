@@ -36,6 +36,15 @@ function UserGroupIcon({ className = 'h-4 w-4' }) {
     );
 }
 
+function HomeIcon({ className = 'h-4 w-4' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+        </svg>
+    );
+}
+
 function Pagination({ voters, onNavigate }) {
     if (!voters || voters.last_page <= 1) return null;
     return (
@@ -87,6 +96,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [avatarUpdates, setAvatarUpdates] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [detailVoter, setDetailVoter] = useState(null);
+    const [addressVoters, setAddressVoters] = useState([]);
+    const [showAddressPopup, setShowAddressPopup] = useState(false);
+    const [loadingAddress, setLoadingAddress] = useState(false);
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'list');
     const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
     const closeDetail = () => { setDetailVoter(null); };
@@ -173,6 +185,24 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         doSearch(namaAyah);
         const el = document.getElementById('bot-search');
         if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    };
+
+    const loadAddressVoters = async (voter) => {
+        if (!voter.address) return;
+        setLoadingAddress(true);
+        setShowAddressPopup(true);
+        try {
+            const res = await fetch(route('culaan-bot.alamat', voter.id), {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) throw new Error('Gagal');
+            const data = await res.json();
+            setAddressVoters(data.voters ?? []);
+        } catch {
+            setAddressVoters([]);
+        } finally {
+            setLoadingAddress(false);
+        }
     };
 
     const updateLocalCollections = (voter) => {
@@ -521,6 +551,14 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                                         )}
                                                     </button>
+                                                    {voter.address && (
+                                                        <button type="button"
+                                                            onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
+                                                            className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                                            title={`Alamat sama: ${voter.address}`}>
+                                                            <HomeIcon className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    )}
                                                 </>
                                             )}
                                             {namaAyah && (
@@ -672,6 +710,14 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                         )}
                                     </button>
+                                    {detailVoter.address && (
+                                        <button type="button"
+                                            onClick={() => { loadAddressVoters(detailVoter); }}
+                                            className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                            title={`Alamat sama: ${detailVoter.address}`}>
+                                            <HomeIcon className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
                                 </>
                             )}
                             {extractNamaAyah(detailVoter.name) && (
@@ -744,6 +790,53 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         Tel
                                     </a>
                                 </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showAddressPopup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
+                    <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                        <div className="flex items-center justify-between gap-2">
+                            <h3 className="text-sm font-bold text-slate-800">Alamat Sama</h3>
+                            <button type="button" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }}
+                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
+                                Tutup
+                            </button>
+                        </div>
+                        <div className="mt-3 max-h-80 overflow-y-auto">
+                            {loadingAddress ? (
+                                <p className="py-4 text-center text-xs font-medium text-slate-500">Mencari...</p>
+                            ) : addressVoters.length === 0 ? (
+                                <p className="py-4 text-center text-xs font-medium text-slate-500">Tiada pemilih lain dengan alamat yang sama.</p>
+                            ) : (
+                                <div className="space-y-1.5">
+                                    {addressVoters.map((v) => (
+                                        <button
+                                            key={v.id}
+                                            type="button"
+                                            onClick={() => {
+                                                setDetailVoter(v);
+                                                setShowAddressPopup(false);
+                                            }}
+                                            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs shadow-sm transition hover:border-green-300 hover:bg-green-50"
+                                        >
+                                            {v.avatar_url && (
+                                                <img src={v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
+                                            )}
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-bold text-slate-800">{v.name}</p>
+                                                <p className="text-[10px] font-medium text-slate-500">{v.no_kp || v.old_ic || '-'}</p>
+                                            </div>
+                                            <div className="shrink-0 text-right">
+                                                <p className="font-bold text-slate-700">{v.age ?? '-'}</p>
+                                                <p className="text-[10px] text-slate-400">thn</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>

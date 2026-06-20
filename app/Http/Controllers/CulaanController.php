@@ -223,6 +223,27 @@ class CulaanController extends Controller
         return response()->json(['voters' => $voters]);
     }
 
+    public function searchByAddress(PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $address = trim((string) $pemilihRecord->address);
+        if ($address === '') {
+            return response()->json(['voters' => []]);
+        }
+
+        $voters = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
+            ->with('culaWorkItem.marker')
+            ->where('address', $address)
+            ->where('id', '!=', $pemilihRecord->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
+            ->values();
+
+        return response()->json(['voters' => $voters]);
+    }
+
     public function destroyMark(Request $request, PemilihRecord $pemilihRecord): RedirectResponse|JsonResponse
     {
         CulaWorkItem::query()

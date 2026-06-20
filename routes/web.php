@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/culaan', [CulaanController::class, 'index'])->middleware('module:culaan')->name('culaan.index');
     Route::get('/culaan/export', [CulaanController::class, 'export'])->middleware('module:culaan.senarai')->name('culaan.export');
     Route::get('/culaan/search', [CulaanController::class, 'search'])->middleware('module:culaan.senarai')->name('culaan.search');
+    Route::get('/culaan/alamat/{pemilihRecord}', [CulaanController::class, 'searchByAddress'])->middleware('module:culaan.senarai')->name('culaan.alamat');
     Route::post('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'storeMark'])->middleware('module:culaan.senarai')->name('culaan.mark.store');
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');
     Route::post('/culaan/{pemilihRecord}/approve-error', [CulaanController::class, 'approveDataError'])->middleware('module:culaan.senarai')->name('culaan.approve-error');
@@ -94,6 +95,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/culaan-bot', [CulaanBotController::class, 'index'])->middleware('module:culaan-bot')->name('culaan-bot.index');
     Route::get('/culaan-bot/search', [CulaanBotController::class, 'search'])->middleware('module:culaan-bot')->name('culaan-bot.search');
+    Route::get('/culaan-bot/alamat/{pemilihRecord}', [CulaanBotController::class, 'searchByAddress'])->middleware('module:culaan-bot')->name('culaan-bot.alamat');
     Route::post('/culaan-bot/{pemilihRecord}/mark', [CulaanBotController::class, 'storeMark'])->middleware('module:culaan-bot')->name('culaan-bot.mark.store');
     Route::delete('/culaan-bot/{pemilihRecord}/mark', [CulaanBotController::class, 'destroyMark'])->middleware('module:culaan-bot')->name('culaan-bot.mark.destroy');
     Route::post('/culaan-bot/{pemilihRecord}/update-cula', [CulaanBotController::class, 'updateCula'])->middleware('module:culaan-bot')->name('culaan-bot.update-cula');
