@@ -245,7 +245,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [actionError, setActionError] = useState('');
     const [selectedVoterId, setSelectedVoterId] = useState(null);
     const [detailVoter, setDetailVoter] = useState(null);
-    const closeDetail = () => { setDetailVoter(null); };
+    const closeDetail = () => { setDetailVoter(null); setShowAddressPopup(true); };
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [pendingIds, setPendingIds] = useState([]);
     const [addressVoters, setAddressVoters] = useState([]);
