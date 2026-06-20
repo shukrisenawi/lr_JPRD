@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function AvatarLightbox({ src, alt, onClose }) {
     useEffect(() => {
@@ -11,7 +12,7 @@ export default function AvatarLightbox({ src, alt, onClose }) {
 
     if (!src) return null;
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
             onClick={onClose}
@@ -31,6 +32,7 @@ export default function AvatarLightbox({ src, alt, onClose }) {
                     className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain shadow-2xl"
                 />
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
