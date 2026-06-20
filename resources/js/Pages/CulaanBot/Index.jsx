@@ -711,6 +711,14 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                         )}
                                     </button>
+                                    {detailVoter.address && detailVoter.address !== '-' && detailVoter.address_count >= 2 && detailVoter.address_count <= 10 && (
+                                        <button type="button"
+                                            onClick={() => { loadAddressVoters(detailVoter); }}
+                                            className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                            title={`Alamat sama: ${detailVoter.address}`}>
+                                            <HomeIcon className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
                                 </>
                             )}
                             {!detailVoter.is_marked ? (
