@@ -102,6 +102,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'list');
     const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
     const fromAddressPopup = useRef(false);
+    const previousDetailVoter = useRef(null);
     const closeDetail = () => { setDetailVoter(null); if (fromAddressPopup.current) { setShowAddressPopup(true); fromAddressPopup.current = false; } };
     const suggestionsAbort = useRef(null);
 
@@ -713,7 +714,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     </button>
                                     {detailVoter.address && detailVoter.address !== '-' && detailVoter.address_count >= 2 && detailVoter.address_count <= 10 && (
                                         <button type="button"
-                                            onClick={() => { loadAddressVoters(detailVoter); }}
+                                            onClick={() => { previousDetailVoter.current = detailVoter; setDetailVoter(null); loadAddressVoters(detailVoter); }}
                                             className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                             title={`Alamat sama: ${detailVoter.address}`}>
                                             <HomeIcon className="h-3.5 w-3.5" />
@@ -790,11 +791,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             )}
 
             {showAddressPopup && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
                     <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="flex items-center justify-between gap-2">
                             <h3 className="text-sm font-bold text-slate-800">Alamat Sama</h3>
-                            <button type="button" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }}
+                            <button type="button" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
                                 Tutup
                             </button>
@@ -812,6 +813,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             type="button"
                                             onClick={() => {
                                                 fromAddressPopup.current = true;
+                                                previousDetailVoter.current = null;
                                                 setDetailVoter(v);
                                                 setShowAddressPopup(false);
                                             }}
