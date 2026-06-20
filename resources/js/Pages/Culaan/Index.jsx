@@ -2117,7 +2117,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 <p className="py-4 text-center text-xs font-medium text-slate-500">Tiada pemilih lain dengan alamat yang sama.</p>
                             ) : (
                                 <div className="space-y-1.5">
-                                    {addressVoters.map((v) => (
+                                    {[...addressVoters].sort((a, b) => (a.age ?? 999) - (b.age ?? 999)).map((v) => (
                                         <button
                                             key={v.id}
                                             type="button"
