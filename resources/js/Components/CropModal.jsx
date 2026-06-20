@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import 'cropperjs/dist/cropper.css';
 import Cropper from 'cropperjs/dist/cropper.esm.js';
 
@@ -47,9 +48,9 @@ export default function CropModal({ file, onCrop, onClose }) {
         }, file.type, 0.92);
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50" onClick={onClose}>
-            <div className="mx-4 w-full max-w-4xl rounded-xl bg-white shadow-2xl flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <div className="w-full max-w-4xl rounded-xl bg-white shadow-2xl flex flex-col max-h-[90vh] mx-4" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
                     <p className="text-sm font-bold text-slate-800">Potong Gambar</p>
                     <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -58,9 +59,9 @@ export default function CropModal({ file, onCrop, onClose }) {
                         </svg>
                     </button>
                 </div>
-                <div className="p-4 flex-1 min-h-0 flex items-center justify-center bg-slate-100">
-                    <div className="w-full max-h-[60vh]">
-                        <img ref={imgRef} src={URL.createObjectURL(file)} alt="" />
+                <div className="p-4 flex-1 min-h-0 bg-slate-100 flex items-center justify-center">
+                    <div className="w-full h-full max-h-[75vh]">
+                        <img ref={imgRef} src={URL.createObjectURL(file)} alt="" className="max-w-full max-h-full" />
                     </div>
                 </div>
                 <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
@@ -75,6 +76,7 @@ export default function CropModal({ file, onCrop, onClose }) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
