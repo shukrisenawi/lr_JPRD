@@ -375,12 +375,12 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         <>
                         <div className="mb-3 flex items-center justify-end gap-1">
                             <button type="button" onClick={() => setViewMode('list')}
-                                className={`rounded-md p-1.5 transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'text-black hover:bg-green-50 hover:text-green-700'}`}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                                className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                                Senarai
                             </button>
                             <button type="button" onClick={() => setViewMode('card')}
-                                className={`rounded-md p-1.5 transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'text-black hover:bg-green-50 hover:text-green-700'}`}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                                className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                                Kad
                             </button>
                         </div>
                         {viewMode === 'list' ? (
@@ -458,7 +458,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 return (
                                     <button key={voter.id} type="button" onClick={() => { setDetailVoter(voter); }}
                                         className="rounded-xl border border-green-600 bg-white p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 hover:shadow-md cursor-pointer">
-                                        <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-center gap-2">
                                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
@@ -467,16 +467,16 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     className="h-7 w-7 shrink-0 rounded-full object-cover border border-slate-200"
                                                     onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
                                             )}
-                                        </div>
-                                        <div className="mt-2">
-                                            <p className="text-sm font-bold leading-5 text-slate-800 break-words">
-                                                {voter.name}
-                                                {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
-                                                    <span className="ml-1 text-[10px] font-semibold text-slate-500">
-                                                        {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
-                                                    </span>
-                                                ) : null}
-                                            </p>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-bold leading-5 text-slate-800 break-words">
+                                                    {voter.name}
+                                                    {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
+                                                        <span className="ml-1 text-[10px] font-semibold text-slate-500">
+                                                            {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                                        </span>
+                                                    ) : null}
+                                                </p>
+                                            </div>
                                         </div>
                                         <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                                             <div>
