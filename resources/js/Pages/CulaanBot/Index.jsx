@@ -362,27 +362,20 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                 </section>
 
                 <div id="voter-count" className="flex items-center justify-between rounded-lg bg-white px-4 py-3 border border-green-600 shadow-sm shadow-green-600/20">
-                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah</p>
-                    <p className="text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</p>
+                    <div className="flex items-center gap-1">
+                        <button type="button" onClick={() => setViewMode('list')}
+                            className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                            Senarai
+                        </button>
+                        <button type="button" onClick={() => setViewMode('card')}
+                            className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                            Kad
+                        </button>
+                    </div>
+                    <p className="text-xs font-bold tracking-[0.1em] text-slate-500">Jumlah <span className="ml-1 text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span></p>
                 </div>
 
                 <section id="voter-list">
-                    {rows.length === 0 ? (
-                        <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20">
-                            {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk paparan.' : 'Tiada pemilih.'}
-                        </p>
-                    ) : (
-                        <>
-                        <div className="mb-3 flex items-center justify-end gap-1">
-                            <button type="button" onClick={() => setViewMode('list')}
-                                className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
-                                Senarai
-                            </button>
-                            <button type="button" onClick={() => setViewMode('card')}
-                                className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
-                                Kad
-                            </button>
-                        </div>
                         {viewMode === 'list' ? (
                         <div className="grid gap-[3px]">
                             {rows.map((voter, index) => {
@@ -594,8 +587,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             })}
                         </div>
                         )}
-                    </>
-                    )}
                     {!shouldPromptUdm && search.trim().length < 2 && (
                         <Pagination voters={localVoters} onNavigate={goToPage} />
                     )}
