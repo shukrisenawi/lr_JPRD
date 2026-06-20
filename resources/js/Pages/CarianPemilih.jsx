@@ -172,9 +172,9 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                         {isCulaPending ? (
                             <button onClick={() => onCulaSiap(voter)} className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500">Siap Cula</button>
                         ) : (
-                            <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Kemas Cula</button>
+                            <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Cula</button>
                         )}
-                        <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Kemaskini Tel</button>
+                        <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Tukar Tel</button>
                         {canEditNoAhli && <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>}
                     </>}
                     <button onClick={onClear} className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-600 text-white shadow-sm transition hover:bg-slate-500" title="Tutup"><XIcon className="h-3.5 w-3.5" /></button>

@@ -1399,14 +1399,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         }}
                                                         className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                                     >
-                                                    Kemas Cula
+                                                    Cula
                                                 </button>
                                                 ))}
                                                 <a
                                                     href={buildTelegramLink('kemastel', voter.telegram_identity)}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                                 >
-                                                    Kemas Tel
+                                                    Tukar Tel
                                                 </a>
                                             </>}
                                             {voter.is_marked && (
