@@ -461,7 +461,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     };
 
     const loadAddressVoters = async (voter) => {
-        if (!voter.address) return;
+        if (!voter.address || voter.address === '-') return;
         setLoadingAddress(true);
         setShowAddressPopup(true);
         try {
@@ -1389,7 +1389,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                                     )}
                                                 </button>
-                                                {voter.address && (
+                                                {voter.address && voter.address !== '-' && (
                                                     <button
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
@@ -1529,18 +1529,18 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                          <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
                                                                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileSelect(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
                                                                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                                                          </label>
-                                                                          {voter.address && (
-                                                                              <button
-                                                                                  type="button"
-                                                                                  onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
-                                                                                  className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600"
-                                                                                  title={`Alamat sama: ${voter.address}`}
-                                                                              >
-                                                                                  <HomeIcon className="h-3 w-3" />
-                                                                              </button>
-                                                                          )}
-                                                                              {voter.address && (
+                                                                           </label>
+                                                                           {voter.address && voter.address !== '-' && (
+                                                                               <button
+                                                                                   type="button"
+                                                                                   onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
+                                                                                   className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600"
+                                                                                   title={`Alamat sama: ${voter.address}`}
+                                                                               >
+                                                                                   <HomeIcon className="h-3 w-3" />
+                                                                               </button>
+                                                                           )}
+{voter.address && voter.address !== '-' && (
                                                                                   <button
                                                                                       type="button"
                                                                                       onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
@@ -1550,8 +1550,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                                       <HomeIcon className="h-3 w-3" />
                                                                                   </button>
                                                                               )}
-                                                                             {(() => {
-                                                                                 const namaAyah = extractNamaAyah(voter.name);
+                                                                              {(() => {
+                                                                                  const namaAyah = extractNamaAyah(voter.name);
                                                                                  if (!namaAyah) return null;
                                                                                  return (
                                                                                      <button
