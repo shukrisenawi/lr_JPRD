@@ -461,7 +461,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         className="rounded-xl border border-green-600 bg-white p-3 shadow-sm overflow-hidden">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-bold text-slate-500 min-w-[1.2rem] text-right">
-                                                {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
+                                                {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}.
                                             </span>
                                             {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                                 <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
