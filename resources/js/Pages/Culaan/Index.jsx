@@ -1332,12 +1332,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <span className="font-semibold text-green-700">Telefon</span>
+                                                    <span className="font-semibold text-green-700">Telefon </span>
                                                     {(() => {
                                                         const phone = voter.phone_mobile || voter.phone_home;
                                                         if (!phone) return <p className="mt-0.5 font-bold text-slate-800">-</p>;
                                                         return (
-                                                            <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => e.stopPropagation()}>
+                                                            <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline " onClick={(e) => e.stopPropagation()}>
                                                                 {phone}
                                                             </a>
                                                         );
