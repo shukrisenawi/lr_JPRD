@@ -208,7 +208,7 @@ class CulaanBotController extends Controller
 
     private function transformVoter(PemilihRecord $voter): array
     {
-        return [
+        $data = [
             'id' => $voter->id,
             'avatar_url' => $voter->avatarUrl(),
             'name' => $voter->name,
@@ -225,6 +225,15 @@ class CulaanBotController extends Controller
             'address' => $voter->address,
             'is_manual' => $voter->is_manual,
         ];
+
+        $data['address_count'] = $voter->address
+            ? PemilihRecord::where('status', 'aktif')
+                ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
+                ->where('address', $voter->address)
+                ->count()
+            : 0;
+
+        return $data;
     }
 
     private function calculateAge(?string $noKp): ?int
