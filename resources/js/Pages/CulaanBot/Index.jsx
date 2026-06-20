@@ -498,6 +498,12 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 <span className="font-semibold text-green-700">Lokaliti</span>
                                                 <p className="font-bold text-slate-800">{voter.locality || '-'}</p>
                                             </div>
+                                            {voter.address && (
+                                                <div className="col-span-2">
+                                                    <span className="font-semibold text-green-700">Alamat</span>
+                                                    <p className="font-bold text-slate-800">{voter.address}</p>
+                                                </div>
+                                            )}
                                             {phone && (
                                                 <div className="col-span-2">
                                                     <span className="font-semibold text-green-700">Telefon</span>
