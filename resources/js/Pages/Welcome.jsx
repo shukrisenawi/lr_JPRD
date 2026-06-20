@@ -11,7 +11,7 @@ export default function Welcome({ auth }) {
                         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm shadow-green-600/20">
                             <ApplicationLogo className="h-14 w-14 object-contain" />
                         </div>
-                        <h1 className="mt-4 text-2xl font-extrabold text-white">PAS Sik</h1>
+                        <h1 className="mt-4 text-2xl font-extrabold text-white">JPrD</h1>
                         <p className="mt-1 text-sm font-bold text-violet-400">Panel Semakan Data Cula</p>
                         <p className="mt-3 max-w-lg text-xs leading-6 text-slate-400">
                             Dashboard untuk semakan data Google Sheet, carian pemilih, analitik laporan, dan pengurusan program.

@@ -385,7 +385,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     };
 
     const whatsappBirthdayMessage = (name) => {
-        return `Assalamualaikum ${name}, kami dari PAS Sik mengucapkan Selamat Hari Lahir! Semoga dipanjangkan umur dan dimurahkan rezeki.`;
+        return `Assalamualaikum ${name}, kami dari JPrD mengucapkan Selamat Hari Lahir! Semoga dipanjangkan umur dan dimurahkan rezeki.`;
     };
 
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
