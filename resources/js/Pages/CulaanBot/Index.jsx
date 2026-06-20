@@ -369,7 +369,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         </button>
                         <button type="button" onClick={() => setViewMode('card')}
                             className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
-                            Kad
+                            Penuh
                         </button>
                     </div>
                     <p className="text-xs font-bold tracking-[0.1em] text-slate-500">Jumlah <span className="ml-1 text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span></p>
