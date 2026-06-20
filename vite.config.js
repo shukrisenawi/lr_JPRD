@@ -13,4 +13,7 @@ export default defineConfig({
         }),
         react(),
     ],
+    optimizeDeps: {
+        exclude: ['cropperjs'],
+    },
 });
