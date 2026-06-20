@@ -720,6 +720,14 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             <HomeIcon className="h-3.5 w-3.5" />
                                         </button>
                                     )}
+                                    {(() => { const namaAyah = extractNamaAyah(detailVoter.name); return namaAyah ? (
+                                        <button type="button"
+                                            onClick={() => { setDetailVoter(null); doSearchNamaAyah(namaAyah); }}
+                                            className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                            title={`Cari keluarga: ${namaAyah}`}>
+                                            <UserGroupIcon className="h-3.5 w-3.5" />
+                                        </button>
+                                    ) : null; })()}
                                 </>
                             )}
                             {!detailVoter.is_marked ? (
