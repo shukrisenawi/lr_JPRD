@@ -488,10 +488,12 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 <span className="font-semibold text-green-700">Umur</span>
                                                 <p className="font-bold text-slate-800">{voter.age ?? '-'}</p>
                                             </div>
+                                            {!formState.udm && (
                                             <div>
                                                 <span className="font-semibold text-green-700">UDM</span>
                                                 <p className="font-bold text-slate-800">{voter.dm || '-'}</p>
                                             </div>
+                                            )}
                                             <div>
                                                 <span className="font-semibold text-green-700">Lokaliti</span>
                                                 <p className="font-bold text-slate-800">{voter.locality || '-'}</p>
