@@ -1950,10 +1950,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
-                                {detailVoter.avatar_url && (
-                                    <img src={detailVoter.avatar_url} alt=""
+                                {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) && (
+                                    <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
                                         className="h-10 w-10 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200"
-                                        onClick={() => setLightboxSrc(detailVoter.avatar_url)} />
+                                        onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
                                 )}
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-800">{detailVoter.name}</h3>
