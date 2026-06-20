@@ -121,7 +121,7 @@ class CarianPemilihController extends Controller
     public function uploadAvatar(Request $request, PemilihRecord $pemilihRecord): JsonResponse
     {
         $validated = $request->validate([
-            'avatar' => ['required', 'image', 'max:2048'],
+            'avatar' => ['required', 'image', 'max:10240'],
         ]);
 
         if ($pemilihRecord->avatar) {

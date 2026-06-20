@@ -116,14 +116,17 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
                 body: form,
             });
-            if (!res.ok) throw new Error('Upload gagal');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.message || errData.errors?.avatar?.[0] || 'Upload gagal');
+            }
             const data = await res.json();
             if (data.success) {
                 setAvatarUrl(data.avatar_url + '&t=' + Date.now());
                 voter.avatar_url = data.avatar_url;
             }
-        } catch {
-            alert('Gagal muat naik gambar.');
+        } catch (err) {
+            alert(err.message || 'Gagal muat naik gambar.');
         } finally {
             setUploading(false);
         }
