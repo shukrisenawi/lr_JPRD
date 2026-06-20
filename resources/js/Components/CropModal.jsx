@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import 'cropperjs/dist/cropper.css';
-import Cropper from 'cropperjs';
+import Cropper from 'cropperjs/dist/cropper.esm.js';
+
 
 export default function CropModal({ file, onCrop, onClose }) {
     const imgRef = useRef(null);
