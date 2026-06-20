@@ -123,7 +123,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
                                             Excel
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 p-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2">
                                         {g.members.map((m) => {
                                             const match = isMatching(m.voter?.name);
                                             return (
@@ -179,7 +179,7 @@ function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
                     {members.length === 0 ? (
                         <p className="py-8 text-center text-xs text-slate-400">Tiada ahli.</p>
                     ) : (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {members.map((m) => (
                                 <div key={m.id} className="flex items-center gap-3 rounded-lg px-3 py-2 bg-slate-50 hover:bg-slate-100 transition">
                                     <div className="h-8 w-8 shrink-0">
@@ -373,7 +373,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
 
             <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
                 <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                    <div className="flex gap-1 border-b border-slate-200 px-4 py-3 bg-slate-50/50">
+                    <div className="flex flex-wrap gap-1 border-b border-slate-200 px-4 py-3 bg-slate-50/50">
                         {levelOptions.map((opt) => (
                             <button
                                 key={opt.key}
@@ -409,7 +409,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                             filteredPositionStats.length === 0 ? (
                                 <p className="py-8 text-center text-xs text-slate-400">Tiada jawatan dengan ahli UDM.</p>
                             ) : (
-                                <div className="grid grid-cols-2 gap-1.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                     {filteredPositionStats.map((pos) => (
                                         <div key={pos.id} className="flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-slate-50">
                                             <div className="min-w-0 flex-1">
@@ -469,7 +469,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                     </span>
                                                 )}
                                             </p>
-                                            <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {filteredMergedMembers.map((m) => {
                                                     const grp = groups.find((g) => g.id === m.committee_group_id);
                                                     return (
@@ -514,7 +514,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                             jprdGroupStats.length === 0 ? (
                                 <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                             ) : (
-                                <div className="grid grid-cols-2 gap-1.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                     {jprdGroupStats.map((g) => (
                                         <div key={g.groupName} className="flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-slate-50">
                                             <div className="min-w-0 flex-1">
@@ -545,7 +545,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                         ) : filteredScopeStats.length === 0 ? (
                             <p className="py-8 text-center text-xs text-slate-400">Tiada data untuk peringkat ini.</p>
                         ) : (
-                            <div className="grid grid-cols-2 gap-1.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                 {filteredScopeStats.map((scope) => {
                                     const hasMembers = scope.totalMembers > 0;
                                     return (
@@ -658,7 +658,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                             {detailGroup.members.length === 0 ? (
                                 <p className="py-8 text-center text-xs text-slate-400">Tiada ahli jawatankuasa.</p>
                             ) : (
-                                <div className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 p-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg border border-slate-200 p-2">
                                     {detailGroup.members.map((m) => {
                                         const match = searchQuery.trim() && m.voter?.name?.toLowerCase().includes(searchQuery.toLowerCase());
                                         return (
