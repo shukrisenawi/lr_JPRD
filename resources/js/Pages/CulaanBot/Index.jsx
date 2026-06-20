@@ -628,7 +628,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             })}
                         </div>
                         )}
-                    {!shouldPromptUdm && search.trim().length < 2 && (
+                    {search.trim().length < 2 && (
                         <Pagination voters={localVoters} onNavigate={goToPage} />
                     )}
                 </section>
