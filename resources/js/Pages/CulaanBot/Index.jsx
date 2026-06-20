@@ -532,10 +532,17 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             {!voter.is_marked ? (
                                                 <>
                                                     {culaSemulaIds.has(voter.id) ? (
+                                                        <>
                                                         <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }}
                                                             className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
                                                             Siap Cula
                                                         </button>
+                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
+                                                            className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                            title="Kembali ke asal">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                        </button>
+                                                        </>
                                                     ) : (
                                                         <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
                                                             className="flex-1 rounded bg-green-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-green-500">
@@ -550,10 +557,17 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             ) : (
                                                 <>
                                                     {culaSemulaIds.has(voter.id) ? (
+                                                        <>
                                                         <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }}
                                                             className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
                                                             Siap Cula
                                                         </button>
+                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
+                                                            className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                            title="Kembali ke asal">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                        </button>
+                                                        </>
                                                     ) : (
                                                         <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
                                                             className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
