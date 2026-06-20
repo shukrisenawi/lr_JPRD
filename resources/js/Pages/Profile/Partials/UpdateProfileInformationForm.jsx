@@ -1,4 +1,5 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import CropModal from '@/Components/CropModal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -19,12 +20,18 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
     const user = usePage().props.auth.user;
     const [preview, setPreview] = useState(user.avatar_url);
     const [lightboxSrc, setLightboxSrc] = useState(null);
+    const [cropFile, setCropFile] = useState(null);
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm({ name: user.name, email: user.email, avatar: null, _method: 'patch' });
 
     useEffect(() => {
         if (!(data.avatar instanceof File)) { setPreview(user.avatar_url); return; }
         const u = URL.createObjectURL(data.avatar); setPreview(u); return () => URL.revokeObjectURL(u);
     }, [data.avatar, user.avatar_url]);
+
+    const handleCrop = (croppedFile) => {
+        setData('avatar', croppedFile);
+        setCropFile(null);
+    };
 
     const submit = (e) => { e.preventDefault(); post(route('profile.update'), { forceFormData: true }); };
 
@@ -40,7 +47,7 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                     <div className="mt-2 flex flex-col gap-3 lg:flex-row lg:items-start">
                         {preview ? <img src={preview} alt="" className="h-20 w-20 cursor-pointer rounded-lg object-cover shadow-sm" onClick={() => setLightboxSrc(preview)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLightboxSrc(preview); } }} role="button" tabIndex={0} /> : <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-green-500 text-lg font-black text-white">{user.name.charAt(0).toUpperCase()}</div>}
                         <label className="flex min-h-[5rem] min-w-0 flex-1 cursor-pointer items-center rounded-lg border border-dashed border-indigo-200 bg-white px-3 py-3 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/40">
-                            <input id="avatar" type="file" accept="image/*" className="sr-only" onChange={(e) => setData('avatar', e.target.files?.[0] ?? null)} />
+                            <input id="avatar" type="file" accept="image/*" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) setCropFile(f); e.target.value = ''; }} />
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                                 <span className="inline-flex items-center justify-center rounded-md bg-gradient-to-r from-violet-700 to-violet-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm">Choose File</span>
                                 <span className="min-w-0 truncate text-xs text-slate-500">{data.avatar?.name ?? 'No file chosen'}</span>
@@ -49,6 +56,9 @@ export default function UpdateProfileInformation({ mustVerifyEmail, status, clas
                     </div>
                     <p className="mt-2 text-xs text-slate-400">Gambar (max 2MB)</p>
                     {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+                    {cropFile && (
+                        <CropModal file={cropFile} onCrop={handleCrop} onClose={() => setCropFile(null)} />
+                    )}
                     <InputError className="mt-1" message={errors.avatar} />
                 </div>
                 <div>

@@ -1,4 +1,5 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import CropModal from '@/Components/CropModal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
@@ -730,13 +731,25 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const [quickAddModal, setQuickAddModal] = useState(null);
     const [uploadingAvatar, setUploadingAvatar] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
+    const [cropFile, setCropFile] = useState(null);
+    const [cropTargetMember, setCropTargetMember] = useState(null);
       const avatarInputRefs = useRef({});
   
-      const handleAvatarUpload = async (m, e) => {
+      const handleFileSelect = (m, e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setCropTargetMember(m);
+        setCropFile(file);
+        e.target.value = '';
+    };
+
+      const handleAvatarUpload = async (file) => {
+        const m = cropTargetMember;
+        if (!m) return;
         const id = m.id;
         setUploadingAvatar(prev => ({ ...prev, [id]: true }));
+        setCropFile(null);
+        setCropTargetMember(null);
         try {
             const form = new FormData();
             form.append('avatar', file);
@@ -1242,7 +1255,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                         <p className="text-xs text-slate-500">{m.voter.no_kp || m.voter.old_ic || '-'}</p>
                                                                                     </div>
                                                                                     <div className="flex shrink-0 items-center gap-1">
-                                                                                        <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/*" onChange={(e) => handleAvatarUpload(m, e)} className="hidden" />
+                                                                                         <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/*" onChange={(e) => handleFileSelect(m, e)} className="hidden" />
                                                                                        <button onClick={() => avatarInputRefs.current[avatarId]?.click()} disabled={uploadingAvatar[avatarId]} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploadingAvatar[avatarId] ? <span className="text-[10px] font-bold">...</span> : <Icon name="camera" className="h-3.5 w-3.5" />}</button>
                                                                                   </div>
                                                                               </div>
@@ -1303,6 +1316,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             </div>
         </section>
             {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+            {cropFile && (
+                <CropModal file={cropFile} onCrop={handleAvatarUpload} onClose={() => { setCropFile(null); setCropTargetMember(null); }} />
+            )}
             {quickAddModal && (
                 <QuickAddMemberModal
                     group={quickAddModal.group}

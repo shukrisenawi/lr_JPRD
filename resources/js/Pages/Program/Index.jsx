@@ -1,4 +1,5 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import CropModal from '@/Components/CropModal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
@@ -251,13 +252,21 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
     const [avatarUrl, setAvatarUrl] = useState(attendee?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
+    const [cropFile, setCropFile] = useState(null);
     const avatarRef = useRef(null);
     if (!attendee) return null;
 
-    const handleAvatarUpload = async (e) => {
+    const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
         if (!file || !attendee.pemilih_record_id) return;
+        setCropFile(file);
+        e.target.value = '';
+    };
+
+    const handleAvatarUpload = async (file) => {
+        if (!file || !attendee.pemilih_record_id) return;
         setUploading(true);
+        setCropFile(null);
         try {
             const form = new FormData();
             form.append('avatar', file);
@@ -320,7 +329,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                     </div>
                 )}
                 <div className="mt-3 flex flex-wrap gap-2 border-t border-green-200 pt-2">
-                    <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    <input ref={avatarRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                     <button onClick={() => avatarRef.current?.click()} disabled={uploading || !attendee.pemilih_record_id} className="rounded-md border border-green-300 bg-white p-1.5 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                     {isCulaPending ? (
                         <button onClick={() => onCulaSiap(attendee)} className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500">Siap Cula</button>
@@ -333,6 +342,9 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                     )}
                 </div>
             </div>
+            {cropFile && (
+                <CropModal file={cropFile} onCrop={handleAvatarUpload} onClose={() => setCropFile(null)} />
+            )}
         </Modal>
     );
 }

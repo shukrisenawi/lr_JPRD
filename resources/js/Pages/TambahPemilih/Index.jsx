@@ -1,4 +1,5 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import CropModal from '@/Components/CropModal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useRef, useState } from 'react';
@@ -63,11 +64,19 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
     const avatarRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [lightboxSrc, setLightboxSrc] = useState(null);
+    const [cropFile, setCropFile] = useState(null);
 
-    const handleAvatarUpload = async (e) => {
+    const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setCropFile(file);
+        e.target.value = '';
+    };
+
+    const handleAvatarUpload = async (file) => {
+        if (!file) return;
         setUploading(true);
+        setCropFile(null);
         try {
             const form = new FormData();
             form.append('avatar', file);
@@ -215,10 +224,13 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
                         <p className="text-sm font-bold text-slate-800">{createdVoter.name}</p>
                         <p className="text-xs text-slate-500">{createdVoter.no_kp || '-'}</p>
                     </div>
-                    <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    <input ref={avatarRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                     <button onClick={() => avatarRef.current?.click()} disabled={uploading} className="shrink-0 rounded-md border border-green-300 bg-white p-2 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-xs font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                 </div>
             </div>
+        )}
+        {cropFile && (
+            <CropModal file={cropFile} onCrop={handleAvatarUpload} onClose={() => setCropFile(null)} />
         )}
     </>
     );
@@ -229,11 +241,19 @@ function DetailModal({ voter, onClose }) {
     const avatarRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [lightboxSrc, setLightboxSrc] = useState(null);
+    const [cropFile, setCropFile] = useState(null);
 
-    const handleAvatarUpload = async (e) => {
+    const handleFileSelect = (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setCropFile(file);
+        e.target.value = '';
+    };
+
+    const handleAvatarUpload = async (file) => {
+        if (!file) return;
         setUploading(true);
+        setCropFile(null);
         try {
             const form = new FormData();
             form.append('avatar', file);
@@ -275,7 +295,7 @@ function DetailModal({ voter, onClose }) {
                             </div>
                         )}
                         {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
-                        <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    <input ref={avatarRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
                         <button onClick={() => avatarRef.current?.click()} disabled={uploading} className="absolute -bottom-1 -right-1 rounded-full border border-green-200 bg-white p-0.5 text-green-700 shadow-sm transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-[10px] font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                     </div>
                     <div className="min-w-0 flex-1">
@@ -295,6 +315,9 @@ function DetailModal({ voter, onClose }) {
                     ))}
                 </div>
             </div>
+            {cropFile && (
+                <CropModal file={cropFile} onCrop={handleAvatarUpload} onClose={() => setCropFile(null)} />
+            )}
         </div>
     );
 }
