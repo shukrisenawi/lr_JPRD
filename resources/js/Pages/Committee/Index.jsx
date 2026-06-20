@@ -1244,7 +1244,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                         ) : (
                                                             <div className={'grid gap-1.5 ' + (pos.members.length > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1')}>
                                                                  {pos.members.map((m, i) => {
-                                                                     const canRemove = auth.user?.is_master_admin || m.created_by === auth.user?.id;
+                                                                      const canRemove = m.created_by === auth.user?.id;
                                                                      const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.key !== `${pos.id}-${m.scope_key || ''}`);
                                                                      const multiKey = `${pos.id}-${m.id}`;
                                                                       const showMore = multiPosExpand[multiKey];

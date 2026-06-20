@@ -765,7 +765,7 @@ class CommitteeController extends Controller
     {
         $user = $request->user();
 
-        if ($membership->created_by !== $user->id && ! $user->isMasterAdmin()) {
+        if ($membership->created_by !== $user->id) {
             return redirect()
                 ->route('jawatankuasa.index')
                 ->with('error', 'Anda tidak mempunyai kebenaran untuk memadam rekod ini.');
