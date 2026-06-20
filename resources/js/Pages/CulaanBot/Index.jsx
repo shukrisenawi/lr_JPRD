@@ -643,10 +643,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                     <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
-                                {detailVoter.avatar_url && (
-                                    <img src={detailVoter.avatar_url} alt=""
+                                {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) && (
+                                    <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
                                         className="h-10 w-10 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200"
-                                        onClick={() => setLightboxSrc(detailVoter.avatar_url)} />
+                                        onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
                                 )}
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-800">{detailVoter.name}</h3>
@@ -807,8 +807,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             }}
                                             className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs shadow-sm transition hover:border-green-300 hover:bg-green-50"
                                         >
-                                            {v.avatar_url && (
-                                                <img src={v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
+                                            {(avatarUpdates[v.id] || v.avatar_url) && (
+                                                <img src={avatarUpdates[v.id] || v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
                                             )}
                                             <div className="min-w-0 flex-1">
                                                 <p className="font-bold text-slate-800">{v.name}</p>
