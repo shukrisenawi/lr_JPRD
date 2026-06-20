@@ -83,7 +83,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         <div className="flex items-center gap-2">
                             <Link href={route('dashboard')} className="flex shrink-0 items-center gap-2">
                                 <ApplicationLogo className="block h-9 w-9 object-contain" />
-                                <span className="hidden text-sm font-bold text-green-800 sm:inline">JPrD</span>
+                                <span className="text-sm font-bold text-green-800">JPrD</span>
                             </Link>
 
                             <div className="ml-2 hidden items-stretch sm:flex">
