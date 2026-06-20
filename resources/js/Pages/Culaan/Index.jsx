@@ -2025,7 +2025,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 if (!namaAyah) return null;
                                 return (
                                     <button type="button"
-                                        onClick={() => { doSearch(namaAyah); closeDetail(); const el = document.getElementById('culaan-search'); if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }}
+                                        onClick={() => { doSearch(namaAyah); setDetailVoter(null); setShowAddressPopup(false); const el = document.getElementById('culaan-search'); if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }}
                                         className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-400 shadow-sm transition hover:border-green-300 hover:text-green-600"
                                         title={`Cari keluarga: ${namaAyah}`}>
                                         <UserGroupIcon className="h-3.5 w-3.5" />
