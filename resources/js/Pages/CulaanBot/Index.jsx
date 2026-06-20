@@ -459,7 +459,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     <button key={voter.id} type="button" onClick={() => { setDetailVoter(voter); }}
                                         className="rounded-xl border border-green-600 bg-white p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 hover:shadow-md cursor-pointer">
                                         <div className="flex items-center gap-2">
-                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
+                                            <span className="text-xs font-bold text-slate-500 min-w-[1.2rem] text-right">
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
                                             {(avatarUpdates[voter.id] || voter.avatar_url) && (
