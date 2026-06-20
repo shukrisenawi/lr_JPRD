@@ -87,7 +87,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [avatarUpdates, setAvatarUpdates] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [detailVoter, setDetailVoter] = useState(null);
-    const [viewMode, setViewMode] = useState('list');
+    const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'list');
+    const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
     const closeDetail = () => { setDetailVoter(null); };
     const suggestionsAbort = useRef(null);
 
@@ -363,11 +364,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
                 <div id="voter-count" className="flex items-center justify-between rounded-lg bg-white px-4 py-3 border border-green-600 shadow-sm shadow-green-600/20">
                     <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => setViewMode('list')}
+                        <button type="button" onClick={() => persistViewMode('list')}
                             className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
                             Senarai
                         </button>
-                        <button type="button" onClick={() => setViewMode('card')}
+                        <button type="button" onClick={() => persistViewMode('card')}
                             className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
                             Penuh
                         </button>
