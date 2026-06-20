@@ -765,17 +765,35 @@ class CommitteeController extends Controller
     {
         $user = $request->user();
 
-        if ($membership->created_by !== $user->id && ! $user->isMasterAdmin()) {
+        if ($user->isMasterAdmin() || $user->access_level === 'jprd') {
+            $membership->delete();
+
             return redirect()
                 ->route('jawatankuasa.index')
-                ->with('error', 'Anda tidak mempunyai kebenaran untuk memadam rekod ini.');
+                ->with('success', 'Ahli jawatankuasa berjaya dibuang.');
         }
 
-        $membership->delete();
+        $scope = $user->accessScope();
+
+        if ($user->access_level === 'udm' && $scope !== null && filled($scope['dm'])) {
+            $inScope = match ($membership->level) {
+                'udm' => $membership->scope_key === $scope['dm'],
+                'cawangan' => $membership->parent_scope_name === $scope['dm'],
+                default => false,
+            };
+
+            if ($inScope) {
+                $membership->delete();
+
+                return redirect()
+                    ->route('jawatankuasa.index')
+                    ->with('success', 'Ahli jawatankuasa berjaya dibuang.');
+            }
+        }
 
         return redirect()
             ->route('jawatankuasa.index')
-            ->with('success', 'Ahli jawatankuasa berjaya dibuang.');
+            ->with('error', 'Anda tidak mempunyai kebenaran untuk memadam rekod ini.');
     }
 
     // ─── Private ──────────────────────────────────────────────────
