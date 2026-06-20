@@ -101,7 +101,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [loadingAddress, setLoadingAddress] = useState(false);
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'list');
     const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
-    const closeDetail = () => { setDetailVoter(null); };
+    const closeDetail = () => { setDetailVoter(null); setShowAddressPopup(true); };
     const suggestionsAbort = useRef(null);
 
     useEffect(() => {
