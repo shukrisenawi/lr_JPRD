@@ -2,9 +2,9 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import { Transition } from '@headlessui/react';
-import { useForm } from '@inertiajs/react';
+import { useForm, router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 
 function PasswordField({ id, label, value, onChange, inputRef, autoComplete, error }) {
     const [visible, setVisible] = useState(false);
@@ -27,10 +27,10 @@ function PasswordField({ id, label, value, onChange, inputRef, autoComplete, err
 
 export default function UpdatePasswordForm({ className = '' }) {
     const pw = useRef(); const cpw = useRef();
-    const { data, setData, errors, put, reset, processing, recentlySuccessful } = useForm({ current_password: '', password: '', password_confirmation: '' });
+    const { data, setData, errors, put, reset, processing } = useForm({ current_password: '', password: '', password_confirmation: '' });
     const updatePassword = (e) => {
         e.preventDefault();
-        put(route('password.update'), { preserveScroll: true, onSuccess: () => reset(), onError: (e) => { if (e.password) { reset('password', 'password_confirmation'); pw.current.focus(); } if (e.current_password) { reset('current_password'); cpw.current.focus(); } } });
+        put(route('password.update'), { preserveScroll: true, onSuccess: () => { reset(); Swal.fire({ icon: 'success', title: 'Berjaya', text: 'Kata laluan berjaya ditukar.', timer: 2000, showConfirmButton: false }).then(() => router.visit(route('carian-pemilih.index'))); }, onError: (e) => { if (e.password) { reset('password', 'password_confirmation'); pw.current.focus(); } if (e.current_password) { reset('current_password'); cpw.current.focus(); } } });
     };
 
     return (
@@ -42,9 +42,6 @@ export default function UpdatePasswordForm({ className = '' }) {
                 <PasswordField id="npc" label="Confirm Password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)} autoComplete="new-password" error={errors.password_confirmation} />
                 <div className="flex items-center gap-3">
                     <PrimaryButton disabled={processing} className="gap-1.5 rounded-md px-4 py-1.5 text-xs font-bold"><svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" /><path d="M17 21v-8H7v8" /><path d="M7 3v5h8" /></svg>Save</PrimaryButton>
-                    <Transition show={recentlySuccessful} enter="transition ease-in-out" enterFrom="opacity-0" leave="transition ease-in-out" leaveTo="opacity-0">
-                        <p className="text-xs font-bold text-green-600">Saved.</p>
-                    </Transition>
                 </div>
             </form>
         </section>
