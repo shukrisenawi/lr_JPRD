@@ -1204,8 +1204,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                 onClick={(e) => { e.stopPropagation(); setWhatsappModal(group); }}
                                                 className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                             >
-                                                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white mr-1">WA</span>
-                                                WhatsApp
+                                                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white mr-1">C</span>
+                                                Copy
                                             </button>
                                             <button
                                                 type="button"
