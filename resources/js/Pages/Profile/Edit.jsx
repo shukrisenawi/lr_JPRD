@@ -43,7 +43,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                     </div>
                     <h3 className="text-base font-bold text-slate-900">Kata Laluan Lalai</h3>
                     <p className="mt-2 text-xs text-slate-500">
-                        Kata laluan anda masih menggunakan kata laluan lalai (123).
+                        Kata laluan anda masih menggunakan kata laluan asal (123).
                         Sila tukar kata laluan baru di bawah sebelum meneruskan.
                     </p>
                     <div className="mt-5">
@@ -61,7 +61,7 @@ export default function Edit({ mustVerifyEmail, status }) {
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
                 {mustChangePassword && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
-                        <p className="font-bold">Kata laluan anda masih kata laluan lalai (123).</p>
+                        <p className="font-bold">Kata laluan anda masih kata laluan asal (123).</p>
                         <p>Sila tukar kata laluan baru di bawah sebelum meneruskan.</p>
                     </div>
                 )}
