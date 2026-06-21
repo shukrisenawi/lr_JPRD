@@ -54,7 +54,7 @@ class HandleInertiaRequests extends Middleware
                             ->filter(fn (string $module) => $request->user()->canAccessModule($module))
                             ->values()
                             ->all(),
-                        'must_change_password' => (bool) $request->user()->must_change_password,
+                        'must_change_password' => $request->session()->has('impersonator_id') ? false : (bool) $request->user()->must_change_password,
                         'is_expired' => $request->user()->isExpired(),
                         'preferences' => $request->user()->preferences ?? [],
                     ]
