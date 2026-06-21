@@ -729,6 +729,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
     const [multiPosExpand, setMultiPosExpand] = useState({});
     const [quickAddModal, setQuickAddModal] = useState(null);
+    const [whatsappModal, setWhatsappModal] = useState(null);
     const [uploadingAvatar, setUploadingAvatar] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [cropFile, setCropFile] = useState(null);
@@ -1200,6 +1201,14 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                         <div className="flex items-center gap-2 shrink-0">
                                             <button
                                                 type="button"
+                                                onClick={(e) => { e.stopPropagation(); setWhatsappModal(group); }}
+                                                className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                                            >
+                                                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white mr-1">WA</span>
+                                                WhatsApp
+                                            </button>
+                                            <button
+                                                type="button"
                                                 onClick={(e) => { e.stopPropagation(); exportGroupToExcel(group); }}
                                                 className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                             >
@@ -1332,6 +1341,12 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     scopes={scopes}
                     currentScopeKey={form.data.scope_key}
                     onClose={() => setQuickAddModal(null)}
+                />
+            )}
+            {whatsappModal && (
+                <WhatsAppCopyModal
+                    group={whatsappModal}
+                    onClose={() => setWhatsappModal(null)}
                 />
             )}
         </>
@@ -1504,6 +1519,82 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                         </PrimaryButton>
                     </div>
                 </form>
+            </div>
+        </div>
+    );
+}
+
+// ─── WhatsAppCopyModal ────────────────────────────────────────────────────
+
+function WhatsAppCopyModal({ group, onClose }) {
+    const [copied, setCopied] = useState(false);
+
+    const buildText = () => {
+        const lines = [];
+        lines.push('*' + group.name + '*');
+        lines.push('');
+        group.positionsWithMembers.forEach(pos => {
+            if (pos.members.length === 0) return;
+            lines.push('*' + pos.name + '*');
+            pos.members.forEach((m, i) => {
+                lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
+            });
+            lines.push('');
+        });
+        return lines.join('\n');
+    };
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(buildText());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = buildText();
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-10 sm:pt-20" onClick={onClose}>
+            <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
+                    <div>
+                        <p className="text-sm font-bold text-slate-800">Salin untuk WhatsApp</p>
+                        <p className="text-xs text-slate-500">{group.name}</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <Icon name="x" className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div className="overflow-y-auto p-4">
+                    <div className="whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-mono text-slate-700 leading-relaxed">
+                        {buildText()}
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 border-t border-slate-100 px-4 py-3 shrink-0">
+                    <button
+                        type="button"
+                        onClick={handleCopy}
+                        className={'rounded-lg px-4 py-2 text-xs font-bold transition flex items-center gap-1.5 ' + (copied ? 'bg-green-600 text-white' : 'bg-green-600 text-white hover:bg-green-700')}
+                    >
+                        {copied ? (
+                            <><Icon name="check" className="h-4 w-4" /> Disalin!</>
+                        ) : (
+                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Salin</>
+                        )}
+                    </button>
+                </div>
             </div>
         </div>
     );
