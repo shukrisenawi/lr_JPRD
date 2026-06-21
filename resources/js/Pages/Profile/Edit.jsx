@@ -33,16 +33,16 @@ export default function Edit({ mustVerifyEmail, status }) {
 
             <Modal show={showModal} closeable={false} maxWidth="md">
                 <div className="px-6 py-8 text-center">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
-                        <svg viewBox="0 0 24 24" className="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-200/20">
+                        <svg viewBox="0 0 24 24" className="h-8 w-8 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="4" y="11" width="16" height="9" rx="2" />
                             <path d="M8 11V7a4 4 0 0 1 8 0v4" />
                             <circle cx="12" cy="16" r="0.5" fill="currentColor" />
                             <path d="M12 12v3" />
                         </svg>
                     </div>
-                    <h3 className="text-base font-bold text-slate-900">Kata Laluan Lalai</h3>
-                    <p className="mt-2 text-xs text-slate-500">
+                    <h3 className="text-base font-bold text-white">Kata Laluan Lalai</h3>
+                    <p className="mt-2 text-xs text-white/80">
                         Kata laluan anda masih menggunakan kata laluan asal (123).
                         Sila tukar kata laluan baru di bawah sebelum meneruskan.
                     </p>
