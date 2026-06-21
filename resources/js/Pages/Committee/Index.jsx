@@ -1537,7 +1537,11 @@ function WhatsAppCopyModal({ group, onClose }) {
             if (pos.members.length === 0) return;
             lines.push('*' + pos.name + '*');
             pos.members.forEach((m, i) => {
-                lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
+                if (pos.members.length === 1) {
+                    lines.push(m.voter?.name || '-');
+                } else {
+                    lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
+                }
             });
             lines.push('');
         });
