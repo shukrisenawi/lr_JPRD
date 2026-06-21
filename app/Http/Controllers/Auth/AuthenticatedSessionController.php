@@ -47,7 +47,7 @@ class AuthenticatedSessionController extends Controller
         $user = $request->user();
         $user->update(['last_login_at' => now()]);
 
-        if ($request->input('password') === '123') {
+        if ($request->input('password') === '123' && !$user->isMasterAdmin()) {
             $user->update(['must_change_password' => true]);
 
             return redirect()->route('profile.edit');
