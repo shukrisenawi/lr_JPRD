@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Modal from '@/Components/Modal';
 import { Head, usePage } from '@inertiajs/react';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
@@ -9,13 +9,21 @@ import UpdateProfileInformationForm from './Partials/UpdateProfileInformationFor
 export default function Edit({ mustVerifyEmail, status }) {
     const { auth } = usePage().props;
     const mustChangePassword = auth.user?.must_change_password ?? false;
+    const [showModal, setShowModal] = useState(mustChangePassword);
     const passwordSectionRef = useRef(null);
 
     useEffect(() => {
-        if (mustChangePassword && passwordSectionRef.current) {
-            passwordSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        setShowModal(mustChangePassword);
     }, [mustChangePassword]);
+
+    const handleTukarKataLaluan = () => {
+        setShowModal(false);
+        setTimeout(() => {
+            passwordSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const firstInput = passwordSectionRef.current?.querySelector('input');
+            firstInput?.focus();
+        }, 300);
+    };
 
     return (
         <AuthenticatedLayout header={
@@ -23,7 +31,7 @@ export default function Edit({ mustVerifyEmail, status }) {
         }>
             <Head title="Profile" />
 
-            <Modal show={mustChangePassword} closeable={false} maxWidth="md">
+            <Modal show={showModal} closeable={false} maxWidth="md">
                 <div className="px-6 py-8 text-center">
                     <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
                         <svg viewBox="0 0 24 24" className="h-8 w-8 text-amber-600" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -41,7 +49,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                     <div className="mt-5">
                         <button
                             type="button"
-                            onClick={() => passwordSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                            onClick={handleTukarKataLaluan}
                             className="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-amber-700"
                         >
                             Tukar Kata Laluan
