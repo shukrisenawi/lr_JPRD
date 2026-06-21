@@ -1,6 +1,6 @@
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 
-export default function Modal({ children, show = false, maxWidth = '2xl', closeable = true, onClose = () => {} }) {
+export default function Modal({ children, show = false, maxWidth = '2xl', closeable = true, onClose = () => {}, title = 'Modal' }) {
     const close = () => { if (closeable) onClose(); };
 
     const maxWidthClass = {
@@ -10,7 +10,7 @@ export default function Modal({ children, show = false, maxWidth = '2xl', closea
 
     return (
         <Transition show={show} leave="duration-200">
-            <Dialog as="div" id="modal" className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-6 sm:px-0" onClose={close}>
+            <Dialog as="div" id="modal" aria-label={title} className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-6 sm:px-0" onClose={close}>
                 <TransitionChild enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
                     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" />
                 </TransitionChild>

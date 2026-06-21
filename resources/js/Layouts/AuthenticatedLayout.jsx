@@ -32,6 +32,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const canAccess = (module) => allowedModules.includes(module);
     const isMasterAdmin = user.role?.is_master_admin === true;
     const impersonation = auth.impersonation ?? { is_active: false, impersonator: null };
+    const mustChangePassword = user.must_change_password ?? false;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const isLight = variant === 'light';
@@ -86,6 +87,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 <span className="text-sm font-bold text-green-800">JPrD Jeneri</span>
                             </Link>
 
+                            {!mustChangePassword && (
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
@@ -128,6 +130,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     );
                                 })}
                             </div>
+                            )}
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -187,6 +190,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 </div>
 
                 <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' border-t border-green-200 bg-white sm:hidden'}>
+                    {!mustChangePassword && (
                     <div className="space-y-0.5 px-2 py-2">
                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Laporan</div>
                         {canAccess('laporan') && <ResponsiveNavLink href={route('laporan.index')} active={route().current('laporan.*')} variant={variant}>Laporan</ResponsiveNavLink>}
@@ -206,6 +210,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {canAccess('settings') && <ResponsiveNavLink href={route('settings.edit')} active={route().current('settings.edit')} variant={variant}>Settings</ResponsiveNavLink>}
                         {isMasterAdmin && <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>}
                     </div>
+                    )}
                     <div className="border-t border-green-100 px-3 py-2">
                         <div className="flex items-center gap-2.5">
                             {user.avatar_url ? (
