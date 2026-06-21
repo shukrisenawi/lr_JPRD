@@ -1216,7 +1216,6 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                 Excel
                                             </button>
                                             <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{group.totalMembers} ahli</span>
-                                            <LevelBadge level={resolvedTab} />
                                         </div>
                                     </button>
 
