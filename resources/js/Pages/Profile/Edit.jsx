@@ -41,7 +41,7 @@ export default function Edit({ mustVerifyEmail, status }) {
                             <path d="M12 12v3" />
                         </svg>
                     </div>
-                    <h3 className="text-base font-bold text-white">Kata Laluan Lalai</h3>
+                    <h3 className="text-base font-bold text-white">Kata laluan anda tidak selamat</h3>
                     <p className="mt-2 text-xs text-white/80">
                         Kata laluan anda masih menggunakan kata laluan asal (123).
                         Sila tukar kata laluan baru di bawah sebelum meneruskan.
