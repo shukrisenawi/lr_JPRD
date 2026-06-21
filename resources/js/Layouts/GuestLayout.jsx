@@ -28,7 +28,7 @@ export default function GuestLayout({ children }) {
                 {/* Logo Header */}
                 <div className="mb-8 text-center">
                     <Link href={route('dashboard')} className="inline-flex flex-col items-center gap-3">
-                        <ApplicationLogo className="h-20 w-20 object-contain drop-shadow-lg" />
+                        <ApplicationLogo className="h-[150px] w-[150px] object-contain drop-shadow-lg" />
                     </Link>
                 </div>
 
