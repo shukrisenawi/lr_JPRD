@@ -50,8 +50,7 @@ class AuthenticatedSessionController extends Controller
         if ($request->input('password') === '123') {
             $user->update(['must_change_password' => true]);
 
-            return redirect()->route('profile.edit')
-                ->with('warning', 'Kata laluan anda masih kata laluan asal (123). Sila tukar kata laluan baru sebelum meneruskan.');
+            return redirect()->route('profile.edit');
         }
 
         return redirect()->intended($this->firstAccessibleRoute($request));
