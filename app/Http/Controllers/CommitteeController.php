@@ -351,7 +351,6 @@ class CommitteeController extends Controller
 
         $builder = PemilihRecord::query()
             ->where('status', 'aktif')
-            ->where('is_manual', false)
             ->where(function ($builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
