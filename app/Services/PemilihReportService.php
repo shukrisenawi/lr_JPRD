@@ -97,7 +97,10 @@ class PemilihReportService
 
     public function buildFromDatabase(): array
     {
-        $records = PemilihRecord::query()->where('status', '!=', 'xaktif')->get();
+        $records = PemilihRecord::query()
+            ->where('status', '!=', 'xaktif')
+            ->where('is_manual', false)
+            ->get();
 
         if ($records->isEmpty()) {
             return $this->emptyReport('database');
@@ -126,6 +129,7 @@ class PemilihReportService
 
         $completedCounts = PemilihRecord::query()
             ->where('status', '!=', 'xaktif')
+            ->where('is_manual', false)
             ->whereHas('culaWorkItem')
             ->select('dm')
             ->selectRaw('COUNT(*) as total')
@@ -137,6 +141,7 @@ class PemilihReportService
 
         $completedCulaByDm = PemilihRecord::query()
             ->where('status', '!=', 'xaktif')
+            ->where('is_manual', false)
             ->whereHas('culaWorkItem')
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
@@ -209,6 +214,7 @@ class PemilihReportService
 
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->where(function ($q) use ($keywords, $rawQuery) {
                 foreach ($keywords as $keyword) {
                     $q->where(function ($kw) use ($keyword, $rawQuery) {
@@ -343,7 +349,10 @@ class PemilihReportService
 
     public function buildUdmSnapshotRows(): array
     {
-        $records = PemilihRecord::query()->where('status', '!=', 'xaktif')->get();
+        $records = PemilihRecord::query()
+            ->where('status', '!=', 'xaktif')
+            ->where('is_manual', false)
+            ->get();
 
         if ($records->isEmpty()) {
             return [];
@@ -368,6 +377,7 @@ class PemilihReportService
 
         $completedCounts = PemilihRecord::query()
             ->where('status', '!=', 'xaktif')
+            ->where('is_manual', false)
             ->whereHas('culaWorkItem')
             ->select('dm')
             ->selectRaw('COUNT(*) as total')
@@ -377,6 +387,7 @@ class PemilihReportService
 
         $completedCulaByDm = PemilihRecord::query()
             ->where('status', '!=', 'xaktif')
+            ->where('is_manual', false)
             ->whereHas('culaWorkItem')
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')

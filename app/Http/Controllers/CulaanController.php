@@ -232,6 +232,7 @@ class CulaanController extends Controller
 
         $voters = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
             ->with('culaWorkItem.marker')
             ->where('address', $address)
@@ -277,7 +278,8 @@ class CulaanController extends Controller
             && count($filters['cula_codes']) > 0;
 
         $query = PemilihRecord::query()
-            ->where('status', 'aktif');
+            ->where('status', 'aktif')
+            ->where('is_manual', false);
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
@@ -356,6 +358,7 @@ class CulaanController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('dm')
             ->where('dm', '!=', '');
 
@@ -376,6 +379,7 @@ class CulaanController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->when($udm !== '', fn (Builder $builder) => $builder->where('dm', $udm))
             ->whereNotNull('locality')
             ->where('locality', '!=', '');
@@ -494,6 +498,7 @@ class CulaanController extends Controller
 
         $data['address_count'] = $voter->address
             ? PemilihRecord::where('status', 'aktif')
+                ->where('is_manual', false)
                 ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
                 ->where('address', $voter->address)
                 ->count()
@@ -626,6 +631,7 @@ class CulaanController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '');
 
@@ -648,6 +654,7 @@ class CulaanController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('race')
             ->where('race', '!=', '');
 
@@ -666,6 +673,7 @@ class CulaanController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
@@ -741,6 +749,7 @@ class CulaanController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('cula_remark')
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
@@ -760,6 +769,7 @@ class CulaanController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('cula_remark')
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));

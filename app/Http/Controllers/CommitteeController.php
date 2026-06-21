@@ -54,6 +54,7 @@ class CommitteeController extends Controller
 
         $udmQuery = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('dm')
             ->where('dm', '!=', '');
         if ($scope !== null && filled($scope['dm'])) {
@@ -62,6 +63,7 @@ class CommitteeController extends Controller
 
         $cawanganQuery = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
             ->whereNotNull('locality')
@@ -218,6 +220,7 @@ class CommitteeController extends Controller
 
         $udmQuery = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('dm')
             ->where('dm', '!=', '');
         if ($scope !== null && filled($scope['dm'])) {
@@ -226,6 +229,7 @@ class CommitteeController extends Controller
 
         $cawanganQuery = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
             ->whereNotNull('locality')
@@ -347,6 +351,7 @@ class CommitteeController extends Controller
 
         $builder = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->where(function ($builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';

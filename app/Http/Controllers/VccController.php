@@ -186,7 +186,8 @@ class VccController extends Controller
         $groupKodCulas = $this->resolveGroupKodCulas($filters['group_id']);
 
         $query = PemilihRecord::query()
-            ->where('status', 'aktif');
+            ->where('status', 'aktif')
+            ->where('is_manual', false);
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
@@ -268,7 +269,7 @@ class VccController extends Controller
 
         if ($selectedUdm === '') {
             $udms = request()->user()
-                ? PemilihRecord::where('status', 'aktif')->whereNotNull('dm')->where('dm', '!=', '')
+                ? PemilihRecord::where('status', 'aktif')->where('is_manual', false)->whereNotNull('dm')->where('dm', '!=', '')
                     ->select('dm')->distinct()->orderBy('dm')->pluck('dm')->all()
                 : [];
 
@@ -394,6 +395,7 @@ class VccController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('dm')
             ->where('dm', '!=', '');
 
@@ -414,6 +416,7 @@ class VccController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->when($udm !== '', fn (Builder $builder) => $builder->where('dm', $udm))
             ->whereNotNull('locality')
             ->where('locality', '!=', '');
@@ -502,6 +505,7 @@ class VccController extends Controller
 
         if ($udm !== '') {
             $availableCulaCodes = PemilihRecord::where('status', 'aktif')
+                ->where('is_manual', false)
                 ->where('dm', $udm)
                 ->whereNotNull('cula_code')
                 ->where('cula_code', '!=', '')
@@ -690,6 +694,7 @@ class VccController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('race')
             ->where('race', '!=', '');
 

@@ -295,6 +295,7 @@ class ProgramController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
             ->where('cula_code', '!=', '?')

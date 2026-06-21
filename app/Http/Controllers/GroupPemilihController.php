@@ -32,6 +32,7 @@ class GroupPemilihController extends Controller
             ]);
 
         $kodCulaQuery = PemilihRecord::query()
+            ->where('is_manual', false)
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
             ->where('cula_code', '!=', '?')
@@ -45,6 +46,7 @@ class GroupPemilihController extends Controller
             ->values();
 
         $keturunanQuery = PemilihRecord::query()
+            ->where('is_manual', false)
             ->whereNotNull('race')
             ->where('race', '!=', '');
         $user->applyScopeToPemilihQuery($keturunanQuery);

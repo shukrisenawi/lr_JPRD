@@ -39,6 +39,7 @@ class CulaanBotController extends Controller
 
         $suggestions = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->tap(fn (Builder $b) => $request->user()?->applyScopeToPemilihQuery($b))
             ->with('culaWorkItem.marker')
             ->where(function (Builder $builder) use ($keywords) {
@@ -85,6 +86,7 @@ class CulaanBotController extends Controller
 
         $voters = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
             ->with('culaWorkItem.marker')
             ->where('address', $address)
@@ -160,7 +162,7 @@ class CulaanBotController extends Controller
 
     private function buildEligibleVotersQuery(array $filters): Builder
     {
-        $query = PemilihRecord::query()->where('status', 'aktif');
+        $query = PemilihRecord::query()->where('status', 'aktif')->where('is_manual', false);
         request()->user()?->applyScopeToPemilihQuery($query);
 
         $query->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
@@ -228,6 +230,7 @@ class CulaanBotController extends Controller
 
         $data['address_count'] = $voter->address
             ? PemilihRecord::where('status', 'aktif')
+                ->where('is_manual', false)
                 ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
                 ->where('address', $voter->address)
                 ->count()
@@ -288,6 +291,7 @@ class CulaanBotController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('dm')
             ->where('dm', '!=', '');
 
@@ -308,6 +312,7 @@ class CulaanBotController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->when($udm !== '', fn (Builder $b) => $b->where('dm', $udm))
             ->whereNotNull('locality')
             ->where('locality', '!=', '');

@@ -64,6 +64,7 @@ class AccessManagementController extends Controller
                 ->values(),
             'udms' => PemilihRecord::query()
                 ->where('status', 'aktif')
+                ->where('is_manual', false)
                 ->whereNotNull('dm')
                 ->where('dm', '!=', '')
                 ->select('dm')
@@ -73,6 +74,7 @@ class AccessManagementController extends Controller
                 ->all(),
             'cawangans' => PemilihRecord::query()
                 ->where('status', 'aktif')
+                ->where('is_manual', false)
                 ->whereNotNull('dm')
                 ->where('dm', '!=', '')
                 ->whereNotNull('locality')

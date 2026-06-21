@@ -19,7 +19,7 @@ class CarianPemilihController extends Controller
     public function index(): Response
     {
         $user = request()->user();
-        $base = PemilihRecord::query()->where('status', 'aktif');
+        $base = PemilihRecord::query()->where('status', 'aktif')->where('is_manual', false);
 
         $user?->applyScopeToPemilihQuery($base);
 
@@ -60,6 +60,7 @@ class CarianPemilihController extends Controller
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
+            ->where('is_manual', false)
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
             ->where('cula_code', '!=', '?')
