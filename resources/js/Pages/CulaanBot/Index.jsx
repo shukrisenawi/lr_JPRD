@@ -269,7 +269,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
         setLoadingAddress(true);
         setShowAddressPopup(true);
-        setAddressPopupTitle(`Rumah No: ${voter.no_rumah}`);
+        setAddressPopupTitle(`Rumah No: ${formatAddress(voter)}`);
         try {
             const res = await fetch(route('culaan-bot.rumah', voter.id), {
                 headers: { Accept: 'application/json' },
