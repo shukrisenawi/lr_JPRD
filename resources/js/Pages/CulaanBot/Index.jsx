@@ -937,7 +937,18 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 <img src={avatarUpdates[v.id] || v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-bold text-slate-800">{v.name}</p>
+                                                <p className="flex items-center gap-1.5 font-bold text-slate-800">
+                                                    {v.no_rumah && v.no_rumah !== '-' && v.no_rumah !== '' && v.rumah_count >= 1 && (
+                                                        <button type="button" onClick={(e) => { e.stopPropagation(); loadRumahVoters(v); }}
+                                                            className="inline-block rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-blue-700">
+                                                            {v.no_rumah}
+                                                        </button>
+                                                    )}
+                                                    {v.no_rumah && v.no_rumah !== '-' && v.no_rumah !== '' && (!v.rumah_count || v.rumah_count < 1) && (
+                                                        <span className="inline-block rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{v.no_rumah}</span>
+                                                    )}
+                                                    {v.name}
+                                                </p>
                                                 <p className="text-[10px] font-medium text-slate-500">{v.no_kp || v.old_ic || '-'}</p>
                                             </div>
                                             <div className="shrink-0 text-right">
