@@ -160,6 +160,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
     const fromAddressPopup = useRef(false);
     const previousDetailVoter = useRef(null);
+    const addressPopupVoterName = useRef('');
     const closeDetail = () => { setDetailVoter(null); if (fromAddressPopup.current) { setShowAddressPopup(true); fromAddressPopup.current = false; } };
     const suggestionsAbort = useRef(null);
 
@@ -269,6 +270,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
         setLoadingAddress(true);
         setShowAddressPopup(true);
+        addressPopupVoterName.current = voter.name;
         setAddressPopupTitle(`Alamat: ${formatAddress(voter)}`);
         try {
             const res = await fetch(route('culaan-bot.rumah', voter.id), {
@@ -907,8 +909,13 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             {showAddressPopup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
                     <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-                        <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                {addressPopupVoterName.current && (
+                                    <p className="text-xs font-bold text-green-700 truncate">{addressPopupVoterName.current}</p>
+                                )}
+                                <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
+                            </div>
                             <button type="button" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
                                 Tutup

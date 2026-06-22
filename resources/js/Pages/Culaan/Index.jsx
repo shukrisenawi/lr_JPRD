@@ -333,6 +333,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         return auth.user?.preferences?.culaan_view_mode ?? 'table';
     });
     const jadualBaselineRef = useRef(null);
+    const addressPopupVoterName = useRef('');
 
     const savePreference = (key, value) => {
         localStorage.setItem(key, value);
@@ -551,6 +552,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
         setLoadingAddress(true);
         setShowAddressPopup(true);
+        addressPopupVoterName.current = voter.name;
         setAddressPopupTitle(`Alamat: ${formatAddress(voter)}`);
         setDetailVoter(null);
         try {
@@ -2206,8 +2208,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             {showAddressPopup && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
                     <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-                        <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                {addressPopupVoterName.current && (
+                                    <p className="text-xs font-bold text-green-700 truncate">{addressPopupVoterName.current}</p>
+                                )}
+                                <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
+                            </div>
                             <button type="button" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
                                 Tutup
