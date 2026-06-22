@@ -359,8 +359,14 @@ class CulaanController extends Controller
                     ->whereColumn('pr2.locality', 'pemilih_records.locality')
                     ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
                     ->where('pr2.status', 'aktif')
-                    ->where('pr2.is_manual', false);
-            });
+                    ->where('pr2.is_manual', false)
+                    ->whereNotNull('pr2.no_rumah')
+                    ->where('pr2.no_rumah', '!=', '')
+                    ->where('pr2.no_rumah', '!=', '-');
+            })
+            ->whereNotNull('no_rumah')
+            ->where('no_rumah', '!=', '')
+            ->where('no_rumah', '!=', '-');
         });
 
         $query->when($filters['filter_alamat'], function (Builder $b) {
@@ -370,8 +376,12 @@ class CulaanController extends Controller
                     ->whereColumn('pr2.address', 'pemilih_records.address')
                     ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
                     ->where('pr2.status', 'aktif')
-                    ->where('pr2.is_manual', false);
-            });
+                    ->where('pr2.is_manual', false)
+                    ->whereNotNull('pr2.address')
+                    ->where('pr2.address', '!=', '');
+            })
+            ->whereNotNull('address')
+            ->where('address', '!=', '');
         });
     }
 
