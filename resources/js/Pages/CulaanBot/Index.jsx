@@ -138,6 +138,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [searchError, setSearchError] = useState('');
     const [actionError, setActionError] = useState('');
     const [showMarked, setShowMarked] = useState(Boolean(filters.show_marked));
+    const [filterRumah, setFilterRumah] = useState(Boolean(filters.filter_rumah));
+    const [filterAlamat, setFilterAlamat] = useState(Boolean(filters.filter_alamat));
     const [ageFrom, setAgeFrom] = useState(filters.age_from ?? '');
     const [ageTo, setAgeTo] = useState(filters.age_to ?? '');
     const [pendingIds, setPendingIds] = useState([]);
@@ -191,6 +193,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
         show_marked: showMarked,
+        filter_rumah: filterRumah,
+        filter_alamat: filterAlamat,
         age_from: ageFrom,
         age_to: ageTo,
     };
@@ -221,6 +225,18 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         applyFilters({ ...formState, show_marked: next });
     };
 
+    const toggleFilterRumah = () => {
+        const next = !filterRumah;
+        setFilterRumah(next);
+        applyFilters({ ...formState, filter_rumah: next });
+    };
+
+    const toggleFilterAlamat = () => {
+        const next = !filterAlamat;
+        setFilterAlamat(next);
+        applyFilters({ ...formState, filter_alamat: next });
+    };
+
     const doSearch = async (value) => {
         setSearch(value);
         setSearchError('');
@@ -234,7 +250,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         suggestionsAbort.current = controller;
         setSearching(true);
         try {
-            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to });
+            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to, filter_rumah: formState.filter_rumah, filter_alamat: formState.filter_alamat });
             const response = await fetch(`${route('culaan-bot.search')}?${params.toString()}`, {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
@@ -388,8 +404,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
 
-    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || ageFrom || ageTo));
-    const hasFilterValue = filters.udm || filters.locality || showMarked || ageFrom || ageTo;
+    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo));
+    const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
     return (
@@ -419,6 +435,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 {filters.udm && <span>{filters.udm}</span>}
                                 {filters.locality && <span>{filters.locality}</span>}
                                 {showMarked && <span className="rounded bg-slate-100 px-1 py-0.5">Siap</span>}
+                                {filterRumah && <span className="rounded bg-blue-100 px-1 py-0.5 text-blue-700">Rumah</span>}
+                                {filterAlamat && <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-700">Alamat</span>}
                             </div>
                         )}
                     </button>
@@ -484,6 +502,16 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     <input type="checkbox" checked={showMarked} onChange={toggleShowMarked}
                                         className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
                                     <span className="text-xs font-bold text-slate-600">Tunjuk yang sudah siap cula</span>
+                                </label>
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={filterRumah} onChange={toggleFilterRumah}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Sama No. Rumah</span>
+                                </label>
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={filterAlamat} onChange={toggleFilterAlamat}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
                                 </label>
                             </div>
                             {actionError && <InputError className="mt-2" message={actionError} />}

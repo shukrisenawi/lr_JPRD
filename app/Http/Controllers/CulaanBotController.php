@@ -68,6 +68,7 @@ class CulaanBotController extends Controller
                 $minBirthYear = now()->year - (int) $filters['age_to'];
                 $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?", [(int) now()->format('y'), $minBirthYear]);
             })
+            ->tap(fn (Builder $b) => $this->applyRumahAlamatFilters($b, $filters))
             ->orderBy('name')
             ->limit(8)
             ->get()
@@ -217,7 +218,35 @@ class CulaanBotController extends Controller
             $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?", [$currentYY, $minBirthYear]);
         });
 
+        $this->applyRumahAlamatFilters($query, $filters);
+
         return $query;
+    }
+
+    private function applyRumahAlamatFilters(Builder $query, array $filters): void
+    {
+        $query->when($filters['filter_rumah'], function (Builder $b) {
+            $b->whereExists(function ($q) {
+                $q->selectRaw(1)
+                    ->from('pemilih_records', 'pr2')
+                    ->whereColumn('pr2.no_rumah', 'pemilih_records.no_rumah')
+                    ->whereColumn('pr2.locality', 'pemilih_records.locality')
+                    ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
+                    ->where('pr2.status', 'aktif')
+                    ->where('pr2.is_manual', false);
+            });
+        });
+
+        $query->when($filters['filter_alamat'], function (Builder $b) {
+            $b->whereExists(function ($q) {
+                $q->selectRaw(1)
+                    ->from('pemilih_records', 'pr2')
+                    ->whereColumn('pr2.address', 'pemilih_records.address')
+                    ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
+                    ->where('pr2.status', 'aktif')
+                    ->where('pr2.is_manual', false);
+            });
+        });
     }
 
     private function paginateVoters(array $filters): \Illuminate\Pagination\LengthAwarePaginator
@@ -325,6 +354,8 @@ class CulaanBotController extends Controller
             'show_marked' => $request->boolean('show_marked'),
             'age_from' => trim((string) $request->query('age_from', '')),
             'age_to' => trim((string) $request->query('age_to', '')),
+            'filter_rumah' => $request->boolean('filter_rumah'),
+            'filter_alamat' => $request->boolean('filter_alamat'),
         ];
     }
 
