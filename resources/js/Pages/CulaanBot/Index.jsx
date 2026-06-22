@@ -158,7 +158,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [showAddressPopup, setShowAddressPopup] = useState(false);
     const [loadingAddress, setLoadingAddress] = useState(false);
     const [addressPopupTitle, setAddressPopupTitle] = useState('Alamat Sama');
-    const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'list');
+    const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'card');
     const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
     const fromAddressPopup = useRef(false);
     const previousDetailVoter = useRef(null);
