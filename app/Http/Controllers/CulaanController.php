@@ -344,7 +344,35 @@ class CulaanController extends Controller
             );
         }
 
+        $this->applyRumahAlamatFilters($query, $filters);
+
         return $query;
+    }
+
+    private function applyRumahAlamatFilters(Builder $query, array $filters): void
+    {
+        $query->when($filters['filter_rumah'], function (Builder $b) {
+            $b->whereExists(function ($q) {
+                $q->selectRaw(1)
+                    ->from('pemilih_records', 'pr2')
+                    ->whereColumn('pr2.no_rumah', 'pemilih_records.no_rumah')
+                    ->whereColumn('pr2.locality', 'pemilih_records.locality')
+                    ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
+                    ->where('pr2.status', 'aktif')
+                    ->where('pr2.is_manual', false);
+            });
+        });
+
+        $query->when($filters['filter_alamat'], function (Builder $b) {
+            $b->whereExists(function ($q) {
+                $q->selectRaw(1)
+                    ->from('pemilih_records', 'pr2')
+                    ->whereColumn('pr2.address', 'pemilih_records.address')
+                    ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
+                    ->where('pr2.status', 'aktif')
+                    ->where('pr2.is_manual', false);
+            });
+        });
     }
 
     private function resolveGroupKodCulas(?int $groupId): ?array
@@ -471,6 +499,8 @@ class CulaanController extends Controller
             'umur_dari' => $request->query('umur_dari') !== null && $request->query('umur_dari') !== '' ? (int) $request->query('umur_dari') : null,
             'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
             'has_phone' => $request->boolean('has_phone'),
+            'filter_rumah' => $request->boolean('filter_rumah'),
+            'filter_alamat' => $request->boolean('filter_alamat'),
         ];
     }
 
@@ -727,6 +757,8 @@ class CulaanController extends Controller
         if ($filters['custom_mode']) {
             $this->applyCustomDemographicFilters($query, $filters);
         }
+
+        $this->applyRumahAlamatFilters($query, $filters);
 
         $total = (clone $query)->count();
 

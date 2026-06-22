@@ -377,6 +377,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         jantina: filters.jantina ?? '',
         umur_dari: filters.umur_dari ?? '',
         umur_hingga: filters.umur_hingga ?? '',
+        filter_rumah: Boolean(filters.filter_rumah),
+        filter_alamat: Boolean(filters.filter_alamat),
     });
 
     useEffect(() => {
@@ -391,8 +393,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             jantina: filters.jantina ?? '',
             umur_dari: filters.umur_dari ?? '',
             umur_hingga: filters.umur_hingga ?? '',
+            filter_rumah: Boolean(filters.filter_rumah),
+            filter_alamat: Boolean(filters.filter_alamat),
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error, filters.filter_rumah, filters.filter_alamat]);
 
     useEffect(() => {
         if (filters.data_error) {
@@ -513,6 +517,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             jantina: formState.jantina,
             umur_dari: formState.umur_dari ?? '',
             umur_hingga: formState.umur_hingga ?? '',
+            filter_rumah: formState.filter_rumah ? '1' : '0',
+            filter_alamat: formState.filter_alamat ? '1' : '0',
         });
         (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
 
@@ -1278,6 +1284,23 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                             </div>
                         </div>
+
+                        {tab === 'senarai' && !isDataErrorTab && (
+                            <div className="mt-3 flex flex-wrap items-center gap-4">
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formState.filter_rumah}
+                                        onChange={(e) => updateFilter('filter_rumah', e.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Sama No. Rumah</span>
+                                </label>
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formState.filter_alamat}
+                                        onChange={(e) => updateFilter('filter_alamat', e.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
+                                </label>
+                            </div>
+                        )}
 
                         {formState.group_id === 'custom' && (
                             <><div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:items-end">
