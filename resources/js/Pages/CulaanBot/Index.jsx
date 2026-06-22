@@ -950,7 +950,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                         <span className="ml-1 text-[10px] font-semibold text-slate-500">{v.cula_display_label || v.cula_code}</span>
                                                     )}
                                                 </p>
-                                                <p className="text-[10px] font-medium text-slate-500">{v.no_kp || v.old_ic || '-'}</p>
+                                                <p className="text-[10px] font-medium text-slate-500 truncate">{formatAddress(v)}</p>
                                             </div>
                                             <div className="shrink-0 text-right">
                                                 <p className="font-bold text-slate-700">{v.age ?? '-'}</p>
