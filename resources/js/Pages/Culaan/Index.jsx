@@ -551,7 +551,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
         setLoadingAddress(true);
         setShowAddressPopup(true);
-        setAddressPopupTitle(`Rumah No: ${formatAddress(voter)}`);
+        setAddressPopupTitle(`Alamat: ${formatAddress(voter)}`);
         setDetailVoter(null);
         try {
             const res = await fetch(route('culaan.rumah', voter.id), {
