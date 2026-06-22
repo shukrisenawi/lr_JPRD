@@ -41,10 +41,26 @@ function addressHasRum(alm, rum) {
     return a === r || a.startsWith(r + ',') || a.startsWith(r);
 }
 
+function stripRum(alm, rum) {
+    let ri = 0, ai = 0;
+    const r = rum.replace(/\s+/g, '');
+    while (ri < r.length && ai < alm.length) {
+        if (/\s/.test(alm[ai])) { ai++; continue; }
+        if (alm[ai].toLowerCase() === r[ri].toLowerCase()) { ri++; ai++; }
+        else break;
+    }
+    if (ri < r.length) return alm;
+    while (ai < alm.length && /[,.\s]/.test(alm[ai])) ai++;
+    return alm.slice(ai);
+}
+
 function combineAddress(rum, alm) {
     if (!rum && !alm) return '-';
     if (rum && alm) {
-        if (addressHasRum(alm, rum)) return alm;
+        if (addressHasRum(alm, rum)) {
+            const s = stripRum(alm, rum);
+            return s ? `${rum}, ${s}` : rum;
+        }
         return `${rum}, ${alm}`;
     }
     return rum || alm;
@@ -65,11 +81,11 @@ function AddressDisplay({ voter }) {
         : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
     if (!rum && !alm) return '-';
     if (!rum) return alm;
-    if (addressHasRum(alm, rum)) return alm;
+    const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
     return (
         <>
             <span className="mr-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>
-            {alm || null}
+            {cleanAlm || null}
         </>
     );
 }
