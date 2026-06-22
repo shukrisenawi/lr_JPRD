@@ -74,7 +74,7 @@ function formatAddress(voter) {
     return combineAddress(rum, alm);
 }
 
-function AddressDisplay({ voter }) {
+function AddressDisplay({ voter, onRumahClick }) {
     const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
     const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
         ? voter.alamat_kediaman
@@ -82,9 +82,17 @@ function AddressDisplay({ voter }) {
     if (!rum && !alm) return '-';
     if (!rum) return alm;
     const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
+    const hasRumahCount = voter.rumah_count >= 1;
     return (
         <>
-            <span className="mr-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>
+            {hasRumahCount ? (
+                <button type="button" onClick={(e) => { e.stopPropagation(); onRumahClick?.(voter); }} title="Pemilih lain dengan rumah sama"
+                    className="mr-1 inline-block rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-blue-700">
+                    {rum}
+                </button>
+            ) : (
+                <span className="mr-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>
+            )}
             {cleanAlm || null}
         </>
     );
@@ -307,6 +315,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [addressVoters, setAddressVoters] = useState([]);
     const [showAddressPopup, setShowAddressPopup] = useState(false);
     const [loadingAddress, setLoadingAddress] = useState(false);
+    const [addressPopupTitle, setAddressPopupTitle] = useState('Alamat Sama');
     const [localVoters, setLocalVoters] = useState(voters);
     const [localSummary, setLocalSummary] = useState(summary);
     const [cropFile, setCropFile] = useState(null);
@@ -522,9 +531,30 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (!voter.address || voter.address === '-') return;
         setLoadingAddress(true);
         setShowAddressPopup(true);
+        setAddressPopupTitle('Alamat Sama');
         setDetailVoter(null);
         try {
             const res = await fetch(route('culaan.alamat', voter.id), {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) throw new Error('Gagal');
+            const data = await res.json();
+            setAddressVoters(data.voters ?? []);
+        } catch {
+            setAddressVoters([]);
+        } finally {
+            setLoadingAddress(false);
+        }
+    };
+
+    const loadRumahVoters = async (voter) => {
+        if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
+        setLoadingAddress(true);
+        setShowAddressPopup(true);
+        setAddressPopupTitle(`Rumah No: ${voter.no_rumah}`);
+        setDetailVoter(null);
+        try {
+            const res = await fetch(route('culaan.rumah', voter.id), {
                 headers: { Accept: 'application/json' },
             });
             if (!res.ok) throw new Error('Gagal');
@@ -1370,7 +1400,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         );
                                                     })()}
                                                 </p>
-                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500"><AddressDisplay voter={voter} /></p>
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500"><AddressDisplay voter={voter} onRumahClick={loadRumahVoters} /></p>
                                             </div>
 
                                         </div>
@@ -1807,7 +1837,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
                                                 </p>
-                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500"><AddressDisplay voter={voter} /></p>
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500"><AddressDisplay voter={voter} onRumahClick={loadRumahVoters} /></p>
                                             </div>
                                         </div>
                                         <div className="mt-3 space-y-2 text-xs">
@@ -2177,7 +2207,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
                     <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-sm font-bold text-slate-800">Alamat Sama</h3>
+                            <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
                             <button type="button" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
                                 Tutup

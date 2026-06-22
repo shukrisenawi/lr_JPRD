@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/culaan/export', [CulaanController::class, 'export'])->middleware('module:culaan.senarai')->name('culaan.export');
     Route::get('/culaan/search', [CulaanController::class, 'search'])->middleware('module:culaan.senarai')->name('culaan.search');
     Route::get('/culaan/alamat/{pemilihRecord}', [CulaanController::class, 'searchByAddress'])->middleware('module:culaan.senarai')->name('culaan.alamat');
+    Route::get('/culaan/rumah/{pemilihRecord}', [CulaanController::class, 'searchByRumah'])->middleware('module:culaan.senarai')->name('culaan.rumah');
     Route::post('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'storeMark'])->middleware('module:culaan.senarai')->name('culaan.mark.store');
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');
     Route::post('/culaan/{pemilihRecord}/approve-error', [CulaanController::class, 'approveDataError'])->middleware('module:culaan.senarai')->name('culaan.approve-error');
