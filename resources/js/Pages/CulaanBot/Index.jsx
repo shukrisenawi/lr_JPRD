@@ -591,6 +591,16 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 <span className="font-semibold text-green-700">Umur</span>
                                                 <p className="font-bold text-slate-800">{voter.age ?? '-'}</p>
                                             </div>
+                                            {(voter.phone_mobile || voter.phone_home) && (
+                                            <div>
+                                                <span className="font-semibold text-green-700">Telefon</span>
+                                                <p className="font-bold text-slate-800">
+                                                    {voter.phone_mobile && voter.phone_home
+                                                        ? `${voter.phone_mobile} / ${voter.phone_home}`
+                                                        : (voter.phone_mobile || voter.phone_home)}
+                                                </p>
+                                            </div>
+                                            )}
                                             {!formState.udm && (
                                             <div>
                                                 <span className="font-semibold text-green-700">UDM</span>
@@ -620,16 +630,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     </div>
                                                 );
                                             })()}
-                                            {(voter.phone_mobile || voter.phone_home) && (
-                                                <div className="col-span-2">
-                                                    <span className="font-semibold text-green-700">Telefon</span>
-                                                    <p className="font-bold text-slate-800">
-                                                        {voter.phone_mobile && voter.phone_home
-                                                            ? `${voter.phone_mobile} / ${voter.phone_home}`
-                                                            : (voter.phone_mobile || voter.phone_home)}
-                                                    </p>
-                                                </div>
-                                            )}
                                         </div>
                                         <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
                                             {!voter.is_manual && (
