@@ -34,14 +34,21 @@ function fmtCulaJadual(total, completed) {
     );
 }
 
+function combineAddress(rum, alm) {
+    if (!rum && !alm) return '-';
+    if (rum && alm) {
+        if (alm === rum || alm.startsWith(rum + ',') || alm.startsWith(rum + ' ')) return alm;
+        return `${rum}, ${alm}`;
+    }
+    return rum || alm;
+}
+
 function formatAddress(voter) {
     const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
     const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
         ? voter.alamat_kediaman
         : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
-    if (!rum && !alm) return '-';
-    if (rum && alm) return `${rum}, ${alm}`;
-    return rum || alm;
+    return combineAddress(rum, alm);
 }
 
 function AddressDisplay({ voter }) {
@@ -50,9 +57,11 @@ function AddressDisplay({ voter }) {
         ? voter.alamat_kediaman
         : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
     if (!rum && !alm) return '-';
+    if (!rum) return alm;
+    if (alm && (alm === rum || alm.startsWith(rum + ',') || alm.startsWith(rum + ' '))) return alm;
     return (
         <>
-            {rum && <span className="mr-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>}
+            <span className="mr-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>
             {alm || null}
         </>
     );
@@ -858,7 +867,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 { value: index + 1, type: 'Number', align: 'center' },
                 { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
                 { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
-                { value: (voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah + ', ' : '') + (voter.address || voter.locality || '-'), type: 'String', align: 'left', wrap: true },
+                { value: formatAddress(voter), type: 'String', align: 'left', wrap: true },
                 { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
                 { value: '', type: 'String', align: 'center' },
             ];
@@ -2011,8 +2020,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 const alm = (detailVoter.alamat_kediaman && detailVoter.alamat_kediaman !== '-' && detailVoter.alamat_kediaman !== '')
                                     ? detailVoter.alamat_kediaman
                                     : (detailVoter.alamat_kp && detailVoter.alamat_kp !== '-' && detailVoter.alamat_kp !== '' ? detailVoter.alamat_kp : detailVoter.address);
-                                const alamat = rum && alm ? `${rum}, ${alm}` : (rum || alm);
-                                return alamat ? (
+                                const alamat = combineAddress(rum, alm);
+                                return alamat !== '-' ? (
                                     <div className="col-span-2">
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
                                         <p className="mt-0.5 font-semibold text-slate-700">{alamat}</p>
