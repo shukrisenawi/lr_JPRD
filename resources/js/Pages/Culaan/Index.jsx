@@ -34,6 +34,16 @@ function fmtCulaJadual(total, completed) {
     );
 }
 
+function formatAddress(voter) {
+    const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
+    const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+        ? voter.alamat_kediaman
+        : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+    if (!rum && !alm) return '-';
+    if (rum && alm) return `${rum}, ${alm}`;
+    return rum || alm;
+}
+
 function extractNamaAyah(name) {
     if (!name) return null;
     const lowerName = name.toLowerCase();
@@ -834,7 +844,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 { value: index + 1, type: 'Number', align: 'center' },
                 { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
                 { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
-                { value: voter.address || voter.locality || '-', type: 'String', align: 'left', wrap: true },
+                { value: (voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah + ', ' : '') + (voter.address || voter.locality || '-'), type: 'String', align: 'left', wrap: true },
                 { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
                 { value: '', type: 'String', align: 'center' },
             ];
@@ -1314,7 +1324,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         );
                                                     })()}
                                                 </p>
-                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{formatAddress(voter)}</p>
                                             </div>
 
                                         </div>
@@ -1397,7 +1407,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         type="button"
                                                         onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
                                                         className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
-                                                        title={`Alamat sama: ${voter.address}`}
+                                                        title={`Alamat sama: ${formatAddress(voter)}`}
                                                     >
                                                         <HomeIcon className="h-3.5 w-3.5" />
                                                     </button>
@@ -1538,7 +1548,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                                    type="button"
                                                                                    onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
                                                                                    className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600"
-                                                                                   title={`Alamat sama: ${voter.address}`}
+                                                                                   title={`Alamat sama: ${formatAddress(voter)}`}
                                                                                >
                                                                                    <HomeIcon className="h-3 w-3" />
                                                                                </button>
@@ -1644,7 +1654,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                                    type="button"
                                                                                    onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
                                                                                    className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600"
-                                                                                   title={`Alamat sama: ${voter.address}`}
+                                                                                   title={`Alamat sama: ${formatAddress(voter)}`}
                                                                                >
                                                                                    <HomeIcon className="h-3 w-3" />
                                                                                </button>
@@ -1751,7 +1761,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
                                                 </p>
-                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{voter.address || '-'}</p>
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{formatAddress(voter)}</p>
                                             </div>
                                         </div>
                                         <div className="mt-3 space-y-2 text-xs">
@@ -1983,9 +1993,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
                             </div>
                             {(() => {
-                                const alamat = (detailVoter.alamat_kediaman && detailVoter.alamat_kediaman !== '-' && detailVoter.alamat_kediaman !== '')
+                                const rum = detailVoter.no_rumah && detailVoter.no_rumah !== '-' && detailVoter.no_rumah !== '' ? detailVoter.no_rumah : '';
+                                const alm = (detailVoter.alamat_kediaman && detailVoter.alamat_kediaman !== '-' && detailVoter.alamat_kediaman !== '')
                                     ? detailVoter.alamat_kediaman
                                     : (detailVoter.alamat_kp && detailVoter.alamat_kp !== '-' && detailVoter.alamat_kp !== '' ? detailVoter.alamat_kp : detailVoter.address);
+                                const alamat = rum && alm ? `${rum}, ${alm}` : (rum || alm);
                                 return alamat ? (
                                     <div className="col-span-2">
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
@@ -1993,10 +2005,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     </div>
                                 ) : null;
                             })()}
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">No. Rumah</p>
-                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.no_rumah || '-'}</p>
-                            </div>
                             <div>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">No. Siri</p>
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.no_siri || '-'}</p>
