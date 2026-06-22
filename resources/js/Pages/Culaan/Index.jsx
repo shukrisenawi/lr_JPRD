@@ -2241,7 +2241,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <img src={avatarUpdates[v.id] || v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-bold text-slate-800">{v.name}</p>
+                                                <p className="font-bold text-slate-800">
+                                                    {v.name}
+                                                    {v.cula_code && v.cula_code !== '0' && v.cula_code !== '?' && (
+                                                        <span className="ml-1 text-[10px] font-semibold text-slate-500">{v.cula_display_label || v.cula_code}</span>
+                                                    )}
+                                                </p>
                                                 <p className="text-[10px] font-medium text-slate-500">{v.no_kp || v.old_ic || '-'}</p>
                                             </div>
                                             <div className="shrink-0 text-right">
