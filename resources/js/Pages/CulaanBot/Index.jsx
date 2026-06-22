@@ -161,7 +161,21 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const fromAddressPopup = useRef(false);
     const previousDetailVoter = useRef(null);
     const addressPopupVoterName = useRef('');
-    const closeDetail = () => { setDetailVoter(null); if (fromAddressPopup.current) { setShowAddressPopup(true); fromAddressPopup.current = false; } };
+    const lastRumahVoterRef = useRef(null);
+    const lastAddressVoterRef = useRef(null);
+    const popupSourceRef = useRef('');
+    const closeDetail = () => {
+        setDetailVoter(null);
+        if (fromAddressPopup.current) {
+            setShowAddressPopup(true);
+            fromAddressPopup.current = false;
+            if (popupSourceRef.current === 'rumah' && lastRumahVoterRef.current) {
+                loadRumahVoters(lastRumahVoterRef.current);
+            } else if (popupSourceRef.current === 'alamat' && lastAddressVoterRef.current) {
+                loadAddressVoters(lastAddressVoterRef.current);
+            }
+        }
+    };
     const suggestionsAbort = useRef(null);
 
     useEffect(() => {
@@ -249,6 +263,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
     const loadAddressVoters = async (voter) => {
         if (!voter.address || voter.address === '-') return;
+        lastAddressVoterRef.current = voter;
+        popupSourceRef.current = 'alamat';
         setLoadingAddress(true);
         setShowAddressPopup(true);
         setAddressPopupTitle('Alamat Sama');
@@ -268,6 +284,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
     const loadRumahVoters = async (voter) => {
         if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
+        lastRumahVoterRef.current = voter;
+        popupSourceRef.current = 'rumah';
         setLoadingAddress(true);
         setShowAddressPopup(true);
         addressPopupVoterName.current = voter.name;
