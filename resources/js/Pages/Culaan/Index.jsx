@@ -132,6 +132,17 @@ function HomeIcon({ className = 'h-4 w-4' }) {
     );
 }
 
+function HashIcon({ className = 'h-4 w-4' }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+            <line x1="4" y1="9" x2="20" y2="9" />
+            <line x1="4" y1="15" x2="20" y2="15" />
+            <line x1="10" y1="3" x2="8" y2="21" />
+            <line x1="16" y1="3" x2="14" y2="21" />
+        </svg>
+    );
+}
+
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
 
 function getBarColor(entry, i) {
@@ -1641,7 +1652,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                                     className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-amber-300 hover:text-amber-600"
                                                                                     title={`Rumah sama: ${voter.no_rumah}`}
                                                                                 >
-                                                                                    <HomeIcon className="h-3 w-3" />
+                                                                                    <HashIcon className="h-3 w-3" />
                                                                                 </button>
                                                                             )}
                                                                                 {(() => {
@@ -1760,7 +1771,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                                     className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-amber-300 hover:text-amber-600"
                                                                                     title={`Rumah sama: ${voter.no_rumah}`}
                                                                                 >
-                                                                                    <HomeIcon className="h-3 w-3" />
+                                                                                     <HashIcon className="h-3 w-3" />
                                                                                 </button>
                                                                             )}
                                                                             {(() => {
