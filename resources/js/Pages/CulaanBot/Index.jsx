@@ -785,7 +785,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     <div className="col-span-2">
                                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
                                         <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-slate-700">
-                                            {rum && <span className="inline-block rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>}
+                                            {rum && <RumahBadge voter={dv} onRumahClick={loadRumahVoters} />}
                                             {cleanAlm || null}
                                         </p>
                                     </div>
