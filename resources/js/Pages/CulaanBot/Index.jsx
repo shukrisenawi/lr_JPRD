@@ -620,10 +620,14 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     </div>
                                                 );
                                             })()}
-                                            {phone && (
+                                            {(voter.phone_mobile || voter.phone_home) && (
                                                 <div className="col-span-2">
                                                     <span className="font-semibold text-green-700">Telefon</span>
-                                                    <p className="font-bold text-slate-800">{phone}</p>
+                                                    <p className="font-bold text-slate-800">
+                                                        {voter.phone_mobile && voter.phone_home
+                                                            ? `${voter.phone_mobile} / ${voter.phone_home}`
+                                                            : (voter.phone_mobile || voter.phone_home)}
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>

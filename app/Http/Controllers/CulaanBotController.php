@@ -255,6 +255,8 @@ class CulaanBotController extends Controller
             'catatan' => $voter->catatan,
             'alamat_kp' => $voter->alamat_kp,
             'alamat_kediaman' => $voter->alamat_kediaman,
+            'phone_home' => $voter->phone_home,
+            'phone_mobile' => $voter->phone_mobile,
         ];
 
         $data['address_count'] = $voter->address
