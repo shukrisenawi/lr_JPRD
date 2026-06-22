@@ -44,6 +44,20 @@ function formatAddress(voter) {
     return rum || alm;
 }
 
+function AddressDisplay({ voter }) {
+    const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
+    const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+        ? voter.alamat_kediaman
+        : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+    if (!rum && !alm) return '-';
+    return (
+        <>
+            {rum && <span className="mr-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>}
+            {alm || null}
+        </>
+    );
+}
+
 function extractNamaAyah(name) {
     if (!name) return null;
     const lowerName = name.toLowerCase();
@@ -1324,7 +1338,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         );
                                                     })()}
                                                 </p>
-                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{formatAddress(voter)}</p>
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500"><AddressDisplay voter={voter} /></p>
                                             </div>
 
                                         </div>
@@ -1761,7 +1775,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
                                                 </p>
-                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">{formatAddress(voter)}</p>
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500"><AddressDisplay voter={voter} /></p>
                                             </div>
                                         </div>
                                         <div className="mt-3 space-y-2 text-xs">
