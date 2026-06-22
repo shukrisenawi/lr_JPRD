@@ -119,6 +119,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/kad-ten/search-pemilih', [KadTenController::class, 'searchPemilih'])->middleware('module:kad-ten')->name('kad-ten.search-pemilih');
     Route::get('/kad-ten/suggest-pemimpin', [KadTenController::class, 'suggestPemimpin'])->middleware('module:kad-ten')->name('kad-ten.suggest-pemimpin');
     Route::get('/kad-ten/{pemilihRecord}/clusters', [KadTenController::class, 'clustersFor'])->middleware('module:kad-ten')->name('kad-ten.clusters');
+    Route::get('/kad-ten/senarai-pemilih', [KadTenController::class, 'senaraiPemilih'])->middleware('module:kad-ten')->name('kad-ten.senarai-pemilih');
+    Route::post('/kad-ten/{kadTen}/assign-voter', [KadTenController::class, 'assignVoter'])->middleware('module:kad-ten')->name('kad-ten.assign-voter');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');

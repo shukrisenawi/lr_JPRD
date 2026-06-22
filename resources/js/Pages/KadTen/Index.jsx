@@ -472,6 +472,11 @@ export default function KadTenIndex({ kads, scopes }) {
         }
     };
 
+    const tabs = [
+        { key: 'index', label: 'Kad Saya' },
+        { key: 'senarai-pemilih', label: 'Senarai Pemilih' },
+    ];
+
     return (
         <AuthenticatedLayout
             header={
@@ -490,6 +495,16 @@ export default function KadTenIndex({ kads, scopes }) {
             <Head title="Kad 10" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
+                <div className="flex gap-1 border-b border-slate-200 pb-0">
+                    {tabs.map(t => (
+                        <button key={t.key} type="button" onClick={() => {
+                            if (t.key === 'senarai-pemilih') router.get(route('kad-ten.senarai-pemilih'));
+                        }}
+                            className={'rounded-t-lg px-4 py-2 text-xs font-bold transition ' + (t.key === 'index' ? 'border-x border-t border-slate-200 bg-white text-green-700' : 'text-slate-500 hover:bg-green-50 hover:text-green-700')}>
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
                 {kads.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-green-300 bg-white py-12 text-center shadow-sm">
                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700">

@@ -525,6 +525,147 @@ class KadTenController extends Controller
         return response()->json(['codes' => $codes]);
     }
 
+    public function senaraiPemilih(Request $request): Response
+    {
+        $user = $request->user();
+
+        $filters = [
+            'udm' => trim((string) $request->query('udm', '')),
+            'locality' => trim((string) $request->query('locality', '')),
+            'q' => trim((string) $request->query('q', '')),
+        ];
+
+        $query = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->whereIn('cula_code', self::ALLOWED_CULA_CODES)
+            ->whereDoesntHave('kadTenMemberships');
+
+        $user->applyScopeToPemilihQuery($query);
+
+        if ($filters['udm'] !== '') {
+            $query->where('dm', $filters['udm']);
+        }
+
+        if ($filters['locality'] !== '') {
+            $query->where('locality', $filters['locality']);
+        }
+
+        if (mb_strlen($filters['q']) >= 2) {
+            $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($filters['q'])) ?: []));
+            $query->where(function (Builder $q) use ($keywords) {
+                foreach ($keywords as $keyword) {
+                    $like = '%'.$keyword.'%';
+                    $q->where(function (Builder $sq) use ($keyword, $like) {
+                        $sq->whereRaw('LOWER(name) like ?', [$like])
+                          ->orWhereRaw('LOWER(dm) like ?', [$like])
+                          ->orWhereRaw('LOWER(locality) like ?', [$like]);
+                        if (preg_match('/\d/', $keyword)) {
+                            $digitLike = '%'.preg_replace('/\D+/', '', $keyword).'%';
+                            $sq->orWhere('no_kp', 'like', $digitLike)
+                              ->orWhere('old_ic', 'like', $digitLike);
+                        }
+                    });
+                }
+            });
+        }
+
+        $voters = $query
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (PemilihRecord $v) => $this->transformVoter($v));
+
+        $udmQuery = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->whereIn('cula_code', self::ALLOWED_CULA_CODES)
+            ->whereDoesntHave('kadTenMemberships')
+            ->whereNotNull('dm')->where('dm', '!=', '');
+
+        $user->applyScopeToPemilihQuery($udmQuery);
+        $udms = $udmQuery->select('dm')->distinct()->orderBy('dm')->pluck('dm')->values()->all();
+
+        $locQuery = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->whereIn('cula_code', self::ALLOWED_CULA_CODES)
+            ->whereDoesntHave('kadTenMemberships')
+            ->whereNotNull('locality')->where('locality', '!=', '');
+        if ($filters['udm'] !== '') {
+            $locQuery->where('dm', $filters['udm']);
+        }
+        $user->applyScopeToPemilihQuery($locQuery);
+        $localities = $locQuery->select('locality')->distinct()->orderBy('locality')->pluck('locality')->values()->all();
+
+        $kads = KadTen::query()
+            ->kadTenForUser($user)
+            ->with('pemimpin')
+            ->latest()
+            ->get()
+            ->map(fn (KadTen $k) => [
+                'id' => $k->id,
+                'name' => $k->name,
+                'pemimpin_name' => $k->pemimpin?->name,
+            ])
+            ->values();
+
+        return Inertia::render('KadTen/SenaraiPemilih', [
+            'filters' => $filters,
+            'voters' => $voters,
+            'udms' => $udms,
+            'localities' => $localities,
+            'kads' => $kads,
+        ]);
+    }
+
+    public function assignVoter(Request $request, KadTen $kadTen): JsonResponse
+    {
+        $validated = $request->validate([
+            'pemilih_record_id' => ['required', 'integer', Rule::exists('pemilih_records', 'id')],
+        ]);
+
+        $voter = PemilihRecord::query()->findOrFail($validated['pemilih_record_id']);
+
+        if ($voter->status !== 'aktif') {
+            return response()->json(['message' => 'Pemilih tidak aktif.'], 422);
+        }
+
+        if (! in_array($voter->cula_code, self::ALLOWED_CULA_CODES)) {
+            return response()->json(['message' => 'Kod cula pemilih tidak dibenarkan.'], 422);
+        }
+
+        $exists = KadTenMember::query()
+            ->where('kad_ten_id', $kadTen->id)
+            ->where('pemilih_record_id', $voter->id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'Pemilih sudah wujud dalam kad ini.'], 422);
+        }
+
+        $alreadyInOther = KadTenMember::query()
+            ->where('pemilih_record_id', $voter->id)
+            ->where('kad_ten_id', '!=', $kadTen->id)
+            ->exists();
+
+        if ($alreadyInOther) {
+            return response()->json(['message' => 'Pemilih sudah diagihkan ke kad lain.'], 422);
+        }
+
+        KadTenMember::query()->create([
+            'kad_ten_id' => $kadTen->id,
+            'pemilih_record_id' => $voter->id,
+            'cluster_type' => 'manual',
+            'cluster_value' => null,
+            'created_by' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Pemilih berjaya diagihkan ke ' . ($kadTen->name ?? 'Kad 10') . '.',
+        ]);
+    }
+
     private function resolveScope(string $level, string $scopeKey, PemilihRecord $voter): array
     {
         return match ($level) {
