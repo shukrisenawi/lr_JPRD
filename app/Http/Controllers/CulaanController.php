@@ -351,8 +351,10 @@ class CulaanController extends Controller
 
     private function applyRumahAlamatFilters(Builder $query, array $filters): void
     {
-        $query->when($filters['filter_rumah'], function (Builder $b) {
-            $b->whereExists(function ($q) {
+        $user = request()->user();
+
+        $query->when($filters['filter_rumah'], function (Builder $b) use ($user) {
+            $b->whereExists(function ($q) use ($user) {
                 $q->selectRaw(1)
                     ->from('pemilih_records', 'pr2')
                     ->whereColumn('pr2.no_rumah', 'pemilih_records.no_rumah')
@@ -363,14 +365,17 @@ class CulaanController extends Controller
                     ->whereNotNull('pr2.no_rumah')
                     ->where('pr2.no_rumah', '!=', '')
                     ->where('pr2.no_rumah', '!=', '-');
+                $user?->applyScopeToPemilihQuery($q);
             })
             ->whereNotNull('no_rumah')
             ->where('no_rumah', '!=', '')
             ->where('no_rumah', '!=', '-');
         });
 
-        $query->when($filters['filter_alamat'], function (Builder $b) {
-            $b->whereExists(function ($q) {
+        $query->when($filters['filter_alamat'], function (Builder $b) use ($user) {
+            $scope = $user?->accessScope();
+
+            $b->whereExists(function ($q) use ($user) {
                 $q->selectRaw(1)
                     ->from('pemilih_records', 'pr2')
                     ->whereColumn('pr2.address', 'pemilih_records.address')
@@ -379,9 +384,29 @@ class CulaanController extends Controller
                     ->where('pr2.is_manual', false)
                     ->whereNotNull('pr2.address')
                     ->where('pr2.address', '!=', '');
+                $user?->applyScopeToPemilihQuery($q);
             })
             ->whereNotNull('address')
-            ->where('address', '!=', '');
+            ->where('address', '!=', '')
+            ->where(function ($q) use ($scope) {
+                $countSql = '(SELECT COUNT(*) FROM pemilih_records pr3 WHERE pr3.address = pemilih_records.address AND pr3.status = ? AND pr3.is_manual = ?';
+                $bindings = ['aktif', false];
+
+                if ($scope !== null) {
+                    if (filled($scope['dm'] ?? null)) {
+                        $countSql .= ' AND pr3.dm = ?';
+                        $bindings[] = $scope['dm'];
+                    }
+                    if (filled($scope['locality'] ?? null)) {
+                        $countSql .= ' AND pr3.locality = ?';
+                        $bindings[] = $scope['locality'];
+                    }
+                }
+
+                $countSql .= ')';
+
+                $q->whereRaw($countSql . ' BETWEEN 2 AND 10', $bindings);
+            });
         });
     }
 
