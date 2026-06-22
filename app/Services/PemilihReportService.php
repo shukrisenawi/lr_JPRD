@@ -1109,7 +1109,7 @@ class PemilihReportService
                 'status' => 'aktif',
                 'source_file' => $sourceFile,
                 'is_manual' => false,
-                'no_rumah' => $this->nullableLabel($row['No. Rumah & No. Siri'] ?? ''),
+                'no_rumah' => $this->nullableLabel($row['No. Rumah & No. Siri'] ?? $row['No. Rumah'] ?? ''),
                 'no_siri' => $this->nullableLabel($row['No. Siri'] ?? ''),
                 'catatan' => $this->nullableLabel($row['Catatan'] ?? ''),
                 'alamat_kp' => $this->nullableLabel($row['Alamat K/P'] ?? ''),
