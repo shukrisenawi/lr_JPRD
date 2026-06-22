@@ -582,20 +582,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 </p>
                                             </div>
                                         </div>
-                                        {(() => {
-                                            const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
-                                            const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
-                                                ? voter.alamat_kediaman
-                                                : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
-                                            if (!alm && !rum) return null;
-                                            const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
-                                            return (
-                                                <div className="mt-0.5 flex items-center gap-1.5 pl-6 text-[11px] font-bold text-slate-600">
-                                                    {rum && <RumahBadge voter={voter} onRumahClick={loadRumahVoters} />}
-                                                    {cleanAlm && <span className="truncate">{cleanAlm}</span>}
-                                                </div>
-                                            );
-                                        })()}
                                         <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                                             <div>
                                                 <span className="font-semibold text-green-700">No KP</span>
@@ -617,6 +603,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 <p className="font-bold text-slate-800">{voter.locality || '-'}</p>
                                             </div>
                                             )}
+                                            {(() => {
+                                                const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
+                                                const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+                                                    ? voter.alamat_kediaman
+                                                    : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+                                                if (!alm && !rum) return null;
+                                                const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
+                                                return (
+                                                    <div className="col-span-2">
+                                                        <span className="font-semibold text-green-700">Alamat</span>
+                                                        <p className="mt-0.5 flex items-center gap-1.5 font-bold text-slate-800">
+                                                            {rum && <RumahBadge voter={voter} onRumahClick={loadRumahVoters} />}
+                                                            {cleanAlm || null}
+                                                        </p>
+                                                    </div>
+                                                );
+                                            })()}
                                             {phone && (
                                                 <div className="col-span-2">
                                                     <span className="font-semibold text-green-700">Telefon</span>
