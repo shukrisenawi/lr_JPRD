@@ -1601,8 +1601,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                           <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-6 w-6 shrink-0 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url)} />
                                                                       )}
                                                                       <div className="min-w-0">
-                                                                          <span className="font-semibold text-slate-800">{voter.name}</span>
-                                                                          <p className="text-[10px] font-medium text-slate-500 truncate">{formatAddress(voter)}</p>
+                                                                           <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                                           {(() => { const a = formatAddress(voter); return a && a !== '-' ? <p className="text-[10px] font-medium text-slate-500 truncate">{a}</p> : null; })()}
                                                                       </div>
                                                                  </div>
                                                              </td>
@@ -1712,7 +1712,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <td className="sticky left-0 z-10 bg-white px-2 py-2">
                                                             <div className="min-w-0">
                                                                 <span className="font-semibold text-slate-800">{voter.name}</span>
-                                                                <p className="text-[10px] font-medium text-slate-500 truncate">{formatAddress(voter)}</p>
+                                                                {(() => { const a = formatAddress(voter); return a && a !== '-' ? <p className="text-[10px] font-medium text-slate-500 truncate">{a}</p> : null; })()}
                                                             </div>
                                                         </td>
                                                         <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
