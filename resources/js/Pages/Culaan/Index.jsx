@@ -320,7 +320,13 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [actionError, setActionError] = useState('');
     const [selectedVoterId, setSelectedVoterId] = useState(null);
     const [detailVoter, setDetailVoter] = useState(null);
-    const closeDetail = () => { setDetailVoter(null); setShowAddressPopup(true); };
+    const closeDetail = () => {
+        setDetailVoter(null);
+        setShowAddressPopup(true);
+        if (lastRumahVoterRef.current) {
+            loadRumahVoters(lastRumahVoterRef.current);
+        }
+    };
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [pendingIds, setPendingIds] = useState([]);
     const [addressVoters, setAddressVoters] = useState([]);
@@ -345,6 +351,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     });
     const jadualBaselineRef = useRef(null);
     const addressPopupVoterName = useRef('');
+    const lastRumahVoterRef = useRef(null);
 
     const savePreference = (key, value) => {
         localStorage.setItem(key, value);
@@ -561,6 +568,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     const loadRumahVoters = async (voter) => {
         if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
+        lastRumahVoterRef.current = voter;
         setLoadingAddress(true);
         setShowAddressPopup(true);
         addressPopupVoterName.current = voter.name;
