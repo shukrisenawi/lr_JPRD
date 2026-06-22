@@ -2213,7 +2213,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 {addressPopupVoterName.current && (
                                     <p className="text-xs font-bold text-green-700 truncate">{addressPopupVoterName.current}</p>
                                 )}
-                                <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
+                                <h3 className="text-xs font-bold text-slate-800">{addressPopupTitle}</h3>
                             </div>
                             <button type="button" onClick={() => { setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">

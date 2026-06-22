@@ -914,7 +914,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 {addressPopupVoterName.current && (
                                     <p className="text-xs font-bold text-green-700 truncate">{addressPopupVoterName.current}</p>
                                 )}
-                                <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
+                                <h3 className="text-xs font-bold text-slate-800">{addressPopupTitle}</h3>
                             </div>
                             <button type="button" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
