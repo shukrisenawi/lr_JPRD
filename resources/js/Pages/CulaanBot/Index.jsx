@@ -267,6 +267,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         popupSourceRef.current = 'alamat';
         setLoadingAddress(true);
         setShowAddressPopup(true);
+        addressPopupVoterName.current = voter.name;
         setAddressPopupTitle('Alamat Sama');
         try {
             const res = await fetch(route('culaan-bot.alamat', voter.id), {

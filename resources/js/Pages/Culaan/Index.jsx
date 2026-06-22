@@ -556,6 +556,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         popupSourceRef.current = 'alamat';
         setLoadingAddress(true);
         setShowAddressPopup(true);
+        addressPopupVoterName.current = voter.name;
         setAddressPopupTitle('Alamat Sama');
         setDetailVoter(null);
         try {
