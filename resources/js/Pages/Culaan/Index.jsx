@@ -34,10 +34,17 @@ function fmtCulaJadual(total, completed) {
     );
 }
 
+function addressHasRum(alm, rum) {
+    if (!alm || !rum) return false;
+    const a = alm.replace(/\s+/g, '');
+    const r = rum.replace(/\s+/g, '');
+    return a === r || a.startsWith(r + ',') || a.startsWith(r);
+}
+
 function combineAddress(rum, alm) {
     if (!rum && !alm) return '-';
     if (rum && alm) {
-        if (alm === rum || alm.startsWith(rum + ',') || alm.startsWith(rum + ' ')) return alm;
+        if (addressHasRum(alm, rum)) return alm;
         return `${rum}, ${alm}`;
     }
     return rum || alm;
@@ -58,7 +65,7 @@ function AddressDisplay({ voter }) {
         : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
     if (!rum && !alm) return '-';
     if (!rum) return alm;
-    if (alm && (alm === rum || alm.startsWith(rum + ',') || alm.startsWith(rum + ' '))) return alm;
+    if (addressHasRum(alm, rum)) return alm;
     return (
         <>
             <span className="mr-1 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>
