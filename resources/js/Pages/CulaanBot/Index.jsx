@@ -434,7 +434,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
                                 {filters.udm && <span>{filters.udm}</span>}
                                 {filters.locality && <span>{filters.locality}</span>}
-                                {showMarked && <span className="rounded bg-slate-100 px-1 py-0.5">Siap</span>}
+                                {showMarked && <span className="rounded bg-green-100 px-1 py-0.5 text-green-700">Siap Cula</span>}
                                 {filterRumah && <span className="rounded bg-blue-100 px-1 py-0.5 text-blue-700">Rumah</span>}
                                 {filterAlamat && <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-700">Alamat</span>}
                             </div>
@@ -498,21 +498,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         )}
                                     </div>
                                 </div>
-                                <label className="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={showMarked} onChange={toggleShowMarked}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                                    <span className="text-xs font-bold text-slate-600">Tunjuk yang sudah siap cula</span>
-                                </label>
-                                <label className="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={filterRumah} onChange={toggleFilterRumah}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                                    <span className="text-xs font-bold text-slate-600">Sama No. Rumah</span>
-                                </label>
-                                <label className="inline-flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" checked={filterAlamat} onChange={toggleFilterAlamat}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                                    <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
-                                </label>
+                                <div className="flex flex-wrap items-center gap-4">
+                                    <label className="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={showMarked} onChange={toggleShowMarked}
+                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                        <span className="text-xs font-bold text-slate-600">Siap Cula</span>
+                                    </label>
+                                    <label className="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={filterRumah} onChange={toggleFilterRumah}
+                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                        <span className="text-xs font-bold text-slate-600">Sama No. Rumah</span>
+                                    </label>
+                                    <label className="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={filterAlamat} onChange={toggleFilterAlamat}
+                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                        <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
+                                    </label>
+                                </div>
                             </div>
                             {actionError && <InputError className="mt-2" message={actionError} />}
                             {searchError && <InputError className="mt-1" message={searchError} />}

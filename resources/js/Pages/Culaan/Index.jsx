@@ -1192,7 +1192,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 )}
                 <section className={`grid gap-3 xl:items-stretch ${isLaporanLike ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_14rem]'}`}>
                     <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
-                        <div className={`grid gap-3 sm:grid-cols-2 xl:items-end ${isLaporanLike ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : isDataErrorTab ? 'xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]' : 'xl:grid-cols-[12rem_12rem_10rem_5rem_minmax(0,1fr)]'}`}>
+                        <div className="grid gap-3 sm:grid-cols-2 xl:items-end xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]">
                             <div>
                                 <label htmlFor="culaan-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                 <select
@@ -1239,24 +1239,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </select>
                             </div>
 
-                            {tab === 'senarai' && !isDataErrorTab && (
-                                <div>
-                                    <label htmlFor="culaan-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Siap Cula</label>
-                                    <label
-                                        htmlFor="culaan-dah-cula"
-                                        className="input-field mt-1.5 inline-flex items-center px-3 py-2"
-                                    >
-                                        <input
-                                            id="culaan-dah-cula"
-                                            type="checkbox"
-                                            checked={formState.show_marked}
-                                            onChange={(event) => updateFilter('show_marked', event.target.checked)}
-                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
-                                        />
-                                    </label>
-                                </div>
-                            )}
-
                             <div>
                                 <label htmlFor="culaan-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
                                 <div className="relative mt-1.5">
@@ -1287,6 +1269,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                         {tab === 'senarai' && !isDataErrorTab && (
                             <div className="mt-3 flex flex-wrap items-center gap-4">
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formState.show_marked}
+                                        onChange={(e) => updateFilter('show_marked', e.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Siap Cula</span>
+                                </label>
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" checked={formState.filter_rumah}
                                         onChange={(e) => updateFilter('filter_rumah', e.target.checked)}
