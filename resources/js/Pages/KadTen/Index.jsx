@@ -33,12 +33,18 @@ function LevelBadge({ level, size = 'sm' }) {
     return <span className={'inline-block rounded-md font-bold ' + meta.bg + ' ' + meta.text + ' ' + sizing}>{meta.label}</span>;
 }
 
-function PemimpinSearchModal({ scopes, onSelect, onClose }) {
+const levelPriority = { jprd: 3, udm: 2, cawangan: 1 };
+const allLevels = ['jprd', 'udm', 'cawangan'];
+
+function PemimpinSearchModal({ scopes, onSelect, onClose, userLevel }) {
     const [searching, setSearching] = useState(false);
     const [results, setResults] = useState([]);
     const [query, setQuery] = useState('');
-    const [selectedLevel, setSelectedLevel] = useState('jprd');
+    const defaultLevel = allLevels.filter(l => levelPriority[l] <= levelPriority[userLevel]).at(-1) || userLevel;
+    const [selectedLevel, setSelectedLevel] = useState(defaultLevel);
     const ac = useRef(null);
+
+    const availableLevels = allLevels.filter(l => levelPriority[l] <= levelPriority[userLevel]);
 
     useEffect(() => {
         if (query.trim().length < 2) { setResults([]); return; }
@@ -65,7 +71,7 @@ function PemimpinSearchModal({ scopes, onSelect, onClose }) {
                 </div>
                 <div className="border-b border-slate-100 px-4 py-2 space-y-2">
                     <div className="flex gap-1">
-                        {['jprd', 'udm', 'cawangan'].map(l => (
+                        {availableLevels.map(l => (
                             <button key={l} type="button" onClick={() => setSelectedLevel(l)}
                                 className={'rounded-lg px-3 py-1.5 text-xs font-bold transition ' + (selectedLevel === l ? 'bg-green-600 text-white' : 'bg-white text-slate-600 hover:bg-green-50')}>
                                 {levelMeta[l].label}
@@ -356,7 +362,7 @@ function KadCard({ kad, onEdit, onDelete, onDeleteMember }) {
     );
 }
 
-function EditKadModal({ kad, onClose }) {
+function EditKadModal({ kad, onClose, userLevel }) {
     const form = useForm({
         name: kad.name || '',
         pemimpin_id: kad.pemimpin?.id || '',
@@ -415,13 +421,14 @@ function EditKadModal({ kad, onClose }) {
                     </div>
                 </form>
             </div>
-            {searchOpen && <PemimpinSearchModal scopes={{}} onSelect={selectPemimpin} onClose={() => setSearchOpen(false)} />}
+            {searchOpen && <PemimpinSearchModal scopes={{}} userLevel={userLevel} onSelect={selectPemimpin} onClose={() => setSearchOpen(false)} />}
         </div>
     );
 }
 
 export default function KadTenIndex({ kads, scopes }) {
     const { auth } = usePage().props;
+    const userLevel = auth?.user?.access_level ?? 'jprd';
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [editKad, setEditKad] = useState(null);
 
@@ -553,11 +560,11 @@ export default function KadTenIndex({ kads, scopes }) {
                             </div>
                         </form>
                     </div>
-                    {pemimpinSearchOpen && <PemimpinSearchModal scopes={scopes} onSelect={selectPemimpin} onClose={() => setPemimpinSearchOpen(false)} />}
+                    {pemimpinSearchOpen && <PemimpinSearchModal scopes={scopes} userLevel={userLevel} onSelect={selectPemimpin} onClose={() => setPemimpinSearchOpen(false)} />}
                 </div>
             )}
 
-            {editKad && <EditKadModal kad={editKad} onClose={() => setEditKad(null)} />}
+            {editKad && <EditKadModal kad={editKad} userLevel={userLevel} onClose={() => setEditKad(null)} />}
         </AuthenticatedLayout>
     );
 }
