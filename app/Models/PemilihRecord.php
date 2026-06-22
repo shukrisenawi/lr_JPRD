@@ -75,4 +75,9 @@ class PemilihRecord extends Model
     {
         return $this->hasOne(CulaWorkItem::class, 'pemilih_record_id');
     }
+
+    public function kadTenMemberships(): HasMany
+    {
+        return $this->hasMany(KadTenMember::class, 'pemilih_record_id');
+    }
 }

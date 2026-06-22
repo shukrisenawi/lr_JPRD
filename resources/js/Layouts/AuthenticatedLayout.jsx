@@ -62,6 +62,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan' },
                 { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
+                { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
             ],
         },
         {
@@ -204,6 +205,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {canAccess('culaan') && <ResponsiveNavLink href={route('culaan.index')} active={route().current('culaan.*')} variant={variant}>Culaan</ResponsiveNavLink>}
                         {canAccess('culaan-bot') && <ResponsiveNavLink href={route('culaan-bot.index')} active={route().current('culaan-bot.*')} variant={variant}>Culaan Bot</ResponsiveNavLink>}
                         {canAccess('vcc') && <ResponsiveNavLink href={route('vcc.index')} active={route().current('vcc.*')} variant={variant}>VCC</ResponsiveNavLink>}
+                        {canAccess('kad-ten') && <ResponsiveNavLink href={route('kad-ten.index')} active={route().current('kad-ten.*')} variant={variant}>Kad 10</ResponsiveNavLink>}
                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
                         {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index')} active={route().current('jawatankuasa.*')} variant={variant}>Jawatankuasa</ResponsiveNavLink>}
                         {canAccess('jawatankuasa.laporan') && <ResponsiveNavLink href={route('jawatankuasa.laporan')} active={route().current('jawatankuasa.laporan')} variant={variant}>Senarai AJK</ResponsiveNavLink>}

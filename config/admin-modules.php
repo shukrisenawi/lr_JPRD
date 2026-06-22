@@ -60,6 +60,10 @@ return [
             'settings.google-sheet' => ['label' => 'URL Google Sheet'],
         ],
     ],
+    'kad-ten' => [
+        'label' => 'Kad 10',
+        'description' => 'Agih pemilih di bawah ketua untuk tugasan.',
+    ],
     'vcc' => [
         'label' => 'VCC',
         'description' => 'Senarai semua pemilih VCC.',

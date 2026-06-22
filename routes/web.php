@@ -7,6 +7,7 @@ use App\Http\Controllers\CopiedRecordController;
 use App\Http\Controllers\CulaanBotController;
 use App\Http\Controllers\CulaanController;
 use App\Http\Controllers\VccController;
+use App\Http\Controllers\KadTenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupPemilihController;
 use App\Http\Controllers\LaporanController;
@@ -108,6 +109,16 @@ Route::middleware('auth')->group(function () {
     Route::delete('/vcc/{pemilihRecord}/mark', [VccController::class, 'destroyMark'])->middleware('module:vcc')->name('vcc.mark.destroy');
     Route::post('/vcc/{pemilihRecord}/update-cula', [VccController::class, 'updateCula'])->middleware('module:vcc')->name('vcc.update-cula');
     Route::post('/vcc/communication/log', [VccController::class, 'logCommunication'])->middleware('module:vcc')->name('vcc.communication.log');
+
+    Route::get('/kad-ten', [KadTenController::class, 'index'])->middleware('module:kad-ten')->name('kad-ten.index');
+    Route::post('/kad-ten', [KadTenController::class, 'store'])->middleware('module:kad-ten')->name('kad-ten.store');
+    Route::put('/kad-ten/{kadTen}', [KadTenController::class, 'update'])->middleware('module:kad-ten')->name('kad-ten.update');
+    Route::delete('/kad-ten/{kadTen}', [KadTenController::class, 'destroy'])->middleware('module:kad-ten')->name('kad-ten.destroy');
+    Route::post('/kad-ten/{kadTen}/members', [KadTenController::class, 'storeMember'])->middleware('module:kad-ten')->name('kad-ten.members.store');
+    Route::delete('/kad-ten/{kadTen}/members/{member}', [KadTenController::class, 'destroyMember'])->middleware('module:kad-ten')->name('kad-ten.members.destroy');
+    Route::get('/kad-ten/search-pemilih', [KadTenController::class, 'searchPemilih'])->middleware('module:kad-ten')->name('kad-ten.search-pemilih');
+    Route::get('/kad-ten/suggest-pemimpin', [KadTenController::class, 'suggestPemimpin'])->middleware('module:kad-ten')->name('kad-ten.suggest-pemimpin');
+    Route::get('/kad-ten/{pemilihRecord}/clusters', [KadTenController::class, 'clustersFor'])->middleware('module:kad-ten')->name('kad-ten.clusters');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
