@@ -12,6 +12,8 @@ class PemilihRecord extends Model
 {
     protected $fillable = [
         'identity_number',
+        'no_rumah',
+        'no_siri',
         'no_kp',
         'old_ic',
         'no_ahli',
@@ -32,6 +34,9 @@ class PemilihRecord extends Model
         'is_manual',
         'created_by',
         'cula_remark',
+        'catatan',
+        'alamat_kp',
+        'alamat_kediaman',
     ];
 
     protected $appends = [

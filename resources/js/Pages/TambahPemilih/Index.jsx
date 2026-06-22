@@ -274,11 +274,17 @@ function DetailModal({ voter, onClose }) {
         }
     };
 
+    const displayAddress = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+        ? voter.alamat_kediaman
+        : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : voter.address);
+
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
-        ['Alamat', voter.address || '-'], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
+        ['Alamat', displayAddress], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
+        ['No. Rumah', voter.no_rumah || '-'], ['No. Siri', voter.no_siri || '-'],
         ['Kod Cula', voter.cula_code || '-'], ['Bangsa', voter.race || '-'],
+        ['Catatan', voter.catatan || '-'],
         ['Dicipta Oleh', voter.creator?.name || '-'],
         ['Tarikh Daftar', voter.created_at ? new Date(voter.created_at).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'],
     ];

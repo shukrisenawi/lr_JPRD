@@ -197,6 +197,11 @@ class PemilihReportService
                 'cula_code' => $voter['cula_code'],
                 'cula_display_label' => $voter['cula_display_label'],
                 'address' => $voter['address'],
+                'no_rumah' => $voter['no_rumah'] ?? null,
+                'no_siri' => $voter['no_siri'] ?? null,
+                'catatan' => $voter['catatan'] ?? null,
+                'alamat_kp' => $voter['alamat_kp'] ?? null,
+                'alamat_kediaman' => $voter['alamat_kediaman'] ?? null,
             ];
 
             if (count($matches) >= $limit) {
@@ -274,6 +279,11 @@ class PemilihReportService
                     'cula_display_label' => $record->cula_display_label,
                     'address' => $record->address,
                     'is_manual' => $record->is_manual,
+                    'no_rumah' => $record->no_rumah,
+                    'no_siri' => $record->no_siri,
+                    'catatan' => $record->catatan,
+                    'alamat_kp' => $record->alamat_kp,
+                    'alamat_kediaman' => $record->alamat_kediaman,
                 ];
             })
             ->all();
@@ -1049,6 +1059,11 @@ class PemilihReportService
                 'cula_code' => $this->normalizeCulaCode($row['Kod Cula'] ?? ''),
                 'cula_display_label' => $this->displayCulaLabel($this->normalizeCulaCode($row['Kod Cula'] ?? '')),
                 'address' => $address,
+                'no_rumah' => $this->fallbackLabel($row['No. Rumah & No. Siri'] ?? $row['No. Rumah'] ?? '', ''),
+                'no_siri' => $this->fallbackLabel($row['No. Siri'] ?? '', ''),
+                'catatan' => $this->fallbackLabel($row['Catatan'] ?? '', ''),
+                'alamat_kp' => $this->fallbackLabel($row['Alamat K/P'] ?? '', ''),
+                'alamat_kediaman' => $this->fallbackLabel($row['Alamat Kediaman'] ?? '', ''),
                 'search_blob' => $this->normalizeSearch(implode(' ', [
                     $name,
                     $noKp,
@@ -1094,6 +1109,11 @@ class PemilihReportService
                 'status' => 'aktif',
                 'source_file' => $sourceFile,
                 'is_manual' => false,
+                'no_rumah' => $this->nullableLabel($row['No. Rumah & No. Siri'] ?? ''),
+                'no_siri' => $this->nullableLabel($row['No. Siri'] ?? ''),
+                'catatan' => $this->nullableLabel($row['Catatan'] ?? ''),
+                'alamat_kp' => $this->nullableLabel($row['Alamat K/P'] ?? ''),
+                'alamat_kediaman' => $this->nullableLabel($row['Alamat Kediaman'] ?? ''),
             ];
         }
 

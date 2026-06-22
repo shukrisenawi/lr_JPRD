@@ -558,6 +558,11 @@ class VccController extends Controller
             'marked_by_name' => $voter->culaWorkItem?->marker?->name,
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,
             'is_manual' => $voter->is_manual,
+            'no_rumah' => $voter->no_rumah,
+            'no_siri' => $voter->no_siri,
+            'catatan' => $voter->catatan,
+            'alamat_kp' => $voter->alamat_kp,
+            'alamat_kediaman' => $voter->alamat_kediaman,
         ];
     }
 

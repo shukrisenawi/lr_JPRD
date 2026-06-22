@@ -226,6 +226,11 @@ class CulaanBotController extends Controller
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,
             'address' => $voter->address,
             'is_manual' => $voter->is_manual,
+            'no_rumah' => $voter->no_rumah,
+            'no_siri' => $voter->no_siri,
+            'catatan' => $voter->catatan,
+            'alamat_kp' => $voter->alamat_kp,
+            'alamat_kediaman' => $voter->alamat_kediaman,
         ];
 
         $data['address_count'] = $voter->address

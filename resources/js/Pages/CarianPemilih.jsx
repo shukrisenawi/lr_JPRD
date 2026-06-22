@@ -140,10 +140,17 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
         }
     };
 
+    const displayAddress = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+        ? voter.alamat_kediaman
+        : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : voter.address);
+
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
         ['No. Ahli', voter.no_ahli || '-'], ['Umur', voter.age ?? '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
-        ['UDM', voter.dm], ['Lokaliti', voter.locality], ['Bangsa', voter.race], ['Status Culaan', voter.cula_display_label || voter.cula_code], ['Alamat', voter.address],
+        ['UDM', voter.dm], ['Lokaliti', voter.locality], ['Bangsa', voter.race], ['Status Culaan', voter.cula_display_label || voter.cula_code],
+        ['No. Rumah', voter.no_rumah || '-'], ['No. Siri', voter.no_siri || '-'],
+        ['Alamat', displayAddress],
+        ['Catatan', voter.catatan || '-'],
     ];
 
     return (

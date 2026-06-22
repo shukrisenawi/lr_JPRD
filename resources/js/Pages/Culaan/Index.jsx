@@ -1982,10 +1982,29 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lokaliti</p>
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
                             </div>
-                            {detailVoter.address && (
+                            {(() => {
+                                const alamat = (detailVoter.alamat_kediaman && detailVoter.alamat_kediaman !== '-' && detailVoter.alamat_kediaman !== '')
+                                    ? detailVoter.alamat_kediaman
+                                    : (detailVoter.alamat_kp && detailVoter.alamat_kp !== '-' && detailVoter.alamat_kp !== '' ? detailVoter.alamat_kp : detailVoter.address);
+                                return alamat ? (
+                                    <div className="col-span-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
+                                        <p className="mt-0.5 font-semibold text-slate-700">{alamat}</p>
+                                    </div>
+                                ) : null;
+                            })()}
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">No. Rumah</p>
+                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.no_rumah || '-'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">No. Siri</p>
+                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.no_siri || '-'}</p>
+                            </div>
+                            {detailVoter.catatan && (
                                 <div className="col-span-2">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
-                                    <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.address}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Catatan</p>
+                                    <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.catatan}</p>
                                 </div>
                             )}
                             {((detailVoter.cula_display_label && !detailVoter.cula_display_label.includes('BELUM DICULA')) || (detailVoter.cula_code && detailVoter.cula_code !== '0' && detailVoter.cula_code !== '?')) && (
