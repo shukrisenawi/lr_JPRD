@@ -598,7 +598,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             </div>
                                             )}
                                             {!formState.locality && (
-                                            <div className="col-span-2">
+                                            <div>
                                                 <span className="font-semibold text-green-700">Lokaliti</span>
                                                 <p className="font-bold text-slate-800">{voter.locality || '-'}</p>
                                             </div>
