@@ -323,8 +323,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const closeDetail = () => {
         setDetailVoter(null);
         setShowAddressPopup(true);
-        if (lastRumahVoterRef.current) {
+        if (popupSourceRef.current === 'rumah' && lastRumahVoterRef.current) {
             loadRumahVoters(lastRumahVoterRef.current);
+        } else if (popupSourceRef.current === 'alamat' && lastAddressVoterRef.current) {
+            loadAddressVoters(lastAddressVoterRef.current);
         }
     };
     const [lightboxSrc, setLightboxSrc] = useState(null);
@@ -352,6 +354,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const jadualBaselineRef = useRef(null);
     const addressPopupVoterName = useRef('');
     const lastRumahVoterRef = useRef(null);
+    const lastAddressVoterRef = useRef(null);
+    const popupSourceRef = useRef('');
 
     const savePreference = (key, value) => {
         localStorage.setItem(key, value);
@@ -548,6 +552,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     const loadAddressVoters = async (voter) => {
         if (!voter.address || voter.address === '-') return;
+        lastAddressVoterRef.current = voter;
+        popupSourceRef.current = 'alamat';
         setLoadingAddress(true);
         setShowAddressPopup(true);
         setAddressPopupTitle('Alamat Sama');
@@ -569,6 +575,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const loadRumahVoters = async (voter) => {
         if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
         lastRumahVoterRef.current = voter;
+        popupSourceRef.current = 'rumah';
         setLoadingAddress(true);
         setShowAddressPopup(true);
         addressPopupVoterName.current = voter.name;
