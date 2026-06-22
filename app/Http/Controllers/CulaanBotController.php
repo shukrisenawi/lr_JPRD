@@ -99,6 +99,30 @@ class CulaanBotController extends Controller
         return response()->json(['voters' => $voters]);
     }
 
+    public function searchByRumah(PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $noRumah = trim((string) $pemilihRecord->no_rumah);
+        $locality = trim((string) $pemilihRecord->locality);
+        if ($noRumah === '' || $noRumah === '-' || $locality === '') {
+            return response()->json(['voters' => []]);
+        }
+
+        $voters = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
+            ->with('culaWorkItem.marker')
+            ->where('no_rumah', $noRumah)
+            ->where('locality', $locality)
+            ->where('id', '!=', $pemilihRecord->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
+            ->values();
+
+        return response()->json(['voters' => $voters]);
+    }
+
     public function storeMark(Request $request, PemilihRecord $pemilihRecord): JsonResponse
     {
         CulaWorkItem::query()->firstOrCreate(
@@ -238,6 +262,16 @@ class CulaanBotController extends Controller
                 ->where('is_manual', false)
                 ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
                 ->where('address', $voter->address)
+                ->count()
+            : 0;
+
+        $data['rumah_count'] = $voter->no_rumah && $voter->no_rumah !== '-' && $voter->no_rumah !== ''
+            ? PemilihRecord::where('status', 'aktif')
+                ->where('is_manual', false)
+                ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
+                ->where('no_rumah', $voter->no_rumah)
+                ->where('locality', $voter->locality)
+                ->where('id', '!=', $voter->id)
                 ->count()
             : 0;
 

@@ -25,6 +25,62 @@ function extractNamaAyah(name) {
     return null;
 }
 
+function addressHasRum(alm, rum) {
+    if (!alm || !rum) return false;
+    const a = alm.replace(/\s+/g, '');
+    const r = rum.replace(/\s+/g, '');
+    return a === r || a.startsWith(r + ',') || a.startsWith(r);
+}
+
+function stripRum(alm, rum) {
+    let ri = 0, ai = 0;
+    const r = rum.replace(/\s+/g, '');
+    while (ri < r.length && ai < alm.length) {
+        if (/\s/.test(alm[ai])) { ai++; continue; }
+        if (alm[ai].toLowerCase() === r[ri].toLowerCase()) { ri++; ai++; }
+        else break;
+    }
+    if (ri < r.length) return alm;
+    while (ai < alm.length && /[,.\s]/.test(alm[ai])) ai++;
+    return alm.slice(ai);
+}
+
+function combineAddress(rum, alm) {
+    if (!rum && !alm) return '-';
+    if (rum && alm) {
+        if (addressHasRum(alm, rum)) {
+            const s = stripRum(alm, rum);
+            return s ? `${rum}, ${s}` : rum;
+        }
+        return `${rum}, ${alm}`;
+    }
+    return rum || alm;
+}
+
+function formatAddress(voter) {
+    const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
+    const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+        ? voter.alamat_kediaman
+        : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+    return combineAddress(rum, alm);
+}
+
+function RumahBadge({ voter, onRumahClick }) {
+    const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
+    if (!rum) return null;
+    if (voter.rumah_count >= 1) {
+        return (
+            <button type="button" onClick={(e) => { e.stopPropagation(); onRumahClick?.(voter); }} title="Pemilih lain dengan rumah sama"
+                className="inline-block rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-blue-700">
+                {rum}
+            </button>
+        );
+    }
+    return (
+        <span className="inline-block rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">{rum}</span>
+    );
+}
+
 function UserGroupIcon({ className = 'h-4 w-4' }) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -99,6 +155,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [addressVoters, setAddressVoters] = useState([]);
     const [showAddressPopup, setShowAddressPopup] = useState(false);
     const [loadingAddress, setLoadingAddress] = useState(false);
+    const [addressPopupTitle, setAddressPopupTitle] = useState('Alamat Sama');
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'list');
     const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
     const fromAddressPopup = useRef(false);
@@ -193,8 +250,28 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         if (!voter.address || voter.address === '-') return;
         setLoadingAddress(true);
         setShowAddressPopup(true);
+        setAddressPopupTitle('Alamat Sama');
         try {
             const res = await fetch(route('culaan-bot.alamat', voter.id), {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) throw new Error('Gagal');
+            const data = await res.json();
+            setAddressVoters(data.voters ?? []);
+        } catch {
+            setAddressVoters([]);
+        } finally {
+            setLoadingAddress(false);
+        }
+    };
+
+    const loadRumahVoters = async (voter) => {
+        if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
+        setLoadingAddress(true);
+        setShowAddressPopup(true);
+        setAddressPopupTitle(`Rumah No: ${voter.no_rumah}`);
+        try {
+            const res = await fetch(route('culaan-bot.rumah', voter.id), {
                 headers: { Accept: 'application/json' },
             });
             if (!res.ok) throw new Error('Gagal');
@@ -505,6 +582,20 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 </p>
                                             </div>
                                         </div>
+                                        {(() => {
+                                            const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
+                                            const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+                                                ? voter.alamat_kediaman
+                                                : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+                                            if (!alm && !rum) return null;
+                                            const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
+                                            return (
+                                                <div className="mt-0.5 flex items-center gap-1.5 pl-6 text-[11px] font-bold text-slate-600">
+                                                    {rum && <RumahBadge voter={voter} onRumahClick={loadRumahVoters} />}
+                                                    {cleanAlm && <span className="truncate">{cleanAlm}</span>}
+                                                </div>
+                                            );
+                                        })()}
                                         <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
                                             <div>
                                                 <span className="font-semibold text-green-700">No KP</span>
@@ -525,12 +616,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 <span className="font-semibold text-green-700">Lokaliti</span>
                                                 <p className="font-bold text-slate-800">{voter.locality || '-'}</p>
                                             </div>
-                                            )}
-                                            {voter.address && (
-                                                <div className="col-span-2">
-                                                    <span className="font-semibold text-green-700">Alamat</span>
-                                                    <p className="font-bold text-slate-800">{voter.address}</p>
-                                                </div>
                                             )}
                                             {phone && (
                                                 <div className="col-span-2">
@@ -679,12 +764,24 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lokaliti</p>
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
                             </div>
-                            {detailVoter.address && (
-                                <div className="col-span-2">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
-                                    <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.address}</p>
-                                </div>
-                            )}
+                            {(() => {
+                                const dv = detailVoter;
+                                const rum = dv.no_rumah && dv.no_rumah !== '-' && dv.no_rumah !== '' ? dv.no_rumah : '';
+                                const alm = (dv.alamat_kediaman && dv.alamat_kediaman !== '-' && dv.alamat_kediaman !== '')
+                                    ? dv.alamat_kediaman
+                                    : (dv.alamat_kp && dv.alamat_kp !== '-' && dv.alamat_kp !== '' ? dv.alamat_kp : dv.address);
+                                if (!alm && !rum) return null;
+                                const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
+                                return (
+                                    <div className="col-span-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
+                                        <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-slate-700">
+                                            {rum && <RumahBadge voter={dv} onRumahClick={loadRumahVoters} />}
+                                            {cleanAlm || null}
+                                        </p>
+                                    </div>
+                                );
+                            })()}
                             {((detailVoter.cula_display_label && !detailVoter.cula_display_label.includes('BELUM DICULA')) || (detailVoter.cula_code && detailVoter.cula_code !== '0' && detailVoter.cula_code !== '?')) && (
                                 <div>
                                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cula</p>
@@ -804,7 +901,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
                     <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-sm font-bold text-slate-800">Alamat Sama</h3>
+                            <h3 className="text-sm font-bold text-slate-800">{addressPopupTitle}</h3>
                             <button type="button" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
                                 Tutup
