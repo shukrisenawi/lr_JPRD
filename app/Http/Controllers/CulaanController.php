@@ -308,7 +308,7 @@ class CulaanController extends Controller
         request()->user()?->applyScopeToPemilihQuery($query);
 
         $query->when(
-                ! $filters['show_marked'],
+                ! $filters['show_marked'] && ! $filters['show_all'],
                 function (Builder $builder) use ($groupKodCulas) {
                     $builder->where(function (Builder $q) use ($groupKodCulas) {
                         $q->whereNull('cula_code')
@@ -536,6 +536,7 @@ class CulaanController extends Controller
             'has_phone' => $request->boolean('has_phone'),
             'filter_rumah' => $request->boolean('filter_rumah'),
             'filter_alamat' => $request->boolean('filter_alamat'),
+            'show_all' => $request->boolean('show_all'),
         ];
     }
 

@@ -380,6 +380,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         umur_hingga: filters.umur_hingga ?? '',
         filter_rumah: Boolean(filters.filter_rumah),
         filter_alamat: Boolean(filters.filter_alamat),
+        show_all: Boolean(filters.show_all),
     });
 
     useEffect(() => {
@@ -396,10 +397,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             umur_hingga: filters.umur_hingga ?? '',
             filter_rumah: Boolean(filters.filter_rumah),
             filter_alamat: Boolean(filters.filter_alamat),
+            show_all: Boolean(filters.show_all),
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error, filters.filter_rumah, filters.filter_alamat]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error, filters.filter_rumah, filters.filter_alamat, filters.show_all]);
 
-    const hasFilterValue = Boolean(formState.udm || formState.locality || formState.group_id === 'custom' || (formState.group_id && formState.group_id !== 'custom' && formState.group_id !== '') || formState.show_marked || formState.filter_rumah || formState.filter_alamat || (formState.cula_codes?.length) || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
+    const hasFilterValue = Boolean(formState.udm || formState.locality || formState.group_id === 'custom' || (formState.group_id && formState.group_id !== 'custom' && formState.group_id !== '') || formState.show_marked || formState.filter_rumah || formState.filter_alamat || formState.show_all || (formState.cula_codes?.length) || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
 
     useEffect(() => {
         if (filters.data_error) {
@@ -522,6 +524,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             umur_hingga: formState.umur_hingga ?? '',
             filter_rumah: formState.filter_rumah ? '1' : '0',
             filter_alamat: formState.filter_alamat ? '1' : '0',
+            show_all: formState.show_all ? '1' : '0',
         });
         (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
 
@@ -1212,6 +1215,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     {formState.show_marked && <span className="rounded bg-green-100 px-1 py-0.5 text-green-700">Siap Cula</span>}
                                     {formState.filter_rumah && <span className="rounded bg-blue-100 px-1 py-0.5 text-blue-700">Rumah</span>}
                                     {formState.filter_alamat && <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-700">Alamat</span>}
+                                    {formState.show_all && <span className="rounded bg-slate-200 px-1 py-0.5 text-slate-700">Semua</span>}
                                 </div>
                             )}
                         </button>
@@ -1310,6 +1314,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         onChange={(e) => updateFilter('filter_alamat', e.target.checked)}
                                         className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
                                     <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
+                                </label>
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formState.show_all}
+                                        onChange={(e) => updateFilter('show_all', e.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Semua Pemilih</span>
                                 </label>
                             </div>
                         )}
