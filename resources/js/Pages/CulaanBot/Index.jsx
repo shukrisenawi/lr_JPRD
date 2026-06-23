@@ -139,9 +139,9 @@ function InfoField({ label, value, mono, accent }) {
     );
 }
 
-function InfoTile({ label, value, suffix, accent }) {
+function InfoTile({ label, value, suffix, accent, className = '' }) {
     return (
-        <div className={`rounded-2xl border p-2.5 text-center ${accent ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50' : 'border-slate-200 bg-white'}`}>
+        <div className={`rounded-2xl border p-2.5 text-center ${accent ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50' : 'border-slate-200 bg-white'} ${className}`}>
             <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${accent ? 'text-emerald-700' : 'text-slate-500'}`}>{label}</p>
             <p className={`mt-0.5 truncate text-base font-black ${accent ? 'text-emerald-900' : 'text-slate-800'}`}>{value}{suffix && <span className="ml-0.5 text-[10px] font-bold opacity-70">{suffix}</span>}</p>
         </div>
@@ -908,8 +908,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             </div>
                         </div>
                         <div className="relative space-y-3 px-5 pb-5 pt-2">
-                            <div className={`grid gap-2 ${(!formState.udm && !formState.locality) ? 'grid-cols-3' : (!formState.udm ? 'grid-cols-2' : (!formState.locality ? 'grid-cols-2' : 'grid-cols-1'))}`}>
-                                <InfoTile label="Umur" value={detailVoter.age ?? '-'} suffix="thn" accent />
+                            <div className="grid grid-cols-[auto_1fr] gap-2">
+                                <InfoTile label="Umur" value={detailVoter.age ?? '-'} suffix="thn" accent className="min-w-[4.5rem]" />
                                 {!formState.udm && <InfoTile label="UDM" value={detailVoter.dm || '-'} />}
                                 {!formState.locality && <InfoTile label="Lokaliti" value={detailVoter.locality || '-'} />}
                             </div>
