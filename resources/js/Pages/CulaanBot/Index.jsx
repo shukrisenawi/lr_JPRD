@@ -795,9 +795,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     </button>
                                                     {voter.address && voter.address !== '-' && voter.address_count >= 2 && voter.address_count <= 10 && (
                                                         <button type="button"
-                                                            onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
+                                                            onClick={(e) => { e.stopPropagation(); filterRumahAlamat && voter.no_rumah && voter.no_rumah !== '-' ? loadRumahAlamat(voter) : loadAddressVoters(voter); }}
                                                             className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-700"
-                                                            title={`Alamat sama: ${voter.address}`}>
+                                                            title={filterRumahAlamat ? 'No & Alamat sama' : `Alamat sama: ${voter.address}`}>
                                                             <HomeIcon className="h-3 w-3" />
                                                             Alamat
                                                         </button>
@@ -984,9 +984,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     </button>
                                     {!fromAddressPopup.current && detailVoter.address && detailVoter.address !== '-' && detailVoter.address_count >= 2 && detailVoter.address_count <= 10 && (
                                         <button type="button"
-                                            onClick={() => { previousDetailVoter.current = detailVoter; setDetailVoter(null); loadAddressVoters(detailVoter); }}
+                                            onClick={() => { previousDetailVoter.current = detailVoter; setDetailVoter(null); filterRumahAlamat && detailVoter.no_rumah && detailVoter.no_rumah !== '-' ? loadRumahAlamat(detailVoter) : loadAddressVoters(detailVoter); }}
                                             className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-700"
-                                            title={`Alamat sama: ${detailVoter.address}`}>
+                                            title={filterRumahAlamat ? 'No & Alamat sama' : `Alamat sama: ${detailVoter.address}`}>
                                             <HomeIcon className="h-3.5 w-3.5" />
                                             Alamat
                                         </button>
