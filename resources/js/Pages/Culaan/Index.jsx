@@ -351,6 +351,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (saved) return saved;
         return auth.user?.preferences?.culaan_view_mode ?? 'table';
     });
+    const [filterOpen, setFilterOpen] = useState(false);
+    const hasFilterValue = Boolean(formState.udm || formState.locality || (formState.group_id && formState.group_id !== 'custom') || formState.group_id === 'custom' || formState.show_marked || formState.filter_rumah || formState.filter_alamat || formState.cula_codes?.length || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
     const jadualBaselineRef = useRef(null);
     const addressPopupVoterName = useRef('');
     const lastRumahVoterRef = useRef(null);
@@ -1191,7 +1193,28 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     </div>
                 )}
                 <section className={`grid gap-3 xl:items-stretch ${isLaporanLike ? 'xl:grid-cols-1' : 'xl:grid-cols-[minmax(0,1fr)_14rem]'}`}>
-                    <div className="rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20 overflow-hidden sm:p-4">
+                    <div className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
+                        <button type="button" onClick={() => setFilterOpen((v) => !v)}
+                            className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left xl:cursor-default xl:pointer-events-none">
+                            <div className="flex items-center gap-2">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 text-green-600 transition-transform duration-200 xl:hidden ${filterOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tapisan</span>
+                                {!filterOpen && hasFilterValue && (
+                                    <span className="ml-1 inline-flex h-2 w-2 rounded-full bg-green-600 xl:hidden" />
+                                )}
+                            </div>
+                            {!filterOpen && hasFilterValue && (
+                                <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 xl:hidden">
+                                    {formState.udm && <span className="rounded bg-green-100 px-1.5 py-0.5 text-green-700">{formState.udm}</span>}
+                                    {formState.locality && <span>{formState.locality}</span>}
+                                    {formState.group_id === 'custom' && <span className="rounded bg-purple-100 px-1.5 py-0.5 text-purple-700">Custom</span>}
+                                    {formState.show_marked && <span className="rounded bg-green-100 px-1 py-0.5 text-green-700">Siap Cula</span>}
+                                    {formState.filter_rumah && <span className="rounded bg-blue-100 px-1 py-0.5 text-blue-700">Rumah</span>}
+                                    {formState.filter_alamat && <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-700">Alamat</span>}
+                                </div>
+                            )}
+                        </button>
+                        <div className={`${filterOpen ? 'block' : 'hidden'} xl:block border-t border-green-100 p-4 xl:border-0 xl:p-4`}>
                         <div className="grid gap-3 sm:grid-cols-2 xl:items-end xl:grid-cols-[12rem_12rem_10rem_minmax(0,1fr)]">
                             <div>
                                 <label htmlFor="culaan-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
@@ -1326,6 +1349,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </button>
                             </div>
                         </>)}
+                        </div>
                     </div>
 
                     {tab === 'senarai' && !isDataErrorTab && (
