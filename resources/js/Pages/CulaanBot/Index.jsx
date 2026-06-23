@@ -462,9 +462,15 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
     const alphabetIndex = useMemo(() => {
-        const letters = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        return letters.split('');
-    }, []);
+        const present = new Set();
+        rows.forEach((v) => {
+            const first = (v.name || '').trim().charAt(0).toUpperCase();
+            if (/[A-Z]/.test(first)) present.add(first);
+            else present.add('#');
+        });
+        const fullAlphabet = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        return fullAlphabet.filter((letter) => present.has(letter));
+    }, [rows]);
 
     const jumpToLetter = (letter) => {
         const target = rows.find((v) => {
