@@ -1619,7 +1619,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     disabled={pendingIds.includes(voter.id)}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md bg-rose-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
                                                 >
-                                                    {pendingIds.includes(voter.id) ? '...' : 'Buka Semula'}
+                                                    {pendingIds.includes(voter.id) ? '...' : 'Buka'}
                                                 </button>
                                             )}
                                         </div>
