@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/culaan-bot/search', [CulaanBotController::class, 'search'])->middleware('module:culaan-bot')->name('culaan-bot.search');
     Route::get('/culaan-bot/alamat/{pemilihRecord}', [CulaanBotController::class, 'searchByAddress'])->middleware('module:culaan-bot')->name('culaan-bot.alamat');
     Route::get('/culaan-bot/rumah/{pemilihRecord}', [CulaanBotController::class, 'searchByRumah'])->middleware('module:culaan-bot')->name('culaan-bot.rumah');
+    Route::get('/culaan-bot/rumah-alamat/{pemilihRecord}', [CulaanBotController::class, 'searchByRumahAlamat'])->middleware('module:culaan-bot')->name('culaan-bot.rumah-alamat');
     Route::post('/culaan-bot/{pemilihRecord}/mark', [CulaanBotController::class, 'storeMark'])->middleware('module:culaan-bot')->name('culaan-bot.mark.store');
     Route::delete('/culaan-bot/{pemilihRecord}/mark', [CulaanBotController::class, 'destroyMark'])->middleware('module:culaan-bot')->name('culaan-bot.mark.destroy');
     Route::post('/culaan-bot/{pemilihRecord}/update-cula', [CulaanBotController::class, 'updateCula'])->middleware('module:culaan-bot')->name('culaan-bot.update-cula');

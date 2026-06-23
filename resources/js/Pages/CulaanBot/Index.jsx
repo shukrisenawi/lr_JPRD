@@ -154,9 +154,10 @@ function ToggleTile({ label, icon, iconColor, active, onToggle }) {
         blue: { active: 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white border-blue-500 shadow-blue-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50/60' },
         amber: { active: 'bg-gradient-to-br from-amber-500 to-orange-500 text-white border-amber-500 shadow-amber-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:bg-amber-50/60' },
         slate: { active: 'bg-gradient-to-br from-slate-700 to-slate-900 text-white border-slate-700 shadow-slate-700/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50' },
+        rose: { active: 'bg-gradient-to-br from-rose-500 to-pink-600 text-white border-rose-500 shadow-rose-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-rose-300 hover:bg-rose-50/60' },
     };
     const cls = colorMap[iconColor] || colorMap.emerald;
-    const iconPath = ({ check: <polyline points="20 6 9 17 4 12" />, home: <><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></>, map: <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>, list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></> })[icon];
+    const iconPath = ({ check: <polyline points="20 6 9 17 4 12" />, home: <><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></>, map: <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>, list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></>, target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></> })[icon];
     return (
         <button type="button" onClick={onToggle}
             className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left text-xs font-bold shadow-sm transition active:scale-[0.97] ${active ? cls.active + ' shadow-md' : cls.idle}`}>
@@ -179,6 +180,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [showMarked, setShowMarked] = useState(Boolean(filters.show_marked));
     const [filterRumah, setFilterRumah] = useState(Boolean(filters.filter_rumah));
     const [filterAlamat, setFilterAlamat] = useState(Boolean(filters.filter_alamat));
+    const [filterRumahAlamat, setFilterRumahAlamat] = useState(Boolean(filters.filter_rumah_alamat));
     const [showAll, setShowAll] = useState(Boolean(filters.show_all));
     const [ageFrom, setAgeFrom] = useState(filters.age_from ?? '');
     const [ageTo, setAgeTo] = useState(filters.age_to ?? '');
@@ -213,11 +215,14 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         setDetailVoter(null);
         if (fromAddressPopup.current) {
             fromAddressPopup.current = false;
-            const isRumah = popupSourceRef.current === 'rumah' && lastRumahVoterRef.current;
-            const isAlamat = popupSourceRef.current === 'alamat' && lastAddressVoterRef.current;
-            if (isRumah || isAlamat) {
+            const src = popupSourceRef.current;
+            const isRumah = src === 'rumah' && lastRumahVoterRef.current;
+            const isAlamat = src === 'alamat' && lastAddressVoterRef.current;
+            const isRumahAlamat = src === 'rumah_alamat' && lastRumahVoterRef.current;
+            if (isRumah || isAlamat || isRumahAlamat) {
                 setShowAddressPopup(true);
-                if (isRumah) loadRumahVoters(lastRumahVoterRef.current);
+                if (isRumahAlamat) loadRumahAlamat(lastRumahVoterRef.current);
+                else if (isRumah) loadRumahVoters(lastRumahVoterRef.current);
                 else loadAddressVoters(lastAddressVoterRef.current);
             }
         }
@@ -240,6 +245,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         show_marked: showMarked,
         filter_rumah: filterRumah,
         filter_alamat: filterAlamat,
+        filter_rumah_alamat: filterRumahAlamat,
         show_all: showAll,
         age_from: ageFrom,
         age_to: ageTo,
@@ -283,6 +289,12 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         applyFilters({ ...formState, filter_alamat: next });
     };
 
+    const toggleFilterRumahAlamat = () => {
+        const next = !filterRumahAlamat;
+        setFilterRumahAlamat(next);
+        applyFilters({ ...formState, filter_rumah_alamat: next });
+    };
+
     const toggleShowAll = () => {
         const next = !showAll;
         setShowAll(next);
@@ -302,7 +314,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         suggestionsAbort.current = controller;
         setSearching(true);
         try {
-            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to, filter_rumah: formState.filter_rumah, filter_alamat: formState.filter_alamat });
+            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to, filter_rumah: formState.filter_rumah, filter_alamat: formState.filter_alamat, filter_rumah_alamat: formState.filter_rumah_alamat });
             const response = await fetch(`${route('culaan-bot.search')}?${params.toString()}`, {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
@@ -361,6 +373,28 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         setAddressPopupTitle(`Alamat: ${formatAddress(voter)}`);
         try {
             const res = await fetch(route('culaan-bot.rumah', voter.id), {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) throw new Error('Gagal');
+            const data = await res.json();
+            setAddressVoters(data.voters ?? []);
+        } catch {
+            setAddressVoters([]);
+        } finally {
+            setLoadingAddress(false);
+        }
+    };
+
+    const loadRumahAlamat = async (voter) => {
+        if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality) return;
+        lastRumahVoterRef.current = voter;
+        popupSourceRef.current = 'rumah_alamat';
+        setLoadingAddress(true);
+        setShowAddressPopup(true);
+        addressPopupVoterName.current = voter.name;
+        setAddressPopupTitle(`No Rumah & Alamat Sama: ${voter.no_rumah}`);
+        try {
+            const res = await fetch(route('culaan-bot.rumah-alamat', voter.id), {
                 headers: { Accept: 'application/json' },
             });
             if (!res.ok) throw new Error('Gagal');
@@ -458,14 +492,15 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
 
-    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo || showAll));
-    const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo || showAll;
+    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll));
+    const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
     const clearAllFilters = () => {
         setShowMarked(false);
         setFilterRumah(false);
         setFilterAlamat(false);
+        setFilterRumahAlamat(false);
         setShowAll(false);
         setAgeFrom('');
         setAgeTo('');
@@ -477,6 +512,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             show_marked: false,
             filter_rumah: false,
             filter_alamat: false,
+            filter_rumah_alamat: false,
             show_all: false,
             age_from: '',
             age_to: '',
@@ -579,6 +615,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         <ToggleTile label="Siap Cula" icon="check" iconColor="emerald" active={showMarked} onToggle={toggleShowMarked} />
                                         <ToggleTile label="Sama Rumah" icon="home" iconColor="blue" active={filterRumah} onToggle={toggleFilterRumah} />
                                         <ToggleTile label="Sama Alamat" icon="map" iconColor="amber" active={filterAlamat} onToggle={toggleFilterAlamat} />
+                                        <ToggleTile label="No & Alamat" icon="target" iconColor="rose" active={filterRumahAlamat} onToggle={toggleFilterRumahAlamat} />
                                         <ToggleTile label="Semua Pemilih" icon="list" iconColor="slate" active={showAll} onToggle={toggleShowAll} />
                                     </div>
                                 </div>

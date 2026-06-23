@@ -124,6 +124,40 @@ class CulaanBotController extends Controller
         return response()->json(['voters' => $voters]);
     }
 
+    public function searchByRumahAlamat(PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $noRumah = trim((string) $pemilihRecord->no_rumah);
+        $locality = trim((string) $pemilihRecord->locality);
+        $alamat = $pemilihRecord->alamat_kediaman && trim((string) $pemilihRecord->alamat_kediaman) !== '' && trim((string) $pemilihRecord->alamat_kediaman) !== '-'
+            ? trim((string) $pemilihRecord->alamat_kediaman)
+            : (trim((string) $pemilihRecord->alamat_kp) !== '' && trim((string) $pemilihRecord->alamat_kp) !== '-'
+                ? trim((string) $pemilihRecord->alamat_kp)
+                : trim((string) $pemilihRecord->address));
+        if ($noRumah === '' || $noRumah === '-' || $locality === '' || $alamat === '' || $alamat === '-') {
+            return response()->json(['voters' => []]);
+        }
+
+        $voters = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
+            ->with('culaWorkItem.marker')
+            ->where('no_rumah', $noRumah)
+            ->where('locality', $locality)
+            ->where(function ($q) use ($alamat) {
+                $q->where('alamat_kediaman', $alamat)
+                  ->orWhere('alamat_kp', $alamat)
+                  ->orWhere('address', $alamat);
+            })
+            ->where('id', '!=', $pemilihRecord->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
+            ->values();
+
+        return response()->json(['voters' => $voters]);
+    }
+
     public function storeMark(Request $request, PemilihRecord $pemilihRecord): JsonResponse
     {
         CulaWorkItem::query()->firstOrCreate(
@@ -250,6 +284,30 @@ class CulaanBotController extends Controller
             ->whereNotNull('no_rumah')
             ->where('no_rumah', '!=', '')
             ->where('no_rumah', '!=', '-');
+        });
+
+        $query->when($filters['filter_rumah_alamat'] ?? false, function (Builder $b) use ($user) {
+            $b->whereExists(function ($q) use ($user) {
+                $q->selectRaw(1)
+                    ->from('pemilih_records', 'pr2')
+                    ->whereColumn('pr2.no_rumah', 'pemilih_records.no_rumah')
+                    ->whereColumn('pr2.address', 'pemilih_records.address')
+                    ->whereColumn('pr2.locality', 'pemilih_records.locality')
+                    ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
+                    ->where('pr2.status', 'aktif')
+                    ->where('pr2.is_manual', false)
+                    ->whereNotNull('pr2.no_rumah')
+                    ->where('pr2.no_rumah', '!=', '')
+                    ->where('pr2.no_rumah', '!=', '-')
+                    ->whereNotNull('pr2.address')
+                    ->where('pr2.address', '!=', '');
+                $user?->applyScopeToPemilihQuery($q);
+            })
+            ->whereNotNull('no_rumah')
+            ->where('no_rumah', '!=', '')
+            ->where('no_rumah', '!=', '-')
+            ->whereNotNull('address')
+            ->where('address', '!=', '');
         });
 
         $query->when($filters['filter_alamat'], function (Builder $b) use ($user) {
@@ -397,6 +455,7 @@ class CulaanBotController extends Controller
             'age_to' => trim((string) $request->query('age_to', '')),
             'filter_rumah' => $request->boolean('filter_rumah'),
             'filter_alamat' => $request->boolean('filter_alamat'),
+            'filter_rumah_alamat' => $request->boolean('filter_rumah_alamat'),
             'show_all' => $request->boolean('show_all'),
         ];
     }
