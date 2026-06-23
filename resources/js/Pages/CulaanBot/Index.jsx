@@ -879,12 +879,12 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             {detailVoter && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
                     <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-                        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
+                        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
                         <button type="button" onClick={closeDetail}
                             className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
-                        <div className="relative px-5 pt-6 pb-3">
+                        <div className="relative px-5 pt-6 pb-4">
                             <div className="flex items-end gap-3">
                                 <div className="relative shrink-0">
                                     {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) ? (
@@ -904,7 +904,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 </div>
                                 <div className="min-w-0 flex-1 pb-1">
                                     <h3 className="line-clamp-2 text-lg font-black leading-tight text-white drop-shadow-sm">{detailVoter.name}</h3>
-                                    <p className="mt-0.5 text-xs font-semibold text-white/90">{detailVoter.no_kp || detailVoter.old_ic || '-'}</p>
+                                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-xs font-black text-slate-800 shadow-sm">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-emerald-700"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2M15 12h2M7 16h10"/></svg>
+                                        {detailVoter.no_kp || detailVoter.old_ic || '-'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
