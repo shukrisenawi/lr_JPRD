@@ -1041,10 +1041,24 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                     <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl shadow-slate-900/30" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="relative bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600 px-5 pb-5 pt-4">
                             <button type="button" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }}
-                                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
+                                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/25 text-white backdrop-blur transition hover:bg-white/40">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             </button>
-                            <div className="flex items-center gap-3 text-white">
+                            <div className="flex items-center gap-3 text-white pr-12">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    {addressPopupVoterName.current && (
+                                        <p className="truncate text-[10px] font-black uppercase tracking-[0.12em] text-white/80">{addressPopupVoterName.current}</p>
+                                    )}
+                                    <h3 className="truncate text-base font-black text-white drop-shadow-sm">{addressPopupTitle}</h3>
+                                </div>
+                                {!loadingAddress && addressVoters.length > 0 && (
+                                    <span className="shrink-0 rounded-full bg-white/25 px-2.5 py-1 text-xs font-black text-white backdrop-blur">{addressVoters.length}</span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3 text-white pr-12">
                                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
                                 </div>
