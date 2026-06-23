@@ -1443,13 +1443,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             <div className="min-w-0 flex-1">
                                                 <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
-                                                    {voter.is_marked && (
-                                                        <span className="inline-flex items-center gap-0.5 rounded bg-green-100 px-1 py-0.5 text-green-800">
-                                                            <span className="text-[10px] font-bold">{voter.cula_code || 'OK'}</span>
-                                                            <span className="inline-flex items-center text-[8px] font-black opacity-80">
-                                                                <svg className="h-2 w-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M18 15l-6-6-6 6"/></svg>
-                                                                <span>1</span>
-                                                            </span>
+                                                    {((voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '')) && (
+                                                        <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 align-middle text-[10px] font-bold text-green-700">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                                            {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
                                                         </span>
                                                     )}
                                                     {(() => {
