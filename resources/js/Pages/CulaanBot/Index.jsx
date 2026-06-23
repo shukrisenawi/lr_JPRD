@@ -656,14 +656,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white' : 'bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700')}`}>
                                             {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                         </span>
-                                        {(avatarUpdates[voter.id] || voter.avatar_url) ? (
+                                        {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                             <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
                                                 className={`h-9 w-9 shrink-0 rounded-xl object-cover border border-slate-200 ${avatarWrapClass}`}
                                                 onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
-                                        ) : (
-                                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-base font-black text-slate-400`}>
-                                                {(voter.name || '?').charAt(0).toUpperCase()}
-                                            </span>
                                         )}
                                         <div className="min-w-0 flex-1">
                                             <p className={`truncate text-sm font-bold leading-5 ${nameColor}`}>
@@ -713,14 +709,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white' : 'bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700')}`}>
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
-                                            {(avatarUpdates[voter.id] || voter.avatar_url) ? (
+                                            {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                                 <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
                                                     className={`h-9 w-9 shrink-0 cursor-pointer rounded-xl object-cover border border-slate-200 ${done ? 'opacity-60 grayscale' : ''}`}
                                                     onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
-                                            ) : (
-                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-sm font-black text-slate-400">
-                                                    {(voter.name || '?').charAt(0).toUpperCase()}
-                                                </span>
                                             )}
                                             <div className="min-w-0 flex-1">
                                                 <p className={`line-clamp-2 text-sm font-bold leading-tight break-words ${nameColor}`}>
