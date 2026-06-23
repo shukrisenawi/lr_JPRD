@@ -130,62 +130,23 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
-function ChipIcon({ name }) {
-    const cls = 'h-3 w-3';
-    switch (name) {
-        case 'check':
-            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cls}><polyline points="20 6 9 17 4 12" /></svg>;
-        case 'home':
-            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
-        case 'map':
-            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cls}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>;
-        case 'list':
-            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cls}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>;
-        default:
-            return null;
-    }
-}
-
-function FilterChip({ id, label, displayValue, clearable, onClear, children }) {
-    const [open, setOpen] = useState(false);
-    const ref = useRef(null);
-    useEffect(() => {
-        if (!open) return;
-        const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-        document.addEventListener('mousedown', onDoc);
-        return () => document.removeEventListener('mousedown', onDoc);
-    }, [open]);
-    return (
-        <div ref={ref} className="relative shrink-0">
-            <button type="button" onClick={() => setOpen((v) => !v)}
-                className={`inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-[11px] font-bold transition ${displayValue && displayValue !== 'Semua' ? 'border-green-300 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:bg-green-50 hover:text-green-700'}`}>
-                <span className="text-[10px] uppercase tracking-wider opacity-70">{label}</span>
-                <span className="truncate max-w-[7rem]">{displayValue}</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            {clearable && (
-                <button type="button" onClick={onClear} title="Buang"
-                    className="absolute -right-1 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm hover:bg-red-600">
-                    ×
-                </button>
-            )}
-            {open && (
-                <div className="absolute left-0 top-full z-30 mt-1.5 min-w-[10rem] rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
-                    <div onClick={(e) => e.stopPropagation()}>
-                        {children}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function ToggleChip({ label, icon, active, onToggle, activeClass }) {
+function ToggleTile({ label, icon, iconColor, active, onToggle }) {
+    const colorMap = {
+        emerald: { active: 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white border-emerald-500 shadow-emerald-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/60' },
+        blue: { active: 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white border-blue-500 shadow-blue-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50/60' },
+        amber: { active: 'bg-gradient-to-br from-amber-500 to-orange-500 text-white border-amber-500 shadow-amber-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:bg-amber-50/60' },
+        slate: { active: 'bg-gradient-to-br from-slate-700 to-slate-900 text-white border-slate-700 shadow-slate-700/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50' },
+    };
+    const cls = colorMap[iconColor] || colorMap.emerald;
+    const iconPath = ({ check: <polyline points="20 6 9 17 4 12" />, home: <><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></>, map: <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>, list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></> })[icon];
     return (
         <button type="button" onClick={onToggle}
-            className={`inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11px] font-bold transition ${active ? activeClass : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
-            <ChipIcon name={icon} />
-            {label}
+            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left text-xs font-bold shadow-sm transition active:scale-[0.97] ${active ? cls.active + ' shadow-md' : cls.idle}`}>
+            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${active ? 'bg-white/20' : 'bg-slate-100'}`}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">{iconPath}</svg>
+            </span>
+            <span className="flex-1 truncate">{label}</span>
+            {active && <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/30 text-xs">✓</span>}
         </button>
     );
 }
@@ -532,144 +493,179 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         >
             <Head title="Culaan Bot" />
 
-            <div className="mx-auto max-w-2xl space-y-2 px-2 sm:space-y-3 sm:px-4">
-                <section id="card-carian" className="sticky top-0 z-20 space-y-2 bg-slate-50/95 pt-1 pb-2 backdrop-blur sm:static sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
-                    <div className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
+            <div className="mx-auto max-w-2xl space-y-3 px-2 sm:px-4">
+                <section id="card-carian" className="sticky top-0 z-20 -mx-2 space-y-2 bg-slate-50/90 px-2 pb-3 pt-2 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80 sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                    <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-white via-emerald-50/40 to-teal-50/60 shadow-sm shadow-emerald-900/5">
+                        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500" />
                         <div className="relative">
-                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base font-bold text-green-600">⌕</span>
+                            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-emerald-600">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </span>
                             <input id="bot-search" value={search}
                                 onChange={(e) => doSearch(e.target.value)}
-                                onFocus={() => setFilterOpen(true)}
-                                className="w-full border-0 bg-white py-3 pl-10 pr-10 text-sm font-semibold text-slate-800 placeholder:text-xs placeholder:font-medium placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                                className="w-full border-0 bg-transparent py-4 pl-12 pr-24 text-sm font-semibold text-slate-800 placeholder:text-sm placeholder:font-medium placeholder:text-slate-400 focus:outline-none focus:ring-0"
                                 placeholder="Cari nama, no KP, telefon..."
                             />
-                            {search ? (
-                                <button type="button" onClick={clearSearch}
-                                    className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-base font-bold text-green-700 transition hover:bg-green-100">
-                                    ×
-                                </button>
-                            ) : (
+                            <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+                                {search && (
+                                    <button type="button" onClick={clearSearch}
+                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-base font-bold text-slate-500 transition hover:bg-red-100 hover:text-red-600">
+                                        ×
+                                    </button>
+                                )}
                                 <button type="button" onClick={() => setFilterOpen((v) => !v)}
-                                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 transition-transform duration-200 ${filterOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                    title="Tapis"
+                                    className={`flex h-8 items-center gap-1 rounded-full px-2.5 text-[11px] font-bold transition ${filterOpen ? 'bg-emerald-600 text-white shadow-sm' : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'}`}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                                    <span>{hasFilterValue ? '✓' : 'Tapis'}</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`h-3 w-3 transition-transform duration-200 ${filterOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
                                 </button>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-1 overflow-x-auto border-t border-slate-100 bg-slate-50/80 px-2 py-2">
-                            <FilterChip id="bot-udm" label="UDM" value={formState.udm} displayValue={formState.udm || 'Semua'} clearable={!!formState.udm} onClear={() => updateFilter('udm', '')}>
-                                <select id="bot-udm" value={formState.udm}
-                                    onChange={(e) => { updateFilter('udm', e.target.value); }}
-                                    className="w-full border-0 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-0">
-                                    <option value="">Semua UDM</option>
-                                    {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
-                                </select>
-                            </FilterChip>
-                            <FilterChip id="bot-locality" label="Lokaliti" value={formState.locality} displayValue={formState.locality || 'Semua'} clearable={!!formState.locality} onClear={() => updateFilter('locality', '')}>
-                                <select id="bot-locality" value={formState.locality}
-                                    onChange={(e) => { updateFilter('locality', e.target.value); }}
-                                    className="w-full border-0 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-0">
-                                    <option value="">Semua Lokaliti</option>
-                                    {localities.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
-                                </select>
-                            </FilterChip>
-                            <FilterChip id="bot-age" label="Umur" value={ageFrom || ageTo ? `${ageFrom || '0'}-${ageTo || '∞'}` : ''} displayValue={ageFrom || ageTo ? `${ageFrom || 0}-${ageTo || '∞'}` : 'Semua'} clearable={!!(ageFrom || ageTo)} onClear={() => { setAgeFrom(''); setAgeTo(''); applyFilters({ ...formState, age_from: '', age_to: '' }); }}>
-                                <div className="grid grid-cols-2 gap-2 p-2">
-                                    <input id="bot-age-from" type="number" min="0" max="150" value={ageFrom}
-                                        onChange={(e) => setAgeFrom(e.target.value)}
-                                        onBlur={(e) => updateFilter('age_from', e.target.value)}
-                                        className="input-field text-xs" placeholder="Dari" />
-                                    <input id="bot-age-to" type="number" min="0" max="150" value={ageTo}
-                                        onChange={(e) => setAgeTo(e.target.value)}
-                                        onBlur={(e) => updateFilter('age_to', e.target.value)}
-                                        className="input-field text-xs" placeholder="Hingga" />
-                                </div>
-                            </FilterChip>
-                            <ToggleChip label="Siap" icon="check" active={showMarked} onToggle={toggleShowMarked} activeClass="bg-green-600 text-white border-green-600" />
-                            <ToggleChip label="Rumah" icon="home" active={filterRumah} onToggle={toggleFilterRumah} activeClass="bg-blue-600 text-white border-blue-600" />
-                            <ToggleChip label="Alamat" icon="map" active={filterAlamat} onToggle={toggleFilterAlamat} activeClass="bg-amber-600 text-white border-amber-600" />
-                            <ToggleChip label="Semua" icon="list" active={showAll} onToggle={toggleShowAll} activeClass="bg-slate-800 text-white border-slate-800" />
+                            </div>
                         </div>
                     </div>
-                    {hasFilterValue && (
-                        <button type="button" onClick={clearAllFilters}
-                            className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 shadow-sm hover:border-red-300 hover:text-red-600">
-                            <span>×</span> Reset semua tapis
-                        </button>
+                    {filterOpen && (
+                        <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm">
+                            <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-50/60 to-teal-50/40 px-4 py-2.5">
+                                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">Tapis Lanjutan</p>
+                            </div>
+                            <div className="grid gap-3 p-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label htmlFor="bot-udm" className="mb-1 block text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">UDM</label>
+                                        <select id="bot-udm" value={formState.udm}
+                                            onChange={(e) => updateFilter('udm', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                            <option value="">Semua UDM</option>
+                                            {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label htmlFor="bot-locality" className="mb-1 block text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Lokaliti</label>
+                                        <select id="bot-locality" value={formState.locality}
+                                            onChange={(e) => updateFilter('locality', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
+                                            <option value="">Semua Lokaliti</option>
+                                            {localities.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label htmlFor="bot-age-from" className="mb-1 block text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Umur Dari</label>
+                                        <input id="bot-age-from" type="number" min="0" max="150" value={ageFrom}
+                                            onChange={(e) => setAgeFrom(e.target.value)}
+                                            onBlur={(e) => updateFilter('age_from', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                            placeholder="cth: 18"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="bot-age-to" className="mb-1 block text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Hingga</label>
+                                        <input id="bot-age-to" type="number" min="0" max="150" value={ageTo}
+                                            onChange={(e) => setAgeTo(e.target.value)}
+                                            onBlur={(e) => updateFilter('age_to', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                            placeholder="cth: 60"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="mb-2 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Pilihan Pantas</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <ToggleTile label="Siap Cula" icon="check" iconColor="emerald" active={showMarked} onToggle={toggleShowMarked} />
+                                        <ToggleTile label="Sama Rumah" icon="home" iconColor="blue" active={filterRumah} onToggle={toggleFilterRumah} />
+                                        <ToggleTile label="Sama Alamat" icon="map" iconColor="amber" active={filterAlamat} onToggle={toggleFilterAlamat} />
+                                        <ToggleTile label="Semua Pemilih" icon="list" iconColor="slate" active={showAll} onToggle={toggleShowAll} />
+                                    </div>
+                                </div>
+                                {hasFilterValue && (
+                                    <button type="button" onClick={clearAllFilters}
+                                        className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:border-red-300 hover:bg-red-100">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                        Reset Semua Tapis
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     )}
                     {(actionError || searchError) && (
-                        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
                             {actionError || searchError}
                         </div>
                     )}
                 </section>
 
-                <div id="voter-count" className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-green-600 shadow-sm shadow-green-600/20">
-                    <div className="flex items-center gap-1">
+                <div id="voter-count" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+                    <div className="inline-flex rounded-xl bg-slate-100 p-0.5">
                         <button type="button" onClick={() => persistViewMode('list')}
-                            className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                            className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${viewMode === 'list' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                             Senarai
                         </button>
                         <button type="button" onClick={() => persistViewMode('card')}
-                            className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                            className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${viewMode === 'card' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                             Penuh
                         </button>
                     </div>
-                    <p className="text-[11px] font-bold tracking-[0.1em] text-slate-500">Jumlah <span className="ml-1 text-xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span></p>
+                    <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-100 to-teal-100 px-3 py-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">Jumlah</span>
+                        <span className="text-base font-black text-emerald-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span>
+                    </div>
                 </div>
 
                 <section id="voter-list">
                         {viewMode === 'list' ? (
-                        <div className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
+                        <div className="grid gap-2">
                             {rows.map((voter, index) => {
                                 const namaAyah = extractNamaAyah(voter.name);
                                 const isSearchResult = search.trim().length >= 2;
                                 const active = activeVoterId === voter.id;
                                 const done = voter.is_marked;
-                                const rowStateClass = active
-                                    ? 'bg-green-100'
-                                    : (done ? 'bg-slate-50' : 'bg-white');
-                                const nameColor = done ? 'text-slate-400 line-through' : (active ? 'text-green-900' : 'text-slate-800');
-                                const showLetter = !isSearchResult && (index === 0 || ((rows[index - 1]?.name || '').trim().charAt(0).toUpperCase()) !== (voter.name || '').trim().charAt(0).toUpperCase());
-                                const firstLetter = (voter.name || '').trim().charAt(0).toUpperCase() || '#';
+                                const cardClass = active
+                                    ? 'border-emerald-400 bg-gradient-to-r from-emerald-50 to-teal-50 ring-2 ring-emerald-400/40 shadow-md shadow-emerald-500/20'
+                                    : (done ? 'border-slate-200 bg-slate-50/80' : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-500/10');
+                                const nameColor = done ? 'text-slate-400 line-through' : (active ? 'text-emerald-900' : 'text-slate-800');
+                                const avatarWrapClass = done ? 'opacity-60 grayscale' : '';
                                 return (
                                     <button key={voter.id} id={`voter-${voter.id}`} type="button" onClick={() => { markActive(voter.id); setDetailVoter(voter); }}
-                                        className={`group relative flex w-full items-center gap-2 px-2.5 py-2 text-left transition active:scale-[0.99] hover:bg-green-50 ${rowStateClass}`}>
-                                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-green-600 text-white' : 'bg-gradient-to-br from-green-600 to-green-500 text-white')}`}>
+                                        className={`group relative flex w-full items-center gap-2.5 overflow-hidden rounded-2xl border p-2.5 text-left transition active:scale-[0.98] ${cardClass}`}>
+                                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white' : 'bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700')}`}>
                                             {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                         </span>
-                                        {(avatarUpdates[voter.id] || voter.avatar_url) && (
+                                        {(avatarUpdates[voter.id] || voter.avatar_url) ? (
                                             <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
-                                                className={`h-7 w-7 shrink-0 rounded-full object-cover border border-slate-200 ${done ? 'opacity-60 grayscale' : ''}`}
+                                                className={`h-9 w-9 shrink-0 rounded-xl object-cover border border-slate-200 ${avatarWrapClass}`}
                                                 onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
+                                        ) : (
+                                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-base font-black text-slate-400`}>
+                                                {(voter.name || '?').charAt(0).toUpperCase()}
+                                            </span>
                                         )}
                                         <div className="min-w-0 flex-1">
                                             <p className={`truncate text-sm font-bold leading-5 ${nameColor}`}>
                                                 {voter.name}
-                                                {showLetter && firstLetter && (
-                                                    <span className="ml-1 text-[10px] font-black uppercase text-slate-400">{firstLetter}</span>
-                                                )}
                                             </p>
-                                            <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] font-medium text-slate-500">
+                                            <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] font-semibold text-slate-500">
                                                 {voter.no_kp && <span>{voter.no_kp}</span>}
-                                                {voter.locality && <span>· {voter.locality}</span>}
+                                                {voter.locality && <span className="truncate">· {voter.locality}</span>}
                                             </p>
                                         </div>
-                                        <span className={`shrink-0 flex h-6 min-w-[1.6rem] items-center justify-center rounded-full px-1.5 text-[10px] font-black ${done ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-700'}`}>
-                                            {voter.age ?? '-'}
-                                        </span>
+                                        <div className="flex shrink-0 flex-col items-end gap-1">
+                                            <span className={`flex h-6 min-w-[2rem] items-center justify-center rounded-lg px-1.5 text-[10px] font-black ${done ? 'bg-slate-200 text-slate-500' : (active ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700')}`}>
+                                                {voter.age ?? '-'} thn
+                                            </span>
+                                            {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '') ? (
+                                                <span className="inline-flex items-center gap-0.5 rounded-md bg-gradient-to-r from-emerald-500 to-teal-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white shadow-sm">
+                                                    {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                                </span>
+                                            ) : null}
+                                        </div>
                                         {done && (
-                                            <span className="shrink-0">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-green-600"><polyline points="20 6 9 17 4 12" /></svg>
+                                            <span className="absolute right-2 top-2 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
                                             </span>
                                         )}
-                                        {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '') ? (
-                                            <span className="shrink-0 inline-flex h-5 items-center rounded-full bg-green-100 px-1.5 text-[10px] font-bold text-green-700">
-                                                {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
-                                            </span>
-                                        ) : null}
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-green-500"><polyline points="9 18 15 12 9 6"/></svg>
                                     </button>
                                 );
                             })}
@@ -857,11 +853,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         </div>
                         )}
                     {search.trim().length < 2 && viewMode === 'list' && rows.length > 0 && (
-                        <div className="sticky bottom-2 z-10 mt-2 flex justify-center sm:hidden">
-                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-full border border-green-300 bg-white/95 px-1.5 py-1 shadow-lg backdrop-blur">
+                        <div className="sticky bottom-3 z-10 mt-3 flex justify-center px-1 sm:hidden">
+                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-2xl border border-emerald-200 bg-white/95 px-2 py-1.5 shadow-lg shadow-emerald-500/20 backdrop-blur">
                                 {alphabetIndex.map((letter) => (
                                     <button key={letter} type="button" onClick={() => jumpToLetter(letter)}
-                                        className="flex h-7 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-slate-600 transition active:scale-90 hover:bg-green-100 hover:text-green-700">
+                                        className="flex h-7 w-6 shrink-0 items-center justify-center rounded-lg text-[10px] font-black text-emerald-700 transition active:scale-90 hover:bg-emerald-100">
                                         {letter}
                                     </button>
                                 ))}
