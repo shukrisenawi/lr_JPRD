@@ -130,6 +130,24 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
+function InfoField({ label, value, mono, accent }) {
+    return (
+        <div className={`min-w-0 ${accent ? 'rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 p-2 ring-1 ring-emerald-200' : ''}`}>
+            <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${accent ? 'text-emerald-700' : 'text-slate-500'}`}>{label}</p>
+            <p className={`mt-0.5 truncate text-xs font-bold ${mono ? 'font-mono' : ''} ${accent ? 'text-emerald-900' : 'text-slate-800'}`}>{value}</p>
+        </div>
+    );
+}
+
+function InfoTile({ label, value, suffix, accent }) {
+    return (
+        <div className={`rounded-2xl border p-2.5 text-center ${accent ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50' : 'border-slate-200 bg-white'}`}>
+            <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${accent ? 'text-emerald-700' : 'text-slate-500'}`}>{label}</p>
+            <p className={`mt-0.5 truncate text-base font-black ${accent ? 'text-emerald-900' : 'text-slate-800'}`}>{value}{suffix && <span className="ml-0.5 text-[10px] font-bold opacity-70">{suffix}</span>}</p>
+        </div>
+    );
+}
+
 function ToggleTile({ label, icon, iconColor, active, onToggle }) {
     const colorMap = {
         emerald: { active: 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white border-emerald-500 shadow-emerald-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/60' },
@@ -678,71 +696,52 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 const namaAyah = extractNamaAyah(voter.name);
                                 const active = activeVoterId === voter.id;
                                 const done = voter.is_marked;
-                                const activeWrapClass = active
-                                    ? ' border-green-700 bg-green-100 ring-1 ring-green-500'
-                                    : (done ? ' border-slate-300 bg-slate-50' : ' border-green-600 bg-white');
-                                const nameColor = done ? 'text-slate-400 line-through' : (active ? 'text-green-900' : 'text-slate-800');
+                                const cardStateClass = active
+                                    ? 'border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-md shadow-emerald-500/20'
+                                    : (done ? 'border-slate-200 bg-slate-50/80' : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-500/10');
+                                const nameColor = done ? 'text-slate-400 line-through' : (active ? 'text-emerald-900' : 'text-slate-800');
                                 return (
                                     <div key={voter.id}
                                         onClick={() => markActive(voter.id)}
-                                        className={`relative cursor-pointer rounded-xl border ${activeWrapClass} p-3 shadow-sm overflow-hidden transition hover:shadow-md`}>
+                                        className={`relative cursor-pointer overflow-hidden rounded-2xl border p-3 shadow-sm transition active:scale-[0.99] ${cardStateClass}`}>
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-xs font-bold min-w-[1.2rem] text-right ${done ? 'text-slate-400' : (active ? 'text-green-800' : 'text-slate-500')}`}>
-                                                {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}.
+                                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white' : 'bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700')}`}>
+                                                {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
-                                            {(avatarUpdates[voter.id] || voter.avatar_url) && (
+                                            {(avatarUpdates[voter.id] || voter.avatar_url) ? (
                                                 <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
-                                                    className={`h-7 w-7 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200 ${done ? 'opacity-60 grayscale' : ''}`}
+                                                    className={`h-9 w-9 shrink-0 cursor-pointer rounded-xl object-cover border border-slate-200 ${done ? 'opacity-60 grayscale' : ''}`}
                                                     onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
+                                            ) : (
+                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-sm font-black text-slate-400">
+                                                    {(voter.name || '?').charAt(0).toUpperCase()}
+                                                </span>
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <p className={`text-sm font-bold leading-5 break-words ${nameColor}`}>
+                                                <p className={`line-clamp-2 text-sm font-bold leading-tight break-words ${nameColor}`}>
                                                     {voter.name}
-                                                    {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
-                                                        <span className="ml-1 text-[10px] font-semibold text-slate-500">
-                                                            {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
-                                                        </span>
-                                                    ) : null}
                                                 </p>
+                                                {((voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '')) && (
+                                                    <p className="mt-0.5 flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                                        {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                                    </p>
+                                                )}
                                             </div>
                                             {done && (
-                                                <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
-                                                    Siap
+                                                <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                                            <div>
-                                                <span className="font-semibold text-green-700">No KP</span>
-                                                <p className="font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
-                                            </div>
-                                            <div>
-                                                <span className="font-semibold text-green-700">Umur</span>
-                                                <p className="font-bold text-slate-800">{voter.age ?? '-'}</p>
-                                            </div>
+                                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                                            <InfoField label="No KP" value={voter.no_kp || voter.old_ic || '-'} />
+                                            <InfoField label="Umur" value={`${voter.age ?? '-'}${voter.age ? ' thn' : ''}`} accent />
                                             {(voter.phone_mobile || voter.phone_home) && (
-                                            <div>
-                                                <span className="font-semibold text-green-700">Telefon</span>
-                                                <p className="font-bold text-slate-800">
-                                                    {voter.phone_mobile && voter.phone_home
-                                                        ? `${voter.phone_mobile} / ${voter.phone_home}`
-                                                        : (voter.phone_mobile || voter.phone_home)}
-                                                </p>
-                                            </div>
+                                                <InfoField label="Telefon" value={voter.phone_mobile && voter.phone_home ? `${voter.phone_mobile} / ${voter.phone_home}` : (voter.phone_mobile || voter.phone_home)} mono />
                                             )}
-                                            {!formState.udm && (
-                                            <div>
-                                                <span className="font-semibold text-green-700">UDM</span>
-                                                <p className="font-bold text-slate-800">{voter.dm || '-'}</p>
-                                            </div>
-                                            )}
-                                            {!formState.locality && (
-                                            <div>
-                                                <span className="font-semibold text-green-700">Lokaliti</span>
-                                                <p className="font-bold text-slate-800">{voter.locality || '-'}</p>
-                                            </div>
-                                            )}
+                                            {!formState.udm && <InfoField label="UDM" value={voter.dm || '-'} />}
+                                            {!formState.locality && <InfoField label="Lokaliti" value={voter.locality || '-'} />}
                                             {(() => {
                                                 const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
                                                 const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
@@ -751,17 +750,17 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 if (!alm && !rum) return null;
                                                 const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
                                                 return (
-                                                    <div className="col-span-2">
-                                                        <span className="font-semibold text-green-700">Alamat</span>
-                                                        <p className="mt-0.5 flex items-center gap-1.5 font-bold text-slate-800">
+                                                    <div className="col-span-2 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-2.5">
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Alamat</p>
+                                                        <p className="mt-0.5 flex items-start gap-1.5 text-xs font-bold text-slate-800">
                                                             {rum && <RumahBadge voter={voter} onRumahClick={loadRumahVoters} />}
-                                                            {cleanAlm || null}
+                                                            <span>{cleanAlm || '-'}</span>
                                                         </p>
                                                     </div>
                                                 );
                                             })()}
                                         </div>
-                                        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+                                        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-200/80 pt-3">
                                             {!voter.is_manual && (
                                                 <>
                                                     <input type="file" accept="image/*" id={`card-avatar-${voter.id}`}
@@ -769,54 +768,56 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     <button type="button"
                                                         onClick={(e) => { e.stopPropagation(); document.getElementById(`card-avatar-${voter.id}`)?.click(); }}
                                                         disabled={uploadingAvatarIds[voter.id]}
-                                                        className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700 disabled:opacity-40"
+                                                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-700 disabled:opacity-40"
                                                         title="Muat naik gambar">
-                                                        {uploadingAvatarIds[voter.id] ? (
-                                                            <span className="text-[10px] font-bold">...</span>
-                                                        ) : (
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
-                                                        )}
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
+                                                        Gambar
                                                     </button>
                                                     {voter.address && voter.address !== '-' && voter.address_count >= 2 && voter.address_count <= 10 && (
                                                         <button type="button"
                                                             onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
-                                                            className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-700"
                                                             title={`Alamat sama: ${voter.address}`}>
-                                                            <HomeIcon className="h-3.5 w-3.5" />
+                                                            <HomeIcon className="h-3 w-3" />
+                                                            Alamat
                                                         </button>
                                                     )}
                                                 </>
                                             )}
                                             {namaAyah && (
                                                 <button type="button"
-                                                    onClick={() => { doSearchNamaAyah(namaAyah); setFilterOpen(true); }}
-                                                    className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-400 shadow-sm transition hover:border-green-300 hover:text-green-600"
+                                                    onClick={(e) => { e.stopPropagation(); doSearchNamaAyah(namaAyah); setFilterOpen(true); }}
+                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-700"
                                                     title={`Cari keluarga: ${namaAyah}`}>
-                                                    <UserGroupIcon className="h-3.5 w-3.5" />
+                                                    <UserGroupIcon className="h-3 w-3" />
+                                                    Keluarga
                                                 </button>
                                             )}
                                             {!voter.is_marked ? (
                                                 <>
                                                     {culaSemulaIds.has(voter.id) ? (
                                                         <>
-                                                        <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }}
-                                                            className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
-                                                            Siap Cula
-                                                        </button>
-                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
-                                                            className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
-                                                            title="Kembali ke asal">
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                                                        </button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedVoterForCula(voter); setShowCulaModal(true); }}
+                                                                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                Siap Cula
+                                                            </button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
+                                                                className="inline-flex w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                                title="Kembali ke asal">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                            </button>
                                                         </>
                                                     ) : (
-                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
-                                                            className="flex-1 rounded bg-green-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-green-500">
+                                                        <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                            className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                                                             Cula
                                                         </button>
                                                     )}
                                                     <a href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                                        className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
+                                                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                                                         Tel
                                                     </a>
                                                 </>
@@ -824,24 +825,26 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 <>
                                                     {culaSemulaIds.has(voter.id) ? (
                                                         <>
-                                                        <button type="button" onClick={() => { setSelectedVoterForCula(voter); setShowCulaModal(true); }}
-                                                            className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
-                                                            Siap Cula
-                                                        </button>
-                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
-                                                            className="flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
-                                                            title="Kembali ke asal">
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                                                        </button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedVoterForCula(voter); setShowCulaModal(true); }}
+                                                                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                Siap Cula
+                                                            </button>
+                                                            <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
+                                                                className="inline-flex w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                                title="Kembali ke asal">
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                            </button>
                                                         </>
                                                     ) : (
-                                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
-                                                            className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
+                                                        <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
+                                                            className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
                                                             Tukar Cula
                                                         </button>
                                                     )}
                                                     <a href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                                        className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
+                                                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                                                         Tel
                                                     </a>
                                                 </>
@@ -877,41 +880,42 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             )}
 
             {detailVoter && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
-                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-                        <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) && (
-                                    <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
-                                        className="h-10 w-10 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200"
-                                        onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
-                                )}
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-800">{detailVoter.name}</h3>
-                                    <p className="text-[11px] font-medium text-slate-500">{detailVoter.no_kp || detailVoter.old_ic || '-'}</p>
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
+                    <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
+                        <button type="button" onClick={closeDetail}
+                            className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                        <div className="relative px-5 pt-6 pb-3">
+                            <div className="flex items-end gap-3">
+                                <div className="relative shrink-0">
+                                    {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) ? (
+                                        <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
+                                            className="h-20 w-20 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
+                                            onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
+                                    ) : (
+                                        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-3xl font-black text-white ring-4 ring-white shadow-lg">
+                                            {(detailVoter.name || '?').charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
+                                    {detailVoter.is_marked && (
+                                        <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1 pb-1">
+                                    <h3 className="line-clamp-2 text-lg font-black leading-tight text-white drop-shadow-sm">{detailVoter.name}</h3>
+                                    <p className="mt-0.5 text-xs font-semibold text-white/90">{detailVoter.no_kp || detailVoter.old_ic || '-'}</p>
                                 </div>
                             </div>
-                            <button type="button" onClick={closeDetail}
-                                className="shrink-0 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
-                                Tutup
-                            </button>
                         </div>
-                        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Umur</p>
-                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.age ?? '-'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">No Kp</p>
-                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.no_kp || detailVoter.old_ic || '-'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">UDM</p>
-                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.dm || '-'}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Lokaliti</p>
-                                <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
+                        <div className="relative space-y-3 px-5 pb-5 pt-2">
+                            <div className="grid grid-cols-3 gap-2">
+                                <InfoTile label="Umur" value={detailVoter.age ?? '-'} suffix="thn" accent />
+                                <InfoTile label="UDM" value={detailVoter.dm || '-'} />
+                                <InfoTile label="Lokaliti" value={detailVoter.locality || '-'} />
                             </div>
                             {(() => {
                                 const dv = detailVoter;
@@ -922,150 +926,169 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 if (!alm && !rum) return null;
                                 const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
                                 return (
-                                    <div className="col-span-2">
-                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat</p>
-                                        <p className="mt-0.5 flex items-center gap-1.5 font-semibold text-slate-700">
+                                    <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3">
+                                        <p className="mb-1 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Alamat</p>
+                                        <p className="flex items-start gap-1.5 text-sm font-semibold text-slate-800">
                                             {rum && <RumahBadge voter={dv} onRumahClick={loadRumahVoters} />}
-                                            {cleanAlm || null}
+                                            <span>{cleanAlm || '-'}</span>
                                         </p>
                                     </div>
                                 );
                             })()}
                             {((detailVoter.cula_display_label && !detailVoter.cula_display_label.includes('BELUM DICULA')) || (detailVoter.cula_code && detailVoter.cula_code !== '0' && detailVoter.cula_code !== '?')) && (
-                                <div>
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cula</p>
-                                    <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.cula_display_label && !detailVoter.cula_display_label.includes('BELUM DICULA') ? detailVoter.cula_display_label : detailVoter.cula_code}</p>
+                                <div className="flex items-center justify-between rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-3">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">Status Cula</p>
+                                        <p className="mt-0.5 text-base font-black text-emerald-900">{detailVoter.cula_display_label && !detailVoter.cula_display_label.includes('BELUM DICULA') ? detailVoter.cula_display_label : detailVoter.cula_code}</p>
+                                    </div>
+                                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>
+                                    </span>
                                 </div>
                             )}
                             {detailVoter.marked_by_name && (
-                                <div className="col-span-2">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dikemas oleh</p>
-                                    <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.marked_by_name}</p>
+                                <div className="rounded-xl bg-slate-100 px-3 py-2 text-xs text-slate-600">
+                                    <span className="font-bold text-slate-700">Dikemas oleh:</span> {detailVoter.marked_by_name}
                                 </div>
                             )}
-                        </div>
-                        <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                             {!detailVoter.is_manual && (
-                                <>
+                                <div className="flex flex-wrap gap-1.5 pt-1">
                                     <input type="file" accept="image/*" id={`detail-avatar-${detailVoter.id}`}
                                         onChange={(e) => handleFileSelect(e, detailVoter.id)} className="hidden" />
                                     <button type="button"
                                         onClick={(e) => { e.stopPropagation(); document.getElementById(`detail-avatar-${detailVoter.id}`)?.click(); }}
                                         disabled={uploadingAvatarIds[detailVoter.id]}
-                                        className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700 disabled:opacity-40"
+                                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40"
                                         title="Muat naik gambar">
-                                        {uploadingAvatarIds[detailVoter.id] ? (
-                                            <span className="text-[10px] font-bold">...</span>
-                                        ) : (
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
-                                        )}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
+                                        Gambar
                                     </button>
                                     {!fromAddressPopup.current && detailVoter.address && detailVoter.address !== '-' && detailVoter.address_count >= 2 && detailVoter.address_count <= 10 && (
                                         <button type="button"
                                             onClick={() => { previousDetailVoter.current = detailVoter; setDetailVoter(null); loadAddressVoters(detailVoter); }}
-                                            className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-700"
                                             title={`Alamat sama: ${detailVoter.address}`}>
                                             <HomeIcon className="h-3.5 w-3.5" />
+                                            Alamat
                                         </button>
                                     )}
                                     {(() => { const namaAyah = extractNamaAyah(detailVoter.name); return namaAyah ? (
                                         <button type="button"
                                             onClick={() => { setDetailVoter(null); setFilterOpen(true); doSearchNamaAyah(namaAyah); }}
-                                            className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700"
                                             title={`Cari keluarga: ${namaAyah}`}>
                                             <UserGroupIcon className="h-3.5 w-3.5" />
+                                            Keluarga
                                         </button>
                                     ) : null; })()}
-                                </>
+                                </div>
                             )}
-                            {!detailVoter.is_marked ? (
-                                <>
-                                    {culaSemulaIds.has(detailVoter.id) ? (
-                                        <>
-                                        <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
-                                            className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
-                                            Siap Cula
-                                        </button>
-                                        <button type="button" onClick={() => {
-                                            setCulaSemulaIds((prev) => {
-                                                const next = new Set(prev);
-                                                next.delete(detailVoter.id);
-                                                return next;
-                                            });
-                                        }}
-                                            className="inline-flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
-                                            title="Kembali ke asal">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                                        </button>
-                                        </>
-                                    ) : (
-                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
-                                            className="flex-1 rounded bg-green-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-green-500">
-                                            Cula
-                                        </button>
-                                    )}
-                                    <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
-                                        className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
-                                        Tel
-                                    </a>
-                                </>
-                            ) : (
-                                <>
-                                    {culaSemulaIds.has(detailVoter.id) ? (
-                                        <>
-                                        <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
-                                            className="flex-1 rounded bg-blue-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-blue-500">
-                                            Siap Cula
-                                        </button>
-                                        <button type="button" onClick={() => {
-                                            setCulaSemulaIds((prev) => {
-                                                const next = new Set(prev);
-                                                next.delete(detailVoter.id);
-                                                return next;
-                                            });
-                                        }}
-                                            className="inline-flex w-7 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
-                                            title="Kembali ke asal">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                                        </button>
-                                        </>
-                                    ) : (
-                                        <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
-                                            className="flex-1 rounded bg-slate-800 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-slate-700">
-                                            Tukar Cula
-                                        </button>
-                                    )}
-                                    <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
-                                        className="flex-1 inline-flex items-center justify-center rounded bg-amber-600 px-2 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-amber-500">
-                                        Tel
-                                    </a>
-                                </>
-                            )}
+                            <div className="flex gap-2 border-t border-slate-200 pt-3">
+                                {!detailVoter.is_marked ? (
+                                    <>
+                                        {culaSemulaIds.has(detailVoter.id) ? (
+                                            <>
+                                                <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
+                                                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    Siap Cula
+                                                </button>
+                                                <button type="button" onClick={() => {
+                                                    setCulaSemulaIds((prev) => {
+                                                        const next = new Set(prev);
+                                                        next.delete(detailVoter.id);
+                                                        return next;
+                                                    });
+                                                }}
+                                                    className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                    title="Kembali ke asal">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
+                                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                                Cula
+                                            </button>
+                                        )}
+                                        <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
+                                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            Tel
+                                        </a>
+                                    </>
+                                ) : (
+                                    <>
+                                        {culaSemulaIds.has(detailVoter.id) ? (
+                                            <>
+                                                <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
+                                                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    Siap Cula
+                                                </button>
+                                                <button type="button" onClick={() => {
+                                                    setCulaSemulaIds((prev) => {
+                                                        const next = new Set(prev);
+                                                        next.delete(detailVoter.id);
+                                                        return next;
+                                                    });
+                                                }}
+                                                    className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                    title="Kembali ke asal">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
+                                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
+                                                Tukar Cula
+                                            </button>
+                                        )}
+                                        <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
+                                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            Tel
+                                        </a>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
             {showAddressPopup && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
-                    <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-                        <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                                {addressPopupVoterName.current && (
-                                    <p className="text-xs font-bold text-green-700 truncate">{addressPopupVoterName.current}</p>
-                                )}
-                                <h3 className="text-xs font-bold text-slate-800">{addressPopupTitle}</h3>
-                            </div>
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
+                    <div className="relative w-full max-w-lg overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                        <div className="relative bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600 px-5 pb-5 pt-4">
                             <button type="button" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }}
-                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50">
-                                Tutup
+                                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             </button>
+                            <div className="flex items-center gap-3 text-white">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    {addressPopupVoterName.current && (
+                                        <p className="truncate text-[10px] font-black uppercase tracking-[0.12em] text-white/80">{addressPopupVoterName.current}</p>
+                                    )}
+                                    <h3 className="truncate text-base font-black text-white drop-shadow-sm">{addressPopupTitle}</h3>
+                                </div>
+                                {!loadingAddress && addressVoters.length > 0 && (
+                                    <span className="shrink-0 rounded-full bg-white/25 px-2.5 py-1 text-xs font-black text-white backdrop-blur">{addressVoters.length}</span>
+                                )}
+                            </div>
                         </div>
-                        <div className="mt-3 max-h-80 overflow-y-auto">
+                        <div className="max-h-[60vh] overflow-y-auto px-3 py-3">
                             {loadingAddress ? (
-                                <p className="py-4 text-center text-xs font-medium text-slate-500">Mencari...</p>
+                                <div className="flex flex-col items-center justify-center py-10 text-center">
+                                    <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></span>
+                                    <p className="mt-3 text-xs font-medium text-slate-500">Mencari...</p>
+                                </div>
                             ) : addressVoters.length === 0 ? (
-                                <p className="py-4 text-center text-xs font-medium text-slate-500">Tiada pemilih lain dengan alamat yang sama.</p>
+                                <p className="py-10 text-center text-xs font-medium text-slate-500">Tiada pemilih lain dengan alamat yang sama.</p>
                             ) : (
                                 <div className="space-y-1.5">
                                     {[...addressVoters].sort((a, b) => (a.age ?? 999) - (b.age ?? 999)).map((v) => (
@@ -1079,23 +1102,26 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 setDetailVoter(v);
                                                 setShowAddressPopup(false);
                                             }}
-                                            className="flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs shadow-sm transition hover:border-green-300 hover:bg-green-50"
+                                            className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-2.5 text-left shadow-sm transition active:scale-[0.98] hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-violet-50"
                                         >
-                                            {(avatarUpdates[v.id] || v.avatar_url) && (
-                                                <img src={avatarUpdates[v.id] || v.avatar_url} alt="" className="h-7 w-7 shrink-0 rounded-full border border-slate-200 object-cover" />
+                                            {(avatarUpdates[v.id] || v.avatar_url) ? (
+                                                <img src={avatarUpdates[v.id] || v.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover border border-slate-200" />
+                                            ) : (
+                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-sm font-black text-slate-400">
+                                                    {(v.name || '?').charAt(0).toUpperCase()}
+                                                </span>
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-bold text-slate-800">
-                                                    {v.name}
-                                                    {v.cula_code && v.cula_code !== '0' && v.cula_code !== '?' && (
-                                                        <span className="ml-1 text-[10px] font-semibold text-slate-500">{v.cula_display_label || v.cula_code}</span>
-                                                    )}
-                                                </p>
-                                                <p className="text-[10px] font-medium text-slate-500 truncate">{formatAddress(v)}</p>
+                                                <p className="truncate text-sm font-bold text-slate-800">{v.name}</p>
+                                                <p className="mt-0.5 truncate text-[10px] font-semibold text-slate-500">{formatAddress(v)}</p>
                                             </div>
-                                            <div className="shrink-0 text-right">
-                                                <p className="font-bold text-slate-700">{v.age ?? '-'}</p>
-                                                <p className="text-[10px] text-slate-400">thn</p>
+                                            <div className="flex shrink-0 flex-col items-end gap-0.5">
+                                                <span className="flex h-6 min-w-[1.8rem] items-center justify-center rounded-lg bg-slate-100 px-1.5 text-[10px] font-black text-slate-700">{v.age ?? '-'}</span>
+                                                {v.cula_code && v.cula_code !== '0' && v.cula_code !== '?' && (
+                                                    <span className="rounded-md bg-gradient-to-r from-emerald-500 to-teal-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white shadow-sm">
+                                                        {v.cula_display_label || v.cula_code}
+                                                    </span>
+                                                )}
                                             </div>
                                         </button>
                                     ))}
