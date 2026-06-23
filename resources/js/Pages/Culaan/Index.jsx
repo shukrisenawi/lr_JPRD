@@ -1616,9 +1616,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 {voter.address && voter.address !== '-' && voter.address_count >= 2 && voter.address_count <= 10 && (
                                                     <button
                                                         type="button"
-                                                        onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
+                                                        onClick={(e) => { e.stopPropagation(); formState.filter_rumah_alamat && voter.no_rumah && voter.no_rumah !== '-' ? loadRumahAlamatVoters(voter) : loadAddressVoters(voter); }}
                                                         className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
-                                                        title={`Alamat sama: ${formatAddress(voter)}`}
+                                                        title={formState.filter_rumah_alamat ? `No & Alamat sama` : `Alamat sama: ${formatAddress(voter)}`}
                                                     >
                                                         <HomeIcon className="h-3.5 w-3.5" />
                                                     </button>
@@ -1766,9 +1766,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                             {voter.address && voter.address !== '-' && voter.address_count >= 2 && voter.address_count <= 10 && (
                                                                                 <button
                                                                                     type="button"
-                                                                                    onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
+                                                                                    onClick={(e) => { e.stopPropagation(); formState.filter_rumah_alamat && voter.no_rumah && voter.no_rumah !== '-' ? loadRumahAlamatVoters(voter) : loadAddressVoters(voter); }}
                                                                                     className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600"
-                                                                                    title={`Alamat sama: ${formatAddress(voter)}`}
+                                                                                    title={formState.filter_rumah_alamat ? `No & Alamat sama` : `Alamat sama: ${formatAddress(voter)}`}
                                                                                 >
                                                                                     <HomeIcon className="h-3 w-3" />
                                                                                 </button>
@@ -1891,9 +1891,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                                             {voter.address && voter.address !== '-' && voter.address_count >= 2 && voter.address_count <= 10 && (
                                                                                 <button
                                                                                     type="button"
-                                                                                    onClick={(e) => { e.stopPropagation(); loadAddressVoters(voter); }}
+                                                                                    onClick={(e) => { e.stopPropagation(); formState.filter_rumah_alamat && voter.no_rumah && voter.no_rumah !== '-' ? loadRumahAlamatVoters(voter) : loadAddressVoters(voter); }}
                                                                                     className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600"
-                                                                                    title={`Alamat sama: ${formatAddress(voter)}`}
+                                                                                    title={formState.filter_rumah_alamat ? `No & Alamat sama` : `Alamat sama: ${formatAddress(voter)}`}
                                                                                 >
                                                                                     <HomeIcon className="h-3 w-3" />
                                                                                 </button>
