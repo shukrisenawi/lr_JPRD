@@ -887,14 +887,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         <div className="relative px-5 pt-5 pb-4">
                             <div className="flex items-end gap-3">
                                 <div className="relative shrink-0">
-                                    {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) ? (
+                                    {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) && (
                                         <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
                                             className="h-16 w-16 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
                                             onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
-                                    ) : (
-                                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-2xl font-black text-white ring-4 ring-white shadow-lg">
-                                            {(detailVoter.name || '?').charAt(0).toUpperCase()}
-                                        </div>
                                     )}
                                     {detailVoter.is_marked && (
                                         <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
@@ -1104,12 +1100,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             }}
                                             className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-2.5 text-left shadow-sm transition active:scale-[0.98] hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-violet-50"
                                         >
-                                            {(avatarUpdates[v.id] || v.avatar_url) ? (
+                                            {(avatarUpdates[v.id] || v.avatar_url) && (
                                                 <img src={avatarUpdates[v.id] || v.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover border border-slate-200" />
-                                            ) : (
-                                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-sm font-black text-slate-400">
-                                                    {(v.name || '?').charAt(0).toUpperCase()}
-                                                </span>
                                             )}
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold text-slate-800">{v.name}</p>
