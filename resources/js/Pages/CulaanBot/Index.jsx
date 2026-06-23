@@ -160,26 +160,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [addressPopupTitle, setAddressPopupTitle] = useState('Alamat Sama');
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('culaBotViewMode') || 'card');
     const persistViewMode = (mode) => { setViewMode(mode); localStorage.setItem('culaBotViewMode', mode); };
-    const [visitedIds, setVisitedIds] = useState(() => {
-        try { return new Set(JSON.parse(localStorage.getItem('culaBotVisited') || '[]')); } catch { return new Set(); }
-    });
-    const persistVisited = (nextSet) => {
-        setVisitedIds(nextSet);
-        try { localStorage.setItem('culaBotVisited', JSON.stringify([...nextSet])); } catch {}
-    };
-    const markVisited = (id) => {
-        setVisitedIds((prev) => {
-            if (prev.has(id)) return prev;
-            const next = new Set(prev);
-            next.add(id);
-            try { localStorage.setItem('culaBotVisited', JSON.stringify([...next])); } catch {}
-            return next;
-        });
-    };
-    const clearVisited = () => {
-        if (!window.confirm('Reset tanda lawatan? Semua kad akan kembali ke warna asal.')) return;
-        persistVisited(new Set());
-    };
+    const [activeVoterId, setActiveVoterId] = useState(null);
+    const markActive = (id) => setActiveVoterId(id);
+    const clearActive = () => setActiveVoterId(null);
     const fromAddressPopup = useRef(false);
     const previousDetailVoter = useRef(null);
     const addressPopupVoterName = useRef('');
@@ -205,6 +188,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         setLocalSummary(summary);
         setActionError('');
         setPendingIds([]);
+        setActiveVoterId(null);
     }, [summary, voters]);
 
     const rows = search.trim().length >= 2 ? suggestions : localVoters.data ?? [];
@@ -553,16 +537,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             Penuh
                         </button>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {visitedIds.size > 0 && (
-                            <button type="button" onClick={clearVisited} title={`Reset ${visitedIds.size} tanda lawatan`}
-                                className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100">
-                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
-                                Reset {visitedIds.size}
-                            </button>
-                        )}
-                        <p className="text-xs font-bold tracking-[0.1em] text-slate-500">Jumlah <span className="ml-1 text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span></p>
-                    </div>
+                    <p className="text-xs font-bold tracking-[0.1em] text-slate-500">Jumlah <span className="ml-1 text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span></p>
                 </div>
 
                 <section id="voter-list">
@@ -571,15 +546,15 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             {rows.map((voter, index) => {
                                 const namaAyah = extractNamaAyah(voter.name);
                                 const isSearchResult = search.trim().length >= 2;
-                                const visited = visitedIds.has(voter.id);
-                                const visitedClass = visited
-                                    ? ' border-blue-500 bg-blue-50 ring-1 ring-blue-400 ring-offset-0'
+                                const active = activeVoterId === voter.id;
+                                const activeClass = active
+                                    ? ' border-green-700 bg-green-100 ring-1 ring-green-500'
                                     : ' border-green-600 bg-white';
                                 if (isSearchResult && voter.is_marked) {
                                     return (
-                                        <button key={voter.id} type="button" onClick={() => { markVisited(voter.id); setDetailVoter(voter); }}
-                                            className={`relative w-full rounded-xl border ${visitedClass} p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 cursor-pointer ${visited ? 'visited-underline' : ''}`}>
-                                            {visited && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-blue-500" />}
+                                        <button key={voter.id} type="button" onClick={() => { markActive(voter.id); setDetailVoter(voter); }}
+                                            className={`relative w-full rounded-xl border ${activeClass} p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 cursor-pointer`}>
+                                            {active && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-green-700" />}
                                             <div className="flex items-center gap-2">
                                                 <span className="shrink-0 text-xs font-bold text-slate-800 min-w-[1.2rem] text-right">
                                                     {index + 1}.
@@ -590,7 +565,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                             className="h-6 w-6 shrink-0 rounded-full object-cover border border-slate-200"
                                                             onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
                                                     )}
-                                                    <p className={`text-sm font-bold leading-5 break-words ${visited ? 'text-blue-800 underline decoration-blue-500 decoration-2 underline-offset-4' : 'text-slate-800'}`}>
+                                                    <p className={`text-sm font-bold leading-5 break-words ${active ? 'text-green-900 underline decoration-green-700 decoration-2 underline-offset-4' : 'text-slate-800'}`}>
                                                         {voter.name}
                                                         {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
                                                             <span className="ml-1 text-[10px] font-semibold text-slate-500">
@@ -608,9 +583,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     );
                                 }
                                 return (
-                                    <button key={voter.id} type="button" onClick={() => { markVisited(voter.id); setDetailVoter(voter); }}
-                                        className={`relative w-full rounded-xl border ${visitedClass} p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 cursor-pointer`}>
-                                        {visited && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-blue-500" />}
+                                    <button key={voter.id} type="button" onClick={() => { markActive(voter.id); setDetailVoter(voter); }}
+                                        className={`relative w-full rounded-xl border ${activeClass} p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 cursor-pointer`}>
+                                        {active && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-green-700" />}
                                         <div className="flex items-center gap-2">
                                             <span className="shrink-0 text-xs font-bold text-slate-800 min-w-[1.2rem] text-right">
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}.
@@ -621,7 +596,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                         className="h-6 w-6 shrink-0 rounded-full object-cover border border-slate-200"
                                                         onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
                                                 )}
-                                                <p className={`text-sm font-bold leading-5 break-words ${visited ? 'text-blue-800 underline decoration-blue-500 decoration-2 underline-offset-4' : 'text-slate-800'}`}>
+                                                <p className={`text-sm font-bold leading-5 break-words ${active ? 'text-green-900 underline decoration-green-700 decoration-2 underline-offset-4' : 'text-slate-800'}`}>
                                                     {voter.name}
                                                     {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
                                                         <span className="ml-1 text-[10px] font-semibold text-slate-500">
@@ -645,17 +620,17 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 const isSearchResult = search.trim().length >= 2;
                                 const phone = voter.phone_mobile || voter.phone_home;
                                 const namaAyah = extractNamaAyah(voter.name);
-                                const visited = visitedIds.has(voter.id);
-                                const visitedWrapClass = visited
-                                    ? ' border-blue-500 bg-blue-50 ring-1 ring-blue-400'
+                                const active = activeVoterId === voter.id;
+                                const activeWrapClass = active
+                                    ? ' border-green-700 bg-green-100 ring-1 ring-green-500'
                                     : ' border-green-600 bg-white';
                                 return (
                                     <div key={voter.id}
-                                        onClick={() => markVisited(voter.id)}
-                                        className={`relative cursor-pointer rounded-xl border ${visitedWrapClass} p-3 shadow-sm overflow-hidden transition hover:shadow-md`}>
-                                        {visited && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-blue-500" />}
+                                        onClick={() => markActive(voter.id)}
+                                        className={`relative cursor-pointer rounded-xl border ${activeWrapClass} p-3 shadow-sm overflow-hidden transition hover:shadow-md`}>
+                                        {active && <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] bg-green-700" />}
                                         <div className="flex items-center gap-2">
-                                            <span className={`text-xs font-bold min-w-[1.2rem] text-right ${visited ? 'text-blue-700' : 'text-slate-500'}`}>
+                                            <span className={`text-xs font-bold min-w-[1.2rem] text-right ${active ? 'text-green-800' : 'text-slate-500'}`}>
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}.
                                             </span>
                                             {(avatarUpdates[voter.id] || voter.avatar_url) && (
@@ -664,7 +639,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
                                             )}
                                             <div className="min-w-0 flex-1">
-                                                <p className={`text-sm font-bold leading-5 break-words ${visited ? 'text-blue-800 underline decoration-blue-500 decoration-2 underline-offset-4' : 'text-slate-800'}`}>
+                                                <p className={`text-sm font-bold leading-5 break-words ${active ? 'text-green-900 underline decoration-green-700 decoration-2 underline-offset-4' : 'text-slate-800'}`}>
                                                     {voter.name}
                                                     {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
                                                         <span className="ml-1 text-[10px] font-semibold text-slate-500">
@@ -1025,7 +1000,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             onClick={() => {
                                                 fromAddressPopup.current = true;
                                                 previousDetailVoter.current = null;
-                                                markVisited(v.id);
+                                                markActive(v.id);
                                                 setDetailVoter(v);
                                                 setShowAddressPopup(false);
                                             }}
