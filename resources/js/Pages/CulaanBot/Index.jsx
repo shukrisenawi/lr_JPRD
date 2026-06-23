@@ -148,7 +148,7 @@ function InfoTile({ label, value, suffix, accent, className = '' }) {
     );
 }
 
-function ToggleTile({ label, icon, iconColor, active, onToggle }) {
+function ToggleTile({ label, icon, iconColor, active, onToggle, disabled }) {
     const colorMap = {
         emerald: { active: 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white border-emerald-500 shadow-emerald-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/60' },
         blue: { active: 'bg-gradient-to-br from-blue-500 to-indigo-500 text-white border-blue-500 shadow-blue-500/30', idle: 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50/60' },
@@ -159,8 +159,8 @@ function ToggleTile({ label, icon, iconColor, active, onToggle }) {
     const cls = colorMap[iconColor] || colorMap.emerald;
     const iconPath = ({ check: <polyline points="20 6 9 17 4 12" />, home: <><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></>, map: <><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></>, list: <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></>, target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></> })[icon];
     return (
-        <button type="button" onClick={onToggle}
-            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left text-xs font-bold shadow-sm transition active:scale-[0.97] ${active ? cls.active + ' shadow-md' : cls.idle}`}>
+        <button type="button" onClick={onToggle} disabled={disabled}
+            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2.5 text-left text-xs font-bold shadow-sm transition active:scale-[0.97] ${disabled ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300 opacity-60' : active ? cls.active + ' shadow-md' : cls.idle}`}>
             <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${active ? 'bg-white/20' : 'bg-slate-100'}`}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">{iconPath}</svg>
             </span>
@@ -278,24 +278,25 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const toggleFilterRumah = () => {
+        if (filterRumahAlamat) return;
         const next = !filterRumah;
         setFilterRumah(next);
-        setFilterRumahAlamat(false);
-        applyFilters({ ...formState, filter_rumah: next, filter_rumah_alamat: false });
+        applyFilters({ ...formState, filter_rumah: next });
     };
 
     const toggleFilterAlamat = () => {
+        if (filterRumahAlamat) return;
         const next = !filterAlamat;
         setFilterAlamat(next);
-        setFilterRumahAlamat(false);
-        applyFilters({ ...formState, filter_alamat: next, filter_rumah_alamat: false });
+        applyFilters({ ...formState, filter_alamat: next });
     };
 
     const toggleFilterRumahAlamat = () => {
         const next = !filterRumahAlamat;
         setFilterRumahAlamat(next);
         setFilterRumah(false);
-        applyFilters({ ...formState, filter_rumah_alamat: next, filter_rumah: false });
+        setFilterAlamat(false);
+        applyFilters({ ...formState, filter_rumah_alamat: next, filter_rumah: false, filter_alamat: false });
     };
 
     const toggleShowAll = () => {
@@ -616,8 +617,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     <p className="mb-2 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Pilihan Pantas</p>
                                     <div className="grid grid-cols-2 gap-2">
                                         <ToggleTile label="Siap Cula" icon="check" iconColor="emerald" active={showMarked} onToggle={toggleShowMarked} />
-                                        <ToggleTile label="Sama Rumah" icon="home" iconColor="blue" active={filterRumah} onToggle={toggleFilterRumah} />
-                                        <ToggleTile label="Sama Alamat" icon="map" iconColor="amber" active={filterAlamat} onToggle={toggleFilterAlamat} />
+                                        <ToggleTile label="Sama Rumah" icon="home" iconColor="blue" active={filterRumah} onToggle={toggleFilterRumah} disabled={filterRumahAlamat} />
+                                        <ToggleTile label="Sama Alamat" icon="map" iconColor="amber" active={filterAlamat} onToggle={toggleFilterAlamat} disabled={filterRumahAlamat} />
                                         <ToggleTile label="Sama No & Alamat" icon="target" iconColor="rose" active={filterRumahAlamat} onToggle={toggleFilterRumahAlamat} />
                                         <ToggleTile label="Semua Pemilih" icon="list" iconColor="slate" active={showAll} onToggle={toggleShowAll} />
                                     </div>
