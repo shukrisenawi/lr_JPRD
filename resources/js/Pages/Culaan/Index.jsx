@@ -1668,13 +1668,21 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     return (
                                                         <tr key={voter.id} className="group border-t border-slate-100 hover:bg-slate-50">
                                                             <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
-                                                             <td className="sticky left-0 z-10 bg-white px-2 py-2 group-hover:bg-slate-50">
+                                                              <td className="sticky left-0 z-10 bg-white px-2 py-2 group-hover:bg-slate-50">
                                                                   <div className="flex items-center gap-1.5">
                                                                       {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                                                           <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-6 w-6 shrink-0 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url)} />
                                                                       )}
                                                                       <div className="min-w-0">
-                                                                           <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                                           <span className="font-semibold text-slate-800">
+                                                                               {voter.name}
+                                                                               {((voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '')) && (
+                                                                                   <span className="ml-1 inline-flex items-center gap-1 rounded bg-green-100 px-1 py-0.5 align-middle text-[10px] font-bold not-italic text-green-700" style={{ textDecoration: 'none' }}>
+                                                                                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                                       {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                                                                   </span>
+                                                                               )}
+                                                                           </span>
                                                                            {(() => { const a = formatAddress(voter); return a && a !== '-' ? <p className="text-[10px] font-medium text-slate-500 truncate">{a}</p> : null; })()}
                                                                       </div>
                                                                  </div>
@@ -1794,7 +1802,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
                                                         <td className="sticky left-0 z-10 bg-white px-2 py-2 group-hover:bg-slate-50">
                                                             <div className="min-w-0">
-                                                                <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                                <span className="font-semibold text-slate-800">
+                                                                    {voter.name}
+                                                                    {((voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '')) && (
+                                                                        <span className="ml-1 inline-flex items-center gap-1 rounded bg-green-100 px-1 py-0.5 align-middle text-[10px] font-bold not-italic text-green-700" style={{ textDecoration: 'none' }}>
+                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                            {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                                                        </span>
+                                                                    )}
+                                                                </span>
                                                                 {(() => { const a = formatAddress(voter); return a && a !== '-' ? <p className="text-[10px] font-medium text-slate-500 truncate">{a}</p> : null; })()}
                                                             </div>
                                                         </td>
