@@ -280,19 +280,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const toggleFilterRumah = () => {
         const next = !filterRumah;
         setFilterRumah(next);
-        applyFilters({ ...formState, filter_rumah: next });
+        setFilterRumahAlamat(false);
+        applyFilters({ ...formState, filter_rumah: next, filter_rumah_alamat: false });
     };
 
     const toggleFilterAlamat = () => {
         const next = !filterAlamat;
         setFilterAlamat(next);
-        applyFilters({ ...formState, filter_alamat: next });
+        setFilterRumahAlamat(false);
+        applyFilters({ ...formState, filter_alamat: next, filter_rumah_alamat: false });
     };
 
     const toggleFilterRumahAlamat = () => {
         const next = !filterRumahAlamat;
         setFilterRumahAlamat(next);
-        applyFilters({ ...formState, filter_rumah_alamat: next });
+        setFilterRumah(false);
+        setFilterAlamat(false);
+        applyFilters({ ...formState, filter_rumah_alamat: next, filter_rumah: false, filter_alamat: false });
     };
 
     const toggleShowAll = () => {
