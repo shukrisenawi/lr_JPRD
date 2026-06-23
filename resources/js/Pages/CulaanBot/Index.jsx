@@ -912,10 +912,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             </div>
                         </div>
                         <div className="relative space-y-3 px-5 pb-5 pt-2">
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className={`grid gap-2 ${(!formState.udm && !formState.locality) ? 'grid-cols-3' : (!formState.udm ? 'grid-cols-2' : (!formState.locality ? 'grid-cols-2' : 'grid-cols-1'))}`}>
                                 <InfoTile label="Umur" value={detailVoter.age ?? '-'} suffix="thn" accent />
-                                <InfoTile label="UDM" value={detailVoter.dm || '-'} />
-                                <InfoTile label="Lokaliti" value={detailVoter.locality || '-'} />
+                                {!formState.udm && <InfoTile label="UDM" value={detailVoter.dm || '-'} />}
+                                {!formState.locality && <InfoTile label="Lokaliti" value={detailVoter.locality || '-'} />}
                             </div>
                             {(() => {
                                 const dv = detailVoter;
