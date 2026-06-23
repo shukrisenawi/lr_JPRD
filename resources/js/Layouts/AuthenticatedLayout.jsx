@@ -193,24 +193,40 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' border-t border-green-200 bg-white sm:hidden'}>
                     {!mustChangePassword && (
                     <div className="space-y-0.5 px-2 py-2">
-                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Laporan</div>
-                        {canAccess('laporan') && <ResponsiveNavLink href={route('laporan.index')} active={route().current('laporan.*')} variant={variant}>Laporan</ResponsiveNavLink>}
-                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pemilih</div>
-                        {canAccess('carian-pemilih') && <ResponsiveNavLink href={route('carian-pemilih.index')} active={route().current('carian-pemilih.*')} variant={variant}>Carian Pemilih</ResponsiveNavLink>}
-                        {canAccess('tambah-pemilih') && <ResponsiveNavLink href={route('tambah-pemilih.index')} active={route().current('tambah-pemilih.*')} variant={variant}>Tambah Pemilih</ResponsiveNavLink>}
-                        {canAccess('group-pemilih') && <ResponsiveNavLink href={route('group-pemilih.index')} active={route().current('group-pemilih.*')} variant={variant}>Group Pemilih</ResponsiveNavLink>}
-                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Operasi</div>
-                        {canAccess('dashboard') && <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')} variant={variant}>Cula Manual</ResponsiveNavLink>}
-                        {canAccess('program') && <ResponsiveNavLink href={route('program.index')} active={route().current('program.*')} variant={variant}>Program</ResponsiveNavLink>}
-                        {canAccess('culaan') && <ResponsiveNavLink href={route('culaan.index')} active={route().current('culaan.*')} variant={variant}>Culaan</ResponsiveNavLink>}
-                        {canAccess('culaan-bot') && <ResponsiveNavLink href={route('culaan-bot.index')} active={route().current('culaan-bot.*')} variant={variant}>Culaan Bot</ResponsiveNavLink>}
-                        {canAccess('vcc') && <ResponsiveNavLink href={route('vcc.index')} active={route().current('vcc.*')} variant={variant}>VCC</ResponsiveNavLink>}
-                        {canAccess('kad-ten') && <ResponsiveNavLink href={route('kad-ten.index')} active={route().current('kad-ten.*')} variant={variant}>Kad 10</ResponsiveNavLink>}
-                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
-                        {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index')} active={route().current('jawatankuasa.*')} variant={variant}>Jawatankuasa</ResponsiveNavLink>}
-                        {canAccess('jawatankuasa.laporan') && <ResponsiveNavLink href={route('jawatankuasa.laporan')} active={route().current('jawatankuasa.laporan')} variant={variant}>Senarai AJK</ResponsiveNavLink>}
-                        {canAccess('settings') && <ResponsiveNavLink href={route('settings.edit')} active={route().current('settings.edit')} variant={variant}>Settings</ResponsiveNavLink>}
-                        {isMasterAdmin && <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>}
+                        {canAccess('laporan') && (
+                            <>
+                                <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Laporan</div>
+                                <ResponsiveNavLink href={route('laporan.index')} active={route().current('laporan.*')} variant={variant}>Laporan</ResponsiveNavLink>
+                            </>
+                        )}
+                        {(canAccess('carian-pemilih') || canAccess('tambah-pemilih') || canAccess('group-pemilih')) && (
+                            <>
+                                <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pemilih</div>
+                                {canAccess('carian-pemilih') && <ResponsiveNavLink href={route('carian-pemilih.index')} active={route().current('carian-pemilih.*')} variant={variant}>Carian Pemilih</ResponsiveNavLink>}
+                                {canAccess('tambah-pemilih') && <ResponsiveNavLink href={route('tambah-pemilih.index')} active={route().current('tambah-pemilih.*')} variant={variant}>Tambah Pemilih</ResponsiveNavLink>}
+                                {canAccess('group-pemilih') && <ResponsiveNavLink href={route('group-pemilih.index')} active={route().current('group-pemilih.*')} variant={variant}>Group Pemilih</ResponsiveNavLink>}
+                            </>
+                        )}
+                        {(canAccess('dashboard') || canAccess('program') || canAccess('culaan') || canAccess('culaan-bot') || canAccess('vcc') || canAccess('kad-ten')) && (
+                            <>
+                                <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Operasi</div>
+                                {canAccess('dashboard') && <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')} variant={variant}>Cula Manual</ResponsiveNavLink>}
+                                {canAccess('program') && <ResponsiveNavLink href={route('program.index')} active={route().current('program.*')} variant={variant}>Program</ResponsiveNavLink>}
+                                {canAccess('culaan') && <ResponsiveNavLink href={route('culaan.index')} active={route().current('culaan.*')} variant={variant}>Culaan</ResponsiveNavLink>}
+                                {canAccess('culaan-bot') && <ResponsiveNavLink href={route('culaan-bot.index')} active={route().current('culaan-bot.*')} variant={variant}>Culaan Bot</ResponsiveNavLink>}
+                                {canAccess('vcc') && <ResponsiveNavLink href={route('vcc.index')} active={route().current('vcc.*')} variant={variant}>VCC</ResponsiveNavLink>}
+                                {canAccess('kad-ten') && <ResponsiveNavLink href={route('kad-ten.index')} active={route().current('kad-ten.*')} variant={variant}>Kad 10</ResponsiveNavLink>}
+                            </>
+                        )}
+                        {(canAccess('jawatankuasa') || canAccess('jawatankuasa.laporan') || canAccess('settings') || isMasterAdmin) && (
+                            <>
+                                <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Pentadbiran</div>
+                                {canAccess('jawatankuasa') && <ResponsiveNavLink href={route('jawatankuasa.index')} active={route().current('jawatankuasa.*')} variant={variant}>Jawatankuasa</ResponsiveNavLink>}
+                                {canAccess('jawatankuasa.laporan') && <ResponsiveNavLink href={route('jawatankuasa.laporan')} active={route().current('jawatankuasa.laporan')} variant={variant}>Senarai AJK</ResponsiveNavLink>}
+                                {canAccess('settings') && <ResponsiveNavLink href={route('settings.edit')} active={route().current('settings.edit')} variant={variant}>Settings</ResponsiveNavLink>}
+                                {isMasterAdmin && <ResponsiveNavLink href={route('admin.access.index')} active={route().current('admin.access.*')} variant={variant}>Akses Pengguna</ResponsiveNavLink>}
+                            </>
+                        )}
                     </div>
                     )}
                     <div className="border-t border-green-100 px-3 py-2">

@@ -74,12 +74,13 @@ class AuthenticatedSessionController extends Controller
     {
         $user = $request->user();
         $moduleRoutes = [
-            'dashboard' => 'dashboard',
             'laporan' => 'laporan.index',
+            'dashboard' => 'dashboard',
             'carian-pemilih' => 'carian-pemilih.index',
             'program' => 'program.index',
             'jawatankuasa' => 'jawatankuasa.index',
             'culaan' => 'culaan.index',
+            'culaan-bot' => 'culaan-bot.index',
             'settings' => 'settings.edit',
         ];
 
