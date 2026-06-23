@@ -269,6 +269,32 @@ class CulaanController extends Controller
         return response()->json(['voters' => $voters]);
     }
 
+    public function searchByRumahAlamat(PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $noRumah = trim((string) $pemilihRecord->no_rumah);
+        $locality = trim((string) $pemilihRecord->locality);
+        $address = trim((string) $pemilihRecord->address);
+        if ($noRumah === '' || $noRumah === '-' || $locality === '' || $address === '') {
+            return response()->json(['voters' => []]);
+        }
+
+        $voters = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
+            ->with('culaWorkItem.marker')
+            ->where('no_rumah', $noRumah)
+            ->where('locality', $locality)
+            ->where('address', $address)
+            ->where('id', '!=', $pemilihRecord->id)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
+            ->values();
+
+        return response()->json(['voters' => $voters]);
+    }
+
     public function destroyMark(Request $request, PemilihRecord $pemilihRecord): RedirectResponse|JsonResponse
     {
         CulaWorkItem::query()
@@ -408,6 +434,30 @@ class CulaanController extends Controller
                 $q->whereRaw($countSql . ' BETWEEN 2 AND 10', $bindings);
             });
         });
+
+        $query->when($filters['filter_rumah_alamat'], function (Builder $b) use ($user) {
+            $b->whereExists(function ($q) use ($user) {
+                $q->selectRaw(1)
+                    ->from('pemilih_records', 'pr2')
+                    ->whereColumn('pr2.no_rumah', 'pemilih_records.no_rumah')
+                    ->whereColumn('pr2.locality', 'pemilih_records.locality')
+                    ->whereColumn('pr2.address', 'pemilih_records.address')
+                    ->whereColumn('pr2.id', '!=', 'pemilih_records.id')
+                    ->where('pr2.status', 'aktif')
+                    ->where('pr2.is_manual', false)
+                    ->whereNotNull('pr2.no_rumah')
+                    ->where('pr2.no_rumah', '!=', '')
+                    ->where('pr2.no_rumah', '!=', '-')
+                    ->whereNotNull('pr2.address')
+                    ->where('pr2.address', '!=', '');
+                $user?->applyScopeToPemilihQuery($q);
+            })
+            ->whereNotNull('no_rumah')
+            ->where('no_rumah', '!=', '')
+            ->where('no_rumah', '!=', '-')
+            ->whereNotNull('address')
+            ->where('address', '!=', '');
+        });
     }
 
     private function resolveGroupKodCulas(?int $groupId): ?array
@@ -536,6 +586,7 @@ class CulaanController extends Controller
             'has_phone' => $request->boolean('has_phone'),
             'filter_rumah' => $request->boolean('filter_rumah'),
             'filter_alamat' => $request->boolean('filter_alamat'),
+            'filter_rumah_alamat' => $request->boolean('filter_rumah_alamat'),
             'show_all' => $request->boolean('show_all'),
         ];
     }

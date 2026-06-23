@@ -323,7 +323,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const closeDetail = () => {
         setDetailVoter(null);
         setShowAddressPopup(true);
-        if (popupSourceRef.current === 'rumah' && lastRumahVoterRef.current) {
+        if (popupSourceRef.current === 'rumah_alamat' && lastRumahAlamatVoterRef.current) {
+            loadRumahAlamatVoters(lastRumahAlamatVoterRef.current);
+        } else if (popupSourceRef.current === 'rumah' && lastRumahVoterRef.current) {
             loadRumahVoters(lastRumahVoterRef.current);
         } else if (popupSourceRef.current === 'alamat' && lastAddressVoterRef.current) {
             loadAddressVoters(lastAddressVoterRef.current);
@@ -356,6 +358,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const addressPopupVoterName = useRef('');
     const lastRumahVoterRef = useRef(null);
     const lastAddressVoterRef = useRef(null);
+    const lastRumahAlamatVoterRef = useRef(null);
     const popupSourceRef = useRef('');
 
     const savePreference = (key, value) => {
@@ -380,6 +383,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         umur_hingga: filters.umur_hingga ?? '',
         filter_rumah: Boolean(filters.filter_rumah),
         filter_alamat: Boolean(filters.filter_alamat),
+        filter_rumah_alamat: Boolean(filters.filter_rumah_alamat ?? false),
         show_all: Boolean(filters.show_all),
     });
 
@@ -397,11 +401,12 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             umur_hingga: filters.umur_hingga ?? '',
             filter_rumah: Boolean(filters.filter_rumah),
             filter_alamat: Boolean(filters.filter_alamat),
+            filter_rumah_alamat: Boolean(filters.filter_rumah_alamat ?? false),
             show_all: Boolean(filters.show_all),
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error, filters.filter_rumah, filters.filter_alamat, filters.show_all]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error, filters.filter_rumah, filters.filter_alamat, filters.filter_rumah_alamat, filters.show_all]);
 
-    const hasFilterValue = Boolean(formState.udm || formState.locality || formState.group_id === 'custom' || (formState.group_id && formState.group_id !== 'custom' && formState.group_id !== '') || formState.show_marked || formState.filter_rumah || formState.filter_alamat || formState.show_all || (formState.cula_codes?.length) || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
+    const hasFilterValue = Boolean(formState.udm || formState.locality || formState.group_id === 'custom' || (formState.group_id && formState.group_id !== 'custom' && formState.group_id !== '') || formState.show_marked || formState.filter_rumah || formState.filter_alamat || formState.filter_rumah_alamat || formState.show_all || (formState.cula_codes?.length) || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
 
     useEffect(() => {
         if (filters.data_error) {
@@ -497,6 +502,30 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         applyFilters(nextState);
     };
 
+    const handleFilterRumah = (checked) => {
+        const nextState = { ...formState, filter_rumah: checked };
+        if (checked && nextState.filter_rumah_alamat) nextState.filter_rumah_alamat = false;
+        setFormState(nextState);
+        applyFilters(nextState);
+    };
+
+    const handleFilterAlamat = (checked) => {
+        const nextState = { ...formState, filter_alamat: checked };
+        if (checked && nextState.filter_rumah_alamat) nextState.filter_rumah_alamat = false;
+        setFormState(nextState);
+        applyFilters(nextState);
+    };
+
+    const handleFilterRumahAlamat = (checked) => {
+        const nextState = { ...formState, filter_rumah_alamat: checked };
+        if (checked) {
+            nextState.filter_rumah = false;
+            nextState.filter_alamat = false;
+        }
+        setFormState(nextState);
+        applyFilters(nextState);
+    };
+
     const doSearch = async (value) => {
         setSearch(value);
         setSearchError('');
@@ -524,6 +553,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             umur_hingga: formState.umur_hingga ?? '',
             filter_rumah: formState.filter_rumah ? '1' : '0',
             filter_alamat: formState.filter_alamat ? '1' : '0',
+            filter_rumah_alamat: formState.filter_rumah_alamat ? '1' : '0',
             show_all: formState.show_all ? '1' : '0',
         });
         (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
@@ -596,6 +626,29 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         setDetailVoter(null);
         try {
             const res = await fetch(route('culaan.rumah', voter.id), {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) throw new Error('Gagal');
+            const data = await res.json();
+            setAddressVoters(data.voters ?? []);
+        } catch {
+            setAddressVoters([]);
+        } finally {
+            setLoadingAddress(false);
+        }
+    };
+
+    const loadRumahAlamatVoters = async (voter) => {
+        if (!voter.no_rumah || voter.no_rumah === '-' || !voter.locality || !voter.address) return;
+        lastRumahAlamatVoterRef.current = voter;
+        popupSourceRef.current = 'rumah_alamat';
+        setLoadingAddress(true);
+        setShowAddressPopup(true);
+        addressPopupVoterName.current = voter.name;
+        setAddressPopupTitle(`No. Rumah & Alamat Sama`);
+        setDetailVoter(null);
+        try {
+            const res = await fetch(route('culaan.rumah-alamat', voter.id), {
                 headers: { Accept: 'application/json' },
             });
             if (!res.ok) throw new Error('Gagal');
@@ -1305,15 +1358,23 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </label>
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" checked={formState.filter_rumah}
-                                        onChange={(e) => updateFilter('filter_rumah', e.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                        onChange={(e) => handleFilterRumah(e.target.checked)}
+                                        disabled={formState.filter_rumah_alamat}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500 disabled:opacity-40" />
                                     <span className="text-xs font-bold text-slate-600">Sama No. Rumah</span>
                                 </label>
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" checked={formState.filter_alamat}
-                                        onChange={(e) => updateFilter('filter_alamat', e.target.checked)}
-                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                        onChange={(e) => handleFilterAlamat(e.target.checked)}
+                                        disabled={formState.filter_rumah_alamat}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500 disabled:opacity-40" />
                                     <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
+                                </label>
+                                <label className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={formState.filter_rumah_alamat}
+                                        onChange={(e) => handleFilterRumahAlamat(e.target.checked)}
+                                        className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                    <span className="text-xs font-bold text-slate-600">Sama No & Alamat</span>
                                 </label>
                                 <label className="inline-flex items-center gap-2 cursor-pointer">
                                     <input type="checkbox" checked={formState.show_all}
@@ -2247,6 +2308,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     </button>
                                 );
                             })()}
+                            {detailVoter.no_rumah && detailVoter.no_rumah !== '-' && detailVoter.address && (
+                                <button type="button"
+                                    onClick={() => { loadRumahAlamatVoters(detailVoter); }}
+                                    className="flex w-8 items-center justify-center rounded border border-slate-200 bg-white py-1.5 text-slate-400 shadow-sm transition hover:border-rose-300 hover:text-rose-600"
+                                    title="Sama No & Alamat">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                                </button>
+                            )}
                             {!detailVoter.is_marked ? (
                                 <>
                                     {culaSemulaIds.has(detailVoter.id) ? (
