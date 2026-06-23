@@ -473,7 +473,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         });
         if (!target) return;
         const el = document.getElementById(`voter-${target.id}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            el.classList.add('ring-2', 'ring-emerald-400', 'ring-offset-1');
+            setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-400', 'ring-offset-1'), 1200);
+        }
     };
 
     const clearAllFilters = () => {
@@ -647,6 +651,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 const avatarWrapClass = done ? 'opacity-60 grayscale' : '';
                                 return (
                                     <button key={voter.id} id={`voter-${voter.id}`} type="button" onClick={() => { markActive(voter.id); setDetailVoter(voter); }}
+                                        style={{ scrollMarginTop: '12rem' }}
                                         className={`group relative flex w-full items-center gap-2.5 overflow-hidden rounded-2xl border p-2.5 text-left transition active:scale-[0.98] ${cardClass}`}>
                                         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white' : 'bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700')}`}>
                                             {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
@@ -856,11 +861,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         </div>
                         )}
                     {search.trim().length < 2 && viewMode === 'list' && rows.length > 0 && (
-                        <div className="sticky bottom-3 z-10 mt-3 flex justify-center px-1 sm:hidden">
-                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-2xl border border-emerald-200 bg-white/95 px-2 py-1.5 shadow-lg shadow-emerald-500/20 backdrop-blur">
+                        <div className="fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 sm:hidden" style={{ pointerEvents: 'none' }}>
+                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-2xl border border-emerald-200 bg-white/95 px-2 py-1.5 shadow-2xl shadow-emerald-900/30 backdrop-blur" style={{ pointerEvents: 'auto' }}>
                                 {alphabetIndex.map((letter) => (
-                                    <button key={letter} type="button" onClick={() => jumpToLetter(letter)}
-                                        className="flex h-7 w-6 shrink-0 items-center justify-center rounded-lg text-[10px] font-black text-emerald-700 transition active:scale-90 hover:bg-emerald-100">
+                                    <button key={letter} type="button" onClick={() => jumpToLetter(letter)} title={`Pergi ke huruf ${letter}`}
+                                        className="flex h-8 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-black text-emerald-700 transition active:scale-90 hover:bg-emerald-500 hover:text-white">
                                         {letter}
                                     </button>
                                 ))}
