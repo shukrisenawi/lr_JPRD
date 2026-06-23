@@ -261,8 +261,26 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
         const groups = {};
         users.forEach((u) => {
             const lvl = u.access_level ?? 'jprd';
-            if (!groups[lvl]) groups[lvl] = [];
-            groups[lvl].push(u);
+            const roleKey = u.role?.id ?? 'tanpa-role';
+            if (!groups[lvl]) groups[lvl] = { groups: {}, order: [] };
+            if (!groups[lvl].groups[roleKey]) {
+                groups[lvl].groups[roleKey] = {
+                    role: u.role ?? null,
+                    users: [],
+                };
+                groups[lvl].order.push(roleKey);
+            }
+            groups[lvl].groups[roleKey].users.push(u);
+        });
+        Object.values(groups).forEach((lvlData) => {
+            lvlData.order.sort((a, b) => {
+                const ra = lvlData.groups[a].role;
+                const rb = lvlData.groups[b].role;
+                const aMaster = ra?.is_master_admin ? 1 : 0;
+                const bMaster = rb?.is_master_admin ? 1 : 0;
+                if (aMaster !== bMaster) return bMaster - aMaster;
+                return (ra?.name ?? '').localeCompare(rb?.name ?? '');
+            });
         });
         return groups;
     }, [users]);
@@ -324,17 +342,36 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                             <h3 className="mt-0.5 text-sm font-bold text-slate-950">Akaun sedia ada</h3>
                             <div className="mt-3 space-y-4">
                                 {levelOrder.map((lvl) => {
-                                    const list = groupedUsers[lvl];
-                                    if (!list?.length) return null;
+                                    const lvlData = groupedUsers[lvl];
+                                    if (!lvlData?.order?.length) return null;
                                     const meta = levelMeta[lvl];
+                                    const totalInLvl = lvlData.order.reduce((sum, k) => sum + lvlData.groups[k].users.length, 0);
                                     return (
-                                        <div key={lvl}>
-                                            <div className="mb-2 flex items-center gap-2">
+                                        <div key={lvl} className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50/60 to-white p-3">
+                                            <div className="mb-3 flex items-center gap-2">
                                                 <span className={'inline-block rounded-md px-2 py-0.5 text-xs font-bold ' + meta.bg + ' ' + meta.text}>{meta.label}</span>
-                                                <span className="text-xs text-slate-400">({list.length} pengguna)</span>
+                                                <span className="text-xs text-slate-500">({totalInLvl} pengguna · {lvlData.order.length} kumpulan)</span>
                                             </div>
-                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                                {list.map((u) => <UserCard key={u.id} user={u} roles={roles} currentUserId={myId} udms={udms} cawangans={cawangans} />)}
+                                            <div className="space-y-3">
+                                                {lvlData.order.map((roleKey) => {
+                                                    const grp = lvlData.groups[roleKey];
+                                                    const roleName = grp.role?.name ?? 'Tiada Kumpulan';
+                                                    const isMaster = grp.role?.is_master_admin;
+                                                    return (
+                                                        <div key={roleKey} className="rounded-lg border border-emerald-100 bg-white p-3 shadow-sm">
+                                                            <div className="mb-2 flex items-center gap-2">
+                                                                <Icon name={isMaster ? 'crown' : 'shield'} className="h-3.5 w-3.5 text-emerald-700" />
+                                                                <span className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-black uppercase tracking-wider ${isMaster ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700'}`}>
+                                                                    {roleName}
+                                                                </span>
+                                                                <span className="text-xs text-slate-400">({grp.users.length} pengguna)</span>
+                                                            </div>
+                                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                                                {grp.users.map((u) => <UserCard key={u.id} user={u} roles={roles} currentUserId={myId} udms={udms} cawangans={cawangans} />)}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     );

@@ -58,6 +58,7 @@ class AccessManagementController extends Controller
                             'id' => $user->role->id,
                             'name' => $user->role->name,
                             'slug' => $user->role->slug,
+                            'is_master_admin' => (bool) $user->role->is_master_admin,
                         ]
                         : null,
                 ])
