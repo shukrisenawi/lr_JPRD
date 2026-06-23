@@ -615,7 +615,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         <ToggleTile label="Siap Cula" icon="check" iconColor="emerald" active={showMarked} onToggle={toggleShowMarked} />
                                         <ToggleTile label="Sama Rumah" icon="home" iconColor="blue" active={filterRumah} onToggle={toggleFilterRumah} />
                                         <ToggleTile label="Sama Alamat" icon="map" iconColor="amber" active={filterAlamat} onToggle={toggleFilterAlamat} />
-                                        <ToggleTile label="No & Alamat" icon="target" iconColor="rose" active={filterRumahAlamat} onToggle={toggleFilterRumahAlamat} />
+                                        <ToggleTile label="Sama No & Alamat" icon="target" iconColor="rose" active={filterRumahAlamat} onToggle={toggleFilterRumahAlamat} />
                                         <ToggleTile label="Semua Pemilih" icon="list" iconColor="slate" active={showAll} onToggle={toggleShowAll} />
                                     </div>
                                 </div>
