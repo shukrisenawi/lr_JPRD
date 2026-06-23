@@ -474,7 +474,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         if (!target) return;
         const el = document.getElementById(`voter-${target.id}`);
         if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            try {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (e) {
+                window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
+            }
             el.classList.add('ring-2', 'ring-emerald-400', 'ring-offset-1');
             setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-400', 'ring-offset-1'), 1200);
         }
@@ -853,11 +857,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         </div>
                         )}
                     {search.trim().length < 2 && viewMode === 'list' && rows.length > 0 && (
-                        <div className="fixed inset-x-0 bottom-3 z-30 flex justify-center px-3 sm:hidden" style={{ pointerEvents: 'none' }}>
-                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-2xl border border-emerald-200 bg-white/95 px-2 py-1.5 shadow-2xl shadow-emerald-900/30 backdrop-blur" style={{ pointerEvents: 'auto' }}>
+                        <div className="fixed inset-x-0 bottom-3 z-40 flex justify-center px-3 sm:hidden">
+                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-2xl border border-emerald-200 bg-white/95 px-2 py-1.5 shadow-2xl shadow-emerald-900/30 backdrop-blur">
                                 {alphabetIndex.map((letter) => (
-                                    <button key={letter} type="button" onClick={() => jumpToLetter(letter)} title={`Pergi ke huruf ${letter}`}
-                                        className="flex h-8 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-black text-emerald-700 transition active:scale-90 hover:bg-emerald-500 hover:text-white">
+                                    <button key={letter} type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); jumpToLetter(letter); }} title={`Pergi ke huruf ${letter}`}
+                                        className="flex h-8 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[11px] font-black text-emerald-700 transition active:scale-90 hover:bg-emerald-500 hover:text-white">
                                         {letter}
                                     </button>
                                 ))}
@@ -877,7 +881,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             )}
 
             {detailVoter && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
                     <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
                         <button type="button" onClick={closeDetail}
