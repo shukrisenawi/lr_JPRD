@@ -352,7 +352,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         return auth.user?.preferences?.culaan_view_mode ?? 'table';
     });
     const [filterOpen, setFilterOpen] = useState(false);
-    const hasFilterValue = Boolean(formState.udm || formState.locality || (formState.group_id && formState.group_id !== 'custom') || formState.group_id === 'custom' || formState.show_marked || formState.filter_rumah || formState.filter_alamat || formState.cula_codes?.length || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
     const jadualBaselineRef = useRef(null);
     const addressPopupVoterName = useRef('');
     const lastRumahVoterRef = useRef(null);
@@ -399,6 +398,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             filter_alamat: Boolean(filters.filter_alamat),
         });
     }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error, filters.filter_rumah, filters.filter_alamat]);
+
+    const hasFilterValue = Boolean(formState.udm || formState.locality || formState.group_id === 'custom' || (formState.group_id && formState.group_id !== 'custom' && formState.group_id !== '') || formState.show_marked || formState.filter_rumah || formState.filter_alamat || (formState.cula_codes?.length) || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
 
     useEffect(() => {
         if (filters.data_error) {
