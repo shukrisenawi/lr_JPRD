@@ -212,12 +212,13 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const closeDetail = () => {
         setDetailVoter(null);
         if (fromAddressPopup.current) {
-            setShowAddressPopup(true);
             fromAddressPopup.current = false;
-            if (popupSourceRef.current === 'rumah' && lastRumahVoterRef.current) {
-                loadRumahVoters(lastRumahVoterRef.current);
-            } else if (popupSourceRef.current === 'alamat' && lastAddressVoterRef.current) {
-                loadAddressVoters(lastAddressVoterRef.current);
+            const isRumah = popupSourceRef.current === 'rumah' && lastRumahVoterRef.current;
+            const isAlamat = popupSourceRef.current === 'alamat' && lastAddressVoterRef.current;
+            if (isRumah || isAlamat) {
+                setShowAddressPopup(true);
+                if (isRumah) loadRumahVoters(lastRumahVoterRef.current);
+                else loadAddressVoters(lastAddressVoterRef.current);
             }
         }
     };
