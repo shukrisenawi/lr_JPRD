@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import CropModal from '@/Components/CropModal';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
 function fmt(v) { return nf.format(v ?? 0); }
@@ -461,35 +461,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo || showAll;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
-    const alphabetIndex = useMemo(() => {
-        const present = new Set();
-        rows.forEach((v) => {
-            const first = (v.name || '').trim().charAt(0).toUpperCase();
-            if (/[A-Z]/.test(first)) present.add(first);
-            else present.add('#');
-        });
-        const fullAlphabet = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-        return fullAlphabet.filter((letter) => present.has(letter));
-    }, [rows]);
-
-    const jumpToLetter = (letter) => {
-        const target = rows.find((v) => {
-            const first = (v.name || '').trim().charAt(0).toUpperCase();
-            return letter === '#' ? !/[A-Z]/.test(first) : first === letter;
-        });
-        if (!target) return;
-        const el = document.getElementById(`voter-${target.id}`);
-        if (el) {
-            try {
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } catch (e) {
-                window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
-            }
-            el.classList.add('ring-2', 'ring-emerald-400', 'ring-offset-1');
-            setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-400', 'ring-offset-1'), 1200);
-        }
-    };
-
     const clearAllFilters = () => {
         setShowMarked(false);
         setFilterRumah(false);
@@ -862,18 +833,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             })}
                         </div>
                         )}
-                    {search.trim().length < 2 && viewMode === 'list' && rows.length > 0 && (
-                        <div className="fixed inset-x-0 bottom-3 z-40 flex justify-center px-3 sm:hidden">
-                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-2xl border border-emerald-200 bg-white/95 px-2 py-1.5 shadow-2xl shadow-emerald-900/30 backdrop-blur">
-                                {alphabetIndex.map((letter) => (
-                                    <button key={letter} type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); jumpToLetter(letter); }} title={`Pergi ke huruf ${letter}`}
-                                        className="flex h-8 w-7 shrink-0 cursor-pointer items-center justify-center rounded-lg text-[11px] font-black text-emerald-700 transition active:scale-90 hover:bg-emerald-500 hover:text-white">
-                                        {letter}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
                     {search.trim().length < 2 && (
                         <Pagination voters={localVoters} onNavigate={goToPage} />
                     )}
