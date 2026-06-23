@@ -882,7 +882,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
             {detailVoter && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
-                    <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                    <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl shadow-slate-900/30" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
                         <button type="button" onClick={closeDetail}
                             className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
@@ -1068,7 +1068,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
             {showAddressPopup && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }} onKeyDown={(e) => { if (e.key === 'Escape') { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); } }} role="presentation">
-                    <div className="relative w-full max-w-lg overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+                    <div className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl shadow-slate-900/30" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
                         <div className="relative bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600 px-5 pb-5 pt-4">
                             <button type="button" onClick={() => { const prev = previousDetailVoter.current; previousDetailVoter.current = null; if (prev) { setDetailVoter(prev); } setShowAddressPopup(false); setAddressVoters([]); }}
                                 className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
