@@ -885,8 +885,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                         <div className="relative px-5 pt-5 pb-4">
-                            <div className="flex items-end gap-3">
-                                <div className="relative shrink-0">
+                            <div className="flex items-end gap-3 min-h-[5rem]">
+                                <div className="relative shrink-0 h-16 w-16">
                                     {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) && (
                                         <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
                                             className="h-16 w-16 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
@@ -898,11 +898,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         </span>
                                     )}
                                 </div>
-                                <div className="min-w-0 flex-1 pb-1">
+                                <div className="min-w-0 flex-1 self-end pb-1">
                                     <h3 className="line-clamp-2 text-lg font-black leading-tight text-white drop-shadow-sm">{detailVoter.name}</h3>
-                                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-xs font-black text-slate-800 shadow-sm">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 text-emerald-700"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2M15 12h2M7 16h10"/></svg>
-                                        {detailVoter.no_kp || detailVoter.old_ic || '-'}
+                                    <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-xs font-black text-slate-800 shadow-sm">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 shrink-0 text-emerald-700"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2M15 12h2M7 16h10"/></svg>
+                                        <span className="truncate">{detailVoter.no_kp || detailVoter.old_ic || '-'}</span>
                                     </span>
                                 </div>
                             </div>
