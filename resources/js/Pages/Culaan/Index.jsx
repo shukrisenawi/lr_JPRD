@@ -1385,7 +1385,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                 {(() => {
                     const tabs = [];
-                    if (canSenarai) tabs.push({ k: 'senarai', l: 'Senarai Belum Cula' });
+                    if (canSenarai) tabs.push({ k: 'senarai', l: 'Senarai Pemilih' });
                     if (canSenarai && data_error_count > 0) tabs.push({ k: 'data_error', l: `Data Error (${data_error_count})` });
                     if (canLaporan) tabs.push({ k: 'laporan', l: 'Laporan (Graf)' });
                     if (canJadual) tabs.push({ k: 'jadual', l: 'Laporan (Jadual)' });
