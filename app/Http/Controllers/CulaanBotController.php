@@ -194,16 +194,22 @@ class CulaanBotController extends Controller
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
         $query->when(
-            $filters['show_marked'],
-            fn (Builder $b) => $b->whereHas('culaWorkItem'),
-            fn (Builder $b) => $b->whereDoesntHave('culaWorkItem')
-                ->where(function (Builder $q) {
-                    $q->whereNull('cula_code')
-                      ->orWhere('cula_code', '')
-                      ->orWhere('cula_code', '?')
-                      ->orWhere('cula_code', 'TIADA')
-                      ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
-                })
+            $filters['show_all'],
+            fn (Builder $b) => $b,
+            function (Builder $b) use ($filters) {
+                $b->when(
+                    $filters['show_marked'],
+                    fn (Builder $sub) => $sub->whereHas('culaWorkItem'),
+                    fn (Builder $sub) => $sub->whereDoesntHave('culaWorkItem')
+                        ->where(function (Builder $q) {
+                            $q->whereNull('cula_code')
+                              ->orWhere('cula_code', '')
+                              ->orWhere('cula_code', '?')
+                              ->orWhere('cula_code', 'TIADA')
+                              ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                        })
+                );
+            }
         );
 
         $query->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
@@ -391,6 +397,7 @@ class CulaanBotController extends Controller
             'age_to' => trim((string) $request->query('age_to', '')),
             'filter_rumah' => $request->boolean('filter_rumah'),
             'filter_alamat' => $request->boolean('filter_alamat'),
+            'show_all' => $request->boolean('show_all'),
         ];
     }
 

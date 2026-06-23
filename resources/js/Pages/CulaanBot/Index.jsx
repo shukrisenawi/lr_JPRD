@@ -140,6 +140,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [showMarked, setShowMarked] = useState(Boolean(filters.show_marked));
     const [filterRumah, setFilterRumah] = useState(Boolean(filters.filter_rumah));
     const [filterAlamat, setFilterAlamat] = useState(Boolean(filters.filter_alamat));
+    const [showAll, setShowAll] = useState(Boolean(filters.show_all));
     const [ageFrom, setAgeFrom] = useState(filters.age_from ?? '');
     const [ageTo, setAgeTo] = useState(filters.age_to ?? '');
     const [pendingIds, setPendingIds] = useState([]);
@@ -199,6 +200,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         show_marked: showMarked,
         filter_rumah: filterRumah,
         filter_alamat: filterAlamat,
+        show_all: showAll,
         age_from: ageFrom,
         age_to: ageTo,
     };
@@ -239,6 +241,12 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         const next = !filterAlamat;
         setFilterAlamat(next);
         applyFilters({ ...formState, filter_alamat: next });
+    };
+
+    const toggleShowAll = () => {
+        const next = !showAll;
+        setShowAll(next);
+        applyFilters({ ...formState, show_all: next });
     };
 
     const doSearch = async (value) => {
@@ -519,6 +527,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         <input type="checkbox" checked={filterAlamat} onChange={toggleFilterAlamat}
                                             className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
                                         <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
+                                    </label>
+                                    <label className="inline-flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" checked={showAll} onChange={toggleShowAll}
+                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
+                                        <span className="text-xs font-bold text-slate-600">Semua Pemilih</span>
                                     </label>
                                 </div>
                             </div>
