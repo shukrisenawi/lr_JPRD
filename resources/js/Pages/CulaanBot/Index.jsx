@@ -260,9 +260,15 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const goToPage = (page) => {
-        const el = document.getElementById('card-carian');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        applyFilters({ ...formState, page });
+        router.get(route('culaan-bot.index'), { ...formState, page }, {
+            preserveState: true,
+            preserveScroll: false,
+            replace: true,
+            onSuccess: () => {
+                const el = document.getElementById('card-carian');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            },
+        });
     };
 
     const updateFilter = (key, value) => {
