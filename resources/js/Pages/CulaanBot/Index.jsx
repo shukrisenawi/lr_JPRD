@@ -295,8 +295,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         const next = !filterRumahAlamat;
         setFilterRumahAlamat(next);
         setFilterRumah(false);
-        setFilterAlamat(false);
-        applyFilters({ ...formState, filter_rumah_alamat: next, filter_rumah: false, filter_alamat: false });
+        applyFilters({ ...formState, filter_rumah_alamat: next, filter_rumah: false });
     };
 
     const toggleShowAll = () => {
