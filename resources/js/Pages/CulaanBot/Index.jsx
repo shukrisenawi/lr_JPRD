@@ -1058,20 +1058,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     <span className="shrink-0 rounded-full bg-white/25 px-2.5 py-1 text-xs font-black text-white backdrop-blur">{addressVoters.length}</span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-3 text-white pr-12">
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    {addressPopupVoterName.current && (
-                                        <p className="truncate text-[10px] font-black uppercase tracking-[0.12em] text-white/80">{addressPopupVoterName.current}</p>
-                                    )}
-                                    <h3 className="truncate text-base font-black text-white drop-shadow-sm">{addressPopupTitle}</h3>
-                                </div>
-                                {!loadingAddress && addressVoters.length > 0 && (
-                                    <span className="shrink-0 rounded-full bg-white/25 px-2.5 py-1 text-xs font-black text-white backdrop-blur">{addressVoters.length}</span>
-                                )}
-                            </div>
                         </div>
                         <div className="max-h-[60vh] overflow-y-auto px-3 py-3">
                             {loadingAddress ? (
