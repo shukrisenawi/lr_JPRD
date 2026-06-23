@@ -879,34 +879,34 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             {detailVoter && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
                     <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-                        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
+                        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
                         <button type="button" onClick={closeDetail}
                             className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
-                        <div className="relative px-5 pt-5 pb-4">
-                            <div className="flex items-end gap-3 min-h-[5rem]">
-                                <div className="relative shrink-0 h-16 w-16">
+                        <div className="relative px-5 pt-4 pb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="relative shrink-0 h-14 w-14">
                                     {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) ? (
                                         <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
-                                            className="h-16 w-16 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
+                                            className="h-14 w-14 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
                                             onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
                                     ) : (
-                                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/60 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
-                                            title={detailVoter.is_manual ? 'Tambah gambar' : 'Tambah gambar'}>
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 opacity-80">
+                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-dashed border-white/60 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                            title="Tambah gambar">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 opacity-80">
                                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                                 <circle cx="12" cy="7" r="4"/>
                                             </svg>
                                         </div>
                                     )}
                                     {detailVoter.is_marked && (
-                                        <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
+                                        <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
                                         </span>
                                     )}
                                 </div>
-                                <div className="min-w-0 flex-1 self-end pb-1">
+                                <div className="min-w-0 flex-1">
                                     <h3 className="line-clamp-2 text-lg font-black leading-tight text-white drop-shadow-sm">{detailVoter.name}</h3>
                                     <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-xs font-black text-slate-800 shadow-sm">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 shrink-0 text-emerald-700"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2M15 12h2M7 16h10"/></svg>
