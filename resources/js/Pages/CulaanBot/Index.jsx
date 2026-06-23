@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import CropModal from '@/Components/CropModal';
 import { Head, router, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
 function fmt(v) { return nf.format(v ?? 0); }
@@ -127,6 +127,66 @@ function Pagination({ voters, onNavigate }) {
                 </button>
             </div>
         </div>
+    );
+}
+
+function ChipIcon({ name }) {
+    const cls = 'h-3 w-3';
+    switch (name) {
+        case 'check':
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cls}><polyline points="20 6 9 17 4 12" /></svg>;
+        case 'home':
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cls}><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+        case 'map':
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cls}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>;
+        case 'list':
+            return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cls}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>;
+        default:
+            return null;
+    }
+}
+
+function FilterChip({ id, label, displayValue, clearable, onClear, children }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    useEffect(() => {
+        if (!open) return;
+        const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', onDoc);
+        return () => document.removeEventListener('mousedown', onDoc);
+    }, [open]);
+    return (
+        <div ref={ref} className="relative shrink-0">
+            <button type="button" onClick={() => setOpen((v) => !v)}
+                className={`inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-[11px] font-bold transition ${displayValue && displayValue !== 'Semua' ? 'border-green-300 bg-green-50 text-green-700' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:bg-green-50 hover:text-green-700'}`}>
+                <span className="text-[10px] uppercase tracking-wider opacity-70">{label}</span>
+                <span className="truncate max-w-[7rem]">{displayValue}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3 w-3 transition-transform ${open ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {clearable && (
+                <button type="button" onClick={onClear} title="Buang"
+                    className="absolute -right-1 -top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm hover:bg-red-600">
+                    ×
+                </button>
+            )}
+            {open && (
+                <div className="absolute left-0 top-full z-30 mt-1.5 min-w-[10rem] rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                    <div onClick={(e) => e.stopPropagation()}>
+                        {children}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function ToggleChip({ label, icon, active, onToggle, activeClass }) {
+    return (
+        <button type="button" onClick={onToggle}
+            className={`inline-flex h-7 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[11px] font-bold transition ${active ? activeClass : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
+            <ChipIcon name={icon} />
+            {label}
+        </button>
     );
 }
 
@@ -418,9 +478,45 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
 
-    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo));
-    const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo;
+    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo || showAll));
+    const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || ageFrom || ageTo || showAll;
     const shouldPromptUdm = !filters.udm && !filters.locality;
+
+    const alphabetIndex = useMemo(() => {
+        const letters = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        return letters.split('');
+    }, []);
+
+    const jumpToLetter = (letter) => {
+        const target = rows.find((v) => {
+            const first = (v.name || '').trim().charAt(0).toUpperCase();
+            return letter === '#' ? !/[A-Z]/.test(first) : first === letter;
+        });
+        if (!target) return;
+        const el = document.getElementById(`voter-${target.id}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    const clearAllFilters = () => {
+        setShowMarked(false);
+        setFilterRumah(false);
+        setFilterAlamat(false);
+        setShowAll(false);
+        setAgeFrom('');
+        setAgeTo('');
+        setSearch('');
+        setSuggestions([]);
+        applyFilters({
+            udm: formState.udm,
+            locality: formState.locality,
+            show_marked: false,
+            filter_rumah: false,
+            filter_alamat: false,
+            show_all: false,
+            age_from: '',
+            age_to: '',
+        });
+    };
 
     return (
         <AuthenticatedLayout
@@ -436,202 +532,144 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         >
             <Head title="Culaan Bot" />
 
-            <div className="mx-auto max-w-2xl space-y-3 px-3 sm:px-4">
-                <section id="card-carian" className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
-                    <button type="button" onClick={() => setFilterOpen(!filterOpen)}
-                        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left">
-                        <div className="flex items-center gap-2">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-4 w-4 text-green-600 transition-transform duration-200 ${filterOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
-                            <span className="text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Carian</span>
+            <div className="mx-auto max-w-2xl space-y-2 px-2 sm:space-y-3 sm:px-4">
+                <section id="card-carian" className="sticky top-0 z-20 space-y-2 bg-slate-50/95 pt-1 pb-2 backdrop-blur sm:static sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                    <div className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20 overflow-hidden">
+                        <div className="relative">
+                            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base font-bold text-green-600">⌕</span>
+                            <input id="bot-search" value={search}
+                                onChange={(e) => doSearch(e.target.value)}
+                                onFocus={() => setFilterOpen(true)}
+                                className="w-full border-0 bg-white py-3 pl-10 pr-10 text-sm font-semibold text-slate-800 placeholder:text-xs placeholder:font-medium placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                                placeholder="Cari nama, no KP, telefon..."
+                            />
+                            {search ? (
+                                <button type="button" onClick={clearSearch}
+                                    className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-base font-bold text-green-700 transition hover:bg-green-100">
+                                    ×
+                                </button>
+                            ) : (
+                                <button type="button" onClick={() => setFilterOpen((v) => !v)}
+                                    className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 transition-transform duration-200 ${filterOpen ? 'rotate-180' : ''}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                            )}
                         </div>
-                        {!filterOpen && hasFilterValue && (
-                            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
-                                {filters.udm && <span>{filters.udm}</span>}
-                                {filters.locality && <span>{filters.locality}</span>}
-                                {showMarked && <span className="rounded bg-green-100 px-1 py-0.5 text-green-700">Siap Cula</span>}
-                                {filterRumah && <span className="rounded bg-blue-100 px-1 py-0.5 text-blue-700">Rumah</span>}
-                                {filterAlamat && <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-700">Alamat</span>}
-                            </div>
-                        )}
-                    </button>
-                    {filterOpen && (
-                        <div className="border-t border-green-100 px-4 pb-4 pt-3">
-                            <div className="flex flex-col gap-3">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label htmlFor="bot-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
-                                        <select id="bot-udm" value={formState.udm}
-                                            onChange={(e) => updateFilter('udm', e.target.value)}
-                                            className="input-field mt-1.5">
-                                            <option value="">Semua</option>
-                                            {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="bot-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
-                                        <select id="bot-locality" value={formState.locality}
-                                            onChange={(e) => updateFilter('locality', e.target.value)}
-                                            className="input-field mt-1.5">
-                                            <option value="">Semua</option>
-                                            {localities.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
-                                        </select>
-                                    </div>
+                        <div className="flex items-center gap-1 overflow-x-auto border-t border-slate-100 bg-slate-50/80 px-2 py-2">
+                            <FilterChip id="bot-udm" label="UDM" value={formState.udm} displayValue={formState.udm || 'Semua'} clearable={!!formState.udm} onClear={() => updateFilter('udm', '')}>
+                                <select id="bot-udm" value={formState.udm}
+                                    onChange={(e) => { updateFilter('udm', e.target.value); }}
+                                    className="w-full border-0 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-0">
+                                    <option value="">Semua UDM</option>
+                                    {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                </select>
+                            </FilterChip>
+                            <FilterChip id="bot-locality" label="Lokaliti" value={formState.locality} displayValue={formState.locality || 'Semua'} clearable={!!formState.locality} onClear={() => updateFilter('locality', '')}>
+                                <select id="bot-locality" value={formState.locality}
+                                    onChange={(e) => { updateFilter('locality', e.target.value); }}
+                                    className="w-full border-0 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-0">
+                                    <option value="">Semua Lokaliti</option>
+                                    {localities.map((loc) => <option key={loc} value={loc}>{loc}</option>)}
+                                </select>
+                            </FilterChip>
+                            <FilterChip id="bot-age" label="Umur" value={ageFrom || ageTo ? `${ageFrom || '0'}-${ageTo || '∞'}` : ''} displayValue={ageFrom || ageTo ? `${ageFrom || 0}-${ageTo || '∞'}` : 'Semua'} clearable={!!(ageFrom || ageTo)} onClear={() => { setAgeFrom(''); setAgeTo(''); applyFilters({ ...formState, age_from: '', age_to: '' }); }}>
+                                <div className="grid grid-cols-2 gap-2 p-2">
+                                    <input id="bot-age-from" type="number" min="0" max="150" value={ageFrom}
+                                        onChange={(e) => setAgeFrom(e.target.value)}
+                                        onBlur={(e) => updateFilter('age_from', e.target.value)}
+                                        className="input-field text-xs" placeholder="Dari" />
+                                    <input id="bot-age-to" type="number" min="0" max="150" value={ageTo}
+                                        onChange={(e) => setAgeTo(e.target.value)}
+                                        onBlur={(e) => updateFilter('age_to', e.target.value)}
+                                        className="input-field text-xs" placeholder="Hingga" />
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label htmlFor="bot-age-from" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dari Umur</label>
-                                        <input id="bot-age-from" type="number" min="0" max="150" value={ageFrom}
-                                            onChange={(e) => setAgeFrom(e.target.value)}
-                                            onBlur={(e) => updateFilter('age_from', e.target.value)}
-                                            className="input-field mt-1.5" placeholder="cth: 18"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="bot-age-to" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Sehingga Umur</label>
-                                        <input id="bot-age-to" type="number" min="0" max="150" value={ageTo}
-                                            onChange={(e) => setAgeTo(e.target.value)}
-                                            onBlur={(e) => updateFilter('age_to', e.target.value)}
-                                            className="input-field mt-1.5" placeholder="cth: 60"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label htmlFor="bot-search" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Cari Pemilih</label>
-                                    <div className="relative mt-1.5">
-                                        <input id="bot-search" value={search}
-                                            onChange={(e) => doSearch(e.target.value)}
-                                            className="input-field pr-10" placeholder="Nama, No Kp..."
-                                        />
-                                        {search ? (
-                                            <button type="button" onClick={clearSearch}
-                                                className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-green-50 text-green-700 transition hover:bg-green-100">
-                                                <span className="text-sm leading-none">×</span>
-                                            </button>
-                                        ) : (
-                                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-green-600">⌕</span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-4">
-                                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={showMarked} onChange={toggleShowMarked}
-                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                                        <span className="text-xs font-bold text-slate-600">Siap Cula</span>
-                                    </label>
-                                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={filterRumah} onChange={toggleFilterRumah}
-                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                                        <span className="text-xs font-bold text-slate-600">Sama No. Rumah</span>
-                                    </label>
-                                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={filterAlamat} onChange={toggleFilterAlamat}
-                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                                        <span className="text-xs font-bold text-slate-600">Sama Alamat</span>
-                                    </label>
-                                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                                        <input type="checkbox" checked={showAll} onChange={toggleShowAll}
-                                            className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
-                                        <span className="text-xs font-bold text-slate-600">Semua Pemilih</span>
-                                    </label>
-                                </div>
-                            </div>
-                            {actionError && <InputError className="mt-2" message={actionError} />}
-                            {searchError && <InputError className="mt-1" message={searchError} />}
+                            </FilterChip>
+                            <ToggleChip label="Siap" icon="check" active={showMarked} onToggle={toggleShowMarked} activeClass="bg-green-600 text-white border-green-600" />
+                            <ToggleChip label="Rumah" icon="home" active={filterRumah} onToggle={toggleFilterRumah} activeClass="bg-blue-600 text-white border-blue-600" />
+                            <ToggleChip label="Alamat" icon="map" active={filterAlamat} onToggle={toggleFilterAlamat} activeClass="bg-amber-600 text-white border-amber-600" />
+                            <ToggleChip label="Semua" icon="list" active={showAll} onToggle={toggleShowAll} activeClass="bg-slate-800 text-white border-slate-800" />
+                        </div>
+                    </div>
+                    {hasFilterValue && (
+                        <button type="button" onClick={clearAllFilters}
+                            className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 shadow-sm hover:border-red-300 hover:text-red-600">
+                            <span>×</span> Reset semua tapis
+                        </button>
+                    )}
+                    {(actionError || searchError) && (
+                        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                            {actionError || searchError}
                         </div>
                     )}
                 </section>
 
-                <div id="voter-count" className="flex items-center justify-between rounded-lg bg-white px-4 py-3 border border-green-600 shadow-sm shadow-green-600/20">
+                <div id="voter-count" className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-green-600 shadow-sm shadow-green-600/20">
                     <div className="flex items-center gap-1">
                         <button type="button" onClick={() => persistViewMode('list')}
-                            className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                            className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition ${viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                             Senarai
                         </button>
                         <button type="button" onClick={() => persistViewMode('card')}
-                            className={`rounded-md px-2.5 py-1 text-xs font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                            className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold transition ${viewMode === 'card' ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:bg-green-50 hover:text-green-700'}`}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
                             Penuh
                         </button>
                     </div>
-                    <p className="text-xs font-bold tracking-[0.1em] text-slate-500">Jumlah <span className="ml-1 text-2xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span></p>
+                    <p className="text-[11px] font-bold tracking-[0.1em] text-slate-500">Jumlah <span className="ml-1 text-xl font-black text-slate-800">{search.trim().length >= 2 ? rows.length : fmt(localSummary.total)}</span></p>
                 </div>
 
                 <section id="voter-list">
                         {viewMode === 'list' ? (
-                        <div className="grid gap-[3px]">
+                        <div className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
                             {rows.map((voter, index) => {
                                 const namaAyah = extractNamaAyah(voter.name);
                                 const isSearchResult = search.trim().length >= 2;
                                 const active = activeVoterId === voter.id;
                                 const done = voter.is_marked;
-                                const activeClass = active
-                                    ? ' border-green-700 bg-green-100 ring-1 ring-green-500'
-                                    : (done ? ' border-slate-300 bg-slate-50' : ' border-green-600 bg-white');
+                                const rowStateClass = active
+                                    ? 'bg-green-100'
+                                    : (done ? 'bg-slate-50' : 'bg-white');
                                 const nameColor = done ? 'text-slate-400 line-through' : (active ? 'text-green-900' : 'text-slate-800');
-                                const checkIcon = (
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0 text-green-600">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                );
-                                if (isSearchResult && voter.is_marked) {
-                                    return (
-                                        <button key={voter.id} type="button" onClick={() => { markActive(voter.id); setDetailVoter(voter); }}
-                                            className={`relative w-full rounded-xl border ${activeClass} p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 cursor-pointer`}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="shrink-0 text-xs font-bold text-slate-800 min-w-[1.2rem] text-right">
-                                                    {index + 1}.
-                                                </span>
-                                                <div className="min-w-0 flex-1 flex items-center gap-2">
-                                                    {(avatarUpdates[voter.id] || voter.avatar_url) && (
-                                                        <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
-                                                            className="h-6 w-6 shrink-0 rounded-full object-cover border border-slate-200"
-                                                            onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
-                                                    )}
-                                                    <p className={`text-sm font-bold leading-5 break-words ${nameColor}`}>
-                                                        {voter.name}
-                                                        {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
-                                                            <span className="ml-1 text-[10px] font-semibold text-slate-500">
-                                                                {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
-                                                            </span>
-                                                        ) : null}
-                                                    </p>
-                                                </div>
-                                                <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
-                                                    {voter.age ?? '-'}
-                                                </span>
-                                                {done && checkIcon}
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-slate-400"><polyline points="9 18 15 12 9 6"/></svg>
-                                            </div>
-                                        </button>
-                                    );
-                                }
+                                const showLetter = !isSearchResult && (index === 0 || ((rows[index - 1]?.name || '').trim().charAt(0).toUpperCase()) !== (voter.name || '').trim().charAt(0).toUpperCase());
+                                const firstLetter = (voter.name || '').trim().charAt(0).toUpperCase() || '#';
                                 return (
-                                    <button key={voter.id} type="button" onClick={() => { markActive(voter.id); setDetailVoter(voter); }}
-                                        className={`relative w-full rounded-xl border ${activeClass} p-3 text-left shadow-sm overflow-hidden transition hover:bg-green-50 cursor-pointer`}>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`shrink-0 text-xs font-bold min-w-[1.2rem] text-right ${done ? 'text-slate-400' : 'text-slate-800'}`}>
-                                                {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}.
-                                            </span>
-                                            <div className="min-w-0 flex-1 flex items-center gap-2">
-                                                {(avatarUpdates[voter.id] || voter.avatar_url) && (
-                                                    <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
-                                                        className={`h-6 w-6 shrink-0 rounded-full object-cover border border-slate-200 ${done ? 'opacity-60 grayscale' : ''}`}
-                                                        onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
+                                    <button key={voter.id} id={`voter-${voter.id}`} type="button" onClick={() => { markActive(voter.id); setDetailVoter(voter); }}
+                                        className={`group relative flex w-full items-center gap-2 px-2.5 py-2 text-left transition active:scale-[0.99] hover:bg-green-50 ${rowStateClass}`}>
+                                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-green-600 text-white' : 'bg-gradient-to-br from-green-600 to-green-500 text-white')}`}>
+                                            {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
+                                        </span>
+                                        {(avatarUpdates[voter.id] || voter.avatar_url) && (
+                                            <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
+                                                className={`h-7 w-7 shrink-0 rounded-full object-cover border border-slate-200 ${done ? 'opacity-60 grayscale' : ''}`}
+                                                onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <p className={`truncate text-sm font-bold leading-5 ${nameColor}`}>
+                                                {voter.name}
+                                                {showLetter && firstLetter && (
+                                                    <span className="ml-1 text-[10px] font-black uppercase text-slate-400">{firstLetter}</span>
                                                 )}
-                                                <p className={`text-sm font-bold leading-5 break-words ${nameColor}`}>
-                                                    {voter.name}
-                                                    {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?') ? (
-                                                        <span className="ml-1 text-[10px] font-semibold text-slate-500">
-                                                            {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
-                                                        </span>
-                                                    ) : null}
-                                                </p>
-                                            </div>
-                                            <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600">
-                                                {voter.age ?? '-'}
-                                            </span>
-                                            {done && checkIcon}
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-slate-400"><polyline points="9 18 15 12 9 6"/></svg>
+                                            </p>
+                                            <p className="mt-0.5 flex items-center gap-1 truncate text-[10px] font-medium text-slate-500">
+                                                {voter.no_kp && <span>{voter.no_kp}</span>}
+                                                {voter.locality && <span>· {voter.locality}</span>}
+                                            </p>
                                         </div>
+                                        <span className={`shrink-0 flex h-6 min-w-[1.6rem] items-center justify-center rounded-full px-1.5 text-[10px] font-black ${done ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-700'}`}>
+                                            {voter.age ?? '-'}
+                                        </span>
+                                        {done && (
+                                            <span className="shrink-0">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-green-600"><polyline points="20 6 9 17 4 12" /></svg>
+                                            </span>
+                                        )}
+                                        {(voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '') ? (
+                                            <span className="shrink-0 inline-flex h-5 items-center rounded-full bg-green-100 px-1.5 text-[10px] font-bold text-green-700">
+                                                {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                            </span>
+                                        ) : null}
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-green-500"><polyline points="9 18 15 12 9 6"/></svg>
                                     </button>
                                 );
                             })}
@@ -818,6 +856,18 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             })}
                         </div>
                         )}
+                    {search.trim().length < 2 && viewMode === 'list' && rows.length > 0 && (
+                        <div className="sticky bottom-2 z-10 mt-2 flex justify-center sm:hidden">
+                            <div className="flex max-w-full gap-0.5 overflow-x-auto rounded-full border border-green-300 bg-white/95 px-1.5 py-1 shadow-lg backdrop-blur">
+                                {alphabetIndex.map((letter) => (
+                                    <button key={letter} type="button" onClick={() => jumpToLetter(letter)}
+                                        className="flex h-7 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-slate-600 transition active:scale-90 hover:bg-green-100 hover:text-green-700">
+                                        {letter}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     {search.trim().length < 2 && (
                         <Pagination voters={localVoters} onNavigate={goToPage} />
                     )}
