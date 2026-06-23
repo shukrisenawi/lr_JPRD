@@ -887,10 +887,18 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                         <div className="relative px-5 pt-5 pb-4">
                             <div className="flex items-end gap-3 min-h-[5rem]">
                                 <div className="relative shrink-0 h-16 w-16">
-                                    {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) && (
+                                    {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) ? (
                                         <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
                                             className="h-16 w-16 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
                                             onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
+                                    ) : (
+                                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/60 bg-white/10 text-white backdrop-blur-sm transition hover:bg-white/20"
+                                            title={detailVoter.is_manual ? 'Tambah gambar' : 'Tambah gambar'}>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-7 w-7 opacity-80">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                                <circle cx="12" cy="7" r="4"/>
+                                            </svg>
+                                        </div>
                                     )}
                                     {detailVoter.is_marked && (
                                         <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
@@ -1100,8 +1108,15 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             }}
                                             className="flex w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-white p-2.5 text-left shadow-sm transition active:scale-[0.98] hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-violet-50"
                                         >
-                                            {(avatarUpdates[v.id] || v.avatar_url) && (
+                                            {(avatarUpdates[v.id] || v.avatar_url) ? (
                                                 <img src={avatarUpdates[v.id] || v.avatar_url} alt="" className="h-9 w-9 shrink-0 rounded-xl object-cover border border-slate-200" />
+                                            ) : (
+                                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                                        <circle cx="12" cy="7" r="4"/>
+                                                    </svg>
+                                                </div>
                                             )}
                                             <div className="min-w-0 flex-1">
                                                 <p className="truncate text-sm font-bold text-slate-800">{v.name}</p>
