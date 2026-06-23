@@ -1631,9 +1631,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 }).map((voter, i) => {
                                                     const globalIdx = search.trim().length >= 2 ? i + 1 : (localVoters.from ?? 0) + i;
                                                     return (
-                                                        <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
+                                                        <tr key={voter.id} className="group border-t border-slate-100 hover:bg-slate-50">
                                                             <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
-                                                             <td className="sticky left-0 z-10 bg-white px-2 py-2 hover:bg-slate-50">
+                                                             <td className="sticky left-0 z-10 bg-white px-2 py-2 group-hover:bg-slate-50">
                                                                   <div className="flex items-center gap-1.5">
                                                                       {(avatarUpdates[voter.id] || voter.avatar_url) && (
                                                                           <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-6 w-6 shrink-0 cursor-pointer rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url)} />
@@ -1755,9 +1755,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             {rows.map((voter, index) => {
                                                 const globalIdx = search.trim().length >= 2 ? index + 1 : (localVoters.from ?? 0) + index;
                                                 return (
-                                                    <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
+                                                    <tr key={voter.id} className="group border-t border-slate-100 hover:bg-slate-50">
                                                         <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
-                                                        <td className="sticky left-0 z-10 bg-white px-2 py-2">
+                                                        <td className="sticky left-0 z-10 bg-white px-2 py-2 group-hover:bg-slate-50">
                                                             <div className="min-w-0">
                                                                 <span className="font-semibold text-slate-800">{voter.name}</span>
                                                                 {(() => { const a = formatAddress(voter); return a && a !== '-' ? <p className="text-[10px] font-medium text-slate-500 truncate">{a}</p> : null; })()}
