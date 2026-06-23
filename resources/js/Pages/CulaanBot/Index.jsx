@@ -879,26 +879,26 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             {detailVoter && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/60 backdrop-blur-sm sm:items-center" onClick={closeDetail} onKeyDown={(e) => { if (e.key === 'Escape') closeDetail(); }} role="presentation">
                     <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl shadow-slate-900/30 sm:rounded-3xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-                        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
+                        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500" />
                         <button type="button" onClick={closeDetail}
                             className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
-                        <div className="relative px-5 pt-6 pb-4">
+                        <div className="relative px-5 pt-5 pb-4">
                             <div className="flex items-end gap-3">
                                 <div className="relative shrink-0">
                                     {(avatarUpdates[detailVoter.id] || detailVoter.avatar_url) ? (
                                         <img src={avatarUpdates[detailVoter.id] || detailVoter.avatar_url} alt=""
-                                            className="h-20 w-20 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
+                                            className="h-16 w-16 cursor-pointer rounded-2xl object-cover ring-4 ring-white shadow-lg"
                                             onClick={() => setLightboxSrc(avatarUpdates[detailVoter.id] || detailVoter.avatar_url)} />
                                     ) : (
-                                        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-3xl font-black text-white ring-4 ring-white shadow-lg">
+                                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-2xl font-black text-white ring-4 ring-white shadow-lg">
                                             {(detailVoter.name || '?').charAt(0).toUpperCase()}
                                         </div>
                                     )}
                                     {detailVoter.is_marked && (
-                                        <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                        <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
                                         </span>
                                     )}
                                 </div>
