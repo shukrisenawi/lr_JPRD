@@ -147,20 +147,14 @@ class AuthenticatedSessionController extends Controller
         return [
             'email' => (string) $decoded['email'],
             'name' => (string) $decoded['name'],
-            'avatar' => isset($decoded['avatar']) ? (string) $decoded['avatar'] : null,
         ];
     }
 
     private function writeLastUserCookie(User $user): void
     {
-        $avatar = $user->avatar
-            ? route('profile.avatar', ['user' => $user->id, 't' => $user->updated_at?->timestamp], absolute: false)
-            : null;
-
         $payload = json_encode([
             'email' => $user->email,
             'name' => $user->name,
-            'avatar' => $avatar,
         ], JSON_UNESCAPED_UNICODE);
 
         Cookie::queue(Cookie::make(

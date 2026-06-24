@@ -9,16 +9,6 @@ function UserAvatar({ name, avatar, size = 'lg' }) {
     const dimension = size === 'lg' ? 'h-20 w-20' : 'h-10 w-10';
     const textSize = size === 'lg' ? 'text-xl' : 'text-sm';
 
-    if (avatar) {
-        return (
-            <img
-                src={avatar}
-                alt={name || 'Avatar'}
-                className={`${dimension} rounded-full border-2 border-white object-cover shadow-md ring-2 ring-green-500/30`}
-            />
-        );
-    }
-
     const initials = (name || '?')
         .split(/\s+/)
         .filter(Boolean)
@@ -66,7 +56,7 @@ export default function Login({ status, canResetPassword, defaultCredentials, la
             {hasLastUser ? (
                 <div className="space-y-5">
                     <div className="flex flex-col items-center gap-3 pt-1 text-center">
-                        <UserAvatar name={lastUser.name} avatar={lastUser.avatar} size="lg" />
+                        <UserAvatar name={lastUser.name} size="lg" />
                         <div className="space-y-0.5">
                             <p className="text-sm font-semibold text-slate-800">{lastUser.name}</p>
                             <p className="text-xs text-slate-500">{lastUser.email}</p>
