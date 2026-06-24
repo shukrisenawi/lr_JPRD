@@ -6,27 +6,33 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 
 function UserAvatar({ size = 'lg' }) {
-    const dimension = size === 'lg' ? 'h-12 w-12' : 'h-10 w-10';
-    const iconSize = size === 'lg' ? 'h-6 w-6' : 'h-5 w-5';
+    const dimension = size === 'lg' ? 'h-16 w-16' : 'h-10 w-10';
+    const iconSize = size === 'lg' ? 'h-8 w-8' : 'h-5 w-5';
 
     return (
-        <div
-            className={`${dimension} flex items-center justify-center rounded-full bg-gradient-to-br from-green-700 to-emerald-600 shadow-md ring-4 ring-green-500/15`}
-            aria-hidden="true"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`${iconSize} text-white`}
+        <div className="relative">
+            <div
+                className={`absolute inset-0 ${dimension} rounded-full bg-green-400/40 blur-md`}
+                aria-hidden="true"
+            />
+            <div
+                className={`relative ${dimension} flex items-center justify-center rounded-full bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 shadow-lg ring-4 ring-white/60`}
+                aria-hidden="true"
             >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-            </svg>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`${iconSize} text-white drop-shadow`}
+                >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                </svg>
+            </div>
         </div>
     );
 }
@@ -95,7 +101,7 @@ export default function Login({ status, defaultCredentials, lastUser }) {
             <StatusBanner status={status} />
 
             {hasLastUser ? (
-                <div className="space-y-6">
+                <div className="space-y-5">
                     <div className="flex flex-col items-center gap-3 pt-1 text-center">
                         <UserAvatar size="lg" />
                         <div className="space-y-0.5">
@@ -104,9 +110,15 @@ export default function Login({ status, defaultCredentials, lastUser }) {
                         </div>
                     </div>
 
-                    <div className="h-px bg-slate-200" />
+                    <div className="relative flex items-center gap-3">
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Sila masukkan kata laluan
+                        </span>
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+                    </div>
 
-                    <form onSubmit={submit} className="space-y-5">
+                    <form onSubmit={submit} className="space-y-4">
                         <input type="hidden" name="email" value={data.email} />
 
                         <div className="text-left">
@@ -199,8 +211,30 @@ export default function Login({ status, defaultCredentials, lastUser }) {
                     </button>
                 </div>
             ) : (
-                <div className="space-y-6">
-                    <div className="space-y-1">
+                <div className="space-y-5">
+                    {/* Hero icon */}
+                    <div className="flex justify-center pt-1">
+                        <div className="relative">
+                            <div className="absolute inset-0 h-16 w-16 rounded-full bg-green-400/40 blur-md" aria-hidden="true" />
+                            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 shadow-lg ring-4 ring-white/60">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-8 w-8 text-white drop-shadow"
+                                >
+                                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1 text-center">
                         <h2 className="text-lg font-bold text-slate-900">Selamat Datang Kembali</h2>
                         <p className="text-xs text-slate-500">
                             Sila masukkan emel dan kata laluan anda untuk teruskan.
