@@ -102,22 +102,24 @@ export default function Login({ status, defaultCredentials, lastUser }) {
 
             {hasLastUser ? (
                 <div className="space-y-5">
-                    <div className="flex flex-col items-center gap-3 pt-1 text-center">
+                    <div className="flex flex-row items-center gap-4 pt-1">
                         {lastUser.avatar_url ? (
-                            <div className="relative">
-                                <div className="absolute inset-0 h-16 w-16 rounded-full bg-green-400/40 blur-md" aria-hidden="true" />
+                            <div className="relative shrink-0">
+                                <div className="absolute inset-0 h-14 w-14 rounded-full bg-green-400/40 blur-md" aria-hidden="true" />
                                 <img
                                     src={lastUser.avatar_url}
                                     alt={lastUser.name}
-                                    className="relative h-16 w-16 rounded-full object-cover shadow-lg ring-4 ring-white/60"
+                                    className="relative h-14 w-14 rounded-full object-cover shadow-lg ring-4 ring-white/60"
                                 />
                             </div>
                         ) : (
-                            <UserAvatar size="lg" />
+                            <div className="shrink-0">
+                                <UserAvatar size="lg" />
+                            </div>
                         )}
-                        <div className="space-y-0.5">
-                            <p className="text-sm font-semibold text-slate-800">{lastUser.name}</p>
-                            <p className="text-xs text-slate-500">{lastUser.email}</p>
+                        <div className="min-w-0 text-left">
+                            <p className="truncate text-sm font-semibold text-slate-800">{lastUser.name}</p>
+                            <p className="truncate text-xs text-slate-500">{lastUser.email}</p>
                         </div>
                     </div>
 
