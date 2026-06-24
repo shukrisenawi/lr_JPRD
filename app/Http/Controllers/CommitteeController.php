@@ -437,7 +437,10 @@ class CommitteeController extends Controller
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
         $builder = PemilihRecord::query()
-            ->where('status', 'aktif')
+            ->where(function ($q) {
+                $q->where('status', 'aktif')
+                  ->orWhere('is_manual', true);
+            })
             ->where(function ($builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
@@ -809,7 +812,7 @@ class CommitteeController extends Controller
 
         $voter = PemilihRecord::query()->findOrFail($validated['pemilih_record_id']);
 
-        if ($voter->status !== 'aktif') {
+        if ($voter->status !== 'aktif' && ! $voter->is_manual) {
             return back()->withErrors([
                 'pemilih_record_id' => 'Hanya pemilih aktif boleh dilantik.',
             ]);
