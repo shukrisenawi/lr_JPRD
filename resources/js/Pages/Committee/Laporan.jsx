@@ -11,6 +11,8 @@ function Icon({ name, className = 'h-5 w-5' }) {
         layers: <><path d="M12 2 2 7l10 5 10-5-10-5Z" /><path d="m2 17 10 5 10-5" /><path d="m2 12 10 5 10-5" /></>,
         phone: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z" /></>,
         x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
+        copy: <><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></>,
+        check: <><path d="M20 6 9 17l-5-5" /></>,
     };
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
 }
@@ -32,6 +34,7 @@ const levelOptions = [
 ];
 
 function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvatarClick }) {
+    const [copiedGroupId, setCopiedGroupId] = useState(null);
     if (!scope) return null;
 
     const groupedByGroup = {};
@@ -47,6 +50,53 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
     });
 
     const sortedGroups = Object.entries(groupedByGroup).sort(([, a], [, b]) => a.sortOrder - b.sortOrder);
+
+    const buildGroupText = (g) => {
+        const lines = [];
+        lines.push('*' + g.groupName + '*');
+        lines.push('');
+        const byPos = {};
+        g.members.forEach((m) => {
+            const pname = m.position?.name || 'Tanpa Jawatan';
+            if (!byPos[pname]) byPos[pname] = [];
+            byPos[pname].push(m);
+        });
+        Object.entries(byPos).forEach(([pname, ms]) => {
+            lines.push('*' + pname + '*');
+            ms.forEach((m, i) => {
+                if (ms.length === 1) {
+                    lines.push(m.voter?.name || '-');
+                } else {
+                    lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
+                }
+            });
+            lines.push('');
+        });
+        return lines.join('\n');
+    };
+
+    const handleCopyGroup = async (gid, g) => {
+        const text = buildGroupText(g);
+        const flash = (ok) => {
+            if (!ok) return;
+            setCopiedGroupId(gid);
+            setTimeout(() => setCopiedGroupId((cur) => (cur === gid ? null : cur)), 2000);
+        };
+        try {
+            await navigator.clipboard.writeText(text);
+            flash(true);
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            flash(ok);
+        }
+    };
 
     const isMatching = (name) => {
         if (!highlight || !highlight.trim()) return false;
@@ -89,6 +139,15 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
                                                 return ' — kemaskini: ' + dd + '/' + mm + '/' + yy + ' ' + hh + ':' + mi;
                                             })()}</p>
                                         </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleCopyGroup(gid, g)}
+                                            className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                                            title="Salin senarai untuk WhatsApp"
+                                        >
+                                            <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">{copiedGroupId === gid ? <Icon name="check" className="h-2.5 w-2.5" /> : 'C'}</span>
+                                            {copiedGroupId === gid ? 'Disalin' : 'Copy'}
+                                        </button>
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -217,6 +276,50 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
     const [detailGroup, setDetailGroup] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPositionIds, setSelectedPositionIds] = useState([]);
+    const [copiedGroupFlag, setCopiedGroupFlag] = useState(false);
+
+    const handleCopyGroupText = async (groupName, members) => {
+        const lines = [];
+        lines.push('*' + groupName + '*');
+        lines.push('');
+        const byPos = {};
+        members.forEach((m) => {
+            const pname = m.position?.name || 'Tanpa Jawatan';
+            if (!byPos[pname]) byPos[pname] = [];
+            byPos[pname].push(m);
+        });
+        Object.entries(byPos).forEach(([pname, ms]) => {
+            lines.push('*' + pname + '*');
+            ms.forEach((m, i) => {
+                if (ms.length === 1) {
+                    lines.push(m.voter?.name || '-');
+                } else {
+                    lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
+                }
+            });
+            lines.push('');
+        });
+        const text = lines.join('\n');
+        const flash = (ok) => {
+            if (!ok) return;
+            setCopiedGroupFlag(true);
+            setTimeout(() => setCopiedGroupFlag(false), 2000);
+        };
+        try {
+            await navigator.clipboard.writeText(text);
+            flash(true);
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            flash(ok);
+        }
+    };
 
     useEffect(() => {
         setSelectedPositionIds([]);
@@ -648,6 +751,15 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                 >
                                     <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">X</span>
                                     Excel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleCopyGroupText(detailGroup.groupName, detailGroup.members)}
+                                    className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                                    title="Salin senarai untuk WhatsApp"
+                                >
+                                    <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">{copiedGroupFlag ? <Icon name="check" className="h-2.5 w-2.5" /> : 'C'}</span>
+                                    {copiedGroupFlag ? 'Disalin' : 'Copy'}
                                 </button>
                                 <button type="button" onClick={() => setDetailGroup(null)} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                                     <Icon name="x" className="h-5 w-5" />
