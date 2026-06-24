@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -89,6 +90,20 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
+     * Serve a user's avatar publicly (no auth) for the login page.
+     */
+    public function publicAvatar(Request $request, User $user): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        abort_unless($user->avatar, 404);
+        abort_unless(Storage::disk('public')->exists($user->avatar), 404);
+
+        return response()->file(
+            Storage::disk('public')->path($user->avatar),
+            ['Cache-Control' => 'private, max-age=3600'],
+        );
+    }
+
+    /**
      * Forget the last user hint so the email field is shown again.
      */
     public function forgetLastUser(Request $request): RedirectResponse
@@ -122,7 +137,7 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * @return array{email: string, name: string, avatar: ?string}|null
+     * @return array{email: string, name: string, avatar_url: ?string}|null
      */
     private function readLastUserCookie(): ?array
     {
@@ -144,17 +159,29 @@ class AuthenticatedSessionController extends Controller
             return null;
         }
 
+        $avatarUrl = null;
+        if (isset($decoded['avatar_url']) && is_string($decoded['avatar_url']) && $decoded['avatar_url'] !== '') {
+            $avatarUrl = $decoded['avatar_url'];
+        }
+
         return [
             'email' => (string) $decoded['email'],
             'name' => (string) $decoded['name'],
+            'avatar_url' => $avatarUrl,
         ];
     }
 
     private function writeLastUserCookie(User $user): void
     {
+        $avatarUrl = null;
+        if ($user->avatar) {
+            $avatarUrl = route('login.avatar', ['user' => $user->id, 't' => $user->updated_at?->timestamp]);
+        }
+
         $payload = json_encode([
             'email' => $user->email,
             'name' => $user->name,
+            'avatar_url' => $avatarUrl,
         ], JSON_UNESCAPED_UNICODE);
 
         Cookie::queue(Cookie::make(

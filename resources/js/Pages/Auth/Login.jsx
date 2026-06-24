@@ -103,7 +103,18 @@ export default function Login({ status, defaultCredentials, lastUser }) {
             {hasLastUser ? (
                 <div className="space-y-5">
                     <div className="flex flex-col items-center gap-3 pt-1 text-center">
-                        <UserAvatar size="lg" />
+                        {lastUser.avatar_url ? (
+                            <div className="relative">
+                                <div className="absolute inset-0 h-16 w-16 rounded-full bg-green-400/40 blur-md" aria-hidden="true" />
+                                <img
+                                    src={lastUser.avatar_url}
+                                    alt={lastUser.name}
+                                    className="relative h-16 w-16 rounded-full object-cover shadow-lg ring-4 ring-white/60"
+                                />
+                            </div>
+                        ) : (
+                            <UserAvatar size="lg" />
+                        )}
                         <div className="space-y-0.5">
                             <p className="text-sm font-semibold text-slate-800">{lastUser.name}</p>
                             <p className="text-xs text-slate-500">{lastUser.email}</p>
