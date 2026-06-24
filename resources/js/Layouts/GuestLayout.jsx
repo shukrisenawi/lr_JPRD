@@ -41,11 +41,6 @@ export default function GuestLayout({ children }) {
 
                     {/* Card */}
                     <div className="rounded-2xl border border-white/15 bg-white/95 p-6 text-center shadow-2xl shadow-green-950/40 backdrop-blur-sm sm:p-8">
-                        <div className="mb-6 flex justify-center">
-                            <span className="inline-flex items-center rounded-full bg-green-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-green-700 ring-1 ring-green-700/10">
-                                Log Masuk Petugas
-                            </span>
-                        </div>
                         <div className="text-center">
                             {children}
                         </div>
