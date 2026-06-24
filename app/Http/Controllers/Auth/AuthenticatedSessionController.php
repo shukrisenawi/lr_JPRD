@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use App\Support\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    private const LAST_USER_COOKIE = 'last_user';
+
     /**
      * Display the login view.
      */
@@ -23,16 +26,29 @@ class AuthenticatedSessionController extends Controller
         $dbUsername = config('database.connections.mysql.username');
         $shouldPrefillAdmin = config('app.env') === 'local' && $dbUsername === 'root';
 
-        return Inertia::render('Auth/Login', [
+        $lastUser = $this->readLastUserCookie();
+        $defaultCredentials = $shouldPrefillAdmin
+            ? [
+                'email' => 'admin@jprd',
+                'password' => '123',
+            ]
+            : null;
+
+        $payload = [
             'canResetPassword' => Route::has('password.request'),
-            'defaultCredentials' => $shouldPrefillAdmin
-                ? [
-                    'email' => 'admin@jprd',
-                    'password' => '123',
-                ]
-                : null,
             'status' => session('status'),
-        ]);
+            'lastUser' => $lastUser,
+            'defaultCredentials' => $defaultCredentials,
+        ];
+
+        if ($lastUser !== null) {
+            $payload['defaultCredentials'] = [
+                'email' => $lastUser['email'],
+                'password' => '',
+            ];
+        }
+
+        return Inertia::render('Auth/Login', $payload);
     }
 
     /**
@@ -46,6 +62,8 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
         $user->update(['last_login_at' => now()]);
+
+        $this->writeLastUserCookie($user);
 
         if ($request->input('password') === '123' && !$user->isMasterAdmin()) {
             $user->update(['must_change_password' => true]);
@@ -70,6 +88,16 @@ class AuthenticatedSessionController extends Controller
         return redirect('/');
     }
 
+    /**
+     * Forget the last user hint so the email field is shown again.
+     */
+    public function forgetLastUser(Request $request): RedirectResponse
+    {
+        Cookie::queue(Cookie::forget(self::LAST_USER_COOKIE));
+
+        return redirect()->route('login');
+    }
+
     private function firstAccessibleRoute(Request $request): string
     {
         $user = $request->user();
@@ -91,5 +119,60 @@ class AuthenticatedSessionController extends Controller
         }
 
         return route('profile.edit', absolute: false);
+    }
+
+    /**
+     * @return array{email: string, name: string, avatar: ?string}|null
+     */
+    private function readLastUserCookie(): ?array
+    {
+        /** @var \Illuminate\Http\Request $req */
+        $req = request();
+        $raw = $req->cookie(self::LAST_USER_COOKIE);
+
+        if (! is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded) || ! isset($decoded['email'], $decoded['name'])) {
+            return null;
+        }
+
+        if (! is_string($decoded['email']) || ! is_string($decoded['name'])) {
+            return null;
+        }
+
+        return [
+            'email' => (string) $decoded['email'],
+            'name' => (string) $decoded['name'],
+            'avatar' => isset($decoded['avatar']) ? (string) $decoded['avatar'] : null,
+        ];
+    }
+
+    private function writeLastUserCookie(User $user): void
+    {
+        $avatar = $user->avatar
+            ? route('profile.avatar', ['user' => $user->id, 't' => $user->updated_at?->timestamp], absolute: false)
+            : null;
+
+        $payload = json_encode([
+            'email' => $user->email,
+            'name' => $user->name,
+            'avatar' => $avatar,
+        ], JSON_UNESCAPED_UNICODE);
+
+        Cookie::queue(Cookie::make(
+            self::LAST_USER_COOKIE,
+            $payload,
+            60 * 24 * 30,
+            '/',
+            null,
+            false,
+            false,
+            false,
+            'strict'
+        ));
     }
 }
