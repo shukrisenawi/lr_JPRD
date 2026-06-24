@@ -15,6 +15,8 @@ function Icon({ name, className = 'h-5 w-5' }) {
         idCard: <><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h3v3H7z" /><path d="M14 7h3" /><path d="M14 11h3" /><path d="M7 14h10" /></>,
         eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
         empty: <><circle cx="12" cy="12" r="10" /><path d="M8 15h8" /><path d="M9 9h.01" /><path d="M15 9h.01" /></>,
+        copy: <><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></>,
+        check: <><path d="M20 6 9 17l-5-5" /></>,
     };
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
 }
@@ -22,9 +24,50 @@ function Icon({ name, className = 'h-5 w-5' }) {
 function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
 function GroupMembersPopup({ group, onClose, onAvatarClick }) {
+    const [copied, setCopied] = useState(false);
     if (!group) return null;
 
     const sortedMembers = [...group.members].sort((a, b) => (a.position?.sort_order ?? 999) - (b.position?.sort_order ?? 999));
+
+    const buildWhatsappText = () => {
+        const lines = [];
+        lines.push('*' + group.name + '*');
+        lines.push('');
+        const positions = group.positionsWithMembers || [];
+        positions.forEach(pos => {
+            if (pos.members.length === 0) return;
+            lines.push('*' + pos.name + '*');
+            pos.members.forEach((m, i) => {
+                if (pos.members.length === 1) {
+                    lines.push(m.voter?.name || '-');
+                } else {
+                    lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
+                }
+            });
+            lines.push('');
+        });
+        return lines.join('\n');
+    };
+
+    const handleCopy = async () => {
+        const text = buildWhatsappText();
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     const exportToExcel = () => {
         const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
@@ -64,6 +107,17 @@ function GroupMembersPopup({ group, onClose, onAvatarClick }) {
                         <p className="text-xs text-slate-500">{group.members.length} orang ahli</p>
                     </div>
                     <div className="flex items-center gap-2">
+                        {group.members.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleCopy}
+                                className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                                title="Salin senarai untuk WhatsApp"
+                            >
+                                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">{copied ? <Icon name="check" className="h-2.5 w-2.5" /> : 'C'}</span>
+                                {copied ? 'Disalin' : 'Copy'}
+                            </button>
+                        )}
                         {group.members.length > 0 && (
                             <button
                                 type="button"
@@ -295,6 +349,7 @@ export default function SenaraiAjkUdm({ dm, memberships, groups }) {
                     group={{
                         ...selectedGroup,
                         members: selectedGroup.positionsWithMembers.flatMap((p) => p.members),
+                        positionsWithMembers: selectedGroup.positionsWithMembers.filter((p) => p.members.length > 0),
                     }}
                     onClose={() => setSelectedGroup(null)}
                     onAvatarClick={setLightboxSrc}
