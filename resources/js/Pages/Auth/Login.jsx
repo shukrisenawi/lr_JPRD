@@ -3,7 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 
 function UserAvatar({ size = 'lg' }) {
     const dimension = size === 'lg' ? 'h-20 w-20' : 'h-10 w-10';
@@ -88,17 +88,6 @@ export default function Login({ status, canResetPassword, defaultCredentials, la
                             <InputError message={errors.email} className="mt-1.5" />
                         </div>
 
-                        {canResetPassword && (
-                            <div className="flex justify-end pt-1">
-                                <Link
-                                    href={route('password.request')}
-                                    className="text-xs font-medium text-green-600 transition hover:text-green-700 hover:underline"
-                                >
-                                    Lupa kata laluan?
-                                </Link>
-                            </div>
-                        )}
-
                         <div className="pt-1">
                             <PrimaryButton
                                 className="w-full justify-center rounded-lg bg-gradient-to-r from-green-700 to-emerald-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-green-700/30 transition hover:from-green-600 hover:to-emerald-500 hover:shadow-green-700/40 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-70"
@@ -171,17 +160,6 @@ export default function Login({ status, canResetPassword, defaultCredentials, la
                         <InputError message={errors.password} className="mt-1.5" />
                     </div>
 
-                    {canResetPassword && (
-                        <div className="flex justify-end pt-1">
-                            <Link
-                                href={route('password.request')}
-                                className="text-xs font-medium text-green-600 transition hover:text-green-700 hover:underline"
-                            >
-                                Lupa kata laluan?
-                            </Link>
-                        </div>
-                    )}
-
                     <div className="pt-2">
                         <PrimaryButton
                             className="w-full justify-center rounded-lg bg-gradient-to-r from-green-700 to-emerald-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-green-700/30 transition hover:from-green-600 hover:to-emerald-500 hover:shadow-green-700/40 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-70"
@@ -202,12 +180,6 @@ export default function Login({ status, canResetPassword, defaultCredentials, la
                     </div>
                 </form>
             )}
-
-            <div className="mt-5 text-center">
-                <p className="text-[10px] text-slate-400">
-                    Sila hubungi pentadbir sistem jika terlupa kata laluan.
-                </p>
-            </div>
         </GuestLayout>
     );
 }

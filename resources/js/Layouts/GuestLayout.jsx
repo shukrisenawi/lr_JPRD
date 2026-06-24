@@ -41,18 +41,6 @@ export default function GuestLayout({ children }) {
                         {children}
                     </div>
                 </div>
-
-                {/* Footer */}
-                <div className="mt-6 text-center">
-                    <a
-                        href="https://paskawasansik.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-green-400/50 transition hover:text-green-300 hover:underline"
-                    >
-                        paskawasansik.com
-                    </a>
-                </div>
             </div>
         </div>
     );
