@@ -5,23 +5,28 @@ import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 
-function UserAvatar({ name, avatar, size = 'lg' }) {
+function UserAvatar({ size = 'lg' }) {
     const dimension = size === 'lg' ? 'h-20 w-20' : 'h-10 w-10';
-    const textSize = size === 'lg' ? 'text-xl' : 'text-sm';
-
-    const initials = (name || '?')
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? '')
-        .join('');
+    const iconSize = size === 'lg' ? 'h-9 w-9' : 'h-5 w-5';
 
     return (
         <div
-            className={`${dimension} flex items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-green-700 to-emerald-600 ${textSize} font-bold text-white shadow-md ring-2 ring-green-500/30`}
+            className={`${dimension} flex items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-green-700 to-emerald-600 shadow-md ring-2 ring-green-500/30`}
             aria-hidden="true"
         >
-            {initials || '?'}
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`${iconSize} text-white`}
+            >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
         </div>
     );
 }
@@ -56,7 +61,7 @@ export default function Login({ status, canResetPassword, defaultCredentials, la
             {hasLastUser ? (
                 <div className="space-y-5">
                     <div className="flex flex-col items-center gap-3 pt-1 text-center">
-                        <UserAvatar name={lastUser.name} size="lg" />
+                        <UserAvatar size="lg" />
                         <div className="space-y-0.5">
                             <p className="text-sm font-semibold text-slate-800">{lastUser.name}</p>
                             <p className="text-xs text-slate-500">{lastUser.email}</p>
