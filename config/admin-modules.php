@@ -34,6 +34,10 @@ return [
         'label' => 'Senarai AJK',
         'description' => 'Senarai AJK mengikut peringkat.',
     ],
+    'jawatankuasa.senarai-udm' => [
+        'label' => 'Senarai AJK UDM',
+        'description' => 'Senarai kumpulan jawatan dan ahli jawatankuasa untuk UDM semasa.',
+    ],
     'group-pemilih' => [
         'label' => 'Group Pemilih',
         'description' => 'Urus group untuk tapisan data pemilih.',

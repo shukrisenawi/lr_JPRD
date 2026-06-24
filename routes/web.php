@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/program/{program}/files/{file}', [ProgramController::class, 'destroyFile'])->middleware('module:program')->name('program.files.destroy');
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');
     Route::get('/jawatankuasa/senarai-ajk', [CommitteeController::class, 'laporan'])->middleware('module:jawatankuasa.laporan')->name('jawatankuasa.laporan');
+    Route::get('/jawatankuasa/senarai-ajk-udm', [CommitteeController::class, 'senaraiAjkUdm'])->middleware('module:jawatankuasa.senarai-udm')->name('jawatankuasa.senarai-ajk-udm');
     Route::get('/jawatankuasa/search', [CommitteeController::class, 'search'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.search');
     Route::post('/jawatankuasa/groups', [CommitteeController::class, 'storeGroup'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.store');
     Route::put('/jawatankuasa/groups/{group}', [CommitteeController::class, 'updateGroup'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.update');

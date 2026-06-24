@@ -71,6 +71,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             items: [
                 { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'Jawatankuasa' },
                 { key: 'jawatankuasa.laporan', href: 'jawatankuasa.laporan', routePattern: 'jawatankuasa.laporan', label: 'Senarai AJK' },
+                { key: 'jawatankuasa.senarai-udm', href: 'jawatankuasa.senarai-ajk-udm', routePattern: 'jawatankuasa.senarai-ajk-udm', label: 'Senarai AJK UDM' },
                 { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
                 ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
             ],
@@ -214,6 +215,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 { label: 'Pentadbiran', items: [
                                     canAccess('jawatankuasa') && { href: route('jawatankuasa.index'), active: route().current('jawatankuasa.*'), label: 'Jawatankuasa' },
                                     canAccess('jawatankuasa.laporan') && { href: route('jawatankuasa.laporan'), active: route().current('jawatankuasa.laporan'), label: 'Senarai AJK' },
+                                    canAccess('jawatankuasa.senarai-udm') && { href: route('jawatankuasa.senarai-ajk-udm'), active: route().current('jawatankuasa.senarai-ajk-udm'), label: 'Senarai AJK UDM' },
                                     canAccess('settings') && { href: route('settings.edit'), active: route().current('settings.edit'), label: 'Settings' },
                                     isMasterAdmin && { href: route('admin.access.index'), active: route().current('admin.access.*'), label: 'Akses Pengguna' },
                                 ].filter(Boolean) },
