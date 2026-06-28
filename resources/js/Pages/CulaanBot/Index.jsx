@@ -719,7 +719,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             })}
                         </div>
                         ) : (
-                        <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2">
                             {rows.map((voter, index) => {
                                 const isSearchResult = search.trim().length >= 2;
                                 const phone = voter.phone_mobile || voter.phone_home;
