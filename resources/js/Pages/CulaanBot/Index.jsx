@@ -813,17 +813,16 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     <button type="button"
                                                         onClick={(e) => { e.stopPropagation(); document.getElementById(`card-avatar-${voter.id}`)?.click(); }}
                                                         disabled={uploadingAvatarIds[voter.id]}
-                                                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-700 disabled:opacity-40"
+                                                        className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700 disabled:opacity-40"
                                                         title="Muat naik gambar">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                                     </button>
                                                     {voter.address && voter.address !== '-' && voter.address_count >= 2 && voter.address_count <= 10 && (
                                                         <button type="button"
                                                             onClick={(e) => { e.stopPropagation(); filterRumahAlamat && voter.no_rumah && voter.no_rumah !== '-' ? loadRumahAlamat(voter) : loadAddressVoters(voter); }}
-                                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/60 hover:text-indigo-700"
+                                                            className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                                             title={filterRumahAlamat ? 'No & Alamat sama' : `Alamat sama: ${voter.address}`}>
-                                                            <HomeIcon className="h-3 w-3" />
-                                                            Alamat
+                                                            <HomeIcon className="h-3.5 w-3.5" />
                                                         </button>
                                                     )}
                                                 </>
@@ -831,9 +830,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             {namaAyah && (
                                                 <button type="button"
                                                     onClick={(e) => { e.stopPropagation(); doSearchNamaAyah(namaAyah); setFilterOpen(true); }}
-                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-700"
+                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                                     title={`Cari keluarga: ${namaAyah}`}>
-                                                    <UserGroupIcon className="h-3 w-3" />
+                                                    <UserGroupIcon className="h-3.5 w-3.5" />
                                                 </button>
                                             )}
                                             {!voter.is_marked ? (
@@ -841,26 +840,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     {culaSemulaIds.has(voter.id) ? (
                                                         <>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedVoterForCula(voter); setShowCulaModal(true); }}
-                                                                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500">
                                                                 Siap Cula
                                                             </button>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
-                                                                className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                                className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
                                                                 title="Kembali ke asal">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                                                             </button>
                                                         </>
                                                     ) : (
                                                         <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
-                                                            className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
-                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                                             Cula
                                                         </button>
                                                     )}
                                                     <a href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                        className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                                         Tukar Tel
                                                     </a>
                                                 </>
@@ -869,25 +865,23 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                     {culaSemulaIds.has(voter.id) ? (
                                                         <>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedVoterForCula(voter); setShowCulaModal(true); }}
-                                                                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500">
                                                                 Siap Cula
                                                             </button>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
-                                                                className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                                className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
                                                                 title="Kembali ke asal">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                                                             </button>
                                                         </>
                                                     ) : (
                                                         <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => new Set([...prev, voter.id])); window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank'); }}
-                                                            className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
-                                                            Tukar Cula
+                                                            className="inline-flex flex-1 items-center justify-center rounded-md bg-rose-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500">
+                                                            Buka
                                                         </button>
                                                     )}
                                                     <a href={buildTelegramLink('kemastel', voter.telegram_identity)}
-                                                        className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-2 py-1.5 text-[11px] font-black text-white shadow-sm transition active:scale-[0.97]">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                                        className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                                         Tukar Tel
                                                     </a>
                                                 </>
@@ -1000,23 +994,22 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     <button type="button"
                                         onClick={(e) => { e.stopPropagation(); document.getElementById(`detail-avatar-${detailVoter.id}`)?.click(); }}
                                         disabled={uploadingAvatarIds[detailVoter.id]}
-                                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40"
+                                        className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700 disabled:opacity-40"
                                         title="Muat naik gambar">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
                                     </button>
                                     {!fromAddressPopup.current && detailVoter.address && detailVoter.address !== '-' && detailVoter.address_count >= 2 && detailVoter.address_count <= 10 && (
                                         <button type="button"
                                             onClick={() => { previousDetailVoter.current = detailVoter; setDetailVoter(null); filterRumahAlamat && detailVoter.no_rumah && detailVoter.no_rumah !== '-' ? loadRumahAlamat(detailVoter) : loadAddressVoters(detailVoter); }}
-                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-blue-300 hover:text-blue-700"
+                                            className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                             title={filterRumahAlamat ? 'No & Alamat sama' : `Alamat sama: ${detailVoter.address}`}>
                                             <HomeIcon className="h-3.5 w-3.5" />
-                                            Alamat
                                         </button>
                                     )}
                                     {(() => { const namaAyah = extractNamaAyah(detailVoter.name); return namaAyah ? (
                                         <button type="button"
                                             onClick={() => { setDetailVoter(null); setFilterOpen(true); doSearchNamaAyah(namaAyah); }}
-                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700"
+                                            className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                             title={`Cari keluarga: ${namaAyah}`}>
                                             <UserGroupIcon className="h-3.5 w-3.5" />
                                         </button>
@@ -1029,8 +1022,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         {culaSemulaIds.has(detailVoter.id) ? (
                                             <>
                                                 <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
-                                                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500">
                                                     Siap Cula
                                                 </button>
                                                 <button type="button" onClick={() => {
@@ -1040,21 +1032,19 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                         return next;
                                                     });
                                                 }}
-                                                    className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
                                                     title="Kembali ke asal">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                                                 </button>
                                             </>
                                         ) : (
                                             <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
-                                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                                className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                                 Cula
                                             </button>
                                         )}
                                         <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
-                                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                             Tukar Tel
                                         </a>
                                     </>
@@ -1063,8 +1053,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         {culaSemulaIds.has(detailVoter.id) ? (
                                             <>
                                                 <button type="button" onClick={() => { setSelectedVoterForCula(detailVoter); setShowCulaModal(true); }}
-                                                    className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500">
                                                     Siap Cula
                                                 </button>
                                                 <button type="button" onClick={() => {
@@ -1074,20 +1063,19 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                         return next;
                                                     });
                                                 }}
-                                                    className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
                                                     title="Kembali ke asal">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                                                 </button>
                                             </>
                                         ) : (
                                             <button type="button" onClick={() => { setCulaSemulaIds((prev) => new Set([...prev, detailVoter.id])); window.open(buildTelegramLink('kemascula', detailVoter.telegram_identity), '_blank'); }}
-                                                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
-                                                Tukar Cula
+                                                className="inline-flex flex-1 items-center justify-center rounded-md bg-rose-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500">
+                                                Buka
                                             </button>
                                         )}
                                         <a href={buildTelegramLink('kemastel', detailVoter.telegram_identity)}
-                                            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2.5 text-sm font-black text-white shadow-md transition active:scale-[0.97] hover:shadow-lg">
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                                             Tukar Tel
                                         </a>
                                     </>
