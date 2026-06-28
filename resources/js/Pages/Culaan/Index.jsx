@@ -2159,7 +2159,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         handleApproveError(voter, 'keep');
                                                     }}
                                                     disabled={pendingIds.includes(voter.id)}
-                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
                                                 >
                                                     {pendingIds.includes(voter.id) ? '...' : 'Siap Cula Sama'}
                                                 </button>
