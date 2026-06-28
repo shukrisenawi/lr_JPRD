@@ -107,6 +107,41 @@ class CulaanController extends Controller
             ->with('success', 'Data error berjaya diluluskan.');
     }
 
+    public function batchApproveDataError(Request $request): JsonResponse
+    {
+        $voterIds = $request->input('voter_ids', []);
+        $action = $request->input('action', 'keep');
+
+        if (empty($voterIds)) {
+            return response()->json(['message' => 'Tiada ID pemilih diterima.'], 422);
+        }
+
+        $records = PemilihRecord::whereIn('id', $voterIds)
+            ->whereNotNull('cula_remark')
+            ->get();
+
+        $count = 0;
+        foreach ($records as $record) {
+            if ($action === 'clear') {
+                $record->update([
+                    'cula_code' => null,
+                    'cula_display_label' => null,
+                    'cula_remark' => null,
+                ]);
+            } else {
+                $record->update([
+                    'cula_remark' => null,
+                ]);
+            }
+            $count++;
+        }
+
+        return response()->json([
+            'message' => "{$count} rekod data error berjaya diluluskan.",
+            'approved_count' => $count,
+        ]);
+    }
+
     public function search(Request $request): JsonResponse
     {
         $query = trim((string) $request->query('q', ''));

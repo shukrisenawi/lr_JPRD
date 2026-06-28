@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/culaan/{pemilihRecord}/mark', [CulaanController::class, 'destroyMark'])->middleware('module:culaan.senarai')->name('culaan.mark.destroy');
     Route::post('/culaan/{pemilihRecord}/approve-error', [CulaanController::class, 'approveDataError'])->middleware('module:culaan.senarai')->name('culaan.approve-error');
     Route::post('/culaan/{pemilihRecord}/update-cula-mark', [CulaanController::class, 'updateCulaAndMark'])->middleware('module:culaan.senarai')->name('culaan.update-cula-mark');
+    Route::post('/culaan/batch-approve-error', [CulaanController::class, 'batchApproveDataError'])->middleware('module:culaan.senarai')->name('culaan.batch-approve-error');
 
     Route::get('/culaan-bot', [CulaanBotController::class, 'index'])->middleware('module:culaan-bot')->name('culaan-bot.index');
     Route::get('/culaan-bot/search', [CulaanBotController::class, 'search'])->middleware('module:culaan-bot')->name('culaan-bot.search');
