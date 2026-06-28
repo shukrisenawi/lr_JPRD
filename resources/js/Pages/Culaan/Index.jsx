@@ -344,6 +344,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
     const [avatarUpdates, setAvatarUpdates] = useState({});
     const [culaSemulaIds, setCulaSemulaIds] = useState(new Set());
+    const [culaSamaIds, setCulaSamaIds] = useState(new Set());
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [isCulaFromDataError, setIsCulaFromDataError] = useState(false);
@@ -2107,17 +2108,35 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </div>
                                         <div className="mt-3 flex gap-2">
                                             {culaSemulaIds.has(voter.id) ? (
+                                                <>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        handleApproveError(voter, 'keep');
+                                                        setSelectedVoterForCula(voter);
+                                                        setIsCulaFromDataError(true);
+                                                        setShowCulaModal(true);
                                                     }}
-                                                    disabled={pendingIds.includes(voter.id)}
-                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500"
                                                 >
-                                                    {pendingIds.includes(voter.id) ? '...' : 'Siap Cula Sama'}
+                                                    Siap Cula
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCulaSemulaIds((prev) => {
+                                                            const next = new Set(prev);
+                                                            next.delete(voter.id);
+                                                            return next;
+                                                        });
+                                                    }}
+                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                    title="Kembali ke asal"
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                </button>
+                                                </>
                                             ) : (
                                                 <button
                                                     type="button"
@@ -2127,6 +2146,31 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank');
                                                     }}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500"
+                                                >
+                                                    Cula Semula
+                                                </button>
+                                            )}
+                                            {culaSamaIds.has(voter.id) ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleApproveError(voter, 'keep');
+                                                    }}
+                                                    disabled={pendingIds.includes(voter.id)}
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                    {pendingIds.includes(voter.id) ? '...' : 'Siap Cula Sama'}
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCulaSamaIds((prev) => new Set([...prev, voter.id]));
+                                                        window.open(buildTelegramLink('kemascula', voter.telegram_identity), '_blank');
+                                                    }}
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-orange-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-orange-500"
                                                 >
                                                     Cula Sama
                                                 </button>
