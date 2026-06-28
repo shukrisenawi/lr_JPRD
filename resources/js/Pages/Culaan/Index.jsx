@@ -841,21 +841,35 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         setActionError('');
 
         try {
-            const response = await fetch(route('culaan.batch-approve-error'), {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: JSON.stringify({
-                    voter_ids: idsToProcess,
-                    action: 'keep',
-                }),
-            });
-
-            if (!response.ok) throw new Error('Request failed');
+            if (isDataErrorTab) {
+                const response = await fetch(route('culaan.batch-approve-error'), {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({
+                        voter_ids: idsToProcess,
+                        action: 'keep',
+                    }),
+                });
+                if (!response.ok) throw new Error('Request failed');
+            } else {
+                await Promise.all(idsToProcess.map((id) => {
+                    const voter = rows.find((r) => r.id === id);
+                    if (!voter) return Promise.resolve();
+                    return fetch(route('culaan.mark.store', voter.id), {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+                }));
+            }
 
             setCulaSemulaIds(new Set());
             refreshPage();
@@ -1529,7 +1543,43 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                                 {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                             </p>
-                        ) : viewMode === 'card' ? (
+                        ) : (
+                            <>
+                            {!shouldPromptUdm && rows.length > 0 && (
+                                <div className="mb-3 flex items-center gap-2">
+                                    {culaSemulaIds.size === 0 ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleCulaSama}
+                                            className="inline-flex items-center gap-1.5 rounded-md bg-green-700 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-green-600"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                            Cula Sama
+                                        </button>
+                                    ) : (
+                                        <>
+                                        <button
+                                            type="button"
+                                            onClick={handleSiapCulaSama}
+                                            disabled={batchProcessing}
+                                            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                            {batchProcessing ? 'Memproses...' : 'Siap Cula Sama'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setCulaSemulaIds(new Set())}
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                        >
+                                            Batal
+                                        </button>
+                                        <span className="text-xs text-slate-500">{culaSemulaIds.size} pemilih dipilih</span>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                            {viewMode === 'card' ? (
                             <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 {rows.map((voter, index) => (
                                     <div
@@ -2022,6 +2072,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </table>
                             </div>
                         )}
+                            </>
+                        )}
                         {!shouldPromptUdm && search.trim().length < 2 && (
                             <Pagination voters={localVoters} onNavigate={goToPage} />
                         )}
@@ -2035,41 +2087,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai data error.' : 'Tiada data error untuk paparan ini.'}
                             </p>
                         ) : (
-                            <>
-                            {!shouldPromptUdm && (
-                                <div className="mb-3 flex items-center gap-2">
-                                    {culaSemulaIds.size === 0 ? (
-                                        <button
-                                            type="button"
-                                            onClick={handleCulaSama}
-                                            className="inline-flex items-center gap-1.5 rounded-md bg-green-700 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-green-600"
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                                            Cula Sama
-                                        </button>
-                                    ) : (
-                                        <>
-                                        <button
-                                            type="button"
-                                            onClick={handleSiapCulaSama}
-                                            disabled={batchProcessing}
-                                            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                            {batchProcessing ? 'Memproses...' : 'Siap Cula Sama'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCulaSemulaIds(new Set())}
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:border-red-300 hover:text-red-600"
-                                        >
-                                            Batal
-                                        </button>
-                                        <span className="text-xs text-slate-500">{culaSemulaIds.size} pemilih dipilih</span>
-                                        </>
-                                    )}
-                                </div>
-                            )}
                             <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 {rows.map((voter, index) => (
                                     <div
@@ -2182,7 +2199,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     </div>
                                 ))}
                             </div>
-                            </>
                         )}
                         {!shouldPromptUdm && search.trim().length < 2 && (
                             <Pagination voters={localVoters} onNavigate={goToPage} />
