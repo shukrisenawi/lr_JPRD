@@ -1543,43 +1543,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                             <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                                 {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}
                             </p>
-                        ) : (
-                            <>
-                            {!shouldPromptUdm && rows.length > 0 && (
-                                <div className="mb-3 flex items-center gap-2">
-                                    {culaSemulaIds.size === 0 ? (
-                                        <button
-                                            type="button"
-                                            onClick={handleCulaSama}
-                                            className="inline-flex items-center gap-1.5 rounded-md bg-green-700 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-green-600"
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                                            Cula Sama
-                                        </button>
-                                    ) : (
-                                        <>
-                                        <button
-                                            type="button"
-                                            onClick={handleSiapCulaSama}
-                                            disabled={batchProcessing}
-                                            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                            {batchProcessing ? 'Memproses...' : 'Siap Cula Sama'}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCulaSemulaIds(new Set())}
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:border-red-300 hover:text-red-600"
-                                        >
-                                            Batal
-                                        </button>
-                                        <span className="text-xs text-slate-500">{culaSemulaIds.size} pemilih dipilih</span>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-                            {viewMode === 'card' ? (
+                        ) : viewMode === 'card' ? (
                             <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                                 {rows.map((voter, index) => (
                                     <div
@@ -2072,8 +2036,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </table>
                             </div>
                         )}
-                            </>
-                        )}
                         {!shouldPromptUdm && search.trim().length < 2 && (
                             <Pagination voters={localVoters} onNavigate={goToPage} />
                         )}
@@ -2145,35 +2107,17 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         </div>
                                         <div className="mt-3 flex gap-2">
                                             {culaSemulaIds.has(voter.id) ? (
-                                                <>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setSelectedVoterForCula(voter);
-                                                        setIsCulaFromDataError(true);
-                                                        setShowCulaModal(true);
+                                                        handleApproveError(voter, 'keep');
                                                     }}
-                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500"
+                                                    disabled={pendingIds.includes(voter.id)}
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
                                                 >
-                                                    Siap Cula
+                                                    {pendingIds.includes(voter.id) ? '...' : 'Siap Cula Sama'}
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setCulaSemulaIds((prev) => {
-                                                            const next = new Set(prev);
-                                                            next.delete(voter.id);
-                                                            return next;
-                                                        });
-                                                    }}
-                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
-                                                    title="Kembali ke asal"
-                                                >
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                                                </button>
-                                                </>
                                             ) : (
                                                 <button
                                                     type="button"
@@ -2184,7 +2128,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     }}
                                                     className="inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500"
                                                 >
-                                                    Cula Semula
+                                                    Cula Sama
                                                 </button>
                                             )}
                                             <button
