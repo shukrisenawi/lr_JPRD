@@ -2151,6 +2151,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 </button>
                                             )}
                                             {culaSamaIds.has(voter.id) ? (
+                                                <>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
@@ -2162,6 +2163,22 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 >
                                                     {pendingIds.includes(voter.id) ? '...' : 'Siap Cula Sama'}
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setCulaSamaIds((prev) => {
+                                                            const next = new Set(prev);
+                                                            next.delete(voter.id);
+                                                            return next;
+                                                        });
+                                                    }}
+                                                    className="inline-flex w-7 items-center justify-center rounded-md border border-slate-200 bg-white py-1.5 text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                    title="Kembali ke asal"
+                                                >
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                </button>
+                                                </>
                                             ) : (
                                                 <button
                                                     type="button"
