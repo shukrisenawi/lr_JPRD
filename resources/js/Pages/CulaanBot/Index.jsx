@@ -719,40 +719,60 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                             })}
                         </div>
                         ) : (
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div id="senarai-grid" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                             {rows.map((voter, index) => {
                                 const isSearchResult = search.trim().length >= 2;
                                 const phone = voter.phone_mobile || voter.phone_home;
                                 const namaAyah = extractNamaAyah(voter.name);
                                 const active = activeVoterId === voter.id;
                                 const done = voter.is_marked;
-                                const cardStateClass = active
-                                    ? 'border-emerald-400 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-md shadow-emerald-500/20'
-                                    : (done ? 'border-slate-200 bg-slate-50/80' : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-md hover:shadow-emerald-500/10');
-                                const nameColor = done ? 'text-slate-400 line-through' : (active ? 'text-emerald-900' : 'text-slate-800');
                                 return (
                                     <div key={voter.id}
                                         onClick={() => markActive(voter.id)}
-                                        className={`relative cursor-pointer overflow-hidden rounded-2xl border p-3 shadow-sm transition active:scale-[0.99] ${cardStateClass}`}>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-black shadow-sm ${done ? 'bg-slate-300 text-white' : (active ? 'bg-gradient-to-br from-emerald-600 to-teal-600 text-white' : 'bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700')}`}>
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); markActive(voter.id); } }}
+                                        className={`rounded-xl border bg-white p-3 shadow-sm overflow-hidden cursor-default transition-colors duration-300 ease-in-out hover:shadow-md ${active ? 'border-black' : done ? 'border-slate-300 bg-slate-50/60' : 'border-green-600'}`}>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-green-500 text-xs font-black text-white shadow-sm">
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
-                                            {(avatarUpdates[voter.id] || voter.avatar_url) && (
-                                                <img src={avatarUpdates[voter.id] || voter.avatar_url} alt=""
-                                                    className={`h-9 w-9 shrink-0 cursor-pointer rounded-xl object-cover border border-slate-200 ${done ? 'opacity-60 grayscale' : ''}`}
-                                                    onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
-                                            )}
                                             <div className="min-w-0 flex-1">
-                                                <p className={`line-clamp-2 text-sm font-bold leading-tight break-words ${nameColor}`}>
+                                                <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
+                                                    {namaAyah && (
+                                                        <button type="button"
+                                                            onClick={(e) => { e.stopPropagation(); doSearchNamaAyah(namaAyah); setFilterOpen(true); }}
+                                                            className="inline-flex shrink-0 items-center justify-center rounded-md border border-white bg-white px-1 py-0.5 text-slate-400 transition hover:border-slate-200 hover:text-green-600"
+                                                            title={`Cari keluarga: ${namaAyah}`}>
+                                                            <UserGroupIcon className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    )}
                                                 </p>
                                                 {((voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '')) && (
-                                                    <p className="mt-0.5 flex items-center gap-1 text-[10px] font-black uppercase text-emerald-700">
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                                                        {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                                    <p className="mt-0.5">
+                                                        <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                                            Cula: {voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA') ? voter.cula_display_label : voter.cula_code}
+                                                        </span>
                                                     </p>
                                                 )}
+                                                <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500">
+                                                    {(() => {
+                                                        const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
+                                                        const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
+                                                            ? voter.alamat_kediaman
+                                                            : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+                                                        if (!rum && !alm) return null;
+                                                        const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
+                                                        return (
+                                                            <>
+                                                                {rum && <RumahBadge voter={voter} onRumahClick={loadRumahVoters} />}
+                                                                {cleanAlm || '-'}
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </p>
                                             </div>
                                             {done && (
                                                 <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
@@ -760,33 +780,40 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                                            <InfoField label="No KP" value={voter.no_kp || voter.old_ic || '-'} />
-                                            <InfoField label="Umur" value={`${voter.age ?? '-'}${voter.age ? ' thn' : ''}`} accent />
-                                            {(voter.phone_mobile || voter.phone_home) && (
-                                                <InfoField label="Telefon" value={voter.phone_mobile && voter.phone_home ? `${voter.phone_mobile} / ${voter.phone_home}` : (voter.phone_mobile || voter.phone_home)} mono />
-                                            )}
-                                            {!formState.udm && <InfoField label="UDM" value={voter.dm || '-'} />}
-                                            {!formState.locality && <InfoField label="Lokaliti" value={voter.locality || '-'} />}
-                                            {(() => {
-                                                const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
-                                                const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
-                                                    ? voter.alamat_kediaman
-                                                    : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
-                                                if (!alm && !rum) return null;
-                                                const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
-                                                return (
-                                                    <div className="col-span-2 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-2.5">
-                                                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Alamat</p>
-                                                        <p className="mt-0.5 flex items-start gap-1.5 text-xs font-bold text-slate-800">
-                                                            {rum && <RumahBadge voter={voter} onRumahClick={loadRumahVoters} />}
-                                                            <span>{cleanAlm || '-'}</span>
-                                                        </p>
+                                        <div className="mt-3 space-y-2 text-xs">
+                                            <div className="grid gap-2" style={{gridTemplateColumns: 'auto auto 1fr'}}>
+                                                <div className="flex items-center gap-2">
+                                                    {(avatarUpdates[voter.id] || voter.avatar_url) && (
+                                                        <div className="shrink-0">
+                                                            <img src={avatarUpdates[voter.id] || voter.avatar_url} alt="" className="h-7 w-7 cursor-pointer rounded-full object-cover border border-slate-200" onClick={(e) => { e.stopPropagation(); setLightboxSrc(avatarUpdates[voter.id] || voter.avatar_url); }} />
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">No Kp</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{voter.no_kp || voter.old_ic || '-'}</p>
                                                     </div>
-                                                );
-                                            })()}
+                                                </div>
+                                                <div>
+                                                    <span className="font-semibold text-green-700">Telefon </span>
+                                                    {phone ? <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => e.stopPropagation()}>{phone}</a> : <p className="mt-0.5 font-bold text-slate-800">-</p>}
+                                                </div>
+                                                <div>
+                                                    <span className="font-semibold text-green-700">Umur</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.age ?? '-'}</p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <span className="font-semibold text-green-700">UDM</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.dm || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <span className="font-semibold text-green-700">Lokaliti</span>
+                                                    <p className="mt-0.5 font-bold text-slate-800">{voter.locality || '-'}</p>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="mt-3 flex flex-wrap gap-1.5 border-t border-slate-200/80 pt-3">
+                                        <div className="mt-3 flex flex-wrap gap-1.5">
                                             {!voter.is_manual && (
                                                 <>
                                                     <input type="file" accept="image/*" id={`card-avatar-${voter.id}`}
@@ -829,9 +856,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                                 Siap Cula
                                                             </button>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
-                                                                className="inline-flex w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                                className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
                                                                 title="Kembali ke asal">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                                                             </button>
                                                         </>
                                                     ) : (
@@ -857,9 +884,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                                 Siap Cula
                                                             </button>
                                                             <button type="button" onClick={(e) => { e.stopPropagation(); setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; }); }}
-                                                                className="inline-flex w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
+                                                                className="inline-flex w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-red-300 hover:text-red-600"
                                                                 title="Kembali ke asal">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
                                                             </button>
                                                         </>
                                                     ) : (
@@ -880,7 +907,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 );
                             })}
                         </div>
-                        )}
+                    )}
                     {search.trim().length < 2 && (
                         <Pagination voters={localVoters} onNavigate={goToPage} />
                     )}
