@@ -2107,7 +2107,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                             )}
                                         </div>
                                         <div className="mt-3 flex gap-2">
-                                            {culaSemulaIds.has(voter.id) ? (
+                                            {!culaSamaIds.has(voter.id) && (culaSemulaIds.has(voter.id) ? (
                                                 <>
                                                 <button
                                                     type="button"
@@ -2149,8 +2149,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 >
                                                     Cula Semula
                                                 </button>
-                                            )}
-                                            {culaSamaIds.has(voter.id) ? (
+                                            ))}
+                                            {!culaSemulaIds.has(voter.id) && (culaSamaIds.has(voter.id) ? (
                                                 <>
                                                 <button
                                                     type="button"
@@ -2191,7 +2191,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 >
                                                     Cula Sama
                                                 </button>
-                                            )}
+                                            ))}
                                             <button
                                                 type="button"
                                                 onClick={(e) => { e.stopPropagation(); handleApproveError(voter, 'clear'); }}
