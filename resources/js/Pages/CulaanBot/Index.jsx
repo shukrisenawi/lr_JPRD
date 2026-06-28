@@ -738,16 +738,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 {isSearchResult ? index + 1 : (localVoters.from ?? 0) + index}
                                             </span>
                                             <div className="min-w-0 flex-1">
-                                                <p className="flex items-center gap-1.5 text-sm font-bold leading-5 text-slate-800">
+                                                <p className="text-sm font-bold leading-5 text-slate-800">
                                                     {voter.name}
-                                                    {namaAyah && (
-                                                        <button type="button"
-                                                            onClick={(e) => { e.stopPropagation(); doSearchNamaAyah(namaAyah); setFilterOpen(true); }}
-                                                            className="inline-flex shrink-0 items-center justify-center rounded-md border border-white bg-white px-1 py-0.5 text-slate-400 transition hover:border-slate-200 hover:text-green-600"
-                                                            title={`Cari keluarga: ${namaAyah}`}>
-                                                            <UserGroupIcon className="h-3.5 w-3.5" />
-                                                        </button>
-                                                    )}
                                                 </p>
                                                 {((voter.cula_display_label && !voter.cula_display_label.includes('BELUM DICULA')) || (voter.cula_code && voter.cula_code !== '0' && voter.cula_code !== '?' && voter.cula_code !== '')) && (
                                                     <p className="mt-0.5">
@@ -824,7 +816,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                         className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-700 disabled:opacity-40"
                                                         title="Muat naik gambar">
                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
-                                                        Gambar
                                                     </button>
                                                     {voter.address && voter.address !== '-' && voter.address_count >= 2 && voter.address_count <= 10 && (
                                                         <button type="button"
@@ -840,10 +831,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             {namaAyah && (
                                                 <button type="button"
                                                     onClick={(e) => { e.stopPropagation(); doSearchNamaAyah(namaAyah); setFilterOpen(true); }}
-                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-700"
+                                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[10px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60 hover:text-emerald-700"
                                                     title={`Cari keluarga: ${namaAyah}`}>
                                                     <UserGroupIcon className="h-3 w-3" />
-                                                    Keluarga
                                                 </button>
                                             )}
                                             {!voter.is_marked ? (
@@ -1013,7 +1003,6 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-40"
                                         title="Muat naik gambar">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>
-                                        Gambar
                                     </button>
                                     {!fromAddressPopup.current && detailVoter.address && detailVoter.address !== '-' && detailVoter.address_count >= 2 && detailVoter.address_count <= 10 && (
                                         <button type="button"
@@ -1027,10 +1016,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                     {(() => { const namaAyah = extractNamaAyah(detailVoter.name); return namaAyah ? (
                                         <button type="button"
                                             onClick={() => { setDetailVoter(null); setFilterOpen(true); doSearchNamaAyah(namaAyah); }}
-                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700"
+                                            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-bold text-slate-600 shadow-sm transition hover:border-emerald-300 hover:text-emerald-700"
                                             title={`Cari keluarga: ${namaAyah}`}>
                                             <UserGroupIcon className="h-3.5 w-3.5" />
-                                            Keluarga
                                         </button>
                                     ) : null; })()}
                                 </div>
