@@ -420,11 +420,10 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const updateLocalCollections = (voter) => {
         setSuggestions((current) => current.filter((item) => item.id !== voter.id));
         setLocalVoters((current) => {
-            const nextData = (current.data ?? []).map((item) =>
-                item.id === voter.id ? { ...item, is_marked: true, cula_code: voter.cula_code, cula_display_label: voter.cula_display_label } : item
-            );
-            return { ...current, data: nextData };
+            const nextData = (current.data ?? []).filter((item) => item.id !== voter.id);
+            return { ...current, data: nextData, total: Math.max(0, (current.total ?? 0) - 1) };
         });
+        setLocalSummary((current) => ({ ...current, total: Math.max(0, (current.total ?? 0) - 1) }));
         setCulaSemulaIds((prev) => { const next = new Set(prev); next.delete(voter.id); return next; });
     };
 
