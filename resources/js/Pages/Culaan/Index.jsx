@@ -1593,6 +1593,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                         </span>
                                                     </p>
                                                 )}
+                                                {voter.is_manual && voter.created_by_name && (
+                                                    <p className="mt-0.5">
+                                                        <span className="inline-flex items-center gap-1 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700" title="Pemilih manual">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/><path d="M19 8v6"/></svg>
+                                                            Oleh: {voter.created_by_name}
+                                                        </span>
+                                                    </p>
+                                                )}
                                                 <p className="mt-0.5 text-xs font-medium uppercase leading-4 tracking-[0.03em] text-slate-500"><AddressDisplay voter={voter} onRumahClick={loadRumahVoters} /></p>
                                             </div>
 
@@ -2100,6 +2108,17 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     <p className="mt-0.5 font-bold text-slate-600 italic">Tiada</p>
                                                 </div>
                                             </div>
+                                            {(voter.created_by_name || voter.source_file) && (
+                                                <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                                                    <span className="font-semibold text-slate-500">Dimasukkan oleh:</span>
+                                                    {voter.created_by_name ? (
+                                                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-bold text-indigo-700">{voter.created_by_name}</span>
+                                                    ) : null}
+                                                    {voter.source_file ? (
+                                                        <span className="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[10px] text-slate-700" title="Sumber fail import">{voter.source_file}</span>
+                                                    ) : null}
+                                                </div>
+                                            )}
                                             {voter.cula_remark && (
                                                 <div className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
                                                     {voter.cula_remark}
@@ -2374,6 +2393,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 <div className="col-span-2">
                                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dikemas oleh</p>
                                     <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.marked_by_name}</p>
+                                </div>
+                            )}
+                            {(detailVoter.created_by_name || detailVoter.source_file) && (
+                                <div className="col-span-2">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dimasukkan oleh</p>
+                                    <p className="mt-0.5 font-semibold text-slate-700">
+                                        {detailVoter.created_by_name && <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-xs font-bold text-indigo-700 mr-1">{detailVoter.created_by_name}</span>}
+                                        {detailVoter.source_file && <span className="font-mono text-xs text-slate-500">{detailVoter.source_file}</span>}
+                                    </p>
                                 </div>
                             )}
                         </div>

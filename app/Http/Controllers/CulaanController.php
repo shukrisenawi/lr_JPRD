@@ -515,7 +515,7 @@ class CulaanController extends Controller
     private function paginateVoters(array $filters): LengthAwarePaginator
     {
         return $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem.marker')
+            ->with('creator', 'culaWorkItem.marker')
             ->when($filters['udm'] === '' && ! $filters['show_marked'], fn (Builder $q) => $q->orderBy('dm'))
             ->when($filters['show_marked'], fn (Builder $q) => $q->orderByDesc(
                 CulaWorkItem::select('marked_at')->whereColumn('pemilih_record_id', 'pemilih_records.id')
@@ -675,6 +675,9 @@ class CulaanController extends Controller
             'catatan' => $voter->catatan,
             'alamat_kp' => $voter->alamat_kp,
             'alamat_kediaman' => $voter->alamat_kediaman,
+            'created_by_name' => $voter->creator?->name,
+            'created_by_id' => $voter->created_by,
+            'source_file' => $voter->source_file,
         ];
 
         $data['address_count'] = $voter->address
@@ -976,6 +979,7 @@ class CulaanController extends Controller
         }
 
         return $query
+            ->with('creator', 'culaWorkItem.marker')
             ->orderByRaw("
                 CASE
                     WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
