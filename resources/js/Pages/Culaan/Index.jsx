@@ -2108,12 +2108,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                     <p className="mt-0.5 font-bold text-slate-600 italic">Tiada</p>
                                                 </div>
                                             </div>
-                                            {voter.created_by_name && (
-                                                <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
-                                                    <span className="font-semibold text-slate-500">Dimasukkan oleh:</span>
+                                            <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                                                <span className="font-semibold text-slate-500">Dimasukkan oleh:</span>
+                                                {voter.created_by_name ? (
                                                     <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-bold text-indigo-700">{voter.created_by_name}</span>
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <span className="italic text-slate-400">Tiada rekod</span>
+                                                )}
+                                            </div>
                                             {voter.cula_remark && (
                                                 <div className="rounded-md bg-slate-100 px-2 py-1 text-xs text-slate-600">
                                                     {voter.cula_remark}
@@ -2390,14 +2392,16 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.marked_by_name}</p>
                                 </div>
                             )}
-                            {detailVoter.created_by_name && (
-                                <div className="col-span-2">
+                            <div className="col-span-2">
                                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Dimasukkan oleh</p>
                                     <p className="mt-0.5">
-                                        <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-xs font-bold text-indigo-700">{detailVoter.created_by_name}</span>
+                                        {detailVoter.created_by_name ? (
+                                            <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-xs font-bold text-indigo-700">{detailVoter.created_by_name}</span>
+                                        ) : (
+                                            <span className="italic text-xs text-slate-400">Tiada rekod</span>
+                                        )}
                                     </p>
                                 </div>
-                            )}
                         </div>
                         <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                             {!detailVoter.is_manual && (
