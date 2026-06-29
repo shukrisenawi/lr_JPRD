@@ -677,7 +677,6 @@ class CulaanController extends Controller
             'alamat_kediaman' => $voter->alamat_kediaman,
             'created_by_name' => $voter->creator?->name,
             'created_by_id' => $voter->created_by,
-            'source_file' => $voter->source_file,
         ];
 
         $data['address_count'] = $voter->address
