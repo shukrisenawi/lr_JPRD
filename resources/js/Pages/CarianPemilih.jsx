@@ -215,6 +215,8 @@ function SearchPanel() {
     const isCawanganLevel = auth.user?.access_level === 'cawangan';
     const [selectedDm, setSelectedDm] = useState('');
     const [selectedLocality, setSelectedLocality] = useState('');
+    const [selectedCulaCodes, setSelectedCulaCodes] = useState([]);
+    const [showCulaFilter, setShowCulaFilter] = useState(false);
     const [openingTg, setOpeningTg] = useState(false);
     const [editNoAhli, setEditNoAhli] = useState(null);
     const [flash, setFlash] = useState('');
@@ -226,7 +228,7 @@ function SearchPanel() {
     useEffect(() => () => ac.current?.abort(), []);
     useEffect(() => { if (flash) { const t = setTimeout(() => setFlash(''), 2000); return () => clearTimeout(t); } }, [flash]);
 
-    const fetchSuggestions = async (searchQ, dm, locality) => {
+    const fetchSuggestions = async (searchQ, dm, locality, culaCodes) => {
         ac.current?.abort();
         if (searchQ.trim().length < 2) { setSuggestions([]); setSearching(false); return; }
 
@@ -239,6 +241,7 @@ function SearchPanel() {
             const params = new URLSearchParams({ q: searchQ });
             if (dm) params.set('dm', dm);
             if (locality) params.set('locality', locality);
+            if (culaCodes && culaCodes.length > 0) params.set('cula_codes', culaCodes.join(','));
             const res = await fetch(`${route('carian-pemilih.search')}?${params.toString()}`, { headers: { Accept: 'application/json' }, signal: c.signal });
             const ct = res.headers.get('content-type') ?? '';
             if (res.redirected || !res.ok || !ct.includes('application/json')) throw new Error();
@@ -252,15 +255,15 @@ function SearchPanel() {
     const handleChange = async (e) => {
         const nq = e.target.value;
         setQ(nq); setSelected(null); setErr('');
-        fetchSuggestions(nq, selectedDm, selectedLocality);
+        fetchSuggestions(nq, selectedDm, selectedLocality, selectedCulaCodes);
     };
 
     useEffect(() => {
         if (q.trim().length >= 2) {
             setSelected(null);
-            fetchSuggestions(q, selectedDm, selectedLocality);
+            fetchSuggestions(q, selectedDm, selectedLocality, selectedCulaCodes);
         }
-    }, [selectedDm, selectedLocality]);
+    }, [selectedDm, selectedLocality, selectedCulaCodes]);
 
     const pick = (voter) => {
         ac.current?.abort(); rid.current += 1; setSearching(false); setSuggestions([]); setQ(voter.name ?? ''); setSelected(voter);
@@ -336,6 +339,61 @@ function SearchPanel() {
                                     <option value="">Semua Lokaliti</option>
                                     {(selectedDm ? (localities_by_dm[selectedDm] || []) : Object.values(localities_by_dm).flat()).map((loc) => <option key={loc} value={loc}>{loc}</option>)}
                                 </select>
+                            </div>
+                        )}
+                        {initialCulaCodes && initialCulaCodes.length > 0 && (
+                            <div className="relative flex-1 basis-full sm:basis-[180px]">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCulaFilter(!showCulaFilter)}
+                                    className={`input-field flex w-full items-center justify-between py-2 pl-3 pr-3 text-xs ${selectedCulaCodes.length > 0 ? 'border-green-400 bg-green-50 text-green-700' : ''}`}
+                                >
+                                    <span className="truncate">
+                                        {selectedCulaCodes.length > 0
+                                            ? `Cula (${selectedCulaCodes.length})`
+                                            : 'Semua Cula'}
+                                    </span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`ml-1 h-3.5 w-3.5 shrink-0 transition ${showCulaFilter ? 'rotate-180' : ''}`}>
+                                        <path d="m6 9 6 6 6-6" />
+                                    </svg>
+                                </button>
+                                {showCulaFilter && (
+                                    <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+                                        <div className="max-h-48 overflow-y-auto p-1.5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedCulaCodes([])}
+                                                className={`w-full rounded-md px-2.5 py-1.5 text-left text-xs font-bold transition ${selectedCulaCodes.length === 0 ? 'bg-green-100 text-green-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                            >
+                                                Semua Cula
+                                            </button>
+                                            {initialCulaCodes.map((c) => {
+                                                const checked = selectedCulaCodes.includes(c.code);
+                                                return (
+                                                    <button
+                                                        key={c.code}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedCulaCodes((prev) =>
+                                                                checked ? prev.filter((x) => x !== c.code) : [...prev, c.code]
+                                                            );
+                                                        }}
+                                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition ${checked ? 'bg-green-100 text-green-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+                                                    >
+                                                        <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${checked ? 'border-green-600 bg-green-600 text-white' : 'border-slate-300'}`}>
+                                                            {checked && (
+                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
+                                                                    <path d="M20 6 9 17l-5-5" />
+                                                                </svg>
+                                                            )}
+                                                        </span>
+                                                        <span className="truncate">{c.label}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

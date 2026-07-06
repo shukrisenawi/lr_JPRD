@@ -85,6 +85,11 @@ class CarianPemilihController extends Controller
     {
         $path = Setting::valueOf('pemilih_report_file_path', PemilihReportService::DEFAULT_SAMPLE_PATH);
 
+        $culaCodes = $request->query('cula_codes', []);
+        if (is_string($culaCodes)) {
+            $culaCodes = array_filter(explode(',', $culaCodes));
+        }
+
         return response()->json([
             'suggestions' => $reportService->searchVoters(
                 (string) $request->query('q', ''),
@@ -93,6 +98,7 @@ class CarianPemilihController extends Controller
                 $request->user(),
                 $request->query('dm', '') ?: null,
                 $request->query('locality', '') ?: null,
+                $culaCodes ?: null,
             ),
         ]);
     }
