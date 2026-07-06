@@ -516,6 +516,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll));
+    const [culaFilterOpen, setCulaFilterOpen] = useState(false);
     const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
@@ -646,31 +647,38 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 </div>
                                 {showAll && available_cula_codes.length > 0 && (
                                     <div>
-                                        <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Tapisan Kod Cula</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {[...available_cula_codes].sort((a, b) => {
-                                                const na = parseInt(a.code, 10);
-                                                const nb = parseInt(b.code, 10);
-                                                return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
-                                            }).map((c) => (
-                                                <button
-                                                    key={c.code}
-                                                    type="button"
-                                                    onClick={() => toggleCulaCode(c.code)}
-                                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${
-                                                        culaCodes.includes(c.code)
-                                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                            : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'
-                                                    }`}
-                                                >
-                                                    {c.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                        {culaCodes.length > 0 && (
-                                            <p className="mt-1 text-[10px] font-medium text-slate-400">
-                                                {culaCodes.length} kod cula dipilih
-                                            </p>
+                                        <button type="button" onClick={() => setCulaFilterOpen((v) => !v)}
+                                            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 hover:text-slate-700">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                                                className={`h-3 w-3 transition-transform duration-200 ${culaFilterOpen ? 'rotate-90' : ''}`}>
+                                                <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                            Tapisan Kod Cula
+                                            {culaCodes.length > 0 && (
+                                                <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">{culaCodes.length}</span>
+                                            )}
+                                        </button>
+                                        {culaFilterOpen && (
+                                            <div className="mt-2 flex flex-wrap gap-1.5">
+                                                {[...available_cula_codes].sort((a, b) => {
+                                                    const na = parseInt(a.code, 10);
+                                                    const nb = parseInt(b.code, 10);
+                                                    return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
+                                                }).map((c) => (
+                                                    <button
+                                                        key={c.code}
+                                                        type="button"
+                                                        onClick={() => toggleCulaCode(c.code)}
+                                                        className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${
+                                                            culaCodes.includes(c.code)
+                                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                                : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'
+                                                        }`}
+                                                    >
+                                                        {c.label}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                 )}

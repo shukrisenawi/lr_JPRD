@@ -356,6 +356,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         return auth.user?.preferences?.culaan_view_mode ?? 'table';
     });
     const [filterOpen, setFilterOpen] = useState(false);
+    const [culaFilterOpen, setCulaFilterOpen] = useState(false);
     const jadualBaselineRef = useRef(null);
     const addressPopupVoterName = useRef('');
     const lastRumahVoterRef = useRef(null);
@@ -1447,31 +1448,38 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
                         {formState.show_all && available_cula_codes.length > 0 && (
                             <div className="mt-3">
-                                <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tapisan Kod Cula</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {[...available_cula_codes].sort((a, b) => {
-                                        const na = parseInt(a.code, 10);
-                                        const nb = parseInt(b.code, 10);
-                                        return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
-                                    }).map((c) => (
-                                        <button
-                                            key={c.code}
-                                            type="button"
-                                            onClick={() => toggleCulaCode(c.code)}
-                                            className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${
-                                                (formState.cula_codes ?? []).includes(c.code)
-                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                    : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'
-                                            }`}
-                                        >
-                                            {c.label}
-                                        </button>
-                                    ))}
-                                </div>
-                                {(formState.cula_codes ?? []).length > 0 && (
-                                    <p className="mt-1 text-[10px] font-medium text-slate-400">
-                                        {formState.cula_codes.length} kod cula dipilih
-                                    </p>
+                                <button type="button" onClick={() => setCulaFilterOpen((v) => !v)}
+                                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-600 hover:text-slate-800">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                                        className={`h-3 w-3 transition-transform duration-200 ${culaFilterOpen ? 'rotate-90' : ''}`}>
+                                        <polyline points="9 18 15 12 9 6" />
+                                    </svg>
+                                    Tapisan Kod Cula
+                                    {(formState.cula_codes ?? []).length > 0 && (
+                                        <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">{formState.cula_codes.length}</span>
+                                    )}
+                                </button>
+                                {culaFilterOpen && (
+                                    <div className="mt-2 flex flex-wrap gap-1.5">
+                                        {[...available_cula_codes].sort((a, b) => {
+                                            const na = parseInt(a.code, 10);
+                                            const nb = parseInt(b.code, 10);
+                                            return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
+                                        }).map((c) => (
+                                            <button
+                                                key={c.code}
+                                                type="button"
+                                                onClick={() => toggleCulaCode(c.code)}
+                                                className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${
+                                                    (formState.cula_codes ?? []).includes(c.code)
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                        : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'
+                                                }`}
+                                            >
+                                                {c.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         )}
