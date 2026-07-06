@@ -2154,7 +2154,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 {voter.created_by_name ? (
                                                     <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-bold text-indigo-700">{voter.created_by_name}</span>
                                                 ) : (
-                                                    <span className="italic text-slate-400">Tiada rekod</span>
+                                                    <span className="rounded bg-slate-200 px-1.5 py-0.5 font-bold text-slate-600">Import CSV</span>
                                                 )}
                                             </div>
                                             {voter.cula_remark && (
