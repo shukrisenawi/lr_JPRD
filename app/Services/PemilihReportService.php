@@ -310,6 +310,10 @@ class PemilihReportService
                 $voter['cula_remark'] = 'Data import ' . ($voter['source_file'] ?? 'fail') . ' pada ' . now()->format('d-m-Y') . ' - tiada kod cula';
             }
 
+            if ($existing) {
+                $voter['created_by'] = $existing->created_by;
+            }
+
             $record = PemilihRecord::query()->updateOrCreate(
                 ['identity_number' => $voter['identity_number']],
                 $voter,
