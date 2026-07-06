@@ -182,6 +182,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [filterAlamat, setFilterAlamat] = useState(Boolean(filters.filter_alamat));
     const [filterRumahAlamat, setFilterRumahAlamat] = useState(Boolean(filters.filter_rumah_alamat));
     const [showAll, setShowAll] = useState(Boolean(filters.show_all));
+    const [culaCodes, setCulaCodes] = useState(filters.cula_codes ?? []);
     const [ageFrom, setAgeFrom] = useState(filters.age_from ?? '');
     const [ageTo, setAgeTo] = useState(filters.age_to ?? '');
     const [pendingIds, setPendingIds] = useState([]);
@@ -247,6 +248,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         filter_alamat: filterAlamat,
         filter_rumah_alamat: filterRumahAlamat,
         show_all: showAll,
+        cula_codes: culaCodes,
         age_from: ageFrom,
         age_to: ageTo,
     };
@@ -308,7 +310,18 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const toggleShowAll = () => {
         const next = !showAll;
         setShowAll(next);
-        applyFilters({ ...formState, show_all: next });
+        if (!next) {
+            setCulaCodes([]);
+        }
+        applyFilters({ ...formState, show_all: next, cula_codes: next ? culaCodes : [] });
+    };
+
+    const toggleCulaCode = (code) => {
+        const next = culaCodes.includes(code)
+            ? culaCodes.filter((c) => c !== code)
+            : [...culaCodes, code];
+        setCulaCodes(next);
+        applyFilters({ ...formState, cula_codes: next });
     };
 
     const doSearch = async (value) => {
@@ -324,7 +337,8 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         suggestionsAbort.current = controller;
         setSearching(true);
         try {
-            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to, filter_rumah: formState.filter_rumah, filter_alamat: formState.filter_alamat, filter_rumah_alamat: formState.filter_rumah_alamat });
+            const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to, filter_rumah: formState.filter_rumah, filter_alamat: formState.filter_alamat, filter_rumah_alamat: formState.filter_rumah_alamat, show_all: formState.show_all ? '1' : '0' });
+            (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
             const response = await fetch(`${route('culaan-bot.search')}?${params.toString()}`, {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
@@ -511,6 +525,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         setFilterAlamat(false);
         setFilterRumahAlamat(false);
         setShowAll(false);
+        setCulaCodes([]);
         setAgeFrom('');
         setAgeTo('');
         setSearch('');
@@ -523,6 +538,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             filter_alamat: false,
             filter_rumah_alamat: false,
             show_all: false,
+            cula_codes: [],
             age_from: '',
             age_to: '',
         });
@@ -628,6 +644,36 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         <ToggleTile label="Semua Pemilih" icon="list" iconColor="slate" active={showAll} onToggle={toggleShowAll} />
                                     </div>
                                 </div>
+                                {showAll && available_cula_codes.length > 0 && (
+                                    <div>
+                                        <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-slate-500">Tapisan Kod Cula</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {[...available_cula_codes].sort((a, b) => {
+                                                const na = parseInt(a.code, 10);
+                                                const nb = parseInt(b.code, 10);
+                                                return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
+                                            }).map((c) => (
+                                                <button
+                                                    key={c.code}
+                                                    type="button"
+                                                    onClick={() => toggleCulaCode(c.code)}
+                                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${
+                                                        culaCodes.includes(c.code)
+                                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                            : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'
+                                                    }`}
+                                                >
+                                                    {c.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {culaCodes.length > 0 && (
+                                            <p className="mt-1 text-[10px] font-medium text-slate-400">
+                                                {culaCodes.length} kod cula dipilih
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                                 {hasFilterValue && (
                                     <button type="button" onClick={clearAllFilters}
                                         className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:border-red-300 hover:bg-red-100">

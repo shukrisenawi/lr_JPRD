@@ -246,6 +246,11 @@ class CulaanBotController extends Controller
             }
         );
 
+        $query->when(
+            $filters['show_all'] && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0,
+            fn (Builder $b) => $b->whereIn('cula_code', $filters['cula_codes'])
+        );
+
         $query->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
             $maxBirthYear = now()->year - (int) $filters['age_from'];
             $currentYY = (int) now()->format('y');
@@ -457,6 +462,7 @@ class CulaanBotController extends Controller
             'filter_alamat' => $request->boolean('filter_alamat'),
             'filter_rumah_alamat' => $request->boolean('filter_rumah_alamat'),
             'show_all' => $request->boolean('show_all'),
+            'cula_codes' => $request->query('cula_codes'),
         ];
     }
 
