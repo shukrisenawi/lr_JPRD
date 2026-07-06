@@ -1048,6 +1048,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 jantina: formState.jantina,
                 umur_dari: formState.umur_dari ?? '',
                 umur_hingga: formState.umur_hingga ?? '',
+                show_all: formState.show_all ? '1' : '0',
+                filter_rumah_alamat: formState.filter_rumah_alamat ? '1' : '0',
             });
             (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
 
@@ -1440,6 +1442,37 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                         className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500" />
                                     <span className="text-xs font-bold text-slate-600">Semua Pemilih</span>
                                 </label>
+                            </div>
+                        )}
+
+                        {formState.show_all && available_cula_codes.length > 0 && (
+                            <div className="mt-3">
+                                <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tapisan Kod Cula</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {[...available_cula_codes].sort((a, b) => {
+                                        const na = parseInt(a.code, 10);
+                                        const nb = parseInt(b.code, 10);
+                                        return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
+                                    }).map((c) => (
+                                        <button
+                                            key={c.code}
+                                            type="button"
+                                            onClick={() => toggleCulaCode(c.code)}
+                                            className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md ${
+                                                (formState.cula_codes ?? []).includes(c.code)
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                    : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'
+                                            }`}
+                                        >
+                                            {c.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                {(formState.cula_codes ?? []).length > 0 && (
+                                    <p className="mt-1 text-[10px] font-medium text-slate-400">
+                                        {formState.cula_codes.length} kod cula dipilih
+                                    </p>
+                                )}
                             </div>
                         )}
 

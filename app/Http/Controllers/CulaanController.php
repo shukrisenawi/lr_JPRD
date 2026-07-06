@@ -358,7 +358,7 @@ class CulaanController extends Controller
     {
         $groupKodCulas = $this->resolveGroupKodCulas($filters['group_id']);
 
-        $usingCustomCulaCodes = $filters['custom_mode']
+        $usingCustomCulaCodes = ($filters['custom_mode'] || $filters['show_all'])
             && is_array($filters['cula_codes'])
             && count($filters['cula_codes']) > 0;
 
@@ -872,7 +872,7 @@ class CulaanController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
-        if ($filters['custom_mode'] && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0) {
+        if (($filters['custom_mode'] || $filters['show_all']) && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0) {
             $query->whereIn('cula_code', $filters['cula_codes']);
         }
 
