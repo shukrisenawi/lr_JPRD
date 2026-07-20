@@ -386,30 +386,42 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
 
                                         <div className="mt-3 space-y-2 text-xs">
                                             <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <span className="font-semibold text-green-700">No KP</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{noKp}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="font-semibold text-green-700">Telefon</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{phone}</p>
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <span className="font-semibold text-green-700">Alamat</span>
-                                                    <p className="mt-0.5 font-medium text-slate-600">{address}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="font-semibold text-green-700">Universiti</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{university}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="font-semibold text-green-700">Bidang</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{bidang}</p>
-                                                </div>
-                                                <div className="col-span-2">
-                                                    <span className="font-semibold text-green-700">Tarikh Permohonan</span>
-                                                    <p className="mt-0.5 font-bold text-slate-800">{tarikh}</p>
-                                                </div>
+                                                {noKp && noKp !== '-' && (
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">No KP</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{noKp}</p>
+                                                    </div>
+                                                )}
+                                                {phone && phone !== '-' && (
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">Telefon</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{phone}</p>
+                                                    </div>
+                                                )}
+                                                {address && address !== '-' && (
+                                                    <div className="col-span-2">
+                                                        <span className="font-semibold text-green-700">Alamat</span>
+                                                        <p className="mt-0.5 font-medium text-slate-600">{address}</p>
+                                                    </div>
+                                                )}
+                                                {university && university !== '-' && (
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">Universiti</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{university}</p>
+                                                    </div>
+                                                )}
+                                                {bidang && bidang !== '-' && (
+                                                    <div>
+                                                        <span className="font-semibold text-green-700">Bidang</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{bidang}</p>
+                                                    </div>
+                                                )}
+                                                {tarikh && tarikh !== '-' && (
+                                                    <div className="col-span-2">
+                                                        <span className="font-semibold text-green-700">Tarikh Permohonan</span>
+                                                        <p className="mt-0.5 font-bold text-slate-800">{tarikh}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
@@ -417,9 +429,15 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                             <div className="mt-3 rounded-lg border border-green-100 bg-green-50/60 p-2.5">
                                                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Data Pemilih</p>
                                                 <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
-                                                    <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli || '-'}</span></p>
-                                                    <p><span className="text-slate-500">Cula:</span> <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code || '-'}</span></p>
-                                                    <p><span className="text-slate-500">Status:</span> <span className={`font-bold ${record.pemilih.status === 'aktif' ? 'text-green-700' : 'text-red-600'}`}>{record.pemilih.status || '-'}</span></p>
+                                                    {record.pemilih.no_ahli && (
+                                                        <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli}</span></p>
+                                                    )}
+                                                    {(record.pemilih.cula_display_label || record.pemilih.cula_code) && (
+                                                        <p><span className="text-slate-500">Cula:</span> <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span></p>
+                                                    )}
+                                                    {record.pemilih.status && (
+                                                        <p><span className="text-slate-500">Status:</span> <span className={`font-bold ${record.pemilih.status === 'aktif' ? 'text-green-700' : 'text-red-600'}`}>{record.pemilih.status}</span></p>
+                                                    )}
                                                 </div>
                                             </div>
                                         )}
