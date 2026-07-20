@@ -384,16 +384,6 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-sm font-bold leading-5 text-slate-800">{name}</p>
                                                     <div className="mt-1 flex flex-wrap items-center gap-1">
-                                                        {record.linked ? (
-                                                            <span className="inline-flex items-center gap-1 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5" aria-hidden="true"><title>dipaut</title><polyline points="20 6 9 17 4 12" /></svg>
-                                                                Dipaut
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">
-                                                                Tiada pautan
-                                                            </span>
-                                                        )}
                                                         {record.pemilih?.dm && (
                                                             <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
                                                                 {record.pemilih.dm}
