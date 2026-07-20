@@ -137,7 +137,7 @@ function Pagination({ currentPage, totalPages, totalRecords, pageSize, onPageCha
     );
 }
 
-export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal }) {
+export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [] }) {
     const [sheetUrl, setSheetUrl] = useState(initialSheetUrl);
     const [editingUrl, setEditingUrl] = useState(false);
     const [urlInput, setUrlInput] = useState(initialSheetUrl);
@@ -151,23 +151,49 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [updatedCount, setUpdatedCount] = useState(null);
     const [search, setSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [activeTab, setActiveTab] = useState('pemilih');
+    const [activeTab, setActiveTab] = useState('belum');
+    const [selectedRecord, setSelectedRecord] = useState(null);
+    const [showCulaModal, setShowCulaModal] = useState(false);
+    const [pendingIds, setPendingIds] = useState(new Set());
     const pageSize = 20;
 
-    const linkedRecords = useMemo(() => records.filter((r) => r.linked), [records]);
     const unlinkedRecords = useMemo(() => records.filter((r) => !r.linked), [records]);
 
+    const culaStatuses = useMemo(() => {
+        const map = new Map();
+        records.forEach((r) => {
+            if (!r.linked || !r.pemilih) return;
+            const code = r.pemilih.cula_code;
+            const label = r.pemilih.cula_display_label || '';
+            const isDone = code && code !== '0' && code !== '?' && !label.includes('BELUM DICULA');
+            map.set(r.id, isDone ? 'done' : 'pending');
+        });
+        return map;
+    }, [records]);
+
+    const tabRecords = useMemo(() => {
+        switch (activeTab) {
+            case 'belum':
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending');
+            case 'siap':
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done');
+            case 'tiada':
+                return unlinkedRecords;
+            default:
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending');
+        }
+    }, [records, unlinkedRecords, culaStatuses, activeTab]);
+
     const activeRecords = useMemo(() => {
-        const source = activeTab === 'pemilih' ? linkedRecords : unlinkedRecords;
-        if (!search.trim()) return source;
+        if (!search.trim()) return tabRecords;
         const q = search.toLowerCase();
-        return source.filter((r) => {
+        return tabRecords.filter((r) => {
             const name = getName(r).toLowerCase();
             const noKp = getNoKpDisplay(r).toLowerCase();
             const noKpClean = String(r.no_kp || '').toLowerCase();
             return name.includes(q) || noKp.includes(q) || noKpClean.includes(q);
         });
-    }, [linkedRecords, unlinkedRecords, activeTab, search]);
+    }, [tabRecords, search]);
 
     const totalPages = Math.ceil(activeRecords.length / pageSize);
     const paginatedRecords = useMemo(() => {
@@ -175,8 +201,10 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         return activeRecords.slice(start, start + pageSize);
     }, [activeRecords, currentPage]);
 
-    const linkedCount = linkedRecords.length;
+    const linkedCount = records.filter((r) => r.linked).length;
     const unlinkedCount = unlinkedRecords.length;
+    const doneCount = records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done').length;
+    const pendingCount = linkedCount - doneCount;
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -186,6 +214,47 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const handlePageChange = (page) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const updateRecordCula = (recordId, culaCode, culaDisplayLabel) => {
+        setRecords((prev) => prev.map((r) => {
+            if (r.id !== recordId) return r;
+            const next = { ...r };
+            if (next.pemilih) {
+                next.pemilih = { ...next.pemilih, cula_code: culaCode, cula_display_label: culaDisplayLabel };
+            }
+            return next;
+        }));
+    };
+
+    const handleCulaSiap = async (code, label) => {
+        if (!selectedRecord?.pemilih || !code) return;
+        setShowCulaModal(false);
+        setPendingIds((prev) => new Set([...prev, selectedRecord.pemilih.id]));
+        setMessage('');
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const res = await fetch(route('pusat-khidmat.update-cula', selectedRecord.pemilih.id), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, Accept: 'application/json' },
+                body: JSON.stringify({ cula_code: code, cula_display_label: label }),
+            });
+            const payload = await res.json();
+            if (!res.ok) throw new Error(payload.message || 'Gagal.');
+            updateRecordCula(selectedRecord.id, code, label);
+            setMessage(payload.message || 'Kod culaan dikemaskini.');
+            setMessageType('success');
+        } catch (e) {
+            setMessage(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
+            setMessageType('error');
+        } finally {
+            setPendingIds((prev) => {
+                const next = new Set(prev);
+                next.delete(selectedRecord.pemilih.id);
+                return next;
+            });
+            setSelectedRecord(null);
+        }
     };
 
     const handleSync = async () => {
@@ -301,19 +370,26 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                 </section>
 
                 <section className="card overflow-hidden p-0">
-                    <div className="flex flex-col gap-3 border-b border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 border-b border-slate-200 p-3 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
                             <button
                                 type="button"
-                                onClick={() => handleTabChange('pemilih')}
-                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'pemilih' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                onClick={() => handleTabChange('belum')}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'belum' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
-                                Pemilih ({linkedCount})
+                                Belum Cula ({pendingCount})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('siap')}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'siap' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                            >
+                                Siap Cula ({doneCount})
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleTabChange('tiada')}
-                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'tiada' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'tiada' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
                                 Tiada Data Pemilih ({unlinkedCount})
                             </button>
@@ -453,6 +529,37 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                 </div>
                                             </div>
                                         )}
+
+                                        {activeTab === 'belum' && record.pemilih && (
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => { setSelectedRecord(record); setShowCulaModal(true); }}
+                                                    disabled={pendingIds.has(record.pemilih.id)}
+                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                    {pendingIds.has(record.pemilih.id) ? '...' : 'Siap Cula'}
+                                                </button>
+                                                <a
+                                                    href={`https://t.me/${record.pemilih.telegram_identity || ''}?start=kemascula`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    onClick={(e) => { if (!record.pemilih.telegram_identity) e.preventDefault(); }}
+                                                    className={`inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500 ${!record.pemilih.telegram_identity ? 'pointer-events-none opacity-40' : ''}`}
+                                                >
+                                                    Cula Sama
+                                                </a>
+                                                <a
+                                                    href={`https://t.me/${record.pemilih.telegram_identity || ''}?start=kemastel`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    onClick={(e) => { if (!record.pemilih.telegram_identity) e.preventDefault(); }}
+                                                    className={`inline-flex flex-1 items-center justify-center rounded-md bg-orange-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-orange-500 ${!record.pemilih.telegram_identity ? 'pointer-events-none opacity-40' : ''}`}
+                                                >
+                                                    Kemas Tel
+                                                </a>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -468,6 +575,46 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                     </>
                 )}
             </div>
+
+            {showCulaModal && selectedRecord?.pemilih && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-black text-slate-800">Kemaskini Cula — {getName(selectedRecord)}</h3>
+                            <button
+                                type="button"
+                                onClick={() => { setShowCulaModal(false); setSelectedRecord(null); }}
+                                className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <p className="mt-2 text-xs text-slate-600">Pilih kod culaan untuk rekod ini:</p>
+                        <div className="mt-3 grid max-h-[16rem] gap-2 overflow-y-auto pr-1">
+                            {[...availableCulaCodes].sort((a, b) => a.code.localeCompare(b.code)).map((c) => (
+                                <button
+                                    key={c.code}
+                                    type="button"
+                                    onClick={() => handleCulaSiap(c.code, c.label || c.code)}
+                                    disabled={pendingIds.has(selectedRecord.pemilih.id)}
+                                    className={`rounded-md border px-2.5 py-2 text-left text-xs font-bold shadow-sm transition hover:shadow-md ${c.code === (selectedRecord.pemilih.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}
+                                >
+                                    {c.label || c.code}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="mt-3 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => { setShowCulaModal(false); setSelectedRecord(null); }}
+                                className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
             </div>
         </AuthenticatedLayout>
