@@ -453,7 +453,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                         {record.linked && record.pemilih && (
                                             <div className="mt-3 rounded-lg border border-green-100 bg-green-50/60 p-2.5">
                                                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Data Pemilih</p>
-                                                <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
+                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
                                                     {record.pemilih.no_ahli && (
                                                         <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli}</span></p>
                                                     )}
