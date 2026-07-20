@@ -460,9 +460,6 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                     {(record.pemilih.cula_display_label || record.pemilih.cula_code) && (
                                                         <p><span className="text-slate-500">Cula:</span> <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span></p>
                                                     )}
-                                                    {record.pemilih.status && (
-                                                        <p><span className="text-slate-500">Status:</span> <span className={`font-bold ${record.pemilih.status === 'aktif' ? 'text-green-700' : 'text-red-600'}`}>{record.pemilih.status}</span></p>
-                                                    )}
                                                 </div>
                                             </div>
                                         )}
