@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\PemilihRecord;
 use App\Models\PusatKhidmatData;
 use App\Models\Setting;
-use Illuminate\Support\Collection;
+use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -14,6 +14,8 @@ use RuntimeException;
 class PusatKhidmatService
 {
     public const DEFAULT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1_2uM_knp2IvyPG5dxGYhSGXU1nY5FpDslj2khQeA_k8/edit?usp=sharing';
+
+    private const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
     public function getSheetUrl(): string
     {
@@ -28,44 +30,30 @@ class PusatKhidmatService
     public function fetchAndSync(): array
     {
         $sheetUrl = $this->getSheetUrl();
-        $csvUrl = $this->toCsvExportUrl($sheetUrl);
+        $sheetId = $this->extractSheetId($sheetUrl);
         $sheetKey = md5($sheetUrl);
 
-        $response = Http::timeout(30)
-            ->accept('text/csv')
-            ->get($csvUrl);
+        $rows = $this->fetchSheetRows($sheetId);
 
-        if ($response->failed()) {
-            throw new RuntimeException('Gagal mendapatkan data daripada Google Sheet.');
-        }
-
-        $lines = array_values(array_filter(
-            preg_split("/\r\n|\n|\r/", trim($response->body())) ?: [],
-            fn (string $line) => trim($line) !== '',
-        ));
-
-        if (count($lines) < 2) {
+        if (empty($rows)) {
             return [
                 'headers' => [],
                 'records' => [],
                 'sheet_key' => $sheetKey,
                 'sheet_url' => $sheetUrl,
-                'csv_url' => $csvUrl,
                 'new_count' => 0,
                 'updated_count' => 0,
                 'total_count' => 0,
             ];
         }
 
-        $headers = array_map(
-            fn ($header) => Str::of((string) $header)->trim()->toString(),
-            str_getcsv(array_shift($lines)),
-        );
+        $headers = array_shift($rows);
+        $headers = array_map(fn ($h) => Str::of((string) $h)->trim()->toString(), $headers);
 
         $newCount = 0;
         $updatedCount = 0;
 
-        DB::transaction(function () use ($lines, $headers, $sheetKey, &$newCount, &$updatedCount) {
+        DB::transaction(function () use ($rows, $headers, $sheetKey, &$newCount, &$updatedCount) {
             $existingFingerprints = PusatKhidmatData::query()
                 ->where('sheet_key', $sheetKey)
                 ->pluck('row_fingerprint', 'row_key')
@@ -73,10 +61,8 @@ class PusatKhidmatService
 
             $processedRowKeys = [];
 
-            foreach ($lines as $index => $line) {
-                $values = str_getcsv($line);
+            foreach ($rows as $index => $values) {
                 $row = [];
-
                 foreach ($headers as $headerIndex => $header) {
                     $row[$header] = trim((string) ($values[$headerIndex] ?? ''));
                 }
@@ -154,7 +140,6 @@ class PusatKhidmatService
             'records' => $records,
             'sheet_key' => $sheetKey,
             'sheet_url' => $sheetUrl,
-            'csv_url' => $csvUrl,
             'new_count' => $newCount,
             'updated_count' => $updatedCount,
             'total_count' => count($records),
@@ -209,29 +194,49 @@ class PusatKhidmatService
         ];
     }
 
-    public function toCsvExportUrl(string $sheetUrl): string
+    private function fetchSheetRows(string $sheetId): array
     {
-        if (str_contains($sheetUrl, '/export?format=csv')) {
-            return $sheetUrl;
+        $token = $this->getAccessToken();
+
+        $response = Http::withToken($token)
+            ->timeout(30)
+            ->accept('application/json')
+            ->get("https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}/values/Sheet1");
+
+        if ($response->failed()) {
+            throw new RuntimeException('Gagal mendapatkan data daripada Google Sheet: ' . $response->body());
         }
 
+        return $response->json('values', []);
+    }
+
+    private function getAccessToken(): string
+    {
+        $keyPath = storage_path('app/service-account.json');
+
+        if (!file_exists($keyPath)) {
+            throw new RuntimeException('Fail service-account.json tidak dijumpai di storage/app/. Sila letak JSON key Service Account.');
+        }
+
+        $credentials = new ServiceAccountCredentials(self::SCOPES, $keyPath);
+        $token = $credentials->fetchAuthToken();
+
+        if (empty($token['access_token'])) {
+            throw new RuntimeException('Gagal mendapatkan access token dari Service Account.');
+        }
+
+        return $token['access_token'];
+    }
+
+    private function extractSheetId(string $sheetUrl): string
+    {
         preg_match('/\/d\/([a-zA-Z0-9-_]+)/', $sheetUrl, $matches);
 
         if (!isset($matches[1])) {
             throw new RuntimeException('URL Google Sheet tidak sah.');
         }
 
-        $gid = null;
-        $queryString = parse_url($sheetUrl, PHP_URL_QUERY);
-
-        if ($queryString) {
-            parse_str($queryString, $queryParams);
-            $gid = $queryParams['gid'] ?? null;
-        }
-
-        $baseUrl = 'https://docs.google.com/spreadsheets/d/' . $matches[1] . '/export?format=csv';
-
-        return $gid !== null ? $baseUrl . '&gid=' . $gid : $baseUrl;
+        return $matches[1];
     }
 
     private function normalizeNoKp(string $noKp): string
