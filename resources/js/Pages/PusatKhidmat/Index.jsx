@@ -360,7 +360,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             </div>
                         ) : (
                             <>
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {paginatedRecords.map((record, index) => {
                                 const name = getName(record);
                                 const noKp = getNoKpDisplay(record);
