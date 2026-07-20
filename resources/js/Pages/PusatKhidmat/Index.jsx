@@ -137,7 +137,7 @@ function Pagination({ currentPage, totalPages, totalRecords, pageSize, onPageCha
     );
 }
 
-export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [] }) {
+export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [], udms = [], localities = [] }) {
     const [sheetUrl, setSheetUrl] = useState(initialSheetUrl);
     const [editingUrl, setEditingUrl] = useState(false);
     const [urlInput, setUrlInput] = useState(initialSheetUrl);
@@ -150,6 +150,8 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [newCount, setNewCount] = useState(null);
     const [updatedCount, setUpdatedCount] = useState(null);
     const [search, setSearch] = useState('');
+    const [selectedUdm, setSelectedUdm] = useState('');
+    const [selectedLocality, setSelectedLocality] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [activeTab, setActiveTab] = useState('belum');
     const [selectedRecord, setSelectedRecord] = useState(null);
@@ -185,15 +187,24 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     }, [records, unlinkedRecords, culaStatuses, activeTab]);
 
     const activeRecords = useMemo(() => {
-        if (!search.trim()) return tabRecords;
-        const q = search.toLowerCase();
-        return tabRecords.filter((r) => {
-            const name = getName(r).toLowerCase();
-            const noKp = getNoKpDisplay(r).toLowerCase();
-            const noKpClean = String(r.no_kp || '').toLowerCase();
-            return name.includes(q) || noKp.includes(q) || noKpClean.includes(q);
-        });
-    }, [tabRecords, search]);
+        let result = tabRecords;
+        if (selectedUdm) {
+            result = result.filter((r) => r.pemilih?.dm === selectedUdm);
+        }
+        if (selectedLocality) {
+            result = result.filter((r) => r.pemilih?.locality === selectedLocality);
+        }
+        if (search.trim()) {
+            const q = search.toLowerCase();
+            result = result.filter((r) => {
+                const name = getName(r).toLowerCase();
+                const noKp = getNoKpDisplay(r).toLowerCase();
+                const noKpClean = String(r.no_kp || '').toLowerCase();
+                return name.includes(q) || noKp.includes(q) || noKpClean.includes(q);
+            });
+        }
+        return result;
+    }, [tabRecords, selectedUdm, selectedLocality, search]);
 
     const totalPages = Math.ceil(activeRecords.length / pageSize);
     const paginatedRecords = useMemo(() => {
@@ -208,6 +219,13 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
+        setCurrentPage(1);
+    };
+
+    const handleResetFilters = () => {
+        setSearch('');
+        setSelectedUdm('');
+        setSelectedLocality('');
         setCurrentPage(1);
     };
 
@@ -394,26 +412,50 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                 Tiada Data Pemilih ({unlinkedCount})
                             </button>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="relative flex-1 lg:min-w-[16rem]">
-                                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                                    placeholder="Cari nama atau no kp..."
-                                    className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                />
-                            </div>
-                            {search && (
-                                <button
-                                    type="button"
-                                    onClick={() => { setSearch(''); setCurrentPage(1); }}
-                                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
+                        <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <select
+                                    value={selectedUdm}
+                                    onChange={(e) => { setSelectedUdm(e.target.value); setCurrentPage(1); }}
+                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                 >
-                                    Reset
-                                </button>
-                            )}
+                                    <option value="">Semua UDM</option>
+                                    {udms.map((dm) => (
+                                        <option key={dm} value={dm}>{dm}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={selectedLocality}
+                                    onChange={(e) => { setSelectedLocality(e.target.value); setCurrentPage(1); }}
+                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                >
+                                    <option value="">Semua Lokaliti</option>
+                                    {localities.map((loc) => (
+                                        <option key={loc} value={loc}>{loc}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="relative flex-1 lg:min-w-[16rem]">
+                                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                                        placeholder="Cari nama atau no kp..."
+                                        className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                    />
+                                </div>
+                                {(search || selectedUdm || selectedLocality) && (
+                                    <button
+                                        type="button"
+                                        onClick={handleResetFilters}
+                                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
+                                    >
+                                        Reset
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 

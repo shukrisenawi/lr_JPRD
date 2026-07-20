@@ -161,12 +161,43 @@ class PusatKhidmatService
             ->map(fn (PusatKhidmatData $record) => $this->formatRecord($record))
             ->all();
 
+        $udms = $this->availableUdms($records);
+        $localities = $this->availableLocalities($records);
+
         return [
             'records' => $records,
             'sheet_key' => $sheetKey,
             'sheet_url' => $sheetUrl,
             'total_count' => count($records),
+            'udms' => $udms,
+            'localities' => $localities,
         ];
+    }
+
+    private function availableUdms(array $records): array
+    {
+        $udms = [];
+        foreach ($records as $record) {
+            $dm = $record['pemilih']['dm'] ?? null;
+            if ($dm && ! in_array($dm, $udms, true)) {
+                $udms[] = $dm;
+            }
+        }
+        sort($udms);
+        return $udms;
+    }
+
+    private function availableLocalities(array $records): array
+    {
+        $localities = [];
+        foreach ($records as $record) {
+            $locality = $record['pemilih']['locality'] ?? null;
+            if ($locality && ! in_array($locality, $localities, true)) {
+                $localities[] = $locality;
+            }
+        }
+        sort($localities);
+        return $localities;
     }
 
     private function formatRecord(PusatKhidmatData $record): array

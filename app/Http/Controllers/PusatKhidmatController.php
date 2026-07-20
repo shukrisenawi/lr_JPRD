@@ -23,6 +23,8 @@ class PusatKhidmatController extends Controller
             'records' => $data['records'],
             'total_count' => $data['total_count'],
             'available_cula_codes' => $this->availableCulaCodes(),
+            'udms' => $data['udms'],
+            'localities' => $data['localities'],
         ]);
     }
 
