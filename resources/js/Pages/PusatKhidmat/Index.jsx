@@ -291,11 +291,8 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                 </section>
 
                 <section className="card p-3">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                        <div className="flex flex-col gap-1">
-                            <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Sumber Data</h3>
-                            <p className="text-sm font-medium text-slate-700">{sheetUrl}</p>
-                        </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Senarai Pemohon</h3>
                         <div className="flex items-center gap-2">
                             <div className="relative flex-1 lg:min-w-[16rem]">
                                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
