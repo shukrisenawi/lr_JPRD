@@ -257,6 +257,8 @@ class PusatKhidmatService
 
     private function normalizeNoKp(string $noKp): string
     {
+        $noKp = str_replace(['-', ' ', "\t"], '', $noKp);
+
         if ($noKp === '' || !ctype_digit($noKp) || strlen($noKp) >= 12) {
             return $noKp;
         }

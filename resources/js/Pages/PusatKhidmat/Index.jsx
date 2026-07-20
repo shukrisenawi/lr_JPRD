@@ -32,7 +32,7 @@ function RecordCard({ record, headers }) {
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                         <span className="inline-flex items-center rounded bg-slate-200 px-1.5 py-0.5 text-xs font-bold text-slate-600">#{record.position}</span>
-                        <span className="text-sm font-black text-slate-950">{record.payload?.nama || record.payload?.name || record.payload?.nama_pemilih || 'Tiada nama'}</span>
+                        <span className="text-sm font-black text-slate-950">{record.payload?.NAMA_PEMOHON || record.payload?.nama || record.payload?.name || record.payload?.nama_pemilih || 'Tiada nama'}</span>
                     </div>
                     <p className="mt-0.5 text-xs text-slate-600">No KP: {record.no_kp || '-'}</p>
                 </div>
