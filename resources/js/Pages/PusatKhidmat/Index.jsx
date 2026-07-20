@@ -416,7 +416,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                                 <select
                                     value={selectedUdm}
-                                    onChange={(e) => { setSelectedUdm(e.target.value); setCurrentPage(1); }}
+                                    onChange={(e) => { setSelectedUdm(e.target.value); setSelectedLocality(''); setCurrentPage(1); }}
                                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                 >
                                     <option value="">Semua UDM</option>
@@ -430,9 +430,11 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                 >
                                     <option value="">Semua Lokaliti</option>
-                                    {localities.map((loc) => (
-                                        <option key={loc} value={loc}>{loc}</option>
-                                    ))}
+                                    {localities
+                                        .filter((loc) => !selectedUdm || records.some((r) => r.pemilih?.dm === selectedUdm && r.pemilih?.locality === loc))
+                                        .map((loc) => (
+                                            <option key={loc} value={loc}>{loc}</option>
+                                        ))}
                                 </select>
                             </div>
                             <div className="flex items-center gap-2">

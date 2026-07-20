@@ -1,0 +1,18 @@
+uid=15_0 RootWebArea "Log Masuk" url="http://127.0.0.1:8000/login"
+  uid=15_1 link "Logo JPRD JENERI SISTEM PENGURUSAN PEMILIH" url="http://127.0.0.1:8000/dashboard"
+    uid=15_2 image "Logo" url="http://127.0.0.1:8000/build/assets/logo-BVbxA-Un.png"
+    uid=15_3 StaticText "JPRD JENERI"
+    uid=15_4 StaticText "SISTEM PENGURUSAN PEMILIH"
+  uid=15_5 image "Master Admin" url="https://ui-avatars.com/api/?name=Master%20Admin&background=10b981&color=fff&size=128"
+  uid=15_6 StaticText "Master Admin"
+  uid=15_7 StaticText "admin@jprd"
+  uid=15_8 StaticText "SILA MASUKKAN KATA LALUAN"
+  uid=15_9 form
+    uid=15_10 StaticText "KATA LALUAN"
+    uid=15_11 textbox "KATA LALUAN" focusable focused
+    uid=15_12 button "Log Masuk"
+  uid=15_13 StaticText "ATAU"
+  uid=15_14 button "Tukar Pengguna"
+  uid=15_15 StaticText "© "
+  uid=15_16 StaticText "2026"
+  uid=15_17 StaticText " JPRD Jeneri · Semua hak cipta terpelihara"
