@@ -198,10 +198,26 @@ class PusatKhidmatService
     {
         $token = $this->getAccessToken();
 
+        $metaResponse = Http::withToken($token)
+            ->timeout(30)
+            ->accept('application/json')
+            ->get("https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}");
+
+        if ($metaResponse->failed()) {
+            throw new RuntimeException('Gagal mendapatkan metadata Google Sheet: ' . $metaResponse->body());
+        }
+
+        $sheets = $metaResponse->json('sheets', []);
+        if (empty($sheets)) {
+            throw new RuntimeException('Google Sheet tidak mempunyai sebarang tab.');
+        }
+
+        $firstTab = $sheets[0]['properties']['title'] ?? 'Sheet1';
+
         $response = Http::withToken($token)
             ->timeout(30)
             ->accept('application/json')
-            ->get("https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}/values/Sheet1");
+            ->get("https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}/values/" . rawurlencode($firstTab));
 
         if ($response->failed()) {
             throw new RuntimeException('Gagal mendapatkan data daripada Google Sheet: ' . $response->body());
