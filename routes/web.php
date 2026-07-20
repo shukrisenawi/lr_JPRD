@@ -15,6 +15,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TambahPemilihController;
+use App\Http\Controllers\PusatKhidmatController;
 use App\Http\Controllers\SheetPageController;
 use Illuminate\Support\Facades\Route;
 
@@ -143,6 +144,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/access/impersonation/stop', [AccessManagementController::class, 'stopImpersonation'])->name('admin.access.impersonation.destroy');
     Route::post('/admin/access/roles', [AccessManagementController::class, 'storeRole'])->name('admin.access.roles.store');
     Route::put('/admin/access/roles/{role}', [AccessManagementController::class, 'updateRole'])->name('admin.access.roles.update');
+
+    Route::get('/pusat-khidmat', [PusatKhidmatController::class, 'index'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.index');
+    Route::post('/pusat-khidmat/sync', [PusatKhidmatController::class, 'sync'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.sync');
+    Route::post('/pusat-khidmat/sheet-url', [PusatKhidmatController::class, 'updateSheetUrl'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.sheet-url');
 
     Route::post('/preferences', function (\Illuminate\Http\Request $request) {
         $request->validate([

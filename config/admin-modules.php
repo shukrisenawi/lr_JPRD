@@ -76,4 +76,8 @@ return [
         'label' => 'Kemaskini No Ahli',
         'description' => 'Benarkan kemaskini nombor ahli pemilih.',
     ],
+    'pusat-khidmat' => [
+        'label' => 'Pusat Khidmat',
+        'description' => 'Data Pusat Khidmat dari Google Sheet.',
+    ],
 ];

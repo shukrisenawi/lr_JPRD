@@ -63,6 +63,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                 { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
+                { key: 'pusat-khidmat', href: 'pusat-khidmat.index', routePattern: 'pusat-khidmat.*', label: 'Pusat Khidmat' },
             ],
         },
         {
@@ -211,6 +212,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'Kad 10' },
+                                    canAccess('pusat-khidmat') && { href: route('pusat-khidmat.index'), active: route().current('pusat-khidmat.*'), label: 'Pusat Khidmat' },
                                 ].filter(Boolean) },
                                 { label: 'Pentadbiran', items: [
                                     canAccess('jawatankuasa') && { href: route('jawatankuasa.index'), active: route().current('jawatankuasa.*'), label: 'Jawatankuasa' },
