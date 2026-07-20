@@ -67,8 +67,9 @@ class PusatKhidmatService
                     $row[$header] = trim((string) ($values[$headerIndex] ?? ''));
                 }
 
-                if (array_key_exists('no_kp', $row)) {
-                    $row['no_kp'] = $this->normalizeNoKp($row['no_kp']);
+                $noKp = $this->extractNoKp($row);
+                if ($noKp !== null) {
+                    $row['no_kp'] = $noKp;
                 }
 
                 $fingerprint = sha1(json_encode($row, JSON_UNESCAPED_UNICODE));
@@ -253,6 +254,19 @@ class PusatKhidmatService
         }
 
         return $matches[1];
+    }
+
+    private function extractNoKp(array $row): ?string
+    {
+        $possibleKeys = ['no_kp', 'NO KAD PENGENALAN', 'no_kad_pengenalan', 'nokp', 'ic', 'no_ic'];
+
+        foreach ($possibleKeys as $key) {
+            if (!empty($row[$key])) {
+                return $this->normalizeNoKp($row[$key]);
+            }
+        }
+
+        return null;
     }
 
     private function normalizeNoKp(string $noKp): string
