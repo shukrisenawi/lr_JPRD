@@ -151,27 +151,37 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [updatedCount, setUpdatedCount] = useState(null);
     const [search, setSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [activeTab, setActiveTab] = useState('pemilih');
     const pageSize = 20;
 
-    const filteredRecords = useMemo(() => {
-        if (!search.trim()) return records;
+    const linkedRecords = useMemo(() => records.filter((r) => r.linked), [records]);
+    const unlinkedRecords = useMemo(() => records.filter((r) => !r.linked), [records]);
+
+    const activeRecords = useMemo(() => {
+        const source = activeTab === 'pemilih' ? linkedRecords : unlinkedRecords;
+        if (!search.trim()) return source;
         const q = search.toLowerCase();
-        return records.filter((r) => {
+        return source.filter((r) => {
             const name = getName(r).toLowerCase();
             const noKp = getNoKpDisplay(r).toLowerCase();
             const noKpClean = String(r.no_kp || '').toLowerCase();
             return name.includes(q) || noKp.includes(q) || noKpClean.includes(q);
         });
-    }, [records, search]);
+    }, [linkedRecords, unlinkedRecords, activeTab, search]);
 
-    const totalPages = Math.ceil(filteredRecords.length / pageSize);
+    const totalPages = Math.ceil(activeRecords.length / pageSize);
     const paginatedRecords = useMemo(() => {
         const start = (currentPage - 1) * pageSize;
-        return filteredRecords.slice(start, start + pageSize);
-    }, [filteredRecords, currentPage]);
+        return activeRecords.slice(start, start + pageSize);
+    }, [activeRecords, currentPage]);
 
-    const linkedCount = records.filter((r) => r.linked).length;
-    const unlinkedCount = records.length - linkedCount;
+    const linkedCount = linkedRecords.length;
+    const unlinkedCount = unlinkedRecords.length;
+
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        setCurrentPage(1);
+    };
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -290,9 +300,24 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                     <StatCard label="Dikemaskini" value={updatedCount !== null ? updatedCount : 0} color="cyan" />
                 </section>
 
-                <section className="card p-3">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">Senarai Pemohon</h3>
+                <section className="card overflow-hidden p-0">
+                    <div className="flex flex-col gap-3 border-b border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('pemilih')}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'pemilih' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                            >
+                                Pemilih ({linkedCount})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('tiada')}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'tiada' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                            >
+                                Tiada Data Pemilih ({unlinkedCount})
+                            </button>
+                        </div>
                         <div className="flex items-center gap-2">
                             <div className="relative flex-1 lg:min-w-[16rem]">
                                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">⌕</span>
@@ -315,27 +340,27 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             )}
                         </div>
                     </div>
-                </section>
 
-                {message && (
-                    <div className={`${messageType === 'success' ? 'flash-success' : messageType === 'error' ? 'flash-error' : 'flash-info'}`}>
-                        {message}
-                    </div>
-                )}
+                    {message && (
+                        <div className={`${messageType === 'success' ? 'flash-success' : messageType === 'error' ? 'flash-error' : 'flash-info'}`}>
+                            {message}
+                        </div>
+                    )}
 
-                {records.length === 0 ? (
-                    <div className="card-dashed">
-                        <p className="text-base font-black text-slate-950">Tiada data</p>
-                        <p className="mt-1 text-sm text-slate-600">Tekan "Get Data" untuk mula mengambil data dari Google Sheet.</p>
-                    </div>
-                ) : filteredRecords.length === 0 ? (
-                    <div className="card-dashed">
-                        <p className="text-base font-black text-slate-950">Tiada keputusan</p>
-                        <p className="mt-1 text-sm text-slate-600">Tiada rekod sepadan dengan carian anda.</p>
-                    </div>
-                ) : (
-                    <section>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="p-3">
+                        {records.length === 0 ? (
+                            <div className="card-dashed">
+                                <p className="text-base font-black text-slate-950">Tiada data</p>
+                                <p className="mt-1 text-sm text-slate-600">Tekan "Get Data" untuk mula mengambil data dari Google Sheet.</p>
+                            </div>
+                        ) : activeRecords.length === 0 ? (
+                            <div className="card-dashed">
+                                <p className="text-base font-black text-slate-950">Tiada keputusan</p>
+                                <p className="mt-1 text-sm text-slate-600">Tiada rekod sepadan dengan tab dan carian anda.</p>
+                            </div>
+                        ) : (
+                            <>
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {paginatedRecords.map((record, index) => {
                                 const name = getName(record);
                                 const noKp = getNoKpDisplay(record);
@@ -449,12 +474,14 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         <Pagination
                             currentPage={currentPage}
                             totalPages={totalPages}
-                            totalRecords={filteredRecords.length}
+                            totalRecords={activeRecords.length}
                             pageSize={pageSize}
                             onPageChange={handlePageChange}
                         />
-                    </section>
+                    </>
                 )}
+            </div>
+        </section>
             </div>
         </AuthenticatedLayout>
     );
