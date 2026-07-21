@@ -156,6 +156,8 @@ class PusatKhidmatService
 
     public function getRecords(?User $user = null): array
     {
+        $this->autoSyncIfNeeded();
+        
         $sheetUrl = $this->getSheetUrl();
         $sheetKey = md5($sheetUrl);
 
@@ -185,6 +187,26 @@ class PusatKhidmatService
             'udms' => $udms,
             'localities' => $localities,
         ];
+    }
+
+    public function autoSyncIfNeeded(): void
+    {
+        $lastSyncAt = Setting::valueOf('pusat_khidmat_last_sync_at');
+        $now = now();
+        
+        if (!$lastSyncAt) {
+            $this->fetchAndSync();
+            Setting::setValue('pusat_khidmat_last_sync_at', $now->toDateTimeString());
+            return;
+        }
+        
+        $lastSync = \Carbon\Carbon::parse($lastSyncAt);
+        $hoursSinceSync = $lastSync->diffInHours($now);
+        
+        if ($hoursSinceSync >= 24) {
+            $this->fetchAndSync();
+            Setting::setValue('pusat_khidmat_last_sync_at', $now->toDateTimeString());
+        }
     }
 
     private function availableUdms(array $records): array

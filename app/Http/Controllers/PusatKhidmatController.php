@@ -17,6 +17,7 @@ class PusatKhidmatController extends Controller
     public function index(PusatKhidmatService $service): Response
     {
         $data = $service->getRecords(request()->user());
+        $lastSyncAt = \App\Models\Setting::valueOf('pusat_khidmat_last_sync_at');
 
         return Inertia::render('PusatKhidmat/Index', [
             'sheet_url' => $data['sheet_url'],
@@ -25,6 +26,7 @@ class PusatKhidmatController extends Controller
             'available_cula_codes' => $this->availableCulaCodes(),
             'udms' => $data['udms'],
             'localities' => $data['localities'],
+            'last_sync_at' => $lastSyncAt,
         ]);
     }
 

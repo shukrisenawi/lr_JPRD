@@ -142,13 +142,15 @@ function Pagination({ currentPage, totalPages, totalRecords, pageSize, onPageCha
     );
 }
 
-export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [], udms = [], localities = [] }) {
+export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [], udms = [], localities = [], last_sync_at: lastSyncAt }) {
     const { auth } = usePage().props;
     const accessLevel = auth.user?.access_level ?? 'jprd';
-    const scope = accessLevel === 'jprd' ? null : (auth.user?.role?.slug === 'master-admin' ? null : null);
+    const isMasterAdmin = auth.user?.role?.slug === 'master-admin';
+    const scope = accessLevel === 'jprd' ? null : (isMasterAdmin ? null : null);
     const userScopeDm = accessLevel === 'udm' ? auth.user?.scope_key : (accessLevel === 'cawangan' ? auth.user?.scope_key?.split('|')[0] : null);
     const userScopeLocality = accessLevel === 'cawangan' ? auth.user?.scope_key?.split('|')[1] : null;
     const isScoped = accessLevel === 'udm' || accessLevel === 'cawangan';
+    const isAdmin = isMasterAdmin;
 
     const [sheetUrl, setSheetUrl] = useState(initialSheetUrl);
     const [editingUrl, setEditingUrl] = useState(false);
@@ -157,6 +159,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [syncing, setSyncing] = useState(false);
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('info');
+    const [lastSync, setLastSync] = useState(lastSyncAt);
     const [records, setRecords] = useState(initialRecords);
     const [totalCount, setTotalCount] = useState(initialTotal);
     const [newCount, setNewCount] = useState(null);
@@ -406,6 +409,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             setUpdatedCount(payload.updated_count);
             setMessage(payload.message);
             setMessageType('success');
+            setLastSync(new Date().toISOString().slice(0, 19).replace('T', ' '));
         } catch (e) {
             setMessage(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
             setMessageType('error');
@@ -446,27 +450,34 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                     <div>
                         <p className="label-section">Operasi</p>
                         <h2 className="mt-0.5 heading-lg">Data Pusat Khidmat</h2>
-                        <p className="text-muted mt-0.5">Ambil data dari Google Sheet dan pautkan dengan rekod pemilih melalui No Kad Pengenalan.</p>
+                        {isAdmin && <p className="text-muted mt-0.5">Ambil data dari Google Sheet dan pautkan dengan rekod pemilih melalui No Kad Pengenalan.</p>}
+                        {lastSync && (
+                            <p className="mt-1 text-xs text-slate-500">
+                                ✓ Auto-sync: Terakhir dikemaskini {new Date(lastSync).toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' })}
+                            </p>
+                        )}
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                        <button
-                            type="button"
-                            onClick={() => { setEditingUrl(!editingUrl); if (!editingUrl) setUrlInput(sheetUrl); }}
-                            className="btn-ghost"
-                        >
-                            {editingUrl ? 'Batal' : 'Tukar URL'}
-                        </button>
-                        <button type="button" onClick={handleSync} disabled={syncing} className="btn-emerald">
-                            {syncing ? 'Mengambil...' : 'Get Data'}
-                        </button>
-                    </div>
+                    {isAdmin && (
+                        <div className="flex flex-wrap gap-3">
+                            <button
+                                type="button"
+                                onClick={() => { setEditingUrl(!editingUrl); if (!editingUrl) setUrlInput(sheetUrl); }}
+                                className="btn-ghost"
+                            >
+                                {editingUrl ? 'Batal' : 'Tukar URL'}
+                            </button>
+                            <button type="button" onClick={handleSync} disabled={syncing} className="btn-emerald">
+                                {syncing ? 'Mengambil...' : 'Get Data'}
+                            </button>
+                        </div>
+                    )}
                 </div>
             }
         >
             <Head title="Pusat Khidmat" />
 
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                {editingUrl && (
+                {isAdmin && editingUrl && (
                     <div className="card">
                         <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
                             <div className="flex-1">
@@ -487,12 +498,14 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                     </div>
                 )}
 
-                <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <StatCard label="Jumlah Rekod" value={totalCount} color="violet" />
-                    <StatCard label="Dipaut Pemilih" value={linkedCount} color="emerald" />
-                    <StatCard label="Baru Ditambah" value={newCount !== null ? newCount : 0} color="amber" />
-                    <StatCard label="Dikemaskini" value={updatedCount !== null ? updatedCount : 0} color="cyan" />
-                </section>
+                {isAdmin && (
+                    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <StatCard label="Jumlah Rekod" value={totalCount} color="violet" />
+                        <StatCard label="Dipaut Pemilih" value={linkedCount} color="emerald" />
+                        <StatCard label="Baru Ditambah" value={newCount !== null ? newCount : 0} color="amber" />
+                        <StatCard label="Dikemaskini" value={updatedCount !== null ? updatedCount : 0} color="cyan" />
+                    </section>
+                )}
 
                 <section className="card overflow-hidden p-0">
                     <div className="flex flex-col gap-3 border-b border-slate-200 p-3 sm:flex-row sm:items-start sm:justify-between">
@@ -509,7 +522,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                 onClick={() => handleTabChange('siap')}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'siap' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
-                                Siap Cula ({tabCountsByUdm.siap})
+                                Telah Cula ({tabCountsByUdm.siap})
                             </button>
                             <button
                                 type="button"
@@ -528,11 +541,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         </div>
                         <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                {isScoped ? (
-                                    <span className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-xs font-bold text-green-700">
-                                        {userScopeDm}
-                                    </span>
-                                ) : (
+                                {!isScoped && (
                                     <select
                                         value={selectedUdm}
                                         onChange={(e) => { setSelectedUdm(e.target.value); setSelectedLocality(''); setCurrentPage(1); }}
@@ -544,11 +553,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                         ))}
                                     </select>
                                 )}
-                                {isScoped && userScopeLocality ? (
-                                    <span className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-xs font-bold text-green-700">
-                                        {userScopeLocality}
-                                    </span>
-                                ) : (
+                                {!isScoped && (
                                     <select
                                         value={selectedLocality}
                                         onChange={(e) => { setSelectedLocality(e.target.value); setCurrentPage(1); }}

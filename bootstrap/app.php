@@ -37,13 +37,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
             if ($exception->getStatusCode() === 403 && ! $request->expectsJson() && $request->user()) {
-                Auth::guard('web')->logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
                 return redirect()
-                    ->route('login')
-                    ->with('error', 'Sesi anda ditutup kerana akses ke halaman ini tidak dibenarkan.');
+                    ->back()
+                    ->with('error', 'Anda tidak mempunyai akses ke halaman ini.');
             }
 
             return null;

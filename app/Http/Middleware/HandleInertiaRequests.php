@@ -74,6 +74,37 @@ class HandleInertiaRequests extends Middleware
                 'warning' => fn () => $request->session()->get('warning'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'badgeCounts' => [
+                'pusatKhidmatBelumSemak' => $this->getPusatKhidmatBelumSemakCount($request->user()),
+            ],
         ];
+    }
+
+    public function getPusatKhidmatBelumSemakCount($user): int
+    {
+        if (!$user) return 0;
+        
+        try {
+            $query = \App\Models\PusatKhidmatData::query()
+                ->whereNotNull('no_kp')
+                ->where('no_kp', '!=', '');
+            
+            if ($user->access_level === 'udm' || $user->access_level === 'cawangan') {
+                $query->whereHas('pemilihRecord', function ($q) use ($user) {
+                    if ($user->access_level === 'udm') {
+                        $q->where('dm', $user->scope_key);
+                    } else {
+                        $scopeParts = explode('|', $user->scope_key);
+                        if (count($scopeParts) >= 2) {
+                            $q->where('dm', $scopeParts[0])->where('locality', $scopeParts[1]);
+                        }
+                    }
+                });
+            }
+            
+            return $query->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
     }
 }

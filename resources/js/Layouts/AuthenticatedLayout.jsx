@@ -9,6 +9,15 @@ function NavIcon({ children }) {
     return <span className="flex items-center leading-none">{children}</span>;
 }
 
+function Badge({ count }) {
+    if (!count || count <= 0) return null;
+    return (
+        <span className="ml-1.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            {count > 99 ? '99+' : count}
+        </span>
+    );
+}
+
 function HeaderIcon({ name, className = 'h-5 w-5' }) {
     const paths = {
         user: <><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></>,
@@ -25,7 +34,7 @@ function HeaderIcon({ name, className = 'h-5 w-5' }) {
 }
 
 export default function AuthenticatedLayout({ header, children, variant = 'light' }) {
-    const { auth, flash } = usePage().props;
+    const { auth, flash, badgeCounts } = usePage().props;
     const user = auth.user;
     const userInitial = user.name.charAt(0).toUpperCase();
     const allowedModules = user.allowed_modules ?? [];
@@ -33,6 +42,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const isMasterAdmin = user.role?.is_master_admin === true;
     const impersonation = auth.impersonation ?? { is_active: false, impersonator: null };
     const mustChangePassword = user.must_change_password ?? false;
+    const pusatKhidmatBelumSemak = badgeCounts?.pusatKhidmatBelumSemak ?? 0;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const isLight = variant === 'light';
@@ -63,7 +73,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                 { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
-                { key: 'pusat-khidmat', href: 'pusat-khidmat.index', routePattern: 'pusat-khidmat.*', label: 'Data Pusat Khidmat' },
+                { key: 'pusat-khidmat', href: 'pusat-khidmat.index', routePattern: 'pusat-khidmat.*', label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
             ],
         },
         {
@@ -129,6 +139,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     <NavLink key={item.key} href={navHref(item)} active={route().current(item.routePattern)} variant={variant}>
                                         <NavIcon>{item.icon}</NavIcon>
                                         <span>{item.label}</span>
+                                        {item.badge !== undefined && <Badge count={item.badge} />}
                                     </NavLink>
                                     );
                                 })}
@@ -212,7 +223,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'Kad 10' },
-                                    canAccess('pusat-khidmat') && { href: route('pusat-khidmat.index'), active: route().current('pusat-khidmat.*'), label: 'Data Pusat Khidmat' },
+                                    canAccess('pusat-khidmat') && { href: route('pusat-khidmat.index'), active: route().current('pusat-khidmat.*'), label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
                                 ].filter(Boolean) },
                                 { label: 'Pentadbiran', items: [
                                     canAccess('jawatankuasa') && { href: route('jawatankuasa.index'), active: route().current('jawatankuasa.*'), label: 'Jawatankuasa' },
@@ -232,7 +243,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     <div key={g.label}>
                                         <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">{g.label}</div>
                                         {g.items.map(sub => (
-                                            <ResponsiveNavLink key={sub.label} href={sub.href} active={sub.active} variant={variant}>{sub.label}</ResponsiveNavLink>
+                                            <ResponsiveNavLink key={sub.label} href={sub.href} active={sub.active} variant={variant} badge={sub.badge}>{sub.label}</ResponsiveNavLink>
                                         ))}
                                     </div>
                                 );
