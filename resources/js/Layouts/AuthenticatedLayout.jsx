@@ -126,7 +126,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                                 </Dropdown.Trigger>
                                                 <Dropdown.Content align="left" widthClasses="w-52">
                                                     {accessibleItems.map(sub => (
-                                                        <Dropdown.Link key={sub.key} href={navHref(sub)}>
+                                                        <Dropdown.Link key={sub.key} href={navHref(sub)} badge={sub.badge}>
                                                             {sub.label}
                                                         </Dropdown.Link>
                                                     ))}
@@ -151,7 +151,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="hidden sm:block">
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <button className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-medium text-green-800 shadow-sm transition hover:border-green-300 hover:bg-green-100">
+                                        <button type="button" className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-medium text-green-800 shadow-sm transition hover:border-green-300 hover:bg-green-100">
                                             {user.avatar_url ? (
                                                 <img src={user.avatar_url} alt={user.name} className="h-6 w-6 rounded-md object-cover" />
                                             ) : (
@@ -192,7 +192,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 </Dropdown>
                             </div>
 
-                            <button onClick={() => setShowingNavigationDropdown((prev) => !prev)}
+                            <button type="button" onClick={() => setShowingNavigationDropdown((prev) => !prev)}
                                 className="inline-flex items-center justify-center rounded-lg p-1.5 text-green-700 transition hover:bg-green-100 sm:hidden">
                                 <svg className="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                     <path className={!showingNavigationDropdown ? 'inline-flex' : 'hidden'} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />

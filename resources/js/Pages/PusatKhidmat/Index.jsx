@@ -172,24 +172,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [pendingIds, setPendingIds] = useState(new Set());
-    const [checkedIds, setCheckedIds] = useState(() => {
-        try {
-            const saved = localStorage.getItem('pusat-khidmat-checked-ids');
-            if (saved) {
-                return new Set(JSON.parse(saved));
-            }
-        } catch {}
-        return new Set();
-    });
-    const [checkedTimestamps, setCheckedTimestamps] = useState(() => {
-        try {
-            const saved = localStorage.getItem('pusat-khidmat-checked-timestamps');
-            if (saved) {
-                return JSON.parse(saved);
-            }
-        } catch {}
-        return {};
-    });
+    const [checkingIds, setCheckingIds] = useState(new Set());
     const pageSize = 20;
 
     const unlinkedRecords = useMemo(() => records.filter((r) => !r.linked), [records]);
@@ -221,10 +204,10 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         const map = new Map();
         records.forEach((r) => {
             if (!r.linked || !r.pemilih) return;
-            map.set(r.id, checkedIds.has(r.id));
+            map.set(r.id, !!r.checked_at);
         });
         return map;
-    }, [records, checkedIds]);
+    }, [records]);
 
     const udmLocalityCount = useMemo(() => {
         const count = {};
@@ -251,11 +234,11 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             case 'semak':
                 return records
                     .filter((r) => r.linked && semakStatuses.get(r.id))
-                    .sort((a, b) => (checkedTimestamps[b.id] || 0) - (checkedTimestamps[a.id] || 0));
+                    .sort((a, b) => new Date(b.checked_at || 0) - new Date(a.checked_at || 0));
             default:
                 return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
         }
-    }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab, checkedTimestamps]);
+    }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab]);
 
     const activeRecords = useMemo(() => {
         let result = tabRecords;
@@ -335,27 +318,33 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         }));
     };
 
-    const handleCheckToggle = (recordId) => {
-        setCheckedIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(recordId)) {
+    const handleCheckToggle = async (recordId) => {
+        const record = records.find((r) => r.id === recordId);
+        if (!record) return;
+
+        setCheckingIds((prev) => new Set([...prev, recordId]));
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const res = await fetch(route('pusat-khidmat.check', recordId), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, Accept: 'application/json' },
+            });
+            const payload = await res.json();
+            if (!res.ok) throw new Error(payload.message || 'Gagal.');
+
+            setRecords((prev) => prev.map((r) => r.id === recordId ? { ...r, checked_at: payload.checked_at } : r));
+        } catch (e) {
+            setSuccessModal(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
+        } finally {
+            setCheckingIds((prev) => {
+                const next = new Set(prev);
                 next.delete(recordId);
-            } else {
-                next.add(recordId);
-                setCheckedTimestamps((prevTs) => ({ ...prevTs, [recordId]: Date.now() }));
-            }
-            return next;
-        });
+                return next;
+            });
+        }
     };
 
     const [successModal, setSuccessModal] = useState(null);
-
-    useEffect(() => {
-        try {
-            localStorage.setItem('pusat-khidmat-checked-ids', JSON.stringify([...checkedIds]));
-            localStorage.setItem('pusat-khidmat-checked-timestamps', JSON.stringify(checkedTimestamps));
-        } catch {}
-    }, [checkedIds, checkedTimestamps]);
 
     const handleCulaSiap = async (code, label) => {
         if (!selectedRecord?.pemilih || !code) return;
@@ -371,7 +360,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             const payload = await res.json();
             if (!res.ok) throw new Error(payload.message || 'Gagal.');
             updateRecordCula(selectedRecord.id, code, label);
-            setCheckedIds((prev) => new Set([...prev, selectedRecord.id]));
+            setRecords((prev) => prev.map((r) => r.id === selectedRecord.id ? { ...r, checked_at: new Date().toISOString().slice(0, 19).replace('T', ' ') } : r));
             setSuccessModal(`Kod culaan ${getName(selectedRecord)} (${label}) berjaya dikemaskini.`);
         } catch (e) {
             setSuccessModal(e instanceof Error ? e.message : 'Ralat tidak diketahui.');

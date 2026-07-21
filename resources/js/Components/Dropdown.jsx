@@ -53,13 +53,23 @@ const Content = ({ align = 'right', contentClasses = '', widthClasses = 'w-44', 
     );
 };
 
-const DropdownLink = ({ className = '', children, ...props }) => {
+function Badge({ count }) {
+    if (!count || count <= 0) return null;
+    return (
+        <span className="ml-auto inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            {count > 99 ? '99+' : count}
+        </span>
+    );
+}
+
+const DropdownLink = ({ className = '', badge, children, ...props }) => {
     return (
         <Link
             {...props}
-            className={'block w-full px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700 focus:outline-none ' + className}
+            className={'flex w-full items-center px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700 focus:outline-none ' + className}
         >
-            {children}
+            <span className="flex-1">{children}</span>
+            <Badge count={badge} />
         </Link>
     );
 };

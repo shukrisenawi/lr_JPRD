@@ -246,6 +246,7 @@ class PusatKhidmatService
             'no_kp' => $record->no_kp,
             'payload' => $record->payload,
             'status' => $record->status,
+            'checked_at' => $record->checked_at ? $record->checked_at->toDateTimeString() : null,
             'pemilih' => $pemilih ? [
                 'id' => $pemilih->id,
                 'name' => $pemilih->name,

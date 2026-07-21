@@ -149,6 +149,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pusat-khidmat/sync', [PusatKhidmatController::class, 'sync'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.sync');
     Route::post('/pusat-khidmat/sheet-url', [PusatKhidmatController::class, 'updateSheetUrl'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.sheet-url');
     Route::post('/pusat-khidmat/{pemilihRecord}/update-cula', [PusatKhidmatController::class, 'updateCula'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.update-cula');
+    Route::post('/pusat-khidmat/{record}/check', [PusatKhidmatController::class, 'toggleCheck'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.check');
 
     Route::post('/preferences', function (\Illuminate\Http\Request $request) {
         $request->validate([

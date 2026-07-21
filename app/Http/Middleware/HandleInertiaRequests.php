@@ -83,25 +83,33 @@ class HandleInertiaRequests extends Middleware
     public function getPusatKhidmatBelumSemakCount($user): int
     {
         if (!$user) return 0;
-        
+
         try {
             $query = \App\Models\PusatKhidmatData::query()
                 ->whereNotNull('no_kp')
-                ->where('no_kp', '!=', '');
-            
-            if ($user->access_level === 'udm' || $user->access_level === 'cawangan') {
-                $query->whereHas('pemilihRecord', function ($q) use ($user) {
+                ->where('no_kp', '!=', '')
+                ->whereNotNull('pemilih_record_id')
+                ->whereNull('checked_at')
+                ->whereHas('pemilihRecord', function ($q) use ($user) {
+                    $q->where('status', 'aktif')
+                        ->where(function ($sub) {
+                            $sub->whereNull('cula_code')
+                                ->orWhere('cula_code', '')
+                                ->orWhere('cula_code', '0')
+                                ->orWhere('cula_code', '?')
+                                ->orWhere('cula_display_label', 'like', '%BELUM DICULA%');
+                        });
+
                     if ($user->access_level === 'udm') {
                         $q->where('dm', $user->scope_key);
-                    } else {
+                    } elseif ($user->access_level === 'cawangan') {
                         $scopeParts = explode('|', $user->scope_key);
                         if (count($scopeParts) >= 2) {
                             $q->where('dm', $scopeParts[0])->where('locality', $scopeParts[1]);
                         }
                     }
                 });
-            }
-            
+
             return $query->count();
         } catch (\Exception $e) {
             return 0;

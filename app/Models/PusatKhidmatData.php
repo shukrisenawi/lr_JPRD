@@ -18,12 +18,14 @@ class PusatKhidmatData extends Model
         'pemilih_record_id',
         'payload',
         'status',
+        'checked_at',
     ];
 
     protected function casts(): array
     {
         return [
             'payload' => 'array',
+            'checked_at' => 'datetime',
         ];
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PemilihRecord;
+use App\Models\PusatKhidmatData;
 use App\Models\User;
 use App\Services\PusatKhidmatService;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +28,21 @@ class PusatKhidmatController extends Controller
             'udms' => $data['udms'],
             'localities' => $data['localities'],
             'last_sync_at' => $lastSyncAt,
+        ]);
+    }
+
+    public function toggleCheck(PusatKhidmatData $record): JsonResponse
+    {
+        $isChecked = $record->checked_at !== null;
+
+        $record->update([
+            'checked_at' => $isChecked ? null : now(),
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'checked' => ! $isChecked,
+            'checked_at' => $record->fresh()->checked_at?->toDateTimeString(),
         ]);
     }
 
