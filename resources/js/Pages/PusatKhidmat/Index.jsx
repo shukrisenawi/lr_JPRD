@@ -171,6 +171,15 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         } catch {}
         return new Set();
     });
+    const [checkedTimestamps, setCheckedTimestamps] = useState(() => {
+        try {
+            const saved = localStorage.getItem('pusat-khidmat-checked-timestamps');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch {}
+        return {};
+    });
     const pageSize = 20;
 
     const unlinkedRecords = useMemo(() => records.filter((r) => !r.linked), [records]);
@@ -216,11 +225,13 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             case 'tiada':
                 return unlinkedRecords;
             case 'semak':
-                return records.filter((r) => r.linked && semakStatuses.get(r.id));
+                return records
+                    .filter((r) => r.linked && semakStatuses.get(r.id))
+                    .sort((a, b) => (checkedTimestamps[b.id] || 0) - (checkedTimestamps[a.id] || 0));
             default:
                 return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
         }
-    }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab]);
+    }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab, checkedTimestamps]);
 
     const activeRecords = useMemo(() => {
         let result = tabRecords;
@@ -305,6 +316,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                 next.delete(recordId);
             } else {
                 next.add(recordId);
+                setCheckedTimestamps((prevTs) => ({ ...prevTs, [recordId]: Date.now() }));
             }
             return next;
         });
@@ -315,8 +327,9 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     useEffect(() => {
         try {
             localStorage.setItem('pusat-khidmat-checked-ids', JSON.stringify([...checkedIds]));
+            localStorage.setItem('pusat-khidmat-checked-timestamps', JSON.stringify(checkedTimestamps));
         } catch {}
-    }, [checkedIds]);
+    }, [checkedIds, checkedTimestamps]);
 
     const handleCulaSiap = async (code, label) => {
         if (!selectedRecord?.pemilih || !code) return;
