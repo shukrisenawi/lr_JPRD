@@ -216,6 +216,20 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         return map;
     }, [records, checkedIds]);
 
+    const udmLocalityCount = useMemo(() => {
+        const count = {};
+        records.forEach((r) => {
+            if (!r.linked || !r.pemilih) return;
+            const dm = r.pemilih.dm;
+            const loc = r.pemilih.locality;
+            if (dm && loc) {
+                if (!count[dm]) count[dm] = new Set();
+                count[dm].add(loc);
+            }
+        });
+        return Object.fromEntries(Object.entries(count).map(([k, v]) => [k, v.size]));
+    }, [records]);
+
     const tabRecords = useMemo(() => {
         switch (activeTab) {
             case 'belum':
@@ -600,7 +614,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                                 {record.pemilih.dm}
                                                             </span>
                                                         )}
-                                                        {record.pemilih?.locality && (
+                                                        {record.pemilih?.locality && (udmLocalityCount[record.pemilih.dm] || 1) > 1 && (
                                                             <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
                                                                 {record.pemilih.locality}
                                                             </span>
