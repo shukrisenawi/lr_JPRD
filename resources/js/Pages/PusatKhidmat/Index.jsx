@@ -157,6 +157,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [pendingIds, setPendingIds] = useState(new Set());
+    const [checkedIds, setCheckedIds] = useState(new Set());
     const pageSize = 20;
 
     const unlinkedRecords = useMemo(() => records.filter((r) => !r.linked), [records]);
@@ -173,18 +174,29 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         return map;
     }, [records]);
 
+    const semakStatuses = useMemo(() => {
+        const map = new Map();
+        records.forEach((r) => {
+            if (!r.linked || !r.pemilih) return;
+            map.set(r.id, checkedIds.has(r.id));
+        });
+        return map;
+    }, [records, checkedIds]);
+
     const tabRecords = useMemo(() => {
         switch (activeTab) {
             case 'belum':
-                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending');
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
             case 'siap':
                 return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done');
             case 'tiada':
                 return unlinkedRecords;
+            case 'semak':
+                return records.filter((r) => r.linked && semakStatuses.get(r.id));
             default:
-                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending');
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
         }
-    }, [records, unlinkedRecords, culaStatuses, activeTab]);
+    }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab]);
 
     const activeRecords = useMemo(() => {
         let result = tabRecords;
@@ -218,11 +230,13 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const pendingCount = linkedCount - doneCount;
 
     const tabCountsByUdm = useMemo(() => {
-        const counts = { belum: 0, siap: 0, tiada: 0 };
+        const counts = { belum: 0, siap: 0, tiada: 0, semak: 0 };
         records.forEach((r) => {
             if (selectedUdm && r.pemilih?.dm !== selectedUdm) return;
             if (!r.linked) {
                 counts.tiada++;
+            } else if (semakStatuses.get(r.id)) {
+                counts.semak++;
             } else if (culaStatuses.get(r.id) === 'done') {
                 counts.siap++;
             } else {
@@ -230,7 +244,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             }
         });
         return counts;
-    }, [records, selectedUdm, culaStatuses]);
+    }, [records, selectedUdm, culaStatuses, semakStatuses]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -258,6 +272,18 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             }
             return next;
         }));
+    };
+
+    const handleCheckToggle = (recordId) => {
+        setCheckedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(recordId)) {
+                next.delete(recordId);
+            } else {
+                next.add(recordId);
+            }
+            return next;
+        });
     };
 
     const handleCulaSiap = async (code, label) => {
@@ -411,6 +437,13 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'belum' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
                                 Belum Cula ({tabCountsByUdm.belum})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('semak')}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'semak' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                            >
+                                Siap Semak ({tabCountsByUdm.semak})
                             </button>
                             <button
                                 type="button"
@@ -576,19 +609,43 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                         </div>
 
                                         {record.linked && record.pemilih && (
-                                            <div className="mt-3 rounded-lg border border-green-100 bg-green-50/60 p-2.5">
-                                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Data Pemilih</p>
-                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                                                    {record.pemilih.no_ahli && (
-                                                        <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli}</span></p>
-                                                    )}
-                                                    {(record.pemilih.cula_display_label || record.pemilih.cula_code) && (
-                                                        <p><span className="text-slate-500">Cula:</span> <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span></p>
-                                                    )}
+                                            <>
+                                            <div className="mt-3 flex items-start justify-between gap-2">
+                                                <div className="flex-1 rounded-lg border border-green-100 bg-green-50/60 p-2.5">
+                                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Data Pemilih</p>
+                                                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                                                        {record.pemilih.no_ahli && (
+                                                            <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli}</span></p>
+                                                        )}
+                                                        {(record.pemilih.cula_display_label || record.pemilih.cula_code) && (
+                                                            <p><span className="text-slate-500">Cula:</span> <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span></p>
+                                                        )}
+                                                    </div>
                                                 </div>
+                                                {activeTab === 'belum' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCheckToggle(record.id)}
+                                                        className={`mt-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
+                                                        title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                    >
+                                                        ✓
+                                                    </button>
+                                                )}
                                             </div>
+                                            {activeTab === 'semak' && (
+                                                <div className="mt-3 flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCheckToggle(record.id)}
+                                                        className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
+                                                    >
+                                                        Buang
+                                                    </button>
+                                                </div>
+                                            )}
+                                            </>
                                         )}
-
 
                                     </div>
                                 );
