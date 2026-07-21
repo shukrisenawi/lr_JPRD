@@ -156,7 +156,11 @@ class PusatKhidmatService
 
     public function getRecords(?User $user = null): array
     {
-        $this->autoSyncIfNeeded();
+        try {
+            $this->autoSyncIfNeeded();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('PusatKhidmat autoSyncIfNeeded gagal: ' . $e->getMessage());
+        }
         
         $sheetUrl = $this->getSheetUrl();
         $sheetKey = md5($sheetUrl);
