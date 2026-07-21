@@ -302,11 +302,12 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         });
     };
 
+    const [successModal, setSuccessModal] = useState(null);
+
     const handleCulaSiap = async (code, label) => {
         if (!selectedRecord?.pemilih || !code) return;
         setShowCulaModal(false);
         setPendingIds((prev) => new Set([...prev, selectedRecord.pemilih.id]));
-        setMessage('');
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const res = await fetch(route('pusat-khidmat.update-cula', selectedRecord.pemilih.id), {
@@ -318,11 +319,9 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             if (!res.ok) throw new Error(payload.message || 'Gagal.');
             updateRecordCula(selectedRecord.id, code, label);
             setCheckedIds((prev) => new Set([...prev, selectedRecord.id]));
-            setMessage(payload.message || 'Kod culaan dikemaskini.');
-            setMessageType('success');
+            setSuccessModal(`Kod culaan ${label} dikemaskini.`);
         } catch (e) {
-            setMessage(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
-            setMessageType('error');
+            setSuccessModal(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
         } finally {
             setPendingIds((prev) => {
                 const next = new Set(prev);
@@ -736,6 +735,28 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                 className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
                             >
                                 Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {successModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-sm rounded-xl bg-white p-4 shadow-xl">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
+                                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="Success"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </div>
+                            <p className="text-sm font-bold text-slate-800">{successModal}</p>
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setSuccessModal(null)}
+                                className="rounded-md bg-green-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-green-500"
+                            >
+                                OK
                             </button>
                         </div>
                     </div>
