@@ -179,6 +179,17 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         return map;
     }, [records]);
 
+    const hasCulaCode = useMemo(() => {
+        const map = new Map();
+        records.forEach((r) => {
+            if (!r.linked || !r.pemilih) return;
+            const code = r.pemilih.cula_code;
+            const hasCode = code && code !== '0' && code !== '?';
+            map.set(r.id, hasCode);
+        });
+        return map;
+    }, [records]);
+
     const semakStatuses = useMemo(() => {
         const map = new Map();
         records.forEach((r) => {
@@ -191,15 +202,15 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const tabRecords = useMemo(() => {
         switch (activeTab) {
             case 'belum':
-                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
+                return records.filter((r) => r.linked && !semakStatuses.get(r.id));
             case 'siap':
-                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done');
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done' && semakStatuses.get(r.id));
             case 'tiada':
                 return unlinkedRecords;
             case 'semak':
                 return records.filter((r) => r.linked && semakStatuses.get(r.id));
             default:
-                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
+                return records.filter((r) => r.linked && !semakStatuses.get(r.id));
         }
     }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab]);
 
@@ -241,9 +252,11 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             if (!r.linked) {
                 counts.tiada++;
             } else if (semakStatuses.get(r.id)) {
-                counts.semak++;
-            } else if (culaStatuses.get(r.id) === 'done') {
-                counts.siap++;
+                if (culaStatuses.get(r.id) === 'done') {
+                    counts.siap++;
+                } else {
+                    counts.semak++;
+                }
             } else {
                 counts.belum++;
             }
@@ -625,12 +638,12 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                         <p className="flex items-center gap-1">
                                                             <span className="text-slate-500">Cula:</span>
                                                             <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span>
-                                                            {activeTab === 'siap' && (
+                                                            {semakStatuses.get(record.id) && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleCheckToggle(record.id)}
                                                                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 text-[8px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
-                                                                    title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                                    title="Buang dari Siap Semak"
                                                                 >
                                                                     ✓
                                                                 </button>
