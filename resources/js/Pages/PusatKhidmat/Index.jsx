@@ -319,7 +319,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             if (!res.ok) throw new Error(payload.message || 'Gagal.');
             updateRecordCula(selectedRecord.id, code, label);
             setCheckedIds((prev) => new Set([...prev, selectedRecord.id]));
-            setSuccessModal(`Kod culaan ${label} dikemaskini.`);
+            setSuccessModal(`Kod culaan ${getName(selectedRecord)} (${label}) berjaya dikemaskini.`);
         } catch (e) {
             setSuccessModal(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
         } finally {
