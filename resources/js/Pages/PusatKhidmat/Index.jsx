@@ -217,6 +217,21 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const doneCount = records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done').length;
     const pendingCount = linkedCount - doneCount;
 
+    const tabCountsByUdm = useMemo(() => {
+        const counts = { belum: 0, siap: 0, tiada: 0 };
+        records.forEach((r) => {
+            if (selectedUdm && r.pemilih?.dm !== selectedUdm) return;
+            if (!r.linked) {
+                counts.tiada++;
+            } else if (culaStatuses.get(r.id) === 'done') {
+                counts.siap++;
+            } else {
+                counts.belum++;
+            }
+        });
+        return counts;
+    }, [records, selectedUdm, culaStatuses]);
+
     const handleTabChange = (tab) => {
         setActiveTab(tab);
         setCurrentPage(1);
@@ -395,21 +410,21 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                 onClick={() => handleTabChange('belum')}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'belum' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
-                                Belum Cula ({pendingCount})
+                                Belum Cula ({tabCountsByUdm.belum})
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleTabChange('siap')}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'siap' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
-                                Siap Cula ({doneCount})
+                                Siap Cula ({tabCountsByUdm.siap})
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleTabChange('tiada')}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'tiada' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
-                                Tiada Data Pemilih ({unlinkedCount})
+                                Tiada Data Pemilih ({tabCountsByUdm.tiada})
                             </button>
                         </div>
                         <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
