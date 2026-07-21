@@ -574,36 +574,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                             </div>
                                         )}
 
-                                        {activeTab === 'belum' && record.pemilih && (
-                                            <div className="mt-3 flex flex-wrap gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => { setSelectedRecord(record); setShowCulaModal(true); }}
-                                                    disabled={pendingIds.has(record.pemilih.id)}
-                                                    className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-                                                >
-                                                    {pendingIds.has(record.pemilih.id) ? '...' : 'Siap Cula'}
-                                                </button>
-                                                <a
-                                                    href={`https://t.me/${record.pemilih.telegram_identity || ''}?start=kemascula`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    onClick={(e) => { if (!record.pemilih.telegram_identity) e.preventDefault(); }}
-                                                    className={`inline-flex flex-1 items-center justify-center rounded-md bg-green-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-green-500 ${!record.pemilih.telegram_identity ? 'pointer-events-none opacity-40' : ''}`}
-                                                >
-                                                    Cula Sama
-                                                </a>
-                                                <a
-                                                    href={`https://t.me/${record.pemilih.telegram_identity || ''}?start=kemastel`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    onClick={(e) => { if (!record.pemilih.telegram_identity) e.preventDefault(); }}
-                                                    className={`inline-flex flex-1 items-center justify-center rounded-md bg-orange-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-orange-500 ${!record.pemilih.telegram_identity ? 'pointer-events-none opacity-40' : ''}`}
-                                                >
-                                                    Kemas Tel
-                                                </a>
-                                            </div>
-                                        )}
+
                                     </div>
                                 );
                             })}
