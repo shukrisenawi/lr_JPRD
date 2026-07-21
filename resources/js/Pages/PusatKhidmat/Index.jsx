@@ -535,19 +535,19 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         </div>
                         <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                {!isScoped && (
+                                {accessLevel !== 'cawangan' && (
                                     <select
                                         value={selectedUdm}
                                         onChange={(e) => { setSelectedUdm(e.target.value); setSelectedLocality(''); setCurrentPage(1); }}
                                         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                     >
-                                        <option value="">Semua UDM</option>
+                                        <option value="">{accessLevel === 'udm' ? userScopeDm || 'UDM' : 'Semua UDM'}</option>
                                         {udms.map((dm) => (
                                             <option key={dm} value={dm}>{dm}</option>
                                         ))}
                                     </select>
                                 )}
-                                {!isScoped && (
+                                {accessLevel !== 'cawangan' && (
                                     <select
                                         value={selectedLocality}
                                         onChange={(e) => { setSelectedLocality(e.target.value); setCurrentPage(1); }}
