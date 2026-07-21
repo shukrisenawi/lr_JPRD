@@ -620,7 +620,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                         <p className="flex items-center gap-1">
                                                             <span className="text-slate-500">Cula:</span>
                                                             <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span>
-                                                            {(activeTab === 'belum' || activeTab === 'siap') && (
+                                                            {activeTab === 'siap' && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleCheckToggle(record.id)}
