@@ -128,11 +128,7 @@ class PusatKhidmatService
             }
         });
 
-        $records = PusatKhidmatData::query()
-            ->with('pemilihRecord')
-            ->where('sheet_key', $sheetKey)
-            ->where('status', 'aktif')
-            ->orderBy('position')
+        $records = $this->buildRecordsQuery($user)
             ->get()
             ->map(fn (PusatKhidmatData $record) => $this->formatRecord($record))
             ->all();
@@ -159,11 +155,7 @@ class PusatKhidmatService
         $sheetUrl = $this->getSheetUrl();
         $sheetKey = md5($sheetUrl);
 
-        $records = PusatKhidmatData::query()
-            ->with('pemilihRecord')
-            ->where('sheet_key', $sheetKey)
-            ->where('status', 'aktif')
-            ->orderBy('position')
+        $records = $this->buildRecordsQuery($user)
             ->get()
             ->map(fn (PusatKhidmatData $record) => $this->formatRecord($record))
             ->all();
@@ -179,6 +171,30 @@ class PusatKhidmatService
             'udms' => $udms,
             'localities' => $localities,
         ];
+    }
+
+    private function buildRecordsQuery(?User $user)
+    {
+        $query = PusatKhidmatData::query()
+            ->with('pemilihRecord')
+            ->where('sheet_key', md5($this->getSheetUrl()))
+            ->where('status', 'aktif')
+            ->orderBy('position');
+
+        $scope = $user?->accessScope();
+
+        if ($scope !== null) {
+            $query->whereHas('pemilihRecord', function ($q) use ($scope) {
+                if (filled($scope['dm'])) {
+                    $q->where('dm', $scope['dm']);
+                }
+                if (filled($scope['locality'])) {
+                    $q->where('locality', $scope['locality']);
+                }
+            });
+        }
+
+        return $query;
     }
 
     public function autoSyncIfNeeded(): void
