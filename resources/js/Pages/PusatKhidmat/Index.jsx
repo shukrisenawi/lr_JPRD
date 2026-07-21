@@ -639,7 +639,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                     )}
                                                     {(activeTab === 'belum' || activeTab === 'siap') && record.pemilih && (
                                                         <a
-                                                            href={buildTelegramLink('kemastel', record.pemilih.telegram_identity)}
+                                                            href={buildTelegramLink('kemastel', record.pemilih.no_kp)}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
