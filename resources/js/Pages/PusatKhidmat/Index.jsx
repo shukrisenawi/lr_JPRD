@@ -489,7 +489,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
 
                 <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard label="Jumlah Rekod" value={totalCount} color="violet" />
-                    <StatCard label="Dipaut Pemilih" value={linkedCount} detail={`${unlinkedCount} belum dipaut`} color="emerald" />
+                    <StatCard label="Dipaut Pemilih" value={linkedCount} color="emerald" />
                     <StatCard label="Baru Ditambah" value={newCount !== null ? newCount : 0} color="amber" />
                     <StatCard label="Dikemaskini" value={updatedCount !== null ? updatedCount : 0} color="cyan" />
                 </section>
