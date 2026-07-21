@@ -128,16 +128,10 @@ class PusatKhidmatService
             }
         });
 
-        $query = PusatKhidmatData::query()
+        $records = PusatKhidmatData::query()
             ->with('pemilihRecord')
             ->where('sheet_key', $sheetKey)
-            ->where('status', 'aktif');
-
-        if ($user) {
-            $query->whereHas('pemilihRecord', fn ($q) => $user->applyScopeToPemilihQuery($q));
-        }
-
-        $records = $query
+            ->where('status', 'aktif')
             ->orderBy('position')
             ->get()
             ->map(fn (PusatKhidmatData $record) => $this->formatRecord($record))
@@ -165,16 +159,10 @@ class PusatKhidmatService
         $sheetUrl = $this->getSheetUrl();
         $sheetKey = md5($sheetUrl);
 
-        $query = PusatKhidmatData::query()
+        $records = PusatKhidmatData::query()
             ->with('pemilihRecord')
             ->where('sheet_key', $sheetKey)
-            ->where('status', 'aktif');
-
-        if ($user) {
-            $query->whereHas('pemilihRecord', fn ($q) => $user->applyScopeToPemilihQuery($q));
-        }
-
-        $records = $query
+            ->where('status', 'aktif')
             ->orderBy('position')
             ->get()
             ->map(fn (PusatKhidmatData $record) => $this->formatRecord($record))
