@@ -275,6 +275,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         const counts = { belum: 0, siap: 0, tiada: 0, semak: 0 };
         records.forEach((r) => {
             if (selectedUdm && r.pemilih?.dm !== selectedUdm) return;
+            if (selectedLocality && r.pemilih?.locality !== selectedLocality) return;
             if (!r.linked) {
                 counts.tiada++;
             } else if (semakStatuses.get(r.id)) {
@@ -286,7 +287,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             }
         });
         return counts;
-    }, [records, selectedUdm, culaStatuses, semakStatuses]);
+    }, [records, selectedUdm, selectedLocality, culaStatuses, semakStatuses]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -535,13 +536,13 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         </div>
                         <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                {accessLevel !== 'cawangan' && (
+                                {accessLevel === 'jprd' && (
                                     <select
                                         value={selectedUdm}
                                         onChange={(e) => { setSelectedUdm(e.target.value); setSelectedLocality(''); setCurrentPage(1); }}
                                         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                     >
-                                        <option value="">{accessLevel === 'udm' ? userScopeDm || 'UDM' : 'Semua UDM'}</option>
+                                        <option value="">Semua UDM</option>
                                         {udms.map((dm) => (
                                             <option key={dm} value={dm}>{dm}</option>
                                         ))}
