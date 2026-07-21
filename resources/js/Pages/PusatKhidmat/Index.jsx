@@ -212,7 +212,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             case 'belum':
                 return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
             case 'siap':
-                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done');
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done' && !semakStatuses.get(r.id));
             case 'tiada':
                 return unlinkedRecords;
             case 'semak':
