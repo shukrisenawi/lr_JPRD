@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
 
@@ -162,7 +162,15 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [pendingIds, setPendingIds] = useState(new Set());
-    const [checkedIds, setCheckedIds] = useState(new Set());
+    const [checkedIds, setCheckedIds] = useState(() => {
+        try {
+            const saved = localStorage.getItem('pusat-khidmat-checked-ids');
+            if (saved) {
+                return new Set(JSON.parse(saved));
+            }
+        } catch {}
+        return new Set();
+    });
     const pageSize = 20;
 
     const unlinkedRecords = useMemo(() => records.filter((r) => !r.linked), [records]);
@@ -303,6 +311,12 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     };
 
     const [successModal, setSuccessModal] = useState(null);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('pusat-khidmat-checked-ids', JSON.stringify([...checkedIds]));
+        } catch {}
+    }, [checkedIds]);
 
     const handleCulaSiap = async (code, label) => {
         if (!selectedRecord?.pemilih || !code) return;
