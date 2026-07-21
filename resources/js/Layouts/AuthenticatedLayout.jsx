@@ -18,6 +18,15 @@ function Badge({ count }) {
     );
 }
 
+function GlowingDot() {
+    return (
+        <span className="relative ml-1.5 flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+        </span>
+    );
+}
+
 function HeaderIcon({ name, className = 'h-5 w-5' }) {
     const paths = {
         user: <><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></>,
@@ -106,12 +115,14 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     if (item.items) {
                                         const accessibleItems = item.items.filter(i => canAccess(i.key) || i.key === 'akses');
                                         if (accessibleItems.length === 0) return null;
+                                        const hasSubBadge = accessibleItems.some(sub => sub.badge > 0);
                                         if (accessibleItems.length === 1) {
                                             const sub = accessibleItems[0];
                                             return (
                                                 <NavLink key={sub.key} href={navHref(sub)} active={route().current(sub.routePattern)} variant={variant}>
                                                     <NavIcon>{item.icon}</NavIcon>
                                                     <span>{sub.label}</span>
+                                                    {sub.badge > 0 && <Badge count={sub.badge} />}
                                                 </NavLink>
                                             );
                                         }
@@ -121,6 +132,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                                     <button type="button" className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition mx-[2px] text-slate-600 hover:bg-green-100 hover:text-green-700">
                                                         <NavIcon>{item.icon}</NavIcon>
                                                         <span>{item.label}</span>
+                                                        {hasSubBadge && <GlowingDot />}
                                                         <HeaderIcon name="down" className="h-3 w-3" />
                                                     </button>
                                                 </Dropdown.Trigger>
@@ -235,13 +247,17 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             ];
                             return groups.map(g => {
                                 if (g.items.length === 0) return null;
+                                const hasSubBadge = g.items.some(sub => sub.badge > 0);
                                 if (g.items.length === 1) {
                                     const sub = g.items[0];
-                                    return <ResponsiveNavLink key={g.label} href={sub.href} active={sub.active} variant={variant}>{sub.label}</ResponsiveNavLink>;
+                                    return <ResponsiveNavLink key={g.label} href={sub.href} active={sub.active} variant={variant} badge={sub.badge}>{sub.label}</ResponsiveNavLink>;
                                 }
                                 return (
                                     <div key={g.label}>
-                                        <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">{g.label}</div>
+                                        <div className="flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                            <span>{g.label}</span>
+                                            {hasSubBadge && <GlowingDot />}
+                                        </div>
                                         {g.items.map(sub => (
                                             <ResponsiveNavLink key={sub.label} href={sub.href} active={sub.active} variant={variant} badge={sub.badge}>{sub.label}</ResponsiveNavLink>
                                         ))}
