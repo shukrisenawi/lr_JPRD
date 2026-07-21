@@ -665,6 +665,12 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                             <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span>
                                                         </p>
                                                     )}
+                                                    {record.pemilih.no_rumah && record.pemilih.no_rumah !== '-' && (
+                                                        <p><span className="text-slate-500">No Rumah:</span> <span className="font-bold text-slate-800">{record.pemilih.no_rumah}</span></p>
+                                                    )}
+                                                    {record.pemilih.alamat_kediaman && record.pemilih.alamat_kediaman !== '-' && (
+                                                        <p className="col-span-2"><span className="text-slate-500">Alamat:</span> <span className="font-bold text-slate-800">{record.pemilih.alamat_kediaman}</span></p>
+                                                    )}
                                                 </div>
                                             </div>
                                                 {(activeTab === 'belum' || activeTab === 'siap') && record.pemilih && (
