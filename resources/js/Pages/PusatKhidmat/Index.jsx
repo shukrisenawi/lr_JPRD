@@ -202,15 +202,15 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const tabRecords = useMemo(() => {
         switch (activeTab) {
             case 'belum':
-                return records.filter((r) => r.linked && !semakStatuses.get(r.id));
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
             case 'siap':
-                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done' && semakStatuses.get(r.id));
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done');
             case 'tiada':
                 return unlinkedRecords;
             case 'semak':
                 return records.filter((r) => r.linked && semakStatuses.get(r.id));
             default:
-                return records.filter((r) => r.linked && !semakStatuses.get(r.id));
+                return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
         }
     }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab]);
 
@@ -252,11 +252,9 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             if (!r.linked) {
                 counts.tiada++;
             } else if (semakStatuses.get(r.id)) {
-                if (culaStatuses.get(r.id) === 'done') {
-                    counts.siap++;
-                } else {
-                    counts.semak++;
-                }
+                counts.semak++;
+            } else if (culaStatuses.get(r.id) === 'done') {
+                counts.siap++;
             } else {
                 counts.belum++;
             }
@@ -638,22 +636,12 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                         <p className="flex items-center gap-1">
                                                             <span className="text-slate-500">Cula:</span>
                                                             <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span>
-                                                            {semakStatuses.get(record.id) && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleCheckToggle(record.id)}
-                                                                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 text-[8px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
-                                                                    title="Buang dari Siap Semak"
-                                                                >
-                                                                    ✓
-                                                                </button>
-                                                            )}
                                                         </p>
                                                     )}
                                                 </div>
                                             </div>
                                             {(activeTab === 'belum' || activeTab === 'siap') && record.pemilih && (
-                                                <div className="mt-2 flex gap-2">
+                                                <div className="mt-2 flex items-center gap-2">
                                                     <a
                                                         href={buildTelegramLink('kemascula', record.pemilih.no_kp)}
                                                         target="_blank"
@@ -671,6 +659,14 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                     >
                                                         Kemas Tel
                                                     </a>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCheckToggle(record.id)}
+                                                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
+                                                        title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                    >
+                                                        ✓
+                                                    </button>
                                                 </div>
                                             )}
                                             {activeTab === 'semak' && (
