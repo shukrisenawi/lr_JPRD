@@ -58,6 +58,11 @@ class PusatKhidmatController extends Controller
             'cula_display_label' => $request->input('cula_display_label'),
         ]);
 
+        \App\Models\PusatKhidmatData::query()
+            ->where('pemilih_record_id', $pemilihRecord->id)
+            ->whereNull('checked_at')
+            ->update(['checked_at' => now()]);
+
         return response()->json([
             'ok' => true,
             'message' => 'Kod culaan dikemaskini.',
