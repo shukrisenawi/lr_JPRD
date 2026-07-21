@@ -230,7 +230,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             case 'siap':
                 return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'done' && !semakStatuses.get(r.id));
             case 'tiada':
-                return isAdmin ? unlinkedRecords : [];
+                return unlinkedRecords;
             case 'semak':
                 return records
                     .filter((r) => r.linked && semakStatuses.get(r.id))
@@ -238,7 +238,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             default:
                 return records.filter((r) => r.linked && culaStatuses.get(r.id) === 'pending' && !semakStatuses.get(r.id));
         }
-    }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab, isAdmin]);
+    }, [records, unlinkedRecords, culaStatuses, semakStatuses, activeTab]);
 
     const activeRecords = useMemo(() => {
         let result = tabRecords;
@@ -516,7 +516,6 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             >
                                 Telah Cula ({tabCountsByUdm.siap})
                             </button>
-                            {isAdmin && (
                             <button
                                 type="button"
                                 onClick={() => handleTabChange('tiada')}
@@ -524,7 +523,6 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             >
                                 Tiada Data Pemilih ({tabCountsByUdm.tiada})
                             </button>
-                            )}
                             <button
                                 type="button"
                                 onClick={() => handleTabChange('semak')}
