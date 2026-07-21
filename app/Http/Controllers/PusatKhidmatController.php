@@ -111,7 +111,7 @@ class PusatKhidmatController extends Controller
                 'records' => $result['records'],
                 'message' => $this->buildMessage($result),
             ]);
-        } catch (RuntimeException $e) {
+        } catch (\Throwable $e) {
             return response()->json([
                 'ok' => false,
                 'message' => $e->getMessage(),
