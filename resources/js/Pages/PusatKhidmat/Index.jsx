@@ -659,14 +659,16 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                     >
                                                         Kemas Tel
                                                     </a>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleCheckToggle(record.id)}
-                                                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
-                                                        title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
-                                                    >
-                                                        ✓
-                                                    </button>
+                                                    {activeTab === 'siap' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleCheckToggle(record.id)}
+                                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
+                                                            title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                        >
+                                                            ✓
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                             {activeTab === 'semak' && (
