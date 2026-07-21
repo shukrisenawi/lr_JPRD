@@ -16,7 +16,7 @@ class PusatKhidmatController extends Controller
 {
     public function index(PusatKhidmatService $service): Response
     {
-        $data = $service->getRecords();
+        $data = $service->getRecords(request()->user());
 
         return Inertia::render('PusatKhidmat/Index', [
             'sheet_url' => $data['sheet_url'],
@@ -78,7 +78,7 @@ class PusatKhidmatController extends Controller
     public function sync(PusatKhidmatService $service): \Illuminate\Http\JsonResponse
     {
         try {
-            $result = $service->fetchAndSync();
+            $result = $service->fetchAndSync(request()->user());
 
             return response()->json([
                 'ok' => true,

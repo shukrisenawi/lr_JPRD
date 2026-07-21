@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\PemilihRecord;
 use App\Models\PusatKhidmatData;
 use App\Models\Setting;
+use App\Models\User;
 use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -27,7 +28,7 @@ class PusatKhidmatService
         Setting::setValue('pusat_khidmat_sheet_url', $url);
     }
 
-    public function fetchAndSync(): array
+    public function fetchAndSync(?User $user = null): array
     {
         $sheetUrl = $this->getSheetUrl();
         $sheetId = $this->extractSheetId($sheetUrl);
@@ -127,10 +128,16 @@ class PusatKhidmatService
             }
         });
 
-        $records = PusatKhidmatData::query()
+        $query = PusatKhidmatData::query()
             ->with('pemilihRecord')
             ->where('sheet_key', $sheetKey)
-            ->where('status', 'aktif')
+            ->where('status', 'aktif');
+
+        if ($user) {
+            $query->whereHas('pemilihRecord', fn ($q) => $user->applyScopeToPemilihQuery($q));
+        }
+
+        $records = $query
             ->orderBy('position')
             ->get()
             ->map(fn (PusatKhidmatData $record) => $this->formatRecord($record))
@@ -147,15 +154,21 @@ class PusatKhidmatService
         ];
     }
 
-    public function getRecords(): array
+    public function getRecords(?User $user = null): array
     {
         $sheetUrl = $this->getSheetUrl();
         $sheetKey = md5($sheetUrl);
 
-        $records = PusatKhidmatData::query()
+        $query = PusatKhidmatData::query()
             ->with('pemilihRecord')
             ->where('sheet_key', $sheetKey)
-            ->where('status', 'aktif')
+            ->where('status', 'aktif');
+
+        if ($user) {
+            $query->whereHas('pemilihRecord', fn ($q) => $user->applyScopeToPemilihQuery($q));
+        }
+
+        $records = $query
             ->orderBy('position')
             ->get()
             ->map(fn (PusatKhidmatData $record) => $this->formatRecord($record))

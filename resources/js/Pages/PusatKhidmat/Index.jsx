@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
@@ -143,6 +143,13 @@ function Pagination({ currentPage, totalPages, totalRecords, pageSize, onPageCha
 }
 
 export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [], udms = [], localities = [] }) {
+    const { auth } = usePage().props;
+    const accessLevel = auth.user?.access_level ?? 'jprd';
+    const scope = accessLevel === 'jprd' ? null : (auth.user?.role?.slug === 'master-admin' ? null : null);
+    const userScopeDm = accessLevel === 'udm' ? auth.user?.scope_key : (accessLevel === 'cawangan' ? auth.user?.scope_key?.split('|')[0] : null);
+    const userScopeLocality = accessLevel === 'cawangan' ? auth.user?.scope_key?.split('|')[1] : null;
+    const isScoped = accessLevel === 'udm' || accessLevel === 'cawangan';
+
     const [sheetUrl, setSheetUrl] = useState(initialSheetUrl);
     const [editingUrl, setEditingUrl] = useState(false);
     const [urlInput, setUrlInput] = useState(initialSheetUrl);
@@ -155,8 +162,8 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [newCount, setNewCount] = useState(null);
     const [updatedCount, setUpdatedCount] = useState(null);
     const [search, setSearch] = useState('');
-    const [selectedUdm, setSelectedUdm] = useState('');
-    const [selectedLocality, setSelectedLocality] = useState('');
+    const [selectedUdm, setSelectedUdm] = useState(userScopeDm || '');
+    const [selectedLocality, setSelectedLocality] = useState(userScopeLocality || '');
     const [currentPage, setCurrentPage] = useState(1);
     const [activeTab, setActiveTab] = useState('belum');
     const [selectedRecord, setSelectedRecord] = useState(null);
@@ -302,8 +309,10 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
 
     const handleResetFilters = () => {
         setSearch('');
-        setSelectedUdm('');
-        setSelectedLocality('');
+        if (!isScoped) {
+            setSelectedUdm('');
+            setSelectedLocality('');
+        }
         setCurrentPage(1);
     };
 
@@ -519,28 +528,40 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         </div>
                         <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                <select
-                                    value={selectedUdm}
-                                    onChange={(e) => { setSelectedUdm(e.target.value); setSelectedLocality(''); setCurrentPage(1); }}
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                >
-                                    <option value="">Semua UDM</option>
-                                    {udms.map((dm) => (
-                                        <option key={dm} value={dm}>{dm}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    value={selectedLocality}
-                                    onChange={(e) => { setSelectedLocality(e.target.value); setCurrentPage(1); }}
-                                    className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                >
-                                    <option value="">Semua Lokaliti</option>
-                                    {localities
-                                        .filter((loc) => !selectedUdm || records.some((r) => r.pemilih?.dm === selectedUdm && r.pemilih?.locality === loc))
-                                        .map((loc) => (
-                                            <option key={loc} value={loc}>{loc}</option>
+                                {isScoped ? (
+                                    <span className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-xs font-bold text-green-700">
+                                        {userScopeDm}
+                                    </span>
+                                ) : (
+                                    <select
+                                        value={selectedUdm}
+                                        onChange={(e) => { setSelectedUdm(e.target.value); setSelectedLocality(''); setCurrentPage(1); }}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                    >
+                                        <option value="">Semua UDM</option>
+                                        {udms.map((dm) => (
+                                            <option key={dm} value={dm}>{dm}</option>
                                         ))}
-                                </select>
+                                    </select>
+                                )}
+                                {isScoped && userScopeLocality ? (
+                                    <span className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-xs font-bold text-green-700">
+                                        {userScopeLocality}
+                                    </span>
+                                ) : (
+                                    <select
+                                        value={selectedLocality}
+                                        onChange={(e) => { setSelectedLocality(e.target.value); setCurrentPage(1); }}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                    >
+                                        <option value="">Semua Lokaliti</option>
+                                        {localities
+                                            .filter((loc) => !selectedUdm || records.some((r) => r.pemilih?.dm === selectedUdm && r.pemilih?.locality === loc))
+                                            .map((loc) => (
+                                                <option key={loc} value={loc}>{loc}</option>
+                                            ))}
+                                    </select>
+                                )}
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="relative flex-1 lg:min-w-[16rem]">
