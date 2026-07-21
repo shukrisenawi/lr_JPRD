@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
@@ -333,6 +333,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             if (!res.ok) throw new Error(payload.message || 'Gagal.');
 
             setRecords((prev) => prev.map((r) => r.id === recordId ? { ...r, checked_at: payload.checked_at } : r));
+            router.reload({ only: ['badgeCounts'], preserveState: true, preserveScroll: true });
         } catch (e) {
             setSuccessModal(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
         } finally {
@@ -362,6 +363,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             updateRecordCula(selectedRecord.id, code, label);
             setRecords((prev) => prev.map((r) => r.id === selectedRecord.id ? { ...r, checked_at: new Date().toISOString().slice(0, 19).replace('T', ' ') } : r));
             setSuccessModal(`Kod culaan ${getName(selectedRecord)} (${label}) berjaya dikemaskini.`);
+            router.reload({ only: ['badgeCounts'], preserveState: true, preserveScroll: true });
         } catch (e) {
             setSuccessModal(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
         } finally {
@@ -399,6 +401,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             setMessage(payload.message);
             setMessageType('success');
             setLastSync(new Date().toISOString().slice(0, 19).replace('T', ' '));
+            router.reload({ only: ['badgeCounts'], preserveState: true, preserveScroll: true });
         } catch (e) {
             setMessage(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
             setMessageType('error');
