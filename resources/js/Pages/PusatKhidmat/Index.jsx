@@ -317,6 +317,9 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             const payload = await res.json();
             if (!res.ok) throw new Error(payload.message || 'Gagal.');
             updateRecordCula(selectedRecord.id, code, label);
+            setCheckedIds((prev) => new Set([...prev, selectedRecord.id]));
+            setActiveTab('semak');
+            setCurrentPage(1);
             setMessage(payload.message || 'Kod culaan dikemaskini.');
             setMessageType('success');
         } catch (e) {
