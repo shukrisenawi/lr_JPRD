@@ -91,14 +91,7 @@ class HandleInertiaRequests extends Middleware
                 ->whereNotNull('pemilih_record_id')
                 ->whereNull('checked_at')
                 ->whereHas('pemilihRecord', function ($q) use ($user) {
-                    $q->where('status', 'aktif')
-                        ->where(function ($sub) {
-                            $sub->whereNull('cula_code')
-                                ->orWhere('cula_code', '')
-                                ->orWhere('cula_code', '0')
-                                ->orWhere('cula_code', '?')
-                                ->orWhere('cula_display_label', 'like', '%BELUM DICULA%');
-                        });
+                    $q->where('status', 'aktif');
 
                     if ($user->access_level === 'udm') {
                         $q->where('dm', $user->scope_key);
