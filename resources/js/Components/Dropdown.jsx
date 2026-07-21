@@ -55,9 +55,10 @@ const Content = ({ align = 'right', contentClasses = '', widthClasses = 'w-44', 
 
 function Badge({ count }) {
     if (!count || count <= 0) return null;
+    const display = typeof count === 'number' ? count : (parseInt(count, 10) || 0);
     return (
         <span className="ml-auto inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-            {count > 99 ? '99+' : count}
+            {display}
         </span>
     );
 }

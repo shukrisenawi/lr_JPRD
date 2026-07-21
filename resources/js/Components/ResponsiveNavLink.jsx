@@ -13,7 +13,7 @@ export default function ResponsiveNavLink({ active = false, variant = 'light', c
             <span className="flex-1">{children}</span>
             {badge !== undefined && badge > 0 && (
                 <span className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {badge > 99 ? '99+' : badge}
+                    {badge}
                 </span>
             )}
         </Link>
