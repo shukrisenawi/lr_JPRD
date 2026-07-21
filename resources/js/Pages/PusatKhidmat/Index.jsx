@@ -718,21 +718,26 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         </div>
                         <p className="mt-1 text-xs text-slate-500">Pilih kod culaan untuk dikemaskini:</p>
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                            {[...availableCulaCodes].sort((a, b) => {
-                                const na = parseInt(a.code, 10);
-                                const nb = parseInt(b.code, 10);
-                                return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
-                            }).map((c) => (
-                                <button
-                                    key={c.code}
-                                    type="button"
-                                    onClick={() => handleCulaSiap(c.code, c.label || c.code)}
-                                    disabled={pendingIds.has(selectedRecord.pemilih.id)}
-                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 ${c.code === (selectedRecord.pemilih.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}
-                                >
-                                    {c.label || c.code}
-                                </button>
-                            ))}
+                            {[...availableCulaCodes]
+                                .filter((c) => {
+                                    const label = c.label || '';
+                                    return !label.includes('BELUM DICULA') && label !== 'M';
+                                })
+                                .sort((a, b) => {
+                                    const na = parseInt(a.code, 10);
+                                    const nb = parseInt(b.code, 10);
+                                    return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
+                                }).map((c) => (
+                                    <button
+                                        key={c.code}
+                                        type="button"
+                                        onClick={() => handleCulaSiap(c.code, c.label || c.code)}
+                                        disabled={pendingIds.has(selectedRecord.pemilih.id)}
+                                        className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 ${c.code === (selectedRecord.pemilih.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}
+                                    >
+                                        {c.label || c.code}
+                                    </button>
+                                ))}
                         </div>
                     </div>
                 </div>
