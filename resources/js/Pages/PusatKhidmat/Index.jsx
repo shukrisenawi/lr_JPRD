@@ -440,13 +440,6 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             </button>
                             <button
                                 type="button"
-                                onClick={() => handleTabChange('semak')}
-                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'semak' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
-                            >
-                                Siap Semak ({tabCountsByUdm.semak})
-                            </button>
-                            <button
-                                type="button"
                                 onClick={() => handleTabChange('siap')}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'siap' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
@@ -458,6 +451,13 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'tiada' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
                                 Tiada Data Pemilih ({tabCountsByUdm.tiada})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('semak')}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'semak' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                            >
+                                Siap Semak ({tabCountsByUdm.semak})
                             </button>
                         </div>
                         <div className="flex w-full flex-col gap-2 lg:w-auto lg:flex-row lg:items-center">
@@ -622,11 +622,11 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                         )}
                                                     </div>
                                                 </div>
-                                                {activeTab === 'belum' && (
+                                                {(activeTab === 'belum' || activeTab === 'siap') && (
                                                     <button
                                                         type="button"
                                                         onClick={() => handleCheckToggle(record.id)}
-                                                        className={`mt-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
+                                                        className={`mt-3 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 text-[8px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
                                                         title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
                                                     >
                                                         ✓
