@@ -704,40 +704,35 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             </div>
 
             {showCulaModal && selectedRecord?.pemilih && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-black text-slate-800">Kemaskini Cula — {getName(selectedRecord)}</h3>
+                <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)} onKeyDown={(e) => e.key === 'Escape' && setShowCulaModal(false)} tabIndex={-1}>
+                    <div role="document" className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between gap-2">
+                            <h3 className="text-sm font-bold text-slate-800">Kemaskini Cula — {getName(selectedRecord)}</h3>
                             <button
                                 type="button"
                                 onClick={() => { setShowCulaModal(false); setSelectedRecord(null); }}
-                                className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50"
                             >
-                                ✕
+                                Tutup
                             </button>
                         </div>
-                        <p className="mt-2 text-xs text-slate-600">Pilih kod culaan untuk rekod ini:</p>
-                        <div className="mt-3 grid max-h-[16rem] gap-2 overflow-y-auto pr-1">
-                            {[...availableCulaCodes].sort((a, b) => a.code.localeCompare(b.code)).map((c) => (
+                        <p className="mt-1 text-xs text-slate-500">Pilih kod culaan untuk dikemaskini:</p>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                            {[...availableCulaCodes].sort((a, b) => {
+                                const na = parseInt(a.code, 10);
+                                const nb = parseInt(b.code, 10);
+                                return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
+                            }).map((c) => (
                                 <button
                                     key={c.code}
                                     type="button"
                                     onClick={() => handleCulaSiap(c.code, c.label || c.code)}
                                     disabled={pendingIds.has(selectedRecord.pemilih.id)}
-                                    className={`rounded-md border px-2.5 py-2 text-left text-xs font-bold shadow-sm transition hover:shadow-md ${c.code === (selectedRecord.pemilih.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}
+                                    className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 ${c.code === (selectedRecord.pemilih.cula_code || '') ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}
                                 >
                                     {c.label || c.code}
                                 </button>
                             ))}
-                        </div>
-                        <div className="mt-3 flex justify-end">
-                            <button
-                                type="button"
-                                onClick={() => { setShowCulaModal(false); setSelectedRecord(null); }}
-                                className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
-                            >
-                                Tutup
-                            </button>
                         </div>
                     </div>
                 </div>
