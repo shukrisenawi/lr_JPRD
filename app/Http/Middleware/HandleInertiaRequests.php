@@ -76,6 +76,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'badgeCounts' => [
                 'pusatKhidmatBelumSemak' => $this->getPusatKhidmatBelumSemakCount($request->user()),
+                'belumDicula' => $this->getBelumDiculaCount($request->user()),
             ],
         ];
     }
@@ -102,6 +103,31 @@ class HandleInertiaRequests extends Middleware
                         }
                     }
                 });
+
+            return $query->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getBelumDiculaCount($user): int
+    {
+        if (!$user) return 0;
+
+        try {
+            $query = \App\Models\PemilihRecord::query()
+                ->where('status', 'aktif')
+                ->where('is_manual', false)
+                ->where(function ($q) {
+                    $q->whereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhere('cula_code', '?')
+                        ->orWhere('cula_code', 'TIADA')
+                        ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                })
+                ->whereDoesntHave('culaWorkItem');
+
+            $user->applyScopeToPemilihQuery($query);
 
             return $query->count();
         } catch (\Exception $e) {

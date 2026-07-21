@@ -53,6 +53,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const impersonation = auth.impersonation ?? { is_active: false, impersonator: null };
     const mustChangePassword = user.must_change_password ?? false;
     const pusatKhidmatBelumSemak = badgeCounts?.pusatKhidmatBelumSemak ?? 0;
+    const belumDicula = badgeCounts?.belumDicula ?? 0;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const isLight = variant === 'light';
@@ -79,7 +80,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             items: [
                 { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
                 { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
-                { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan' },
+                { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan', badge: belumDicula },
                 { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                 { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
@@ -232,7 +233,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 { label: 'Operasi', items: [
                                     canAccess('dashboard') && { href: route('dashboard'), active: route().current('dashboard'), label: 'Cula Manual' },
                                     canAccess('program') && { href: route('program.index'), active: route().current('program.*'), label: 'Program' },
-                                    canAccess('culaan') && { href: route('culaan.index'), active: route().current('culaan.*'), label: 'Culaan' },
+                                    canAccess('culaan') && { href: route('culaan.index'), active: route().current('culaan.*'), label: 'Culaan', badge: belumDicula },
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'Kad 10' },
