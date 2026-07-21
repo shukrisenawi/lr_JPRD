@@ -610,28 +610,29 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
 
                                         {record.linked && record.pemilih && (
                                             <>
-                                            <div className="mt-3 flex items-start justify-between gap-2">
-                                                <div className="flex-1 rounded-lg border border-green-100 bg-green-50/60 p-2.5">
-                                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Data Pemilih</p>
-                                                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                                                        {record.pemilih.no_ahli && (
-                                                            <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli}</span></p>
-                                                        )}
-                                                        {(record.pemilih.cula_display_label || record.pemilih.cula_code) && (
-                                                            <p><span className="text-slate-500">Cula:</span> <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span></p>
-                                                        )}
-                                                    </div>
+                                            <div className="mt-3 rounded-lg border border-green-100 bg-green-50/60 p-2.5">
+                                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Data Pemilih</p>
+                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                                                    {record.pemilih.no_ahli && (
+                                                        <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli}</span></p>
+                                                    )}
+                                                    {(record.pemilih.cula_display_label || record.pemilih.cula_code) && (
+                                                        <p className="flex items-center gap-1">
+                                                            <span className="text-slate-500">Cula:</span>
+                                                            <span className="font-bold text-slate-800">{record.pemilih.cula_display_label || record.pemilih.cula_code}</span>
+                                                            {(activeTab === 'belum' || activeTab === 'siap') && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCheckToggle(record.id)}
+                                                                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 text-[8px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
+                                                                    title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                                >
+                                                                    ✓
+                                                                </button>
+                                                            )}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                                {(activeTab === 'belum' || activeTab === 'siap') && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleCheckToggle(record.id)}
-                                                        className={`mt-3 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 text-[8px] font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
-                                                        title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
-                                                    >
-                                                        ✓
-                                                    </button>
-                                                )}
                                             </div>
                                             {activeTab === 'semak' && (
                                                 <div className="mt-3 flex justify-end">
