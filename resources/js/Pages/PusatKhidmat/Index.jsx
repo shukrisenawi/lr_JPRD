@@ -640,37 +640,39 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                     )}
                                                 </div>
                                             </div>
-                                            {(activeTab === 'belum' || activeTab === 'siap') && record.pemilih && (
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <a
-                                                        href={buildTelegramLink('kemascula', record.pemilih.no_kp)}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        onClick={() => { setSelectedRecord(record); setShowCulaModal(true); }}
-                                                        className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
-                                                    >
-                                                        Cula
-                                                    </a>
-                                                    <a
-                                                        href={buildTelegramLink('kemastel', record.pemilih.no_kp)}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
-                                                    >
-                                                        Kemas Tel
-                                                    </a>
-                                                    {activeTab === 'siap' && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleCheckToggle(record.id)}
-                                                            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
-                                                            title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                {(activeTab === 'belum' || activeTab === 'siap') && record.pemilih && (
+                                                    <div className="mt-2 flex items-center gap-2">
+                                                        <a
+                                                            href={buildTelegramLink('kemascula', record.pemilih.no_kp)}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            onClick={() => { setSelectedRecord(record); setShowCulaModal(true); }}
+                                                            className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
                                                         >
-                                                            ✓
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            )}
+                                                            Cula
+                                                        </a>
+                                                        {phone && phone !== '-' && (
+                                                            <a
+                                                                href={buildTelegramLink('kemastel', record.pemilih.no_kp)}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex flex-1 items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700"
+                                                            >
+                                                                Kemas Tel
+                                                            </a>
+                                                        )}
+                                                        {activeTab === 'siap' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleCheckToggle(record.id)}
+                                                                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
+                                                                title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                            >
+                                                                ✓
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             {activeTab === 'semak' && (
                                                 <div className="mt-3 flex justify-end">
                                                     <button
