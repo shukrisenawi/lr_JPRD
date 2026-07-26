@@ -16,6 +16,7 @@ class ApiKey extends Model
     protected function casts(): array
     {
         return [
+            'key' => 'encrypted',
             'last_used_at' => 'datetime',
             'expires_at' => 'datetime',
         ];

@@ -24,7 +24,7 @@ class ApiKeyController extends Controller
                 ->map(fn (ApiKey $apiKey) => [
                     'id' => $apiKey->id,
                     'name' => $apiKey->name,
-                    'key_preview' => substr($apiKey->key, 0, 12).'...',
+                    'key' => $apiKey->key,
                     'last_used_at' => $apiKey->last_used_at?->format('d-m-Y H:i'),
                     'expires_at' => $apiKey->expires_at?->format('d-m-Y'),
                     'created_at' => $apiKey->created_at->format('d-m-Y H:i'),
@@ -42,11 +42,10 @@ class ApiKeyController extends Controller
         ]);
 
         $plainText = Str::random(40);
-        $hashed = hash('sha256', $plainText);
 
         ApiKey::query()->create([
             'name' => $validated['name'],
-            'key' => $hashed,
+            'key' => $plainText,
             'expires_at' => $validated['expires_at'],
         ]);
 

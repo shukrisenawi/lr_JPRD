@@ -18,8 +18,7 @@ class VoterController extends Controller
             return response()->json(['error' => 'Kunci API diperlukan.'], 401);
         }
 
-        $hashed = hash('sha256', $key);
-        $apiKey = ApiKey::query()->where('key', $hashed)->first();
+        $apiKey = ApiKey::query()->get()->first(fn (ApiKey $k) => $k->key === $key);
 
         if (! $apiKey) {
             return response()->json(['error' => 'Kunci API tidak sah.'], 401);
