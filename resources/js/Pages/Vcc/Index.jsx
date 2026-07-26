@@ -985,7 +985,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                             <button type="button" onClick={() => setLightboxSrc(birthdayImageUpdates[voter.id] || voter.birthday_image_url)}
                                                                                 className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-pink-300 hover:text-pink-600"
                                                                                 title="Lihat gambar hari jadi">
-                                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                                                                             </button>
                                                                         )}
                                                                         {voter.whatsapp_link && (
