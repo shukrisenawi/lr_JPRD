@@ -44,14 +44,18 @@ class VoterController extends Controller
             ->whereNotNull('date_of_birth')
             ->whereMonth('date_of_birth', $month)
             ->whereDay('date_of_birth', $day)
-            ->whereNotNull('no_telefon')
-            ->where('no_telefon', '!=', '')
+            ->where(function ($q) {
+                $q->whereNotNull('phone_home')->where('phone_home', '!=', '')
+                  ->orWhereNotNull('phone_mobile')->where('phone_mobile', '!=', '');
+            })
             ->orderBy('name')
             ->get()
             ->map(fn (PemilihRecord $voter) => [
                 'name' => $voter->name,
                 'ic_number' => $voter->no_kp,
-                'no_telefon' => $voter->no_telefon ? preg_replace('/[^0-9]/', '', $voter->no_telefon) : null,
+                'no_telefon' => $voter->phone_mobile
+                    ? preg_replace('/[^0-9]/', '', $voter->phone_mobile)
+                    : ($voter->phone_home ? preg_replace('/[^0-9]/', '', $voter->phone_home) : null),
                 'date_of_birth' => $voter->date_of_birth?->format('Y-m-d'),
                 'birthday_url' => $voter->birthdayImageUrl(),
             ]);
