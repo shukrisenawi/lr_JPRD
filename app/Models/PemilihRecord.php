@@ -18,6 +18,7 @@ class PemilihRecord extends Model
         'old_ic',
         'no_ahli',
         'avatar',
+        'birthday_image',
         'name',
         'dm',
         'locality',
@@ -41,6 +42,7 @@ class PemilihRecord extends Model
 
     protected $appends = [
         'avatar_url',
+        'birthday_image_url',
     ];
 
     protected function casts(): array
@@ -59,6 +61,20 @@ class PemilihRecord extends Model
     public function getAvatarUrlAttribute(): ?string
     {
         return $this->avatarUrl();
+    }
+
+    public function birthdayImageUrl(): ?string
+    {
+        if (!$this->birthday_image) {
+            return null;
+        }
+
+        return route('pemilih.birthday-image', ['pemilihRecord' => $this->id, 't' => $this->updated_at?->timestamp]);
+    }
+
+    public function getBirthdayImageUrlAttribute(): ?string
+    {
+        return $this->birthdayImageUrl();
     }
 
     public function creator(): BelongsTo

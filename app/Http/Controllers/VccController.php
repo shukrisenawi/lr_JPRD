@@ -539,6 +539,7 @@ class VccController extends Controller
         return [
             'id' => $voter->id,
             'avatar_url' => $voter->avatarUrl(),
+            'birthday_image_url' => $voter->birthdayImageUrl(),
             'name' => $voter->name,
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,

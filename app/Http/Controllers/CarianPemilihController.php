@@ -171,6 +171,38 @@ class CarianPemilihController extends Controller
         ]);
     }
 
+    public function uploadBirthdayImage(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $validated = $request->validate([
+            'birthday_image' => ['required', 'image', 'max:10240'],
+        ]);
+
+        if ($pemilihRecord->birthday_image) {
+            Storage::disk('public')->delete($pemilihRecord->birthday_image);
+        }
+
+        $pemilihRecord->birthday_image = ImageService::resizeIfNeeded($request->file('birthday_image'), 'pemilih-birthday-images');
+        $pemilihRecord->save();
+
+        return response()->json([
+            'success' => true,
+            'birthday_image_url' => $pemilihRecord->birthdayImageUrl(),
+        ]);
+    }
+
+    public function birthdayImage(Request $request, PemilihRecord $pemilihRecord)
+    {
+        abort_unless($pemilihRecord->birthday_image, 404);
+        abort_unless(Storage::disk('public')->exists($pemilihRecord->birthday_image), 404);
+
+        return response()->file(
+            Storage::disk('public')->path($pemilihRecord->birthday_image),
+            [
+                'Cache-Control' => 'private, max-age=3600',
+            ],
+        );
+    }
+
     public function avatar(Request $request, PemilihRecord $pemilihRecord)
     {
         abort_unless($pemilihRecord->avatar, 404);

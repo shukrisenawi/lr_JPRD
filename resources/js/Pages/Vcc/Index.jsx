@@ -121,6 +121,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [localSummary, setLocalSummary] = useState(summary);
     const [uploadingAvatarIds, setUploadingAvatarIds] = useState({});
     const [avatarUpdates, setAvatarUpdates] = useState({});
+    const [uploadingBirthdayImageIds, setUploadingBirthdayImageIds] = useState({});
+    const [birthdayImageUpdates, setBirthdayImageUpdates] = useState({});
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
@@ -365,6 +367,31 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             alert('Gagal muat naik gambar.');
         } finally {
             setUploadingAvatarIds((prev) => ({ ...prev, [voterId]: false }));
+            e.target.value = '';
+        }
+    };
+
+    const handleBirthdayImageUpload = async (e, voterId) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingBirthdayImageIds((prev) => ({ ...prev, [voterId]: true }));
+        try {
+            const form = new FormData();
+            form.append('birthday_image', file);
+            const res = await fetch(route('pemilih.birthday-image.upload', voterId), {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+                body: form,
+            });
+            if (!res.ok) throw new Error('Upload gagal');
+            const data = await res.json();
+            if (data.birthday_image_url) {
+                setBirthdayImageUpdates((prev) => ({ ...prev, [voterId]: data.birthday_image_url + '&t=' + Date.now() }));
+            }
+        } catch {
+            alert('Gagal muat naik gambar hari jadi.');
+        } finally {
+            setUploadingBirthdayImageIds((prev) => ({ ...prev, [voterId]: false }));
             e.target.value = '';
         }
     };
@@ -898,7 +925,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         <th className="w-20 px-2 py-2.5 text-center">T. Lahir</th>
                                         <th className="w-12 px-2 py-2.5 text-center">Umur</th>
                                         {showCulaColumn && <th className="px-2 py-2.5">Cula</th>}
-                                        <th className="w-48 px-2 py-2.5 text-center">Tindakan</th>
+                                        <th className="w-56 px-2 py-2.5 text-center">Tindakan</th>
                                     </tr>
                                 </thead>
                                 {showUdmColumn ? (
@@ -948,7 +975,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                     <>
                                                                         <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
                                                                             <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
-                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik avatar" role="img"><title>Muat naik avatar</title><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                        </label>
+                                                                        <label className={`flex cursor-pointer items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(birthdayImageUpdates[voter.id] || voter.birthday_image_url) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`} title="Muat naik gambar hari jadi">
+                                                                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBirthdayImageUpload(e, voter.id)} disabled={uploadingBirthdayImageIds[voter.id]} />
+                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik gambar hari jadi" role="img"><title>Muat naik gambar hari jadi</title><path d="M2 19h20v-4a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1h-2v-1a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1H5v-1a3 3 0 0 0-3 3v4z"/><path d="M2 11h20"/><path d="M12 3v5"/><path d="M9 6l3-3 3 3"/></svg>
                                                                         </label>
                                                                         {voter.whatsapp_link && (
                                                                             <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
@@ -1019,7 +1050,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                 <>
                                                                     <label className="flex cursor-pointer items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-green-300 hover:text-green-600" title="Muat naik avatar">
                                                                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
-                                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik avatar" role="img"><title>Muat naik avatar</title><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                                                    </label>
+                                                                    <label className={`flex cursor-pointer items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(birthdayImageUpdates[voter.id] || voter.birthday_image_url) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`} title="Muat naik gambar hari jadi">
+                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBirthdayImageUpload(e, voter.id)} disabled={uploadingBirthdayImageIds[voter.id]} />
+                                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik gambar hari jadi" role="img"><title>Muat naik gambar hari jadi</title><path d="M2 19h20v-4a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1h-2v-1a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1H5v-1a3 3 0 0 0-3 3v4z"/><path d="M2 11h20"/><path d="M12 3v5"/><path d="M9 6l3-3 3 3"/></svg>
                                                                     </label>
                                                                     {voter.whatsapp_link && (
                                                                         <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
