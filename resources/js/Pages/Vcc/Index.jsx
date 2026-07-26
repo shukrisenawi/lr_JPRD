@@ -404,6 +404,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         }
     };
 
+    const [deleteBirthdaySuccess, setDeleteBirthdaySuccess] = useState(false);
+
     const handleDeleteBirthdayImage = async (voterId) => {
         if (!confirm('Padam gambar hari jadi ini?')) return;
         try {
@@ -418,6 +420,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 return next;
             });
             setDeletedBirthdayImageIds((prev) => new Set([...prev, voterId]));
+            setDeleteBirthdaySuccess(true);
+            setTimeout(() => setDeleteBirthdaySuccess(false), 3000);
         } catch {
             alert('Gagal padam gambar hari jadi.');
         }
@@ -1205,6 +1209,12 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                     Gambar hari jadi berjaya dimuat naik
+                </div>
+            )}
+            {deleteBirthdaySuccess && (
+                <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 13H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    Gambar hari jadi berjaya dipadam
                 </div>
             )}
         </AuthenticatedLayout>
