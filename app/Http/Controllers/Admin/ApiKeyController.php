@@ -17,6 +17,7 @@ class ApiKeyController extends Controller
         abort_unless(request()->user()?->isMasterAdmin(), 403);
 
         return Inertia::render('Admin/ApiKeys', [
+            'apiUrl' => route('api.voters.birthdays'),
             'apiKeys' => ApiKey::query()
                 ->orderByDesc('created_at')
                 ->get()
