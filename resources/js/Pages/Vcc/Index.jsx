@@ -770,7 +770,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
-                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_5rem_5rem_5rem_12rem] xl:items-end">
+                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_5rem_5rem_10rem_12rem] xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-per-udm" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
@@ -817,7 +817,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
 
                                 <div>
-                                    <label htmlFor="vcc-birthday-image-status" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Gambar Hari Jadi</label>
+                                    <label htmlFor="vcc-birthday-image-status" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Gambar Hari Jadi</label>
                                     <select
                                         id="vcc-birthday-image-status"
                                         value={formState.birthday_image_status}
