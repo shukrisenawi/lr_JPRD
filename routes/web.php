@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/pemilih/{pemilihRecord}/avatar', [CarianPemilihController::class, 'avatar'])->name('pemilih.avatar');
     Route::post('/pemilih/{pemilihRecord}/birthday-image', [CarianPemilihController::class, 'uploadBirthdayImage'])->name('pemilih.birthday-image.upload');
     Route::get('/pemilih/{pemilihRecord}/birthday-image', [CarianPemilihController::class, 'birthdayImage'])->name('pemilih.birthday-image');
+    Route::delete('/pemilih/{pemilihRecord}/birthday-image', [CarianPemilihController::class, 'destroyBirthdayImage'])->name('pemilih.birthday-image.destroy');
     Route::get('/program', [ProgramController::class, 'index'])->middleware('module:program')->name('program.index');
     Route::post('/program', [ProgramController::class, 'store'])->middleware('module:program')->name('program.store');
     Route::post('/program/groups', [ProgramController::class, 'storeGroup'])->middleware('module:program')->name('program.groups.store');

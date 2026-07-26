@@ -190,6 +190,18 @@ class CarianPemilihController extends Controller
         ]);
     }
 
+    public function destroyBirthdayImage(PemilihRecord $pemilihRecord): JsonResponse
+    {
+        if ($pemilihRecord->birthday_image) {
+            Storage::disk('public')->delete($pemilihRecord->birthday_image);
+        }
+
+        $pemilihRecord->birthday_image = null;
+        $pemilihRecord->save();
+
+        return response()->json(['success' => true]);
+    }
+
     public function birthdayImage(Request $request, PemilihRecord $pemilihRecord)
     {
         abort_unless($pemilihRecord->birthday_image, 404);

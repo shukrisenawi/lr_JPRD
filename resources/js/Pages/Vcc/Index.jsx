@@ -402,6 +402,24 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         }
     };
 
+    const handleDeleteBirthdayImage = async (voterId) => {
+        if (!confirm('Padam gambar hari jadi ini?')) return;
+        try {
+            const res = await fetch(route('pemilih.birthday-image.destroy', voterId), {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
+            });
+            if (!res.ok) throw new Error('Padam gagal');
+            setBirthdayImageUpdates((prev) => {
+                const next = { ...prev };
+                delete next[voterId];
+                return next;
+            });
+        } catch {
+            alert('Gagal padam gambar hari jadi.');
+        }
+    };
+
     const logCommunication = async (voterId, type, notes = '') => {
         try {
             await fetch(route('vcc.communication.log'), {
@@ -1015,6 +1033,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                                                                             </button>
                                                                         )}
+                                                                        {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                            <button type="button" onClick={() => handleDeleteBirthdayImage(voter.id)}
+                                                                                className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-red-300 hover:text-red-500"
+                                                                                title="Padam gambar hari jadi">
+                                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Padam gambar hari jadi" role="img"><title>Padam gambar hari jadi</title><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 13H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                                            </button>
+                                                                        )}
                                                                         {voter.whatsapp_link && (
                                                                             <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
                                                                                 className="rounded border border-green-200 bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100">
@@ -1095,6 +1120,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                             className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-pink-300 hover:text-pink-600"
                                                                             title="Lihat gambar hari jadi">
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                                        </button>
+                                                                    )}
+                                                                    {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                        <button type="button" onClick={() => handleDeleteBirthdayImage(voter.id)}
+                                                                            className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-red-300 hover:text-red-500"
+                                                                            title="Padam gambar hari jadi">
+                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Padam gambar hari jadi" role="img"><title>Padam gambar hari jadi</title><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 13H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                                                         </button>
                                                                     )}
                                                                     {voter.whatsapp_link && (
