@@ -10,6 +10,7 @@ const jsonExample = `{
       "ic_number": "901231105123",
       "no_telefon": "0123456789",
       "date_of_birth": "1990-12-31",
+      "umur": 35,
       "birthday_url": "https://app.example.com/storage/birthday/abc123.jpg"
     }
   ],

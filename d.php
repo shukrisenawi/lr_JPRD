@@ -1,0 +1,20 @@
+<?php
+$conn = ftp_connect('paskawasansik.com', 21, 10);
+if (!$conn) exit(1);
+ftp_login($conn, 'paskawas', 'eG59Q%wA34?a');
+ftp_pasv($conn, true);
+ftp_chdir($conn, 'httpdocs');
+$local = file_get_contents('D:\xampp\htdocs\lr_JPRD\app\Http\Controllers\Api\VoterController.php');
+$tmp = tmpfile();
+fwrite($tmp, $local);
+rewind($tmp);
+ftp_fput($conn, 'app/Http/Controllers/Api/VoterController.php', $tmp, FTP_ASCII);
+fclose($tmp);
+$t = tmpfile();
+fwrite($t, '<?php opcache_reset();echo"ok";');
+rewind($t);
+ftp_fput($conn, 'public/cc.php', $t, FTP_ASCII);
+fclose($t);
+echo file_get_contents('https://paskawasansik.com/cc.php');
+@ftp_delete($conn, 'public/cc.php');
+ftp_close($conn);

@@ -57,6 +57,7 @@ class VoterController extends Controller
                     ? preg_replace('/[^0-9]/', '', $voter->phone_mobile)
                     : ($voter->phone_home ? preg_replace('/[^0-9]/', '', $voter->phone_home) : null),
                 'date_of_birth' => $voter->date_of_birth?->format('Y-m-d'),
+                'umur' => $voter->date_of_birth?->age,
                 'birthday_url' => $voter->birthdayImageUrl(),
             ]);
 
