@@ -925,7 +925,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         <th className="w-20 px-2 py-2.5 text-center">T. Lahir</th>
                                         <th className="w-12 px-2 py-2.5 text-center">Umur</th>
                                         {showCulaColumn && <th className="px-2 py-2.5">Cula</th>}
-                                        <th className="w-56 px-2 py-2.5 text-center">Tindakan</th>
+                                        <th className="w-60 px-2 py-2.5 text-center">Tindakan</th>
                                     </tr>
                                 </thead>
                                 {showUdmColumn ? (
@@ -981,6 +981,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                             <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBirthdayImageUpload(e, voter.id)} disabled={uploadingBirthdayImageIds[voter.id]} />
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik gambar hari jadi" role="img"><title>Muat naik gambar hari jadi</title><path d="M2 19h20v-4a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1h-2v-1a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1H5v-1a3 3 0 0 0-3 3v4z"/><path d="M2 11h20"/><path d="M12 3v5"/><path d="M9 6l3-3 3 3"/></svg>
                                                                         </label>
+                                                                        {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                            <button type="button" onClick={() => setLightboxSrc(birthdayImageUpdates[voter.id] || voter.birthday_image_url)}
+                                                                                className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-pink-300 hover:text-pink-600"
+                                                                                title="Lihat gambar hari jadi">
+                                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                                            </button>
+                                                                        )}
                                                                         {voter.whatsapp_link && (
                                                                             <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
                                                                                 className="rounded border border-green-200 bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100">
@@ -1056,6 +1063,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBirthdayImageUpload(e, voter.id)} disabled={uploadingBirthdayImageIds[voter.id]} />
                                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik gambar hari jadi" role="img"><title>Muat naik gambar hari jadi</title><path d="M2 19h20v-4a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1h-2v-1a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1H5v-1a3 3 0 0 0-3 3v4z"/><path d="M2 11h20"/><path d="M12 3v5"/><path d="M9 6l3-3 3 3"/></svg>
                                                                     </label>
+                                                                    {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                        <button type="button" onClick={() => setLightboxSrc(birthdayImageUpdates[voter.id] || voter.birthday_image_url)}
+                                                                            className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-pink-300 hover:text-pink-600"
+                                                                            title="Lihat gambar hari jadi">
+                                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                                        </button>
+                                                                    )}
                                                                     {voter.whatsapp_link && (
                                                                         <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
                                                                             className="rounded border border-green-200 bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100">
