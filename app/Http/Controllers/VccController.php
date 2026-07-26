@@ -202,6 +202,10 @@ class VccController extends Controller
             ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
                 $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
                   ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
+            }))
+            ->when($filters['birthday_image_status'] === 'uploaded', fn (Builder $builder) => $builder->whereNotNull('birthday_image')->where('birthday_image', '!=', ''))
+            ->when($filters['birthday_image_status'] === 'not_uploaded', fn (Builder $builder) => $builder->where(function (Builder $q) {
+                $q->whereNull('birthday_image')->orWhere('birthday_image', '');
             }));
 
         if (! $skipMarkedFilter) {
@@ -493,6 +497,7 @@ class VccController extends Controller
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
             'has_phone' => $request->boolean('has_phone'),
+            'birthday_image_status' => trim((string) $request->query('birthday_image_status', '')),
         ];
     }
 

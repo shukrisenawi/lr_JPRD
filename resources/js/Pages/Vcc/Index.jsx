@@ -114,6 +114,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [suggestions, setSuggestions] = useState([]);
     const [searchError, setSearchError] = useState('');
     const [actionError, setActionError] = useState('');
+    const [uploadSuccess, setUploadSuccess] = useState(false);
     const [selectedVoterId, setSelectedVoterId] = useState(null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [pendingIds, setPendingIds] = useState([]);
@@ -139,6 +140,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
         cula_codes: filters.cula_codes ?? '',
         has_phone: Boolean(filters.has_phone),
+        birthday_image_status: filters.birthday_image_status ?? '',
     });
 
     useEffect(() => {
@@ -155,8 +157,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
             cula_codes: filters.cula_codes ?? '',
             has_phone: Boolean(filters.has_phone),
+            birthday_image_status: filters.birthday_image_status ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes, filters.has_phone]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes, filters.has_phone, filters.birthday_image_status]);
 
     const initialMonth = useRef(true);
     useEffect(() => {
@@ -239,6 +242,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             bulan_lahir: formState.bulan_lahir ?? '',
             cula_codes: formState.cula_codes ?? '',
             has_phone: formState.has_phone ? '1' : '0',
+            birthday_image_status: formState.birthday_image_status ?? '',
         });
 
         try {
@@ -388,6 +392,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             if (data.birthday_image_url) {
                 setBirthdayImageUpdates((prev) => ({ ...prev, [voterId]: data.birthday_image_url + '&t=' + Date.now() }));
             }
+            setUploadSuccess(true);
+            setTimeout(() => setUploadSuccess(false), 3000);
         } catch {
             alert('Gagal muat naik gambar hari jadi.');
         } finally {
@@ -440,6 +446,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 bulan_lahir: formState.bulan_lahir ?? '',
                 cula_codes: formState.cula_codes ?? '',
                 has_phone: formState.has_phone ? '1' : '0',
+                birthday_image_status: formState.birthday_image_status ?? '',
             });
 
             try {
@@ -763,7 +770,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
-                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_5rem_5rem_5rem] xl:items-end">
+                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_5rem_5rem_5rem_12rem] xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-per-udm" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
@@ -807,6 +814,20 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                             className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
                                         />
                                     </label>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="vcc-birthday-image-status" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Gambar Hari Jadi</label>
+                                    <select
+                                        id="vcc-birthday-image-status"
+                                        value={formState.birthday_image_status}
+                                        onChange={(event) => updateFilter('birthday_image_status', event.target.value)}
+                                        className="input-field mt-1"
+                                    >
+                                        <option value="">Semua</option>
+                                        <option value="uploaded">Telah dimuat naik</option>
+                                        <option value="not_uploaded">Belum dimuat naik</option>
+                                    </select>
                                 </div>
 
                                 <div>
@@ -1136,6 +1157,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                             )}
                         </div>
                     </div>
+                </div>
+            )}
+
+            {uploadSuccess && (
+                <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    Gambar hari jadi berjaya dimuat naik
                 </div>
             )}
         </AuthenticatedLayout>
