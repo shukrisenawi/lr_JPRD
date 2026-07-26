@@ -49,6 +49,7 @@ class VoterController extends Controller
             ->map(fn (PemilihRecord $voter) => [
                 'name' => $voter->name,
                 'ic_number' => $voter->no_kp,
+                'no_telefon' => $voter->no_telefon ? preg_replace('/[^0-9]/', '', $voter->no_telefon) : null,
                 'date_of_birth' => $voter->date_of_birth?->format('Y-m-d'),
                 'birthday_url' => $voter->birthdayImageUrl(),
             ]);
