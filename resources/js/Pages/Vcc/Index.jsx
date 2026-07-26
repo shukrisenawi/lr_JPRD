@@ -923,6 +923,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                         <div className="min-w-0 flex-1 text-right">
                             <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
                             <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
+                            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-pink-600">Muat Naik Gambar Ucapan: {localSummary.total_birthday_images ?? '-'}</p>
                         </div>
                     </div>
                 </section>

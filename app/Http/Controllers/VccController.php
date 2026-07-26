@@ -23,11 +23,18 @@ class VccController extends Controller
         $filters = $this->resolveFilters($request);
         $voters = $this->paginateVoters($filters);
 
+        $totalBirthdayImages = PemilihRecord::where('status', 'aktif')
+            ->where('is_manual', false)
+            ->whereNotNull('birthday_image')
+            ->where('birthday_image', '!=', '')
+            ->count();
+
         return Inertia::render('Vcc/Index', [
             'filters' => $filters,
             'requires_udm' => false,
             'summary' => [
                 'total' => $voters->total(),
+                'total_birthday_images' => $totalBirthdayImages,
             ],
             'udms' => $this->availableUdms(),
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
