@@ -44,6 +44,8 @@ class VoterController extends Controller
             ->whereNotNull('date_of_birth')
             ->whereMonth('date_of_birth', $month)
             ->whereDay('date_of_birth', $day)
+            ->whereNotNull('no_telefon')
+            ->where('no_telefon', '!=', '')
             ->orderBy('name')
             ->get()
             ->map(fn (PemilihRecord $voter) => [
