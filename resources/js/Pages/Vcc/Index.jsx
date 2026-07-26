@@ -124,6 +124,8 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [avatarUpdates, setAvatarUpdates] = useState({});
     const [uploadingBirthdayImageIds, setUploadingBirthdayImageIds] = useState({});
     const [birthdayImageUpdates, setBirthdayImageUpdates] = useState({});
+    const [deletedBirthdayImageIds, setDeletedBirthdayImageIds] = useState(new Set());
+    const hasBirthdayImage = (voter) => (hasBirthdayImage(voter)) && !deletedBirthdayImageIds.has(voter.id);
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
@@ -415,6 +417,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 delete next[voterId];
                 return next;
             });
+            setDeletedBirthdayImageIds((prev) => new Set([...prev, voterId]));
         } catch {
             alert('Gagal padam gambar hari jadi.');
         }
@@ -1022,18 +1025,18 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                             <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik avatar" role="img"><title>Muat naik avatar</title><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                                                         </label>
-                                                                        <label className={`flex cursor-pointer items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(birthdayImageUpdates[voter.id] || voter.birthday_image_url) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`} title="Muat naik gambar hari jadi">
+                                                                        <label className={`flex cursor-pointer items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(hasBirthdayImage(voter)) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`} title="Muat naik gambar hari jadi">
                                                                             <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBirthdayImageUpload(e, voter.id)} disabled={uploadingBirthdayImageIds[voter.id]} />
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik gambar hari jadi" role="img"><title>Muat naik gambar hari jadi</title><path d="M2 19h20v-4a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1h-2v-1a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1H5v-1a3 3 0 0 0-3 3v4z"/><path d="M2 11h20"/><path d="M12 3v5"/><path d="M9 6l3-3 3 3"/></svg>
                                                                         </label>
-                                                                        {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                        {(hasBirthdayImage(voter)) && (
                                                                             <button type="button" onClick={() => setLightboxSrc(birthdayImageUpdates[voter.id] || voter.birthday_image_url)}
-                                                                                className={`flex items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(birthdayImageUpdates[voter.id] || voter.birthday_image_url) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`}
+                                                                                className={`flex items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(hasBirthdayImage(voter)) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`}
                                                                                 title="Lihat gambar hari jadi">
                                                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                                                                             </button>
                                                                         )}
-                                                                        {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                        {(hasBirthdayImage(voter)) && (
                                                                             <button type="button" onClick={() => handleDeleteBirthdayImage(voter.id)}
                                                                                 className="flex items-center justify-center rounded border border-pink-400 bg-white p-1 text-pink-500 hover:border-pink-500 hover:bg-pink-50"
                                                                                 title="Padam gambar hari jadi">
@@ -1111,18 +1114,18 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleAvatarUpload(e, voter.id)} disabled={uploadingAvatarIds[voter.id]} />
                                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik avatar" role="img"><title>Muat naik avatar</title><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                                                     </label>
-                                                                    <label className={`flex cursor-pointer items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(birthdayImageUpdates[voter.id] || voter.birthday_image_url) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`} title="Muat naik gambar hari jadi">
+                                                                    <label className={`flex cursor-pointer items-center justify-center rounded border bg-white p-1 hover:border-pink-300 hover:text-pink-600 ${(hasBirthdayImage(voter)) ? 'border-pink-400 text-pink-500' : 'border-slate-200 text-slate-400'}`} title="Muat naik gambar hari jadi">
                                                                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleBirthdayImageUpload(e, voter.id)} disabled={uploadingBirthdayImageIds[voter.id]} />
                                                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Muat naik gambar hari jadi" role="img"><title>Muat naik gambar hari jadi</title><path d="M2 19h20v-4a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1h-2v-1a3 3 0 0 0-3-3h-1a3 3 0 0 0-3 3v1H5v-1a3 3 0 0 0-3 3v4z"/><path d="M2 11h20"/><path d="M12 3v5"/><path d="M9 6l3-3 3 3"/></svg>
                                                                     </label>
-                                                                    {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                    {(hasBirthdayImage(voter)) && (
                                                                         <button type="button" onClick={() => setLightboxSrc(birthdayImageUpdates[voter.id] || voter.birthday_image_url)}
                                                                             className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-pink-300 hover:text-pink-600"
                                                                             title="Lihat gambar hari jadi">
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Lihat gambar hari jadi" role="img"><title>Lihat gambar hari jadi</title><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                                                                         </button>
                                                                     )}
-                                                                    {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
+                                                                    {(hasBirthdayImage(voter)) && (
                                                                         <button type="button" onClick={() => handleDeleteBirthdayImage(voter.id)}
                                                                             className="flex items-center justify-center rounded border border-pink-400 bg-white p-1 text-pink-500 hover:border-pink-500 hover:bg-pink-50"
                                                                             title="Padam gambar hari jadi">
