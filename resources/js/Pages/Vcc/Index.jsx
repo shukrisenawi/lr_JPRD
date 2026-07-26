@@ -920,10 +920,15 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
                     <div className="flex items-center gap-3 rounded-xl border border-green-600 bg-white px-4 py-3 shadow-sm shadow-green-600/20 overflow-hidden">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
-                        <div className="min-w-0 flex-1 text-right">
-                            <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
-                            <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
-                            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-pink-600">Muat Naik Gambar Ucapan: {localSummary.total_birthday_images ?? '-'}</p>
+                        <div className="min-w-0 flex-1">
+                            <div className="text-right">
+                                <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
+                                <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
+                            </div>
+                            <div className="mt-2 border-t border-green-100 pt-2 text-right">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Muat Naik Gambar Ucapan</p>
+                                <p className="mt-0.5 text-lg font-black leading-none text-slate-800">{localSummary.total_birthday_images ?? '-'}</p>
+                            </div>
                         </div>
                     </div>
                 </section>
