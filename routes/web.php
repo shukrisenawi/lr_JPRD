@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AccessManagementController;
+use App\Http\Controllers\Admin\ApiKeyController;
+use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\CarianPemilihController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CopiedRecordController;
@@ -147,6 +149,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/access/roles', [AccessManagementController::class, 'storeRole'])->name('admin.access.roles.store');
     Route::put('/admin/access/roles/{role}', [AccessManagementController::class, 'updateRole'])->name('admin.access.roles.update');
 
+    Route::get('/admin/api-keys', [ApiKeyController::class, 'index'])->name('admin.api-keys.index');
+    Route::post('/admin/api-keys', [ApiKeyController::class, 'store'])->name('admin.api-keys.store');
+    Route::delete('/admin/api-keys/{apiKey}', [ApiKeyController::class, 'destroy'])->name('admin.api-keys.destroy');
+
     Route::get('/pusat-khidmat', [PusatKhidmatController::class, 'index'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.index');
     Route::post('/pusat-khidmat/sync', [PusatKhidmatController::class, 'sync'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.sync');
     Route::post('/pusat-khidmat/sheet-url', [PusatKhidmatController::class, 'updateSheetUrl'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.sheet-url');
@@ -173,3 +179,5 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/api/voters/birthdays', [VoterController::class, 'birthdays'])->name('api.voters.birthdays');

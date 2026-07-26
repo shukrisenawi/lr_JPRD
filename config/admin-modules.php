@@ -80,4 +80,8 @@ return [
         'label' => 'Pusat Khidmat',
         'description' => 'Data Pusat Khidmat dari Google Sheet.',
     ],
+    'api-keys' => [
+        'label' => 'Kunci API',
+        'description' => 'Urus kunci API untuk integrasi sistem luaran.',
+    ],
 ];
