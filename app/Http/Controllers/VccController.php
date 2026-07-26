@@ -503,7 +503,7 @@ class VccController extends Controller
             'per_udm_count' => $perUdmCount,
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
-            'has_phone' => $request->boolean('has_phone'),
+            'has_phone' => $request->has('has_phone') ? $request->boolean('has_phone') : true,
             'birthday_image_status' => trim((string) $request->query('birthday_image_status', '')),
         ];
     }
