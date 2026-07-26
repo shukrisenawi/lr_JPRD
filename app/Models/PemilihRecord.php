@@ -49,6 +49,7 @@ class PemilihRecord extends Model
     {
         return [
             'is_manual' => 'boolean',
+            'date_of_birth' => 'date',
         ];
     }
 

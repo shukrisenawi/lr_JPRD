@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
 use App\Models\PemilihRecord;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -30,17 +31,25 @@ class VoterController extends Controller
 
         $apiKey->update(['last_used_at' => now()]);
 
+        $date = $request->query('date')
+            ? Carbon::parse($request->query('date'))->timezone('Asia/Kuala_Lumpur')
+            : now()->timezone('Asia/Kuala_Lumpur');
+
+        $month = $date->month;
+        $day = $date->day;
+
         $voters = PemilihRecord::query()
             ->where('status', 'aktif')
             ->where('is_manual', false)
-            ->whereNotNull('birthday_image')
-            ->where('birthday_image', '!=', '')
+            ->whereNotNull('date_of_birth')
+            ->whereMonth('date_of_birth', $month)
+            ->whereDay('date_of_birth', $day)
             ->orderBy('name')
             ->get()
             ->map(fn (PemilihRecord $voter) => [
                 'name' => $voter->name,
                 'ic_number' => $voter->no_kp,
-                'birthday' => $voter->birthday,
+                'date_of_birth' => $voter->date_of_birth?->format('Y-m-d'),
                 'birthday_url' => $voter->birthdayImageUrl(),
             ]);
 

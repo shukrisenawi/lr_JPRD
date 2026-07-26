@@ -8,7 +8,7 @@ const jsonExample = `{
     {
       "name": "AHMAD BIN ISMAIL",
       "ic_number": "901231105123",
-      "birthday": "1990-12-31",
+      "date_of_birth": "1990-12-31",
       "birthday_url": "https://app.example.com/storage/birthday/abc123.jpg"
     }
   ],
@@ -123,6 +123,11 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                                         <td className="py-1.5 pr-4 font-mono text-slate-800">key</td>
                                         <td className="py-1.5 pr-4 text-slate-600">Ya</td>
                                         <td className="py-1.5 text-slate-600">Kunci API (query string atau Bearer token)</td>
+                                    </tr>
+                                    <tr className="border-b border-blue-100">
+                                        <td className="py-1.5 pr-4 font-mono text-slate-800">date</td>
+                                        <td className="py-1.5 pr-4 text-slate-600">Tidak</td>
+                                        <td className="py-1.5 text-slate-600">Tarikh (YYYY-MM-DD). Lalai: hari ini (GMT+8)</td>
                                     </tr>
                                 </tbody>
                             </table>
