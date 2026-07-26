@@ -15,13 +15,18 @@ const jsonExample = `{
   "total": 1
 }`;
 
-function KeyCell({ k, copy: copyFn }) {
+function KeyCell({ k, copy: copyFn, copiedKey }) {
+    const justCopied = copiedKey === k.id;
     return (
         <div className="flex items-center gap-1">
             <span className="min-w-0 truncate font-mono text-slate-500" style={{ maxWidth: '14ch' }}>{k.key.slice(0, 12) + '...'}</span>
-            <button type="button" onClick={function () { copyFn(k.key); }} className="shrink-0 rounded p-0.5 text-slate-400 hover:text-blue-600" title="Salin kunci">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-            </button>
+            {justCopied ? (
+                <span className="whitespace-nowrap text-[10px] font-bold text-blue-600">Telah disalin</span>
+            ) : (
+                <button type="button" onClick={function () { copyFn(k.key, k.id); }} className="shrink-0 rounded p-0.5 text-slate-400 hover:text-blue-600" title="Salin kunci">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+            )}
         </div>
     );
 }
@@ -30,13 +35,13 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
     const { flash } = usePage().props;
     const newKey = flash?.new_api_key;
     const [showForm, setShowForm] = useState(false);
-    const [copied, setCopied] = useState(false);
+    const [copiedKey, setCopiedKey] = useState(null);
 
-    const copy = useCallback(async (text) => {
+    const copy = useCallback(async (text, id) => {
         try {
             await navigator.clipboard.writeText(text);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            setCopiedKey(id);
+            setTimeout(() => setCopiedKey(null), 2000);
         } catch {}
     }, []);
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -70,7 +75,12 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                 {newKey && (
                     <div className="rounded-xl border border-emerald-400 bg-emerald-50 p-4 shadow-sm">
                         <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Kunci API Baharu</p>
-                        <p className="mt-1 break-all font-mono text-sm font-bold text-emerald-900">{newKey}</p>
+                        <div className="mt-1 flex items-start gap-2">
+                            <p className="min-w-0 flex-1 break-all font-mono text-sm font-bold text-emerald-900">{newKey}</p>
+                            <button type="button" onClick={function () { copy(newKey, 'new'); }} className="shrink-0 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-700">
+                                {copiedKey === 'new' ? 'Telah disalin' : 'Salin'}
+                            </button>
+                        </div>
                         <p className="mt-1 text-[11px] font-medium text-emerald-600">Simpan kunci ini. Anda tidak akan dapat melihatnya semula.</p>
                     </div>
                 )}
@@ -79,7 +89,7 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                     <p className="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">{flash.success}</p>
                 )}
 
-                {copied && (
+                {copiedKey && (
                     <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                         Berjaya disalin
@@ -95,7 +105,7 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                             <p className="mb-1 font-bold uppercase tracking-wide text-blue-700">Endpoint</p>
                             <div className="flex items-center gap-2">
                                 <code className="break-all rounded-md bg-white px-3 py-2 font-mono text-sm font-bold text-slate-800 shadow-sm">{apiUrl}</code>
-                                <button type="button" onClick={() => copy(apiUrl + '?key=')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
+                                <button type="button" onClick={() => copy(apiUrl + '?key=', 'url')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
                             </div>
                         </div>
                         <div>
@@ -125,7 +135,7 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                             <p className="mb-1 font-bold uppercase tracking-wide text-blue-700">Contoh Request (curl)</p>
                             <div className="flex items-start gap-2">
                                 <pre className="min-w-0 flex-1 overflow-x-auto rounded-md bg-slate-900 p-3 text-xs leading-relaxed text-green-300 shadow-sm"><code>{`curl "${apiUrl}?key=KUNCI_ANDA"`}</code></pre>
-                                <button type="button" onClick={() => copy(`curl "${apiUrl}?key="`)} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
+                                <button type="button" onClick={() => copy(`curl "${apiUrl}?key="`, 'curl')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
                             </div>
                         </div>
                     </div>
@@ -177,7 +187,7 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                                 {apiKeys.map((k) => (
                                     <tr key={k.id} className="border-b border-green-50 hover:bg-green-50/50">
                                         <td className="px-4 py-2 font-semibold text-slate-800">{k.name}</td>
-                                        <td className="px-4 py-2"><KeyCell k={k} copy={copy} /></td>
+                                        <td className="px-4 py-2"><KeyCell k={k} copy={copy} copiedKey={copiedKey} /></td>
                                         <td className="px-4 py-2 text-slate-500">{k.last_used_at || '-'}</td>
                                         <td className="px-4 py-2 text-slate-500">{k.expires_at || '-'}</td>
                                         <td className="px-4 py-2 text-slate-500">{k.created_at}</td>
