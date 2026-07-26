@@ -1035,7 +1035,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                         )}
                                                                         {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
                                                                             <button type="button" onClick={() => handleDeleteBirthdayImage(voter.id)}
-                                                                                className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-red-300 hover:text-red-500"
+                                                                                className="flex items-center justify-center rounded border border-pink-400 bg-white p-1 text-pink-500 hover:border-pink-500 hover:bg-pink-50"
                                                                                 title="Padam gambar hari jadi">
                                                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Padam gambar hari jadi" role="img"><title>Padam gambar hari jadi</title><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 13H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                                                             </button>
@@ -1124,7 +1124,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                     )}
                                                                     {(birthdayImageUpdates[voter.id] || voter.birthday_image_url) && (
                                                                         <button type="button" onClick={() => handleDeleteBirthdayImage(voter.id)}
-                                                                            className="flex items-center justify-center rounded border border-slate-200 bg-white p-1 text-slate-400 hover:border-red-300 hover:text-red-500"
+                                                                            className="flex items-center justify-center rounded border border-pink-400 bg-white p-1 text-pink-500 hover:border-pink-500 hover:bg-pink-50"
                                                                             title="Padam gambar hari jadi">
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Padam gambar hari jadi" role="img"><title>Padam gambar hari jadi</title><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 13H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                                                         </button>
