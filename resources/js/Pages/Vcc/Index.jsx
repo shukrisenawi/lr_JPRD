@@ -125,7 +125,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [uploadingBirthdayImageIds, setUploadingBirthdayImageIds] = useState({});
     const [birthdayImageUpdates, setBirthdayImageUpdates] = useState({});
     const [deletedBirthdayImageIds, setDeletedBirthdayImageIds] = useState(new Set());
-    const hasBirthdayImage = (voter) => (hasBirthdayImage(voter)) && !deletedBirthdayImageIds.has(voter.id);
+    const hasBirthdayImage = (voter) => (birthdayImageUpdates[voter.id] || voter.birthday_image_url) && !deletedBirthdayImageIds.has(voter.id);
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
