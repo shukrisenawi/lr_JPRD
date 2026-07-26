@@ -1,5 +1,5 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 
@@ -19,6 +19,15 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
     const { flash } = usePage().props;
     const newKey = flash?.new_api_key;
     const [showForm, setShowForm] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const copy = useCallback(async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {}
+    }, []);
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         expires_at: '',
@@ -59,6 +68,13 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                     <p className="rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700">{flash.success}</p>
                 )}
 
+                {copied && (
+                    <div className="fixed bottom-6 right-6 z-[110] flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-4 w-4" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Berjaya disalin
+                    </div>
+                )}
+
                 <div className="rounded-xl border border-blue-600 bg-blue-50 shadow-sm shadow-blue-600/20 overflow-hidden">
                     <div className="border-b border-blue-100 p-4">
                         <h3 className="text-sm font-bold text-slate-800">Cara Guna API</h3>
@@ -68,7 +84,7 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                             <p className="mb-1 font-bold uppercase tracking-wide text-blue-700">Endpoint</p>
                             <div className="flex items-center gap-2">
                                 <code className="break-all rounded-md bg-white px-3 py-2 font-mono text-sm font-bold text-slate-800 shadow-sm">{apiUrl}</code>
-                                <button type="button" onClick={() => navigator.clipboard.writeText(apiUrl + '?key=')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
+                                <button type="button" onClick={() => copy(apiUrl + '?key=')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
                             </div>
                         </div>
                         <div>
@@ -98,7 +114,7 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                             <p className="mb-1 font-bold uppercase tracking-wide text-blue-700">Contoh Request (curl)</p>
                             <div className="flex items-start gap-2">
                                 <pre className="min-w-0 flex-1 overflow-x-auto rounded-md bg-slate-900 p-3 text-xs leading-relaxed text-green-300 shadow-sm"><code>{`curl "${apiUrl}?key=KUNCI_ANDA"`}</code></pre>
-                                <button type="button" onClick={() => navigator.clipboard.writeText(`curl "${apiUrl}?key="`)} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
+                                <button type="button" onClick={() => copy(`curl "${apiUrl}?key="`)} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
                             </div>
                         </div>
                     </div>
