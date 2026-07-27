@@ -53,6 +53,7 @@ class VoterController extends Controller
             ->map(fn (PemilihRecord $voter) => [
                 'name' => $voter->name,
                 'ic_number' => $voter->no_kp,
+                'kod_cula' => $voter->cula_code,
                 'no_telefon' => $voter->phone_mobile
                     ? preg_replace('/[^0-9]/', '', $voter->phone_mobile)
                     : ($voter->phone_home ? preg_replace('/[^0-9]/', '', $voter->phone_home) : null),

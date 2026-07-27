@@ -8,6 +8,7 @@ const jsonExample = `{
     {
       "name": "AHMAD BIN ISMAIL",
       "ic_number": "901231105123",
+      "kod_cula": "KK01",
       "no_telefon": "0123456789",
       "date_of_birth": "1990-12-31",
       "umur": 35,
