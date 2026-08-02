@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
+use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,11 +64,11 @@ class CulaanBotController extends Controller
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']))
             ->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
                 $maxBirthYear = now()->year - (int) $filters['age_from'];
-                $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END <= ?", [(int) now()->format('y'), $maxBirthYear]);
+                $b->whereRaw('CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END <= ?', [(int) now()->format('y'), $maxBirthYear]);
             })
             ->when($filters['age_to'] !== '', function (Builder $b) use ($filters) {
                 $minBirthYear = now()->year - (int) $filters['age_to'];
-                $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?", [(int) now()->format('y'), $minBirthYear]);
+                $b->whereRaw('CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?', [(int) now()->format('y'), $minBirthYear]);
             })
             ->tap(fn (Builder $b) => $this->applyRumahAlamatFilters($b, $filters))
             ->orderBy('name')
@@ -146,8 +148,8 @@ class CulaanBotController extends Controller
             ->where('locality', $locality)
             ->where(function ($q) use ($alamat) {
                 $q->where('alamat_kediaman', $alamat)
-                  ->orWhere('alamat_kp', $alamat)
-                  ->orWhere('address', $alamat);
+                    ->orWhere('alamat_kp', $alamat)
+                    ->orWhere('address', $alamat);
             })
             ->where('id', '!=', $pemilihRecord->id)
             ->orderBy('name')
@@ -237,10 +239,10 @@ class CulaanBotController extends Controller
                     fn (Builder $sub) => $sub->whereDoesntHave('culaWorkItem')
                         ->where(function (Builder $q) {
                             $q->whereNull('cula_code')
-                              ->orWhere('cula_code', '')
-                              ->orWhere('cula_code', '?')
-                              ->orWhere('cula_code', 'TIADA')
-                              ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                                ->orWhere('cula_code', '')
+                                ->orWhere('cula_code', '?')
+                                ->orWhere('cula_code', 'TIADA')
+                                ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
                         })
                 );
             }
@@ -254,13 +256,13 @@ class CulaanBotController extends Controller
         $query->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
             $maxBirthYear = now()->year - (int) $filters['age_from'];
             $currentYY = (int) now()->format('y');
-            $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END <= ?", [$currentYY, $maxBirthYear]);
+            $b->whereRaw('CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END <= ?', [$currentYY, $maxBirthYear]);
         });
 
         $query->when($filters['age_to'] !== '', function (Builder $b) use ($filters) {
             $minBirthYear = now()->year - (int) $filters['age_to'];
             $currentYY = (int) now()->format('y');
-            $b->whereRaw("CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?", [$currentYY, $minBirthYear]);
+            $b->whereRaw('CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END >= ?', [$currentYY, $minBirthYear]);
         });
 
         $this->applyRumahAlamatFilters($query, $filters);
@@ -286,9 +288,9 @@ class CulaanBotController extends Controller
                     ->where('pr2.no_rumah', '!=', '-');
                 $user?->applyScopeToPemilihQuery($q);
             })
-            ->whereNotNull('no_rumah')
-            ->where('no_rumah', '!=', '')
-            ->where('no_rumah', '!=', '-');
+                ->whereNotNull('no_rumah')
+                ->where('no_rumah', '!=', '')
+                ->where('no_rumah', '!=', '-');
         });
 
         $query->when($filters['filter_rumah_alamat'] ?? false, function (Builder $b) use ($user) {
@@ -308,11 +310,11 @@ class CulaanBotController extends Controller
                     ->where('pr2.address', '!=', '');
                 $user?->applyScopeToPemilihQuery($q);
             })
-            ->whereNotNull('no_rumah')
-            ->where('no_rumah', '!=', '')
-            ->where('no_rumah', '!=', '-')
-            ->whereNotNull('address')
-            ->where('address', '!=', '');
+                ->whereNotNull('no_rumah')
+                ->where('no_rumah', '!=', '')
+                ->where('no_rumah', '!=', '-')
+                ->whereNotNull('address')
+                ->where('address', '!=', '');
         });
 
         $query->when($filters['filter_alamat'], function (Builder $b) use ($user) {
@@ -329,31 +331,31 @@ class CulaanBotController extends Controller
                     ->where('pr2.address', '!=', '');
                 $user?->applyScopeToPemilihQuery($q);
             })
-            ->whereNotNull('address')
-            ->where('address', '!=', '')
-            ->where(function ($q) use ($scope) {
-                $countSql = '(SELECT COUNT(*) FROM pemilih_records pr3 WHERE pr3.address = pemilih_records.address AND pr3.status = ? AND pr3.is_manual = ?';
-                $bindings = ['aktif', false];
+                ->whereNotNull('address')
+                ->where('address', '!=', '')
+                ->where(function ($q) use ($scope) {
+                    $countSql = '(SELECT COUNT(*) FROM pemilih_records pr3 WHERE pr3.address = pemilih_records.address AND pr3.status = ? AND pr3.is_manual = ?';
+                    $bindings = ['aktif', false];
 
-                if ($scope !== null) {
-                    if (filled($scope['dm'] ?? null)) {
-                        $countSql .= ' AND pr3.dm = ?';
-                        $bindings[] = $scope['dm'];
+                    if ($scope !== null) {
+                        if (filled($scope['dm'] ?? null)) {
+                            $countSql .= ' AND pr3.dm = ?';
+                            $bindings[] = $scope['dm'];
+                        }
+                        if (filled($scope['locality'] ?? null)) {
+                            $countSql .= ' AND pr3.locality = ?';
+                            $bindings[] = $scope['locality'];
+                        }
                     }
-                    if (filled($scope['locality'] ?? null)) {
-                        $countSql .= ' AND pr3.locality = ?';
-                        $bindings[] = $scope['locality'];
-                    }
-                }
 
-                $countSql .= ')';
+                    $countSql .= ')';
 
-                $q->whereRaw($countSql . ' BETWEEN 2 AND 10', $bindings);
-            });
+                    $q->whereRaw($countSql.' BETWEEN 2 AND 10', $bindings);
+                });
         });
     }
 
-    private function paginateVoters(array $filters): \Illuminate\Pagination\LengthAwarePaginator
+    private function paginateVoters(array $filters): LengthAwarePaginator
     {
         return $this->buildEligibleVotersQuery($filters)
             ->with('culaWorkItem.marker')
@@ -518,54 +520,6 @@ class CulaanBotController extends Controller
 
     private function availableCulaCodes(): array
     {
-        $codes = [];
-        $codeRanges = [
-            ['?', '0'],
-            range(1, 10),
-            [13],
-            ['1A', '1B', '1P'],
-            ['3B', '3D', '3K', '3M', '3P', '3U'],
-            ['7P'],
-            [97, 98, 99],
-        ];
-
-        foreach ($codeRanges as $range) {
-            foreach ($range as $code) {
-                $label = match (true) {
-                    $code === '?' => 'BELUM CULA',
-                    $code === '0' => 'BELUM CULA',
-                    $code === 1 => 'UMNO',
-                    $code === 2 => 'PAS',
-                    $code === 3 => 'PAS LUAR',
-                    $code === 4 => 'ATAS PAGAR',
-                    $code === 5 => 'PKR',
-                    $code === 6 => 'DHPP',
-                    $code === 7 => 'TIDAK DIKENALI',
-                    $code === 8 => 'MATI',
-                    $code === 9 => 'PAN DAP',
-                    $code === 10 => 'PPBM',
-                    $code === 13 => 'MCA',
-                    $code === '1A' => 'UMNO - SASARAN / LEMAH / ATAS PAGAR',
-                    $code === '1B' => 'UMNO SOKONG PAS',
-                    $code === '1P' => 'UMNO SOKONG PN (TIDAK SOKONG PAS)',
-                    $code === '3B' => 'PAS LUAR KEDAH (BORNEO)',
-                    $code === '3D' => 'PAS LUAR DUN',
-                    $code === '3K' => 'PAS LUAR KEDAH (SEMENANJUNG)',
-                    $code === '3M' => 'PAS LUAR MALAYSIA',
-                    $code === '3P' => 'PAS LUAR PARLIMEN',
-                    $code === '3U' => 'PAS LUAR UDM',
-                    $code === '7P' => 'TIDAK DIKENALI (POLIS / TENTERA)',
-                    $code === 97 => 'LAIN-LAIN BANGSA',
-                    $code === 98 => 'INDIA',
-                    $code === 99 => 'CINA',
-                    default => null,
-                };
-                if ($label !== null) {
-                    $codes[] = ['code' => (string) $code, 'label' => "$code - $label"];
-                }
-            }
-        }
-
-        return $codes;
+        return CulaCodes::options();
     }
 }

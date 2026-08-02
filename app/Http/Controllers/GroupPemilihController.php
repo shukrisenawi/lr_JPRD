@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
+use App\Support\CulaCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,19 +32,7 @@ class GroupPemilihController extends Controller
                 'kod_culas' => $group->kodCulas->pluck('kod_cula')->values(),
             ]);
 
-        $kodCulaQuery = PemilihRecord::query()
-            ->where('is_manual', false)
-            ->whereNotNull('cula_code')
-            ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?')
-            ->where('cula_code', '!=', 'TIADA');
-        $user->applyScopeToPemilihQuery($kodCulaQuery);
-        $availableKodCulas = $kodCulaQuery
-            ->select('cula_code')
-            ->distinct()
-            ->orderBy('cula_code')
-            ->pluck('cula_code')
-            ->values();
+        $availableKodCulas = collect(CulaCodes::options())->pluck('code')->values();
 
         $keturunanQuery = PemilihRecord::query()
             ->where('is_manual', false)
@@ -148,5 +137,4 @@ class GroupPemilihController extends Controller
             ->route('group-pemilih.index')
             ->with('success', 'Group pemilih berjaya dipadam.');
     }
-
 }

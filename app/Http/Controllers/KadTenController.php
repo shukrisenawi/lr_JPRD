@@ -6,11 +6,11 @@ use App\Models\CommitteeMembership;
 use App\Models\KadTen;
 use App\Models\KadTenMember;
 use App\Models\PemilihRecord;
+use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -232,10 +232,10 @@ class KadTenController extends Controller
             ->where('status', 'aktif')
             ->where(function (Builder $q) {
                 $q->whereIn('cula_code', self::ALLOWED_CULA_CODES)
-                  ->orWhereNull('cula_code')
-                  ->orWhere('cula_code', '')
-                  ->orWhere('cula_code', '?')
-                  ->orWhere('cula_code', 'TIADA');
+                    ->orWhereNull('cula_code')
+                    ->orWhere('cula_code', '')
+                    ->orWhere('cula_code', '?')
+                    ->orWhere('cula_code', 'TIADA');
             })
             ->get()
             ->keyBy('id');
@@ -255,6 +255,7 @@ class KadTenController extends Controller
 
             if ($exists) {
                 $skipped[] = $voters[$id]->name;
+
                 continue;
             }
 
@@ -271,7 +272,7 @@ class KadTenController extends Controller
 
         $message = $inserted > 0 ? "$inserted ahli berjaya ditambah." : 'Tiada ahli baru ditambah.';
         if ($skipped !== []) {
-            $message .= ' (' . count($skipped) . ' sudah wujud: ' . implode(', ', array_slice($skipped, 0, 3)) . ')';
+            $message .= ' ('.count($skipped).' sudah wujud: '.implode(', ', array_slice($skipped, 0, 3)).')';
         }
 
         if ($request->expectsJson()) {
@@ -315,10 +316,10 @@ class KadTenController extends Controller
             ->where('is_manual', false)
             ->where(function (Builder $q) {
                 $q->whereIn('cula_code', self::ALLOWED_CULA_CODES)
-                  ->orWhereNull('cula_code')
-                  ->orWhere('cula_code', '')
-                  ->orWhere('cula_code', '?')
-                  ->orWhere('cula_code', 'TIADA');
+                    ->orWhereNull('cula_code')
+                    ->orWhere('cula_code', '')
+                    ->orWhere('cula_code', '?')
+                    ->orWhere('cula_code', 'TIADA');
             });
 
         $request->user()->applyScopeToPemilihQuery($builder);
@@ -328,15 +329,15 @@ class KadTenController extends Controller
                 $like = '%'.$keyword.'%';
                 $subQuery->where(function (Builder $q) use ($keyword, $like) {
                     $q->whereRaw('LOWER(name) like ?', [$like])
-                      ->orWhereRaw('LOWER(dm) like ?', [$like])
-                      ->orWhereRaw('LOWER(locality) like ?', [$like]);
+                        ->orWhereRaw('LOWER(dm) like ?', [$like])
+                        ->orWhereRaw('LOWER(locality) like ?', [$like]);
 
                     if (preg_match('/\d/', $keyword)) {
                         $digitLike = '%'.preg_replace('/\D+/', '', $keyword).'%';
                         $q->orWhere('no_kp', 'like', $digitLike)
-                          ->orWhere('old_ic', 'like', $digitLike)
-                          ->orWhere('phone_home', 'like', $digitLike)
-                          ->orWhere('phone_mobile', 'like', $digitLike);
+                            ->orWhere('old_ic', 'like', $digitLike)
+                            ->orWhere('phone_home', 'like', $digitLike)
+                            ->orWhere('phone_mobile', 'like', $digitLike);
                     }
                 });
             }
@@ -346,9 +347,9 @@ class KadTenController extends Controller
         if ($scope !== null && filled($scope['dm'])) {
             $dm = $scope['dm'];
             if (filled($scope['locality'])) {
-                $builder->orderByRaw("CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END", [$dm, $scope['locality']]);
+                $builder->orderByRaw('CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END', [$dm, $scope['locality']]);
             } else {
-                $builder->orderByRaw("CASE WHEN dm = ? THEN 0 ELSE 1 END", [$dm]);
+                $builder->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$dm]);
             }
         }
 
@@ -393,33 +394,33 @@ class KadTenController extends Controller
             if (filled($scope['dm']) && filled($scope['locality'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'cawangan')
-                             ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
-                      });
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
+                        });
                 });
             } elseif (filled($scope['dm'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'udm')
-                             ->where('scope_key', $scope['dm']);
-                      })
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'cawangan')
-                             ->where('parent_scope_name', $scope['dm']);
-                      });
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'udm')
+                                ->where('scope_key', $scope['dm']);
+                        })
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('parent_scope_name', $scope['dm']);
+                        });
                 });
             }
         }
 
         if (mb_strlen($query) >= 2) {
             $like = '%'.$query.'%';
-            $membershipsQuery->whereHas('voter', function (Builder $q) use ($like, $query) {
-                $q->where(function (Builder $sq) use ($like, $query) {
+            $membershipsQuery->whereHas('voter', function (Builder $q) use ($like) {
+                $q->where(function (Builder $sq) use ($like) {
                     $sq->whereRaw('LOWER(name) like ?', [$like])
-                      ->orWhere('no_kp', 'like', $like)
-                      ->orWhere('old_ic', 'like', $like);
+                        ->orWhere('no_kp', 'like', $like)
+                        ->orWhere('old_ic', 'like', $like);
                 });
             });
         }
@@ -460,10 +461,10 @@ class KadTenController extends Controller
                 ->tap(fn (Builder $b) => $user->applyScopeToPemilihQuery($b))
                 ->where(function (Builder $q) {
                     $q->whereIn('cula_code', self::ALLOWED_CULA_CODES)
-                      ->orWhereNull('cula_code')
-                      ->orWhere('cula_code', '')
-                      ->orWhere('cula_code', '?')
-                      ->orWhere('cula_code', 'TIADA');
+                        ->orWhereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhere('cula_code', '?')
+                        ->orWhere('cula_code', 'TIADA');
                 })
                 ->limit(20)
                 ->get()
@@ -484,10 +485,10 @@ class KadTenController extends Controller
                 ->tap(fn (Builder $b) => $user->applyScopeToPemilihQuery($b))
                 ->where(function (Builder $q) {
                     $q->whereIn('cula_code', self::ALLOWED_CULA_CODES)
-                      ->orWhereNull('cula_code')
-                      ->orWhere('cula_code', '')
-                      ->orWhere('cula_code', '?')
-                      ->orWhere('cula_code', 'TIADA');
+                        ->orWhereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhere('cula_code', '?')
+                        ->orWhere('cula_code', 'TIADA');
                 })
                 ->limit(20)
                 ->get()
@@ -503,26 +504,7 @@ class KadTenController extends Controller
 
     public function suggestCulaCodes(): JsonResponse
     {
-        $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereNotNull('cula_code')
-            ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?')
-            ->where('cula_code', '!=', 'TIADA');
-
-        request()->user()->applyScopeToPemilihQuery($query);
-
-        $codes = $query
-            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
-            ->groupBy('cula_code')
-            ->orderBy('cula_code')
-            ->get()
-            ->map(fn ($r) => ['code' => $r->cula_code, 'label' => $r->display_label])
-            ->values()
-            ->all();
-
-        return response()->json(['codes' => $codes]);
+        return response()->json(['codes' => CulaCodes::options()]);
     }
 
     public function senaraiPemilih(Request $request): Response
@@ -558,12 +540,12 @@ class KadTenController extends Controller
                     $like = '%'.$keyword.'%';
                     $q->where(function (Builder $sq) use ($keyword, $like) {
                         $sq->whereRaw('LOWER(name) like ?', [$like])
-                          ->orWhereRaw('LOWER(dm) like ?', [$like])
-                          ->orWhereRaw('LOWER(locality) like ?', [$like]);
+                            ->orWhereRaw('LOWER(dm) like ?', [$like])
+                            ->orWhereRaw('LOWER(locality) like ?', [$like]);
                         if (preg_match('/\d/', $keyword)) {
                             $digitLike = '%'.preg_replace('/\D+/', '', $keyword).'%';
                             $sq->orWhere('no_kp', 'like', $digitLike)
-                              ->orWhere('old_ic', 'like', $digitLike);
+                                ->orWhere('old_ic', 'like', $digitLike);
                         }
                     });
                 }
@@ -662,7 +644,7 @@ class KadTenController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Pemilih berjaya diagihkan ke ' . ($kadTen->name ?? 'Kad 10') . '.',
+            'message' => 'Pemilih berjaya diagihkan ke '.($kadTen->name ?? 'Kad 10').'.',
         ]);
     }
 

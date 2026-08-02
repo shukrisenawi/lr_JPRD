@@ -2,26 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Program;
-use App\Models\ProgramAttendee;
-use App\Models\ProgramFile;
-use App\Models\CommitteeMembership;
 use App\Models\CommitteeGroup;
+use App\Models\CommitteeMembership;
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
+use App\Models\Program;
+use App\Models\ProgramAttendee;
+use App\Models\ProgramFile;
 use App\Models\ProgramGroup;
 use App\Models\ProgramSubProgram;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\ImageService;
 use App\Services\PemilihReportService;
+use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -47,17 +47,14 @@ class ProgramController extends Controller
             ->groupBy('committee_position_id')
             ->map(fn ($items) => $items->pluck('level')->unique()->values()->all());
         $committeeGroupOptions = $committeeGroups
-            ->flatMap(fn (CommitteeGroup $group) => 
-                $group->levels
-                    ? collect($group->levels)->filter(fn (string $level) =>
-                        $group->positions->contains(fn ($pos) =>
-                            isset($activeMemberships[$pos->id]) && in_array($level, $activeMemberships[$pos->id])
-                        )
+            ->flatMap(fn (CommitteeGroup $group) => $group->levels
+                    ? collect($group->levels)->filter(fn (string $level) => $group->positions->contains(fn ($pos) => isset($activeMemberships[$pos->id]) && in_array($level, $activeMemberships[$pos->id])
+                    )
                     )->map(fn (string $level) => [
-                        'value' => $group->id . ':' . $level,
-                        'label' => $group->name . ' ' . ucfirst($level),
+                        'value' => $group->id.':'.$level,
+                        'label' => $group->name.' '.ucfirst($level),
                     ])
-                    : collect([['value' => $group->id . ':', 'label' => $group->name]])
+                    : collect([['value' => $group->id.':', 'label' => $group->name]])
             )
             ->values();
         $groupPemilihOptions = GroupPemilih::query()
@@ -293,27 +290,7 @@ class ProgramController extends Controller
 
     private function availableCulaCodes(): array
     {
-        $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereNotNull('cula_code')
-            ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?')
-            ->where('cula_code', '!=', 'TIADA');
-
-        request()->user()?->applyScopeToPemilihQuery($query);
-
-        return $query
-            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
-            ->groupBy('cula_code')
-            ->orderBy('cula_code')
-            ->get()
-            ->map(fn ($r) => [
-                'code' => $r->cula_code,
-                'label' => $r->display_label,
-            ])
-            ->values()
-            ->all();
+        return CulaCodes::options();
     }
 
     public function store(Request $request): RedirectResponse
@@ -333,7 +310,7 @@ class ProgramController extends Controller
         ]);
 
         $group = $program->group;
-        if ($group && !empty($group->default_shared_user_ids)) {
+        if ($group && ! empty($group->default_shared_user_ids)) {
             $program->sharedUsers()->sync($group->default_shared_user_ids);
         }
 
@@ -506,12 +483,14 @@ class ProgramController extends Controller
         $removed = 0;
         foreach (($validated['remove_ids'] ?? []) as $voterId) {
             $deleted = $program->attendees()->where('voter_id', (string) $voterId)->delete();
-            if ($deleted) $removed++;
+            if ($deleted) {
+                $removed++;
+            }
         }
 
-        $msg = $count . ' orang pemilih berjaya direkodkan sebagai hadir program.';
+        $msg = $count.' orang pemilih berjaya direkodkan sebagai hadir program.';
         if ($removed > 0) {
-            $msg .= ' ' . $removed . ' orang dikeluarkan.';
+            $msg .= ' '.$removed.' orang dikeluarkan.';
         }
 
         return redirect()
@@ -554,8 +533,7 @@ class ProgramController extends Controller
                         $voterIds = $query->pluck('pemilih_record_id')->unique()->values()->all();
 
                         $suggestions = array_values(
-                            array_filter($suggestions, fn ($voter) =>
-                                in_array($voter['record_id'] ?? null, $voterIds)
+                            array_filter($suggestions, fn ($voter) => in_array($voter['record_id'] ?? null, $voterIds)
                             )
                         );
                     }
@@ -570,23 +548,32 @@ class ProgramController extends Controller
                         foreach ($groups as $group) {
                             $kodCulas = $group->kodCulas->pluck('kod_cula')->filter()->values()->all();
                             $culaOk = empty($kodCulas) || in_array($voter['cula_code'] ?? null, $kodCulas);
-                            if (! $culaOk) continue;
+                            if (! $culaOk) {
+                                continue;
+                            }
 
                             $raceOk = ! $group->keturunan || ($voter['race'] ?? null) === $group->keturunan;
-                            if (! $raceOk) continue;
+                            if (! $raceOk) {
+                                continue;
+                            }
 
                             $genderOk = ! $group->jantina || ($voter['gender'] ?? null) === $group->jantina;
-                            if (! $genderOk) continue;
+                            if (! $genderOk) {
+                                continue;
+                            }
 
                             $age = $voter['age'] ?? null;
                             $ageOk = ($group->umur_dari === null && $group->umur_akhir === null)
                                 || ($age !== null
                                     && ($group->umur_dari === null || $age >= $group->umur_dari)
                                     && ($group->umur_akhir === null || $age <= $group->umur_akhir));
-                            if (! $ageOk) continue;
+                            if (! $ageOk) {
+                                continue;
+                            }
 
                             return true;
                         }
+
                         return false;
                     })
                 );
@@ -624,7 +611,7 @@ class ProgramController extends Controller
         $subProgramIds = $validated['sub_program_ids'] ?? [];
 
         $user = $request->user();
-        if (!$user->canAccessModule('kemaskini-no-ahli')) {
+        if (! $user->canAccessModule('kemaskini-no-ahli')) {
             unset($validated['no_ahli']);
         }
 
@@ -1237,7 +1224,7 @@ class ProgramController extends Controller
         $this->ensureAccessible(request()->user()->id, $program);
         abort_unless($file->program_id === $program->id, 404);
 
-        return response()->download(storage_path('app/public/' . $file->stored_path), $file->original_name);
+        return response()->download(storage_path('app/public/'.$file->stored_path), $file->original_name);
     }
 
     public function destroyFile(Program $program, ProgramFile $file): RedirectResponse
@@ -1247,7 +1234,7 @@ class ProgramController extends Controller
         abort_unless($file->program_id === $program->id, 404);
         abort_unless($user->isMasterAdmin() || $file->user_id === $user->id, 403);
 
-        \Illuminate\Support\Facades\Storage::disk('public')->delete($file->stored_path);
+        Storage::disk('public')->delete($file->stored_path);
         $file->delete();
 
         return redirect()

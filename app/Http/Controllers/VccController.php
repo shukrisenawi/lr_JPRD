@@ -6,12 +6,14 @@ use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
 use App\Models\VoterCommunication;
+use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -208,7 +210,7 @@ class VccController extends Controller
             ->when($filters['cula_codes'] !== '', fn (Builder $builder) => $builder->whereIn('cula_code', explode(',', $filters['cula_codes'])))
             ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
                 $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
-                  ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
+                    ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
             }))
             ->when($filters['birthday_image_status'] === 'uploaded', fn (Builder $builder) => $builder->whereNotNull('birthday_image')->where('birthday_image', '!=', ''))
             ->when($filters['birthday_image_status'] === 'not_uploaded', fn (Builder $builder) => $builder->where(function (Builder $q) {
@@ -258,7 +260,7 @@ class VccController extends Controller
         }
 
         return $query
-            ->orderByRaw("
+            ->orderByRaw('
                 CASE
                     WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
                         THEN 1900 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
@@ -266,7 +268,7 @@ class VccController extends Controller
                         THEN 2000 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
                     ELSE 9999
                 END DESC
-            ")
+            ')
             ->orderBy('no_kp')
             ->paginate(20)
             ->withQueryString()
@@ -338,7 +340,7 @@ class VccController extends Controller
         );
     }
 
-    private function distributeIdsForUdm(array $filters): \Illuminate\Support\Collection
+    private function distributeIdsForUdm(array $filters): Collection
     {
         $perUdmCount = $filters['per_udm_count'];
         $selectedUdm = $filters['udm'];
@@ -373,6 +375,7 @@ class VccController extends Controller
             $take = min($alloc['wanted'], $alloc['available']);
             if ($take <= 0) {
                 $shortfall += $alloc['wanted'];
+
                 continue;
             }
 
@@ -528,7 +531,7 @@ class VccController extends Controller
 
             $query->where(function ($q) use ($availableCulaCodes) {
                 $q->whereDoesntHave('kodCulas')
-                  ->orWhereHas('kodCulas', fn ($sub) => $sub->whereIn('kod_cula', $availableCulaCodes));
+                    ->orWhereHas('kodCulas', fn ($sub) => $sub->whereIn('kod_cula', $availableCulaCodes));
             });
         }
 
@@ -729,54 +732,6 @@ class VccController extends Controller
 
     private function availableCulaCodes(): array
     {
-        $codes = [];
-        $codeRanges = [
-            ['?', '0'],
-            range(1, 10),
-            [13],
-            ['1A', '1B', '1P'],
-            ['3B', '3D', '3K', '3M', '3P', '3U'],
-            ['7P'],
-            [97, 98, 99],
-        ];
-
-        foreach ($codeRanges as $range) {
-            foreach ($range as $code) {
-            $label = match (true) {
-                $code === '?' => 'BELUM CULA',
-                $code === '0' => 'BELUM CULA',
-                $code === 1 => 'UMNO',
-                $code === 2 => 'PAS',
-                    $code === 3 => 'PAS LUAR',
-                    $code === 4 => 'ATAS PAGAR',
-                    $code === 5 => 'PKR',
-                    $code === 6 => 'DHPP',
-                    $code === 7 => 'TIDAK DIKENALI',
-                    $code === 8 => 'MATI',
-                    $code === 9 => 'PAN DAP',
-                    $code === 10 => 'PPBM',
-                    $code === 13 => 'MCA',
-                    $code === '1A' => 'UMNO - SASARAN / LEMAH / ATAS PAGAR',
-                    $code === '1B' => 'UMNO SOKONG PAS',
-                    $code === '1P' => 'UMNO SOKONG PN (TIDAK SOKONG PAS)',
-                    $code === '3B' => 'PAS LUAR KEDAH (BORNEO)',
-                    $code === '3D' => 'PAS LUAR DUN',
-                    $code === '3K' => 'PAS LUAR KEDAH (SEMENANJUNG)',
-                    $code === '3M' => 'PAS LUAR MALAYSIA',
-                    $code === '3P' => 'PAS LUAR PARLIMEN',
-                    $code === '3U' => 'PAS LUAR UDM',
-                    $code === '7P' => 'TIDAK DIKENALI (POLIS / TENTERA)',
-                    $code === 97 => 'LAIN-LAIN BANGSA',
-                    $code === 98 => 'INDIA',
-                    $code === 99 => 'CINA',
-                    default => null,
-                };
-                if ($label !== null) {
-                    $codes[] = ['code' => (string) $code, 'label' => "$code - $label"];
-                }
-            }
-        }
-
-        return $codes;
+        return CulaCodes::options();
     }
 }

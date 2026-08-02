@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\Setting;
-use App\Models\CulaWorkItem;
 use App\Services\ImageService;
 use App\Services\PemilihReportService;
+use App\Support\CulaCodes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -58,27 +58,7 @@ class CarianPemilihController extends Controller
 
     private function availableCulaCodes(): array
     {
-        $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereNotNull('cula_code')
-            ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', '?')
-            ->where('cula_code', '!=', 'TIADA');
-
-        request()->user()?->applyScopeToPemilihQuery($query);
-
-        return $query
-            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
-            ->groupBy('cula_code')
-            ->orderBy('cula_code')
-            ->get()
-            ->map(fn ($r) => [
-                'code' => $r->cula_code,
-                'label' => $r->display_label,
-            ])
-            ->values()
-            ->all();
+        return CulaCodes::options();
     }
 
     public function search(Request $request, PemilihReportService $reportService)
@@ -106,7 +86,7 @@ class CarianPemilihController extends Controller
     public function updateNoAhli(Request $request)
     {
         $user = $request->user();
-        if (!$user->canAccessModule('kemaskini-no-ahli')) {
+        if (! $user->canAccessModule('kemaskini-no-ahli')) {
             abort(403, 'Anda tidak mempunyai akses untuk mengemaskini No. Ahli.');
         }
 

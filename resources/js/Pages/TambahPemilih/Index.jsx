@@ -41,9 +41,9 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
     }, [data.dm, localitiesByDm]);
 
     const handleCulaChange = (value) => {
-        const match = culaCodes.find(c => c.cula_code === value);
+        const match = culaCodes.find(c => c.code === value);
         setData('cula_code', value);
-        setData('cula_display_label', match ? match.cula_display_label : '');
+        setData('cula_display_label', match ? match.label : '');
     };
 
     const handleDmChange = (value) => {
@@ -189,7 +189,7 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
                 <select id="cula_code" value={data.cula_code} onChange={e => handleCulaChange(e.target.value)}
                     className="input-field w-full mt-0.5">
                     <option value="">-- Pilih Kod Cula --</option>
-                    {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
+                    {culaCodes.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
                 </select>
                 {errors.cula_code && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.cula_code}</p>}
             </div>
@@ -445,7 +445,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, canEditNoAh
                             <label className="label-field">Kod Cula</label>
                             <select value={data.cula_code} onChange={e => setData('cula_code', e.target.value)} className="input-field w-full py-[5px] text-xs">
                                 <option value="">-- Pilih --</option>
-                                {culaCodes.map(c => <option key={c.cula_code} value={c.cula_code}>{c.cula_code} - {c.cula_display_label}</option>)}
+                                {culaCodes.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
                             </select>
                         </div>
                     </div>

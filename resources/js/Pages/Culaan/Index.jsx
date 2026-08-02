@@ -1461,11 +1461,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 </button>
                                 {culaFilterOpen && (
                                     <div className="mt-2 flex flex-wrap gap-1.5">
-                                        {[...available_cula_codes].sort((a, b) => {
-                                            const na = parseInt(a.code, 10);
-                                            const nb = parseInt(b.code, 10);
-                                            return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
-                                        }).map((c) => (
+                                         {available_cula_codes.map((c) => (
                                             <button
                                                 key={c.code}
                                                 type="button"
@@ -2623,11 +2619,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </div>
                         <p className="mt-1 text-xs text-slate-500">Pilih kod cula untuk dikemaskini:</p>
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                            {[...available_cula_codes].sort((a, b) => {
-                                const na = parseInt(a.code, 10);
-                                const nb = parseInt(b.code, 10);
-                                return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
-                            }).map((c) => (
+                             {available_cula_codes.map((c) => (
                                 <button
                                     key={c.code}
                                     type="button"

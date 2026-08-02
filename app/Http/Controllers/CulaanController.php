@@ -6,11 +6,12 @@ use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
 use App\Services\PemilihReportService;
+use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -369,21 +370,21 @@ class CulaanController extends Controller
         request()->user()?->applyScopeToPemilihQuery($query);
 
         $query->when(
-                ! $filters['show_marked'] && ! $filters['show_all'],
-                function (Builder $builder) use ($groupKodCulas) {
-                    $builder->where(function (Builder $q) use ($groupKodCulas) {
-                        $q->whereNull('cula_code')
-                            ->orWhere('cula_code', '')
-                            ->orWhere('cula_code', '?')
-                            ->orWhere('cula_code', 'TIADA')
-                            ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+            ! $filters['show_marked'] && ! $filters['show_all'],
+            function (Builder $builder) use ($groupKodCulas) {
+                $builder->where(function (Builder $q) use ($groupKodCulas) {
+                    $q->whereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhere('cula_code', '?')
+                        ->orWhere('cula_code', 'TIADA')
+                        ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
 
-                        if ($groupKodCulas !== null) {
-                            $q->orWhereIn('cula_code', $groupKodCulas);
-                        }
-                    });
-                }
-            )
+                    if ($groupKodCulas !== null) {
+                        $q->orWhereIn('cula_code', $groupKodCulas);
+                    }
+                });
+            }
+        )
             ->when(
                 $usingCustomCulaCodes && ! $filters['show_marked'],
                 fn (Builder $builder) => $builder->whereIn('cula_code', $filters['cula_codes'])
@@ -394,7 +395,7 @@ class CulaanController extends Controller
             ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
             ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
                 $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
-                  ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
+                    ->orWhereNotNull('phone_home')->where('phone_home', '!=', '');
             }));
 
         if (! $skipMarkedFilter) {
@@ -428,9 +429,9 @@ class CulaanController extends Controller
                     ->where('pr2.no_rumah', '!=', '-');
                 $user?->applyScopeToPemilihQuery($q);
             })
-            ->whereNotNull('no_rumah')
-            ->where('no_rumah', '!=', '')
-            ->where('no_rumah', '!=', '-');
+                ->whereNotNull('no_rumah')
+                ->where('no_rumah', '!=', '')
+                ->where('no_rumah', '!=', '-');
         });
 
         $query->when($filters['filter_alamat'], function (Builder $b) use ($user) {
@@ -447,27 +448,27 @@ class CulaanController extends Controller
                     ->where('pr2.address', '!=', '');
                 $user?->applyScopeToPemilihQuery($q);
             })
-            ->whereNotNull('address')
-            ->where('address', '!=', '')
-            ->where(function ($q) use ($scope) {
-                $countSql = '(SELECT COUNT(*) FROM pemilih_records pr3 WHERE pr3.address = pemilih_records.address AND pr3.status = ? AND pr3.is_manual = ?';
-                $bindings = ['aktif', false];
+                ->whereNotNull('address')
+                ->where('address', '!=', '')
+                ->where(function ($q) use ($scope) {
+                    $countSql = '(SELECT COUNT(*) FROM pemilih_records pr3 WHERE pr3.address = pemilih_records.address AND pr3.status = ? AND pr3.is_manual = ?';
+                    $bindings = ['aktif', false];
 
-                if ($scope !== null) {
-                    if (filled($scope['dm'] ?? null)) {
-                        $countSql .= ' AND pr3.dm = ?';
-                        $bindings[] = $scope['dm'];
+                    if ($scope !== null) {
+                        if (filled($scope['dm'] ?? null)) {
+                            $countSql .= ' AND pr3.dm = ?';
+                            $bindings[] = $scope['dm'];
+                        }
+                        if (filled($scope['locality'] ?? null)) {
+                            $countSql .= ' AND pr3.locality = ?';
+                            $bindings[] = $scope['locality'];
+                        }
                     }
-                    if (filled($scope['locality'] ?? null)) {
-                        $countSql .= ' AND pr3.locality = ?';
-                        $bindings[] = $scope['locality'];
-                    }
-                }
 
-                $countSql .= ')';
+                    $countSql .= ')';
 
-                $q->whereRaw($countSql . ' BETWEEN 2 AND 10', $bindings);
-            });
+                    $q->whereRaw($countSql.' BETWEEN 2 AND 10', $bindings);
+                });
         });
 
         $query->when($filters['filter_rumah_alamat'], function (Builder $b) use ($user) {
@@ -487,11 +488,11 @@ class CulaanController extends Controller
                     ->where('pr2.address', '!=', '');
                 $user?->applyScopeToPemilihQuery($q);
             })
-            ->whereNotNull('no_rumah')
-            ->where('no_rumah', '!=', '')
-            ->where('no_rumah', '!=', '-')
-            ->whereNotNull('address')
-            ->where('address', '!=', '');
+                ->whereNotNull('no_rumah')
+                ->where('no_rumah', '!=', '')
+                ->where('no_rumah', '!=', '-')
+                ->whereNotNull('address')
+                ->where('address', '!=', '');
         });
     }
 
@@ -822,25 +823,7 @@ class CulaanController extends Controller
 
     private function availableCulaCodes(): array
     {
-        $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereNotNull('cula_code')
-            ->where('cula_code', '!=', '');
-
-        request()->user()?->applyScopeToPemilihQuery($query);
-
-        return $query
-            ->select('cula_code', DB::raw('MAX(cula_display_label) as display_label'))
-            ->groupBy('cula_code')
-            ->orderBy('cula_code')
-            ->get()
-            ->map(fn ($r) => [
-                'code' => $r->cula_code,
-                'label' => $r->display_label,
-            ])
-            ->values()
-            ->all();
+        return CulaCodes::options();
     }
 
     private function availableRaces(): array
@@ -979,7 +962,7 @@ class CulaanController extends Controller
 
         return $query
             ->with('creator', 'culaWorkItem.marker')
-            ->orderByRaw("
+            ->orderByRaw('
                 CASE
                     WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
                         THEN 1900 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
@@ -987,7 +970,7 @@ class CulaanController extends Controller
                         THEN 2000 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
                     ELSE 9999
                 END DESC
-            ")
+            ')
             ->orderBy('no_kp')
             ->paginate(20)
             ->withQueryString()

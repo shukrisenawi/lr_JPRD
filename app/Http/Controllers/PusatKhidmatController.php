@@ -4,21 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\PemilihRecord;
 use App\Models\PusatKhidmatData;
-use App\Models\User;
+use App\Models\Setting;
 use App\Services\PusatKhidmatService;
-use Illuminate\Database\Eloquent\Builder;
+use App\Support\CulaCodes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use RuntimeException;
 
 class PusatKhidmatController extends Controller
 {
     public function index(PusatKhidmatService $service): Response
     {
         $data = $service->getRecords(request()->user());
-        $lastSyncAt = \App\Models\Setting::valueOf('pusat_khidmat_last_sync_at');
+        $lastSyncAt = Setting::valueOf('pusat_khidmat_last_sync_at');
 
         return Inertia::render('PusatKhidmat/Index', [
             'sheet_url' => $data['sheet_url'],
@@ -58,7 +57,7 @@ class PusatKhidmatController extends Controller
             'cula_display_label' => $request->input('cula_display_label'),
         ]);
 
-        \App\Models\PusatKhidmatData::query()
+        PusatKhidmatData::query()
             ->where('pemilih_record_id', $pemilihRecord->id)
             ->whereNull('checked_at')
             ->update(['checked_at' => now()]);
@@ -72,33 +71,10 @@ class PusatKhidmatController extends Controller
 
     private function availableCulaCodes(): array
     {
-        /** @var Builder $query */
-        $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->whereNotNull('cula_code')
-            ->where('cula_code', '!=', '');
-
-        $user = request()->user();
-        if ($user instanceof User) {
-            $user->applyScopeToPemilihQuery($query);
-        }
-
-        $rows = $query
-            ->select('cula_code', \Illuminate\Support\Facades\DB::raw('MAX(cula_display_label) as display_label'))
-            ->groupBy('cula_code')
-            ->orderBy('cula_code')
-            ->get();
-
-        return collect($rows)
-            ->map(fn ($r) => [
-                'code' => $r->cula_code,
-                'label' => $r->display_label,
-            ])
-            ->values()
-            ->all();
+        return CulaCodes::options();
     }
 
-    public function sync(PusatKhidmatService $service): \Illuminate\Http\JsonResponse
+    public function sync(PusatKhidmatService $service): JsonResponse
     {
         try {
             $result = $service->fetchAndSync(request()->user());
@@ -119,7 +95,7 @@ class PusatKhidmatController extends Controller
         }
     }
 
-    public function updateSheetUrl(Request $request, PusatKhidmatService $service): \Illuminate\Http\JsonResponse
+    public function updateSheetUrl(Request $request, PusatKhidmatService $service): JsonResponse
     {
         $request->validate([
             'url' => 'required|url',
@@ -138,17 +114,17 @@ class PusatKhidmatController extends Controller
         $parts = [];
 
         if ($result['new_count'] > 0) {
-            $parts[] = $result['new_count'] . ' rekod baru ditambah';
+            $parts[] = $result['new_count'].' rekod baru ditambah';
         }
 
         if ($result['updated_count'] > 0) {
-            $parts[] = $result['updated_count'] . ' rekod dikemaskini';
+            $parts[] = $result['updated_count'].' rekod dikemaskini';
         }
 
         if (empty($parts)) {
             return 'Tiada perubahan data.';
         }
 
-        return implode(', ', $parts) . '. Jumlah: ' . $result['total_count'] . ' rekod.';
+        return implode(', ', $parts).'. Jumlah: '.$result['total_count'].' rekod.';
     }
 }

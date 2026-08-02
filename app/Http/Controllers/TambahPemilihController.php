@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\PemilihRecord;
+use App\Support\CulaCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -47,14 +47,7 @@ class TambahPemilihController extends Controller
                 ->toArray();
         }
 
-        $culaCodes = PemilihRecord::whereNotNull('cula_code')
-            ->where('cula_code', '!=', '')
-            ->where('cula_code', '!=', 'TIADA')
-            ->select('cula_code', 'cula_display_label')
-            ->distinct()
-            ->orderBy('cula_code')
-            ->get()
-            ->toArray();
+        $culaCodes = CulaCodes::options();
 
         $manualQuery = PemilihRecord::where('is_manual', true)
             ->with('creator:id,name')
@@ -96,7 +89,7 @@ class TambahPemilihController extends Controller
         ]);
 
         $user = $request->user();
-        if (!$user->canAccessModule('kemaskini-no-ahli')) {
+        if (! $user->canAccessModule('kemaskini-no-ahli')) {
             unset($validated['no_ahli']);
         }
 
@@ -116,15 +109,15 @@ class TambahPemilihController extends Controller
         }
 
         $exists = PemilihRecord::where(function ($q) use ($validated) {
-            if (!empty($validated['no_kp'])) {
+            if (! empty($validated['no_kp'])) {
                 $q->where('identity_number', $validated['no_kp'])
-                  ->orWhere('no_kp', $validated['no_kp'])
-                  ->orWhere('old_ic', $validated['no_kp']);
+                    ->orWhere('no_kp', $validated['no_kp'])
+                    ->orWhere('old_ic', $validated['no_kp']);
             }
-            if (!empty($validated['old_ic'])) {
+            if (! empty($validated['old_ic'])) {
                 $q->orWhere('identity_number', $validated['old_ic'])
-                  ->orWhere('no_kp', $validated['old_ic'])
-                  ->orWhere('old_ic', $validated['old_ic']);
+                    ->orWhere('no_kp', $validated['old_ic'])
+                    ->orWhere('old_ic', $validated['old_ic']);
             }
         })->exists();
 
@@ -144,10 +137,10 @@ class TambahPemilihController extends Controller
 
     public function update(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
     {
-        if (!$pemilihRecord->is_manual) {
+        if (! $pemilihRecord->is_manual) {
             abort(403);
         }
-        if (!$this->isMasterAdmin($request) && $pemilihRecord->created_by !== $request->user()->id) {
+        if (! $this->isMasterAdmin($request) && $pemilihRecord->created_by !== $request->user()->id) {
             abort(403);
         }
 
@@ -168,7 +161,7 @@ class TambahPemilihController extends Controller
         ]);
 
         $user = $request->user();
-        if (!$user->canAccessModule('kemaskini-no-ahli')) {
+        if (! $user->canAccessModule('kemaskini-no-ahli')) {
             unset($validated['no_ahli']);
         }
 
@@ -194,10 +187,10 @@ class TambahPemilihController extends Controller
 
     public function destroy(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
     {
-        if (!$pemilihRecord->is_manual) {
+        if (! $pemilihRecord->is_manual) {
             abort(403);
         }
-        if (!$this->isMasterAdmin($request) && $pemilihRecord->created_by !== $request->user()->id) {
+        if (! $this->isMasterAdmin($request) && $pemilihRecord->created_by !== $request->user()->id) {
             abort(403);
         }
 

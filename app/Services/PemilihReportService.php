@@ -4,7 +4,12 @@ namespace App\Services;
 
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
+use App\Models\ProgramAttendee;
 use App\Models\Setting;
+use App\Models\UdmSnapshot;
+use App\Models\User;
+use App\Support\CulaCodes;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
@@ -22,42 +27,10 @@ class PemilihReportService
         'TK' => ['7'],
         'Mati' => ['8'],
     ];
+
     public const DEFAULT_SAMPLE_PATH = 'F:\\OneDrive\\PAS\\pemilih.xls';
 
     private const REPORT_SCHEMA_VERSION = 3;
-
-    private const CULA_LABELS = [
-        '1' => 'UMNO',
-        '10' => 'PPBM',
-        '11' => 'GERAKAN',
-        '12' => 'PEJUANG',
-        '13' => 'MCA',
-        '14' => 'MIC',
-        '15' => 'PUTRA',
-        '16' => 'MUDA',
-        '1A' => 'UMNO - SASARAN / LEMAH / ATAS PAGAR',
-        '1B' => 'UMNO SOKONG PAS',
-        '1P' => 'UMNO SOKONG PN (TIDAK SOKONG PAS)',
-        '2' => 'PAS',
-        '3B' => 'PAS LUAR KEDAH (BORNEO)',
-        '3D' => 'PAS LUAR DUN',
-        '3K' => 'PAS LUAR KEDAH (SEMENANJUNG)',
-        '3M' => 'PAS LUAR MALAYSIA',
-        '3P' => 'PAS LUAR PARLIMEN',
-        '3U' => 'PAS LUAR UDM',
-        '4' => 'ATAS PAGAR',
-        '4P' => 'ATAS PAGAR SOKONG PN',
-        '5' => 'PKR',
-        '6' => 'DHPP',
-        '7' => 'TIDAK DIKENALI',
-        '7P' => 'TIDAK DIKENALI (POLIS / TENTERA)',
-        '8' => 'MATI',
-        '9' => 'PAN DAP',
-        '97' => 'LAIN-LAIN BANGSA',
-        '98' => 'INDIA',
-        '99' => 'CINA',
-        '?' => 'BELUM DICULA',
-    ];
 
     public function buildFromPath(?string $path = null): array
     {
@@ -160,7 +133,7 @@ class PemilihReportService
         return $report;
     }
 
-    public function searchVoters(string $query, ?string $path = null, int $limit = 8, ?\App\Models\User $user = null, ?string $dm = null, ?string $locality = null, ?array $culaCodes = null): array
+    public function searchVoters(string $query, ?string $path = null, int $limit = 8, ?User $user = null, ?string $dm = null, ?string $locality = null, ?array $culaCodes = null): array
     {
         $normalizedQuery = $this->normalizeSearch($query);
 
@@ -212,7 +185,7 @@ class PemilihReportService
         return $matches;
     }
 
-    private function searchVotersFromDb(string $normalizedQuery, string $rawQuery, int $limit, ?\App\Models\User $user = null, ?string $dm = null, ?string $locality = null, ?array $culaCodes = null): array
+    private function searchVotersFromDb(string $normalizedQuery, string $rawQuery, int $limit, ?User $user = null, ?string $dm = null, ?string $locality = null, ?array $culaCodes = null): array
     {
         $keywords = preg_split('/\s+/', $normalizedQuery);
         $keywords = array_values(array_filter($keywords));
@@ -220,10 +193,10 @@ class PemilihReportService
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
             ->where('is_manual', false)
-            ->where(function ($q) use ($keywords, $rawQuery) {
+            ->where(function ($q) use ($keywords) {
                 foreach ($keywords as $keyword) {
-                    $q->where(function ($kw) use ($keyword, $rawQuery) {
-                        $like = '%' . $keyword . '%';
+                    $q->where(function ($kw) use ($keyword) {
+                        $like = '%'.$keyword.'%';
                         $kw->where(DB::raw('LOWER(name)'), 'like', $like)
                             ->orWhere(DB::raw('LOWER(dm)'), 'like', $like)
                             ->orWhere(DB::raw('LOWER(locality)'), 'like', $like)
@@ -307,7 +280,7 @@ class PemilihReportService
 
             if ($existing && $existing->cula_code && $existing->cula_code !== '?' && ($voter['cula_code'] ?? '') === '?') {
                 unset($voter['cula_code'], $voter['cula_display_label']);
-                $voter['cula_remark'] = 'Data import ' . ($voter['source_file'] ?? 'fail') . ' pada ' . now()->format('d-m-Y') . ' - tiada kod cula';
+                $voter['cula_remark'] = 'Data import '.($voter['source_file'] ?? 'fail').' pada '.now()->format('d-m-Y').' - tiada kod cula';
             }
 
             if ($existing) {
@@ -320,7 +293,7 @@ class PemilihReportService
             );
 
             if ($record->no_kp || $record->old_ic) {
-                \App\Models\ProgramAttendee::query()
+                ProgramAttendee::query()
                     ->where(function ($q) use ($record) {
                         $q->where('no_kp', $record->no_kp);
                         if ($record->old_ic) {
@@ -352,7 +325,7 @@ class PemilihReportService
 
         if ($uploadedAt) {
             try {
-                $uploadedAt = \Carbon\Carbon::parse($uploadedAt, 'Asia/Kuala_Lumpur')->format('d-m-Y h:i A');
+                $uploadedAt = Carbon::parse($uploadedAt, 'Asia/Kuala_Lumpur')->format('d-m-Y h:i A');
             } catch (\Exception $e) {
             }
         }
@@ -446,6 +419,7 @@ class PemilihReportService
                         return $r['total'];
                     }
                 }
+
                 return 0;
             };
 
@@ -458,6 +432,7 @@ class PemilihReportService
                 foreach ($codes as $code) {
                     $sum += $byCode[$code] ?? 0;
                 }
+
                 return $sum;
             };
 
@@ -466,6 +441,7 @@ class PemilihReportService
                 foreach ($codes as $c) {
                     $s += $dmCulaCompleted[$c] ?? 0;
                 }
+
                 return $s;
             };
 
@@ -507,7 +483,7 @@ class PemilihReportService
         return $snapshotRows;
     }
 
-    public function saveUdmSnapshotOnImport(?string $uploadedBy = null): ?\App\Models\UdmSnapshot
+    public function saveUdmSnapshotOnImport(?string $uploadedBy = null): ?UdmSnapshot
     {
         $cutoffDay = (int) Setting::valueOf('udm_cutoff_day', 1);
         $today = now('Asia/Kuala_Lumpur');
@@ -520,7 +496,7 @@ class PemilihReportService
         $periodStart = $today->copy()->day($cutoffDay)->startOfDay();
         $periodEnd = $today->copy()->endOfDay();
 
-        $exists = \App\Models\UdmSnapshot::query()
+        $exists = UdmSnapshot::query()
             ->where('cutoff_day', $cutoffDay)
             ->where('period_start', '>=', $periodStart->toDateString())
             ->where('period_end', '<=', $periodEnd->toDateString())
@@ -536,7 +512,7 @@ class PemilihReportService
             return null;
         }
 
-        return \App\Models\UdmSnapshot::create([
+        return UdmSnapshot::create([
             'cutoff_day' => $cutoffDay,
             'period_start' => $periodStart->toDateString(),
             'period_end' => $periodEnd->toDateString(),
@@ -547,13 +523,13 @@ class PemilihReportService
         ]);
     }
 
-    public function getLatestUdmSnapshot(): ?\App\Models\UdmSnapshot
+    public function getLatestUdmSnapshot(): ?UdmSnapshot
     {
         $cutoffDay = (int) Setting::valueOf('udm_cutoff_day', 1);
         $today = now('Asia/Kuala_Lumpur');
 
         if ((int) $today->format('d') < $cutoffDay) {
-            return \App\Models\UdmSnapshot::query()
+            return UdmSnapshot::query()
                 ->where('cutoff_day', $cutoffDay)
                 ->orderByDesc('created_at')
                 ->first();
@@ -561,7 +537,7 @@ class PemilihReportService
 
         $periodStart = $today->copy()->day($cutoffDay)->startOfDay();
 
-        return \App\Models\UdmSnapshot::query()
+        return UdmSnapshot::query()
             ->where('cutoff_day', $cutoffDay)
             ->where('period_start', '>=', $periodStart->toDateString())
             ->orderByDesc('created_at')
@@ -1275,7 +1251,7 @@ class PemilihReportService
 
     private function culaLabel(string $code): string
     {
-        return self::CULA_LABELS[$code] ?? $code;
+        return CulaCodes::label($code);
     }
 
     private function displayCulaLabel(string $code): string

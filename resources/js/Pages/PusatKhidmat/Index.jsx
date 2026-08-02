@@ -786,16 +786,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         </div>
                         <p className="mt-1 text-xs text-slate-500">Pilih kod culaan untuk dikemaskini:</p>
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                            {[...availableCulaCodes]
-                                .filter((c) => {
-                                    const label = c.label || '';
-                                    return !label.includes('BELUM DICULA') && label !== 'M';
-                                })
-                                .sort((a, b) => {
-                                    const na = parseInt(a.code, 10);
-                                    const nb = parseInt(b.code, 10);
-                                    return (na || 999) - (nb || 999) || a.code.localeCompare(b.code);
-                                }).map((c) => (
+                             {availableCulaCodes.map((c) => (
                                     <button
                                         key={c.code}
                                         type="button"
