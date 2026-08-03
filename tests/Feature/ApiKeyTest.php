@@ -41,6 +41,11 @@ it('serves birthday voter data to an external app with a bearer API key', functi
         'identity_number' => '900101010101',
         'no_kp' => '900101010101',
         'name' => 'Ahmad Tester',
+        'dm' => 'UDM 01',
+        'locality' => 'Lokaliti 1',
+        'gender' => 'L',
+        'race' => 'M',
+        'cula_code' => '1',
         'date_of_birth' => $birthday,
         'phone_mobile' => '012-345 6789',
         'status' => 'aktif',
@@ -60,6 +65,16 @@ it('serves birthday voter data to an external app with a bearer API key', functi
         ->assertJsonPath('data.0.no_telefon', '0123456789');
 
     expect(ApiKey::query()->first()->last_used_at)->not->toBeNull();
+
+    $this->getJson(route('api.reports.udm'), [
+        'Authorization' => 'Bearer '.$plainTextKey,
+    ])
+        ->assertOk()
+        ->assertJsonPath('summary.total_voters', 1)
+        ->assertJsonPath('data.0.name', 'UDM 01')
+        ->assertJsonPath('data.0.total', 1)
+        ->assertJsonPath('data.0.M', 1)
+        ->assertJsonPath('data.0.BN', 1);
 });
 
 it('rejects invalid and expired API keys', function () {

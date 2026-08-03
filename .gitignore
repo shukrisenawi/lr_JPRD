@@ -13,6 +13,9 @@
 /.zed
 /auth.json
 /node_modules
+/desktop/node_modules/
+/desktop/dist/
+/desktop/release/
 # /public/build  # Dibenarkan untuk deployment (build output diperlukan di server)
 /public/fonts-manifest.dev.json
 /public/hot

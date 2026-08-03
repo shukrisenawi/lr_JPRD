@@ -34,7 +34,7 @@ function KeyCell({ k, copy: copyFn, copiedKey }) {
     );
 }
 
-export default function ApiKeys({ apiKeys, apiUrl }) {
+export default function ApiKeys({ apiKeys, apiUrl, udmApiUrl }) {
     const { flash } = usePage().props;
     const newKey = flash?.new_api_key;
     const [showForm, setShowForm] = useState(false);
@@ -109,6 +109,13 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                             <div className="flex items-center gap-2">
                                 <code className="break-all rounded-md bg-white px-3 py-2 font-mono text-sm font-bold text-slate-800 shadow-sm">{apiUrl}</code>
                                 <button type="button" onClick={() => copy(apiUrl + '?key=', 'url')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
+                            </div>
+                        </div>
+                        <div>
+                            <p className="mb-1 font-bold uppercase tracking-wide text-blue-700">Endpoint Laporan UDM</p>
+                            <div className="flex items-center gap-2">
+                                <code className="break-all rounded-md bg-white px-3 py-2 font-mono text-sm font-bold text-slate-800 shadow-sm">{udmApiUrl}</code>
+                                <button type="button" onClick={() => copy(udmApiUrl, 'udm-url')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
                             </div>
                         </div>
                         <div>

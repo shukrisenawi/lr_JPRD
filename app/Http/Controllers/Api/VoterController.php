@@ -3,33 +3,19 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ApiKey;
 use App\Models\PemilihRecord;
+use App\Services\ApiKeyAuthenticator;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class VoterController extends Controller
 {
-    public function birthdays(Request $request): JsonResponse
+    public function birthdays(Request $request, ApiKeyAuthenticator $apiKeyAuthenticator): JsonResponse
     {
-        $key = $request->query('key') ?? $request->bearerToken();
-
-        if (! $key) {
-            return response()->json(['error' => 'Kunci API diperlukan.'], 401);
+        if ($error = $apiKeyAuthenticator->validate($request)) {
+            return $error;
         }
-
-        $apiKey = ApiKey::query()->get()->first(fn (ApiKey $k) => $k->key === $key);
-
-        if (! $apiKey) {
-            return response()->json(['error' => 'Kunci API tidak sah.'], 401);
-        }
-
-        if ($apiKey->expires_at && $apiKey->expires_at->isPast()) {
-            return response()->json(['error' => 'Kunci API telah luput.'], 401);
-        }
-
-        $apiKey->update(['last_used_at' => now()]);
 
         $date = $request->query('date')
             ? Carbon::parse($request->query('date'))->timezone('Asia/Kuala_Lumpur')
@@ -46,7 +32,7 @@ class VoterController extends Controller
             ->whereDay('date_of_birth', $day)
             ->where(function ($q) {
                 $q->whereNotNull('phone_home')->where('phone_home', '!=', '')
-                  ->orWhereNotNull('phone_mobile')->where('phone_mobile', '!=', '');
+                    ->orWhereNotNull('phone_mobile')->where('phone_mobile', '!=', '');
             })
             ->orderBy('name')
             ->get()

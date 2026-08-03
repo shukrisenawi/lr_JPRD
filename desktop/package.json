@@ -1,0 +1,45 @@
+{
+    "name": "jprd-udm-monitor",
+    "version": "1.0.0",
+    "description": "Windows desktop monitor for the JPRD UDM cula report",
+    "author": "JPRD",
+    "private": true,
+    "type": "module",
+    "main": "main.mjs",
+    "scripts": {
+        "start": "electron .",
+        "dist": "node build-windows.mjs",
+        "dist:installer": "node build-windows.mjs installer",
+        "dist:portable": "node build-windows.mjs portable"
+    },
+    "devDependencies": {
+        "electron": "^43.2.0",
+        "electron-builder": "^26.15.3"
+    },
+    "build": {
+        "appId": "com.jprd.udmmonitor",
+        "productName": "JPRD UDM Monitor",
+        "artifactName": "JPRD-UDM-Monitor-${version}-${arch}.${ext}",
+        "files": [
+            "main.mjs",
+            "build-windows.mjs",
+            "preload.cjs",
+            "renderer/**/*"
+        ],
+        "directories": {
+            "output": "release"
+        },
+        "win": {
+            "target": [
+                "nsis",
+                "portable"
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "shortcutName": "JPRD UDM Monitor"
+        }
+    }
+}

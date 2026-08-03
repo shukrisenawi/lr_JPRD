@@ -2,23 +2,25 @@
 
 use App\Http\Controllers\Admin\AccessManagementController;
 use App\Http\Controllers\Admin\ApiKeyController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\CarianPemilihController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CopiedRecordController;
 use App\Http\Controllers\CulaanBotController;
 use App\Http\Controllers\CulaanController;
-use App\Http\Controllers\VccController;
-use App\Http\Controllers\KadTenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupPemilihController;
+use App\Http\Controllers\KadTenController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
-use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\TambahPemilihController;
 use App\Http\Controllers\PusatKhidmatController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SheetPageController;
+use App\Http\Controllers\TambahPemilihController;
+use App\Http\Controllers\VccController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -160,7 +162,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/pusat-khidmat/{pemilihRecord}/update-cula', [PusatKhidmatController::class, 'updateCula'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.update-cula');
     Route::post('/pusat-khidmat/{record}/check', [PusatKhidmatController::class, 'toggleCheck'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.check');
 
-    Route::post('/preferences', function (\Illuminate\Http\Request $request) {
+    Route::post('/preferences', function (Request $request) {
         $request->validate([
             'key' => 'required|string',
             'value' => 'nullable',
@@ -170,6 +172,7 @@ Route::middleware('auth')->group(function () {
                 $request->key => $request->value,
             ]),
         ]);
+
         return response()->json(['ok' => true]);
     })->name('preferences.save');
 
@@ -182,3 +185,4 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 
 Route::get('/api/voters/birthdays', [VoterController::class, 'birthdays'])->name('api.voters.birthdays');
+Route::get('/api/reports/udm', [ReportController::class, 'udm'])->name('api.reports.udm');

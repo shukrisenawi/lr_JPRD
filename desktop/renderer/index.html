@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPRD UDM Monitor</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">JPRD MONITOR</p>
+                <h1>Table Culaan UDM</h1>
+                <p class="subtitle">Paparan ringkas yang dikemas kini secara automatik.</p>
+            </div>
+            <div class="top-actions">
+                <span id="connection-status" class="status status-idle">Belum disambung</span>
+                <button id="refresh-button" class="button button-light" type="button">Refresh</button>
+                <button id="settings-button" class="button button-light" type="button">Tetapan</button>
+            </div>
+        </header>
+
+        <main>
+            <section id="settings-panel" class="panel settings-panel hidden">
+                <div>
+                    <p class="eyebrow">SAMBUNGAN API</p>
+                    <h2>Tetapan aplikasi</h2>
+                    <p class="muted">API key disimpan secara terlindung dalam PC ini dan digunakan untuk akses API sistem.</p>
+                </div>
+                <form id="settings-form" class="settings-form">
+                    <label>
+                        URL sistem
+                        <input id="base-url" name="baseUrl" type="url" value="https://paskawasansik.com" required>
+                    </label>
+                    <label>
+                        API key
+                        <input id="api-key" name="apiKey" type="password" autocomplete="off" placeholder="Masukkan API key">
+                        <small id="key-hint" class="muted"></small>
+                    </label>
+                    <div class="form-actions">
+                        <button class="button button-primary" type="submit">Simpan dan sambung</button>
+                    </div>
+                </form>
+                <p id="settings-error" class="error-text hidden"></p>
+            </section>
+
+            <section id="dashboard" class="hidden">
+                <div class="dashboard-heading">
+                    <div>
+                        <p class="eyebrow">LAPORAN / UDM</p>
+                        <h2>Jumlah keseluruhan</h2>
+                    </div>
+                    <p id="updated-at" class="muted">Belum ada data</p>
+                </div>
+                <div id="stats" class="stats-grid"></div>
+
+                <section class="panel table-panel">
+                    <div class="table-heading">
+                        <div>
+                            <h2>Ringkasan Culaan Mengikut UDM</h2>
+                            <p class="muted">Data diambil daripada <code>/api/reports/udm</code>.</p>
+                        </div>
+                        <span id="row-count" class="row-count">0 UDM</span>
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>UDM</th>
+                                    <th>Siap</th>
+                                    <th>JP</th>
+                                    <th>L</th>
+                                    <th>P</th>
+                                    <th>M</th>
+                                    <th>C</th>
+                                    <th>I</th>
+                                    <th>S</th>
+                                    <th>PAS</th>
+                                    <th>PBBM</th>
+                                    <th>BN</th>
+                                    <th>PH</th>
+                                    <th>GTA</th>
+                                    <th>PLK</th>
+                                    <th>AP</th>
+                                    <th>TK</th>
+                                    <th>Mati</th>
+                                    <th>Baki</th>
+                                </tr>
+                            </thead>
+                            <tbody id="udm-table-body"></tbody>
+                            <tfoot id="udm-table-foot"></tfoot>
+                        </table>
+                    </div>
+                </section>
+            </section>
+
+            <section id="empty-state" class="panel empty-state">
+                <div class="empty-icon">API</div>
+                <h2>Sambungkan aplikasi</h2>
+                <p>Masukkan URL sistem dan API key untuk memaparkan laporan culaan UDM.</p>
+                <button id="empty-settings-button" class="button button-primary" type="button">Buka tetapan</button>
+            </section>
+
+            <p id="global-error" class="error-banner hidden"></p>
+        </main>
+    </div>
+    <script type="module" src="./renderer.js"></script>
+</body>
+</html>

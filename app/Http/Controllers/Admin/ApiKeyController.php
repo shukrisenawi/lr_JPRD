@@ -18,6 +18,7 @@ class ApiKeyController extends Controller
 
         return Inertia::render('Admin/ApiKeys', [
             'apiUrl' => route('api.voters.birthdays'),
+            'udmApiUrl' => route('api.reports.udm'),
             'apiKeys' => ApiKey::query()
                 ->orderByDesc('created_at')
                 ->get()
