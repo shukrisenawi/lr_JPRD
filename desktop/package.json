@@ -23,6 +23,7 @@
         "files": [
             "main.mjs",
             "build-windows.mjs",
+            "build/icon.png",
             "preload.cjs",
             "renderer/**/*"
         ],
@@ -30,6 +31,7 @@
             "output": "release"
         },
         "win": {
+            "icon": "build/icon.png",
             "target": [
                 "nsis",
                 "portable"
