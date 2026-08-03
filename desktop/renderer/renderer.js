@@ -24,9 +24,9 @@ const elements = {
 };
 
 const columns = [
-    ['siap_cula', 'Siap'], ['JP', 'JP'], ['L', 'L'], ['P', 'P'], ['M', 'M'], ['C', 'C'], ['I', 'I'], ['S', 'S'],
-    ['PAS', 'PAS'], ['PBBM', 'PBBM'], ['BN', 'BN'], ['PH', 'PH'], ['GTA', 'GTA'], ['PLK', 'PLK'],
-    ['Atas Pagar', 'AP'], ['Tak Kenal', 'TK'], ['Mati', 'Mati'], ['CULA', 'Baki'],
+    ['siap_cula', 'Siap', 'ready'], ['JP', 'JP', 'jp'], ['L', 'L', 'demo'], ['P', 'P', 'demo'], ['M', 'M', 'demo'], ['C', 'C', 'demo'], ['I', 'I', 'demo'], ['S', 'S', 'demo'],
+    ['PAS', 'PAS', 'party'], ['PBBM', 'PBBM', 'party'], ['BN', 'BN', 'party'], ['PH', 'PH', 'party'], ['GTA', 'GTA', 'party'], ['PLK', 'PLK', 'party'],
+    ['Atas Pagar', 'AP', 'party'], ['Tak Kenal', 'TK', 'party'], ['Mati', 'Mati', 'party'], ['CULA', 'Baki', 'total'],
 ];
 
 let settings = { hasApiKey: false };
@@ -69,29 +69,29 @@ function clearErrors() {
 
 function renderStats(summary) {
     const stats = [
-        ['Jumlah Pemilih', summary.total_voters, 'Rekod aktif'],
-        ['Sudah Dicula', summary.with_cula, 'Ada status culaan'],
-        ['Belum Dicula', summary.belum_dicula, 'Baki tindakan'],
-        ['Peratus Siap', fmtPercent(summary.coverage_percent), `${fmt(summary.total_dm)} UDM / ${fmt(summary.total_localities)} lokaliti`],
+        ['Jumlah Pemilih', summary.total_voters, 'Rekod aktif', 'ALL'],
+        ['Sudah Dicula', summary.with_cula, 'Ada status culaan', 'OK'],
+        ['Belum Dicula', summary.belum_dicula, 'Baki tindakan', 'TODO'],
+        ['Peratus Siap', fmtPercent(summary.coverage_percent), `${fmt(summary.total_dm)} UDM / ${fmt(summary.total_localities)} lokaliti`, '%'],
     ];
 
-    elements.stats.innerHTML = stats.map(([label, value, detail]) => `
+    elements.stats.innerHTML = stats.map(([label, value, detail, marker]) => `
         <article class="stat-card">
-            <div class="stat-label">${escapeHtml(label)}</div>
+            <div class="stat-top"><span class="stat-marker">${escapeHtml(marker)}</span><span class="stat-label">${escapeHtml(label)}</span></div>
             <div class="stat-value">${escapeHtml(value)}</div>
             <div class="stat-detail">${escapeHtml(detail)}</div>
         </article>
     `).join('');
 }
 
-function renderTable(rows, summary) {
+function renderTable(rows) {
     elements.rowCount.textContent = `${fmt(rows.length)} UDM`;
-    elements.tableBody.innerHTML = rows.map((row) => `
+    elements.tableBody.innerHTML = rows.length ? rows.map((row) => `
         <tr>
             <td>${escapeHtml(row.name || row.code || '-')}</td>
-            ${columns.map(([key]) => `<td>${fmt(row[key])}</td>`).join('')}
+            ${columns.map(([key, _label, group]) => `<td class="metric-${group}">${fmt(row[key])}</td>`).join('')}
         </tr>
-    `).join('');
+    `).join('') : '<tr><td class="table-empty" colspan="19">Tiada rekod UDM untuk dipaparkan.</td></tr>';
 
     const totals = columns.reduce((result, [key]) => {
         result[key] = rows.reduce((total, row) => total + (Number(row[key]) || 0), 0);
@@ -101,7 +101,7 @@ function renderTable(rows, summary) {
     elements.tableFoot.innerHTML = `
         <tr>
             <td>JUMLAH</td>
-            ${columns.map(([key]) => `<td>${fmt(totals[key])}</td>`).join('')}
+            ${columns.map(([key, _label, group]) => `<td class="metric-${group}">${fmt(totals[key])}</td>`).join('')}
         </tr>
     `;
 }
@@ -110,7 +110,7 @@ function renderReport(payload) {
     const summary = payload.summary || {};
     const rows = Array.isArray(payload.data) ? payload.data : [];
     renderStats(summary);
-    renderTable(rows, summary);
+    renderTable(rows);
     elements.updatedAt.textContent = payload.fetched_at
         ? `Kemas kini terakhir: ${new Date(payload.fetched_at).toLocaleString('ms-MY')}`
         : 'Kemas kini terakhir: -';

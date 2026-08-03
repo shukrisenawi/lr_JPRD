@@ -9,15 +9,19 @@
 <body>
     <div class="app-shell">
         <header class="topbar">
-            <div>
-                <p class="eyebrow">JPRD MONITOR</p>
-                <h1>Table Culaan UDM</h1>
-                <p class="subtitle">Paparan ringkas yang dikemas kini secara automatik.</p>
+            <div class="brand-cluster">
+                <div class="brand-mark"><span>J</span><i></i></div>
+                <div>
+                    <p class="eyebrow">JPRD / LIVE OPERATIONS</p>
+                    <h1>Culaan UDM Monitor</h1>
+                    <p class="subtitle">Ringkasan lapangan yang sentiasa dikemas kini.</p>
+                </div>
             </div>
             <div class="top-actions">
+                <div class="live-chip"><span class="live-dot"></span><span>Live data</span></div>
                 <span id="connection-status" class="status status-idle">Belum disambung</span>
-                <button id="refresh-button" class="button button-light" type="button">Refresh</button>
-                <button id="settings-button" class="button button-light" type="button">Tetapan</button>
+                <button id="refresh-button" class="button button-quiet" type="button">Refresh</button>
+                <button id="settings-button" class="button button-quiet" type="button">Tetapan</button>
             </div>
         </header>
 
@@ -25,8 +29,8 @@
             <section id="settings-panel" class="panel settings-panel hidden">
                 <div>
                     <p class="eyebrow">SAMBUNGAN API</p>
-                    <h2>Tetapan aplikasi</h2>
-                    <p class="muted">API key disimpan secara terlindung dalam PC ini dan digunakan untuk akses API sistem.</p>
+                    <h2>Konfigurasi monitor</h2>
+                    <p class="muted">API key digunakan untuk akses selamat ke sistem production.</p>
                 </div>
                 <form id="settings-form" class="settings-form">
                     <label>
@@ -39,7 +43,7 @@
                         <small id="key-hint" class="muted"></small>
                     </label>
                     <div class="form-actions">
-                        <button class="button button-primary" type="submit">Simpan dan sambung</button>
+                        <button class="button button-primary" type="submit">Simpan & sambung</button>
                     </div>
                 </form>
                 <p id="settings-error" class="error-text hidden"></p>
@@ -49,22 +53,28 @@
                 <div class="dashboard-heading">
                     <div>
                         <p class="eyebrow">LAPORAN / UDM</p>
-                        <h2>Jumlah keseluruhan</h2>
+                        <h2>Ringkasan keseluruhan</h2>
+                        <p class="muted">Pantau jumlah pemilih, status culaan dan pecahan UDM dalam satu pandangan.</p>
                     </div>
-                    <p id="updated-at" class="muted">Belum ada data</p>
+                    <div class="dashboard-meta"><span class="meta-dot"></span><p id="updated-at" class="muted">Belum ada data</p></div>
                 </div>
                 <div id="stats" class="stats-grid"></div>
 
                 <section class="panel table-panel">
                     <div class="table-heading">
                         <div>
-                            <h2>Ringkasan Culaan Mengikut UDM</h2>
-                            <p class="muted">Data diambil daripada <code>/api/reports/udm</code>.</p>
+                            <p class="eyebrow">LIVE BREAKDOWN</p>
+                            <h2>Ringkasan culaan mengikut UDM</h2>
+                            <p class="muted">Data akan disegarkan automatik setiap 10 saat.</p>
                         </div>
-                        <span id="row-count" class="row-count">0 UDM</span>
+                        <div class="table-heading-meta"><span id="row-count" class="row-count">0 UDM</span><span class="table-source">API secured</span></div>
                     </div>
-                    <div class="table-scroll">
+                    <div class="table-wrap">
                         <table>
+                            <colgroup>
+                                <col class="col-udm">
+                                <col span="18">
+                            </colgroup>
                             <thead>
                                 <tr>
                                     <th>UDM</th>
@@ -96,9 +106,10 @@
             </section>
 
             <section id="empty-state" class="panel empty-state">
-                <div class="empty-icon">API</div>
-                <h2>Sambungkan aplikasi</h2>
-                <p>Masukkan URL sistem dan API key untuk memaparkan laporan culaan UDM.</p>
+                <div class="empty-icon"><span></span><span></span><span></span></div>
+                <p class="eyebrow">FIRST CONNECTION</p>
+                <h2>Sambungkan monitor</h2>
+                <p>Masukkan API key untuk mula memaparkan laporan culaan UDM secara live.</p>
                 <button id="empty-settings-button" class="button button-primary" type="button">Buka tetapan</button>
             </section>
 
