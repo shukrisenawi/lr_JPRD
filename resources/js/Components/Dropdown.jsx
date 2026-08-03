@@ -69,7 +69,7 @@ const DropdownLink = ({ className = '', badge, children, ...props }) => {
             {...props}
             className={'flex w-full items-center px-3 py-2 text-left text-xs font-medium text-slate-700 transition hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700 focus:outline-none ' + className}
         >
-            <span className="flex-1">{children}</span>
+            {children}
             <Badge count={badge} />
         </Link>
     );
