@@ -15,6 +15,20 @@ return new class extends Migration
             return;
         }
 
+        if (DB::getDriverName() === 'sqlite') {
+            DB::table('roles')->get()->each(function ($role) use ($childKeys): void {
+                $modules = json_decode($role->access_modules ?? '[]', true) ?: [];
+
+                if (in_array('culaan', $modules, true)) {
+                    DB::table('roles')->where('id', $role->id)->update([
+                        'access_modules' => json_encode($childKeys),
+                    ]);
+                }
+            });
+
+            return;
+        }
+
         $childKeysJson = collect($childKeys)->map(fn (string $k) => '"'.$k.'"')->implode(',');
 
         DB::statement("
@@ -26,6 +40,20 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            DB::table('roles')->get()->each(function ($role): void {
+                $modules = json_decode($role->access_modules ?? '[]', true) ?: [];
+
+                if (array_intersect(['culaan.senarai', 'culaan.laporan'], $modules)) {
+                    DB::table('roles')->where('id', $role->id)->update([
+                        'access_modules' => json_encode(['culaan']),
+                    ]);
+                }
+            });
+
+            return;
+        }
+
         DB::statement("
             UPDATE roles
             SET access_modules = JSON_ARRAY('culaan')

@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Clear existing data — start fresh
         DB::statement('SET FOREIGN_KEY_CHECKS=0');
         DB::table('committee_memberships')->truncate();

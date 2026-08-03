@@ -96,7 +96,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 ...(user.access_level === 'udm' ? [{ key: 'jawatankuasa.senarai-udm', href: 'jawatankuasa.senarai-ajk-udm', routePattern: 'jawatankuasa.senarai-ajk-udm', label: 'Senarai AJK UDM' }] : []),
                 { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
                 ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
-                ...(isMasterAdmin ? [{ key: 'api-keys', href: 'admin.api-keys.index', routePattern: 'admin.api-keys.*', label: 'Create API' }] : []),
+                ...(isMasterAdmin ? [{ key: 'api-keys', href: 'admin.api-keys.index', routePattern: 'admin.api-keys.*', label: 'Generate API Key' }] : []),
             ],
         },
     ];
@@ -246,7 +246,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('jawatankuasa.senarai-udm') && user.access_level === 'udm' && { href: route('jawatankuasa.senarai-ajk-udm'), active: route().current('jawatankuasa.senarai-ajk-udm'), label: 'Senarai AJK UDM' },
                                     canAccess('settings') && { href: route('settings.edit'), active: route().current('settings.edit'), label: 'Settings' },
                                     isMasterAdmin && { href: route('admin.access.index'), active: route().current('admin.access.*'), label: 'Akses Pengguna' },
-                                    isMasterAdmin && { href: route('admin.api-keys.index'), active: route().current('admin.api-keys.*'), label: 'Create API' },
+                                    isMasterAdmin && { href: route('admin.api-keys.index'), active: route().current('admin.api-keys.*'), label: 'Generate API Key' },
                                 ].filter(Boolean) },
                             ];
                             return groups.map(g => {

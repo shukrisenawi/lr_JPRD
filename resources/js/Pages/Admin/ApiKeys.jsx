@@ -67,12 +67,12 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
             header={
                 <div>
                     <p className="label-section">Pentadbiran</p>
-                    <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">Kunci API</h2>
-                    <p className="mt-1 text-xs font-medium text-slate-500">Urus kunci API untuk integrasi sistem luaran.</p>
+                    <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">Generate API Key</h2>
+                    <p className="mt-1 text-xs font-medium text-slate-500">Jana dan urus kunci untuk aplikasi luaran mengakses maklumat sistem.</p>
                 </div>
             }
         >
-            <Head title="Kunci API" />
+            <Head title="Generate API Key" />
 
             <div className="mx-auto max-w-4xl space-y-4 px-3 sm:px-4 lg:px-6">
                 {newKey && (
@@ -125,7 +125,7 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                                     <tr className="border-b border-blue-100">
                                         <td className="py-1.5 pr-4 font-mono text-slate-800">key</td>
                                         <td className="py-1.5 pr-4 text-slate-600">Ya</td>
-                                        <td className="py-1.5 text-slate-600">Kunci API (query string atau Bearer token)</td>
+                                        <td className="py-1.5 text-slate-600">Pilihan jika tidak menggunakan Bearer token</td>
                                     </tr>
                                     <tr className="border-b border-blue-100">
                                         <td className="py-1.5 pr-4 font-mono text-slate-800">date</td>
@@ -142,8 +142,8 @@ export default function ApiKeys({ apiKeys, apiUrl }) {
                         <div>
                             <p className="mb-1 font-bold uppercase tracking-wide text-blue-700">Contoh Request (curl)</p>
                             <div className="flex items-start gap-2">
-                                <pre className="min-w-0 flex-1 overflow-x-auto rounded-md bg-slate-900 p-3 text-xs leading-relaxed text-green-300 shadow-sm"><code>{`curl "${apiUrl}?key=KUNCI_ANDA"`}</code></pre>
-                                <button type="button" onClick={() => copy(`curl "${apiUrl}?key="`, 'curl')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
+                                <pre className="min-w-0 flex-1 overflow-x-auto rounded-md bg-slate-900 p-3 text-xs leading-relaxed text-green-300 shadow-sm"><code>{`curl -H "Authorization: Bearer KUNCI_ANDA" "${apiUrl}?date=YYYY-MM-DD"`}</code></pre>
+                                <button type="button" onClick={() => copy(`curl -H "Authorization: Bearer KUNCI_ANDA" "${apiUrl}?date=YYYY-MM-DD"`, 'curl')} className="shrink-0 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-700">Salin</button>
                             </div>
                         </div>
                     </div>

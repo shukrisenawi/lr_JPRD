@@ -13,6 +13,23 @@ return new class extends Migration
             $table->foreignId('committee_group_id')->nullable()->after('id')->constrained('committee_groups')->cascadeOnDelete();
         });
 
+        if (DB::getDriverName() === 'sqlite') {
+            DB::table('committee_memberships')->get()->each(function ($membership): void {
+                $groups = DB::table('committee_group_position')
+                    ->where('committee_position_id', $membership->committee_position_id)
+                    ->where('level', $membership->level)
+                    ->pluck('committee_group_id');
+
+                if ($groups->count() === 1) {
+                    DB::table('committee_memberships')
+                        ->where('id', $membership->id)
+                        ->update(['committee_group_id' => $groups->first()]);
+                }
+            });
+
+            return;
+        }
+
         DB::statement('
             UPDATE committee_memberships cm
             SET cm.committee_group_id = (

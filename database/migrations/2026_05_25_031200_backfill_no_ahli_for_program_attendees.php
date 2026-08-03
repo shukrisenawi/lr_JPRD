@@ -8,9 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('pemilih_records', 'no_ahli')) {
+        if (! Schema::hasColumn('pemilih_records', 'no_ahli')) {
             return;
         }
+
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement('
             UPDATE program_attendees pa
             JOIN pemilih_records pr ON (
