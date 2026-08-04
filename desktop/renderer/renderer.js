@@ -81,6 +81,15 @@ function clearErrors() {
     elements.globalError.classList.add('hidden');
 }
 
+function webCoveragePercent(row) {
+    const explicitCoverage = Number(row.coverage_percent);
+    if (Number.isFinite(explicitCoverage)) return explicitCoverage;
+
+    const total = Number(row.total) || 0;
+    const pending = Number(row.CULA) || 0;
+    return total > 0 ? ((total - pending) / total) * 100 : 0;
+}
+
 function renderStats(summary) {
     const stats = [
         ['Jumlah Pemilih', fmt(summary.total_voters), 'Rekod pemilih aktif', '01'],
@@ -100,7 +109,8 @@ function renderStats(summary) {
 
 function renderTable(rows) {
     elements.rowCount.textContent = `${fmt(rows.length)} UDM`;
-    elements.tableBody.innerHTML = rows.length ? rows.map((row) => `
+    const orderedRows = [...rows].sort((first, second) => webCoveragePercent(second) - webCoveragePercent(first));
+    elements.tableBody.innerHTML = orderedRows.length ? orderedRows.map((row) => `
         <tr>
             <td>${escapeHtml(row.name || row.code || '-')}</td>
             ${columns.map(([key, _label, group]) => `<td class="metric-${group}">${fmt(row[key])}</td>`).join('')}

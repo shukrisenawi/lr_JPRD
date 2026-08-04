@@ -64,9 +64,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(41, 151, 101
 .side-button strong { font-size: 11px; font-weight: 600; }
 .side-button small { color: #8eaf9e; font-size: 9px; }
 .button-glyph { position: relative; display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; border: 1px solid rgba(190,230,205,.14); border-radius: 8px; background: rgba(255,255,255,.06); }
-.refresh-glyph::before { width: 11px; height: 11px; border: 2px solid #9cd8b3; border-right-color: transparent; border-radius: 50%; content: ""; }
+.refresh-glyph::before { display: block; width: 11px; height: 11px; border: 2px solid #9cd8b3; border-right-color: transparent; border-radius: 50%; box-sizing: border-box; content: ""; }
 .refresh-glyph::after { position: absolute; top: 7px; right: 6px; border: 3px solid transparent; border-left-color: #9cd8b3; transform: rotate(-28deg); content: ""; }
-.settings-glyph::before { width: 10px; height: 10px; border: 2px dotted #9cd8b3; border-radius: 50%; content: ""; }
+.settings-glyph::before { display: block; width: 10px; height: 10px; border: 2px dotted #9cd8b3; border-radius: 50%; box-sizing: border-box; content: ""; }
 .settings-glyph::after { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #9cd8b3; content: ""; }
 .sidebar-footer { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; margin-top: auto; border-top: 1px solid rgba(204,238,217,.1); padding-top: 17px; }
 .secure-dot { width: 8px; height: 8px; border-radius: 50%; background: #65cc8c; box-shadow: 0 0 0 4px rgba(101,204,140,.08); }
@@ -127,9 +127,9 @@ main { max-width: 1580px; margin: 0 auto; padding: 25px 34px 42px; }
 .table-source { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #dcfce7; color: #64748b; }
 .table-source i { width: 5px; height: 5px; border-radius: 50%; background: #2ca568; }
 .table-wrap { width: 100%; min-height: 265px; overflow: visible; }
-table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 13px; }
 .col-udm { width: 14%; }
-th { height: 40px; border-bottom: 1px solid #bbd6c5; padding: 9px 3px; background: #d1fae5; color: #14532d; font-size: 10px; font-weight: 600; letter-spacing: .035em; text-align: center; text-transform: uppercase; }
+th { height: 41px; border-bottom: 1px solid #bbd6c5; padding: 9px 3px; background: #d1fae5; color: #14532d; font-size: 11px; font-weight: 600; letter-spacing: .035em; text-align: center; text-transform: uppercase; }
 th:first-child, td:first-child { text-align: left; }
 th:first-child { padding-left: 14px; background: #dcfce7; }
 th:nth-child(2) { background: #f0fdf4; color: #14532d; }
@@ -137,8 +137,8 @@ th:nth-child(3) { background: #dbeafe; color: #1e3a8a; }
 th:nth-child(n+4):nth-child(-n+9) { background: #d1fae5; color: #064e3b; }
 th:nth-child(n+10):nth-child(-n+18) { background: #fef3c7; color: #78350f; }
 th:last-child { background: #ede9fe; color: #4c1d95; }
-td { height: 41px; border-bottom: 1px solid #e2e8f0; padding: 9px 3px; background: #fff; color: #475569; text-align: center; white-space: nowrap; font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; transition: background-color .12s; }
-td:first-child { overflow-wrap: anywhere; padding-right: 8px; padding-left: 14px; background: #fff; color: #1e293b; font-size: 11px; font-weight: 600; white-space: normal; }
+td { height: 42px; border-bottom: 1px solid #e2e8f0; padding: 9px 3px; background: #fff; color: #475569; text-align: center; white-space: nowrap; font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; transition: background-color .12s; }
+td:first-child { overflow-wrap: anywhere; padding-right: 8px; padding-left: 14px; background: #fff; color: #1e293b; font-size: 12px; font-weight: 600; white-space: normal; }
 td:nth-child(2) { background-color: rgba(240, 253, 244, .75); color: #166534; }
 td:nth-child(3) { background-color: rgba(239, 246, 255, .75); color: #1e40af; }
 td:nth-child(n+4):nth-child(-n+9) { background-color: rgba(236, 253, 245, .72); color: #065f46; }
@@ -146,8 +146,8 @@ td:nth-child(n+10):nth-child(-n+18) { background-color: rgba(255, 251, 235, .72)
 td:last-child { background-color: rgba(245, 243, 255, .85); color: #5b21b6; font-weight: 600; }
 tbody tr:nth-child(even) td:first-child { background-color: #f8fafc; }
 tbody tr:hover td { background-color: #f0fdf4 !important; color: #14532d; }
-.table-empty { height: 110px; color: var(--muted); font-size: 13px; text-align: center !important; }
-tfoot td { height: 43px; border-top: 2px solid #86b99a; border-bottom: 0; background: #dcfce7 !important; color: #14532d; font-size: 11px; font-weight: 600; }
+.table-empty { height: 110px; color: var(--muted); font-size: 14px; text-align: center !important; }
+tfoot td { height: 44px; border-top: 2px solid #86b99a; border-bottom: 0; background: #dcfce7 !important; color: #14532d; font-size: 12px; font-weight: 600; }
 tfoot td:first-child { background: #bbf7d0 !important; }
 
 .sidebar-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
@@ -160,8 +160,8 @@ tfoot td:first-child { background: #bbf7d0 !important; }
 .sidebar-collapsed .brand-mark { width: 48px; height: 48px; }
 .sidebar-collapsed .connection-card { width: 42px; min-height: 42px; margin-top: 55px; padding: 12px; }
 .sidebar-collapsed #connection-status { display: grid; width: 34px; height: 34px; place-items: center; margin: 0 auto; padding: 0; overflow: hidden; border-radius: 10px; font-size: 0 !important; text-indent: -9999px; white-space: nowrap; }
-.sidebar-collapsed #connection-status::before { width: 9px; height: 9px; border-radius: 50%; background: currentColor; content: ""; }
-.sidebar-collapsed #connection-status.status-loading::before { width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; background: transparent; animation: status-spin .8s linear infinite; }
+.sidebar-collapsed #connection-status::before { display: block; width: 9px; height: 9px; place-self: center; border-radius: 50%; background: currentColor; content: ""; text-indent: 0; }
+.sidebar-collapsed #connection-status.status-loading::before { width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; background: transparent; box-sizing: border-box; animation: status-spin .8s linear infinite; }
 @keyframes status-spin { to { transform: rotate(360deg); } }
 .sidebar-collapsed .sidebar-actions { width: 100%; }
 .sidebar-collapsed .side-button { justify-content: center; padding: 7px; }
