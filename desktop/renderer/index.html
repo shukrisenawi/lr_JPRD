@@ -8,113 +8,171 @@
 </head>
 <body>
     <div class="app-shell">
-        <header class="topbar">
+        <aside class="sidebar">
+            <div class="sidebar-pattern" aria-hidden="true"></div>
+
+            <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Sembunyikan menu" aria-expanded="true">
+                <span aria-hidden="true"></span>
+            </button>
+
             <div class="brand-cluster">
-                <div class="brand-mark"><span>J</span><i></i></div>
-                <div>
-                    <p class="eyebrow">JPRD / LIVE OPERATIONS</p>
-                    <h1>Culaan UDM Monitor</h1>
-                    <p class="subtitle">Ringkasan lapangan yang sentiasa dikemas kini.</p>
+                <div class="brand-mark">
+                    <img src="../build/icon.png" alt="Logo JPRD">
+                </div>
+                <div class="brand-copy">
+                    <p class="brand-kicker">JPRD JENERI</p>
+                    <h1>UDM Monitor</h1>
                 </div>
             </div>
-            <div class="top-actions">
-                <div class="live-chip"><span class="live-dot"></span><span>Live data</span></div>
-                <span id="connection-status" class="status status-idle">Belum disambung</span>
-                <button id="refresh-button" class="button button-quiet" type="button">Refresh</button>
-                <button id="settings-button" class="button button-quiet" type="button">Tetapan</button>
-            </div>
-        </header>
 
-        <main>
-            <section id="settings-panel" class="panel settings-panel hidden">
-                <div>
-                    <p class="eyebrow">SAMBUNGAN API</p>
-                    <h2>Konfigurasi monitor</h2>
-                    <p class="muted">API key digunakan untuk akses selamat ke sistem production.</p>
+            <div class="sidebar-rule"></div>
+
+            <section class="connection-card" aria-label="Status sambungan">
+                <div class="connection-heading sidebar-copy">
+                    <span class="live-beacon"><i></i></span>
+                    <span>OPERASI LANGSUNG</span>
                 </div>
-                <form id="settings-form" class="settings-form">
-                    <label>
-                        URL sistem
-                        <input id="base-url" name="baseUrl" type="url" value="https://paskawasansik.com" required>
-                    </label>
-                    <label>
-                        API key
-                        <input id="api-key" name="apiKey" type="password" autocomplete="off" placeholder="Masukkan API key">
-                        <small id="key-hint" class="muted"></small>
-                    </label>
-                    <div class="form-actions">
-                        <button class="button button-primary" type="submit">Simpan & sambung</button>
-                    </div>
-                </form>
-                <p id="settings-error" class="error-text hidden"></p>
+                <span id="connection-status" class="status status-idle sidebar-copy">Belum disambung</span>
+                <p class="sidebar-copy">Data disegar secara automatik setiap 10 saat.</p>
             </section>
 
-            <section id="dashboard" class="hidden">
-                <div class="dashboard-heading">
-                    <div>
-                        <p class="eyebrow">LAPORAN / UDM</p>
-                        <h2>Ringkasan keseluruhan</h2>
-                        <p class="muted">Pantau jumlah pemilih, status culaan dan pecahan UDM dalam satu pandangan.</p>
-                    </div>
-                    <div class="dashboard-meta"><span class="meta-dot"></span><p id="updated-at" class="muted">Belum ada data</p></div>
-                </div>
-                <div id="stats" class="stats-grid"></div>
+            <nav class="sidebar-actions" aria-label="Tindakan aplikasi">
+                <button id="refresh-button" class="side-button side-button-primary" type="button">
+                    <span class="button-glyph refresh-glyph" aria-hidden="true"></span>
+                    <span class="sidebar-copy">
+                        <strong>Segar semula</strong>
+                        <small>Ambil data terkini</small>
+                    </span>
+                </button>
+                <button id="settings-button" class="side-button" type="button">
+                    <span class="button-glyph settings-glyph" aria-hidden="true"></span>
+                    <span class="sidebar-copy">
+                        <strong>Tetapan</strong>
+                        <small>URL sistem dan API key</small>
+                    </span>
+                </button>
+            </nav>
 
-                <section class="panel table-panel">
-                    <div class="table-heading">
+            <div class="sidebar-footer">
+                <span class="secure-dot"></span>
+                <div class="sidebar-copy">
+                    <strong>Sambungan terlindung</strong>
+                    <small>API secured / Windows storage</small>
+                </div>
+            </div>
+        </aside>
+
+        <div class="workspace">
+            <header class="workspace-header">
+                <div>
+                    <p class="section-label">PUSAT KAWALAN DATA</p>
+                    <h2>Culaan UDM</h2>
+                    <p class="header-copy">Status lapangan dan prestasi culaan dalam satu paparan.</p>
+                </div>
+                <div class="header-meta">
+                    <span class="date-label">KEMAS KINI TERAKHIR</span>
+                    <p id="updated-at">Belum ada data</p>
+                </div>
+            </header>
+
+            <main>
+                <section id="settings-panel" class="settings-panel hidden">
+                    <div class="settings-intro">
+                        <span class="panel-index">01</span>
                         <div>
-                            <p class="eyebrow">LIVE BREAKDOWN</p>
-                            <h2>Ringkasan culaan mengikut UDM</h2>
-                            <p class="muted">Data akan disegarkan automatik setiap 10 saat.</p>
+                            <p class="section-label">SAMBUNGAN API</p>
+                            <h3>Konfigurasi monitor</h3>
+                            <p>API key digunakan untuk akses selamat ke sistem production.</p>
                         </div>
-                        <div class="table-heading-meta"><span id="row-count" class="row-count">0 UDM</span><span class="table-source">API secured</span></div>
                     </div>
-                    <div class="table-wrap">
-                        <table>
-                            <colgroup>
-                                <col class="col-udm">
-                                <col span="18">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>UDM</th>
-                                    <th>Siap</th>
-                                    <th>JP</th>
-                                    <th>L</th>
-                                    <th>P</th>
-                                    <th>M</th>
-                                    <th>C</th>
-                                    <th>I</th>
-                                    <th>S</th>
-                                    <th>PAS</th>
-                                    <th>PBBM</th>
-                                    <th>BN</th>
-                                    <th>PH</th>
-                                    <th>GTA</th>
-                                    <th>PLK</th>
-                                    <th>AP</th>
-                                    <th>TK</th>
-                                    <th>Mati</th>
-                                    <th>Baki</th>
-                                </tr>
-                            </thead>
-                            <tbody id="udm-table-body"></tbody>
-                            <tfoot id="udm-table-foot"></tfoot>
-                        </table>
-                    </div>
+                    <form id="settings-form" class="settings-form">
+                        <label>
+                            <span>URL sistem</span>
+                            <input id="base-url" name="baseUrl" type="url" value="https://paskawasansik.com" required>
+                        </label>
+                        <label>
+                            <span>API key</span>
+                            <input id="api-key" name="apiKey" type="password" autocomplete="off" placeholder="Masukkan API key">
+                            <small id="key-hint"></small>
+                        </label>
+                        <div class="form-actions">
+                            <button class="primary-button" type="submit">Simpan & sambung</button>
+                        </div>
+                    </form>
+                    <p id="settings-error" class="error-text hidden"></p>
                 </section>
-            </section>
 
-            <section id="empty-state" class="panel empty-state">
-                <div class="empty-icon"><span></span><span></span><span></span></div>
-                <p class="eyebrow">FIRST CONNECTION</p>
-                <h2>Sambungkan monitor</h2>
-                <p>Masukkan API key untuk mula memaparkan laporan culaan UDM secara live.</p>
-                <button id="empty-settings-button" class="button button-primary" type="button">Buka tetapan</button>
-            </section>
+                <section id="dashboard" class="hidden">
+                    <div class="overview-heading">
+                        <div>
+                            <h3>Ringkasan keseluruhan</h3>
+                            <p>Prestasi semasa bagi semua UDM yang direkodkan.</p>
+                        </div>
+                        <div class="live-label"><span></span> DATA LANGSUNG</div>
+                    </div>
 
-            <p id="global-error" class="error-banner hidden"></p>
-        </main>
+                    <div id="stats" class="stats-grid"></div>
+
+                    <section class="table-panel">
+                        <div class="table-heading">
+                            <div>
+                                <p class="section-label">PECAHAN OPERASI</p>
+                                <h3>Ringkasan culaan mengikut UDM</h3>
+                            </div>
+                            <div class="table-heading-meta">
+                                <span id="row-count" class="row-count">0 UDM</span>
+                                <span class="table-source"><i></i> API SECURED</span>
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <colgroup>
+                                    <col class="col-udm">
+                                    <col span="18">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>UDM</th>
+                                        <th>Siap</th>
+                                        <th>JP</th>
+                                        <th>L</th>
+                                        <th>P</th>
+                                        <th>M</th>
+                                        <th>C</th>
+                                        <th>I</th>
+                                        <th>S</th>
+                                        <th>PAS</th>
+                                        <th>PBBM</th>
+                                        <th>BN</th>
+                                        <th>PH</th>
+                                        <th>GTA</th>
+                                        <th>PLK</th>
+                                        <th>AP</th>
+                                        <th>TK</th>
+                                        <th>Mati</th>
+                                        <th>Baki</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="udm-table-body"></tbody>
+                                <tfoot id="udm-table-foot"></tfoot>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section id="empty-state" class="empty-state">
+                    <div class="empty-visual" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    <p class="section-label">SAMBUNGAN PERTAMA</p>
+                    <h3>Monitor sedia untuk digunakan</h3>
+                    <p>Masukkan API key untuk mula memaparkan laporan culaan UDM secara langsung.</p>
+                    <button id="empty-settings-button" class="primary-button" type="button">Buka tetapan</button>
+                </section>
+
+                <p id="global-error" class="error-banner hidden"></p>
+            </main>
+        </div>
     </div>
     <script type="module" src="./renderer.js"></script>
 </body>

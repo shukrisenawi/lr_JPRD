@@ -3,6 +3,8 @@ const refreshInterval = 10000;
 const numberFormat = new Intl.NumberFormat('ms-MY');
 
 const elements = {
+    appShell: document.querySelector('.app-shell'),
+    sidebarToggle: document.querySelector('#sidebar-toggle'),
     status: document.querySelector('#connection-status'),
     refresh: document.querySelector('#refresh-button'),
     settingsButton: document.querySelector('#settings-button'),
@@ -31,6 +33,13 @@ const columns = [
 
 let settings = { hasApiKey: false };
 let loading = false;
+
+function setSidebarCollapsed(collapsed) {
+    elements.appShell.classList.toggle('sidebar-collapsed', collapsed);
+    elements.sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+    elements.sidebarToggle.setAttribute('aria-label', collapsed ? 'Paparkan menu' : 'Sembunyikan menu');
+    localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0');
+}
 
 function fmt(value) {
     return numberFormat.format(Number(value) || 0);
@@ -69,10 +78,10 @@ function clearErrors() {
 
 function renderStats(summary) {
     const stats = [
-        ['Jumlah Pemilih', summary.total_voters, 'Rekod aktif', 'ALL'],
-        ['Sudah Dicula', summary.with_cula, 'Ada status culaan', 'OK'],
-        ['Belum Dicula', summary.belum_dicula, 'Baki tindakan', 'TODO'],
-        ['Peratus Siap', fmtPercent(summary.coverage_percent), `${fmt(summary.total_dm)} UDM / ${fmt(summary.total_localities)} lokaliti`, '%'],
+        ['Jumlah Pemilih', fmt(summary.total_voters), 'Rekod pemilih aktif', '01'],
+        ['Sudah Dicula', fmt(summary.with_cula), 'Rekod dengan status culaan', '02'],
+        ['Belum Dicula', fmt(summary.belum_dicula), 'Baki yang memerlukan tindakan', '03'],
+        ['Peratus Siap', fmtPercent(summary.coverage_percent), `${fmt(summary.total_dm)} UDM / ${fmt(summary.total_localities)} lokaliti`, '04'],
     ];
 
     elements.stats.innerHTML = stats.map(([label, value, detail, marker]) => `
@@ -127,7 +136,7 @@ async function refresh() {
     try {
         const payload = await api.fetchReport();
         renderReport(payload);
-        setStatus('online', `Online - auto ${refreshInterval / 1000}s`);
+        setStatus('online', `Online / Auto ${refreshInterval / 1000}s`);
     } catch (error) {
         setStatus('error', 'Tidak dapat disambung');
         showError(error.message || 'Gagal mendapatkan data daripada sistem.');
@@ -172,8 +181,12 @@ async function boot() {
 }
 
 elements.refresh.addEventListener('click', refresh);
+elements.sidebarToggle.addEventListener('click', () => {
+    setSidebarCollapsed(!elements.appShell.classList.contains('sidebar-collapsed'));
+});
 elements.settingsButton.addEventListener('click', () => showSettings(elements.settingsPanel.classList.contains('hidden')));
 elements.emptySettingsButton.addEventListener('click', () => showSettings(true));
 elements.settingsForm.addEventListener('submit', saveSettings);
 setInterval(refresh, refreshInterval);
+setSidebarCollapsed(localStorage.getItem('sidebar-collapsed') === '1');
 boot();
