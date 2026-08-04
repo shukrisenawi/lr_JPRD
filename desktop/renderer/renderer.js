@@ -135,9 +135,11 @@ function renderReport(payload) {
     const rows = Array.isArray(payload.data) ? payload.data : [];
     renderStats(summary);
     renderTable(rows);
-    elements.updatedAt.textContent = payload.fetched_at
-        ? `Kemas kini terakhir: ${new Date(payload.fetched_at).toLocaleString('ms-MY')}`
-        : 'Kemas kini terakhir: -';
+    if (elements.updatedAt) {
+        elements.updatedAt.textContent = payload.fetched_at
+            ? `Kemas kini terakhir: ${new Date(payload.fetched_at).toLocaleString('ms-MY')}`
+            : 'Kemas kini terakhir: -';
+    }
     elements.dashboard.classList.remove('hidden');
     elements.emptyState.classList.add('hidden');
 }
