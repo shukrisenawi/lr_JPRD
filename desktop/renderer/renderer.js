@@ -35,9 +35,12 @@ let settings = { hasApiKey: false };
 let loading = false;
 
 function setSidebarCollapsed(collapsed) {
+    elements.status.dataset.statusText = elements.status.dataset.statusText || elements.status.textContent;
     elements.appShell.classList.toggle('sidebar-collapsed', collapsed);
     elements.sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
     elements.sidebarToggle.setAttribute('aria-label', collapsed ? 'Paparkan menu' : 'Sembunyikan menu');
+    elements.status.textContent = collapsed ? '' : elements.status.dataset.statusText;
+    elements.status.setAttribute('aria-label', elements.status.dataset.statusText);
     localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0');
 }
 
@@ -57,7 +60,9 @@ function escapeHtml(value) {
 
 function setStatus(type, text) {
     elements.status.className = `status status-${type}`;
-    elements.status.textContent = text;
+    elements.status.dataset.statusText = text;
+    elements.status.textContent = elements.appShell.classList.contains('sidebar-collapsed') ? '' : text;
+    elements.status.setAttribute('aria-label', text);
 }
 
 function showSettings(open = true) {
