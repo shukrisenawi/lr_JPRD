@@ -1482,13 +1482,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     )}
                                 </div>
                                 <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => updateFilter('hashtags', [])}
-                                        className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${formState.hashtags?.length === 0 ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}
-                                    >
-                                        Semua #
-                                    </button>
                                     {available_hashtags.map((hashtag) => {
                                         const selected = formState.hashtags?.includes(hashtag);
                                         return (
