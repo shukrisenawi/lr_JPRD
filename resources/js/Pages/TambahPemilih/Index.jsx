@@ -1,5 +1,6 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
+import HashtagInput from '@/Components/HashtagInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useRef, useState } from 'react';
@@ -34,6 +35,7 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
         name: '', no_kp: '', old_ic: '', no_ahli: '', phone_mobile: '', phone_home: '',
         address: '', dm: '', locality: '', gender: '', race: '',
         cula_code: '', cula_display_label: '',
+        hashtags: [],
     });
 
     const filteredLocalities = useMemo(() => {
@@ -137,6 +139,8 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
                     className="input-field w-full mt-0.5" rows="1" placeholder="Alamat kediaman" />
                 {errors.address && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.address}</p>}
             </div>
+
+            <HashtagInput value={data.hashtags} onChange={value => setData('hashtags', value)} label="Hashtag Pemilih" />
 
             <div className="grid gap-3 sm:grid-cols-2">
                 <div>
@@ -284,6 +288,7 @@ function DetailModal({ voter, onClose }) {
         ['Alamat', displayAddress], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
         ['No. Rumah', voter.no_rumah || '-'], ['No. Siri', voter.no_siri || '-'],
         ['Kod Cula', voter.cula_code || '-'], ['Bangsa', voter.race || '-'],
+        ['Hashtag', voter.hashtags?.join(' ') || '-'],
         ['Catatan', voter.catatan || '-'],
         ['Dicipta Oleh', voter.creator?.name || '-'],
         ['Tarikh Daftar', voter.created_at ? new Date(voter.created_at).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'],
@@ -342,6 +347,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, canEditNoAh
         gender: voter.gender || '',
         race: voter.race || '',
         cula_code: voter.cula_code || '',
+        hashtags: voter.hashtags || [],
     });
 
     const filteredLocalities = useMemo(() => {
@@ -449,6 +455,8 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, canEditNoAh
                             </select>
                         </div>
                     </div>
+
+                    <HashtagInput value={data.hashtags} onChange={value => setData('hashtags', value)} label="Hashtag Pemilih" />
 
                     <div className="flex justify-center gap-2 pt-1">
                         <button type="button" onClick={onClose} className="rounded-md bg-slate-200 px-3 py-[5px] text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>

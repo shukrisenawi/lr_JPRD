@@ -1,6 +1,7 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import CropModal from '@/Components/CropModal';
+import HashtagEditor from '@/Components/HashtagEditor';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -97,7 +98,7 @@ function NoAhliModal({ voter, onClose, onSaved }) {
     );
 }
 
-function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli, isCulaPending, onCulaSiap }) {
+function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli, isCulaPending, onCulaSiap, onHashtagsSaved }) {
     const [avatarUrl, setAvatarUrl] = useState(voter?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -195,6 +196,11 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                     </div>
                 ))}
             </div>
+            {voter.record_id && (
+                <div className="px-3 pb-3">
+                    <HashtagEditor voterId={voter.record_id} value={voter.hashtags ?? []} onSaved={onHashtagsSaved} />
+                </div>
+            )}
             {cropFile && (
                 <CropModal file={cropFile} onCrop={handleAvatarUpload} onClose={() => setCropFile(null)} />
             )}
@@ -453,7 +459,8 @@ function SearchPanel() {
             <ResultCard key={selected?.record_id ?? 'no-voter'} voter={selected} onClear={() => { clearSearch(); setOpeningTg(false); }}
                 onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selected, 'kemascula'))}
                 onUpdateNoAhli={(v) => setEditNoAhli(v)} canEditNoAhli={canEditNoAhli}
-                isCulaPending={culaPendingIds.has(selected?.id)} onCulaSiap={(v) => { setSelectedVoterForCula(v); setShowCulaModal(true); }} />
+                isCulaPending={culaPendingIds.has(selected?.id)} onCulaSiap={(v) => { setSelectedVoterForCula(v); setShowCulaModal(true); }}
+                onHashtagsSaved={(hashtags) => setSelected((prev) => prev ? { ...prev, hashtags } : prev)} />
 
             {showCulaModal && selectedVoterForCula && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)}>

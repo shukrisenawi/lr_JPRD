@@ -359,3 +359,96 @@ it('paginates culaan voters by 20 records per page', function () {
             ->where('voters.current_page', 2)
             ->where('voters.data', fn ($data) => count($data) === 5));
 });
+
+it('normalizes and deduplicates voter hashtags', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025569',
+        'no_kp' => '900101025569',
+        'name' => 'ALI HASHTAG',
+        'dm' => 'UDM HASHTAG',
+        'locality' => 'LOKALITI HASHTAG',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $this->actingAs($user)
+        ->putJson(route('pemilih.hashtags.update', $voter), [
+            'hashtags' => ['#Keluarga', '#keluarga', '#Sahabat'],
+        ])
+        ->assertOk()
+        ->assertJsonPath('hashtags', ['#keluarga', '#sahabat']);
+
+    expect($voter->fresh()->hashtags->pluck('name')->all())->toBe(['#keluarga', '#sahabat']);
+    $this->assertDatabaseCount('hashtags', 2);
+    $this->assertDatabaseCount('hashtag_pemilih_record', 2);
+});
+
+it('returns matching unique hashtag suggestions', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    foreach (range(1, 2) as $index) {
+        $voter = PemilihRecord::query()->create([
+            'identity_number' => '90010102557'.$index,
+            'no_kp' => '90010102557'.$index,
+            'name' => 'PEMILIH CADANGAN '.$index,
+            'dm' => 'UDM HASHTAG',
+            'locality' => 'LOKALITI HASHTAG',
+            'status' => 'aktif',
+            'cula_code' => '?',
+            'cula_display_label' => 'BELUM DICULA',
+        ]);
+
+        $this->actingAs($user)->putJson(route('pemilih.hashtags.update', $voter), [
+            'hashtags' => ['#Keluarga', '#Kawasan'],
+        ])->assertOk();
+    }
+
+    $this->actingAs($user)
+        ->getJson(route('pemilih.hashtags.suggestions', ['q' => '#kel']))
+        ->assertOk()
+        ->assertJsonPath('hashtags', ['#keluarga']);
+});
+
+it('filters culaan voters by hashtag', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $match = PemilihRecord::query()->create([
+        'identity_number' => '900101025573',
+        'no_kp' => '900101025573',
+        'name' => 'PEMILIH DENGAN HASHTAG',
+        'dm' => 'UDM HASHTAG',
+        'locality' => 'LOKALITI HASHTAG',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+    $other = PemilihRecord::query()->create([
+        'identity_number' => '900101025574',
+        'no_kp' => '900101025574',
+        'name' => 'PEMILIH TANPA HASHTAG',
+        'dm' => 'UDM HASHTAG',
+        'locality' => 'LOKALITI HASHTAG',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $this->actingAs($user)->putJson(route('pemilih.hashtags.update', $match), [
+        'hashtags' => ['#sasaran'],
+    ])->assertOk();
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', [
+            'udm' => 'UDM HASHTAG',
+            'hashtags' => ['#sasaran'],
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.hashtags', ['#sasaran'])
+            ->where('summary.total', 1)
+            ->where('voters.data.0.id', $match->id)
+            ->where('voters.data', fn ($data) => collect($data)->pluck('id')->doesntContain($other->id)));
+});

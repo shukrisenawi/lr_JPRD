@@ -169,6 +169,7 @@ class PemilihReportService
                 'race' => $voter['race'],
                 'cula_code' => $voter['cula_code'],
                 'cula_display_label' => $voter['cula_display_label'],
+                'hashtags' => $voter['hashtags'] ?? [],
                 'address' => $voter['address'],
                 'no_rumah' => $voter['no_rumah'] ?? null,
                 'no_siri' => $voter['no_siri'] ?? null,
@@ -223,6 +224,7 @@ class PemilihReportService
         }
 
         $records = $query
+            ->with('hashtags')
             ->limit($limit)
             ->get()
             ->map(function (PemilihRecord $record) {
@@ -254,6 +256,7 @@ class PemilihReportService
                     'race' => $record->race,
                     'cula_code' => $record->cula_code,
                     'cula_display_label' => $record->cula_display_label,
+                    'hashtags' => $record->hashtags->pluck('name')->values()->all(),
                     'address' => $record->address,
                     'is_manual' => $record->is_manual,
                     'no_rumah' => $record->no_rumah,

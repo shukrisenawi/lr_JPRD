@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
 use App\Models\PemilihRecord;
+use App\Services\HashtagService;
 use App\Services\PemilihReportService;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +19,7 @@ use Inertia\Response;
 
 class CulaanController extends Controller
 {
-    public function index(Request $request, PemilihReportService $reportService): Response
+    public function index(Request $request, PemilihReportService $reportService, HashtagService $hashtagService): Response
     {
         $filters = $this->resolveFilters($request);
 
@@ -58,6 +59,7 @@ class CulaanController extends Controller
             'groups' => $groups,
             'voters' => $voters,
             'available_cula_codes' => $this->availableCulaCodes(),
+            'available_hashtags' => $hashtagService->available($request->user(), false),
             'available_races' => $this->availableRaces(),
             'data_error_count' => $dataErrorCount,
         ]);
@@ -156,7 +158,7 @@ class CulaanController extends Controller
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
         $suggestions = $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where(function (Builder $builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
@@ -250,7 +252,7 @@ class CulaanController extends Controller
 
         $voters = $this->buildEligibleVotersQuery($filters, true)
             ->whereDoesntHave('culaWorkItem')
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->orderBy('no_kp')
             ->get()
             ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
@@ -270,7 +272,7 @@ class CulaanController extends Controller
             ->where('status', 'aktif')
             ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where('address', $address)
             ->where('id', '!=', $pemilihRecord->id)
             ->orderBy('name')
@@ -293,7 +295,7 @@ class CulaanController extends Controller
             ->where('status', 'aktif')
             ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where('no_rumah', $noRumah)
             ->where('locality', $locality)
             ->where('id', '!=', $pemilihRecord->id)
@@ -318,7 +320,7 @@ class CulaanController extends Controller
             ->where('status', 'aktif')
             ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where('no_rumah', $noRumah)
             ->where('locality', $locality)
             ->where('address', $address)
@@ -391,6 +393,7 @@ class CulaanController extends Controller
             )
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
+            ->when($filters['hashtags'], fn (Builder $builder) => $builder->whereHas('hashtags', fn (Builder $hashtagQuery) => $hashtagQuery->whereIn('hashtags.name', $filters['hashtags'])))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
             ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
             ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
@@ -516,7 +519,7 @@ class CulaanController extends Controller
     private function paginateVoters(array $filters): LengthAwarePaginator
     {
         return $this->buildEligibleVotersQuery($filters)
-            ->with('creator', 'culaWorkItem.marker')
+            ->with('creator', 'culaWorkItem.marker', 'hashtags')
             ->when($filters['udm'] === '' && ! $filters['show_marked'], fn (Builder $q) => $q->orderBy('dm'))
             ->when($filters['show_marked'], fn (Builder $q) => $q->orderByDesc(
                 CulaWorkItem::select('marked_at')->whereColumn('pemilih_record_id', 'pemilih_records.id')
@@ -615,6 +618,7 @@ class CulaanController extends Controller
             'custom_mode' => $customMode,
             'data_error' => $request->boolean('data_error'),
             'cula_codes' => $request->query('cula_codes'),
+            'hashtags' => $this->normalizeHashtagFilters($request->query('hashtags', [])),
             'keturunan' => trim((string) $request->query('keturunan', '')),
             'jantina' => trim((string) $request->query('jantina', '')),
             'umur_dari' => $request->query('umur_dari') !== null && $request->query('umur_dari') !== '' ? (int) $request->query('umur_dari') : null,
@@ -665,6 +669,7 @@ class CulaanController extends Controller
             'status' => $voter->status,
             'cula_code' => $voter->cula_code,
             'cula_display_label' => $voter->cula_display_label,
+            'hashtags' => $voter->hashtags->pluck('name')->values()->all(),
             'cula_remark' => $voter->cula_remark,
             'is_marked' => $voter->culaWorkItem !== null,
             'marked_by_name' => $voter->culaWorkItem?->marker?->name,
@@ -714,6 +719,15 @@ class CulaanController extends Controller
         $age = (int) now()->year - ($century + $yy);
 
         return $age < 18 ? null : $age;
+    }
+
+    private function applyHashtagFilter(Builder $query, array $filters): void
+    {
+        if (empty($filters['hashtags'])) {
+            return;
+        }
+
+        $query->whereHas('hashtags', fn (Builder $hashtagQuery) => $hashtagQuery->whereIn('hashtags.name', $filters['hashtags']));
     }
 
     private function isEligibleForCulaan(PemilihRecord $voter): bool
@@ -826,6 +840,24 @@ class CulaanController extends Controller
         return CulaCodes::options();
     }
 
+    private function normalizeHashtagFilters(mixed $value): array
+    {
+        $values = is_array($value)
+            ? $value
+            : ($value === null || $value === '' ? [] : explode(',', (string) $value));
+
+        $hashtags = [];
+        foreach ($values as $item) {
+            $hashtag = HashtagService::normalizeTag(is_string($item) ? $item : null);
+
+            if ($hashtag !== null && ! in_array($hashtag, $hashtags, true)) {
+                $hashtags[] = $hashtag;
+            }
+        }
+
+        return $hashtags;
+    }
+
     private function availableRaces(): array
     {
         $query = PemilihRecord::query()
@@ -854,6 +886,8 @@ class CulaanController extends Controller
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
         request()->user()?->applyScopeToPemilihQuery($query);
+
+        $this->applyHashtagFilter($query, $filters);
 
         if (($filters['custom_mode'] || $filters['show_all']) && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0) {
             $query->whereIn('cula_code', $filters['cula_codes']);
@@ -934,6 +968,8 @@ class CulaanController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
+        $this->applyHashtagFilter($query, $filters);
+
         $this->applyGroupDemographicFilters($query, $filters['group_id']);
 
         if ($filters['custom_mode']) {
@@ -954,6 +990,8 @@ class CulaanController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
+        $this->applyHashtagFilter($query, $filters);
+
         $this->applyGroupDemographicFilters($query, $filters['group_id']);
 
         if ($filters['custom_mode']) {
@@ -961,7 +999,7 @@ class CulaanController extends Controller
         }
 
         return $query
-            ->with('creator', 'culaWorkItem.marker')
+            ->with('creator', 'culaWorkItem.marker', 'hashtags')
             ->orderByRaw('
                 CASE
                     WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)

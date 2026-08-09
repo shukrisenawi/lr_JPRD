@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PemilihRecord;
+use App\Services\HashtagService;
 use App\Support\CulaCodes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -50,7 +51,7 @@ class TambahPemilihController extends Controller
         $culaCodes = CulaCodes::options();
 
         $manualQuery = PemilihRecord::where('is_manual', true)
-            ->with('creator:id,name')
+            ->with('creator:id,name', 'hashtags')
             ->orderBy('created_at', 'desc');
         $user->applyScopeToPemilihQuery($manualQuery);
         $manualVoters = $manualQuery->paginate(20);
@@ -58,7 +59,7 @@ class TambahPemilihController extends Controller
         $createdVoterId = (int) $request->query('created');
         $createdVoter = null;
         if ($createdVoterId) {
-            $createdVoter = PemilihRecord::find($createdVoterId);
+            $createdVoter = PemilihRecord::with('hashtags')->find($createdVoterId);
         }
 
         return Inertia::render('TambahPemilih/Index', [
@@ -70,7 +71,7 @@ class TambahPemilihController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, HashtagService $hashtagService): RedirectResponse
     {
         $validated = $request->validate([
             'no_kp' => 'nullable|string|max:20',
@@ -86,6 +87,8 @@ class TambahPemilihController extends Controller
             'phone_mobile' => 'nullable|string|max:20',
             'cula_code' => 'nullable|string|max:50',
             'cula_display_label' => 'nullable|string|max:255',
+            'hashtags' => ['nullable', 'array', 'max:20'],
+            'hashtags.*' => ['string', 'max:50', 'regex:/^#[\pL\pN_][\pL\pN_-]*$/u'],
         ]);
 
         $user = $request->user();
@@ -130,12 +133,16 @@ class TambahPemilihController extends Controller
         $validated['is_manual'] = true;
         $validated['created_by'] = $request->user()->id;
 
+        $hashtags = $validated['hashtags'] ?? [];
+        unset($validated['hashtags']);
+
         $voter = PemilihRecord::create($validated);
+        $hashtagService->sync($voter, $hashtags);
 
         return redirect()->route('tambah-pemilih.index', ['created' => $voter->id]);
     }
 
-    public function update(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
+    public function update(Request $request, PemilihRecord $pemilihRecord, HashtagService $hashtagService): RedirectResponse
     {
         if (! $pemilihRecord->is_manual) {
             abort(403);
@@ -158,6 +165,8 @@ class TambahPemilihController extends Controller
             'race' => 'nullable|string|max:50',
             'cula_code' => 'nullable|string|max:50',
             'cula_display_label' => 'nullable|string|max:255',
+            'hashtags' => ['nullable', 'array', 'max:20'],
+            'hashtags.*' => ['string', 'max:50', 'regex:/^#[\pL\pN_][\pL\pN_-]*$/u'],
         ]);
 
         $user = $request->user();
@@ -180,7 +189,14 @@ class TambahPemilihController extends Controller
             $validated['identity_number'] = $identityNumber;
         }
 
+        $hashtagInputProvided = array_key_exists('hashtags', $validated);
+        $hashtags = $validated['hashtags'] ?? [];
+        unset($validated['hashtags']);
+
         $pemilihRecord->update($validated);
+        if ($hashtagInputProvided) {
+            $hashtagService->sync($pemilihRecord, $hashtags);
+        }
 
         return redirect()->route('tambah-pemilih.index');
     }

@@ -55,7 +55,7 @@ class VccController extends Controller
 
         if ($exportAll) {
             $voters = $this->buildEligibleVotersQuery($filters)
-                ->with('culaWorkItem.marker')
+                ->with('culaWorkItem.marker', 'hashtags')
                 ->orderBy('dm')
                 ->orderBy('locality')
                 ->orderBy('no_kp')
@@ -73,7 +73,7 @@ class VccController extends Controller
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
         $suggestions = $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where(function (Builder $builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
@@ -253,7 +253,7 @@ class VccController extends Controller
             return $this->paginateDistributedVoters($filters);
         }
 
-        $query->with('culaWorkItem.marker');
+        $query->with('culaWorkItem.marker', 'hashtags');
 
         if ($filters['udm'] === '') {
             $query->orderBy('dm');
@@ -299,7 +299,7 @@ class VccController extends Controller
             $offset = ($page - 1) * $perPage;
             $sliceIds = $allIds->slice($offset, $perPage)->values();
 
-            $items = PemilihRecord::with('culaWorkItem.marker')
+            $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags')
                 ->whereIn('id', $sliceIds)
                 ->orderBy('dm')
                 ->orderBy('locality')
@@ -324,7 +324,7 @@ class VccController extends Controller
         $offset = ($page - 1) * $perPage;
         $sliceIds = $ids->slice($offset, $perPage)->values();
 
-        $items = PemilihRecord::with('culaWorkItem.marker')
+        $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags')
             ->whereIn('id', $sliceIds)
             ->orderBy('locality')
             ->orderBy('no_kp')
@@ -570,6 +570,7 @@ class VccController extends Controller
             'status' => $voter->status,
             'cula_code' => $voter->cula_code,
             'cula_display_label' => $voter->cula_display_label,
+            'hashtags' => $voter->hashtags->pluck('name')->values()->all(),
             'is_marked' => $voter->culaWorkItem !== null,
             'marked_by_name' => $voter->culaWorkItem?->marker?->name,
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,

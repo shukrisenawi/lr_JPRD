@@ -43,7 +43,7 @@ class CulaanBotController extends Controller
             ->where('status', 'aktif')
             ->where('is_manual', false)
             ->tap(fn (Builder $b) => $request->user()?->applyScopeToPemilihQuery($b))
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where(function (Builder $builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
@@ -91,7 +91,7 @@ class CulaanBotController extends Controller
             ->where('status', 'aktif')
             ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where('address', $address)
             ->where('id', '!=', $pemilihRecord->id)
             ->orderBy('name')
@@ -114,7 +114,7 @@ class CulaanBotController extends Controller
             ->where('status', 'aktif')
             ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where('no_rumah', $noRumah)
             ->where('locality', $locality)
             ->where('id', '!=', $pemilihRecord->id)
@@ -143,7 +143,7 @@ class CulaanBotController extends Controller
             ->where('status', 'aktif')
             ->where('is_manual', false)
             ->tap(fn (Builder $b) => request()->user()?->applyScopeToPemilihQuery($b))
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->where('no_rumah', $noRumah)
             ->where('locality', $locality)
             ->where(function ($q) use ($alamat) {
@@ -380,6 +380,7 @@ class CulaanBotController extends Controller
             'locality' => $voter->locality,
             'cula_code' => $voter->cula_code,
             'cula_display_label' => $voter->cula_display_label,
+            'hashtags' => $voter->hashtags->pluck('name')->values()->all(),
             'is_marked' => $voter->culaWorkItem !== null,
             'marked_by_name' => $voter->culaWorkItem?->marker?->name,
             'telegram_identity' => $voter->no_kp ?: $voter->old_ic,

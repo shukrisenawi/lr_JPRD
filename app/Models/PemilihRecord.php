@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PemilihRecord extends Model
 {
@@ -55,7 +55,10 @@ class PemilihRecord extends Model
 
     public function avatarUrl(): ?string
     {
-        if (!$this->avatar) return null;
+        if (! $this->avatar) {
+            return null;
+        }
+
         return route('pemilih.avatar', ['pemilihRecord' => $this->id, 't' => $this->updated_at?->timestamp]);
     }
 
@@ -66,7 +69,7 @@ class PemilihRecord extends Model
 
     public function birthdayImageUrl(): ?string
     {
-        if (!$this->birthday_image) {
+        if (! $this->birthday_image) {
             return null;
         }
 
@@ -96,5 +99,15 @@ class PemilihRecord extends Model
     public function kadTenMemberships(): HasMany
     {
         return $this->hasMany(KadTenMember::class, 'pemilih_record_id');
+    }
+
+    public function hashtags(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Hashtag::class,
+            'hashtag_pemilih_record',
+            'pemilih_record_id',
+            'hashtag_id',
+        )->orderBy('name');
     }
 }

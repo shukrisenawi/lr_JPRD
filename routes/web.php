@@ -13,6 +13,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupPemilihController;
 use App\Http\Controllers\KadTenController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\PemilihHashtagController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\PusatKhidmatController;
@@ -37,6 +38,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/carian-pemilih/update-no-ahli', [CarianPemilihController::class, 'updateNoAhli'])->middleware('module:carian-pemilih')->name('carian-pemilih.update-no-ahli');
     Route::post('/carian-pemilih/{pemilihRecord}/update-cula', [CarianPemilihController::class, 'updateCula'])->middleware('module:carian-pemilih')->name('carian-pemilih.update-cula');
     Route::post('/pemilih/{pemilihRecord}/avatar', [CarianPemilihController::class, 'uploadAvatar'])->name('pemilih.avatar.upload');
+    Route::get('/pemilih/hashtags', [PemilihHashtagController::class, 'suggestions'])->name('pemilih.hashtags.suggestions');
+    Route::put('/pemilih/{pemilihRecord}/hashtags', [PemilihHashtagController::class, 'update'])->name('pemilih.hashtags.update');
     Route::get('/pemilih/{pemilihRecord}/avatar', [CarianPemilihController::class, 'avatar'])->name('pemilih.avatar');
     Route::post('/pemilih/{pemilihRecord}/birthday-image', [CarianPemilihController::class, 'uploadBirthdayImage'])->name('pemilih.birthday-image.upload');
     Route::get('/pemilih/{pemilihRecord}/birthday-image', [CarianPemilihController::class, 'birthdayImage'])->name('pemilih.birthday-image');
