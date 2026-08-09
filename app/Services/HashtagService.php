@@ -72,17 +72,25 @@ final class HashtagService
         ));
     }
 
-    public function suggestions(?string $query, ?User $user = null, bool $includeManual = true, int $limit = 20): array
+    public function suggestions(?string $query, ?User $user = null, bool $includeManual = true, int $limit = 20, ?string $dm = null, ?string $locality = null): array
     {
         $search = mb_strtolower(trim((string) $query));
         $search = ltrim($search, '#');
 
         $builder = Hashtag::query()
-            ->whereHas('pemilihRecords', function (Builder $voterQuery) use ($user, $includeManual) {
+            ->whereHas('pemilihRecords', function (Builder $voterQuery) use ($user, $includeManual, $dm, $locality) {
                 $voterQuery->where('status', 'aktif');
 
                 if (! $includeManual) {
                     $voterQuery->where('is_manual', false);
+                }
+
+                if (filled($dm)) {
+                    $voterQuery->where('dm', $dm);
+                }
+
+                if (filled($locality)) {
+                    $voterQuery->where('locality', $locality);
                 }
 
                 $user?->applyScopeToPemilihQuery($voterQuery);
@@ -101,8 +109,8 @@ final class HashtagService
             ->all();
     }
 
-    public function available(?User $user = null, bool $includeManual = true): array
+    public function available(?User $user = null, bool $includeManual = true, ?string $dm = null, ?string $locality = null): array
     {
-        return $this->suggestions('', $user, $includeManual, 1000);
+        return $this->suggestions('', $user, $includeManual, 1000, $dm, $locality);
     }
 }

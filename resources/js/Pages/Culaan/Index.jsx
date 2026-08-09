@@ -1353,7 +1353,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     {formState.show_marked && <span className="rounded bg-green-100 px-1 py-0.5 text-green-700">Siap Cula</span>}
                                     {formState.filter_rumah && <span className="rounded bg-blue-100 px-1 py-0.5 text-blue-700">Rumah</span>}
                                     {formState.filter_alamat && <span className="rounded bg-amber-100 px-1 py-0.5 text-amber-700">Alamat</span>}
-                                     {formState.hashtags?.length > 0 && <span className="rounded bg-fuchsia-100 px-1.5 py-0.5 text-fuchsia-700"># {formState.hashtags.length}</span>}
+                                     {formState.hashtags?.length > 0 && <span className="rounded bg-green-100 px-1.5 py-0.5 text-green-700"># {formState.hashtags.length}</span>}
                                      {formState.show_all && <span className="rounded bg-slate-200 px-1 py-0.5 text-slate-700">Semua</span>}
                                 </div>
                             )}
@@ -1476,7 +1476,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</span>
                                     {formState.hashtags?.length > 0 && (
-                                        <span className="rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-bold text-fuchsia-700">
+                                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
                                             {formState.hashtags.length} dipilih
                                         </span>
                                     )}
@@ -1485,7 +1485,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                     <button
                                         type="button"
                                         onClick={() => updateFilter('hashtags', [])}
-                                        className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${formState.hashtags?.length === 0 ? 'border-fuchsia-500 bg-fuchsia-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300 hover:text-fuchsia-700'}`}
+                                        className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${formState.hashtags?.length === 0 ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}
                                     >
                                         Semua #
                                     </button>
@@ -1496,7 +1496,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 key={hashtag}
                                                 type="button"
                                                 onClick={() => toggleHashtag(hashtag)}
-                                                className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${selected ? 'border-fuchsia-500 bg-fuchsia-600 text-white shadow-sm' : 'border-fuchsia-200 bg-white text-fuchsia-700 hover:border-fuchsia-400 hover:bg-fuchsia-50'}`}
+                                                className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${selected ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-green-200 bg-white text-green-700 hover:border-green-400 hover:bg-green-50'}`}
                                             >
                                                 {hashtag}
                                             </button>

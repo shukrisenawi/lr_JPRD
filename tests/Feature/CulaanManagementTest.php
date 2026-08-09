@@ -435,9 +435,22 @@ it('filters culaan voters by hashtag', function () {
         'cula_code' => '?',
         'cula_display_label' => 'BELUM DICULA',
     ]);
+    $outsideUdm = PemilihRecord::query()->create([
+        'identity_number' => '900101025575',
+        'no_kp' => '900101025575',
+        'name' => 'PEMILIH UDM LAIN',
+        'dm' => 'UDM LAIN',
+        'locality' => 'LOKALITI LAIN',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
 
     $this->actingAs($user)->putJson(route('pemilih.hashtags.update', $match), [
         'hashtags' => ['#sasaran'],
+    ])->assertOk();
+    $this->actingAs($user)->putJson(route('pemilih.hashtags.update', $outsideUdm), [
+        'hashtags' => ['#luar-udm'],
     ])->assertOk();
 
     $this->actingAs($user)
@@ -448,6 +461,7 @@ it('filters culaan voters by hashtag', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.hashtags', ['#sasaran'])
+            ->where('available_hashtags', ['#sasaran'])
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $match->id)
             ->where('voters.data', fn ($data) => collect($data)->pluck('id')->doesntContain($other->id)));

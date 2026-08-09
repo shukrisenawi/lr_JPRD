@@ -59,7 +59,7 @@ class CulaanController extends Controller
             'groups' => $groups,
             'voters' => $voters,
             'available_cula_codes' => $this->availableCulaCodes(),
-            'available_hashtags' => $hashtagService->available($request->user(), false),
+            'available_hashtags' => $hashtagService->available($request->user(), false, $filters['udm'], $filters['locality']),
             'available_races' => $this->availableRaces(),
             'data_error_count' => $dataErrorCount,
         ]);
