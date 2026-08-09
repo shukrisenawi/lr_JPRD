@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
+use App\Models\Hashtag;
 use App\Models\PemilihRecord;
+use App\Services\HashtagService;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,6 +29,7 @@ class CulaanBotController extends Controller
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
             'voters' => $voters,
             'available_cula_codes' => $this->availableCulaCodes(),
+            'available_hashtags' => $this->availableHashtags($filters),
         ]);
     }
 
@@ -62,6 +66,7 @@ class CulaanBotController extends Controller
             })
             ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']))
+            ->when($filters['hashtags'], fn (Builder $b) => $b->whereHas('hashtags', fn (Builder $hashtagQuery) => $hashtagQuery->whereIn('hashtags.name', $filters['hashtags'])))
             ->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
                 $maxBirthYear = now()->year - (int) $filters['age_from'];
                 $b->whereRaw('CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END <= ?', [(int) now()->format('y'), $maxBirthYear]);
@@ -221,7 +226,7 @@ class CulaanBotController extends Controller
         ]);
     }
 
-    private function buildEligibleVotersQuery(array $filters): Builder
+    private function buildEligibleVotersQuery(array $filters, bool $skipMarkedFilter = false): Builder
     {
         $query = PemilihRecord::query()->where('status', 'aktif')->where('is_manual', false);
         request()->user()?->applyScopeToPemilihQuery($query);
@@ -229,29 +234,27 @@ class CulaanBotController extends Controller
         $query->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
-        $query->when(
-            $filters['show_all'],
-            fn (Builder $b) => $b,
-            function (Builder $b) use ($filters) {
-                $b->when(
-                    $filters['show_marked'],
-                    fn (Builder $sub) => $sub->whereHas('culaWorkItem'),
-                    fn (Builder $sub) => $sub->whereDoesntHave('culaWorkItem')
-                        ->where(function (Builder $q) {
-                            $q->whereNull('cula_code')
-                                ->orWhere('cula_code', '')
-                                ->orWhere('cula_code', '?')
-                                ->orWhere('cula_code', 'TIADA')
-                                ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
-                        })
-                );
+        if (! $skipMarkedFilter) {
+            if ($filters['show_marked']) {
+                $query->whereHas('culaWorkItem');
+            } elseif (! $filters['show_all'] && empty($filters['hashtags'])) {
+                $query->whereDoesntHave('culaWorkItem')
+                    ->where(function (Builder $q) {
+                        $q->whereNull('cula_code')
+                            ->orWhere('cula_code', '')
+                            ->orWhere('cula_code', '?')
+                            ->orWhere('cula_code', 'TIADA')
+                            ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                    });
             }
-        );
+        }
 
         $query->when(
             $filters['show_all'] && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0,
             fn (Builder $b) => $b->whereIn('cula_code', $filters['cula_codes'])
         );
+
+        $query->when($filters['hashtags'], fn (Builder $b) => $b->whereHas('hashtags', fn (Builder $hashtagQuery) => $hashtagQuery->whereIn('hashtags.name', $filters['hashtags'])));
 
         $query->when($filters['age_from'] !== '', function (Builder $b) use ($filters) {
             $maxBirthYear = now()->year - (int) $filters['age_from'];
@@ -358,7 +361,7 @@ class CulaanBotController extends Controller
     private function paginateVoters(array $filters): LengthAwarePaginator
     {
         return $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem.marker')
+            ->with('culaWorkItem.marker', 'hashtags')
             ->when($filters['udm'] === '', fn (Builder $q) => $q->orderBy('dm'))
             ->orderByRaw("CONCAT(IF(CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ?, '19', '20'), SUBSTR(no_kp, 1, 2)) DESC", [now()->format('y')])
             ->orderBy('name')
@@ -466,7 +469,25 @@ class CulaanBotController extends Controller
             'filter_rumah_alamat' => $request->boolean('filter_rumah_alamat'),
             'show_all' => $request->boolean('show_all'),
             'cula_codes' => $request->query('cula_codes'),
+            'hashtags' => HashtagService::normalizeTags($request->query('hashtags', [])),
         ];
+    }
+
+    private function availableHashtags(array $filters): array
+    {
+        $candidateFilters = $filters;
+        $candidateFilters['hashtags'] = [];
+        $voterIds = $this->buildEligibleVotersQuery($candidateFilters, ! $filters['show_marked'])
+            ->select('pemilih_records.id');
+
+        return Hashtag::query()
+            ->whereIn('id', DB::table('hashtag_pemilih_record')
+                ->select('hashtag_id')
+                ->whereIn('pemilih_record_id', $voterIds))
+            ->orderBy('name')
+            ->pluck('name')
+            ->values()
+            ->all();
     }
 
     private function availableUdms(): array

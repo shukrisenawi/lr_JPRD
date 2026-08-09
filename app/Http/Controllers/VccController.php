@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
+use App\Models\Hashtag;
 use App\Models\PemilihRecord;
 use App\Models\VoterCommunication;
+use App\Services\HashtagService;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -44,6 +46,7 @@ class VccController extends Controller
             'voters' => $voters,
             'available_races' => $this->availableRaces(),
             'available_cula_codes' => $this->availableCulaCodes(),
+            'available_hashtags' => $this->availableHashtags($filters),
         ]);
     }
 
@@ -203,6 +206,7 @@ class VccController extends Controller
         $query->when($groupKodCulas !== null, fn (Builder $builder) => $builder->whereIn('cula_code', $groupKodCulas))
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
+            ->when($filters['hashtags'], fn (Builder $builder) => $builder->whereHas('hashtags', fn (Builder $hashtagQuery) => $hashtagQuery->whereIn('hashtags.name', $filters['hashtags'])))
             ->when($filters['group_id'] !== null, fn (Builder $builder) => $this->applyGroupDemographicFilters($builder, $filters['group_id']))
             ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
             ->when($filters['bulan_lahir'] !== '', fn (Builder $builder) => $builder->whereRaw('LENGTH(no_kp) >= 6')
@@ -218,11 +222,11 @@ class VccController extends Controller
             }));
 
         if (! $skipMarkedFilter) {
-            $query->when(
-                $filters['show_marked'],
-                fn (Builder $builder) => $builder->whereHas('culaWorkItem'),
-                fn (Builder $builder) => $builder->whereDoesntHave('culaWorkItem')
-            );
+            if ($filters['show_marked']) {
+                $query->whereHas('culaWorkItem');
+            } elseif (empty($filters['hashtags'])) {
+                $query->whereDoesntHave('culaWorkItem');
+            }
         }
 
         return $query;
@@ -508,7 +512,25 @@ class VccController extends Controller
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
             'has_phone' => $request->has('has_phone') ? $request->boolean('has_phone') : true,
             'birthday_image_status' => trim((string) $request->query('birthday_image_status', '')),
+            'hashtags' => HashtagService::normalizeTags($request->query('hashtags', [])),
         ];
+    }
+
+    private function availableHashtags(array $filters): array
+    {
+        $candidateFilters = $filters;
+        $candidateFilters['hashtags'] = [];
+        $voterIds = $this->buildEligibleVotersQuery($candidateFilters, ! $filters['show_marked'])
+            ->select('pemilih_records.id');
+
+        return Hashtag::query()
+            ->whereIn('id', DB::table('hashtag_pemilih_record')
+                ->select('hashtag_id')
+                ->whereIn('pemilih_record_id', $voterIds))
+            ->orderBy('name')
+            ->pluck('name')
+            ->values()
+            ->all();
     }
 
     private function availableGroups(string $udm = ''): array
