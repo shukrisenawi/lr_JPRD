@@ -535,12 +535,14 @@ class CulaanController extends Controller
     {
         $voterQuery = $filters['data_error']
             ? $this->buildDataErrorVotersQuery($filters)
-            : $this->buildEligibleVotersQuery($filters);
+            : $this->buildEligibleVotersQuery($filters, ! $filters['show_marked']);
 
         $voterIds = (clone $voterQuery)->select('pemilih_records.id');
 
         return Hashtag::query()
-            ->whereHas('pemilihRecords', fn (Builder $query) => $query->whereIn('pemilih_records.id', $voterIds))
+            ->whereIn('id', DB::table('hashtag_pemilih_record')
+                ->select('hashtag_id')
+                ->whereIn('pemilih_record_id', $voterIds))
             ->orderBy('name')
             ->pluck('name')
             ->values()

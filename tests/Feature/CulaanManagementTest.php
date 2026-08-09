@@ -501,6 +501,15 @@ it('shows tagged voters even when their culaan is already completed', function (
         ->assertInertia(fn ($page) => $page
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $voter->id));
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', [
+            'udm' => 'UDM TAGGED',
+            'show_all' => true,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('available_hashtags', ['#siap']));
 });
 
 it('only exposes hashtags from the current culaan data', function () {
