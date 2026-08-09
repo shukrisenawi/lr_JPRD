@@ -358,8 +358,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     });
     const [filterOpen, setFilterOpen] = useState(false);
     const [culaFilterOpen, setCulaFilterOpen] = useState(false);
-    const [hashtagFilterOpen, setHashtagFilterOpen] = useState(false);
-    const [hashtagFilterSearch, setHashtagFilterSearch] = useState('');
     const jadualBaselineRef = useRef(null);
     const addressPopupVoterName = useRef('');
     const lastRumahVoterRef = useRef(null);
@@ -415,12 +413,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.cula_codes, filters.hashtags, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.data_error, filters.filter_rumah, filters.filter_alamat, filters.filter_rumah_alamat, filters.show_all]);
 
     const hasFilterValue = Boolean(formState.udm || formState.locality || formState.group_id === 'custom' || (formState.group_id && formState.group_id !== 'custom' && formState.group_id !== '') || formState.show_marked || formState.filter_rumah || formState.filter_alamat || formState.filter_rumah_alamat || formState.show_all || (formState.cula_codes?.length) || (formState.hashtags?.length) || formState.keturunan || formState.jantina || formState.umur_dari || formState.umur_hingga || search.trim().length >= 2);
-
-    const filteredAvailableHashtags = useMemo(() => {
-        const query = hashtagFilterSearch.trim().toLocaleLowerCase();
-        if (!query) return available_hashtags;
-        return available_hashtags.filter((hashtag) => hashtag.toLocaleLowerCase().includes(query));
-    }, [available_hashtags, hashtagFilterSearch]);
 
     useEffect(() => {
         if (filters.data_error) {
@@ -1480,64 +1472,37 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         )}
 
                         {available_hashtags.length > 0 && (
-                            <div className="relative mt-3 max-w-xl">
-                                <label htmlFor="culaan-hashtag-filter" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</label>
-                                <button
-                                    type="button"
-                                    onClick={() => setHashtagFilterOpen((open) => !open)}
-                                    className={`input-field mt-1.5 flex w-full items-center justify-between gap-2 text-left ${formState.hashtags?.length > 0 ? 'border-fuchsia-300 bg-fuchsia-50 text-fuchsia-700' : ''}`}
-                                >
-                                    <span className="truncate">
-                                        {formState.hashtags?.length > 0 ? formState.hashtags.join(', ') : 'Semua Hashtag'}
-                                    </span>
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 shrink-0 transition ${hashtagFilterOpen ? 'rotate-180' : ''}`}>
-                                        <path d="m6 9 6 6 6-6" />
-                                    </svg>
-                                </button>
-                                {hashtagFilterOpen && (
-                                    <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
-                                        <div className="border-b border-slate-100 p-2">
-                                            <input
-                                                id="culaan-hashtag-filter"
-                                                value={hashtagFilterSearch}
-                                                onChange={(event) => setHashtagFilterSearch(event.target.value)}
-                                                className="input-field w-full py-1.5 text-xs"
-                                                placeholder="Cari #..."
-                                                autoFocus
-                                            />
-                                        </div>
-                                        <div className="max-h-48 overflow-y-auto p-1.5">
+                            <div className="mt-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</span>
+                                    {formState.hashtags?.length > 0 && (
+                                        <span className="rounded-full bg-fuchsia-100 px-2 py-0.5 text-[10px] font-bold text-fuchsia-700">
+                                            {formState.hashtags.length} dipilih
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => updateFilter('hashtags', [])}
+                                        className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${formState.hashtags?.length === 0 ? 'border-fuchsia-500 bg-fuchsia-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-fuchsia-300 hover:text-fuchsia-700'}`}
+                                    >
+                                        Semua #
+                                    </button>
+                                    {available_hashtags.map((hashtag) => {
+                                        const selected = formState.hashtags?.includes(hashtag);
+                                        return (
                                             <button
+                                                key={hashtag}
                                                 type="button"
-                                                onClick={() => { setHashtagFilterSearch(''); updateFilter('hashtags', []); }}
-                                                className={`w-full rounded-md px-2.5 py-1.5 text-left text-xs font-bold transition ${formState.hashtags?.length === 0 ? 'bg-fuchsia-100 text-fuchsia-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                                onClick={() => toggleHashtag(hashtag)}
+                                                className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${selected ? 'border-fuchsia-500 bg-fuchsia-600 text-white shadow-sm' : 'border-fuchsia-200 bg-white text-fuchsia-700 hover:border-fuchsia-400 hover:bg-fuchsia-50'}`}
                                             >
-                                                Semua Hashtag
+                                                {hashtag}
                                             </button>
-                                            {filteredAvailableHashtags.map((hashtag) => {
-                                                const checked = formState.hashtags?.includes(hashtag);
-                                                return (
-                                                    <button
-                                                        key={hashtag}
-                                                        type="button"
-                                                        onClick={() => toggleHashtag(hashtag)}
-                                                        className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-xs transition ${checked ? 'bg-fuchsia-100 font-bold text-fuchsia-700' : 'text-slate-600 hover:bg-slate-50'}`}
-                                                    >
-                                                        <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${checked ? 'border-fuchsia-600 bg-fuchsia-600 text-white' : 'border-slate-300'}`}>
-                                                            {checked && (
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5">
-                                                                    <path d="M20 6 9 17l-5-5" />
-                                                                </svg>
-                                                            )}
-                                                        </span>
-                                                        <span className="truncate">{hashtag}</span>
-                                                    </button>
-                                                );
-                                            })}
-                                            {filteredAvailableHashtags.length === 0 && <p className="px-2.5 py-2 text-xs text-slate-400">Tiada hashtag sepadan.</p>}
-                                        </div>
-                                    </div>
-                                )}
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
 
