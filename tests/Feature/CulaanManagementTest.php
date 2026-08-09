@@ -502,3 +502,47 @@ it('shows tagged voters even when their culaan is already completed', function (
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $voter->id));
 });
+
+it('only exposes hashtags from the current culaan data', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $availableVoter = PemilihRecord::query()->create([
+        'identity_number' => '900101025577',
+        'no_kp' => '900101025577',
+        'name' => 'PEMILIH TANPA TAG',
+        'dm' => 'UDM SEMAK TAG',
+        'locality' => 'LOKALITI SEMAK TAG',
+        'status' => 'aktif',
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $completedVoter = PemilihRecord::query()->create([
+        'identity_number' => '900101025578',
+        'no_kp' => '900101025578',
+        'name' => 'PEMILIH TAG SIAP',
+        'dm' => 'UDM SEMAK TAG',
+        'locality' => 'LOKALITI SEMAK TAG',
+        'status' => 'aktif',
+        'cula_code' => '2',
+        'cula_display_label' => '2 - PAS',
+    ]);
+
+    CulaWorkItem::query()->create([
+        'pemilih_record_id' => $completedVoter->id,
+        'marked_by' => $user->id,
+        'marked_at' => now(),
+    ]);
+
+    $this->actingAs($user)->putJson(route('pemilih.hashtags.update', $completedVoter), [
+        'hashtags' => ['#tag-siap'],
+    ])->assertOk();
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', ['udm' => 'UDM SEMAK TAG']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('summary.total', 1)
+            ->where('voters.data.0.id', $availableVoter->id)
+            ->where('available_hashtags', []));
+});

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
+use App\Models\Hashtag;
 use App\Models\PemilihRecord;
 use App\Services\HashtagService;
 use App\Services\PemilihReportService;
@@ -19,7 +20,7 @@ use Inertia\Response;
 
 class CulaanController extends Controller
 {
-    public function index(Request $request, PemilihReportService $reportService, HashtagService $hashtagService): Response
+    public function index(Request $request, PemilihReportService $reportService): Response
     {
         $filters = $this->resolveFilters($request);
 
@@ -59,7 +60,7 @@ class CulaanController extends Controller
             'groups' => $groups,
             'voters' => $voters,
             'available_cula_codes' => $this->availableCulaCodes(),
-            'available_hashtags' => $hashtagService->available($request->user(), false, $filters['udm'], $filters['locality']),
+            'available_hashtags' => $this->availableHashtags($filters),
             'available_races' => $this->availableRaces(),
             'data_error_count' => $dataErrorCount,
         ]);
@@ -530,6 +531,22 @@ class CulaanController extends Controller
             ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
     }
 
+    private function availableHashtags(array $filters): array
+    {
+        $voterQuery = $filters['data_error']
+            ? $this->buildDataErrorVotersQuery($filters)
+            : $this->buildEligibleVotersQuery($filters);
+
+        $voterIds = (clone $voterQuery)->select('pemilih_records.id');
+
+        return Hashtag::query()
+            ->whereHas('pemilihRecords', fn (Builder $query) => $query->whereIn('pemilih_records.id', $voterIds))
+            ->orderBy('name')
+            ->pluck('name')
+            ->values()
+            ->all();
+    }
+
     private function availableUdms(): array
     {
         $query = PemilihRecord::query()
@@ -959,27 +976,10 @@ class CulaanController extends Controller
 
     private function countDataErrorVoters(array $filters): int
     {
-        $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereNotNull('cula_remark')
-            ->when($filters['udm'] !== '', fn (Builder $b) => $b->where('dm', $filters['udm']))
-            ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
-
-        request()->user()?->applyScopeToPemilihQuery($query);
-
-        $this->applyHashtagFilter($query, $filters);
-
-        $this->applyGroupDemographicFilters($query, $filters['group_id']);
-
-        if ($filters['custom_mode']) {
-            $this->applyCustomDemographicFilters($query, $filters);
-        }
-
-        return $query->count();
+        return $this->buildDataErrorVotersQuery($filters)->count();
     }
 
-    private function paginateDataErrorVoters(array $filters): LengthAwarePaginator
+    private function buildDataErrorVotersQuery(array $filters): Builder
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
@@ -998,7 +998,12 @@ class CulaanController extends Controller
             $this->applyCustomDemographicFilters($query, $filters);
         }
 
-        return $query
+        return $query;
+    }
+
+    private function paginateDataErrorVoters(array $filters): LengthAwarePaginator
+    {
+        return $this->buildDataErrorVotersQuery($filters)
             ->with('creator', 'culaWorkItem.marker', 'hashtags')
             ->orderByRaw('
                 CASE
