@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\User;
 
@@ -465,4 +466,39 @@ it('filters culaan voters by hashtag', function () {
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $match->id)
             ->where('voters.data', fn ($data) => collect($data)->pluck('id')->doesntContain($other->id)));
+});
+
+it('shows tagged voters even when their culaan is already completed', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025576',
+        'no_kp' => '900101025576',
+        'name' => 'PEMILIH CULA SIAP',
+        'dm' => 'UDM TAGGED',
+        'locality' => 'LOKALITI TAGGED',
+        'status' => 'aktif',
+        'cula_code' => '2',
+        'cula_display_label' => '2 - PAS',
+    ]);
+
+    CulaWorkItem::query()->create([
+        'pemilih_record_id' => $voter->id,
+        'marked_by' => $user->id,
+        'marked_at' => now(),
+    ]);
+
+    $this->actingAs($user)->putJson(route('pemilih.hashtags.update', $voter), [
+        'hashtags' => ['#siap'],
+    ])->assertOk();
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', [
+            'udm' => 'UDM TAGGED',
+            'hashtags' => ['#siap'],
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('summary.total', 1)
+            ->where('voters.data.0.id', $voter->id));
 });

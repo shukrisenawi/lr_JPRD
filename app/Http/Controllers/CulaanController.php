@@ -372,7 +372,7 @@ class CulaanController extends Controller
         request()->user()?->applyScopeToPemilihQuery($query);
 
         $query->when(
-            ! $filters['show_marked'] && ! $filters['show_all'],
+            ! $filters['show_marked'] && ! $filters['show_all'] && empty($filters['hashtags']),
             function (Builder $builder) use ($groupKodCulas) {
                 $builder->where(function (Builder $q) use ($groupKodCulas) {
                     $q->whereNull('cula_code')
@@ -402,11 +402,11 @@ class CulaanController extends Controller
             }));
 
         if (! $skipMarkedFilter) {
-            $query->when(
-                $filters['show_marked'],
-                fn (Builder $builder) => $builder->whereHas('culaWorkItem'),
-                fn (Builder $builder) => $builder->whereDoesntHave('culaWorkItem')
-            );
+            if ($filters['show_marked']) {
+                $query->whereHas('culaWorkItem');
+            } elseif (empty($filters['hashtags'])) {
+                $query->whereDoesntHave('culaWorkItem');
+            }
         }
 
         $this->applyRumahAlamatFilters($query, $filters);
