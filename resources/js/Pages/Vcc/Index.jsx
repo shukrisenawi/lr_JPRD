@@ -106,7 +106,7 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
-export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [], available_cula_codes: initialCulaCodes = [] }) {
+export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [], available_cula_codes: initialCulaCodes = [], available_hashtags = [] }) {
     const { auth } = usePage().props;
     const suggestionsAbort = useRef(null);
     const [search, setSearch] = useState('');
@@ -141,6 +141,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             per_udm_count: filters.per_udm_count ?? 20,
         bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
         cula_codes: filters.cula_codes ?? '',
+        hashtags: Array.isArray(filters.hashtags) ? filters.hashtags : [],
         has_phone: Boolean(filters.has_phone),
         birthday_image_status: filters.birthday_image_status ?? '',
     });
@@ -158,10 +159,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         per_udm_count: filters.per_udm_count ?? 20,
             bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
             cula_codes: filters.cula_codes ?? '',
+            hashtags: Array.isArray(filters.hashtags) ? filters.hashtags : [],
             has_phone: Boolean(filters.has_phone),
             birthday_image_status: filters.birthday_image_status ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes, filters.has_phone, filters.birthday_image_status]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes, filters.hashtags, filters.has_phone, filters.birthday_image_status]);
 
     const initialMonth = useRef(true);
     useEffect(() => {
@@ -215,6 +217,19 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         applyFilters(nextState);
     };
 
+    const toggleHashtag = (hashtag) => {
+        const current = formState.hashtags ?? [];
+        const next = current.includes(hashtag)
+            ? current.filter((tag) => tag !== hashtag)
+            : [...current, hashtag];
+        updateFilter('hashtags', next);
+    };
+
+    const resetFilters = () => {
+        setFormState((current) => ({ ...current, hashtags: [] }));
+        window.location.assign(route('vcc.index'));
+    };
+
     const doSearch = async (value) => {
         setSearch(value);
         setSearchError('');
@@ -245,6 +260,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             cula_codes: formState.cula_codes ?? '',
             has_phone: formState.has_phone ? '1' : '0',
             birthday_image_status: formState.birthday_image_status ?? '',
+        });
+        (formState.hashtags ?? []).forEach((hashtag) => {
+            params.append('hashtags[]', hashtag);
         });
 
         try {
@@ -472,6 +490,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 cula_codes: formState.cula_codes ?? '',
                 has_phone: formState.has_phone ? '1' : '0',
                 birthday_image_status: formState.birthday_image_status ?? '',
+            });
+            (formState.hashtags ?? []).forEach((hashtag) => {
+                params.append('hashtags[]', hashtag);
             });
 
             try {
@@ -857,7 +878,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
                                 <div>
                                     <label className="block text-xs font-bold uppercase tracking-[0.08em] text-transparent">Reset</label>
-                                    <button type="button" onClick={() => window.location.assign(route('vcc.index'))}
+                                    <button type="button" onClick={resetFilters}
                                         className="input-field mt-1 inline-flex items-center justify-center bg-white px-2 py-1.5 text-xs font-bold text-black hover:bg-slate-100">
                                         Reset
                                     </button>
@@ -887,6 +908,34 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     })}
                                 </div>
                             </div>
+
+                            {available_hashtags.length > 0 && (
+                                <div className="mt-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</span>
+                                        {formState.hashtags.length > 0 && (
+                                            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                                                {formState.hashtags.length} dipilih
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
+                                        {available_hashtags.map((hashtag) => {
+                                            const selected = formState.hashtags.includes(hashtag);
+                                            return (
+                                                <button
+                                                    key={hashtag}
+                                                    type="button"
+                                                    onClick={() => toggleHashtag(hashtag)}
+                                                    className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${selected ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-green-200 bg-white text-green-700 hover:border-green-400 hover:bg-green-50'}`}
+                                                >
+                                                    {hashtag}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             {actionError && <InputError className="mt-1" message={actionError} />}
                         </div>

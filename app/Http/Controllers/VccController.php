@@ -266,13 +266,13 @@ class VccController extends Controller
         return $query
             ->orderByRaw('
                 CASE
-                    WHEN LENGTH(no_kp) >= 2 AND SUBSTRING(no_kp, 1, 2) > RIGHT(YEAR(CURDATE()), 2)
+                    WHEN LENGTH(no_kp) >= 2 AND CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED) > ?
                         THEN 1900 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
                     WHEN LENGTH(no_kp) >= 2
                         THEN 2000 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
                     ELSE 9999
                 END DESC
-            ')
+            ', [(int) now()->format('y')])
             ->orderBy('no_kp')
             ->paginate(20)
             ->withQueryString()

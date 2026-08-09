@@ -363,7 +363,7 @@ class CulaanBotController extends Controller
         return $this->buildEligibleVotersQuery($filters)
             ->with('culaWorkItem.marker', 'hashtags')
             ->when($filters['udm'] === '', fn (Builder $q) => $q->orderBy('dm'))
-            ->orderByRaw("CONCAT(IF(CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ?, '19', '20'), SUBSTR(no_kp, 1, 2)) DESC", [now()->format('y')])
+            ->orderByRaw('CASE WHEN CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) ELSE 2000 + CAST(SUBSTR(no_kp, 1, 2) AS UNSIGNED) END DESC', [(int) now()->format('y')])
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString()

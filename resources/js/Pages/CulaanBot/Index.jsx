@@ -170,7 +170,7 @@ function ToggleTile({ label, icon, iconColor, active, onToggle, disabled }) {
     );
 }
 
-export default function CulaanBotIndex({ filters, summary, udms, localities, voters, available_cula_codes = [] }) {
+export default function CulaanBotIndex({ filters, summary, udms, localities, voters, available_cula_codes = [], available_hashtags = [] }) {
     const { auth } = usePage().props;
     const [search, setSearch] = useState('');
     const [searching, setSearching] = useState(false);
@@ -183,6 +183,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     const [filterRumahAlamat, setFilterRumahAlamat] = useState(Boolean(filters.filter_rumah_alamat));
     const [showAll, setShowAll] = useState(Boolean(filters.show_all));
     const [culaCodes, setCulaCodes] = useState(filters.cula_codes ?? []);
+    const [hashtags, setHashtags] = useState(Array.isArray(filters.hashtags) ? filters.hashtags : []);
     const [ageFrom, setAgeFrom] = useState(filters.age_from ?? '');
     const [ageTo, setAgeTo] = useState(filters.age_to ?? '');
     const [pendingIds, setPendingIds] = useState([]);
@@ -249,6 +250,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         filter_rumah_alamat: filterRumahAlamat,
         show_all: showAll,
         cula_codes: culaCodes,
+        hashtags,
         age_from: ageFrom,
         age_to: ageTo,
     };
@@ -324,6 +326,14 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         applyFilters({ ...formState, cula_codes: next });
     };
 
+    const toggleHashtag = (hashtag) => {
+        const next = hashtags.includes(hashtag)
+            ? hashtags.filter((tag) => tag !== hashtag)
+            : [...hashtags, hashtag];
+        setHashtags(next);
+        applyFilters({ ...formState, hashtags: next });
+    };
+
     const doSearch = async (value) => {
         setSearch(value);
         setSearchError('');
@@ -339,6 +349,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         try {
             const params = new URLSearchParams({ q: value, udm: formState.udm, locality: formState.locality, age_from: formState.age_from, age_to: formState.age_to, filter_rumah: formState.filter_rumah, filter_alamat: formState.filter_alamat, filter_rumah_alamat: formState.filter_rumah_alamat, show_all: formState.show_all ? '1' : '0' });
             (formState.cula_codes ?? []).forEach((code) => params.append('cula_codes[]', code));
+            (formState.hashtags ?? []).forEach((hashtag) => {
+                params.append('hashtags[]', hashtag);
+            });
             const response = await fetch(`${route('culaan-bot.search')}?${params.toString()}`, {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
@@ -515,9 +528,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         } catch { setActionError('Tindakan tidak berjaya disimpan. Sila cuba lagi.'); }
     };
 
-    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll));
+    const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll || hashtags.length));
     const [culaFilterOpen, setCulaFilterOpen] = useState(false);
-    const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll;
+    const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll || hashtags.length > 0;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
     const clearAllFilters = () => {
@@ -527,6 +540,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         setFilterRumahAlamat(false);
         setShowAll(false);
         setCulaCodes([]);
+        setHashtags([]);
         setAgeFrom('');
         setAgeTo('');
         setSearch('');
@@ -540,6 +554,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
             filter_rumah_alamat: false,
             show_all: false,
             cula_codes: [],
+            hashtags: [],
             age_from: '',
             age_to: '',
         });
@@ -645,6 +660,33 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         <ToggleTile label="Semua Pemilih" icon="list" iconColor="slate" active={showAll} onToggle={toggleShowAll} />
                                     </div>
                                 </div>
+                                {available_hashtags.length > 0 && (
+                                    <div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</span>
+                                            {hashtags.length > 0 && (
+                                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                                                    {hashtags.length} dipilih
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
+                                            {available_hashtags.map((hashtag) => {
+                                                const selected = hashtags.includes(hashtag);
+                                                return (
+                                                    <button
+                                                        key={hashtag}
+                                                        type="button"
+                                                        onClick={() => toggleHashtag(hashtag)}
+                                                        className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${selected ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-green-200 bg-white text-green-700 hover:border-green-400 hover:bg-green-50'}`}
+                                                    >
+                                                        {hashtag}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                                 {showAll && available_cula_codes.length > 0 && (
                                     <div>
                                         <button type="button" onClick={() => setCulaFilterOpen((v) => !v)}

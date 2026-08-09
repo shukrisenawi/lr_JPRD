@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\Hashtag;
 use App\Models\PemilihRecord;
+use App\Models\ProgramSubProgram;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 final class HashtagService
 {
@@ -50,14 +52,51 @@ final class HashtagService
     public function sync(PemilihRecord $record, mixed $values): array
     {
         $names = self::normalizeTags($values);
-        $ids = [];
+        $ids = $this->resolveIds($names);
 
-        foreach ($names as $name) {
-            $ids[] = Hashtag::query()->firstOrCreate(['name' => $name])->getKey();
+        $this->syncSource($record, $ids, 'is_manual');
+
+        return $this->namesForIds($ids);
+    }
+
+    public function attach(PemilihRecord $record, mixed $values): array
+    {
+        $names = self::normalizeTags($values);
+        $ids = $this->resolveIds($names);
+
+        foreach ($ids as $id) {
+            DB::table('hashtag_pemilih_record')->updateOrInsert(
+                ['hashtag_id' => $id, 'pemilih_record_id' => $record->id],
+                ['is_manual' => true],
+            );
         }
 
-        $record->hashtags()->sync($ids);
+        return $this->namesForIds($ids);
+    }
 
+    public function syncProgramAssignments(PemilihRecord $record): array
+    {
+        $names = ProgramSubProgram::query()
+            ->whereHas('attendees', fn (Builder $query) => $query->where('voter_id', (string) $record->id))
+            ->pluck('name')
+            ->all();
+        $ids = $this->resolveIds(self::normalizeTags($names));
+
+        $this->syncSource($record, $ids, 'is_program');
+
+        return $this->namesForIds($ids);
+    }
+
+    private function resolveIds(array $names): array
+    {
+        return array_map(
+            fn (string $name) => Hashtag::query()->firstOrCreate(['name' => $name])->getKey(),
+            $names,
+        );
+    }
+
+    private function namesForIds(array $ids): array
+    {
         if ($ids === []) {
             return [];
         }
@@ -70,6 +109,37 @@ final class HashtagService
             fn (int $id) => $namesById[$id],
             $ids,
         ));
+    }
+
+    private function syncSource(PemilihRecord $record, array $ids, string $source): void
+    {
+        DB::transaction(function () use ($record, $ids, $source) {
+            DB::table('hashtag_pemilih_record')
+                ->where('pemilih_record_id', $record->id)
+                ->where($source, true)
+                ->update([$source => false]);
+
+            foreach ($ids as $id) {
+                $attributes = ['hashtag_id' => $id, 'pemilih_record_id' => $record->id];
+                $exists = DB::table('hashtag_pemilih_record')->where($attributes)->exists();
+
+                if ($exists) {
+                    DB::table('hashtag_pemilih_record')->where($attributes)->update([$source => true]);
+                } else {
+                    DB::table('hashtag_pemilih_record')->insert([
+                        ...$attributes,
+                        'is_manual' => $source === 'is_manual',
+                        'is_program' => $source === 'is_program',
+                    ]);
+                }
+            }
+
+            DB::table('hashtag_pemilih_record')
+                ->where('pemilih_record_id', $record->id)
+                ->where('is_manual', false)
+                ->where('is_program', false)
+                ->delete();
+        });
     }
 
     public function suggestions(?string $query, ?User $user = null, bool $includeManual = true, int $limit = 20, ?string $dm = null, ?string $locality = null): array

@@ -6,6 +6,7 @@ use App\Models\CommitteeGroup;
 use App\Models\CommitteeMembership;
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
+use App\Models\Hashtag;
 use App\Models\PemilihRecord;
 use App\Models\Program;
 use App\Models\ProgramAttendee;
@@ -14,6 +15,7 @@ use App\Models\ProgramGroup;
 use App\Models\ProgramSubProgram;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\HashtagService;
 use App\Services\ImageService;
 use App\Services\PemilihReportService;
 use App\Support\CulaCodes;
@@ -585,7 +587,7 @@ class ProgramController extends Controller
         ]);
     }
 
-    public function storeAttendee(Request $request, Program $program): RedirectResponse
+    public function storeAttendee(Request $request, Program $program, HashtagService $hashtagService): RedirectResponse
     {
         $this->ensureAccessible($request->user()->id, $program);
 
@@ -632,13 +634,14 @@ class ProgramController extends Controller
         }
 
         $attendee->subPrograms()->sync($subProgramIds);
+        $this->attachSubProgramHashtags($attendee, $hashtagService);
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
             ->with('success', 'Pemilih berjaya direkodkan sebagai hadir program.');
     }
 
-    public function destroyAttendee(Request $request, Program $program, ProgramAttendee $attendee): RedirectResponse
+    public function destroyAttendee(Request $request, Program $program, ProgramAttendee $attendee, HashtagService $hashtagService): RedirectResponse
     {
         $this->ensureAccessible($request->user()->id, $program);
         $this->ensureAttendeeModifiable($request->user(), $program, $attendee);
@@ -647,7 +650,12 @@ class ProgramController extends Controller
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
         }
 
+        $voter = $attendee->voter()->first();
         $attendee->delete();
+
+        if ($voter) {
+            $hashtagService->syncProgramAssignments($voter);
+        }
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
@@ -1010,7 +1018,7 @@ class ProgramController extends Controller
 
         $validated = $request->validate([
             'name' => [
-                'required', 'string', 'max:255',
+                'required', 'string', 'max:49',
                 Rule::unique('program_sub_programs', 'name')
                     ->where('program_id', $program->id),
             ],
@@ -1018,6 +1026,13 @@ class ProgramController extends Controller
         ]);
 
         $validated['name'] = strtolower(preg_replace('/\s+/', '_', $validated['name']));
+        $hashtag = HashtagService::normalizeTag($validated['name']);
+
+        if ($hashtag === null) {
+            return back()->withErrors(['name' => 'Nama sub program mesti sesuai digunakan sebagai hashtag.']);
+        }
+
+        Hashtag::query()->firstOrCreate(['name' => $hashtag]);
 
         $program->subPrograms()->create($validated);
 
@@ -1026,14 +1041,14 @@ class ProgramController extends Controller
             ->with('success', 'Sub program berjaya ditambah.');
     }
 
-    public function updateSubProgram(Request $request, ProgramSubProgram $subProgram): RedirectResponse
+    public function updateSubProgram(Request $request, ProgramSubProgram $subProgram, HashtagService $hashtagService): RedirectResponse
     {
         $program = $subProgram->program;
         $this->ensureOwner($request->user()->id, $program);
 
         $validated = $request->validate([
             'name' => [
-                'required', 'string', 'max:255',
+                'required', 'string', 'max:49',
                 Rule::unique('program_sub_programs', 'name')
                     ->where('program_id', $program->id)
                     ->ignore($subProgram->id),
@@ -1042,27 +1057,46 @@ class ProgramController extends Controller
         ]);
 
         $validated['name'] = strtolower(preg_replace('/\s+/', '_', $validated['name']));
+        $hashtag = HashtagService::normalizeTag($validated['name']);
+
+        if ($hashtag === null) {
+            return back()->withErrors(['name' => 'Nama sub program mesti sesuai digunakan sebagai hashtag.']);
+        }
+
+        Hashtag::query()->firstOrCreate(['name' => $hashtag]);
 
         $subProgram->update($validated);
+
+        $subProgram->attendees()
+            ->with('voter', 'subPrograms')
+            ->get()
+            ->each(fn (ProgramAttendee $attendee) => $this->attachSubProgramHashtags($attendee, $hashtagService));
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
             ->with('success', 'Sub program berjaya dikemas kini.');
     }
 
-    public function destroySubProgram(Request $request, ProgramSubProgram $subProgram): RedirectResponse
+    public function destroySubProgram(Request $request, ProgramSubProgram $subProgram, HashtagService $hashtagService): RedirectResponse
     {
         $program = $subProgram->program;
         $this->ensureOwner($request->user()->id, $program);
 
+        $voters = $subProgram->attendees()
+            ->with('voter')
+            ->get()
+            ->pluck('voter')
+            ->filter();
+
         $subProgram->delete();
+        $voters->each(fn (PemilihRecord $voter) => $hashtagService->syncProgramAssignments($voter));
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
             ->with('success', 'Sub program berjaya dipadam.');
     }
 
-    public function updateAttendeeSubPrograms(Request $request, Program $program, ProgramAttendee $attendee): RedirectResponse
+    public function updateAttendeeSubPrograms(Request $request, Program $program, ProgramAttendee $attendee, HashtagService $hashtagService): RedirectResponse
     {
         $this->ensureAccessible($request->user()->id, $program);
         $this->ensureAttendeeModifiable($request->user(), $program, $attendee);
@@ -1077,10 +1111,22 @@ class ProgramController extends Controller
         ]);
 
         $attendee->subPrograms()->sync($validated['sub_program_ids'] ?? []);
+        $this->attachSubProgramHashtags($attendee, $hashtagService);
 
         return redirect()
             ->route('program.index', ['program' => $program->id])
             ->with('success', 'Sub program pemilih berjaya dikemas kini.');
+    }
+
+    private function attachSubProgramHashtags(ProgramAttendee $attendee, HashtagService $hashtagService): void
+    {
+        $voter = $attendee->relationLoaded('voter') ? $attendee->voter : $attendee->voter()->first();
+
+        if (! $voter) {
+            return;
+        }
+
+        $hashtagService->syncProgramAssignments($voter);
     }
 
     private function validateProgram(Request $request): array
