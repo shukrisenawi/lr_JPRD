@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ApiKey;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,7 +17,13 @@ class ApiKeyAuthenticator
             return response()->json(['error' => 'Kunci API diperlukan.'], 401);
         }
 
-        $apiKey = ApiKey::query()->get()->first(fn (ApiKey $storedKey) => $storedKey->key === $key);
+        $apiKey = ApiKey::query()->get()->first(function (ApiKey $storedKey) use ($key): bool {
+            try {
+                return $storedKey->key === $key;
+            } catch (DecryptException) {
+                return false;
+            }
+        });
 
         if (! $apiKey) {
             return response()->json(['error' => 'Kunci API tidak sah.'], 401);

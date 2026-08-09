@@ -4,6 +4,7 @@ use App\Models\ApiKey;
 use App\Models\PemilihRecord;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 it('allows a master admin to generate an API key', function () {
     $admin = User::factory()->masterAdmin()->create();
@@ -26,6 +27,26 @@ it('allows a master admin to generate an API key', function () {
     expect($apiKey)->not->toBeNull();
     expect($apiKey->key)->toBe($plainTextKey);
     $this->assertDatabaseHas('api_keys', ['name' => 'Birthday App']);
+});
+
+it('keeps the API key page available when a stored key cannot be decrypted', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $timestamp = now()->addMinute();
+
+    DB::table('api_keys')->insert([
+        'name' => 'Kunci Lama Tidak Sah',
+        'key' => 'invalid-encrypted-value',
+        'created_at' => $timestamp,
+        'updated_at' => $timestamp,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.api-keys.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Admin/ApiKeys')
+            ->where('apiKeys.0.name', 'Kunci Lama Tidak Sah')
+            ->where('apiKeys.0.key', null));
 });
 
 it('serves birthday voter data to an external app with a bearer API key', function () {
@@ -79,6 +100,13 @@ it('serves birthday voter data to an external app with a bearer API key', functi
 
 it('rejects invalid and expired API keys', function () {
     $birthday = Carbon::today('Asia/Kuala_Lumpur');
+
+    DB::table('api_keys')->insert([
+        'name' => 'Kunci Lama Tidak Sah',
+        'key' => 'invalid-encrypted-value',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 
     $this->getJson(route('api.voters.birthdays', ['date' => $birthday->toDateString()]), [
         'Authorization' => 'Bearer invalid-key',

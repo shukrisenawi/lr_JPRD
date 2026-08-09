@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiKey;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -22,14 +23,22 @@ class ApiKeyController extends Controller
             'apiKeys' => ApiKey::query()
                 ->orderByDesc('created_at')
                 ->get()
-                ->map(fn (ApiKey $apiKey) => [
-                    'id' => $apiKey->id,
-                    'name' => $apiKey->name,
-                    'key' => $apiKey->key,
-                    'last_used_at' => $apiKey->last_used_at?->format('d-m-Y H:i'),
-                    'expires_at' => $apiKey->expires_at?->format('d-m-Y'),
-                    'created_at' => $apiKey->created_at->format('d-m-Y H:i'),
-                ]),
+                ->map(function (ApiKey $apiKey): array {
+                    try {
+                        $key = $apiKey->key;
+                    } catch (DecryptException) {
+                        $key = null;
+                    }
+
+                    return [
+                        'id' => $apiKey->id,
+                        'name' => $apiKey->name,
+                        'key' => $key,
+                        'last_used_at' => $apiKey->last_used_at?->format('d-m-Y H:i'),
+                        'expires_at' => $apiKey->expires_at?->format('d-m-Y'),
+                        'created_at' => $apiKey->created_at->format('d-m-Y H:i'),
+                    ];
+                }),
         ]);
     }
 
