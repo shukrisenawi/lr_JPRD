@@ -18,6 +18,7 @@ class PusatKhidmatData extends Model
         'pemilih_record_id',
         'payload',
         'status',
+        'is_manual',
         'checked_at',
     ];
 
@@ -25,6 +26,7 @@ class PusatKhidmatData extends Model
     {
         return [
             'payload' => 'array',
+            'is_manual' => 'boolean',
             'checked_at' => 'datetime',
         ];
     }

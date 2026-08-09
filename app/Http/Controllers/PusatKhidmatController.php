@@ -30,6 +30,30 @@ class PusatKhidmatController extends Controller
         ]);
     }
 
+    public function storeManual(Request $request, PusatKhidmatService $service): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user?->isMasterAdmin(), 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'no_kp' => ['required', 'string', 'max:20'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'address' => ['nullable', 'string', 'max:5000'],
+            'university' => ['nullable', 'string', 'max:255'],
+            'bidang' => ['nullable', 'string', 'max:255'],
+            'tarikh_permohonan' => ['nullable', 'date'],
+        ]);
+
+        $record = $service->createManualRecord($validated, $user);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Data Pusat Khidmat berjaya ditambah.',
+            'record' => $service->formatRecord($record->load('pemilihRecord')),
+        ], 201);
+    }
+
     public function toggleCheck(PusatKhidmatData $record): JsonResponse
     {
         $isChecked = $record->checked_at !== null;

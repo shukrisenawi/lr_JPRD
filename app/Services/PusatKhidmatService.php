@@ -6,10 +6,13 @@ use App\Models\PemilihRecord;
 use App\Models\PusatKhidmatData;
 use App\Models\Setting;
 use App\Models\User;
+use Carbon\Carbon;
 use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class PusatKhidmatService
@@ -80,7 +83,7 @@ class PusatKhidmatService
 
                 if ($existingFingerprint === null) {
                     $pemilihRecordId = null;
-                    if (!empty($row['no_kp'])) {
+                    if (! empty($row['no_kp'])) {
                         $pemilihRecordId = PemilihRecord::query()
                             ->where('no_kp', $row['no_kp'])
                             ->orWhere('identity_number', $row['no_kp'])
@@ -101,7 +104,7 @@ class PusatKhidmatService
                     $newCount++;
                 } elseif ($existingFingerprint !== $fingerprint) {
                     $pemilihRecordId = null;
-                    if (!empty($row['no_kp'])) {
+                    if (! empty($row['no_kp'])) {
                         $pemilihRecordId = PemilihRecord::query()
                             ->where('no_kp', $row['no_kp'])
                             ->orWhere('identity_number', $row['no_kp'])
@@ -120,9 +123,10 @@ class PusatKhidmatService
                 }
             }
 
-            if (!empty($processedRowKeys)) {
+            if (! empty($processedRowKeys)) {
                 PusatKhidmatData::query()
                     ->where('sheet_key', $sheetKey)
+                    ->where('is_manual', false)
                     ->whereNotIn('row_key', $processedRowKeys)
                     ->update(['status' => 'xaktif']);
             }
@@ -149,9 +153,9 @@ class PusatKhidmatService
         try {
             $this->autoSyncIfNeeded();
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('PusatKhidmat autoSyncIfNeeded gagal: ' . $e->getMessage());
+            Log::warning('PusatKhidmat autoSyncIfNeeded gagal: '.$e->getMessage());
         }
-        
+
         $sheetUrl = $this->getSheetUrl();
         $sheetKey = md5($sheetUrl);
 
@@ -173,11 +177,82 @@ class PusatKhidmatService
         ];
     }
 
+    public function createManualRecord(array $data, User $user): PusatKhidmatData
+    {
+        return DB::transaction(function () use ($data, $user): PusatKhidmatData {
+            $noKp = $this->normalizeNoKp((string) $data['no_kp']);
+            $sheetKey = md5($this->getSheetUrl());
+
+            $duplicate = PusatKhidmatData::query()
+                ->where('is_manual', true)
+                ->where('no_kp', $noKp)
+                ->where('status', 'aktif')
+                ->exists();
+
+            if ($duplicate) {
+                throw ValidationException::withMessages([
+                    'no_kp' => 'Data manual dengan No KP ini sudah wujud.',
+                ]);
+            }
+
+            $pemilih = PemilihRecord::query()
+                ->where('no_kp', $noKp)
+                ->orWhere('identity_number', $noKp)
+                ->orWhere('old_ic', $noKp)
+                ->first();
+
+            if (! $pemilih) {
+                $pemilih = PemilihRecord::query()->create([
+                    'identity_number' => $noKp,
+                    'no_kp' => $noKp,
+                    'name' => $data['name'],
+                    'phone_mobile' => $data['phone'] ?? null,
+                    'address' => $data['address'] ?? null,
+                    'status' => 'aktif',
+                    'is_manual' => true,
+                    'created_by' => $user->id,
+                ]);
+            }
+
+            $payload = [
+                'NAMA PEMOHON' => $data['name'],
+                'NO KAD PENGENALAN' => $noKp,
+                'NO TELEFON' => $data['phone'] ?? '',
+                'ALAMAT' => $data['address'] ?? '',
+                'UNIVERSITI' => $data['university'] ?? '',
+                'BIDANG' => $data['bidang'] ?? '',
+                'TARIKH PERMOHONAN' => $data['tarikh_permohonan'] ?? '',
+            ];
+            $rowKey = 'manual-'.Str::uuid()->toString();
+
+            return PusatKhidmatData::query()->create([
+                'sheet_key' => $sheetKey,
+                'row_key' => $rowKey,
+                'row_fingerprint' => sha1(json_encode($payload, JSON_UNESCAPED_UNICODE).$rowKey),
+                'position' => ((int) PusatKhidmatData::query()
+                    ->where(function ($query) use ($sheetKey) {
+                        $query->where('sheet_key', $sheetKey)
+                            ->orWhere('is_manual', true);
+                    })
+                    ->max('position')) + 1,
+                'no_kp' => $noKp,
+                'pemilih_record_id' => $pemilih->id,
+                'payload' => $payload,
+                'status' => 'aktif',
+                'is_manual' => true,
+            ]);
+        });
+    }
+
     private function buildRecordsQuery(?User $user)
     {
+        $sheetKey = md5($this->getSheetUrl());
         $query = PusatKhidmatData::query()
             ->with('pemilihRecord')
-            ->where('sheet_key', md5($this->getSheetUrl()))
+            ->where(function ($query) use ($sheetKey) {
+                $query->where('sheet_key', $sheetKey)
+                    ->orWhere('is_manual', true);
+            })
             ->where('status', 'aktif')
             ->orderBy('position');
 
@@ -201,16 +276,17 @@ class PusatKhidmatService
     {
         $lastSyncAt = Setting::valueOf('pusat_khidmat_last_sync_at');
         $now = now();
-        
-        if (!$lastSyncAt) {
+
+        if (! $lastSyncAt) {
             $this->fetchAndSync();
             Setting::setValue('pusat_khidmat_last_sync_at', $now->toDateTimeString());
+
             return;
         }
-        
-        $lastSync = \Carbon\Carbon::parse($lastSyncAt);
+
+        $lastSync = Carbon::parse($lastSyncAt);
         $hoursSinceSync = $lastSync->diffInHours($now);
-        
+
         if ($hoursSinceSync >= 24) {
             $this->fetchAndSync();
             Setting::setValue('pusat_khidmat_last_sync_at', $now->toDateTimeString());
@@ -227,6 +303,7 @@ class PusatKhidmatService
             }
         }
         sort($udms);
+
         return $udms;
     }
 
@@ -240,10 +317,11 @@ class PusatKhidmatService
             }
         }
         sort($localities);
+
         return $localities;
     }
 
-    private function formatRecord(PusatKhidmatData $record): array
+    public function formatRecord(PusatKhidmatData $record): array
     {
         $pemilih = $record->pemilihRecord;
 
@@ -280,7 +358,7 @@ class PusatKhidmatService
             ->get("https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}");
 
         if ($metaResponse->failed()) {
-            throw new RuntimeException('Gagal mendapatkan metadata Google Sheet: ' . $metaResponse->body());
+            throw new RuntimeException('Gagal mendapatkan metadata Google Sheet: '.$metaResponse->body());
         }
 
         $sheets = $metaResponse->json('sheets', []);
@@ -293,10 +371,10 @@ class PusatKhidmatService
         $response = Http::withToken($token)
             ->timeout(30)
             ->accept('application/json')
-            ->get("https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}/values/" . rawurlencode($firstTab));
+            ->get("https://sheets.googleapis.com/v4/spreadsheets/{$sheetId}/values/".rawurlencode($firstTab));
 
         if ($response->failed()) {
-            throw new RuntimeException('Gagal mendapatkan data daripada Google Sheet: ' . $response->body());
+            throw new RuntimeException('Gagal mendapatkan data daripada Google Sheet: '.$response->body());
         }
 
         return $response->json('values', []);
@@ -306,7 +384,7 @@ class PusatKhidmatService
     {
         $keyPath = storage_path('app/service-account.json');
 
-        if (!file_exists($keyPath)) {
+        if (! file_exists($keyPath)) {
             throw new RuntimeException('Fail service-account.json tidak dijumpai di storage/app/. Sila letak JSON key Service Account.');
         }
 
@@ -324,7 +402,7 @@ class PusatKhidmatService
     {
         preg_match('/\/d\/([a-zA-Z0-9-_]+)/', $sheetUrl, $matches);
 
-        if (!isset($matches[1])) {
+        if (! isset($matches[1])) {
             throw new RuntimeException('URL Google Sheet tidak sah.');
         }
 
@@ -336,7 +414,7 @@ class PusatKhidmatService
         $possibleKeys = ['no_kp', 'NO KAD PENGENALAN', 'no_kad_pengenalan', 'nokp', 'ic', 'no_ic'];
 
         foreach ($possibleKeys as $key) {
-            if (!empty($row[$key])) {
+            if (! empty($row[$key])) {
                 return $this->normalizeNoKp($row[$key]);
             }
         }
@@ -344,11 +422,11 @@ class PusatKhidmatService
         return null;
     }
 
-    private function normalizeNoKp(string $noKp): string
+    public function normalizeNoKp(string $noKp): string
     {
         $noKp = str_replace(['-', ' ', "\t"], '', $noKp);
 
-        if ($noKp === '' || !ctype_digit($noKp) || strlen($noKp) >= 12) {
+        if ($noKp === '' || ! ctype_digit($noKp) || strlen($noKp) >= 12) {
             return $noKp;
         }
 

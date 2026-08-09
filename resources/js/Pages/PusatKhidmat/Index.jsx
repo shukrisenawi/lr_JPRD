@@ -29,6 +29,93 @@ function StatCard({ label, value, detail, color = 'violet' }) {
     );
 }
 
+const emptyManualData = {
+    name: '',
+    no_kp: '',
+    phone: '',
+    address: '',
+    university: '',
+    bidang: '',
+    tarikh_permohonan: '',
+};
+
+function FieldError({ message }) {
+    if (!message) return null;
+
+    return <p className="mt-1 text-xs font-bold text-rose-600">{Array.isArray(message) ? message[0] : message}</p>;
+}
+
+function ManualDataModal({ data, errors, saving, onChange, onSubmit, onClose }) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 sm:p-5" role="dialog" aria-modal="true" aria-labelledby="manual-data-title">
+            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+                    <div>
+                        <p className="label-section">Pusat Khidmat</p>
+                        <h3 id="manual-data-title" className="mt-0.5 text-lg font-black text-slate-800">Tambah Data Manual</h3>
+                        <p className="mt-1 text-xs text-slate-500">Data ini akan dipaparkan dalam senarai dan dipautkan dengan rekod pemilih.</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-50">Tutup</button>
+                </div>
+
+                <form onSubmit={onSubmit} className="space-y-4 p-4 sm:p-5">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label htmlFor="manual-name" className="label-field">Nama Pemohon <span className="text-rose-500">*</span></label>
+                            <input id="manual-name" type="text" value={data.name} onChange={(event) => onChange('name', event.target.value)} className="input-field mt-1 w-full" placeholder="NAMA PENUH" />
+                            <FieldError message={errors.name} />
+                        </div>
+                        <div>
+                            <label htmlFor="manual-no-kp" className="label-field">No Kad Pengenalan <span className="text-rose-500">*</span></label>
+                            <input id="manual-no-kp" type="text" value={data.no_kp} onChange={(event) => onChange('no_kp', event.target.value)} className="input-field mt-1 w-full" placeholder="900101025555" />
+                            <FieldError message={errors.no_kp} />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label htmlFor="manual-phone" className="label-field">No Telefon</label>
+                            <input id="manual-phone" type="text" value={data.phone} onChange={(event) => onChange('phone', event.target.value)} className="input-field mt-1 w-full" placeholder="0123456789" />
+                            <FieldError message={errors.phone} />
+                        </div>
+                        <div>
+                            <label htmlFor="manual-date" className="label-field">Tarikh Permohonan</label>
+                            <input id="manual-date" type="date" value={data.tarikh_permohonan} onChange={(event) => onChange('tarikh_permohonan', event.target.value)} className="input-field mt-1 w-full" />
+                            <FieldError message={errors.tarikh_permohonan} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="manual-address" className="label-field">Alamat</label>
+                        <textarea id="manual-address" value={data.address} onChange={(event) => onChange('address', event.target.value)} className="input-field mt-1 w-full" rows="2" placeholder="Alamat pemohon" />
+                        <FieldError message={errors.address} />
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label htmlFor="manual-university" className="label-field">Universiti</label>
+                            <input id="manual-university" type="text" value={data.university} onChange={(event) => onChange('university', event.target.value)} className="input-field mt-1 w-full" placeholder="Nama universiti" />
+                            <FieldError message={errors.university} />
+                        </div>
+                        <div>
+                            <label htmlFor="manual-bidang" className="label-field">Bidang</label>
+                            <input id="manual-bidang" type="text" value={data.bidang} onChange={(event) => onChange('bidang', event.target.value)} className="input-field mt-1 w-full" placeholder="Bidang pengajian" />
+                            <FieldError message={errors.bidang} />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:justify-end">
+                        <button type="button" onClick={onClose} className="btn-ghost">Batal</button>
+                        <button type="submit" disabled={saving} className="btn-primary disabled:cursor-not-allowed disabled:opacity-50">
+                            {saving ? 'Menyimpan...' : 'Simpan Data'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 function getName(record) {
     return record.payload?.['NAMA PEMOHON']
         || record.payload?.NAMA_PEMOHON
@@ -160,6 +247,10 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [message, setMessage] = useState('');
     const [messageType, setMessageType] = useState('info');
     const [lastSync, setLastSync] = useState(lastSyncAt);
+    const [showManualForm, setShowManualForm] = useState(false);
+    const [manualData, setManualData] = useState({ ...emptyManualData });
+    const [manualErrors, setManualErrors] = useState({});
+    const [savingManual, setSavingManual] = useState(false);
     const [records, setRecords] = useState(initialRecords);
     const [totalCount, setTotalCount] = useState(initialTotal);
     const [newCount, setNewCount] = useState(null);
@@ -436,6 +527,50 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
         }
     };
 
+    const handleManualChange = (field, value) => {
+        setManualData((previous) => ({ ...previous, [field]: value }));
+        if (manualErrors[field]) {
+            setManualErrors((previous) => ({ ...previous, [field]: null }));
+        }
+    };
+
+    const handleSaveManual = async (event) => {
+        event.preventDefault();
+        setSavingManual(true);
+        setManualErrors({});
+
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const res = await fetch(route('pusat-khidmat.manual.store'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, Accept: 'application/json' },
+                body: JSON.stringify(manualData),
+            });
+            const payload = await res.json();
+
+            if (!res.ok) {
+                if (res.status === 422) setManualErrors(payload.errors ?? {});
+                throw new Error(payload.message || 'Data tidak dapat disimpan.');
+            }
+
+            setRecords((previous) => [...previous, payload.record]);
+            setTotalCount((previous) => previous + 1);
+            setNewCount(1);
+            setSearch('');
+            setCurrentPage(1);
+            setActiveTab('belum');
+            setManualData({ ...emptyManualData });
+            setShowManualForm(false);
+            setMessage(payload.message);
+            setMessageType('success');
+        } catch (e) {
+            setMessage(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
+            setMessageType('error');
+        } finally {
+            setSavingManual(false);
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -452,6 +587,13 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                     </div>
                     {isAdmin && (
                         <div className="flex flex-wrap gap-3">
+                            <button
+                                type="button"
+                                onClick={() => { setShowManualForm(true); setManualErrors({}); setMessage(''); }}
+                                className="btn-primary"
+                            >
+                                Tambah Data
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => { setEditingUrl(!editingUrl); if (!editingUrl) setUrlInput(sheetUrl); }}
@@ -489,6 +631,17 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             </button>
                         </div>
                     </div>
+                )}
+
+                {isAdmin && showManualForm && (
+                    <ManualDataModal
+                        data={manualData}
+                        errors={manualErrors}
+                        saving={savingManual}
+                        onChange={handleManualChange}
+                        onSubmit={handleSaveManual}
+                        onClose={() => setShowManualForm(false)}
+                    />
                 )}
 
                 {isAdmin && (
