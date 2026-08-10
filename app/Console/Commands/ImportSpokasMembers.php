@@ -10,7 +10,7 @@ class ImportSpokasMembers extends Command
 {
     protected $signature = 'spokas:import
                             {file : Laluan ke fail JSON export SPoKAS}
-                            {--replace : Padam rekod source yang sama sebelum import}';
+                            {--replace : Kosongkan jadual sebelum import}';
 
     protected $description = 'Import senarai ahli SPoKAS ke jadual spokas_members';
 

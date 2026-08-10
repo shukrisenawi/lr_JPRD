@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('imports spokas member rows idempotently', function () {
+it('replaces existing spokas member rows before a fresh import', function () {
     $path = tempnam(sys_get_temp_dir(), 'spokas-');
 
     file_put_contents($path, json_encode([
@@ -38,10 +38,10 @@ it('imports spokas member rows idempotently', function () {
         ],
     ], JSON_THROW_ON_ERROR));
 
-    $this->artisan('spokas:import', ['file' => $path])
+    $this->artisan('spokas:import', ['file' => $path, '--replace' => true])
         ->assertSuccessful();
 
-    $this->artisan('spokas:import', ['file' => $path])
+    $this->artisan('spokas:import', ['file' => $path, '--replace' => true])
         ->assertSuccessful();
 
     expect(SpokasMember::query()->count())->toBe(2)

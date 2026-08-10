@@ -26,6 +26,7 @@ class SpokasMemberImportService
         $capturedAt = $this->capturedAt($meta['captured_at'] ?? null);
         $now = now();
         $prepared = [];
+        $pages = [];
         $statusCounts = [];
 
         foreach ($rows as $index => $row) {
@@ -33,22 +34,14 @@ class SpokasMemberImportService
                 throw new InvalidArgumentException("Rekod pada index {$index} tidak sah.");
             }
 
-            $page = $this->positiveInteger($row['page_number'] ?? null, "rows.{$index}.page_number");
-            $position = $this->positiveInteger(
-                $row['page_position'] ?? ($row['source_position'] ?? null),
-                "rows.{$index}.page_position"
-            );
-            $status = $this->nullableString($row['status'] ?? null, 80);
-            $key = implode(':', [$sourceKey, $page, $position]);
+            if (array_key_exists('page_number', $row)) {
+                $page = $this->positiveInteger($row['page_number'], "rows.{$index}.page_number");
+                $pages[$page] = true;
+            }
 
-            $prepared[$key] = [
-                'source_key' => $sourceKey,
-                'source_page' => $page,
-                'source_position' => $position,
-                'source_record_id' => $this->nullableString(
-                    $row['record_id'] ?? ($row['source_record_id'] ?? null),
-                    64
-                ),
+            $status = $this->nullableString($row['status'] ?? null, 80);
+
+            $prepared[] = [
                 'name' => $this->nullableString($row['name'] ?? null, 255),
                 'member_number' => $this->nullableString(
                     $row['member_no'] ?? ($row['member_number'] ?? null),
@@ -63,10 +56,6 @@ class SpokasMemberImportService
                     64
                 ),
                 'status' => $status,
-                'profile_url' => $this->nullableString(
-                    $row['source_url'] ?? ($row['profile_url'] ?? null),
-                    2048
-                ),
                 'captured_at' => $capturedAt,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -78,29 +67,13 @@ class SpokasMemberImportService
 
         $records = array_values($prepared);
 
-        DB::transaction(function () use ($records, $sourceKey, $replace): void {
+        DB::transaction(function () use ($records, $replace): void {
             if ($replace) {
-                DB::table('spokas_members')
-                    ->where('source_key', $sourceKey)
-                    ->delete();
+                DB::table('spokas_members')->delete();
             }
 
             foreach (array_chunk($records, 500) as $chunk) {
-                DB::table('spokas_members')->upsert(
-                    $chunk,
-                    ['source_key', 'source_page', 'source_position'],
-                    [
-                        'source_record_id',
-                        'name',
-                        'member_number',
-                        'ic_birth',
-                        'ic_old',
-                        'status',
-                        'profile_url',
-                        'captured_at',
-                        'updated_at',
-                    ]
-                );
+                DB::table('spokas_members')->insert($chunk);
             }
         });
 
@@ -108,7 +81,7 @@ class SpokasMemberImportService
             'source_key' => $sourceKey,
             'rows_received' => count($rows),
             'rows_written' => count($records),
-            'pages' => count(array_unique(array_column($records, 'source_page'))),
+            'pages' => count($pages),
             'status_counts' => $statusCounts,
         ];
     }
