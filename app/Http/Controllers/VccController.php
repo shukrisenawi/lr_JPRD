@@ -511,7 +511,7 @@ class VccController extends Controller
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
             'has_phone' => $request->has('has_phone') ? $request->boolean('has_phone') : true,
             'birthday_image_status' => trim((string) $request->query('birthday_image_status', '')),
-            'hashtags' => HashtagService::normalizeTags($request->query('hashtags', [])),
+            'hashtags' => array_slice(HashtagService::normalizeTags($request->query('hashtags', [])), 0, 1),
         ];
     }
 

@@ -497,9 +497,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
 
     const toggleHashtag = (hashtag) => {
         const current = formState.hashtags ?? [];
-        const next = current.includes(hashtag)
-            ? current.filter((tag) => tag !== hashtag)
-            : [...current, hashtag];
+        const next = current.includes(hashtag) ? [] : [hashtag];
         updateFilter('hashtags', next);
     };
 

@@ -467,7 +467,7 @@ class CulaanBotController extends Controller
             'filter_rumah_alamat' => $request->boolean('filter_rumah_alamat'),
             'show_all' => $request->boolean('show_all'),
             'cula_codes' => $request->query('cula_codes'),
-            'hashtags' => HashtagService::normalizeTags($request->query('hashtags', [])),
+            'hashtags' => array_slice(HashtagService::normalizeTags($request->query('hashtags', [])), 0, 1),
         ];
     }
 

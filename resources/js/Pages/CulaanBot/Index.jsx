@@ -327,9 +327,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const toggleHashtag = (hashtag) => {
-        const next = hashtags.includes(hashtag)
-            ? hashtags.filter((tag) => tag !== hashtag)
-            : [...hashtags, hashtag];
+        const next = hashtags.includes(hashtag) ? [] : [hashtag];
         setHashtags(next);
         applyFilters({ ...formState, hashtags: next });
     };

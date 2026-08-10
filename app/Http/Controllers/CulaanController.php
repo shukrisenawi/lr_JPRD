@@ -867,7 +867,7 @@ class CulaanController extends Controller
             }
         }
 
-        return $hashtags;
+        return array_slice($hashtags, 0, 1);
     }
 
     private function availableRaces(): array
