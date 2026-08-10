@@ -387,6 +387,27 @@ it('normalizes and deduplicates voter hashtags', function () {
     $this->assertDatabaseCount('hashtag_pemilih_record', 2);
 });
 
+it('allows the hashtag pemilih role to manage voter hashtags', function () {
+    $user = User::factory()->withModules(['hashtag-pemilih'])->create();
+
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025568',
+        'no_kp' => '900101025568',
+        'name' => 'ALI ROLE HASHTAG',
+        'dm' => 'UDM HASHTAG',
+        'locality' => 'LOKALITI HASHTAG',
+        'status' => 'aktif',
+        'cula_code' => '?',
+    ]);
+
+    $this->actingAs($user)
+        ->putJson(route('pemilih.hashtags.update', $voter), [
+            'hashtags' => ['#RoleHashtag'],
+        ])
+        ->assertOk()
+        ->assertJsonPath('hashtags', ['#rolehashtag']);
+});
+
 it('returns matching unique hashtag suggestions', function () {
     $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
 

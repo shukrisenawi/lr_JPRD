@@ -13,6 +13,10 @@ return [
         'label' => 'Carian Pemilih',
         'description' => 'Carian data pemilih dari laporan aktif.',
     ],
+    'hashtag-pemilih' => [
+        'label' => 'Hashtag Pemilih',
+        'description' => 'Urus hashtag pada rekod pemilih.',
+    ],
     'tambah-pemilih' => [
         'label' => 'Tambah Pemilih',
         'description' => 'Daftar pemilih manual untuk kehadiran program.',

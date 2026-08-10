@@ -42,7 +42,8 @@ class PemilihHashtagController extends Controller
             $user?->isMasterAdmin()
                 || $user?->canAccessModule('culaan.senarai')
                 || $user?->canAccessModule('tambah-pemilih')
-                || $user?->canAccessModule('carian-pemilih'),
+                || $user?->canAccessModule('carian-pemilih')
+                || $user?->canAccessModule('hashtag-pemilih'),
             403,
         );
 
