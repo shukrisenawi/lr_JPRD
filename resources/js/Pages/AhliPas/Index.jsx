@@ -283,6 +283,7 @@ export default function AhliPasIndex({
     const [selectedMemberForCula, setSelectedMemberForCula] = useState(null);
     const [savingCula, setSavingCula] = useState(false);
     const [culaError, setCulaError] = useState("");
+    const [localitySearch, setLocalitySearch] = useState("");
 
     useEffect(() => setForm(filters), [filters]);
     useEffect(
@@ -349,6 +350,11 @@ export default function AhliPasIndex({
         );
     const rows = members?.data ?? [];
     const wrongCulaRows = localWrongCulaMembers?.data ?? [];
+    const localityRows = (statistics?.by_locality ?? []).filter((row) =>
+        row.locality
+            .toLowerCase()
+            .includes(localitySearch.trim().toLowerCase()),
+    );
 
     const openCula = (member) => {
         const identity = member.no_kp || member.old_ic;
@@ -1031,13 +1037,35 @@ export default function AhliPasIndex({
                             </section>
                             <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                                 <div className="border-b border-slate-100 px-4 py-3">
-                                    <p className="label-section">
-                                        Ahli Mengikut Lokaliti
-                                    </p>
-                                    <p className="mt-0.5 text-xs text-slate-500">
-                                        Pecahan ahli PAS mengikut UDM dan
-                                        lokaliti.
-                                    </p>
+                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="label-section">
+                                                Ahli Mengikut Lokaliti
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-slate-500">
+                                                Pecahan ahli PAS mengikut UDM
+                                                dan lokaliti.
+                                            </p>
+                                        </div>
+                                        <div className="relative w-full sm:w-56">
+                                            <Icon
+                                                name="search"
+                                                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                                            />
+                                            <input
+                                                type="search"
+                                                value={localitySearch}
+                                                onChange={(event) =>
+                                                    setLocalitySearch(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder="Cari lokaliti"
+                                                aria-label="Cari lokaliti"
+                                                className="input-field w-full py-1.5 pl-9 text-xs"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="max-h-[32rem] overflow-auto">
                                     <table className="w-full text-xs">
@@ -1055,9 +1083,7 @@ export default function AhliPasIndex({
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {(
-                                                statistics?.by_locality ?? []
-                                            ).map((row) => (
+                                            {localityRows.map((row) => (
                                                 <tr
                                                     key={`${row.udm}-${row.locality}`}
                                                 >
@@ -1076,6 +1102,16 @@ export default function AhliPasIndex({
                                                     </td>
                                                 </tr>
                                             ))}
+                                            {localityRows.length === 0 && (
+                                                <tr>
+                                                    <td
+                                                        colSpan="3"
+                                                        className="px-4 py-8 text-center text-slate-400"
+                                                    >
+                                                        Tiada lokaliti sepadan.
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
                                 </div>
