@@ -533,6 +533,10 @@ class CulaanController extends Controller
 
     private function availableHashtags(array $filters): array
     {
+        if ($filters['hashtags'] !== []) {
+            return $filters['hashtags'];
+        }
+
         $voterQuery = $filters['data_error']
             ? $this->buildDataErrorVotersQuery($filters)
             : $this->buildEligibleVotersQuery($filters, ! $filters['show_marked']);

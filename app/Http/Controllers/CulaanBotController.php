@@ -475,6 +475,10 @@ class CulaanBotController extends Controller
 
     private function availableHashtags(array $filters): array
     {
+        if ($filters['hashtags'] !== []) {
+            return $filters['hashtags'];
+        }
+
         $voterIds = $this->buildEligibleVotersQuery($filters, ! $filters['show_marked'])
             ->select('pemilih_records.id');
 

@@ -134,7 +134,7 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
         'cula_code' => '?',
     ]);
 
-    app(HashtagService::class)->attach($match, ['#program_sama']);
+    app(HashtagService::class)->attach($match, ['#program_sama', '#hashtag_seiring']);
     app(HashtagService::class)->attach($otherTagged, ['#hashtag_lain']);
 
     $this->actingAs($user)
