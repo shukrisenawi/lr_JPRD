@@ -11,6 +11,9 @@ class SpokasMigrationRun extends Model
         'user_id',
         'source_count',
         'updated_count',
+        'ic_match_count',
+        'name_match_count',
+        'failed_count',
         'ic_matches',
         'name_matches',
         'failed',
@@ -35,11 +38,12 @@ class SpokasMigrationRun extends Model
     public function resultPayload(): array
     {
         return [
+            'id' => $this->id,
             'source_count' => (int) $this->source_count,
             'updated_count' => (int) $this->updated_count,
-            'ic_matches' => $this->ic_matches ?? [],
-            'name_matches' => $this->name_matches ?? [],
-            'failed' => $this->failed ?? [],
+            'ic_match_count' => (int) $this->ic_match_count,
+            'name_match_count' => (int) $this->name_match_count,
+            'failed_count' => (int) $this->failed_count,
         ];
     }
 }

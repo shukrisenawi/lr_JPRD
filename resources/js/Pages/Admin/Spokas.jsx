@@ -1,7 +1,7 @@
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 const numberFormat = new Intl.NumberFormat('ms-MY');
 
@@ -37,46 +37,27 @@ function SummaryCard({ label, value, tone = 'green', icon }) {
     );
 }
 
-function ResultTable({ items, kind }) {
-    const [query, setQuery] = useState('');
-    const [page, setPage] = useState(1);
-    const pageSize = 50;
-    const filtered = useMemo(() => {
-        const needle = query.trim().toLowerCase();
-
-        if (!needle) return items;
-
-        return items.filter((item) => [
-            item.name,
-            item.member_number,
-            item.ic_birth,
-            item.pemilih_name,
-            item.pemilih_no_kp,
-            item.reason,
-        ].some((value) => String(value ?? '').toLowerCase().includes(needle)));
-    }, [items, query]);
-    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-    const currentPage = Math.min(page, totalPages);
-    const visible = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+function ResultTable({ results, kind, search, onSearch, onPage }) {
+    const visible = results?.data ?? [];
+    const totalPages = results?.last_page ?? 1;
+    const currentPage = results?.current_page ?? 1;
+    const total = results?.total ?? 0;
     const successful = kind !== 'failed';
 
     return (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-col gap-2 border-b border-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p className="text-sm font-bold text-slate-900">{numberFormat.format(filtered.length)} rekod</p>
+                    <p className="text-sm font-bold text-slate-900">{numberFormat.format(total)} rekod</p>
                     <p className="text-xs text-slate-500">Papar maksimum 50 rekod setiap halaman.</p>
                 </div>
-                <div className="relative sm:w-72">
-                    <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="search"
-                        value={query}
-                        onChange={(event) => { setQuery(event.target.value); setPage(1); }}
-                        placeholder="Cari nama atau nombor..."
-                        className="input-field w-full pl-9 text-xs"
-                    />
-                </div>
+                <form onSubmit={onSearch} className="flex gap-1 sm:w-72">
+                    <div className="relative min-w-0 flex-1">
+                        <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input type="search" value={search} onChange={(event) => onSearch(event, true)} placeholder="Cari nama atau nombor..." className="input-field w-full pl-9 text-xs" />
+                    </div>
+                    <button type="submit" className="btn-ghost px-2 text-[11px]">Cari</button>
+                </form>
             </div>
 
             {visible.length === 0 ? (
@@ -129,12 +110,12 @@ function ResultTable({ items, kind }) {
                 </div>
             )}
 
-            {filtered.length > pageSize && (
+            {total > 50 && (
                 <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2">
                     <span className="text-[11px] font-semibold text-slate-500">Halaman {currentPage} / {totalPages}</span>
                     <div className="flex gap-1">
-                        <button type="button" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="btn-ghost px-2 py-1 text-[11px] disabled:opacity-40">Sebelum</button>
-                        <button type="button" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))} className="btn-ghost px-2 py-1 text-[11px] disabled:opacity-40">Seterusnya</button>
+                        <button type="button" disabled={currentPage === 1} onClick={() => onPage(currentPage - 1)} className="btn-ghost px-2 py-1 text-[11px] disabled:opacity-40">Sebelum</button>
+                        <button type="button" disabled={currentPage === totalPages} onClick={() => onPage(currentPage + 1)} className="btn-ghost px-2 py-1 text-[11px] disabled:opacity-40">Seterusnya</button>
                     </div>
                 </div>
             )}
@@ -142,13 +123,28 @@ function ResultTable({ items, kind }) {
     );
 }
 
-export default function Spokas({ spokas_count, pemilih_count, results, last_migrated_at }) {
+export default function Spokas({ spokas_count, pemilih_count, run, results, active_tab, search, last_migrated_at }) {
     const { post, processing } = useForm({});
-    const [tab, setTab] = useState('ic');
-    const icMatches = results?.ic_matches ?? [];
-    const nameMatches = results?.name_matches ?? [];
-    const failed = results?.failed ?? [];
-    const activeItems = tab === 'ic' ? icMatches : (tab === 'name' ? nameMatches : failed);
+    const [tab, setTab] = useState(active_tab ?? 'ic');
+    const [searchValue, setSearchValue] = useState(search ?? '');
+
+    useEffect(() => {
+        setTab(active_tab ?? 'ic');
+        setSearchValue(search ?? '');
+    }, [active_tab, search]);
+
+    const loadResults = (nextTab = tab, page = 1, nextSearch = searchValue) => {
+        setTab(nextTab);
+        router.get(route('admin.spokas.index'), {
+            tab: nextTab,
+            page,
+            search: nextSearch || undefined,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['run', 'results', 'active_tab', 'search', 'last_migrated_at'],
+        });
+    };
 
     const migrate = () => {
         if (! window.confirm('Teruskan migrasi No. Ahli PAS ke data pemilih?')) return;
@@ -156,9 +152,9 @@ export default function Spokas({ spokas_count, pemilih_count, results, last_migr
     };
 
     const tabs = [
-        { key: 'ic', label: 'Berjaya guna IC', count: icMatches.length, active: 'border-sky-600 bg-sky-50 text-sky-800' },
-        { key: 'name', label: 'Berjaya guna nama', count: nameMatches.length, active: 'border-violet-600 bg-violet-50 text-violet-800' },
-        { key: 'failed', label: 'Tidak berjaya', count: failed.length, active: 'border-red-600 bg-red-50 text-red-800' },
+        { key: 'ic', label: 'Berjaya guna IC', count: run?.ic_match_count ?? 0, active: 'border-sky-600 bg-sky-50 text-sky-800' },
+        { key: 'name', label: 'Berjaya guna nama', count: run?.name_match_count ?? 0, active: 'border-violet-600 bg-violet-50 text-violet-800' },
+        { key: 'failed', label: 'Tidak berjaya', count: run?.failed_count ?? 0, active: 'border-red-600 bg-red-50 text-red-800' },
     ];
 
     return (
@@ -197,13 +193,13 @@ export default function Spokas({ spokas_count, pemilih_count, results, last_migr
                 <section className="grid gap-3 sm:grid-cols-2">
                     <SummaryCard label="Rekod SPoKAS" value={spokas_count} icon="database" />
                     <SummaryCard label="Rekod Pemilih" value={pemilih_count} tone="blue" icon="user" />
-                    {results && <SummaryCard label="Jumlah Dikemaskini" value={results.updated_count} tone="green" icon="check" />}
-                    {results && <SummaryCard label="Tidak Berjaya" value={failed.length} tone="red" icon="alert" />}
+                    {run && <SummaryCard label="Jumlah Dikemaskini" value={run.updated_count} tone="green" icon="check" />}
+                    {run && <SummaryCard label="Tidak Berjaya" value={run.failed_count} tone="red" icon="alert" />}
                 </section>
 
                 {last_migrated_at && <p className="text-right text-[11px] font-semibold text-slate-500">Migrasi terakhir: {last_migrated_at}</p>}
 
-                {results ? (
+                {run ? (
                     <section className="space-y-3">
                         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Keputusan migrasi SPoKAS">
                             {tabs.map((item) => (
@@ -212,14 +208,27 @@ export default function Spokas({ spokas_count, pemilih_count, results, last_migr
                                     type="button"
                                     role="tab"
                                     aria-selected={tab === item.key}
-                                    onClick={() => setTab(item.key)}
+                                    onClick={() => loadResults(item.key)}
                                     className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${tab === item.key ? item.active : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'}`}
                                 >
                                     {item.label} <span className="ml-1 rounded-full bg-white/80 px-1.5 py-0.5 text-[10px]">{numberFormat.format(item.count)}</span>
                                 </button>
                             ))}
                         </div>
-                        <ResultTable items={activeItems} kind={tab} />
+                        <ResultTable
+                            results={results}
+                            kind={tab}
+                            search={searchValue}
+                            onSearch={(event, draftOnly = false) => {
+                                if (draftOnly) {
+                                    setSearchValue(event.target.value);
+                                    return;
+                                }
+                                event.preventDefault();
+                                loadResults(tab, 1, searchValue);
+                            }}
+                            onPage={(page) => loadResults(tab, page, searchValue)}
+                        />
                     </section>
                 ) : (
                     <section className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">

@@ -45,11 +45,12 @@ it('allows a master admin to run spokas migration and returns grouped results', 
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Admin/Spokas')
-            ->where('results.source_count', 3)
-            ->where('results.updated_count', 2)
-            ->where('results.ic_matches.0.match_by', 'ic')
-            ->where('results.name_matches.0.match_by', 'nama')
-            ->where('results.failed.0.reason', 'Tiada padanan berdasarkan IC atau nama.')
+            ->where('run.source_count', 3)
+            ->where('run.updated_count', 2)
+            ->where('run.ic_match_count', 1)
+            ->where('run.name_match_count', 1)
+            ->where('run.failed_count', 1)
+            ->where('results.total', 1)
         );
 
     expect($icRecord->fresh()->no_ahli)->toBe('A-001')
@@ -59,7 +60,7 @@ it('allows a master admin to run spokas migration and returns grouped results', 
     $this->actingAs($admin)
         ->get(route('admin.spokas.index'))
         ->assertInertia(fn ($page) => $page
-            ->where('results.updated_count', 2)
+            ->where('run.updated_count', 2)
             ->where('last_migrated_at', fn ($value) => is_string($value) && $value !== '')
         );
 });
@@ -72,6 +73,7 @@ it('allows a master admin to open the spokas page', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Admin/Spokas')
+            ->where('run', null)
             ->where('results', null)
             ->where('last_migrated_at', null)
         );

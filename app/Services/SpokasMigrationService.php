@@ -2,141 +2,173 @@
 
 namespace App\Services;
 
-use App\Models\PemilihRecord;
-use App\Models\SpokasMember;
+use App\Models\SpokasMigrationRun;
 use Illuminate\Support\Facades\DB;
 
 class SpokasMigrationService
 {
     /**
-     * Match every SPoKAS member to one pemilih record and update no_ahli.
+     * Match SPoKAS members in chunks and persist each result row immediately.
      *
-     * @return array{source_count: int, updated_count: int, ic_matches: array<int, array<string, mixed>>, name_matches: array<int, array<string, mixed>>, failed: array<int, array<string, mixed>>}
+     * @return array{source_count: int, updated_count: int, ic_match_count: int, name_match_count: int, failed_count: int}
      */
-    public function migrate(): array
+    public function migrate(SpokasMigrationRun $run): array
     {
-        $spokasMembers = SpokasMember::query()
-            ->select(['id', 'name', 'member_number', 'ic_birth'])
-            ->orderBy('id')
-            ->get();
-
-        $pemilihRecords = PemilihRecord::query()
-            ->select(['id', 'identity_number', 'name', 'no_kp', 'no_ahli'])
-            ->orderBy('id')
-            ->get();
-
         $byIc = [];
         $byName = [];
+        $pemilihById = [];
 
-        foreach ($pemilihRecords as $record) {
-            $icKey = $this->normalizeIc($record->no_kp);
-            $nameKey = $this->normalizeName($record->name);
+        DB::table('pemilih_records')
+            ->select(['id', 'identity_number', 'name', 'no_kp', 'no_ahli'])
+            ->orderBy('id')
+            ->chunkById(1000, function ($records) use (&$byIc, &$byName, &$pemilihById): void {
+                foreach ($records as $record) {
+                    $id = (int) $record->id;
+                    $pemilihById[$id] = [
+                        'id' => $id,
+                        'identity_number' => $record->identity_number,
+                        'name' => $record->name,
+                        'no_kp' => $record->no_kp,
+                        'no_ahli' => $record->no_ahli,
+                    ];
 
-            if ($icKey !== '') {
-                $byIc[$icKey][] = $record;
-            }
+                    $icKey = $this->normalizeIc($record->no_kp);
+                    $nameKey = $this->normalizeName($record->name);
 
-            if ($nameKey !== '') {
-                $byName[$nameKey][] = $record;
-            }
-        }
+                    if ($icKey !== '') {
+                        $byIc[$icKey][] = $id;
+                    }
 
-        $icMatches = [];
-        $nameMatches = [];
-        $failed = [];
-        $updates = [];
-        $assignedPemilih = [];
-        $now = now();
-
-        foreach ($spokasMembers as $member) {
-            $base = [
-                'spokas_id' => $member->id,
-                'name' => $member->name,
-                'member_number' => $member->member_number,
-                'ic_birth' => $member->ic_birth,
-            ];
-            $memberNumber = $this->cleanValue($member->member_number);
-
-            if ($memberNumber === '') {
-                $failed[] = $base + ['reason' => 'No. ahli SPoKAS kosong.'];
-
-                continue;
-            }
-
-            $icKey = $this->normalizeIc($member->ic_birth);
-            $icCandidates = $icKey === '' ? [] : ($byIc[$icKey] ?? []);
-            $matchType = null;
-            $candidates = $icCandidates;
-
-            if (count($icCandidates) === 1) {
-                $matchType = 'ic';
-            } elseif (count($icCandidates) > 1) {
-                $failed[] = $base + ['reason' => 'No. K/P sepadan dengan lebih daripada satu rekod pemilih.'];
-
-                continue;
-            } else {
-                $nameKey = $this->normalizeName($member->name);
-                $candidates = $nameKey === '' ? [] : ($byName[$nameKey] ?? []);
-
-                if (count($candidates) === 1) {
-                    $matchType = 'nama';
-                } elseif (count($candidates) > 1) {
-                    $failed[] = $base + ['reason' => 'Nama sepadan dengan lebih daripada satu rekod pemilih.'];
-
-                    continue;
+                    if ($nameKey !== '') {
+                        $byName[$nameKey][] = $id;
+                    }
                 }
-            }
+            });
 
-            if ($matchType === null || ! isset($candidates[0])) {
-                $failed[] = $base + ['reason' => 'Tiada padanan berdasarkan IC atau nama.'];
-
-                continue;
-            }
-
-            $record = $candidates[0];
-
-            if (isset($assignedPemilih[$record->id])) {
-                $failed[] = $base + ['reason' => 'Rekod pemilih telah dipadankan oleh rekod SPoKAS lain.'];
-
-                continue;
-            }
-
-            $assignedPemilih[$record->id] = true;
-            $updates[] = [
-                'id' => $record->id,
-                'identity_number' => $record->identity_number,
-                'no_ahli' => $memberNumber,
-                'updated_at' => $now,
-            ];
-
-            $result = $base + [
-                'match_by' => $matchType,
-                'pemilih_id' => $record->id,
-                'pemilih_name' => $record->name,
-                'pemilih_no_kp' => $record->no_kp,
-                'previous_no_ahli' => $record->no_ahli,
-            ];
-
-            if ($matchType === 'ic') {
-                $icMatches[] = $result;
-            } else {
-                $nameMatches[] = $result;
-            }
-        }
-
-        DB::transaction(function () use ($updates): void {
-            foreach (array_chunk($updates, 500) as $chunk) {
-                DB::table('pemilih_records')->upsert($chunk, ['id'], ['no_ahli', 'updated_at']);
-            }
-        });
-
-        return [
-            'source_count' => $spokasMembers->count(),
-            'updated_count' => count($updates),
-            'ic_matches' => $icMatches,
-            'name_matches' => $nameMatches,
-            'failed' => $failed,
+        $summary = [
+            'source_count' => 0,
+            'updated_count' => 0,
+            'ic_match_count' => 0,
+            'name_match_count' => 0,
+            'failed_count' => 0,
         ];
+        $assignedPemilih = [];
+
+        DB::table('spokas_members')
+            ->select(['id', 'name', 'member_number', 'ic_birth'])
+            ->orderBy('id')
+            ->chunkById(500, function ($members) use (&$summary, &$assignedPemilih, $byIc, $byName, $pemilihById, $run): void {
+                $updates = [];
+                $results = [];
+                $now = now();
+
+                foreach ($members as $member) {
+                    $summary['source_count']++;
+                    $base = [
+                        'spokas_migration_run_id' => $run->id,
+                        'spokas_member_id' => $member->id,
+                        'name' => $member->name,
+                        'member_number' => $member->member_number,
+                        'ic_birth' => $member->ic_birth,
+                        'category' => null,
+                        'match_by' => null,
+                        'pemilih_id' => null,
+                        'pemilih_name' => null,
+                        'pemilih_no_kp' => null,
+                        'previous_no_ahli' => null,
+                        'reason' => null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                    $memberNumber = $this->cleanValue($member->member_number);
+
+                    if ($memberNumber === '') {
+                        $results[] = array_merge($base, [
+                            'category' => 'failed',
+                            'reason' => 'No. ahli SPoKAS kosong.',
+                        ]);
+                        $summary['failed_count']++;
+
+                        continue;
+                    }
+
+                    $icKey = $this->normalizeIc($member->ic_birth);
+                    $icCandidates = $icKey === '' ? [] : ($byIc[$icKey] ?? []);
+                    $matchType = null;
+                    $candidates = $icCandidates;
+                    $reason = null;
+
+                    if (count($icCandidates) === 1) {
+                        $matchType = 'ic';
+                    } elseif (count($icCandidates) > 1) {
+                        $reason = 'No. K/P sepadan dengan lebih daripada satu rekod pemilih.';
+                    } else {
+                        $nameKey = $this->normalizeName($member->name);
+                        $candidates = $nameKey === '' ? [] : ($byName[$nameKey] ?? []);
+
+                        if (count($candidates) === 1) {
+                            $matchType = 'name';
+                        } elseif (count($candidates) > 1) {
+                            $reason = 'Nama sepadan dengan lebih daripada satu rekod pemilih.';
+                        } else {
+                            $reason = 'Tiada padanan berdasarkan IC atau nama.';
+                        }
+                    }
+
+                    if ($matchType === null || ! isset($candidates[0])) {
+                        $results[] = array_merge($base, [
+                            'category' => 'failed',
+                            'reason' => $reason,
+                        ]);
+                        $summary['failed_count']++;
+
+                        continue;
+                    }
+
+                    $pemilihId = (int) $candidates[0];
+                    $record = $pemilihById[$pemilihId] ?? null;
+
+                    if ($record === null || isset($assignedPemilih[$pemilihId])) {
+                        $results[] = array_merge($base, [
+                            'category' => 'failed',
+                            'reason' => 'Rekod pemilih telah dipadankan oleh rekod SPoKAS lain.',
+                        ]);
+                        $summary['failed_count']++;
+
+                        continue;
+                    }
+
+                    $assignedPemilih[$pemilihId] = true;
+                    $updates[] = [
+                        'id' => $pemilihId,
+                        'identity_number' => $record['identity_number'],
+                        'no_ahli' => $memberNumber,
+                        'updated_at' => $now,
+                    ];
+                    $results[] = array_merge($base, [
+                        'category' => $matchType,
+                        'match_by' => $matchType,
+                        'pemilih_id' => $pemilihId,
+                        'pemilih_name' => $record['name'],
+                        'pemilih_no_kp' => $record['no_kp'],
+                        'previous_no_ahli' => $record['no_ahli'],
+                    ]);
+                    $summary[$matchType === 'ic' ? 'ic_match_count' : 'name_match_count']++;
+                    $summary['updated_count']++;
+                }
+
+                DB::transaction(function () use ($updates, $results): void {
+                    if ($updates !== []) {
+                        DB::table('pemilih_records')->upsert($updates, ['id'], ['no_ahli', 'updated_at']);
+                    }
+
+                    if ($results !== []) {
+                        DB::table('spokas_migration_results')->insert($results);
+                    }
+                });
+            });
+
+        return $summary;
     }
 
     private function cleanValue(mixed $value): string
