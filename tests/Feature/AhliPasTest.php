@@ -105,3 +105,35 @@ it('requires the ahli pas role permission', function () {
 
     $this->assertAuthenticatedAs($user);
 });
+
+it('updates salah cula member to an allowed pas cula code within the user scope', function () {
+    $user = User::factory()->withModules(['ahli-pas'])->create([
+        'access_level' => 'cawangan',
+        'scope_key' => 'UDM A|LOKALITI A',
+    ]);
+    $member = createAhliPasRecord([
+        'no_ahli' => 'PAS-001',
+        'dm' => 'UDM A',
+        'locality' => 'LOKALITI A',
+        'cula_code' => '1',
+        'cula_display_label' => '1 - UMNO',
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('ahli-pas.cula.update', $member), [
+            'cula_code' => '2',
+            'cula_display_label' => '2 - PAS',
+        ])
+        ->assertOk()
+        ->assertJsonPath('voter_id', $member->id);
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'id' => $member->id,
+        'cula_code' => '2',
+        'cula_display_label' => '2 - PAS',
+    ]);
+    $this->assertDatabaseHas('cula_work_items', [
+        'pemilih_record_id' => $member->id,
+        'marked_by' => $user->id,
+    ]);
+});

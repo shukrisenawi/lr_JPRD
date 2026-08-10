@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
+use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -72,11 +75,43 @@ class AhliPasController extends Controller
             'available_localities' => $availableLocalities,
             'members' => $members,
             'wrong_cula_members' => $wrongCulaMembers,
+            'pas_cula_codes' => collect(CulaCodes::options())
+                ->whereIn('code', self::PAS_CULA_CODES)
+                ->values()
+                ->all(),
             'statistics' => [
                 'total' => (clone $base)->count(),
                 'by_udm' => $this->groupByUdm(clone $base),
                 'by_locality' => $this->groupByLocality(clone $base),
             ],
+        ]);
+    }
+
+    public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $validated = $request->validate([
+            'cula_code' => ['required', 'string', 'in:'.implode(',', self::PAS_CULA_CODES)],
+            'cula_display_label' => ['required', 'string', 'max:255'],
+        ]);
+
+        $record = $this->baseQuery($request->user())->findOrFail($pemilihRecord->id);
+        $record->update([
+            'cula_code' => $validated['cula_code'],
+            'cula_display_label' => $validated['cula_display_label'],
+        ]);
+
+        CulaWorkItem::query()->firstOrCreate(
+            ['pemilih_record_id' => $record->id],
+            [
+                'marked_by' => $request->user()->id,
+                'marked_at' => now(),
+                'notes' => null,
+            ],
+        );
+
+        return response()->json([
+            'message' => 'Kod culaan berjaya dikemaskini.',
+            'voter_id' => $record->id,
         ]);
     }
 
