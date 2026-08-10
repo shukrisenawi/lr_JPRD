@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AccessManagementController;
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\SpokasController;
+use App\Http\Controllers\AhliPasController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\CarianPemilihController;
@@ -35,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('module:laporan')->name('laporan.index');
     Route::get('/carian-pemilih', [CarianPemilihController::class, 'index'])->middleware('module:carian-pemilih')->name('carian-pemilih.index');
+    Route::get('/ahli-pas', [AhliPasController::class, 'index'])->middleware('module:carian-pemilih')->name('ahli-pas.index');
     Route::get('/carian-pemilih/search', [CarianPemilihController::class, 'search'])->middleware('module:carian-pemilih')->name('carian-pemilih.search');
     Route::post('/carian-pemilih/update-no-ahli', [CarianPemilihController::class, 'updateNoAhli'])->middleware('module:carian-pemilih')->name('carian-pemilih.update-no-ahli');
     Route::post('/carian-pemilih/{pemilihRecord}/update-cula', [CarianPemilihController::class, 'updateCula'])->middleware('module:carian-pemilih')->name('carian-pemilih.update-cula');

@@ -70,6 +70,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             icon: <HeaderIcon name="users" className="h-4 w-4" />,
             items: [
                 { key: 'carian-pemilih', href: 'carian-pemilih.index', routePattern: 'carian-pemilih.*', label: 'Carian Pemilih' },
+                { key: 'ahli-pas', href: 'ahli-pas.index', routePattern: 'ahli-pas.*', label: 'Ahli PAS' },
                 { key: 'tambah-pemilih', href: 'tambah-pemilih.index', routePattern: 'tambah-pemilih.*', label: 'Tambah Pemilih' },
                 { key: 'group-pemilih', href: 'group-pemilih.index', routePattern: 'group-pemilih.*', label: 'Group Pemilih' },
             ],
@@ -117,7 +118,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
-                                         const accessibleItems = item.items.filter(i => canAccess(i.key) || ['akses', 'api-keys', 'spokas'].includes(i.key));
+                                         const accessibleItems = item.items.filter(i => canAccess(i.key) || (i.key === 'ahli-pas' && canAccess('carian-pemilih')) || ['akses', 'api-keys', 'spokas'].includes(i.key));
                                         if (accessibleItems.length === 0) return null;
                                         const hasSubBadge = accessibleItems.some(sub => sub.badge > 0);
                                         if (accessibleItems.length === 1) {
@@ -229,6 +230,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 ].filter(Boolean) },
                                 { label: 'Pemilih', items: [
                                     canAccess('carian-pemilih') && { href: route('carian-pemilih.index'), active: route().current('carian-pemilih.*'), label: 'Carian Pemilih' },
+                                    canAccess('carian-pemilih') && { href: route('ahli-pas.index'), active: route().current('ahli-pas.*'), label: 'Ahli PAS' },
                                     canAccess('tambah-pemilih') && { href: route('tambah-pemilih.index'), active: route().current('tambah-pemilih.*'), label: 'Tambah Pemilih' },
                                     canAccess('group-pemilih') && { href: route('group-pemilih.index'), active: route().current('group-pemilih.*'), label: 'Group Pemilih' },
                                 ].filter(Boolean) },
