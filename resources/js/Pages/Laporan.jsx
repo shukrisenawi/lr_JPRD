@@ -252,6 +252,8 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
     const selLoc = selUdm?.localities.slice(0, 12) ?? [];
     const selRace = selUdm?.race_breakdown.slice(0, 8) ?? [];
     const selLocTable = selUdm?.localities.slice(0, 20) ?? [];
+    const ahliPasUdmRows = ahli_pas_stats?.by_udm ?? [];
+    const ahliPasChartHeight = Math.max(256, ahliPasUdmRows.length * 34);
     const selGender = useMemo(() => {
         if (!selUdm) return [];
         return [{ k: 'L', l: 'Lelaki', t: selUdm.summary.male ?? 0 }, { k: 'P', l: 'Perempuan', t: selUdm.summary.female ?? 0 }, { k: 'X', l: 'Lain', t: selUdm.summary.other_gender ?? 0 }].filter((r) => r.t > 0);
@@ -400,24 +402,38 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
                         </div>
 
                         {ahli_pas_stats && (
-                            <ChartPanel
-                                title="Keahlian PAS Mengikut UDM"
-                                action={<span className="rounded-full bg-green-100 px-2 py-1 text-[10px] font-bold text-green-700">{fmt(ahli_pas_stats.total)} ahli</span>}
-                            >
-                                {(ahli_pas_stats.by_udm ?? []).length > 0 ? (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={(ahli_pas_stats.by_udm ?? []).slice(0, 12)} margin={{ top: 4, right: 8, bottom: 56, left: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
-                                            <XAxis dataKey="name" interval={0} angle={-25} textAnchor="end" height={56} tick={{ fontSize: 9, fill: '#475569' }} />
-                                            <YAxis tickFormatter={fmt} width={44} tick={{ fontSize: 9, fill: '#475569' }} />
-                                            <Tooltip content={<TTip />} />
-                                            <Bar dataKey="total" name="Ahli PAS" fill="#10b981" radius={[2, 2, 0, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <div className="flex h-full items-center justify-center text-xs font-semibold text-slate-400">Tiada data keahlian PAS dalam skop.</div>
-                                )}
-                            </ChartPanel>
+                            <section className="relative overflow-hidden rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-lime-50 p-4 shadow-sm">
+                                <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-emerald-200/40 blur-3xl" />
+                                <div className="absolute -bottom-20 left-1/3 h-36 w-36 rounded-full bg-lime-200/30 blur-3xl" />
+                                <div className="relative">
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-[0.1em] text-emerald-700">Keahlian PAS</p>
+                                            <h3 className="mt-0.5 text-sm font-bold text-slate-900">Keahlian PAS Mengikut UDM</h3>
+                                            <p className="mt-1 text-xs text-slate-500">Semua {fmt(ahliPasUdmRows.length)} UDM dengan rekod ahli dalam skop semasa.</p>
+                                        </div>
+                                        <div className="rounded-xl border border-emerald-200 bg-white/80 px-3 py-2 text-right shadow-sm backdrop-blur">
+                                            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">Jumlah Ahli</p>
+                                            <p className="mt-0.5 text-xl font-black leading-none text-emerald-700">{fmt(ahli_pas_stats.total)}</p>
+                                        </div>
+                                    </div>
+                                    {ahliPasUdmRows.length > 0 ? (
+                                        <div className="mt-3 rounded-lg border border-emerald-100 bg-white/70 p-2 shadow-inner shadow-emerald-100/60" style={{ height: ahliPasChartHeight }}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={ahliPasUdmRows} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 116 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#bbf7d0" />
+                                                    <XAxis type="number" tickFormatter={fmt} tick={{ fontSize: 10, fill: '#64748b' }} />
+                                                    <YAxis type="category" dataKey="name" width={116} tick={{ fontSize: 10, fill: '#166534' }} />
+                                                    <Tooltip content={<TTip />} />
+                                                    <Bar dataKey="total" name="Ahli PAS" fill="#10b981" radius={[0, 4, 4, 0]} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-3 flex h-48 items-center justify-center rounded-lg border border-dashed border-emerald-200 bg-white/70 text-xs font-semibold text-slate-400">Tiada data keahlian PAS dalam skop.</div>
+                                    )}
+                                </div>
+                            </section>
                         )}
 
                         <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
