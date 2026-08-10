@@ -327,7 +327,9 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
     };
 
     const toggleHashtag = (hashtag) => {
-        const next = hashtags.includes(hashtag) ? [] : [hashtag];
+        const next = hashtags.includes(hashtag)
+            ? hashtags.filter((item) => item !== hashtag)
+            : [...hashtags, hashtag];
         setHashtags(next);
         applyFilters({ ...formState, hashtags: next });
     };
@@ -528,6 +530,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
     const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll || hashtags.length));
     const [culaFilterOpen, setCulaFilterOpen] = useState(false);
+    const [hashtagFilterOpen, setHashtagFilterOpen] = useState(true);
     const orderedHashtags = [...available_hashtags].sort((a, b) => {
         const aIsXaktif = String(a.name).trim().toLowerCase() === '#xaktif';
         const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';
@@ -666,32 +669,38 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                 </div>
                                 {visibleHashtags.length > 0 && (
                                     <div>
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</span>
+                                        <button type="button" onClick={() => setHashtagFilterOpen((value) => !value)}
+                                            aria-expanded={hashtagFilterOpen}
+                                            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-slate-600 hover:text-slate-800">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                                                className={`h-3 w-3 transition-transform duration-200 ${hashtagFilterOpen ? 'rotate-90' : ''}`}>
+                                                <polyline points="9 18 15 12 9 6" />
+                                            </svg>
+                                            Hashtag Pemilih
                                             {hashtags.length > 0 && (
                                                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">
                                                     {hashtags.length} dipilih
                                                 </span>
                                             )}
-                                        </div>
-                                        <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
-                                            {visibleHashtags.map((hashtag) => {
-                                                const count = Number(hashtag.count ?? 0);
-                                                const selected = hashtags.includes(hashtag.name);
-                                                const disabled = count === 0;
-                                                return (
-                                                    <button
-                                                        key={hashtag.name}
-                                                        type="button"
-                                                        disabled={disabled}
-                                                        onClick={() => toggleHashtag(hashtag.name)}
-                                                        className={`rounded-full border px-2.5 py-1 text-[11px] font-bold transition ${disabled ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400' : selected ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-green-200 bg-white text-green-700 hover:border-green-400 hover:bg-green-50'}`}
-                                                    >
-                                                        {hashtag.name} - {count}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
+                                        </button>
+                                        {hashtagFilterOpen && (
+                                            <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
+                                                {visibleHashtags.map((hashtag) => {
+                                                    const count = Number(hashtag.count ?? 0);
+                                                    const selected = hashtags.includes(hashtag.name);
+                                                    return (
+                                                        <button
+                                                            key={hashtag.name}
+                                                            type="button"
+                                                            onClick={() => toggleHashtag(hashtag.name)}
+                                                            className={`rounded-full border px-2.5 py-1 text-[11px] font-bold transition ${selected ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-green-200 bg-white text-green-700 hover:border-green-400 hover:bg-green-50'}`}
+                                                        >
+                                                            {hashtag.name} - {count}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 {showAll && available_cula_codes.length > 0 && (

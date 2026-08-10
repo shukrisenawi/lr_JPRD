@@ -161,8 +161,8 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
         ]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('filters.hashtags', ['#program_sama'])
-            ->where('summary.total', 1));
+            ->where('filters.hashtags', ['#program_sama', '#hashtag_lain'])
+            ->where('summary.total', 2));
 
     $this->actingAs($user)
         ->get(route('culaan.index', [
@@ -179,6 +179,16 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
             ])
             ->where('filters.hashtags', ['#program_sama'])
             ->where('summary.total', 1));
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', [
+            'udm' => 'UDM HASHTAG SAMA',
+            'hashtags' => ['#program_sama', '#hashtag_lain'],
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.hashtags', ['#program_sama', '#hashtag_lain'])
+            ->where('summary.total', 2));
 
     $this->actingAs($user)
         ->getJson(route('culaan-bot.search', [
@@ -219,8 +229,8 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
         ]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('filters.hashtags', ['#program_sama'])
-            ->where('summary.total', 1));
+            ->where('filters.hashtags', ['#program_sama', '#hashtag_lain'])
+            ->where('summary.total', 2));
 
     $this->actingAs($user)
         ->getJson(route('vcc.search', [
