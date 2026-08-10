@@ -123,8 +123,19 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
         'status' => 'aktif',
         'cula_code' => '?',
     ]);
+    $otherTagged = PemilihRecord::query()->create([
+        'identity_number' => '900808025505',
+        'no_kp' => '900808025505',
+        'name' => 'PEMILIH HASHTAG LAIN',
+        'dm' => 'UDM HASHTAG SAMA',
+        'locality' => 'LOKALITI HASHTAG SAMA',
+        'phone_mobile' => '0187654321',
+        'status' => 'aktif',
+        'cula_code' => '?',
+    ]);
 
     app(HashtagService::class)->attach($match, ['#program_sama']);
+    app(HashtagService::class)->attach($otherTagged, ['#hashtag_lain']);
 
     $this->actingAs($user)
         ->get(route('culaan-bot.index', [
