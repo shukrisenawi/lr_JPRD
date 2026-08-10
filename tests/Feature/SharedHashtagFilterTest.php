@@ -135,7 +135,7 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
     ]);
 
     app(HashtagService::class)->attach($match, ['#program_sama', '#hashtag_seiring']);
-    app(HashtagService::class)->attach($otherTagged, ['#hashtag_lain']);
+    app(HashtagService::class)->attach($otherTagged, ['#hashtag_lain', '#xaktif']);
 
     $this->actingAs($user)
         ->get(route('culaan-bot.index', [
@@ -149,6 +149,7 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
                 ['name' => '#hashtag_lain', 'count' => 1],
                 ['name' => '#hashtag_seiring', 'count' => 1],
                 ['name' => '#program_sama', 'count' => 1],
+                ['name' => '#xaktif', 'count' => 1],
             ])
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $match->id));
@@ -187,6 +188,7 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
                 ['name' => '#hashtag_lain', 'count' => 1],
                 ['name' => '#hashtag_seiring', 'count' => 1],
                 ['name' => '#program_sama', 'count' => 1],
+                ['name' => '#xaktif', 'count' => 1],
             ])
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $match->id));
