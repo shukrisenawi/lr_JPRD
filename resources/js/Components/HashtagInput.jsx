@@ -91,11 +91,13 @@ export default function HashtagInput({ value = [], onChange, id = 'hashtags', la
         }
     };
 
+    const showSuggestions = loading || (input.trim().startsWith('#') && suggestions.length > 0);
+
     return (
         <div>
             <label htmlFor={id} className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</label>
             <div
-                className={`relative mt-1.5 flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 focus-within:border-green-400 focus-within:ring-1 focus-within:ring-green-200 ${disabled ? 'opacity-60' : ''}`}
+                className={`relative ${showSuggestions ? 'z-50' : ''} mt-1.5 flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 focus-within:border-green-400 focus-within:ring-1 focus-within:ring-green-200 ${disabled ? 'opacity-60' : ''}`}
             >
                 {tags.map((tag) => (
                     <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-[11px] font-bold text-green-700">
@@ -124,8 +126,8 @@ export default function HashtagInput({ value = [], onChange, id = 'hashtags', la
                     placeholder={tags.length >= maxTags ? 'Maksimum 20 hashtag' : '#contoh'}
                     autoComplete="off"
                 />
-                {(loading || (input.trim().startsWith('#') && suggestions.length > 0)) && (
-                    <div className="absolute left-0 right-0 top-full z-40 mt-1 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
+                {showSuggestions && (
+                    <div className="absolute left-0 right-0 top-full z-[100] mt-1 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg">
                         {loading ? (
                             <p className="px-3 py-2 text-xs font-medium text-slate-500">Mencari hashtag...</p>
                         ) : (

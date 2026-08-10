@@ -155,7 +155,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
     ];
 
     return (
-        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
