@@ -420,12 +420,12 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
                                     {ahliPasUdmRows.length > 0 ? (
                                         <div className="mt-3 rounded-lg border border-emerald-100 bg-white/70 p-2 shadow-inner shadow-emerald-100/60" style={{ height: ahliPasChartHeight }}>
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={ahliPasUdmRows} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 116 }}>
+                                                <BarChart data={ahliPasUdmRows} layout="vertical" margin={{ top: 4, right: 48, bottom: 4, left: 116 }}>
                                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#bbf7d0" />
                                                     <XAxis type="number" tickFormatter={fmt} tick={{ fontSize: 10, fill: '#64748b' }} />
                                                     <YAxis type="category" dataKey="name" width={116} tick={{ fontSize: 10, fill: '#166534' }} />
                                                     <Tooltip content={<TTip />} />
-                                                    <Bar dataKey="total" name="Ahli PAS" fill="#10b981" radius={[0, 4, 4, 0]} />
+                                                    <Bar dataKey="total" name="Ahli PAS" fill="#10b981" radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: fmt, fill: '#047857', fontSize: 10, fontWeight: 700 }} />
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
