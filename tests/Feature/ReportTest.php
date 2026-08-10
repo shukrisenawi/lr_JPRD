@@ -5,6 +5,7 @@ use App\Models\User;
 use App\Models\PemilihRecord;
 use App\Services\PemilihReportService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 function pemilihReportFixture(): string
 {
@@ -110,6 +111,41 @@ it('renders carian pemilih page', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('CarianPemilih'));
+});
+
+it('includes scoped ahli pas statistics in laporan', function () {
+    $user = User::factory()->withModules(['laporan', 'ahli-pas'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM A',
+    ]);
+
+    PemilihRecord::create([
+        'identity_number' => (string) Str::uuid(),
+        'name' => 'AHLI DALAM UDM',
+        'no_ahli' => 'PAS-001',
+        'dm' => 'UDM A',
+        'locality' => 'LOKALITI A',
+        'status' => 'aktif',
+        'is_manual' => false,
+    ]);
+    PemilihRecord::create([
+        'identity_number' => (string) Str::uuid(),
+        'name' => 'AHLI LUAR UDM',
+        'no_ahli' => 'PAS-002',
+        'dm' => 'UDM B',
+        'locality' => 'LOKALITI B',
+        'status' => 'aktif',
+        'is_manual' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/laporan')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Laporan')
+            ->where('ahli_pas_stats.total', 1)
+            ->where('ahli_pas_stats.by_udm.0.name', 'UDM A')
+            ->where('ahli_pas_stats.by_udm.0.total', 1));
 });
 
 it('stores uploaded pemilih file from settings for laporan data source', function () {

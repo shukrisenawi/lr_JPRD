@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PemilihRecord;
 use App\Models\User;
 use App\Services\PemilihReportService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class LaporanController extends Controller
 {
-    public function index(PemilihReportService $reportService): Response
+    public function index(Request $request, PemilihReportService $reportService): Response
     {
         $snapshot = $reportService->getLatestUdmSnapshot();
 
@@ -35,6 +37,37 @@ class LaporanController extends Controller
                     'name' => $user->name,
                     'last_login_at' => $user->last_login_at->setTimezone('Asia/Kuala_Lumpur')->format('d-m-Y h:iA'),
                 ]),
+            'ahli_pas_stats' => $request->user()?->canAccessModule('ahli-pas')
+                ? $this->ahliPasStats($request->user())
+                : null,
         ]);
+    }
+
+    private function ahliPasStats(User $user): array
+    {
+        $query = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->whereRaw("TRIM(COALESCE(no_ahli, '')) NOT IN ('', '-')");
+
+        $user->applyScopeToPemilihQuery($query);
+
+        $labelExpression = "COALESCE(NULLIF(NULLIF(dm, ''), '-'), 'Tidak Ditetapkan')";
+
+        return [
+            'total' => (clone $query)->count(),
+            'by_udm' => (clone $query)
+                ->selectRaw("{$labelExpression} as name, COUNT(*) as total")
+                ->groupByRaw($labelExpression)
+                ->orderByDesc('total')
+                ->orderBy('name')
+                ->get()
+                ->map(fn (PemilihRecord $row) => [
+                    'name' => $row->name,
+                    'total' => (int) $row->total,
+                ])
+                ->values()
+                ->all(),
+        ];
     }
 }

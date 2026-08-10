@@ -134,7 +134,7 @@ function DataTable({ rows, columns }) {
     );
 }
 
-export default function Laporan({ report, pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [] }) {
+export default function Laporan({ report, pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null }) {
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
@@ -398,6 +398,27 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
                                 </ResponsiveContainer>
                             </ChartPanel>
                         </div>
+
+                        {ahli_pas_stats && (
+                            <ChartPanel
+                                title="Keahlian PAS Mengikut UDM"
+                                action={<span className="rounded-full bg-green-100 px-2 py-1 text-[10px] font-bold text-green-700">{fmt(ahli_pas_stats.total)} ahli</span>}
+                            >
+                                {(ahli_pas_stats.by_udm ?? []).length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={(ahli_pas_stats.by_udm ?? []).slice(0, 12)} margin={{ top: 4, right: 8, bottom: 56, left: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
+                                            <XAxis dataKey="name" interval={0} angle={-25} textAnchor="end" height={56} tick={{ fontSize: 9, fill: '#475569' }} />
+                                            <YAxis tickFormatter={fmt} width={44} tick={{ fontSize: 9, fill: '#475569' }} />
+                                            <Tooltip content={<TTip />} />
+                                            <Bar dataKey="total" name="Ahli PAS" fill="#10b981" radius={[2, 2, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="flex h-full items-center justify-center text-xs font-semibold text-slate-400">Tiada data keahlian PAS dalam skop.</div>
+                                )}
+                            </ChartPanel>
+                        )}
 
                         <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
                             <div className="flex gap-0.5">
