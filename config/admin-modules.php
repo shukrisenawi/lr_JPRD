@@ -13,6 +13,10 @@ return [
         'label' => 'Carian Pemilih',
         'description' => 'Carian data pemilih dari laporan aktif.',
     ],
+    'ahli-pas' => [
+        'label' => 'Ahli PAS',
+        'description' => 'Senarai dan statistik ahli PAS mengikut skop pengguna.',
+    ],
     'hashtag-pemilih' => [
         'label' => 'Hashtag Pemilih',
         'description' => 'Urus hashtag pada rekod pemilih.',

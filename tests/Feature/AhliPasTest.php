@@ -14,7 +14,7 @@ function createAhliPasRecord(array $attributes): PemilihRecord
 }
 
 it('renders ahli pas list and statistics using only records with no ahli', function () {
-    $user = User::factory()->withModules(['carian-pemilih'])->create();
+    $user = User::factory()->withModules(['ahli-pas'])->create();
 
     createAhliPasRecord([
         'name' => 'AHLI SATU',
@@ -58,7 +58,7 @@ it('renders ahli pas list and statistics using only records with no ahli', funct
 });
 
 it('applies the users locality scope to ahli pas', function () {
-    $user = User::factory()->withModules(['carian-pemilih'])->create([
+    $user = User::factory()->withModules(['ahli-pas'])->create([
         'access_level' => 'cawangan',
         'scope_key' => 'UDM A|LOKALITI A',
     ]);
@@ -73,4 +73,14 @@ it('applies the users locality scope to ahli pas', function () {
             ->where('members.total', 1)
             ->where('members.data.0.name', 'DALAM SKOP')
             ->where('statistics.total', 1));
+});
+
+it('requires the ahli pas role permission', function () {
+    $user = User::factory()->withModules(['carian-pemilih'])->create();
+
+    $this->actingAs($user)
+        ->get('/ahli-pas')
+        ->assertRedirect('/');
+
+    $this->assertAuthenticatedAs($user);
 });

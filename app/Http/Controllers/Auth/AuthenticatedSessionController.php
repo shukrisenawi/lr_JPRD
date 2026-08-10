@@ -120,6 +120,7 @@ class AuthenticatedSessionController extends Controller
             'laporan' => 'laporan.index',
             'dashboard' => 'dashboard',
             'carian-pemilih' => 'carian-pemilih.index',
+            'ahli-pas' => 'ahli-pas.index',
             'program' => 'program.index',
             'jawatankuasa' => 'jawatankuasa.index',
             'culaan' => 'culaan.index',
