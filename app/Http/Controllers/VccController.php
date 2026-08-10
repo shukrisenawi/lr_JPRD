@@ -518,11 +518,10 @@ class VccController extends Controller
 
     private function availableHashtags(array $filters): array
     {
-        if ($filters['hashtags'] !== []) {
-            return $filters['hashtags'];
-        }
+        $candidateFilters = $filters;
+        $candidateFilters['hashtags'] = [];
 
-        $voterIds = $this->buildEligibleVotersQuery($filters, ! $filters['show_marked'])
+        $voterIds = $this->buildEligibleVotersQuery($candidateFilters, ! $filters['show_marked'])
             ->select('pemilih_records.id');
 
         return Hashtag::query()
