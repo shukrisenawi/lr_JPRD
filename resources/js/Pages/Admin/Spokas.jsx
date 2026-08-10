@@ -142,7 +142,7 @@ function ResultTable({ items, kind }) {
     );
 }
 
-export default function Spokas({ spokas_count, pemilih_count, results }) {
+export default function Spokas({ spokas_count, pemilih_count, results, last_migrated_at }) {
     const { post, processing } = useForm({});
     const [tab, setTab] = useState('ic');
     const icMatches = results?.ic_matches ?? [];
@@ -200,6 +200,8 @@ export default function Spokas({ spokas_count, pemilih_count, results }) {
                     {results && <SummaryCard label="Jumlah Dikemaskini" value={results.updated_count} tone="green" icon="check" />}
                     {results && <SummaryCard label="Tidak Berjaya" value={failed.length} tone="red" icon="alert" />}
                 </section>
+
+                {last_migrated_at && <p className="text-right text-[11px] font-semibold text-slate-500">Migrasi terakhir: {last_migrated_at}</p>}
 
                 {results ? (
                     <section className="space-y-3">

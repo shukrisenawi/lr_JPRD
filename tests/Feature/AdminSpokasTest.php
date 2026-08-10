@@ -2,6 +2,7 @@
 
 use App\Models\PemilihRecord;
 use App\Models\SpokasMember;
+use App\Models\SpokasMigrationRun;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -52,7 +53,15 @@ it('allows a master admin to run spokas migration and returns grouped results', 
         );
 
     expect($icRecord->fresh()->no_ahli)->toBe('A-001')
-        ->and($nameRecord->fresh()->no_ahli)->toBe('A-002');
+        ->and($nameRecord->fresh()->no_ahli)->toBe('A-002')
+        ->and(SpokasMigrationRun::query()->count())->toBe(1);
+
+    $this->actingAs($admin)
+        ->get(route('admin.spokas.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('results.updated_count', 2)
+            ->where('last_migrated_at', fn ($value) => is_string($value) && $value !== '')
+        );
 });
 
 it('allows a master admin to open the spokas page', function () {
@@ -64,5 +73,6 @@ it('allows a master admin to open the spokas page', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Admin/Spokas')
             ->where('results', null)
+            ->where('last_migrated_at', null)
         );
 });
