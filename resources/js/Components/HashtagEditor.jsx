@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import HashtagInput from '@/Components/HashtagInput';
+import Swal from 'sweetalert2';
 
 export default function HashtagEditor({ voterId, value = [], onSaved, label = 'Hashtag Pemilih' }) {
     const [hashtags, setHashtags] = useState(Array.isArray(value) ? value : []);
@@ -35,6 +36,13 @@ export default function HashtagEditor({ voterId, value = [], onSaved, label = 'H
             const next = Array.isArray(payload.hashtags) ? payload.hashtags : hashtags;
             setHashtags(next);
             onSaved?.(next);
+            Swal.fire({
+                icon: 'success',
+                title: 'Berjaya',
+                text: 'Hashtag berjaya disimpan.',
+                timer: 1800,
+                showConfirmButton: false,
+            });
         } catch (saveError) {
             setError(saveError.message || 'Hashtag tidak berjaya disimpan.');
         } finally {
