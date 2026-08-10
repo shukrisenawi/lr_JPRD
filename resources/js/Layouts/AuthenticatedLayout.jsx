@@ -97,6 +97,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
                 ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
                 ...(isMasterAdmin ? [{ key: 'api-keys', href: 'admin.api-keys.index', routePattern: 'admin.api-keys.*', label: 'Generate API Key' }] : []),
+                ...(isMasterAdmin ? [{ key: 'spokas', href: 'admin.spokas.index', routePattern: 'admin.spokas.*', label: 'SPoKAS' }] : []),
             ],
         },
     ];
@@ -116,7 +117,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
-                                        const accessibleItems = item.items.filter(i => canAccess(i.key) || i.key === 'akses');
+                                         const accessibleItems = item.items.filter(i => canAccess(i.key) || ['akses', 'api-keys', 'spokas'].includes(i.key));
                                         if (accessibleItems.length === 0) return null;
                                         const hasSubBadge = accessibleItems.some(sub => sub.badge > 0);
                                         if (accessibleItems.length === 1) {
@@ -247,6 +248,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('settings') && { href: route('settings.edit'), active: route().current('settings.edit'), label: 'Settings' },
                                     isMasterAdmin && { href: route('admin.access.index'), active: route().current('admin.access.*'), label: 'Akses Pengguna' },
                                     isMasterAdmin && { href: route('admin.api-keys.index'), active: route().current('admin.api-keys.*'), label: 'Generate API Key' },
+                                    isMasterAdmin && { href: route('admin.spokas.index'), active: route().current('admin.spokas.*'), label: 'SPoKAS' },
                                 ].filter(Boolean) },
                             ];
                             return groups.map(g => {

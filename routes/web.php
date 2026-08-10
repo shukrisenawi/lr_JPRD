@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AccessManagementController;
 use App\Http\Controllers\Admin\ApiKeyController;
+use App\Http\Controllers\Admin\SpokasController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\CarianPemilihController;
@@ -158,6 +159,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/api-keys', [ApiKeyController::class, 'index'])->name('admin.api-keys.index');
     Route::post('/admin/api-keys', [ApiKeyController::class, 'store'])->name('admin.api-keys.store');
     Route::delete('/admin/api-keys/{apiKey}', [ApiKeyController::class, 'destroy'])->name('admin.api-keys.destroy');
+    Route::get('/admin/spokas', [SpokasController::class, 'index'])->name('admin.spokas.index');
+    Route::post('/admin/spokas/migrate', [SpokasController::class, 'migrate'])->name('admin.spokas.migrate');
 
     Route::get('/pusat-khidmat', [PusatKhidmatController::class, 'index'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.index');
     Route::post('/pusat-khidmat/manual', [PusatKhidmatController::class, 'storeManual'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.manual.store');
