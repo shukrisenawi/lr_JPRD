@@ -10,10 +10,13 @@ use Inertia\Response;
 
 class AhliPasController extends Controller
 {
+    private const PAS_CULA_CODES = ['2', '3B', '3D', '3K', '3M', '3P', '3U'];
+
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $tab = $request->string('tab')->toString() === 'statistik' ? 'statistik' : 'senarai';
+        $tab = $request->string('tab')->toString();
+        $tab = in_array($tab, ['senarai', 'salah-cula', 'statistik'], true) ? $tab : 'senarai';
         $base = $this->baseQuery($user);
 
         $availableDms = (clone $base)
@@ -52,12 +55,23 @@ class AhliPasController extends Controller
             ->paginate(20)
             ->withQueryString();
 
+        $wrongCulaMembers = $this->wrongCulaQuery(clone $base)
+            ->select([
+                'id', 'name', 'no_kp', 'old_ic', 'no_ahli', 'dm', 'locality', 'cula_code', 'cula_display_label',
+                'phone_mobile', 'phone_home', 'gender', 'race', 'date_of_birth', 'address', 'alamat_kp', 'alamat_kediaman', 'catatan',
+            ])
+            ->orderBy('name')
+            ->orderBy('id')
+            ->paginate(20, ['*'], 'salah_cula_page')
+            ->withQueryString();
+
         return Inertia::render('AhliPas/Index', [
             'active_tab' => $tab,
             'filters' => $filters,
             'available_dms' => $availableDms,
             'available_localities' => $availableLocalities,
             'members' => $members,
+            'wrong_cula_members' => $wrongCulaMembers,
             'statistics' => [
                 'total' => (clone $base)->count(),
                 'by_udm' => $this->groupByUdm(clone $base),
@@ -93,6 +107,17 @@ class AhliPasController extends Controller
                         ->orWhere('no_ahli', 'like', $like);
                 });
             });
+    }
+
+    private function wrongCulaQuery(Builder $query): Builder
+    {
+        return $query->where(function (Builder $builder) {
+            $builder->whereNull('cula_code')
+                ->orWhere('cula_code', '')
+                ->orWhere('cula_code', '?')
+                ->orWhere('cula_code', 'TIADA')
+                ->orWhereNotIn('cula_code', self::PAS_CULA_CODES);
+        });
     }
 
     private function groupByUdm(Builder $query): array

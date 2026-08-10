@@ -7,6 +7,9 @@ function Icon({ name, className = 'h-5 w-5' }) {
         search: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></>,
         users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
         chart: <><path d="M3 3v18h18" /><path d="m7 16 4-5 3 2 5-7" /></>,
+        alert: <><path d="M10.3 3.4 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></>,
+        eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
+        x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
     };
 
     return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -41,9 +44,47 @@ function SummaryCard({ label, value, icon }) {
     );
 }
 
-export default function AhliPasIndex({ active_tab, filters, available_dms, available_localities, members, statistics }) {
+function culaStatus(member) {
+    if (!member.cula_code || member.cula_code === '?' || member.cula_code === 'TIADA') return 'Belum Cula';
+    return member.cula_display_label || member.cula_code;
+}
+
+function formatDate(value) {
+    const [year, month, day] = String(value || '').slice(0, 10).split('-');
+    return year && month && day ? `${day}/${month}/${year}` : '-';
+}
+
+function DetailModal({ member, onClose }) {
+    const address = member.alamat_kediaman || member.alamat_kp || member.address || '-';
+    const fields = [
+        ['No. Ahli', member.no_ahli], ['No. KP', member.no_kp || member.old_ic || '-'],
+        ['UDM', member.dm || '-'], ['Lokaliti', member.locality || '-'],
+        ['No. Telefon', member.phone_mobile || member.phone_home || '-'], ['Jantina', member.gender || '-'],
+        ['Bangsa', member.race || '-'], ['Tarikh Lahir', formatDate(member.date_of_birth)],
+        ['Status Cula', culaStatus(member)], ['Alamat', address], ['Catatan', member.catatan || '-'],
+    ];
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/50 p-3 pt-12 backdrop-blur-sm sm:items-center sm:pt-3">
+            <section className="w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label="Maklumat pemilih">
+                <div className="flex items-start justify-between gap-3 border-b border-emerald-100 bg-emerald-50 px-4 py-3">
+                    <div><p className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">Maklumat Pemilih</p><h3 className="mt-0.5 text-sm font-bold uppercase text-slate-900">{member.name || '-'}</h3></div>
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 transition hover:bg-white hover:text-slate-700" aria-label="Tutup maklumat pemilih"><Icon name="x" className="h-5 w-5" /></button>
+                </div>
+                <div className="grid gap-2 p-4 sm:grid-cols-2">
+                    {fields.map(([label, value]) => <div key={label} className={`rounded-lg border border-slate-100 px-3 py-2 ${label === 'Alamat' || label === 'Catatan' ? 'sm:col-span-2' : ''}`}><p className="text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">{label}</p><p className="mt-0.5 break-words text-xs font-medium text-slate-700">{value || '-'}</p></div>)}
+                </div>
+            </section>
+        </div>
+    );
+}
+
+export default function AhliPasIndex({ active_tab, filters, available_dms, available_localities, members, wrong_cula_members, statistics }) {
     const [form, setForm] = useState(filters);
     const [copiedNoAhli, setCopiedNoAhli] = useState('');
+    const [detailMember, setDetailMember] = useState(null);
+    const [openingCulaId, setOpeningCulaId] = useState(null);
+    const [culaError, setCulaError] = useState('');
 
     useEffect(() => setForm(filters), [filters]);
 
@@ -96,8 +137,30 @@ export default function AhliPasIndex({ active_tab, filters, available_dms, avail
         applyFilters(form);
     };
 
-    const goToPage = (page) => load({ ...form, tab: active_tab, page });
+    const goToPage = (page) => load(active_tab === 'salah-cula'
+        ? { ...form, tab: active_tab, salah_cula_page: page }
+        : { ...form, tab: active_tab, page });
     const rows = members?.data ?? [];
+    const wrongCulaRows = wrong_cula_members?.data ?? [];
+
+    const openCula = (member) => {
+        const identity = member.no_kp || member.old_ic;
+        if (!identity) {
+            setCulaError('No. KP tidak tersedia untuk membuka Telegram Bot.');
+            return;
+        }
+
+        const telegramWindow = window.open('about:blank', '_blank');
+        setOpeningCulaId(member.id);
+        try {
+            telegramWindow?.location.replace(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/kemascula ${identity}`)}`);
+        } catch {
+            telegramWindow?.close();
+            setCulaError('Telegram Bot gagal dibuka.');
+        } finally {
+            window.setTimeout(() => setOpeningCulaId(current => current === member.id ? null : current), 1200);
+        }
+    };
 
     return (
         <AuthenticatedLayout
@@ -107,9 +170,10 @@ export default function AhliPasIndex({ active_tab, filters, available_dms, avail
 
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <div className="rounded-xl border border-green-200 bg-white p-1 shadow-sm">
-                    <div className="grid grid-cols-2 gap-1">
+                    <div className="grid grid-cols-3 gap-1">
                         {[
                             { key: 'senarai', label: 'Senarai Ahli', icon: 'users' },
+                            { key: 'salah-cula', label: 'Salah Cula', icon: 'alert' },
                             { key: 'statistik', label: 'Statistik', icon: 'chart' },
                         ].map(tab => (
                             <button key={tab.key} type="button" onClick={() => selectTab(tab.key)} className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold transition ${active_tab === tab.key ? 'bg-green-600 text-white shadow-sm' : 'text-slate-500 hover:bg-green-50 hover:text-green-700'}`}>
@@ -165,6 +229,18 @@ export default function AhliPasIndex({ active_tab, filters, available_dms, avail
                             <Pagination members={members} onPage={goToPage} />
                         </section>
                     </>
+                ) : active_tab === 'salah-cula' ? (
+                    <section className="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+                        <div className="flex flex-col gap-3 border-b border-amber-100 bg-amber-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div><p className="label-section text-amber-700">Semakan Salah Cula</p><p className="mt-0.5 text-xs text-slate-600">{Number(wrong_cula_members?.total ?? 0).toLocaleString('ms-MY')} ahli PAS berkod selain PAS atau belum cula.</p></div>
+                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800">Perlu semakan</span>
+                        </div>
+                        {culaError && <div className="mx-4 mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{culaError}</div>}
+                        {wrongCulaRows.length === 0 ? <div className="py-12 text-center"><p className="text-sm font-bold text-slate-400">Tiada ahli salah cula</p><p className="mt-1 text-xs text-slate-400">Semua ahli dalam skop mempunyai kod PAS yang sah.</p></div> : (
+                            <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="border-b border-amber-100 bg-amber-50"><th className="px-4 py-2 text-left font-bold text-slate-500">#</th><th className="px-4 py-2 text-left font-bold text-slate-500">Nama</th><th className="px-4 py-2 text-left font-bold text-slate-500">No. Ahli</th><th className="px-4 py-2 text-left font-bold text-slate-500">Status Cula</th><th className="px-4 py-2 text-left font-bold text-slate-500">UDM</th><th className="px-4 py-2 text-left font-bold text-slate-500">Lokaliti</th><th className="px-4 py-2 text-center font-bold text-slate-500">Tindakan</th></tr></thead><tbody className="divide-y divide-slate-100">{wrongCulaRows.map((member, index) => <tr key={member.id} className="hover:bg-amber-50/40"><td className="px-4 py-2 text-slate-400">{(wrong_cula_members.from ?? 1) + index}</td><td className="px-4 py-2 font-semibold uppercase text-slate-800">{member.name || '-'}</td><td className="px-4 py-2"><button type="button" onClick={() => copyNoAhli(member.no_ahli)} title="Klik untuk salin No. Ahli" className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold transition ${copiedNoAhli === member.no_ahli ? 'bg-emerald-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>{copiedNoAhli === member.no_ahli ? 'Disalin' : member.no_ahli}</button></td><td className="px-4 py-2"><span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${culaStatus(member) === 'Belum Cula' ? 'bg-slate-200 text-slate-700' : 'bg-rose-100 text-rose-700'}`}>{culaStatus(member)}</span></td><td className="px-4 py-2 text-slate-600">{member.dm || '-'}</td><td className="px-4 py-2 text-slate-600">{member.locality || '-'}</td><td className="px-4 py-2"><div className="flex justify-center gap-1.5"><button type="button" onClick={() => openCula(member)} className="rounded-md bg-green-600 px-2.5 py-1 text-[10px] font-bold text-white transition hover:bg-green-500">{openingCulaId === member.id ? 'Membuka...' : 'Cula'}</button><button type="button" onClick={() => setDetailMember(member)} className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"><Icon name="eye" className="h-3 w-3" />Detail</button></div></td></tr>)}</tbody></table></div>
+                        )}
+                        <Pagination members={wrong_cula_members} onPage={goToPage} />
+                    </section>
                 ) : (
                     <>
                         <div className="grid gap-3 sm:grid-cols-3"><SummaryCard label="Jumlah Ahli PAS" value={statistics?.total} icon="users" /><SummaryCard label="Jumlah UDM" value={statistics?.by_udm?.length} icon="chart" /><SummaryCard label="Jumlah Lokaliti" value={statistics?.by_locality?.length} icon="chart" /></div>
@@ -175,6 +251,7 @@ export default function AhliPasIndex({ active_tab, filters, available_dms, avail
                     </>
                 )}
             </div>
+            {detailMember && <DetailModal member={detailMember} onClose={() => setDetailMember(null)} />}
         </AuthenticatedLayout>
     );
 }

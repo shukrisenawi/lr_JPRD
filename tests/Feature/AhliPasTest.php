@@ -76,6 +76,26 @@ it('applies the users locality scope to ahli pas', function () {
             ->where('statistics.total', 1));
 });
 
+it('lists ahli pas with non pas and missing cula codes', function () {
+    $user = User::factory()->withModules(['ahli-pas'])->create();
+
+    createAhliPasRecord(['name' => 'BELUM CULA', 'no_ahli' => 'PAS-001', 'cula_code' => null]);
+    createAhliPasRecord(['name' => 'CULA UMNO', 'no_ahli' => 'PAS-002', 'cula_code' => '1']);
+    createAhliPasRecord(['name' => 'PAS DALAM KAWASAN', 'no_ahli' => 'PAS-003', 'cula_code' => '2']);
+    createAhliPasRecord(['name' => 'PAS LUAR PARLIMEN', 'no_ahli' => 'PAS-004', 'cula_code' => '3P']);
+
+    $this->actingAs($user)
+        ->get('/ahli-pas?tab=salah-cula')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('AhliPas/Index')
+            ->where('active_tab', 'salah-cula')
+            ->where('wrong_cula_members.per_page', 20)
+            ->where('wrong_cula_members.total', 2)
+            ->where('wrong_cula_members.data.0.name', 'BELUM CULA')
+            ->where('wrong_cula_members.data.1.name', 'CULA UMNO'));
+});
+
 it('requires the ahli pas role permission', function () {
     $user = User::factory()->withModules(['carian-pemilih'])->create();
 
