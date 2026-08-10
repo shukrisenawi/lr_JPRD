@@ -52,18 +52,16 @@ class LaporanController extends Controller
 
         $user->applyScopeToPemilihQuery($query);
 
-        $labelExpression = "COALESCE(NULLIF(NULLIF(dm, ''), '-'), 'Tidak Ditetapkan')";
-
         return [
             'total' => (clone $query)->count(),
             'by_udm' => (clone $query)
-                ->selectRaw("{$labelExpression} as name, COUNT(*) as total")
-                ->groupByRaw($labelExpression)
+                ->selectRaw('dm, COUNT(*) as total')
+                ->groupBy('dm')
                 ->orderByDesc('total')
-                ->orderByRaw($labelExpression)
+                ->orderBy('dm')
                 ->get()
                 ->map(fn (PemilihRecord $row) => [
-                    'name' => $row->name,
+                    'name' => filled($row->dm) && $row->dm !== '-' ? $row->dm : 'Tidak Ditetapkan',
                     'total' => (int) $row->total,
                 ])
                 ->values()
