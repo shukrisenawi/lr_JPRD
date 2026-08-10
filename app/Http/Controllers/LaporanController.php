@@ -60,7 +60,7 @@ class LaporanController extends Controller
                 ->selectRaw("{$labelExpression} as name, COUNT(*) as total")
                 ->groupByRaw($labelExpression)
                 ->orderByDesc('total')
-                ->orderBy('name')
+                ->orderByRaw($labelExpression)
                 ->get()
                 ->map(fn (PemilihRecord $row) => [
                     'name' => $row->name,
