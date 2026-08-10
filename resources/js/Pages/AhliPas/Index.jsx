@@ -43,8 +43,32 @@ function SummaryCard({ label, value, icon }) {
 
 export default function AhliPasIndex({ active_tab, filters, available_dms, available_localities, members, statistics }) {
     const [form, setForm] = useState(filters);
+    const [copiedNoAhli, setCopiedNoAhli] = useState('');
 
     useEffect(() => setForm(filters), [filters]);
+
+    const copyNoAhli = async (value) => {
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(value);
+            } else {
+                const input = document.createElement('textarea');
+                input.value = value;
+                input.setAttribute('readonly', '');
+                input.style.position = 'fixed';
+                input.style.opacity = '0';
+                document.body.appendChild(input);
+                input.select();
+                const copied = document.execCommand('copy');
+                input.remove();
+                if (!copied) throw new Error('copy-failed');
+            }
+            setCopiedNoAhli(value);
+            setTimeout(() => setCopiedNoAhli(current => current === value ? '' : current), 1500);
+        } catch {
+            setCopiedNoAhli('');
+        }
+    };
 
     const load = (params) => {
         router.get(route('ahli-pas.index'), params, {
@@ -134,7 +158,7 @@ export default function AhliPasIndex({ active_tab, filters, available_dms, avail
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-xs">
                                         <thead><tr className="border-b border-slate-100 bg-slate-50"><th className="px-4 py-2 text-left font-bold text-slate-500">#</th><th className="px-4 py-2 text-left font-bold text-slate-500">Nama</th><th className="px-4 py-2 text-left font-bold text-slate-500">No KP</th><th className="px-4 py-2 text-left font-bold text-slate-500">No. Ahli</th><th className="px-4 py-2 text-left font-bold text-slate-500">UDM</th><th className="px-4 py-2 text-left font-bold text-slate-500">Lokaliti</th></tr></thead>
-                                        <tbody className="divide-y divide-slate-100">{rows.map((member, index) => <tr key={member.id} className="hover:bg-green-50/50"><td className="px-4 py-2 text-slate-400">{(members.from ?? 1) + index}</td><td className="px-4 py-2 font-semibold uppercase text-slate-800">{member.name || '-'}</td><td className="px-4 py-2 text-slate-600">{member.no_kp || member.old_ic || '-'}</td><td className="px-4 py-2 font-bold text-green-700">{member.no_ahli}</td><td className="px-4 py-2 text-slate-600">{member.dm || '-'}</td><td className="px-4 py-2 text-slate-600">{member.locality || '-'}</td></tr>)}</tbody>
+                                        <tbody className="divide-y divide-slate-100">{rows.map((member, index) => <tr key={member.id} className="hover:bg-green-50/50"><td className="px-4 py-2 text-slate-400">{(members.from ?? 1) + index}</td><td className="px-4 py-2 font-semibold uppercase text-slate-800">{member.name || '-'}</td><td className="px-4 py-2 text-slate-600">{member.no_kp || member.old_ic || '-'}</td><td className="px-4 py-2"><button type="button" onClick={() => copyNoAhli(member.no_ahli)} title="Klik untuk salin No. Ahli" aria-label={`Salin No. Ahli ${member.no_ahli}`} className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold transition ${copiedNoAhli === member.no_ahli ? 'bg-emerald-600 text-white' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>{copiedNoAhli === member.no_ahli ? 'Disalin' : member.no_ahli}</button></td><td className="px-4 py-2 text-slate-600">{member.dm || '-'}</td><td className="px-4 py-2 text-slate-600">{member.locality || '-'}</td></tr>)}</tbody>
                                     </table>
                                 </div>
                             )}
