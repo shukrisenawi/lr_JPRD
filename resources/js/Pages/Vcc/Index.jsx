@@ -134,6 +134,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';
         return Number(aIsXaktif) - Number(bIsXaktif);
     });
+    const visibleHashtags = orderedHashtags.filter((hashtag) => Number(hashtag.count ?? 0) > 0);
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -912,7 +913,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
-                            {available_hashtags.length > 0 && (
+                            {visibleHashtags.length > 0 && (
                                 <div className="mt-3">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</span>
@@ -923,7 +924,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         )}
                                     </div>
                                     <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
-                                        {orderedHashtags.map((hashtag) => {
+                                        {visibleHashtags.map((hashtag) => {
                                             const count = Number(hashtag.count ?? 0);
                                             const selected = formState.hashtags.includes(hashtag.name);
                                             const disabled = count === 0;

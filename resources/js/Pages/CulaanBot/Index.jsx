@@ -533,6 +533,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
         const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';
         return Number(aIsXaktif) - Number(bIsXaktif);
     });
+    const visibleHashtags = orderedHashtags.filter((hashtag) => Number(hashtag.count ?? 0) > 0);
     const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll || hashtags.length > 0;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
@@ -663,7 +664,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                         <ToggleTile label="Semua Pemilih" icon="list" iconColor="slate" active={showAll} onToggle={toggleShowAll} />
                                     </div>
                                 </div>
-                                {available_hashtags.length > 0 && (
+                                {visibleHashtags.length > 0 && (
                                     <div>
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Hashtag Pemilih</span>
@@ -674,7 +675,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             )}
                                         </div>
                                         <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
-                                            {orderedHashtags.map((hashtag) => {
+                                            {visibleHashtags.map((hashtag) => {
                                                 const count = Number(hashtag.count ?? 0);
                                                 const selected = hashtags.includes(hashtag.name);
                                                 const disabled = count === 0;
