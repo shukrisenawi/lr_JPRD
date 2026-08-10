@@ -80,7 +80,7 @@ it('lists ahli pas with non pas and missing cula codes', function () {
     $user = User::factory()->withModules(['ahli-pas'])->create();
 
     createAhliPasRecord(['name' => 'BELUM CULA', 'no_ahli' => 'PAS-001', 'cula_code' => null]);
-    createAhliPasRecord(['name' => 'CULA UMNO', 'no_ahli' => 'PAS-002', 'cula_code' => '1']);
+    createAhliPasRecord(['name' => 'CULA UMNO', 'no_ahli' => 'PAS-002', 'dm' => 'UDM A', 'cula_code' => '1']);
     createAhliPasRecord(['name' => 'PAS DALAM KAWASAN', 'no_ahli' => 'PAS-003', 'cula_code' => '2']);
     createAhliPasRecord(['name' => 'PAS LUAR PARLIMEN', 'no_ahli' => 'PAS-004', 'cula_code' => '3P']);
 
@@ -94,6 +94,13 @@ it('lists ahli pas with non pas and missing cula codes', function () {
             ->where('wrong_cula_members.total', 2)
             ->where('wrong_cula_members.data.0.name', 'BELUM CULA')
             ->where('wrong_cula_members.data.1.name', 'CULA UMNO'));
+
+    $this->actingAs($user)
+        ->get('/ahli-pas?tab=salah-cula&udm=UDM%20A&q=UMNO')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('wrong_cula_members.total', 1)
+            ->where('wrong_cula_members.data.0.name', 'CULA UMNO'));
 });
 
 it('requires the ahli pas role permission', function () {

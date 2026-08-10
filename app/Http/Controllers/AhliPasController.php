@@ -58,7 +58,7 @@ class AhliPasController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $wrongCulaMembers = $this->wrongCulaQuery(clone $base)
+        $wrongCulaMembers = $this->wrongCulaQuery($this->applyFilters(clone $base, $filters))
             ->select([
                 'id', 'name', 'no_kp', 'old_ic', 'no_ahli', 'dm', 'locality', 'cula_code', 'cula_display_label',
                 'phone_mobile', 'phone_home', 'gender', 'race', 'date_of_birth', 'address', 'alamat_kp', 'alamat_kediaman', 'catatan',
