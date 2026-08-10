@@ -129,6 +129,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
+    const orderedHashtags = [...available_hashtags].sort((a, b) => {
+        const aIsXaktif = String(a.name).trim().toLowerCase() === '#xaktif';
+        const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';
+        return Number(aIsXaktif) - Number(bIsXaktif);
+    });
     const [formState, setFormState] = useState({
         udm: filters.udm ?? '',
         locality: filters.locality ?? '',
@@ -918,7 +923,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         )}
                                     </div>
                                     <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
-                                        {available_hashtags.map((hashtag) => {
+                                        {orderedHashtags.map((hashtag) => {
                                             const count = Number(hashtag.count ?? 0);
                                             const selected = formState.hashtags.includes(hashtag.name);
                                             const disabled = count === 0;

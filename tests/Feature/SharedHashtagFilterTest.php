@@ -102,7 +102,7 @@ it('backfills existing program sub program assignments into central hashtags', f
 });
 
 it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
-    $user = User::factory()->withModules(['dashboard', 'culaan-bot', 'vcc'])->create();
+    $user = User::factory()->withModules(['dashboard', 'culaan', 'culaan-bot', 'vcc'])->create();
     $match = PemilihRecord::query()->create([
         'identity_number' => '900808025502',
         'no_kp' => '900808025502',
@@ -161,6 +161,22 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
         ]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
+            ->where('filters.hashtags', ['#program_sama'])
+            ->where('summary.total', 1));
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', [
+            'udm' => 'UDM HASHTAG SAMA',
+            'hashtags' => ['#program_sama'],
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('available_hashtags', [
+                ['name' => '#hashtag_lain', 'count' => 1],
+                ['name' => '#hashtag_seiring', 'count' => 1],
+                ['name' => '#program_sama', 'count' => 1],
+                ['name' => '#xaktif', 'count' => 1],
+            ])
             ->where('filters.hashtags', ['#program_sama'])
             ->where('summary.total', 1));
 

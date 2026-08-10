@@ -205,7 +205,7 @@ final class HashtagService
             ->whereIn('id', DB::table('hashtag_pemilih_record as available_hpr')
                 ->select('available_hpr.hashtag_id')
                 ->whereIn('available_hpr.pemilih_record_id', $availableVoterIds))
-            ->orderByRaw("CASE WHEN name = '#xaktif' THEN 1 ELSE 0 END")
+            ->orderByRaw("CASE WHEN LOWER(TRIM(name)) IN ('#xaktif', 'xaktif') THEN 1 ELSE 0 END")
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn (Hashtag $hashtag) => [

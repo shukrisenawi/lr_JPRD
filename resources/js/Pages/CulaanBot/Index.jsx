@@ -528,6 +528,11 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
     const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll || hashtags.length));
     const [culaFilterOpen, setCulaFilterOpen] = useState(false);
+    const orderedHashtags = [...available_hashtags].sort((a, b) => {
+        const aIsXaktif = String(a.name).trim().toLowerCase() === '#xaktif';
+        const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';
+        return Number(aIsXaktif) - Number(bIsXaktif);
+    });
     const hasFilterValue = filters.udm || filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll || hashtags.length > 0;
     const shouldPromptUdm = !filters.udm && !filters.locality;
 
@@ -669,7 +674,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             )}
                                         </div>
                                         <div className="mt-1.5 flex max-h-32 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 p-2">
-                                            {available_hashtags.map((hashtag) => {
+                                            {orderedHashtags.map((hashtag) => {
                                                 const count = Number(hashtag.count ?? 0);
                                                 const selected = hashtags.includes(hashtag.name);
                                                 const disabled = count === 0;
