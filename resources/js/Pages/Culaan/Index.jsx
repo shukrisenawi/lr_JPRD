@@ -358,7 +358,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     });
     const [filterOpen, setFilterOpen] = useState(false);
     const [culaFilterOpen, setCulaFilterOpen] = useState(false);
-    const [hashtagFilterOpen, setHashtagFilterOpen] = useState(true);
+    const [hashtagFilterOpen, setHashtagFilterOpen] = useState(false);
     const orderedHashtags = [...available_hashtags].sort((a, b) => {
         const aIsXaktif = String(a.name).trim().toLowerCase() === '#xaktif';
         const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';

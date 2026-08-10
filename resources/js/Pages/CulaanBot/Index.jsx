@@ -530,7 +530,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
 
     const [filterOpen, setFilterOpen] = useState(() => Boolean(filters.locality || showMarked || filterRumah || filterAlamat || filterRumahAlamat || ageFrom || ageTo || showAll || hashtags.length));
     const [culaFilterOpen, setCulaFilterOpen] = useState(false);
-    const [hashtagFilterOpen, setHashtagFilterOpen] = useState(true);
+    const [hashtagFilterOpen, setHashtagFilterOpen] = useState(false);
     const orderedHashtags = [...available_hashtags].sort((a, b) => {
         const aIsXaktif = String(a.name).trim().toLowerCase() === '#xaktif';
         const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';
