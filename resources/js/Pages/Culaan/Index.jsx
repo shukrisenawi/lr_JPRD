@@ -1489,7 +1489,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                                 key={hashtag}
                                                 type="button"
                                                 onClick={() => toggleHashtag(hashtag)}
-                                                className={`rounded-full border px-2.5 py-1 text-xs font-bold transition ${selected ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-green-200 bg-white text-green-700 hover:border-green-400 hover:bg-green-50'}`}
+                                                className={`rounded-full border px-2.5 py-1 text-[11px] font-bold transition ${selected ? 'border-green-500 bg-green-600 text-white shadow-sm' : 'border-green-200 bg-white text-green-700 hover:border-green-400 hover:bg-green-50'}`}
                                             >
                                                 {hashtag}
                                             </button>
