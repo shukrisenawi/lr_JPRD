@@ -49,7 +49,7 @@ class AhliPasController extends Controller
             ->select(['id', 'name', 'no_kp', 'old_ic', 'no_ahli', 'dm', 'locality'])
             ->orderBy('name')
             ->orderBy('id')
-            ->paginate(50)
+            ->paginate(20)
             ->withQueryString();
 
         return Inertia::render('AhliPas/Index', [
