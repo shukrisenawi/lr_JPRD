@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
-use App\Models\Hashtag;
 use App\Models\PemilihRecord;
 use App\Models\VoterCommunication;
 use App\Services\HashtagService;
@@ -22,7 +21,7 @@ use Inertia\Response;
 
 class VccController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, HashtagService $hashtagService): Response
     {
         $filters = $this->resolveFilters($request);
         $voters = $this->paginateVoters($filters);
@@ -46,7 +45,7 @@ class VccController extends Controller
             'voters' => $voters,
             'available_races' => $this->availableRaces(),
             'available_cula_codes' => $this->availableCulaCodes(),
-            'available_hashtags' => $this->availableHashtags($filters),
+            'available_hashtags' => $this->availableHashtags($filters, $hashtagService),
         ]);
     }
 
@@ -516,22 +515,14 @@ class VccController extends Controller
         ];
     }
 
-    private function availableHashtags(array $filters): array
+    private function availableHashtags(array $filters, HashtagService $hashtagService): array
     {
         $candidateFilters = $filters;
         $candidateFilters['hashtags'] = [];
 
-        $voterIds = $this->buildEligibleVotersQuery($candidateFilters, ! $filters['show_marked'])
-            ->select('pemilih_records.id');
+        $voterQuery = $this->buildEligibleVotersQuery($candidateFilters);
 
-        return Hashtag::query()
-            ->whereIn('id', DB::table('hashtag_pemilih_record')
-                ->select('hashtag_id')
-                ->whereIn('pemilih_record_id', $voterIds))
-            ->orderBy('name')
-            ->pluck('name')
-            ->values()
-            ->all();
+        return $hashtagService->availableWithCounts($voterQuery, request()->user(), $filters['udm'], $filters['locality']);
     }
 
     private function availableGroups(string $udm = ''): array

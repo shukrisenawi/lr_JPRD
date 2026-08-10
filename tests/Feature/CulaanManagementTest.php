@@ -462,7 +462,7 @@ it('filters culaan voters by hashtag', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.hashtags', ['#sasaran'])
-            ->where('available_hashtags', ['#sasaran'])
+            ->where('available_hashtags', [['name' => '#sasaran', 'count' => 1]])
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $match->id)
             ->where('voters.data', fn ($data) => collect($data)->pluck('id')->doesntContain($other->id)));
@@ -509,7 +509,7 @@ it('shows tagged voters even when their culaan is already completed', function (
         ]))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('available_hashtags', ['#siap']));
+            ->where('available_hashtags', [['name' => '#siap', 'count' => 1]]));
 });
 
 it('only exposes hashtags from the current culaan data', function () {
@@ -553,5 +553,5 @@ it('only exposes hashtags from the current culaan data', function () {
         ->assertInertia(fn ($page) => $page
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $availableVoter->id)
-            ->where('available_hashtags', []));
+            ->where('available_hashtags', [['name' => '#tag-siap', 'count' => 0]]));
 });

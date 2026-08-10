@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
 use App\Models\GroupPemilih;
-use App\Models\Hashtag;
 use App\Models\PemilihRecord;
 use App\Services\HashtagService;
 use App\Services\PemilihReportService;
@@ -20,7 +19,7 @@ use Inertia\Response;
 
 class CulaanController extends Controller
 {
-    public function index(Request $request, PemilihReportService $reportService): Response
+    public function index(Request $request, PemilihReportService $reportService, HashtagService $hashtagService): Response
     {
         $filters = $this->resolveFilters($request);
 
@@ -60,7 +59,7 @@ class CulaanController extends Controller
             'groups' => $groups,
             'voters' => $voters,
             'available_cula_codes' => $this->availableCulaCodes(),
-            'available_hashtags' => $this->availableHashtags($filters),
+            'available_hashtags' => $this->availableHashtags($filters, $hashtagService),
             'available_races' => $this->availableRaces(),
             'data_error_count' => $dataErrorCount,
         ]);
@@ -531,7 +530,7 @@ class CulaanController extends Controller
             ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
     }
 
-    private function availableHashtags(array $filters): array
+    private function availableHashtags(array $filters, HashtagService $hashtagService): array
     {
         $candidateFilters = $filters;
         $candidateFilters['hashtags'] = [];
@@ -540,16 +539,7 @@ class CulaanController extends Controller
             ? $this->buildDataErrorVotersQuery($candidateFilters)
             : $this->buildEligibleVotersQuery($candidateFilters, ! $filters['show_marked']);
 
-        $voterIds = (clone $voterQuery)->select('pemilih_records.id');
-
-        return Hashtag::query()
-            ->whereIn('id', DB::table('hashtag_pemilih_record')
-                ->select('hashtag_id')
-                ->whereIn('pemilih_record_id', $voterIds))
-            ->orderBy('name')
-            ->pluck('name')
-            ->values()
-            ->all();
+        return $hashtagService->availableWithCounts($voterQuery, request()->user(), $filters['udm'], $filters['locality']);
     }
 
     private function availableUdms(): array

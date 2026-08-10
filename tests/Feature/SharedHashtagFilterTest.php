@@ -145,7 +145,11 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.hashtags', ['#program_sama'])
-            ->where('available_hashtags', ['#hashtag_lain', '#hashtag_seiring', '#program_sama'])
+            ->where('available_hashtags', [
+                ['name' => '#hashtag_lain', 'count' => 1],
+                ['name' => '#hashtag_seiring', 'count' => 1],
+                ['name' => '#program_sama', 'count' => 1],
+            ])
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $match->id));
 
@@ -169,7 +173,11 @@ it('filters Culaan Bot and VCC with the same voter hashtag data', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.hashtags', ['#program_sama'])
-            ->where('available_hashtags', ['#hashtag_lain', '#hashtag_seiring', '#program_sama'])
+            ->where('available_hashtags', [
+                ['name' => '#hashtag_lain', 'count' => 1],
+                ['name' => '#hashtag_seiring', 'count' => 1],
+                ['name' => '#program_sama', 'count' => 1],
+            ])
             ->where('summary.total', 1)
             ->where('voters.data.0.id', $match->id));
 

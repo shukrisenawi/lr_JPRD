@@ -149,10 +149,10 @@ final class HashtagService
 
         $builder = Hashtag::query()
             ->whereHas('pemilihRecords', function (Builder $voterQuery) use ($user, $includeManual, $dm, $locality) {
-                $voterQuery->where('status', 'aktif');
+                $voterQuery->where('pemilih_records.status', 'aktif');
 
                 if (! $includeManual) {
-                    $voterQuery->where('is_manual', false);
+                    $voterQuery->where('pemilih_records.is_manual', false);
                 }
 
                 if (filled($dm)) {
@@ -182,5 +182,36 @@ final class HashtagService
     public function available(?User $user = null, bool $includeManual = true, ?string $dm = null, ?string $locality = null): array
     {
         return $this->suggestions('', $user, $includeManual, 1000, $dm, $locality);
+    }
+
+    public function availableWithCounts(Builder $voterQuery, ?User $user = null, ?string $dm = null, ?string $locality = null): array
+    {
+        $voterIds = (clone $voterQuery)->select('pemilih_records.id');
+        $counts = DB::table('hashtag_pemilih_record as hpr')
+            ->whereIn('hpr.pemilih_record_id', $voterIds)
+            ->select('hpr.hashtag_id', DB::raw('COUNT(DISTINCT hpr.pemilih_record_id) as total'))
+            ->groupBy('hpr.hashtag_id')
+            ->pluck('total', 'hashtag_id');
+        $availableVoterIds = PemilihRecord::query()
+            ->where('status', 'aktif')
+            ->where('is_manual', false)
+            ->when(filled($dm), fn (Builder $query) => $query->where('dm', $dm))
+            ->when(filled($locality), fn (Builder $query) => $query->where('locality', $locality))
+            ->select('pemilih_records.id');
+
+        $user?->applyScopeToPemilihQuery($availableVoterIds);
+
+        return Hashtag::query()
+            ->whereIn('id', DB::table('hashtag_pemilih_record as available_hpr')
+                ->select('available_hpr.hashtag_id')
+                ->whereIn('available_hpr.pemilih_record_id', $availableVoterIds))
+            ->orderBy('name')
+            ->get(['id', 'name'])
+            ->map(fn (Hashtag $hashtag) => [
+                'name' => $hashtag->name,
+                'count' => (int) ($counts[$hashtag->id] ?? 0),
+            ])
+            ->values()
+            ->all();
     }
 }
