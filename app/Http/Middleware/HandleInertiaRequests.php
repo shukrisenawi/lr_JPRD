@@ -153,6 +153,7 @@ class HandleInertiaRequests extends Middleware
                 ->where('status', 'aktif')
                 ->where('is_manual', false)
                 ->whereRaw("TRIM(COALESCE(no_ahli, '')) NOT IN ('', '-')")
+                ->whereDoesntHave('culaWorkItem')
                 ->where(function ($query) {
                     $query->whereNull('cula_code')
                         ->orWhere('cula_code', '')

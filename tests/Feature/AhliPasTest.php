@@ -165,4 +165,10 @@ it('updates salah cula member to any cula code within the user scope', function 
         'pemilih_record_id' => $member->id,
         'marked_by' => $user->id,
     ]);
+
+    $this->actingAs($user)
+        ->get('/ahli-pas?tab=salah-cula')
+        ->assertInertia(fn ($page) => $page
+            ->where('wrong_cula_members.total', 0)
+            ->where('badgeCounts.ahliPasSalahCula', 0));
 });

@@ -144,13 +144,15 @@ class AhliPasController extends Controller
 
     private function wrongCulaQuery(Builder $query): Builder
     {
-        return $query->where(function (Builder $builder) {
-            $builder->whereNull('cula_code')
-                ->orWhere('cula_code', '')
-                ->orWhere('cula_code', '?')
-                ->orWhere('cula_code', 'TIADA')
-                ->orWhereNotIn('cula_code', [...self::PAS_CULA_CODES, '8']);
-        });
+        return $query
+            ->whereDoesntHave('culaWorkItem')
+            ->where(function (Builder $builder) {
+                $builder->whereNull('cula_code')
+                    ->orWhere('cula_code', '')
+                    ->orWhere('cula_code', '?')
+                    ->orWhere('cula_code', 'TIADA')
+                    ->orWhereNotIn('cula_code', [...self::PAS_CULA_CODES, '8']);
+            });
     }
 
     private function groupByUdm(Builder $query): array
