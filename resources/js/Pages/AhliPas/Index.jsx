@@ -616,49 +616,41 @@ export default function AhliPasIndex({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-xs">
-                                        <thead>
-                                            <tr className="border-b border-slate-100 bg-slate-50">
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    #
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    Nama
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    No KP
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    No. Ahli
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    UDM
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    Lokaliti
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {rows.map((member, index) => (
-                                                <tr
-                                                    key={member.id}
-                                                    className="hover:bg-green-50/50"
-                                                >
-                                                    <td className="px-4 py-2 text-slate-400">
-                                                        {(members.from ?? 1) +
-                                                            index}
-                                                    </td>
-                                                    <td className="px-4 py-2 font-semibold uppercase text-slate-800">
+                                <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {rows.map((member, index) => (
+                                        <article
+                                            key={member.id}
+                                            className="rounded-xl border border-green-200 bg-white p-3 shadow-sm transition hover:border-green-400 hover:shadow-md"
+                                        >
+                                            <div className="flex items-start gap-2">
+                                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-green-600 text-[10px] font-black text-white">
+                                                    {(members.from ?? 1) + index}
+                                                </span>
+                                                <div className="min-w-0">
+                                                    <p className="break-words text-sm font-bold uppercase leading-5 text-slate-800">
                                                         {member.name || "-"}
-                                                    </td>
-                                                    <td className="px-4 py-2 text-slate-600">
+                                                    </p>
+                                                    <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-green-700">
+                                                        Ahli PAS
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-green-100 pt-3 text-xs">
+                                                <div>
+                                                    <dt className="font-bold text-green-700">
+                                                        No. KP
+                                                    </dt>
+                                                    <dd className="mt-0.5 break-words font-semibold text-slate-800">
                                                         {member.no_kp ||
                                                             member.old_ic ||
                                                             "-"}
-                                                    </td>
-                                                    <td className="px-4 py-2">
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt className="font-bold text-green-700">
+                                                        No. Ahli
+                                                    </dt>
+                                                    <dd className="mt-1">
                                                         <NoAhliBadge
                                                             member={member}
                                                             copiedNoAhli={
@@ -666,17 +658,27 @@ export default function AhliPasIndex({
                                                             }
                                                             onCopy={copyNoAhli}
                                                         />
-                                                    </td>
-                                                    <td className="px-4 py-2 text-slate-600">
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt className="font-bold text-green-700">
+                                                        UDM
+                                                    </dt>
+                                                    <dd className="mt-0.5 break-words font-semibold text-slate-800">
                                                         {member.dm || "-"}
-                                                    </td>
-                                                    <td className="px-4 py-2 text-slate-600">
+                                                    </dd>
+                                                </div>
+                                                <div>
+                                                    <dt className="font-bold text-green-700">
+                                                        Lokaliti
+                                                    </dt>
+                                                    <dd className="mt-0.5 break-words font-semibold text-slate-800">
                                                         {member.locality || "-"}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                    </dd>
+                                                </div>
+                                            </dl>
+                                        </article>
+                                    ))}
                                 </div>
                             )}
                             <Pagination members={members} onPage={goToPage} />
@@ -824,154 +826,132 @@ export default function AhliPasIndex({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-xs">
-                                        <thead>
-                                            <tr className="border-b border-amber-100 bg-amber-50">
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    #
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    Nama
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    No. Ahli
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    Status Cula
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    UDM
-                                                </th>
-                                                <th className="px-4 py-2 text-left font-bold text-slate-500">
-                                                    Lokaliti
-                                                </th>
-                                                <th className="px-4 py-2 text-center font-bold text-slate-500">
-                                                    Tindakan
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {wrongCulaRows.map(
-                                                (member, index) => {
-                                                    const isCompleted =
-                                                        completedCulaIds.has(
-                                                            member.id,
-                                                        );
+                                <div className="grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {wrongCulaRows.map((member, index) => {
+                                        const isCompleted = completedCulaIds.has(
+                                            member.id,
+                                        );
 
-                                                    return (
-                                                        <tr
-                                                            key={member.id}
-                                                            className={
-                                                                isCompleted
-                                                                    ? "bg-emerald-50/70 text-slate-400 line-through decoration-emerald-500/50"
-                                                                    : "hover:bg-amber-50/40"
-                                                            }
+                                        return (
+                                            <article
+                                                key={member.id}
+                                                className={`rounded-xl border p-3 shadow-sm transition ${isCompleted ? "border-emerald-200 bg-emerald-50/70" : "border-amber-200 bg-white hover:border-amber-400 hover:shadow-md"}`}
+                                            >
+                                                <div className="flex items-start gap-2">
+                                                    <span
+                                                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-black text-white ${isCompleted ? "bg-emerald-600" : "bg-amber-500"}`}
+                                                    >
+                                                        {(localWrongCulaMembers?.from ??
+                                                            1) + index}
+                                                    </span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="break-words text-sm font-bold uppercase leading-5 text-slate-800">
+                                                            {member.name || "-"}
+                                                        </p>
+                                                        <span
+                                                            className={`mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${isCompleted ? "bg-emerald-100 text-emerald-700" : culaStatus(member) === "Belum Cula" ? "bg-slate-200 text-slate-700" : "bg-rose-100 text-rose-700"}`}
                                                         >
-                                                            <td className="px-4 py-2 text-slate-400">
-                                                                {(localWrongCulaMembers?.from ??
-                                                                    1) + index}
-                                                            </td>
-                                                            <td className="px-4 py-2 font-semibold uppercase text-slate-800">
-                                                                {member.name ||
-                                                                    "-"}
-                                                            </td>
-                                                            <td className="px-4 py-2">
-                                                                <NoAhliBadge
-                                                                    member={
-                                                                        member
-                                                                    }
-                                                                    copiedNoAhli={
-                                                                        copiedNoAhli
-                                                                    }
-                                                                    onCopy={
-                                                                        copyNoAhli
-                                                                    }
-                                                                />
-                                                            </td>
-                                                            <td className="px-4 py-2">
-                                                                <span
-                                                                    className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${isCompleted ? "bg-emerald-100 text-emerald-700" : culaStatus(member) === "Belum Cula" ? "bg-slate-200 text-slate-700" : "bg-rose-100 text-rose-700"}`}
-                                                                >
-                                                                    {isCompleted
-                                                                        ? `Berjaya: ${culaStatus(member)}`
-                                                                        : culaStatus(
-                                                                              member,
-                                                                          )}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-4 py-2 text-slate-600">
-                                                                {member.dm ||
-                                                                    "-"}
-                                                            </td>
-                                                            <td className="px-4 py-2 text-slate-600">
-                                                                {member.locality ||
-                                                                    "-"}
-                                                            </td>
-                                                            <td className="px-4 py-2">
-                                                                <div className="flex justify-center gap-1.5">
-                                                                    {isCompleted ? (
-                                                                        <button
-                                                                            type="button"
-                                                                            disabled
-                                                                            className="rounded-md bg-emerald-600 px-2.5 py-1 text-[10px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
-                                                                        >
-                                                                            Berjaya
-                                                                        </button>
-                                                                    ) : culaPendingIds.has(
-                                                                          member.id,
-                                                                      ) ? (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                setSelectedMemberForCula(
-                                                                                    member,
-                                                                                )
-                                                                            }
-                                                                            className="rounded-md bg-blue-600 px-2.5 py-1 text-[10px] font-bold text-white transition hover:bg-blue-500"
-                                                                        >
-                                                                            Siap
-                                                                            Cula
-                                                                        </button>
-                                                                    ) : (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() =>
-                                                                                openCula(
-                                                                                    member,
-                                                                                )
-                                                                            }
-                                                                            className="rounded-md bg-green-600 px-2.5 py-1 text-[10px] font-bold text-white transition hover:bg-green-500"
-                                                                        >
-                                                                            Cula
-                                                                        </button>
-                                                                    )}
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            setDetailMember(
-                                                                                member,
-                                                                            )
-                                                                        }
-                                                                        disabled={
-                                                                            isCompleted
-                                                                        }
-                                                                        className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                                                    >
-                                                                        <Icon
-                                                                            name="eye"
-                                                                            className="h-3 w-3"
-                                                                        />
-                                                                        Detail
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                },
-                                            )}
-                                        </tbody>
-                                    </table>
+                                                            {isCompleted
+                                                                ? `Berjaya: ${culaStatus(member)}`
+                                                                : culaStatus(member)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-amber-100 pt-3 text-xs">
+                                                    <div>
+                                                        <dt className="font-bold text-amber-700">
+                                                            No. Ahli
+                                                        </dt>
+                                                        <dd className="mt-1">
+                                                            <NoAhliBadge
+                                                                member={member}
+                                                                copiedNoAhli={
+                                                                    copiedNoAhli
+                                                                }
+                                                                onCopy={copyNoAhli}
+                                                            />
+                                                        </dd>
+                                                    </div>
+                                                    <div>
+                                                        <dt className="font-bold text-amber-700">
+                                                            No. KP
+                                                        </dt>
+                                                        <dd className="mt-0.5 break-words font-semibold text-slate-800">
+                                                            {member.no_kp ||
+                                                                member.old_ic ||
+                                                                "-"}
+                                                        </dd>
+                                                    </div>
+                                                    <div>
+                                                        <dt className="font-bold text-amber-700">
+                                                            UDM
+                                                        </dt>
+                                                        <dd className="mt-0.5 break-words font-semibold text-slate-800">
+                                                            {member.dm || "-"}
+                                                        </dd>
+                                                    </div>
+                                                    <div>
+                                                        <dt className="font-bold text-amber-700">
+                                                            Lokaliti
+                                                        </dt>
+                                                        <dd className="mt-0.5 break-words font-semibold text-slate-800">
+                                                            {member.locality ||
+                                                                "-"}
+                                                        </dd>
+                                                    </div>
+                                                </dl>
+                                                <div className="mt-3 flex gap-1.5">
+                                                    {isCompleted ? (
+                                                        <button
+                                                            type="button"
+                                                            disabled
+                                                            className="flex-1 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
+                                                        >
+                                                            Berjaya
+                                                        </button>
+                                                    ) : culaPendingIds.has(
+                                                          member.id,
+                                                      ) ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                setSelectedMemberForCula(
+                                                                    member,
+                                                                )
+                                                            }
+                                                            className="flex-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500 active:scale-[0.98]"
+                                                        >
+                                                            Siap Cula
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                openCula(member)
+                                                            }
+                                                            className="flex-1 rounded-md bg-green-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 active:scale-[0.98]"
+                                                        >
+                                                            Cula
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setDetailMember(member)
+                                                        }
+                                                        disabled={isCompleted}
+                                                        className="inline-flex items-center justify-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        <Icon
+                                                            name="eye"
+                                                            className="h-3.5 w-3.5"
+                                                        />
+                                                        Detail
+                                                    </button>
+                                                </div>
+                                            </article>
+                                        );
+                                    })}
                                 </div>
                             )}
                             <Pagination
