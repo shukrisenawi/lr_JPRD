@@ -47,11 +47,11 @@ class SpokasController extends Controller
     {
         $this->ensureMasterAdmin();
 
-        $run = SpokasMigrationRun::query()->latest('id')->firstOrFail();
-        $restoredCount = $migration->rollback($run);
+        abort_unless(SpokasMigrationRun::query()->exists(), 404);
+        $rollback = $migration->rollback();
 
         return to_route('admin.spokas.index')
-            ->with('success', "{$restoredCount} rekod pemilih berjaya dikembalikan ke data asal.");
+            ->with('success', "{$rollback['restored_count']} rekod pemilih daripada {$rollback['run_count']} migrasi berjaya dikembalikan ke data asal.");
     }
 
     private function ensureMasterAdmin(): void

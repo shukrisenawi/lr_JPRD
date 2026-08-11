@@ -95,12 +95,13 @@ it('allows a master admin to rollback the latest spokas migration', function () 
     ]);
 
     $this->actingAs($admin)->post(route('admin.spokas.migrate'))->assertOk();
+    $this->post(route('admin.spokas.migrate'))->assertOk();
 
     expect($record->fresh()->no_ahli)->toBe('BARU-001');
 
     $this->post(route('admin.spokas.rollback'))
         ->assertRedirect(route('admin.spokas.index'))
-        ->assertSessionHas('success', '1 rekod pemilih berjaya dikembalikan ke data asal.');
+        ->assertSessionHas('success', '2 rekod pemilih daripada 2 migrasi berjaya dikembalikan ke data asal.');
 
     expect($record->fresh()->no_ahli)->toBe('ASAL-001')
         ->and(SpokasMigrationRun::query()->count())->toBe(0);

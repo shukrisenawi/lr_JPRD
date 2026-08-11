@@ -172,29 +172,40 @@ class SpokasMigrationService
     }
 
     /**
-     * Restore the No. Ahli values changed by the most recent migration run.
+     * Restore the No. Ahli values changed by every SPoKAS migration run.
+     *
+     * @return array{restored_count: int, run_count: int}
      */
-    public function rollback(SpokasMigrationRun $run): int
+    public function rollback(): array
     {
-        return DB::transaction(function () use ($run): int {
+        return DB::transaction(function (): array {
+            $runs = SpokasMigrationRun::query()
+                ->latest('id')
+                ->lockForUpdate()
+                ->get();
             $restoredCount = 0;
 
-            DB::table('spokas_migration_results')
-                ->where('spokas_migration_run_id', $run->id)
-                ->whereIn('category', ['ic', 'name'])
-                ->orderBy('id')
-                ->eachById(function (object $result) use (&$restoredCount): void {
-                    $restoredCount += DB::table('pemilih_records')
-                        ->where('id', $result->pemilih_id)
-                        ->update([
-                            'no_ahli' => $result->previous_no_ahli,
-                            'updated_at' => now(),
-                        ]);
-                });
+            foreach ($runs as $run) {
+                DB::table('spokas_migration_results')
+                    ->where('spokas_migration_run_id', $run->id)
+                    ->whereIn('category', ['ic', 'name'])
+                    ->orderBy('id')
+                    ->eachById(function (object $result) use (&$restoredCount): void {
+                        $restoredCount += DB::table('pemilih_records')
+                            ->where('id', $result->pemilih_id)
+                            ->update([
+                                'no_ahli' => $result->previous_no_ahli,
+                                'updated_at' => now(),
+                            ]);
+                    });
 
-            $run->delete();
+                $run->delete();
+            }
 
-            return $restoredCount;
+            return [
+                'restored_count' => $restoredCount,
+                'run_count' => $runs->count(),
+            ];
         });
     }
 
