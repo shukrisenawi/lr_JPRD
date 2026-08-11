@@ -350,6 +350,7 @@ export default function AhliPasIndex({
         );
     const rows = members?.data ?? [];
     const wrongCulaRows = localWrongCulaMembers?.data ?? [];
+    const wrongCulaCount = Number(wrong_cula_members?.total ?? 0);
     const localityRows = (statistics?.by_locality ?? []).filter((row) =>
         row.locality
             .toLowerCase()
@@ -458,6 +459,7 @@ export default function AhliPasIndex({
                                 key: "salah-cula",
                                 label: "Salah Cula",
                                 icon: "alert",
+                                badge: wrongCulaCount,
                             },
                             {
                                 key: "statistik",
@@ -473,6 +475,13 @@ export default function AhliPasIndex({
                             >
                                 <Icon name={tab.icon} className="h-4 w-4" />
                                 {tab.label}
+                                {tab.badge > 0 && (
+                                    <span
+                                        className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${active_tab === tab.key ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800"}`}
+                                    >
+                                        {tab.badge.toLocaleString("ms-MY")}
+                                    </span>
+                                )}
                             </button>
                         ))}
                     </div>
