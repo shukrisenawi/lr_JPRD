@@ -152,7 +152,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
     };
 
     const rollback = () => {
-        if (! window.confirm('Kembalikan data pemilih kepada keadaan sebelum semua migrasi SPoKAS?')) return;
+        if (! window.confirm('Kosongkan No. Ahli PAS yang sepadan dengan data SPoKAS?')) return;
         post(route('admin.spokas.rollback'), { preserveScroll: true });
     };
 
@@ -185,9 +185,9 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
                             </div>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
-                            {run && (
+                            {spokas_count > 0 && (
                                 <button type="button" onClick={rollback} disabled={processing} className="btn-danger px-5 py-2 text-xs disabled:opacity-50">
-                                    Rollback semua migrasi
+                                    Rollback dan kosongkan No. Ahli
                                 </button>
                             )}
                             <PrimaryButton type="button" onClick={migrate} disabled={processing} className="px-5 py-2">

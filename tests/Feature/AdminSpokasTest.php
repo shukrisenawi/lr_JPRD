@@ -85,7 +85,6 @@ it('allows a master admin to rollback the latest spokas migration', function () 
         'identity_number' => 'pemilih-rollback-1',
         'no_kp' => '900101-01-1234',
         'name' => 'NAMA ROLLBACK',
-        'no_ahli' => 'ASAL-001',
         'status' => 'aktif',
     ]);
     SpokasMember::query()->create([
@@ -101,8 +100,30 @@ it('allows a master admin to rollback the latest spokas migration', function () 
 
     $this->post(route('admin.spokas.rollback'))
         ->assertRedirect(route('admin.spokas.index'))
-        ->assertSessionHas('success', '2 rekod pemilih daripada 2 migrasi berjaya dikembalikan ke data asal.');
+        ->assertSessionHas('success', '1 nombor ahli PAS daripada data SPoKAS berjaya dikosongkan.');
 
-    expect($record->fresh()->no_ahli)->toBe('ASAL-001')
+    expect($record->fresh()->no_ahli)->toBeNull()
         ->and(SpokasMigrationRun::query()->count())->toBe(0);
+});
+
+it('clears spokas member numbers even after migration logs are gone', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $record = PemilihRecord::query()->create([
+        'identity_number' => 'pemilih-clear-1',
+        'no_kp' => '900101-01-1234',
+        'name' => 'NAMA KOSONG',
+        'no_ahli' => 'PAS-001',
+        'status' => 'aktif',
+    ]);
+    SpokasMember::query()->create([
+        'name' => 'NAMA KOSONG',
+        'member_number' => 'PAS-001',
+        'ic_birth' => '900101011234',
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.spokas.rollback'))
+        ->assertRedirect(route('admin.spokas.index'));
+
+    expect($record->fresh()->no_ahli)->toBeNull();
 });

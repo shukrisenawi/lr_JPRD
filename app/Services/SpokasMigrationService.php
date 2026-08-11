@@ -172,40 +172,31 @@ class SpokasMigrationService
     }
 
     /**
-     * Restore the No. Ahli values changed by every SPoKAS migration run.
-     *
-     * @return array{restored_count: int, run_count: int}
+     * Clear the No. Ahli values imported from the current SPoKAS member list.
      */
-    public function rollback(): array
+    public function rollback(): int
     {
-        return DB::transaction(function (): array {
-            $runs = SpokasMigrationRun::query()
-                ->latest('id')
-                ->lockForUpdate()
-                ->get();
-            $restoredCount = 0;
+        return DB::transaction(function (): int {
+            $memberNumbers = DB::table('spokas_members')
+                ->whereNotNull('member_number')
+                ->pluck('member_number')
+                ->map(fn (mixed $number) => $this->cleanValue($number))
+                ->filter()
+                ->unique();
+            $clearedCount = 0;
 
-            foreach ($runs as $run) {
-                DB::table('spokas_migration_results')
-                    ->where('spokas_migration_run_id', $run->id)
-                    ->whereIn('category', ['ic', 'name'])
-                    ->orderBy('id')
-                    ->eachById(function (object $result) use (&$restoredCount): void {
-                        $restoredCount += DB::table('pemilih_records')
-                            ->where('id', $result->pemilih_id)
-                            ->update([
-                                'no_ahli' => $result->previous_no_ahli,
-                                'updated_at' => now(),
-                            ]);
-                    });
-
-                $run->delete();
+            foreach ($memberNumbers->chunk(500) as $numbers) {
+                $clearedCount += DB::table('pemilih_records')
+                    ->whereIn('no_ahli', $numbers->all())
+                    ->update([
+                        'no_ahli' => null,
+                        'updated_at' => now(),
+                    ]);
             }
 
-            return [
-                'restored_count' => $restoredCount,
-                'run_count' => $runs->count(),
-            ];
+            SpokasMigrationRun::query()->delete();
+
+            return $clearedCount;
         });
     }
 
