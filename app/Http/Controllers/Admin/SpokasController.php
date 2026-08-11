@@ -23,7 +23,7 @@ class SpokasController extends Controller
         return Inertia::render('Admin/Spokas', $this->pageProps($request));
     }
 
-    public function migrate(Request $request, SpokasMigrationService $migration): Response
+    public function migrate(Request $request, SpokasMigrationService $migration): RedirectResponse
     {
         $this->ensureMasterAdmin();
 
@@ -41,7 +41,8 @@ class SpokasController extends Controller
         ]);
         $run->update($migration->migrate($run));
 
-        return Inertia::render('Admin/Spokas', $this->pageProps($request, $run));
+        return to_route('admin.spokas.index')
+            ->with('success', 'Migrasi SPoKAS selesai diproses.');
     }
 
     public function rollback(Request $request, SpokasMigrationService $migration): RedirectResponse

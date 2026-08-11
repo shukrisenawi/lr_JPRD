@@ -56,7 +56,9 @@ it('allows a master admin to run spokas migration and returns grouped results', 
 
     $this->actingAs($admin)
         ->post(route('admin.spokas.migrate'))
-        ->assertOk()
+        ->assertRedirect(route('admin.spokas.index'));
+
+    $this->get(route('admin.spokas.index'))
         ->assertInertia(fn ($page) => $page
             ->component('Admin/Spokas')
             ->where('run.source_count', 4)
@@ -111,7 +113,7 @@ it('allows a master admin to approve or reject a name match after comparing iden
         'ic_old' => 'B200',
     ]);
 
-    $this->actingAs($admin)->post(route('admin.spokas.migrate'))->assertOk();
+    $this->actingAs($admin)->post(route('admin.spokas.migrate'))->assertRedirect(route('admin.spokas.index'));
 
     $approvedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA APPROVE')->firstOrFail();
     $rejectedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA REJECT')->firstOrFail();
@@ -154,8 +156,8 @@ it('allows a master admin to rollback the latest spokas migration', function () 
         'ic_birth' => '900101011234',
     ]);
 
-    $this->actingAs($admin)->post(route('admin.spokas.migrate'))->assertOk();
-    $this->post(route('admin.spokas.migrate'))->assertOk();
+    $this->actingAs($admin)->post(route('admin.spokas.migrate'))->assertRedirect(route('admin.spokas.index'));
+    $this->post(route('admin.spokas.migrate'))->assertRedirect(route('admin.spokas.index'));
 
     expect($record->fresh()->no_ahli)->toBe('BARU-001');
 
