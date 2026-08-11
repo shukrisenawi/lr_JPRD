@@ -2,8 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\ModuleRegistry;
+use App\Models\PemilihRecord;
+use App\Models\PusatKhidmatData;
 use App\Models\User;
+use App\Support\ModuleRegistry;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -77,16 +79,19 @@ class HandleInertiaRequests extends Middleware
             'badgeCounts' => [
                 'pusatKhidmatBelumSemak' => $this->getPusatKhidmatBelumSemakCount($request->user()),
                 'belumDicula' => $this->getBelumDiculaCount($request->user()),
+                'ahliPasSalahCula' => $this->getAhliPasSalahCulaCount($request->user()),
             ],
         ];
     }
 
     public function getPusatKhidmatBelumSemakCount($user): int
     {
-        if (!$user) return 0;
+        if (! $user) {
+            return 0;
+        }
 
         try {
-            $query = \App\Models\PusatKhidmatData::query()
+            $query = PusatKhidmatData::query()
                 ->whereNotNull('no_kp')
                 ->where('no_kp', '!=', '')
                 ->whereNotNull('pemilih_record_id')
@@ -112,10 +117,12 @@ class HandleInertiaRequests extends Middleware
 
     public function getBelumDiculaCount($user): int
     {
-        if (!$user) return 0;
+        if (! $user) {
+            return 0;
+        }
 
         try {
-            $query = \App\Models\PemilihRecord::query()
+            $query = PemilihRecord::query()
                 ->where('status', 'aktif')
                 ->where('is_manual', false)
                 ->where(function ($q) {
@@ -126,6 +133,33 @@ class HandleInertiaRequests extends Middleware
                         ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
                 })
                 ->whereDoesntHave('culaWorkItem');
+
+            $user->applyScopeToPemilihQuery($query);
+
+            return $query->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getAhliPasSalahCulaCount($user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        try {
+            $query = PemilihRecord::query()
+                ->where('status', 'aktif')
+                ->where('is_manual', false)
+                ->whereRaw("TRIM(COALESCE(no_ahli, '')) NOT IN ('', '-')")
+                ->where(function ($query) {
+                    $query->whereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhere('cula_code', '?')
+                        ->orWhere('cula_code', 'TIADA')
+                        ->orWhereNotIn('cula_code', ['2', '3B', '3D', '3K', '3M', '3P', '3U']);
+                });
 
             $user->applyScopeToPemilihQuery($query);
 

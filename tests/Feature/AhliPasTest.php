@@ -103,6 +103,24 @@ it('lists ahli pas with non pas and missing cula codes', function () {
             ->where('wrong_cula_members.data.0.name', 'CULA UMNO'));
 });
 
+it('shares the wrong cula ahli pas count for the navigation badge', function () {
+    $user = User::factory()->withModules(['ahli-pas'])->create([
+        'access_level' => 'cawangan',
+        'scope_key' => 'UDM A|LOKALITI A',
+    ]);
+
+    createAhliPasRecord(['name' => 'BELUM CULA', 'no_ahli' => 'PAS-001', 'dm' => 'UDM A', 'locality' => 'LOKALITI A', 'cula_code' => null]);
+    createAhliPasRecord(['name' => 'CULA BUKAN PAS', 'no_ahli' => 'PAS-002', 'dm' => 'UDM A', 'locality' => 'LOKALITI A', 'cula_code' => '1']);
+    createAhliPasRecord(['name' => 'CULA PAS', 'no_ahli' => 'PAS-003', 'dm' => 'UDM A', 'locality' => 'LOKALITI A', 'cula_code' => '2']);
+    createAhliPasRecord(['name' => 'LUAR SKOP', 'no_ahli' => 'PAS-004', 'dm' => 'UDM A', 'locality' => 'LOKALITI B', 'cula_code' => '1']);
+
+    $this->actingAs($user)
+        ->get('/ahli-pas')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('badgeCounts.ahliPasSalahCula', 2));
+});
+
 it('requires the ahli pas role permission', function () {
     $user = User::factory()->withModules(['carian-pemilih'])->create();
 
