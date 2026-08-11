@@ -71,11 +71,10 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                 <th className="px-3 py-2">Nama SPoKAS</th>
                                 <th className="px-3 py-2">No. Ahli PAS</th>
                                 <th className="px-3 py-2">No. K/P Baru SPoKAS</th>
+                                {hasPemilih && <th className="px-3 py-2">No. K/P Baru Pemilih</th>}
                                 <th className="px-3 py-2">No. K/P Lama SPoKAS</th>
                                 {hasPemilih ? (
                                     <>
-                                        <th className="px-3 py-2">Nama Pemilih</th>
-                                        <th className="px-3 py-2">No. K/P Baru Pemilih</th>
                                         <th className="px-3 py-2">No. K/P Lama Pemilih</th>
                                         {needsDecision && <th className="px-3 py-2">Tindakan</th>}
                                     </>
@@ -90,16 +89,10 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                     <td className="px-3 py-2 font-semibold text-slate-800">{item.name || '-'}</td>
                                     <td className="px-3 py-2 font-mono text-slate-600">{item.member_number || '-'}</td>
                                     <td className="px-3 py-2 font-mono text-slate-600">{item.ic_birth || '-'}</td>
+                                    {hasPemilih && <td className="px-3 py-2 font-mono text-slate-600">{item.pemilih_no_kp || '-'}</td>}
                                     <td className="px-3 py-2 font-mono text-slate-600">{item.ic_old || '-'}</td>
                                     {hasPemilih ? (
                                         <>
-                                            <td className="px-3 py-2 text-slate-700">
-                                                <div className="font-semibold">{item.pemilih_name || '-'}</div>
-                                                <span className={`mt-0.5 inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold ${kind === 'ic' ? 'bg-sky-100 text-sky-700' : 'bg-violet-100 text-violet-700'}`}>
-                                                    {kind === 'ic' ? 'Padan IC' : 'Padan nama'}
-                                                </span>
-                                            </td>
-                                            <td className="px-3 py-2 font-mono text-slate-600">{item.pemilih_no_kp || '-'}</td>
                                             <td className="px-3 py-2 font-mono text-slate-600">{item.pemilih_old_ic || '-'}</td>
                                             {needsDecision && (
                                                 <td className="px-3 py-2">
