@@ -8,6 +8,7 @@ use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -75,10 +76,7 @@ class AhliPasController extends Controller
             'available_localities' => $availableLocalities,
             'members' => $members,
             'wrong_cula_members' => $wrongCulaMembers,
-            'pas_cula_codes' => collect(CulaCodes::options())
-                ->whereIn('code', self::PAS_CULA_CODES)
-                ->values()
-                ->all(),
+            'available_cula_codes' => CulaCodes::options(),
             'statistics' => [
                 'total' => (clone $base)->count(),
                 'by_udm' => $this->groupByUdm(clone $base),
@@ -90,7 +88,7 @@ class AhliPasController extends Controller
     public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
     {
         $validated = $request->validate([
-            'cula_code' => ['required', 'string', 'in:'.implode(',', self::PAS_CULA_CODES)],
+            'cula_code' => ['required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
             'cula_display_label' => ['required', 'string', 'max:255'],
         ]);
 

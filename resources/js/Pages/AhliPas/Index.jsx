@@ -243,7 +243,7 @@ function CulaModal({ member, codes, saving, onSave, onClose }) {
                     </button>
                 </div>
                 <p className="mt-2 text-xs text-slate-500">
-                    Pilih kod PAS yang sah untuk rekod ini.
+                    Pilih kod cula untuk dikemaskini.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                     {codes.map((code) => (
@@ -270,7 +270,7 @@ export default function AhliPasIndex({
     available_localities,
     members,
     wrong_cula_members,
-    pas_cula_codes = [],
+    available_cula_codes = [],
     statistics,
 }) {
     const [form, setForm] = useState(filters);
@@ -1134,7 +1134,7 @@ export default function AhliPasIndex({
             {selectedMemberForCula && (
                 <CulaModal
                     member={selectedMemberForCula}
-                    codes={pas_cula_codes}
+                    codes={available_cula_codes}
                     saving={savingCula}
                     onSave={saveCula}
                     onClose={() => setSelectedMemberForCula(null)}

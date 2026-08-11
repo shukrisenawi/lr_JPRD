@@ -2,6 +2,7 @@
 
 use App\Models\PemilihRecord;
 use App\Models\User;
+use App\Support\CulaCodes;
 use Illuminate\Support\Str;
 
 function createAhliPasRecord(array $attributes): PemilihRecord
@@ -45,6 +46,7 @@ it('renders ahli pas list and statistics using only records with no ahli', funct
             ->where('members.per_page', 20)
             ->where('members.total', 1)
             ->where('members.data.0.name', 'AHLI SATU')
+            ->where('available_cula_codes', fn ($codes) => collect($codes)->pluck('code')->all() === collect(CulaCodes::options())->pluck('code')->all())
             ->where('statistics.total', 1)
             ->where('statistics.by_udm.0.udm', 'UDM A')
             ->where('statistics.by_udm.0.total', 1)
@@ -133,7 +135,7 @@ it('requires the ahli pas role permission', function () {
     $this->assertAuthenticatedAs($user);
 });
 
-it('updates salah cula member to an allowed pas cula code within the user scope', function () {
+it('updates salah cula member to any cula code within the user scope', function () {
     $user = User::factory()->withModules(['ahli-pas'])->create([
         'access_level' => 'cawangan',
         'scope_key' => 'UDM A|LOKALITI A',
@@ -148,16 +150,16 @@ it('updates salah cula member to an allowed pas cula code within the user scope'
 
     $this->actingAs($user)
         ->postJson(route('ahli-pas.cula.update', $member), [
-            'cula_code' => '2',
-            'cula_display_label' => '2 - PAS',
+            'cula_code' => '10',
+            'cula_display_label' => '10 - PPBM',
         ])
         ->assertOk()
         ->assertJsonPath('voter_id', $member->id);
 
     $this->assertDatabaseHas('pemilih_records', [
         'id' => $member->id,
-        'cula_code' => '2',
-        'cula_display_label' => '2 - PAS',
+        'cula_code' => '10',
+        'cula_display_label' => '10 - PPBM',
     ]);
     $this->assertDatabaseHas('cula_work_items', [
         'pemilih_record_id' => $member->id,
