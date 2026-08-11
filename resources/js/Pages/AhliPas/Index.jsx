@@ -320,11 +320,12 @@ export default function AhliPasIndex({
         }
     };
 
-    const load = (params) =>
+    const load = (params, options = {}) =>
         router.get(route("ahli-pas.index"), params, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
+            onSuccess: options.onSuccess,
         });
     const selectTab = (tab) =>
         load(
@@ -342,12 +343,27 @@ export default function AhliPasIndex({
             [active_tab === "salah-cula" ? "salah_cula_page" : "page"]: 1,
         });
     };
-    const goToPage = (page) =>
+    const goToPage = (page) => {
+        const resultSectionId =
+            active_tab === "salah-cula"
+                ? "salah-cula-results"
+                : "ahli-pas-results";
+
         load(
             active_tab === "salah-cula"
                 ? { ...form, tab: active_tab, salah_cula_page: page }
                 : { ...form, tab: active_tab, page },
+            {
+                onSuccess: () => {
+                    requestAnimationFrame(() => {
+                        document
+                            .getElementById(resultSectionId)
+                            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    });
+                },
+            },
         );
+    };
     const rows = members?.data ?? [];
     const wrongCulaRows = localWrongCulaMembers?.data ?? [];
     const wrongCulaCount = Number(wrong_cula_members?.total ?? 0);
@@ -589,7 +605,7 @@ export default function AhliPasIndex({
                                 </button>
                             </div>
                         </form>
-                        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <section id="ahli-pas-results" className="scroll-mt-16 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                                 <div>
                                     <p className="label-section">
@@ -792,7 +808,7 @@ export default function AhliPasIndex({
                                 </button>
                             </div>
                         </form>
-                        <section className="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+                        <section id="salah-cula-results" className="scroll-mt-16 overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
                             <div className="flex flex-col gap-3 border-b border-amber-100 bg-amber-50/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p className="label-section text-amber-700">
