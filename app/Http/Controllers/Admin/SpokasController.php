@@ -10,6 +10,7 @@ use App\Models\SpokasMigrationRun;
 use App\Services\SpokasMigrationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -53,6 +54,48 @@ class SpokasController extends Controller
             ->with('success', "{$clearedCount} nombor ahli PAS daripada data SPoKAS berjaya dikosongkan.");
     }
 
+    public function approveNameMatch(SpokasMigrationResult $result): RedirectResponse
+    {
+        $this->ensureMasterAdmin();
+
+        DB::transaction(function () use ($result): void {
+            $result = SpokasMigrationResult::query()->lockForUpdate()->findOrFail($result->id);
+            abort_unless($result->category === 'name' && $result->pemilih_id !== null, 422);
+
+            $alreadyApproved = SpokasMigrationResult::query()
+                ->where('spokas_migration_run_id', $result->spokas_migration_run_id)
+                ->where('pemilih_id', $result->pemilih_id)
+                ->whereIn('category', ['ic', 'approved'])
+                ->exists();
+            abort_if($alreadyApproved, 422, 'Rekod pemilih ini telah menerima nombor ahli daripada padanan lain.');
+
+            PemilihRecord::query()->lockForUpdate()->findOrFail($result->pemilih_id)->update([
+                'no_ahli' => $result->member_number,
+            ]);
+            $result->update(['category' => 'approved']);
+            SpokasMigrationRun::query()
+                ->whereKey($result->spokas_migration_run_id)
+                ->increment('updated_count');
+        });
+
+        return to_route('admin.spokas.index', ['tab' => 'approved'])
+            ->with('success', 'Padanan nama diluluskan dan No. Ahli PAS telah dikemaskini.');
+    }
+
+    public function rejectNameMatch(SpokasMigrationResult $result): RedirectResponse
+    {
+        $this->ensureMasterAdmin();
+
+        $updated = SpokasMigrationResult::query()
+            ->whereKey($result->id)
+            ->where('category', 'name')
+            ->update(['category' => 'rejected']);
+        abort_unless($updated === 1, 422);
+
+        return to_route('admin.spokas.index', ['tab' => 'rejected'])
+            ->with('success', 'Padanan nama telah ditolak.');
+    }
+
     private function ensureMasterAdmin(): void
     {
         abort_unless(request()->user()?->isMasterAdmin(), 403);
@@ -62,11 +105,26 @@ class SpokasController extends Controller
     {
         $run ??= SpokasMigrationRun::query()->latest('id')->first();
         $tab = $request->query('tab');
-        $tab = in_array($tab, ['ic', 'name', 'failed'], true) ? $tab : 'ic';
+        $tab = in_array($tab, ['ic', 'name', 'approved', 'rejected', 'not_found'], true) ? $tab : 'ic';
         $search = trim((string) $request->query('search', ''));
         $results = null;
 
+        $resultCounts = [
+            'ic' => 0,
+            'name' => 0,
+            'approved' => 0,
+            'rejected' => 0,
+            'not_found' => 0,
+        ];
+
         if ($run) {
+            $resultCounts = array_replace($resultCounts, SpokasMigrationResult::query()
+                ->where('spokas_migration_run_id', $run->id)
+                ->selectRaw('category, count(*) as total')
+                ->groupBy('category')
+                ->pluck('total', 'category')
+                ->map(fn (mixed $total): int => (int) $total)
+                ->all());
             $query = SpokasMigrationResult::query()
                 ->where('spokas_migration_run_id', $run->id)
                 ->where('category', $tab);
@@ -105,6 +163,7 @@ class SpokasController extends Controller
             'pemilih_count' => PemilihRecord::query()->count(),
             'run' => $run?->resultPayload(),
             'results' => $results,
+            'result_counts' => $resultCounts,
             'active_tab' => $tab,
             'search' => $search,
             'last_migrated_at' => $run?->executed_at?->format('d-m-Y H:i:s'),
@@ -114,14 +173,17 @@ class SpokasController extends Controller
     private function formatResult(SpokasMigrationResult $result): array
     {
         return [
+            'id' => $result->id,
             'spokas_id' => $result->spokas_member_id,
             'name' => $result->name,
             'member_number' => $result->member_number,
             'ic_birth' => $result->ic_birth,
+            'ic_old' => $result->ic_old,
             'match_by' => $result->match_by,
             'pemilih_id' => $result->pemilih_id,
             'pemilih_name' => $result->pemilih_name,
             'pemilih_no_kp' => $result->pemilih_no_kp,
+            'pemilih_old_ic' => $result->pemilih_old_ic,
             'previous_no_ahli' => $result->previous_no_ahli,
             'reason' => $result->reason,
         ];

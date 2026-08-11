@@ -14,10 +14,12 @@ class SpokasMigrationResult extends Model
         'name',
         'member_number',
         'ic_birth',
+        'ic_old',
         'match_by',
         'pemilih_id',
         'pemilih_name',
         'pemilih_no_kp',
+        'pemilih_old_ic',
         'previous_no_ahli',
         'reason',
     ];

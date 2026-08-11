@@ -14,14 +14,15 @@ class SpokasMigrationService
      */
     public function migrate(SpokasMigrationRun $run): array
     {
-        $byIc = [];
+        $byNoKp = [];
+        $byOldIc = [];
         $byName = [];
         $pemilihById = [];
 
         DB::table('pemilih_records')
-            ->select(['id', 'identity_number', 'name', 'no_kp', 'no_ahli'])
+            ->select(['id', 'identity_number', 'name', 'no_kp', 'old_ic', 'no_ahli'])
             ->orderBy('id')
-            ->chunkById(1000, function ($records) use (&$byIc, &$byName, &$pemilihById): void {
+            ->chunkById(1000, function ($records) use (&$byNoKp, &$byOldIc, &$byName, &$pemilihById): void {
                 foreach ($records as $record) {
                     $id = (int) $record->id;
                     $pemilihById[$id] = [
@@ -29,14 +30,20 @@ class SpokasMigrationService
                         'identity_number' => $record->identity_number,
                         'name' => $record->name,
                         'no_kp' => $record->no_kp,
+                        'old_ic' => $record->old_ic,
                         'no_ahli' => $record->no_ahli,
                     ];
 
-                    $icKey = $this->normalizeIc($record->no_kp);
+                    $noKpKey = $this->normalizeIc($record->no_kp);
+                    $oldIcKey = $this->normalizeOldIc($record->old_ic);
                     $nameKey = $this->normalizeName($record->name);
 
-                    if ($icKey !== '') {
-                        $byIc[$icKey][] = $id;
+                    if ($noKpKey !== '') {
+                        $byNoKp[$noKpKey][] = $id;
+                    }
+
+                    if ($oldIcKey !== '') {
+                        $byOldIc[$oldIcKey][] = $id;
                     }
 
                     if ($nameKey !== '') {
@@ -55,9 +62,9 @@ class SpokasMigrationService
         $assignedPemilih = [];
 
         DB::table('spokas_members')
-            ->select(['id', 'name', 'member_number', 'ic_birth'])
+            ->select(['id', 'name', 'member_number', 'ic_birth', 'ic_old'])
             ->orderBy('id')
-            ->chunkById(500, function ($members) use (&$summary, &$assignedPemilih, $byIc, $byName, $pemilihById, $run): void {
+            ->chunkById(500, function ($members) use (&$summary, &$assignedPemilih, $byNoKp, $byOldIc, $byName, $pemilihById, $run): void {
                 $updates = [];
                 $results = [];
                 $now = now();
@@ -70,11 +77,13 @@ class SpokasMigrationService
                         'name' => $member->name,
                         'member_number' => $member->member_number,
                         'ic_birth' => $member->ic_birth,
+                        'ic_old' => $member->ic_old,
                         'category' => null,
                         'match_by' => null,
                         'pemilih_id' => null,
                         'pemilih_name' => null,
                         'pemilih_no_kp' => null,
+                        'pemilih_old_ic' => null,
                         'previous_no_ahli' => null,
                         'reason' => null,
                         'created_at' => $now,
@@ -84,7 +93,7 @@ class SpokasMigrationService
 
                     if ($memberNumber === '') {
                         $results[] = array_merge($base, [
-                            'category' => 'failed',
+                            'category' => 'not_found',
                             'reason' => 'No. ahli SPoKAS kosong.',
                         ]);
                         $summary['failed_count']++;
@@ -92,8 +101,12 @@ class SpokasMigrationService
                         continue;
                     }
 
-                    $icKey = $this->normalizeIc($member->ic_birth);
-                    $icCandidates = $icKey === '' ? [] : ($byIc[$icKey] ?? []);
+                    $birthIcKey = $this->normalizeIc($member->ic_birth);
+                    $oldIcKey = $this->normalizeOldIc($member->ic_old);
+                    $icCandidates = array_values(array_unique(array_merge(
+                        $birthIcKey === '' ? [] : ($byNoKp[$birthIcKey] ?? []),
+                        $oldIcKey === '' ? [] : ($byOldIc[$oldIcKey] ?? []),
+                    )));
                     $matchType = null;
                     $candidates = $icCandidates;
                     $reason = null;
@@ -101,7 +114,7 @@ class SpokasMigrationService
                     if (count($icCandidates) === 1) {
                         $matchType = 'ic';
                     } elseif (count($icCandidates) > 1) {
-                        $reason = 'No. K/P sepadan dengan lebih daripada satu rekod pemilih.';
+                        $reason = 'IC SPoKAS sepadan dengan lebih daripada satu rekod pemilih.';
                     } else {
                         $nameKey = $this->normalizeName($member->name);
                         $candidates = $nameKey === '' ? [] : ($byName[$nameKey] ?? []);
@@ -117,7 +130,7 @@ class SpokasMigrationService
 
                     if ($matchType === null || ! isset($candidates[0])) {
                         $results[] = array_merge($base, [
-                            'category' => 'failed',
+                            'category' => 'not_found',
                             'reason' => $reason,
                         ]);
                         $summary['failed_count']++;
@@ -130,7 +143,7 @@ class SpokasMigrationService
 
                     if ($record === null || isset($assignedPemilih[$pemilihId])) {
                         $results[] = array_merge($base, [
-                            'category' => 'failed',
+                            'category' => 'not_found',
                             'reason' => 'Rekod pemilih telah dipadankan oleh rekod SPoKAS lain.',
                         ]);
                         $summary['failed_count']++;
@@ -138,23 +151,28 @@ class SpokasMigrationService
                         continue;
                     }
 
-                    $assignedPemilih[$pemilihId] = true;
-                    $updates[] = [
-                        'id' => $pemilihId,
-                        'identity_number' => $record['identity_number'],
-                        'no_ahli' => $memberNumber,
-                        'updated_at' => $now,
-                    ];
+                    if ($matchType === 'ic') {
+                        $assignedPemilih[$pemilihId] = true;
+                        $updates[] = [
+                            'id' => $pemilihId,
+                            'identity_number' => $record['identity_number'],
+                            'no_ahli' => $memberNumber,
+                            'updated_at' => $now,
+                        ];
+                    }
                     $results[] = array_merge($base, [
                         'category' => $matchType,
                         'match_by' => $matchType,
                         'pemilih_id' => $pemilihId,
                         'pemilih_name' => $record['name'],
                         'pemilih_no_kp' => $record['no_kp'],
+                        'pemilih_old_ic' => $record['old_ic'],
                         'previous_no_ahli' => $record['no_ahli'],
                     ]);
                     $summary[$matchType === 'ic' ? 'ic_match_count' : 'name_match_count']++;
-                    $summary['updated_count']++;
+                    if ($matchType === 'ic') {
+                        $summary['updated_count']++;
+                    }
                 }
 
                 DB::transaction(function () use ($updates, $results): void {
@@ -208,6 +226,13 @@ class SpokasMigrationService
     private function normalizeIc(mixed $value): string
     {
         return preg_replace('/\D+/', '', $this->cleanValue($value)) ?? '';
+    }
+
+    private function normalizeOldIc(mixed $value): string
+    {
+        $value = mb_strtoupper($this->cleanValue($value), 'UTF-8');
+
+        return preg_replace('/[^A-Z0-9]+/', '', $value) ?? '';
     }
 
     private function normalizeName(mixed $value): string

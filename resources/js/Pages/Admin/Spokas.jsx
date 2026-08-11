@@ -37,12 +37,13 @@ function SummaryCard({ label, value, tone = 'green', icon }) {
     );
 }
 
-function ResultTable({ results, kind, search, onSearch, onPage }) {
+function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onReject, processing }) {
     const visible = results?.data ?? [];
     const totalPages = results?.last_page ?? 1;
     const currentPage = results?.current_page ?? 1;
     const total = results?.total ?? 0;
-    const successful = kind !== 'failed';
+    const hasPemilih = kind !== 'not_found';
+    const needsDecision = kind === 'name';
 
     return (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -69,16 +70,17 @@ function ResultTable({ results, kind, search, onSearch, onPage }) {
                             <tr>
                                 <th className="px-3 py-2">Nama SPoKAS</th>
                                 <th className="px-3 py-2">No. Ahli PAS</th>
-                                {successful ? (
+                                <th className="px-3 py-2">No. K/P Baru SPoKAS</th>
+                                <th className="px-3 py-2">No. K/P Lama SPoKAS</th>
+                                {hasPemilih ? (
                                     <>
                                         <th className="px-3 py-2">Nama Pemilih</th>
-                                        <th className="px-3 py-2">No. K/P Pemilih</th>
+                                        <th className="px-3 py-2">No. K/P Baru Pemilih</th>
+                                        <th className="px-3 py-2">No. K/P Lama Pemilih</th>
+                                        {needsDecision && <th className="px-3 py-2">Tindakan</th>}
                                     </>
                                 ) : (
-                                    <>
-                                        <th className="px-3 py-2">IC Birth</th>
-                                        <th className="px-3 py-2">Sebab</th>
-                                    </>
+                                    <th className="px-3 py-2">Sebab</th>
                                 )}
                             </tr>
                         </thead>
@@ -87,7 +89,9 @@ function ResultTable({ results, kind, search, onSearch, onPage }) {
                                 <tr key={`${kind}-${item.spokas_id}`} className="hover:bg-emerald-50/40">
                                     <td className="px-3 py-2 font-semibold text-slate-800">{item.name || '-'}</td>
                                     <td className="px-3 py-2 font-mono text-slate-600">{item.member_number || '-'}</td>
-                                    {successful ? (
+                                    <td className="px-3 py-2 font-mono text-slate-600">{item.ic_birth || '-'}</td>
+                                    <td className="px-3 py-2 font-mono text-slate-600">{item.ic_old || '-'}</td>
+                                    {hasPemilih ? (
                                         <>
                                             <td className="px-3 py-2 text-slate-700">
                                                 <div className="font-semibold">{item.pemilih_name || '-'}</div>
@@ -96,12 +100,18 @@ function ResultTable({ results, kind, search, onSearch, onPage }) {
                                                 </span>
                                             </td>
                                             <td className="px-3 py-2 font-mono text-slate-600">{item.pemilih_no_kp || '-'}</td>
+                                            <td className="px-3 py-2 font-mono text-slate-600">{item.pemilih_old_ic || '-'}</td>
+                                            {needsDecision && (
+                                                <td className="px-3 py-2">
+                                                    <div className="flex gap-1">
+                                                        <button type="button" onClick={() => onApprove(item)} disabled={processing} className="rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 disabled:opacity-50">Approve</button>
+                                                        <button type="button" onClick={() => onReject(item)} disabled={processing} className="rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-700 disabled:opacity-50">Reject</button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </>
                                     ) : (
-                                        <>
-                                            <td className="px-3 py-2 font-mono text-slate-600">{item.ic_birth || '-'}</td>
-                                            <td className="px-3 py-2 text-red-700">{item.reason}</td>
-                                        </>
+                                        <td className="px-3 py-2 text-red-700">{item.reason}</td>
                                     )}
                                 </tr>
                             ))}
@@ -123,7 +133,7 @@ function ResultTable({ results, kind, search, onSearch, onPage }) {
     );
 }
 
-export default function Spokas({ spokas_count, pemilih_count, run, results, active_tab, search, last_migrated_at }) {
+export default function Spokas({ spokas_count, pemilih_count, run, results, result_counts, active_tab, search, last_migrated_at }) {
     const { post, processing } = useForm({});
     const [tab, setTab] = useState(active_tab ?? 'ic');
     const [searchValue, setSearchValue] = useState(search ?? '');
@@ -142,7 +152,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
         }, {
             preserveState: true,
             preserveScroll: true,
-            only: ['run', 'results', 'active_tab', 'search', 'last_migrated_at'],
+            only: ['run', 'results', 'result_counts', 'active_tab', 'search', 'last_migrated_at'],
         });
     };
 
@@ -157,9 +167,11 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
     };
 
     const tabs = [
-        { key: 'ic', label: 'Berjaya guna IC', count: run?.ic_match_count ?? 0, active: 'border-sky-600 bg-sky-50 text-sky-800' },
-        { key: 'name', label: 'Berjaya guna nama', count: run?.name_match_count ?? 0, active: 'border-violet-600 bg-violet-50 text-violet-800' },
-        { key: 'failed', label: 'Tidak berjaya', count: run?.failed_count ?? 0, active: 'border-red-600 bg-red-50 text-red-800' },
+        { key: 'ic', label: 'Senarai Berjaya', count: result_counts?.ic ?? 0, active: 'border-emerald-600 bg-emerald-50 text-emerald-800' },
+        { key: 'name', label: 'Nama Sama', count: result_counts?.name ?? 0, active: 'border-violet-600 bg-violet-50 text-violet-800' },
+        { key: 'approved', label: 'Nama Approve', count: result_counts?.approved ?? 0, active: 'border-sky-600 bg-sky-50 text-sky-800' },
+        { key: 'rejected', label: 'Nama Reject', count: result_counts?.rejected ?? 0, active: 'border-amber-600 bg-amber-50 text-amber-800' },
+        { key: 'not_found', label: 'Tidak Dijumpai', count: result_counts?.not_found ?? 0, active: 'border-red-600 bg-red-50 text-red-800' },
     ];
 
     return (
@@ -181,7 +193,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
                             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"><Icon name="database" /></span>
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900">Migrasi No. Ahli PAS</h3>
-                                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-500">Sistem akan cuba padan IC Birth SPoKAS dengan No. K/P pemilih dahulu. Jika tiada padanan, sistem akan cuba nama yang sama sebelum mengemaskini column No. Ahli PAS.</p>
+                                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-500">Sistem akan mengemaskini No. Ahli PAS untuk padanan IC Birth dengan No. K/P baru, atau IC lama SPoKAS dengan IC lama pemilih. Padanan nama perlu diluluskan selepas perbandingan IC.</p>
                             </div>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
@@ -198,7 +210,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
                     </div>
                     <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
                         <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span>Padanan nama mesti tepat selepas normalisasi huruf besar dan jarak kosong. Padanan berganda tidak akan dikemaskini secara automatik.</span>
+                        <span>Padanan nama mesti tepat selepas normalisasi huruf besar dan jarak kosong. Semak No. K/P baru serta lama sebelum meluluskan padanan nama.</span>
                     </div>
                 </section>
 
@@ -206,7 +218,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
                     <SummaryCard label="Rekod SPoKAS" value={spokas_count} icon="database" />
                     <SummaryCard label="Rekod Pemilih" value={pemilih_count} tone="blue" icon="user" />
                     {run && <SummaryCard label="Jumlah Dikemaskini" value={run.updated_count} tone="green" icon="check" />}
-                    {run && <SummaryCard label="Tidak Berjaya" value={run.failed_count} tone="red" icon="alert" />}
+                    {run && <SummaryCard label="Tidak Dijumpai" value={result_counts?.not_found ?? 0} tone="red" icon="alert" />}
                 </section>
 
                 {last_migrated_at && <p className="text-right text-[11px] font-semibold text-slate-500">Migrasi terakhir: {last_migrated_at}</p>}
@@ -240,6 +252,13 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
                                 loadResults(tab, 1, searchValue);
                             }}
                             onPage={(page) => loadResults(tab, page, searchValue)}
+                            processing={processing}
+                            onApprove={(item) => {
+                                if (window.confirm(`Luluskan padanan nama ${item.name || 'ini'}?`)) post(route('admin.spokas.results.approve', item.id), { preserveScroll: true });
+                            }}
+                            onReject={(item) => {
+                                if (window.confirm(`Tolak padanan nama ${item.name || 'ini'}?`)) post(route('admin.spokas.results.reject', item.id), { preserveScroll: true });
+                            }}
                         />
                     </section>
                 ) : (

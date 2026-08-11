@@ -2,6 +2,7 @@
 
 use App\Models\PemilihRecord;
 use App\Models\SpokasMember;
+use App\Models\SpokasMigrationResult;
 use App\Models\SpokasMigrationRun;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +18,13 @@ it('allows a master admin to run spokas migration and returns grouped results', 
         'name' => 'NAMA IC',
         'status' => 'aktif',
     ]);
+    $oldIcRecord = PemilihRecord::query()->create([
+        'identity_number' => 'pemilih-old-ic-1',
+        'no_kp' => '810202-02-1234',
+        'old_ic' => 'A1234567',
+        'name' => 'NAMA IC LAMA',
+        'status' => 'aktif',
+    ]);
     $nameRecord = PemilihRecord::query()->create([
         'identity_number' => 'pemilih-name-1',
         'no_kp' => '910202021234',
@@ -30,13 +38,19 @@ it('allows a master admin to run spokas migration and returns grouped results', 
         'ic_birth' => '900101011234',
     ]);
     SpokasMember::query()->create([
-        'name' => 'NAMA FALLBACK',
+        'name' => 'SPoKAS IC LAMA',
         'member_number' => 'A-002',
+        'ic_birth' => null,
+        'ic_old' => 'A1234567',
+    ]);
+    SpokasMember::query()->create([
+        'name' => 'NAMA FALLBACK',
+        'member_number' => 'A-003',
         'ic_birth' => null,
     ]);
     SpokasMember::query()->create([
         'name' => 'TIADA PADANAN',
-        'member_number' => 'A-003',
+        'member_number' => 'A-004',
         'ic_birth' => '990909099999',
     ]);
 
@@ -45,24 +59,71 @@ it('allows a master admin to run spokas migration and returns grouped results', 
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Admin/Spokas')
-            ->where('run.source_count', 3)
+            ->where('run.source_count', 4)
             ->where('run.updated_count', 2)
-            ->where('run.ic_match_count', 1)
+            ->where('run.ic_match_count', 2)
             ->where('run.name_match_count', 1)
             ->where('run.failed_count', 1)
-            ->where('results.total', 1)
+            ->where('results.total', 2)
         );
 
     expect($icRecord->fresh()->no_ahli)->toBe('A-001')
-        ->and($nameRecord->fresh()->no_ahli)->toBe('A-002')
+        ->and($oldIcRecord->fresh()->no_ahli)->toBe('A-002')
+        ->and($nameRecord->fresh()->no_ahli)->toBeNull()
         ->and(SpokasMigrationRun::query()->count())->toBe(1);
 
     $this->actingAs($admin)
         ->get(route('admin.spokas.index'))
         ->assertInertia(fn ($page) => $page
-            ->where('run.updated_count', 2)
+            ->where('result_counts.ic', 2)
+            ->where('result_counts.name', 1)
+            ->where('result_counts.not_found', 1)
             ->where('last_migrated_at', fn ($value) => is_string($value) && $value !== '')
         );
+});
+
+it('allows a master admin to approve or reject a name match after comparing identity numbers', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $approvedRecord = PemilihRecord::query()->create([
+        'identity_number' => 'pemilih-name-approve',
+        'no_kp' => '900101011234',
+        'old_ic' => 'A100',
+        'name' => 'NAMA SAMA APPROVE',
+        'status' => 'aktif',
+    ]);
+    PemilihRecord::query()->create([
+        'identity_number' => 'pemilih-name-reject',
+        'no_kp' => '910202021234',
+        'old_ic' => 'A200',
+        'name' => 'NAMA SAMA REJECT',
+        'status' => 'aktif',
+    ]);
+    SpokasMember::query()->create([
+        'name' => 'NAMA SAMA APPROVE',
+        'member_number' => 'LULUS-001',
+        'ic_birth' => '800101011234',
+        'ic_old' => 'B100',
+    ]);
+    SpokasMember::query()->create([
+        'name' => 'NAMA SAMA REJECT',
+        'member_number' => 'TOLAK-001',
+        'ic_birth' => '810202021234',
+        'ic_old' => 'B200',
+    ]);
+
+    $this->actingAs($admin)->post(route('admin.spokas.migrate'))->assertOk();
+
+    $approvedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA APPROVE')->firstOrFail();
+    $rejectedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA REJECT')->firstOrFail();
+
+    $this->post(route('admin.spokas.results.approve', $approvedResult))
+        ->assertRedirect(route('admin.spokas.index', ['tab' => 'approved']));
+    $this->post(route('admin.spokas.results.reject', $rejectedResult))
+        ->assertRedirect(route('admin.spokas.index', ['tab' => 'rejected']));
+
+    expect($approvedRecord->fresh()->no_ahli)->toBe('LULUS-001')
+        ->and($approvedResult->fresh()->category)->toBe('approved')
+        ->and($rejectedResult->fresh()->category)->toBe('rejected');
 });
 
 it('allows a master admin to open the spokas page', function () {
