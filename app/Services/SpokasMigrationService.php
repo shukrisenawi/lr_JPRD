@@ -171,6 +171,33 @@ class SpokasMigrationService
         return $summary;
     }
 
+    /**
+     * Restore the No. Ahli values changed by the most recent migration run.
+     */
+    public function rollback(SpokasMigrationRun $run): int
+    {
+        return DB::transaction(function () use ($run): int {
+            $restoredCount = 0;
+
+            DB::table('spokas_migration_results')
+                ->where('spokas_migration_run_id', $run->id)
+                ->whereIn('category', ['ic', 'name'])
+                ->orderBy('id')
+                ->eachById(function (object $result) use (&$restoredCount): void {
+                    $restoredCount += DB::table('pemilih_records')
+                        ->where('id', $result->pemilih_id)
+                        ->update([
+                            'no_ahli' => $result->previous_no_ahli,
+                            'updated_at' => now(),
+                        ]);
+                });
+
+            $run->delete();
+
+            return $restoredCount;
+        });
+    }
+
     private function cleanValue(mixed $value): string
     {
         return trim((string) ($value ?? ''));

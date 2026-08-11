@@ -8,6 +8,7 @@ use App\Models\SpokasMember;
 use App\Models\SpokasMigrationResult;
 use App\Models\SpokasMigrationRun;
 use App\Services\SpokasMigrationService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -40,6 +41,17 @@ class SpokasController extends Controller
         $run->update($migration->migrate($run));
 
         return Inertia::render('Admin/Spokas', $this->pageProps($request, $run));
+    }
+
+    public function rollback(Request $request, SpokasMigrationService $migration): RedirectResponse
+    {
+        $this->ensureMasterAdmin();
+
+        $run = SpokasMigrationRun::query()->latest('id')->firstOrFail();
+        $restoredCount = $migration->rollback($run);
+
+        return to_route('admin.spokas.index')
+            ->with('success', "{$restoredCount} rekod pemilih berjaya dikembalikan ke data asal.");
     }
 
     private function ensureMasterAdmin(): void

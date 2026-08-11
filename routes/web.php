@@ -164,6 +164,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/api-keys/{apiKey}', [ApiKeyController::class, 'destroy'])->name('admin.api-keys.destroy');
     Route::get('/admin/spokas', [SpokasController::class, 'index'])->name('admin.spokas.index');
     Route::post('/admin/spokas/migrate', [SpokasController::class, 'migrate'])->name('admin.spokas.migrate');
+    Route::post('/admin/spokas/rollback', [SpokasController::class, 'rollback'])->name('admin.spokas.rollback');
 
     Route::get('/pusat-khidmat', [PusatKhidmatController::class, 'index'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.index');
     Route::post('/pusat-khidmat/manual', [PusatKhidmatController::class, 'storeManual'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.manual.store');

@@ -78,3 +78,30 @@ it('allows a master admin to open the spokas page', function () {
             ->where('last_migrated_at', null)
         );
 });
+
+it('allows a master admin to rollback the latest spokas migration', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $record = PemilihRecord::query()->create([
+        'identity_number' => 'pemilih-rollback-1',
+        'no_kp' => '900101-01-1234',
+        'name' => 'NAMA ROLLBACK',
+        'no_ahli' => 'ASAL-001',
+        'status' => 'aktif',
+    ]);
+    SpokasMember::query()->create([
+        'name' => 'NAMA ROLLBACK',
+        'member_number' => 'BARU-001',
+        'ic_birth' => '900101011234',
+    ]);
+
+    $this->actingAs($admin)->post(route('admin.spokas.migrate'))->assertOk();
+
+    expect($record->fresh()->no_ahli)->toBe('BARU-001');
+
+    $this->post(route('admin.spokas.rollback'))
+        ->assertRedirect(route('admin.spokas.index'))
+        ->assertSessionHas('success', '1 rekod pemilih berjaya dikembalikan ke data asal.');
+
+    expect($record->fresh()->no_ahli)->toBe('ASAL-001')
+        ->and(SpokasMigrationRun::query()->count())->toBe(0);
+});

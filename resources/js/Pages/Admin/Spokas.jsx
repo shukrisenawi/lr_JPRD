@@ -151,6 +151,11 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
         post(route('admin.spokas.migrate'), { preserveScroll: true });
     };
 
+    const rollback = () => {
+        if (! window.confirm('Kembalikan data pemilih yang dikemaskini oleh migrasi terakhir?')) return;
+        post(route('admin.spokas.rollback'), { preserveScroll: true });
+    };
+
     const tabs = [
         { key: 'ic', label: 'Berjaya guna IC', count: run?.ic_match_count ?? 0, active: 'border-sky-600 bg-sky-50 text-sky-800' },
         { key: 'name', label: 'Berjaya guna nama', count: run?.name_match_count ?? 0, active: 'border-violet-600 bg-violet-50 text-violet-800' },
@@ -179,10 +184,17 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, acti
                                 <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-500">Sistem akan cuba padan IC Birth SPoKAS dengan No. K/P pemilih dahulu. Jika tiada padanan, sistem akan cuba nama yang sama sebelum mengemaskini column No. Ahli PAS.</p>
                             </div>
                         </div>
-                        <PrimaryButton type="button" onClick={migrate} disabled={processing} className="shrink-0 px-5 py-2">
-                            {processing ? 'Sedang migrate...' : 'Migrate'}
-                            {!processing && <Icon name="arrow" className="ml-2 h-4 w-4" />}
-                        </PrimaryButton>
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                            {run && (
+                                <button type="button" onClick={rollback} disabled={processing} className="btn-danger px-5 py-2 text-xs disabled:opacity-50">
+                                    Rollback migrasi terakhir
+                                </button>
+                            )}
+                            <PrimaryButton type="button" onClick={migrate} disabled={processing} className="px-5 py-2">
+                                {processing ? 'Sedang migrate...' : 'Migrate'}
+                                {!processing && <Icon name="arrow" className="ml-2 h-4 w-4" />}
+                            </PrimaryButton>
+                        </div>
                     </div>
                     <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
                         <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
