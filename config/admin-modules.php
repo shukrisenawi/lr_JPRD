@@ -88,6 +88,10 @@ return [
         'label' => 'Pusat Khidmat',
         'description' => 'Data Pusat Khidmat dari Google Sheet.',
     ],
+    'spokas' => [
+        'label' => 'SPoKAS',
+        'description' => 'Migrasi nombor ahli PAS daripada data SPoKAS.',
+    ],
     'api-keys' => [
         'label' => 'Generate API Key',
         'description' => 'Urus kunci API untuk integrasi sistem luaran.',

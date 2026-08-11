@@ -19,6 +19,7 @@ it('allows master admin to open access management page', function () {
             ->component('Admin/AccessManagement')
             ->where('auth.user.role.slug', 'master-admin')
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'ahli-pas' && $module['label'] === 'Ahli PAS'))
+            ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'spokas' && $module['label'] === 'SPoKAS'))
             ->where('users.0.id', $managedUser->id)
             ->where('users.0.avatar_url', $managedUser->avatarUrl()));
 });
@@ -71,7 +72,7 @@ it('allows master admin to update role module access', function () {
     $this->actingAs($masterAdmin)
         ->put(route('admin.access.roles.update', $role), [
             'name' => 'Pentadbir',
-            'access_modules' => ['dashboard', 'laporan', 'carian-pemilih', 'ahli-pas', 'hashtag-pemilih'],
+            'access_modules' => ['dashboard', 'laporan', 'carian-pemilih', 'ahli-pas', 'hashtag-pemilih', 'spokas'],
         ])
         ->assertRedirect(route('admin.access.index'));
 
@@ -81,6 +82,7 @@ it('allows master admin to update role module access', function () {
         'carian-pemilih',
         'ahli-pas',
         'hashtag-pemilih',
+        'spokas',
     ]);
 });
 

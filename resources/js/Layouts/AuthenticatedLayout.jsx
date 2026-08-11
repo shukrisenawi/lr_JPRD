@@ -87,7 +87,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                 { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
                 { key: 'pusat-khidmat', href: 'pusat-khidmat.index', routePattern: 'pusat-khidmat.*', label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
-                ...(isMasterAdmin ? [{ key: 'spokas', href: 'admin.spokas.index', routePattern: 'admin.spokas.*', label: 'SPoKAS' }] : []),
+                { key: 'spokas', href: 'admin.spokas.index', routePattern: 'admin.spokas.*', label: 'SPoKAS' },
             ],
         },
         {
@@ -119,7 +119,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
-                                         const accessibleItems = item.items.filter(i => canAccess(i.key) || ['akses', 'api-keys', 'spokas'].includes(i.key));
+                                         const accessibleItems = item.items.filter(i => canAccess(i.key) || ['akses', 'api-keys'].includes(i.key));
                                         if (accessibleItems.length === 0) return null;
                                         const hasSubBadge = accessibleItems.some(sub => sub.badge > 0);
                                         if (accessibleItems.length === 1) {
@@ -243,7 +243,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'Kad 10' },
                                     canAccess('pusat-khidmat') && { href: route('pusat-khidmat.index'), active: route().current('pusat-khidmat.*'), label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
-                                    isMasterAdmin && { href: route('admin.spokas.index'), active: route().current('admin.spokas.*'), label: 'SPoKAS' },
+                                    canAccess('spokas') && { href: route('admin.spokas.index'), active: route().current('admin.spokas.*'), label: 'SPoKAS' },
                                 ].filter(Boolean) },
                                 { label: 'Pentadbiran', items: [
                                     canAccess('jawatankuasa') && { href: route('jawatankuasa.index'), active: route().current('jawatankuasa.*'), label: 'Jawatankuasa' },

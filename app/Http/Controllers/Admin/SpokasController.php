@@ -18,14 +18,14 @@ class SpokasController extends Controller
 {
     public function index(Request $request): Response
     {
-        $this->ensureMasterAdmin();
+        $this->ensureModuleAccess();
 
         return Inertia::render('Admin/Spokas', $this->pageProps($request));
     }
 
     public function migrate(Request $request, SpokasMigrationService $migration): RedirectResponse
     {
-        $this->ensureMasterAdmin();
+        $this->ensureModuleAccess();
 
         $run = SpokasMigrationRun::query()->create([
             'user_id' => $request->user()->id,
@@ -47,7 +47,7 @@ class SpokasController extends Controller
 
     public function rollback(Request $request, SpokasMigrationService $migration): RedirectResponse
     {
-        $this->ensureMasterAdmin();
+        $this->ensureModuleAccess();
 
         $clearedCount = $migration->rollback();
 
@@ -57,7 +57,7 @@ class SpokasController extends Controller
 
     public function approveNameMatch(SpokasMigrationResult $result): RedirectResponse
     {
-        $this->ensureMasterAdmin();
+        $this->ensureModuleAccess();
 
         DB::transaction(function () use ($result): void {
             $result = SpokasMigrationResult::query()->lockForUpdate()->findOrFail($result->id);
@@ -85,7 +85,7 @@ class SpokasController extends Controller
 
     public function rejectNameMatch(SpokasMigrationResult $result): RedirectResponse
     {
-        $this->ensureMasterAdmin();
+        $this->ensureModuleAccess();
 
         $updated = SpokasMigrationResult::query()
             ->whereKey($result->id)
@@ -97,9 +97,9 @@ class SpokasController extends Controller
             ->with('success', 'Padanan nama telah ditolak.');
     }
 
-    private function ensureMasterAdmin(): void
+    private function ensureModuleAccess(): void
     {
-        abort_unless(request()->user()?->isMasterAdmin(), 403);
+        abort_unless(request()->user()?->canAccessModule('spokas'), 403);
     }
 
     private function pageProps(Request $request, ?SpokasMigrationRun $run = null): array

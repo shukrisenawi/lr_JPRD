@@ -142,6 +142,26 @@ it('allows a master admin to open the spokas page', function () {
         );
 });
 
+it('allows a role with spokas access to open the spokas page', function () {
+    $user = User::factory()->withModules(['dashboard', 'spokas'])->create();
+
+    $this->actingAs($user)
+        ->get(route('admin.spokas.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('Admin/Spokas'));
+});
+
+it('blocks a role without spokas access from opening the spokas page', function () {
+    $user = User::factory()->withModules(['dashboard'])->create();
+
+    $this->actingAs($user)
+        ->get(route('admin.spokas.index'))
+        ->assertStatus(302)
+        ->assertSessionHas('error', 'Anda tidak mempunyai akses ke halaman ini.');
+
+    $this->assertAuthenticatedAs($user);
+});
+
 it('allows a master admin to rollback the latest spokas migration', function () {
     $admin = User::factory()->masterAdmin()->create();
     $record = PemilihRecord::query()->create([
