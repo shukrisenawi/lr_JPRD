@@ -151,7 +151,7 @@ class AhliPasController extends Controller
                 ->orWhere('cula_code', '')
                 ->orWhere('cula_code', '?')
                 ->orWhere('cula_code', 'TIADA')
-                ->orWhereNotIn('cula_code', self::PAS_CULA_CODES);
+                ->orWhereNotIn('cula_code', [...self::PAS_CULA_CODES, '8']);
         });
     }
 

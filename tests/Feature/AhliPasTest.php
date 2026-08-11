@@ -83,6 +83,7 @@ it('lists ahli pas with non pas and missing cula codes', function () {
     createAhliPasRecord(['name' => 'CULA UMNO', 'no_ahli' => 'PAS-002', 'dm' => 'UDM A', 'cula_code' => '1']);
     createAhliPasRecord(['name' => 'PAS DALAM KAWASAN', 'no_ahli' => 'PAS-003', 'cula_code' => '2']);
     createAhliPasRecord(['name' => 'PAS LUAR PARLIMEN', 'no_ahli' => 'PAS-004', 'cula_code' => '3P']);
+    createAhliPasRecord(['name' => 'AHLI MATI', 'no_ahli' => 'PAS-005', 'cula_code' => '8']);
 
     $this->actingAs($user)
         ->get('/ahli-pas?tab=salah-cula')
@@ -113,6 +114,7 @@ it('shares the wrong cula ahli pas count for the navigation badge', function () 
     createAhliPasRecord(['name' => 'CULA BUKAN PAS', 'no_ahli' => 'PAS-002', 'dm' => 'UDM A', 'locality' => 'LOKALITI A', 'cula_code' => '1']);
     createAhliPasRecord(['name' => 'CULA PAS', 'no_ahli' => 'PAS-003', 'dm' => 'UDM A', 'locality' => 'LOKALITI A', 'cula_code' => '2']);
     createAhliPasRecord(['name' => 'LUAR SKOP', 'no_ahli' => 'PAS-004', 'dm' => 'UDM A', 'locality' => 'LOKALITI B', 'cula_code' => '1']);
+    createAhliPasRecord(['name' => 'AHLI MATI', 'no_ahli' => 'PAS-005', 'dm' => 'UDM A', 'locality' => 'LOKALITI A', 'cula_code' => '8']);
 
     $this->actingAs($user)
         ->get('/ahli-pas')

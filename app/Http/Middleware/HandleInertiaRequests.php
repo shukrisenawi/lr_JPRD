@@ -158,7 +158,7 @@ class HandleInertiaRequests extends Middleware
                         ->orWhere('cula_code', '')
                         ->orWhere('cula_code', '?')
                         ->orWhere('cula_code', 'TIADA')
-                        ->orWhereNotIn('cula_code', ['2', '3B', '3D', '3K', '3M', '3P', '3U']);
+                        ->orWhereNotIn('cula_code', ['2', '3B', '3D', '3K', '3M', '3P', '3U', '8']);
                 });
 
             $user->applyScopeToPemilihQuery($query);
