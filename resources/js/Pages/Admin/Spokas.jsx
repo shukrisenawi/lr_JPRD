@@ -37,7 +37,29 @@ function SummaryCard({ label, value, tone = 'green', icon }) {
     );
 }
 
-function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onReject, processing }) {
+function CopyableValue({ value, label, copyKey, copiedKey, onCopy }) {
+    if (value === null || value === undefined || value === '') {
+        return <span className="font-mono text-slate-600">-</span>;
+    }
+
+    const text = String(value);
+    const copied = copiedKey === copyKey;
+
+    return (
+        <button
+            type="button"
+            onClick={() => onCopy(text, copyKey)}
+            className={`inline-flex items-center gap-1 rounded px-1 text-left font-mono transition hover:bg-emerald-50 hover:text-emerald-700 ${copied ? 'text-emerald-700' : 'text-slate-600'}`}
+            title={`Klik untuk salin ${label}`}
+            aria-label={`Salin ${label} ${text}`}
+        >
+            <span>{text}</span>
+            {copied && <span className="font-sans text-[10px] font-bold text-emerald-600">Disalin</span>}
+        </button>
+    );
+}
+
+function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onReject, processing, copiedKey, onCopy }) {
     const visible = results?.data ?? [];
     const totalPages = results?.last_page ?? 1;
     const currentPage = results?.current_page ?? 1;
@@ -87,13 +109,25 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                             {visible.map((item) => (
                                 <tr key={`${kind}-${item.spokas_id}`} className="hover:bg-emerald-50/40">
                                     <td className="px-3 py-2 font-semibold text-slate-800">{item.name || '-'}</td>
-                                    <td className="px-3 py-2 font-mono text-slate-600">{item.member_number || '-'}</td>
-                                    <td className="px-3 py-2 font-mono text-slate-600">{item.ic_birth || '-'}</td>
-                                    {hasPemilih && <td className="px-3 py-2 font-mono text-slate-600">{item.pemilih_no_kp || '-'}</td>}
-                                    <td className="px-3 py-2 font-mono text-slate-600">{item.ic_old || '-'}</td>
+                                    <td className="px-3 py-2">
+                                        <CopyableValue value={item.member_number} label="No. Ahli" copyKey={`${item.id}-member_number`} copiedKey={copiedKey} onCopy={onCopy} />
+                                    </td>
+                                    <td className="px-3 py-2">
+                                        <CopyableValue value={item.ic_birth} label="IC baru SPOKAS" copyKey={`${item.id}-ic_birth`} copiedKey={copiedKey} onCopy={onCopy} />
+                                    </td>
+                                    {hasPemilih && (
+                                        <td className="px-3 py-2">
+                                            <CopyableValue value={item.pemilih_no_kp} label="IC baru pemilih" copyKey={`${item.id}-pemilih_no_kp`} copiedKey={copiedKey} onCopy={onCopy} />
+                                        </td>
+                                    )}
+                                    <td className="px-3 py-2">
+                                        <CopyableValue value={item.ic_old} label="IC lama SPOKAS" copyKey={`${item.id}-ic_old`} copiedKey={copiedKey} onCopy={onCopy} />
+                                    </td>
                                     {hasPemilih ? (
                                         <>
-                                            <td className="px-3 py-2 font-mono text-slate-600">{item.pemilih_old_ic || '-'}</td>
+                                            <td className="px-3 py-2">
+                                                <CopyableValue value={item.pemilih_old_ic} label="IC lama pemilih" copyKey={`${item.id}-pemilih_old_ic`} copiedKey={copiedKey} onCopy={onCopy} />
+                                            </td>
                                             {needsDecision && (
                                                 <td className="px-3 py-2">
                                                     <div className="flex gap-1">
@@ -130,6 +164,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
     const { post, processing } = useForm({});
     const [tab, setTab] = useState(active_tab ?? 'ic');
     const [searchValue, setSearchValue] = useState(search ?? '');
+    const [copiedKey, setCopiedKey] = useState(null);
 
     useEffect(() => {
         setTab(active_tab ?? 'ic');
@@ -147,6 +182,36 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
             preserveScroll: true,
             only: ['run', 'results', 'result_counts', 'active_tab', 'search', 'last_migrated_at'],
         });
+    };
+
+    const copyValue = async (value, key) => {
+        let copied = false;
+
+        try {
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(value);
+                copied = true;
+            }
+        } catch (_) {}
+
+        if (!copied) {
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = value;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                copied = document.execCommand('copy');
+                textarea.remove();
+            } catch (_) {}
+        }
+
+        if (!copied) return;
+
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey((current) => (current === key ? null : current)), 1500);
     };
 
     const migrate = () => {
@@ -246,12 +311,10 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                             }}
                             onPage={(page) => loadResults(tab, page, searchValue)}
                             processing={processing}
-                            onApprove={(item) => {
-                                if (window.confirm(`Luluskan padanan nama ${item.name || 'ini'}?`)) post(route('admin.spokas.results.approve', item.id), { preserveScroll: true });
-                            }}
-                            onReject={(item) => {
-                                if (window.confirm(`Tolak padanan nama ${item.name || 'ini'}?`)) post(route('admin.spokas.results.reject', item.id), { preserveScroll: true });
-                            }}
+                            copiedKey={copiedKey}
+                            onCopy={copyValue}
+                            onApprove={(item) => post(route('admin.spokas.results.approve', item.id), { preserveScroll: true })}
+                            onReject={(item) => post(route('admin.spokas.results.reject', item.id), { preserveScroll: true })}
                         />
                     </section>
                 ) : (

@@ -6,6 +6,7 @@ use App\Models\BackupLog;
 use App\Models\Setting;
 use App\Services\GoogleSheetService;
 use App\Services\PemilihReportService;
+use App\Services\SpokasMigrationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
@@ -66,7 +67,7 @@ class SettingsController extends Controller
         return back()->with('success', 'Tetapan berjaya dikemaskini.');
     }
 
-    public function uploadPemilih(Request $request, PemilihReportService $reportService): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function uploadPemilih(Request $request, PemilihReportService $reportService, SpokasMigrationService $spokasMigration): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         abort_unless($request->user()->canAccessModule('settings.upload-pemilih'), 403);
 
@@ -95,6 +96,7 @@ class SettingsController extends Controller
             Setting::setValue('pemilih_report_uploaded_by', $request->user()->name);
             Setting::setValue('pemilih_report_uploaded_at', now('Asia/Kuala_Lumpur')->format('d-m-Y h:i A'));
             $reportService->syncUploadedVoters($storedPath);
+            $spokasRetry = $spokasMigration->retryNotFound();
             $reportService->buildFromPath($storedPath);
             $reportService->saveUdmSnapshotOnImport($request->user()->name);
         } catch (\Throwable $e) {
@@ -110,16 +112,21 @@ class SettingsController extends Controller
                 ->with('error', 'Ralat memproses fail: '.$e->getMessage());
         }
 
+        $message = 'Fail pemilih berjaya dimuat naik sebagai data terkini sistem.';
+        if (($spokasRetry['matched_count'] ?? 0) > 0) {
+            $message .= ' '.($spokasRetry['matched_count']).' rekod SPOKAS yang tidak dijumpai berjaya dipadankan semula.';
+        }
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Fail pemilih berjaya dimuat naik sebagai data terkini sistem.',
+                'message' => $message,
             ]);
         }
 
         return redirect()
             ->route('settings.edit')
-            ->with('success', 'Fail pemilih berjaya dimuat naik sebagai data terkini sistem.');
+            ->with('success', $message);
     }
 
     public function exportDatabase(Request $request): HttpResponse|RedirectResponse

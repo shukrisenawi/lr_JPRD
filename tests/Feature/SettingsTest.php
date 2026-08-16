@@ -3,6 +3,9 @@
 use App\Models\CopiedRecord;
 use App\Models\PemilihRecord;
 use App\Models\Setting;
+use App\Models\SpokasMember;
+use App\Models\SpokasMigrationResult;
+use App\Models\SpokasMigrationRun;
 use App\Models\User;
 use App\Services\GoogleSheetService;
 use Illuminate\Http\UploadedFile;
@@ -94,6 +97,54 @@ HTML);
     ]);
 
     expect(PemilihRecord::query()->count())->toBe(3);
+});
+
+it('retries spokas records not found after a new pemilih file is uploaded', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $settingsUser = User::factory()->withModules(['settings'])->create();
+
+    SpokasMember::query()->create([
+        'name' => 'AHLI BAHARU',
+        'member_number' => 'SPOKAS-001',
+        'ic_birth' => '900101011234',
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.spokas.migrate'))
+        ->assertRedirect(route('admin.spokas.index'));
+
+    $result = SpokasMigrationResult::query()->firstOrFail();
+    expect($result->category)->toBe('not_found');
+
+    $path = storage_path('app/settings-upload-spokas-retry.xls');
+    file_put_contents($path, <<<'HTML'
+<html><body><table>
+<tr><th>No. K/P (Baru)</th><th>Nama Pemilih</th></tr>
+<tr><td>="900101011234"</td><td>AHLI BAHARU</td></tr>
+</table></body></html>
+HTML);
+
+    $this->actingAs($settingsUser)
+        ->post(route('settings.pemilih-upload'), [
+            'pemilih_file' => new UploadedFile($path, 'pemilih-spokas-retry.xls', 'application/vnd.ms-excel', null, true),
+        ])
+        ->assertRedirect(route('settings.edit'))
+        ->assertSessionHas('success', fn (string $message): bool => str_contains($message, '1 rekod SPOKAS'));
+
+    $result->refresh();
+    $run = SpokasMigrationRun::query()->latest('id')->firstOrFail();
+
+    expect($result->category)->toBe('ic')
+        ->and($result->pemilih_id)->not->toBeNull()
+        ->and($run->ic_match_count)->toBe(1)
+        ->and($run->failed_count)->toBe(0)
+        ->and($run->updated_count)->toBe(1);
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'identity_number' => '900101011234',
+        'no_ahli' => 'SPOKAS-001',
+        'name' => 'AHLI BAHARU',
+    ]);
 });
 
 it('records copied rows for the active sheet', function () {
