@@ -118,8 +118,9 @@ it('allows a master admin to approve or reject a name match after comparing iden
     $approvedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA APPROVE')->firstOrFail();
     $rejectedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA REJECT')->firstOrFail();
 
-    $this->post(route('admin.spokas.results.approve', $approvedResult))
-        ->assertRedirect(route('admin.spokas.index', ['tab' => 'approved']));
+    $this->withHeader('Referer', route('admin.spokas.index', ['tab' => 'name']))
+        ->post(route('admin.spokas.results.approve', $approvedResult))
+        ->assertRedirect(route('admin.spokas.index', ['tab' => 'name']));
     $this->post(route('admin.spokas.results.reject', $rejectedResult))
         ->assertRedirect(route('admin.spokas.index', ['tab' => 'rejected']));
 

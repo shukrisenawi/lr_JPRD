@@ -37,19 +37,22 @@ function SummaryCard({ label, value, tone = 'green', icon }) {
     );
 }
 
-function CopyableValue({ value, label, copyKey, copiedKey, onCopy }) {
+function CopyableValue({ value, label, tone = 'ic', copyKey, copiedKey, onCopy }) {
     if (value === null || value === undefined || value === '') {
         return <span className="font-mono text-slate-600">-</span>;
     }
 
     const text = String(value);
     const copied = copiedKey === copyKey;
+    const toneClasses = tone === 'member'
+        ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+        : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100';
 
     return (
         <button
             type="button"
             onClick={() => onCopy(text, copyKey)}
-            className={`inline-flex items-center gap-1 rounded px-1 text-left font-mono transition hover:bg-emerald-50 hover:text-emerald-700 ${copied ? 'text-emerald-700' : 'text-slate-600'}`}
+            className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-left font-mono text-[10px] font-bold transition ${toneClasses} ${copied ? 'ring-2 ring-emerald-200 ring-offset-1' : ''}`}
             title={`Klik untuk salin ${label}`}
             aria-label={`Salin ${label} ${text}`}
         >
@@ -110,7 +113,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                 <tr key={`${kind}-${item.spokas_id}`} className="hover:bg-emerald-50/40">
                                     <td className="px-3 py-2 font-semibold text-slate-800">{item.name || '-'}</td>
                                     <td className="px-3 py-2">
-                                        <CopyableValue value={item.member_number} label="No. Ahli" copyKey={`${item.id}-member_number`} copiedKey={copiedKey} onCopy={onCopy} />
+                                        <CopyableValue value={item.member_number} label="No. Ahli" tone="member" copyKey={`${item.id}-member_number`} copiedKey={copiedKey} onCopy={onCopy} />
                                     </td>
                                     <td className="px-3 py-2">
                                         <CopyableValue value={item.ic_birth} label="IC baru SPOKAS" copyKey={`${item.id}-ic_birth`} copiedKey={copiedKey} onCopy={onCopy} />
@@ -313,7 +316,11 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                             processing={processing}
                             copiedKey={copiedKey}
                             onCopy={copyValue}
-                            onApprove={(item) => post(route('admin.spokas.results.approve', item.id), { preserveScroll: true })}
+                            onApprove={(item) => post(route('admin.spokas.results.approve', item.id), {
+                                preserveState: true,
+                                preserveScroll: true,
+                                onSuccess: () => window.alert(`Nama ${item.name || '-'} berjaya dikemaskini.`),
+                            })}
                             onReject={(item) => post(route('admin.spokas.results.reject', item.id), { preserveScroll: true })}
                         />
                     </section>

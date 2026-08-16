@@ -79,8 +79,7 @@ class SpokasController extends Controller
                 ->increment('updated_count');
         });
 
-        return to_route('admin.spokas.index', ['tab' => 'approved'])
-            ->with('success', 'Padanan nama diluluskan dan No. Ahli PAS telah dikemaskini.');
+        return back();
     }
 
     public function rejectNameMatch(SpokasMigrationResult $result): RedirectResponse
