@@ -435,20 +435,22 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         <p className="text-muted mt-0.5">Mengikut UDM, lokaliti dan status culaan.</p>
                     </div>
                     {pemilih_report?.name && (
-                        <div className="inline-flex shrink-0 flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs shadow-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-700">
-                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <path d="M8 13h2"/>
-                                <path d="M10 13v4"/>
-                                <path d="M14 13h2"/>
-                                <path d="M16 13v4"/>
-                            </svg>
-                            {pemilih_report?.uploaded_by && <span className="text-slate-500">Data terbaru dimuat naik oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
-                            {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{fmtDate(pemilih_report.uploaded_at)}</span></span>}
+                        <div className="flex shrink-0 flex-wrap items-center gap-2">
+                            <div className="inline-flex flex-wrap items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-700">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <path d="M8 13h2"/>
+                                    <path d="M10 13v4"/>
+                                    <path d="M14 13h2"/>
+                                    <path d="M16 13v4"/>
+                                </svg>
+                                {pemilih_report?.uploaded_by && <span className="text-slate-500">Data terbaru dimuat naik oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
+                                {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{fmtDate(pemilih_report.uploaded_at)}</span></span>}
+                            </div>
                             <button type="button" onClick={openN8nModal} className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-green-700 to-green-500 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400">
                                 <span aria-hidden="true">↗</span>
-                                Hantar n8n
+                                Hantar Status Cula
                             </button>
                             {n8nNotice && <span className="font-semibold text-green-700">{n8nNotice}</span>}
                         </div>
