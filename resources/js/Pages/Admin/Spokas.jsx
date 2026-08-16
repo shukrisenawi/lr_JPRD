@@ -62,7 +62,7 @@ function CopyableValue({ value, label, tone = 'ic', copyKey, copiedKey, onCopy }
     );
 }
 
-function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onReject, processing, copiedKey, onCopy }) {
+function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onReject, processing, copiedKey, onCopy, actionedRows }) {
     const visible = results?.data ?? [];
     const totalPages = results?.last_page ?? 1;
     const currentPage = results?.current_page ?? 1;
@@ -110,7 +110,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {visible.map((item) => (
-                                <tr key={`${kind}-${item.spokas_id}`} className="hover:bg-emerald-50/40">
+                                <tr key={`${kind}-${item.spokas_id}`} className={`hover:bg-emerald-50/40 ${actionedRows?.[item.id] ? 'bg-slate-100/70 opacity-60 line-through decoration-slate-400' : ''}`}>
                                     <td className="px-3 py-2 font-semibold text-slate-800">{item.name || '-'}</td>
                                     <td className="px-3 py-2">
                                         <CopyableValue value={item.member_number} label="No. Ahli" tone="member" copyKey={`${item.id}-member_number`} copiedKey={copiedKey} onCopy={onCopy} />
@@ -134,8 +134,9 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                             {needsDecision && (
                                                 <td className="px-3 py-2">
                                                     <div className="flex gap-1">
-                                                        <button type="button" onClick={() => onApprove(item)} disabled={processing} className="rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 disabled:opacity-50">Approve</button>
-                                                        <button type="button" onClick={() => onReject(item)} disabled={processing} className="rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-700 disabled:opacity-50">Reject</button>
+                                                        <button type="button" onClick={() => onApprove(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">Approve</button>
+                                                        <button type="button" onClick={() => onReject(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">Reject</button>
+                                                        {actionedRows?.[item.id] && <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-bold text-slate-600">{actionedRows[item.id] === 'approved' ? 'Diluluskan' : 'Ditolak'}</span>}
                                                     </div>
                                                 </td>
                                             )}
@@ -168,7 +169,9 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
     const [tab, setTab] = useState(active_tab ?? 'ic');
     const [searchValue, setSearchValue] = useState(search ?? '');
     const [copiedKey, setCopiedKey] = useState(null);
-    const [approvingId, setApprovingId] = useState(null);
+    const [decisionId, setDecisionId] = useState(null);
+    const [actionedRows, setActionedRows] = useState({});
+    const [decisionError, setDecisionError] = useState('');
 
     useEffect(() => {
         setTab(active_tab ?? 'ic');
@@ -228,14 +231,18 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
         post(route('admin.spokas.rollback'), { preserveScroll: true });
     };
 
-    const approve = async (item) => {
-        if (approvingId !== null) return;
+    const decide = async (item, decision) => {
+        if (decisionId !== null || actionedRows[item.id]) return;
 
-        setApprovingId(item.id);
+        setDecisionError('');
+        setDecisionId(item.id);
 
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const response = await fetch(route('admin.spokas.results.approve', item.id), {
+            const endpoint = decision === 'approved'
+                ? route('admin.spokas.results.approve', item.id)
+                : route('admin.spokas.results.reject', item.id);
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -249,19 +256,14 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
             const payload = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(payload.message || 'Padanan nama gagal diluluskan.');
+                throw new Error(payload.message || 'Tindakan padanan nama gagal diproses.');
             }
 
-            window.alert(payload.message || `Nama ${item.name || '-'} berjaya dikemaskini.`);
-            router.reload({
-                preserveState: true,
-                preserveScroll: true,
-                only: ['run', 'results', 'result_counts', 'active_tab', 'search', 'last_migrated_at'],
-            });
+            setActionedRows((current) => ({ ...current, [item.id]: decision }));
         } catch (error) {
-            window.alert(error.message || 'Padanan nama gagal diluluskan.');
+            setDecisionError(error.message || 'Tindakan padanan nama gagal diproses.');
         } finally {
-            setApprovingId(null);
+            setDecisionId(null);
         }
     };
 
@@ -338,6 +340,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                                 </button>
                             ))}
                         </div>
+                        {decisionError && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{decisionError}</p>}
                         <ResultTable
                             results={results}
                             kind={tab}
@@ -351,11 +354,12 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                                 loadResults(tab, 1, searchValue);
                             }}
                             onPage={(page) => loadResults(tab, page, searchValue)}
-                            processing={processing || approvingId !== null}
+                            processing={processing || decisionId !== null}
                             copiedKey={copiedKey}
                             onCopy={copyValue}
-                            onApprove={approve}
-                            onReject={(item) => post(route('admin.spokas.results.reject', item.id), { preserveScroll: true })}
+                            actionedRows={actionedRows}
+                            onApprove={(item) => decide(item, 'approved')}
+                            onReject={(item) => decide(item, 'rejected')}
                         />
                     </section>
                 ) : (

@@ -94,9 +94,10 @@ class SpokasController extends Controller
         return back()->with('success', $message);
     }
 
-    public function rejectNameMatch(SpokasMigrationResult $result): RedirectResponse
+    public function rejectNameMatch(Request $request, SpokasMigrationResult $result): RedirectResponse|JsonResponse
     {
         $this->ensureModuleAccess();
+        $name = $result->name ?: 'pemilih';
 
         $updated = SpokasMigrationResult::query()
             ->whereKey($result->id)
@@ -104,8 +105,17 @@ class SpokasController extends Controller
             ->update(['category' => 'rejected']);
         abort_unless($updated === 1, 422);
 
+        $message = "Nama {$name} telah ditolak.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
         return to_route('admin.spokas.index', ['tab' => 'rejected'])
-            ->with('success', 'Padanan nama telah ditolak.');
+            ->with('success', $message);
     }
 
     private function ensureModuleAccess(): void
