@@ -10,6 +10,7 @@ function Icon({ name, className = 'h-5 w-5' }) {
         database: <><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5" /><path d="M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7" /></>,
         check: <><path d="m5 12 4 4L19 6" /></>,
         user: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+        x: <><path d="m6 6 12 12" /><path d="m18 6-12 12" /></>,
         search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
         alert: <><path d="M10.3 3.5 2.1 18a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3L13.7 3.5a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></>,
         arrow: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
@@ -111,7 +112,16 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                         <tbody className="divide-y divide-slate-100">
                             {visible.map((item) => (
                                 <tr key={`${kind}-${item.spokas_id}`} className={`hover:bg-emerald-50/40 ${actionedRows?.[item.id] ? 'bg-slate-100/70 opacity-60 line-through decoration-slate-400' : ''}`}>
-                                    <td className="px-3 py-2 font-semibold text-slate-800">{item.name || '-'}</td>
+                                    <td className="px-3 py-2 font-semibold text-slate-800">
+                                        <span className="inline-flex items-center gap-1.5">
+                                            {actionedRows?.[item.id] && (
+                                                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white ${actionedRows[item.id] === 'approved' ? 'bg-emerald-500' : 'bg-red-500'}`} title={actionedRows[item.id] === 'approved' ? 'Diluluskan' : 'Ditolak'}>
+                                                    <Icon name={actionedRows[item.id] === 'approved' ? 'check' : 'x'} className="h-2.5 w-2.5" />
+                                                </span>
+                                            )}
+                                            <span>{item.name || '-'}</span>
+                                        </span>
+                                    </td>
                                     <td className="px-3 py-2">
                                         <CopyableValue value={item.member_number} label="No. Ahli" tone="member" copyKey={`${item.id}-member_number`} copiedKey={copiedKey} onCopy={onCopy} />
                                     </td>
@@ -136,7 +146,6 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                                     <div className="flex gap-1">
                                                         <button type="button" onClick={() => onApprove(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">Approve</button>
                                                         <button type="button" onClick={() => onReject(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">Reject</button>
-                                                        {actionedRows?.[item.id] && <span className="rounded-full bg-slate-200 px-2 py-1 text-[10px] font-bold text-slate-600">{actionedRows[item.id] === 'approved' ? 'Diluluskan' : 'Ditolak'}</span>}
                                                     </div>
                                                 </td>
                                             )}
