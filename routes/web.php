@@ -35,7 +35,7 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('module:laporan')->name('laporan.index');
-    Route::post('/laporan/n8n', [LaporanController::class, 'sendN8nMessage'])->middleware('module:laporan')->name('laporan.n8n.send');
+    Route::post('/laporan/n8n', [LaporanController::class, 'sendN8nMessage'])->middleware('module:laporan-hantar-status')->name('laporan.n8n.send');
     Route::get('/carian-pemilih', [CarianPemilihController::class, 'index'])->middleware('module:carian-pemilih')->name('carian-pemilih.index');
     Route::get('/ahli-pas', [AhliPasController::class, 'index'])->middleware('module:ahli-pas')->name('ahli-pas.index');
     Route::post('/ahli-pas/{pemilihRecord}/cula', [AhliPasController::class, 'updateCula'])->middleware('module:ahli-pas')->name('ahli-pas.cula.update');

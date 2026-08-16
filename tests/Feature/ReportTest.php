@@ -129,7 +129,7 @@ it('formats culaan message with current report values', function () {
 });
 
 it('sends an edited culaan message to the selected n8n webhook', function () {
-    $user = User::factory()->withModules(['laporan'])->create();
+    $user = User::factory()->withModules(['laporan', 'laporan-hantar-status'])->create();
     $webhook = 'https://example.test/webhook-test';
 
     Setting::setValue('n8n_webhook_test_url', $webhook);
@@ -147,6 +147,14 @@ it('sends an edited culaan message to the selected n8n webhook', function () {
     Http::assertSent(fn ($request) => $request->url() === $webhook
         && $request->method() === 'POST'
         && $request->data() === ['message' => 'Mesej culaan ujian']);
+});
+
+it('blocks culaan message sending without the n8n status permission', function () {
+    $user = User::factory()->withModules(['laporan'])->create();
+
+    $this->actingAs($user)
+        ->postJson(route('laporan.n8n.send'), ['message' => 'Mesej tanpa akses'])
+        ->assertForbidden();
 });
 
 it('renders carian pemilih page', function () {

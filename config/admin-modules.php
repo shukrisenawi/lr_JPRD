@@ -5,6 +5,10 @@ return [
         'label' => 'Laporan',
         'description' => 'Lihat dan muat naik laporan pemilih.',
     ],
+    'laporan-hantar-status' => [
+        'label' => 'Hantar Status Cula',
+        'description' => 'Benarkan penghantaran mesej status cula ke n8n.',
+    ],
     'dashboard' => [
         'label' => 'Cula Manual',
         'description' => 'Paparan utama dan ringkasan status semasa.',
