@@ -60,6 +60,7 @@ class SpokasController extends Controller
     {
         $this->ensureModuleAccess();
         $name = $result->name ?: 'pemilih';
+        $memberNumber = $result->member_number ?: '-';
 
         DB::transaction(function () use ($result): void {
             $result = SpokasMigrationResult::query()->lockForUpdate()->findOrFail($result->id);
@@ -81,7 +82,7 @@ class SpokasController extends Controller
                 ->increment('updated_count');
         });
 
-        $message = "Nama {$name} berjaya dikemaskini.";
+        $message = "Nama {$name} berjaya dikemaskini. No. Ahli PAS {$memberNumber} telah disimpan.";
 
         if ($request->expectsJson()) {
             return response()->json([
