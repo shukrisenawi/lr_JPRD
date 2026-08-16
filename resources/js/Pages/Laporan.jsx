@@ -202,7 +202,7 @@ function N8nMessageModal({ open, message, onChange, onClose, onSend, sending, er
 
 export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null }) {
     const { auth } = usePage().props;
-    const canSendStatusCula = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
+    const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
@@ -450,7 +450,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                 {pemilih_report?.uploaded_by && <span className="text-slate-500">Data terbaru dimuat naik oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
                                 {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{fmtDate(pemilih_report.uploaded_at)}</span></span>}
                             </div>
-                            {canSendStatusCula && (
+                            {canSendN8nMessage && (
                                 <>
                                     <button type="button" onClick={openN8nModal} className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-green-700 to-green-500 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400">
                                         <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

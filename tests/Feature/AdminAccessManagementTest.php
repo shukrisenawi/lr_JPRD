@@ -19,7 +19,7 @@ it('allows master admin to open access management page', function () {
             ->component('Admin/AccessManagement')
             ->where('auth.user.role.slug', 'master-admin')
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'ahli-pas' && $module['label'] === 'Ahli PAS'))
-            ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'laporan-hantar-status' && $module['label'] === 'Hantar Status Cula'))
+            ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'laporan-hantar-status' && $module['label'] === 'Hantar Mesej n8n'))
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'spokas' && $module['label'] === 'SPoKAS'))
             ->where('users.0.id', $managedUser->id)
             ->where('users.0.avatar_url', $managedUser->avatarUrl()));

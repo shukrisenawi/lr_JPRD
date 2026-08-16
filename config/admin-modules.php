@@ -6,8 +6,8 @@ return [
         'description' => 'Lihat dan muat naik laporan pemilih.',
     ],
     'laporan-hantar-status' => [
-        'label' => 'Hantar Status Cula',
-        'description' => 'Benarkan penghantaran mesej status cula ke n8n.',
+        'label' => 'Hantar Mesej n8n',
+        'description' => 'Benarkan penghantaran mesej melalui n8n.',
     ],
     'dashboard' => [
         'label' => 'Cula Manual',
