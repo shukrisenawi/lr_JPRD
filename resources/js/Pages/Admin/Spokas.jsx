@@ -168,6 +168,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
     const [tab, setTab] = useState(active_tab ?? 'ic');
     const [searchValue, setSearchValue] = useState(search ?? '');
     const [copiedKey, setCopiedKey] = useState(null);
+    const [approvingId, setApprovingId] = useState(null);
 
     useEffect(() => {
         setTab(active_tab ?? 'ic');
@@ -225,6 +226,43 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
     const rollback = () => {
         if (! window.confirm('Kosongkan No. Ahli PAS yang sepadan dengan data SPoKAS?')) return;
         post(route('admin.spokas.rollback'), { preserveScroll: true });
+    };
+
+    const approve = async (item) => {
+        if (approvingId !== null) return;
+
+        setApprovingId(item.id);
+
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(route('admin.spokas.results.approve', item.id), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                },
+                body: JSON.stringify({}),
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload.message || 'Padanan nama gagal diluluskan.');
+            }
+
+            window.alert(payload.message || `Nama ${item.name || '-'} berjaya dikemaskini.`);
+            router.reload({
+                preserveState: true,
+                preserveScroll: true,
+                only: ['run', 'results', 'result_counts', 'active_tab', 'search', 'last_migrated_at'],
+            });
+        } catch (error) {
+            window.alert(error.message || 'Padanan nama gagal diluluskan.');
+        } finally {
+            setApprovingId(null);
+        }
     };
 
     const tabs = [
@@ -313,14 +351,10 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                                 loadResults(tab, 1, searchValue);
                             }}
                             onPage={(page) => loadResults(tab, page, searchValue)}
-                            processing={processing}
+                            processing={processing || approvingId !== null}
                             copiedKey={copiedKey}
                             onCopy={copyValue}
-                            onApprove={(item) => post(route('admin.spokas.results.approve', item.id), {
-                                preserveState: true,
-                                preserveScroll: true,
-                                onSuccess: () => window.alert(`Nama ${item.name || '-'} berjaya dikemaskini.`),
-                            })}
+                            onApprove={approve}
                             onReject={(item) => post(route('admin.spokas.results.reject', item.id), { preserveScroll: true })}
                         />
                     </section>

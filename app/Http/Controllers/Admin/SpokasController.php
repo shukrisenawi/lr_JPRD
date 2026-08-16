@@ -8,6 +8,7 @@ use App\Models\SpokasMember;
 use App\Models\SpokasMigrationResult;
 use App\Models\SpokasMigrationRun;
 use App\Services\SpokasMigrationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -55,9 +56,10 @@ class SpokasController extends Controller
             ->with('success', "{$clearedCount} nombor ahli PAS daripada data SPoKAS berjaya dikosongkan.");
     }
 
-    public function approveNameMatch(SpokasMigrationResult $result): RedirectResponse
+    public function approveNameMatch(Request $request, SpokasMigrationResult $result): RedirectResponse|JsonResponse
     {
         $this->ensureModuleAccess();
+        $name = $result->name ?: 'pemilih';
 
         DB::transaction(function () use ($result): void {
             $result = SpokasMigrationResult::query()->lockForUpdate()->findOrFail($result->id);
@@ -79,7 +81,16 @@ class SpokasController extends Controller
                 ->increment('updated_count');
         });
 
-        return back();
+        $message = "Nama {$name} berjaya dikemaskini.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function rejectNameMatch(SpokasMigrationResult $result): RedirectResponse
