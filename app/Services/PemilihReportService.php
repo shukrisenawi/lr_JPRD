@@ -76,6 +76,12 @@ class PemilihReportService
             ->get();
 
         if ($records->isEmpty()) {
+            $path = Setting::valueOf('pemilih_report_file_path');
+
+            if (is_string($path) && file_exists($path)) {
+                return $this->buildFromPath($path);
+            }
+
             return $this->emptyReport('database');
         }
 

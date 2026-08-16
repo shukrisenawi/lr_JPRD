@@ -5,24 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\BackupLog;
 use App\Models\Setting;
 use App\Services\GoogleSheetService;
+use App\Services\N8nWebhookService;
 use App\Services\PemilihReportService;
 use App\Services\SpokasMigrationService;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
-
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SettingsController extends Controller
 {
-    public function edit(GoogleSheetService $googleSheetService): Response
+    public function edit(GoogleSheetService $googleSheetService, N8nWebhookService $n8nWebhook): Response
     {
         return Inertia::render('Settings/Edit', [
             'settings' => [
                 'google_sheet_url' => $googleSheetService->getSheetUrl(),
                 'pemilih_report' => $this->pemilihReportMetadata(),
                 'udm_cutoff_day' => Setting::valueOf('udm_cutoff_day', 1),
+                'n8n_webhook' => $n8nWebhook->settings(),
             ],
             'backup_logs' => BackupLog::query()
                 ->orderByDesc('backed_up_at')
@@ -38,7 +42,7 @@ class SettingsController extends Controller
         ]);
     }
 
-    public function update(Request $request, GoogleSheetService $googleSheetService): RedirectResponse
+    public function update(Request $request, GoogleSheetService $googleSheetService, N8nWebhookService $n8nWebhook): RedirectResponse
     {
         $canSheet = $request->user()->canAccessModule('settings.google-sheet');
         $canSettings = $request->user()->canAccessModule('settings');
@@ -52,6 +56,9 @@ class SettingsController extends Controller
 
         if ($canSettings || $isMaster) {
             $rules['udm_cutoff_day'] = ['nullable', 'integer', 'min:1', 'max:31'];
+            $rules['n8n_webhook_test_url'] = ['sometimes', 'required', 'url'];
+            $rules['n8n_webhook_production_url'] = ['sometimes', 'required', 'url'];
+            $rules['n8n_webhook_environment'] = ['sometimes', 'required', Rule::in(['test', 'production'])];
         }
 
         $validated = $request->validate($rules);
@@ -64,10 +71,12 @@ class SettingsController extends Controller
             Setting::setValue('udm_cutoff_day', (int) $validated['udm_cutoff_day']);
         }
 
+        $n8nWebhook->updateSettings($validated);
+
         return back()->with('success', 'Tetapan berjaya dikemaskini.');
     }
 
-    public function uploadPemilih(Request $request, PemilihReportService $reportService, SpokasMigrationService $spokasMigration): RedirectResponse|\Illuminate\Http\JsonResponse
+    public function uploadPemilih(Request $request, PemilihReportService $reportService, SpokasMigrationService $spokasMigration): RedirectResponse|JsonResponse
     {
         abort_unless($request->user()->canAccessModule('settings.upload-pemilih'), 403);
 
@@ -135,14 +144,15 @@ class SettingsController extends Controller
 
         $mysqldump = $this->findMysqldumpPath();
         $db = config('database.connections.mysql') ?? [];
-        $filename = 'DB_PAS_' . now('Asia/Kuala_Lumpur')->format('d-m-Y_H-iA') . '.sql';
+        $filename = 'DB_PAS_'.now('Asia/Kuala_Lumpur')->format('d-m-Y_H-iA').'.sql';
 
         $result = $this->runMysqldump($mysqldump, $db);
 
         if ($result['returnVar'] !== 0) {
             $errorMsg = $result['stderr'] ?: ($result['stdout'] ?: 'mysqldump gagal dijalankan. Pastikan mysqldump dipasang atau set DB_DUMP_PATH dalam .env.');
-            logger()->error('Backup database gagal (exit ' . $result['returnVar'] . '): ' . $errorMsg);
-            return redirect()->route('settings.edit')->with('error', 'Backup gagal: ' . $errorMsg);
+            logger()->error('Backup database gagal (exit '.$result['returnVar'].'): '.$errorMsg);
+
+            return redirect()->route('settings.edit')->with('error', 'Backup gagal: '.$errorMsg);
         }
 
         BackupLog::create([
@@ -162,7 +172,7 @@ class SettingsController extends Controller
 
         $headers = [
             'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         return new HttpResponse($result['stdout'], 200, $headers);
@@ -188,7 +198,7 @@ class SettingsController extends Controller
 
         $process = @proc_open($command, $descriptors, $pipes);
 
-        if (!is_resource($process)) {
+        if (! is_resource($process)) {
             return ['stdout' => '', 'stderr' => 'proc_open gagal', 'returnVar' => -1];
         }
 
@@ -226,7 +236,7 @@ class SettingsController extends Controller
         ];
 
         $xamppRoot = dirname(PHP_BINARY, 2);
-        $candidates[] = $xamppRoot . DIRECTORY_SEPARATOR . 'mysql' . DIRECTORY_SEPARATOR . 'bin' . DIRECTORY_SEPARATOR . 'mysqldump.exe';
+        $candidates[] = $xamppRoot.DIRECTORY_SEPARATOR.'mysql'.DIRECTORY_SEPARATOR.'bin'.DIRECTORY_SEPARATOR.'mysqldump.exe';
 
         foreach ($candidates as $candidate) {
             if (@file_exists($candidate)) {
@@ -248,6 +258,7 @@ class SettingsController extends Controller
             if ($result === '') {
                 $result = trim((string) shell_exec("which {$cmd} 2>/dev/null"));
             }
+
             return $result;
         } catch (\Throwable $e) {
             return '';
@@ -261,7 +272,7 @@ class SettingsController extends Controller
 
         if ($uploadedAt) {
             try {
-                $uploadedAt = \Carbon\Carbon::parse($uploadedAt, 'Asia/Kuala_Lumpur')->format('d-m-Y h:i A');
+                $uploadedAt = Carbon::parse($uploadedAt, 'Asia/Kuala_Lumpur')->format('d-m-Y h:i A');
             } catch (\Exception $e) {
                 // keep original if parse fails
             }

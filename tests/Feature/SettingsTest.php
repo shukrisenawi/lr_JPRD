@@ -23,6 +23,23 @@ it('stores google sheet url in settings', function () {
         ->toBe('https://docs.google.com/spreadsheets/d/abc123/edit?gid=0');
 });
 
+it('stores n8n webhook settings', function () {
+    $user = User::factory()->withModules(['settings'])->create();
+
+    $this->actingAs($user)
+        ->put('/settings', [
+            'google_sheet_url' => 'https://docs.google.com/spreadsheets/d/abc123/edit?gid=0',
+            'n8n_webhook_test_url' => 'https://example.test/webhook-test',
+            'n8n_webhook_production_url' => 'https://example.test/webhook',
+            'n8n_webhook_environment' => 'test',
+        ])
+        ->assertRedirect();
+
+    expect(Setting::valueOf('n8n_webhook_test_url'))->toBe('https://example.test/webhook-test')
+        ->and(Setting::valueOf('n8n_webhook_production_url'))->toBe('https://example.test/webhook')
+        ->and(Setting::valueOf('n8n_webhook_environment'))->toBe('test');
+});
+
 it('renders settings page with pemilih upload metadata', function () {
     $user = User::factory()->withModules(['settings'])->create();
     $path = storage_path('app/settings-current-pemilih.xls');
@@ -35,7 +52,8 @@ it('renders settings page with pemilih upload metadata', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Settings/Edit')
             ->where('settings.pemilih_report.exists', true)
-            ->where('settings.pemilih_report.name', 'settings-current-pemilih.xls'));
+            ->where('settings.pemilih_report.name', 'settings-current-pemilih.xls')
+            ->where('settings.n8n_webhook.environment', 'production'));
 });
 
 it('stores uploaded pemilih file from settings and syncs latest voter data', function () {

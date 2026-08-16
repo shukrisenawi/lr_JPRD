@@ -1,10 +1,13 @@
 <?php
 
+use App\Models\PemilihRecord;
 use App\Models\Setting;
 use App\Models\User;
-use App\Models\PemilihRecord;
+use App\Services\CulaanMessageService;
 use App\Services\PemilihReportService;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 function pemilihReportFixture(): string
@@ -101,6 +104,49 @@ it('renders laporan page with pemilih report data', function () {
             ->where('report.cula_by_dm.0.cula_breakdown.0.code', '2')
             ->where('report.cula_by_dm.0.cula_breakdown.0.display_label', '2 - PAS')
             ->where('report.dm_details.0.summary.total_localities', 1));
+});
+
+it('formats culaan message with current report values', function () {
+    $message = app(CulaanMessageService::class)->build([
+        'summary' => [
+            'total_voters' => 35848,
+            'with_cula' => 28054,
+            'belum_dicula' => 7794,
+            'coverage_percent' => 78.3,
+        ],
+        'by_dm' => [
+            ['name' => 'Kg Bandar', 'belum_dicula' => 123],
+        ],
+    ], Carbon::create(2026, 8, 2, 12, 0, 0, 'Asia/Kuala_Lumpur'));
+
+    expect($message)
+        ->toContain('📌CULAN TERKINI JPrD JENERI 2/8/26')
+        ->toContain('3️⃣5️⃣, 8️⃣4️⃣8️⃣')
+        ->toContain('2️⃣8️⃣, 0️⃣5️⃣4️⃣')
+        ->toContain('7️⃣, 7️⃣9️⃣4️⃣')
+        ->toContain('7️⃣8️⃣▪️3️⃣')
+        ->toContain('1) Kg Bandar 1️⃣2️⃣3️⃣🌸');
+});
+
+it('sends an edited culaan message to the selected n8n webhook', function () {
+    $user = User::factory()->withModules(['laporan'])->create();
+    $webhook = 'https://example.test/webhook-test';
+
+    Setting::setValue('n8n_webhook_test_url', $webhook);
+    Setting::setValue('n8n_webhook_environment', 'test');
+    Http::fake([$webhook => Http::response(['ok' => true])]);
+
+    $this->actingAs($user)
+        ->postJson(route('laporan.n8n.send'), ['message' => 'Mesej culaan ujian'])
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Mesej culaan berjaya dihantar ke n8n.',
+        ]);
+
+    Http::assertSent(fn ($request) => $request->url() === $webhook
+        && $request->method() === 'POST'
+        && $request->data() === ['message' => 'Mesej culaan ujian']);
 });
 
 it('renders carian pemilih page', function () {

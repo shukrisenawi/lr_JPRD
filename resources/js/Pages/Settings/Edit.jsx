@@ -218,10 +218,72 @@ function UdmCutoffPanel({ value, onChange }) {
     );
 }
 
+function N8nWebhookPanel({ data, onChange, onSubmit, processing, errors }) {
+    return (
+        <section className="card p-4">
+            <div>
+                <p className="label-section">Automasi n8n</p>
+                <h3 className="mt-1 text-sm font-bold text-slate-800">Webhook Mesej Culaan</h3>
+                <p className="mt-1 text-xs text-slate-500">Pilih webhook yang digunakan apabila mesej culaan dihantar dari halaman Laporan.</p>
+            </div>
+            <form onSubmit={onSubmit} className="mt-3 space-y-3">
+                <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                        <InputLabel htmlFor="n8n_webhook_test_url" value="Webhook Test" />
+                        <TextInput
+                            id="n8n_webhook_test_url"
+                            type="url"
+                            value={data.n8n_webhook_test_url}
+                            onChange={(e) => onChange('n8n_webhook_test_url', e.target.value)}
+                            className="mt-1 input-field py-2"
+                            placeholder="https://.../webhook-test/..."
+                        />
+                        <InputError className="mt-1" message={errors.n8n_webhook_test_url} />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="n8n_webhook_production_url" value="Webhook Production" />
+                        <TextInput
+                            id="n8n_webhook_production_url"
+                            type="url"
+                            value={data.n8n_webhook_production_url}
+                            onChange={(e) => onChange('n8n_webhook_production_url', e.target.value)}
+                            className="mt-1 input-field py-2"
+                            placeholder="https://.../webhook/..."
+                        />
+                        <InputError className="mt-1" message={errors.n8n_webhook_production_url} />
+                    </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <InputLabel htmlFor="n8n_webhook_environment" value="Environment aktif" />
+                        <select
+                            id="n8n_webhook_environment"
+                            value={data.n8n_webhook_environment}
+                            onChange={(e) => onChange('n8n_webhook_environment', e.target.value)}
+                            className="input-field mt-1 py-2 text-xs"
+                        >
+                            <option value="test">Test</option>
+                            <option value="production">Production</option>
+                        </select>
+                        <InputError className="mt-1" message={errors.n8n_webhook_environment} />
+                    </div>
+                    <PrimaryButton disabled={processing}>
+                        <Icon name="save" className="h-3.5 w-3.5" />
+                        {processing ? 'Menyimpan...' : 'Simpan webhook'}
+                    </PrimaryButton>
+                </div>
+            </form>
+        </section>
+    );
+}
+
 export default function Edit({ settings, backup_logs }) {
     const { data, setData, put, processing, errors } = useForm({
         google_sheet_url: settings.google_sheet_url ?? '',
         udm_cutoff_day: settings.udm_cutoff_day ?? 1,
+        n8n_webhook_test_url: settings.n8n_webhook?.test_url ?? '',
+        n8n_webhook_production_url: settings.n8n_webhook?.production_url ?? '',
+        n8n_webhook_environment: settings.n8n_webhook?.environment ?? 'production',
     });
     const submit = (e) => { e.preventDefault(); put(route('settings.update')); };
     const { auth } = usePage().props;
@@ -238,6 +300,15 @@ export default function Edit({ settings, backup_logs }) {
                 {(allowedModules.includes('settings.upload-pemilih') || isMasterAdmin) && <PemilihUploadPanel report={settings.pemilih_report} />}
                 {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel logs={backup_logs} />}
                 {canSettings && <UdmCutoffPanel value={data.udm_cutoff_day} onChange={(v) => setData('udm_cutoff_day', v)} />}
+                {canSettings && (
+                    <N8nWebhookPanel
+                        data={data}
+                        onChange={setData}
+                        onSubmit={submit}
+                        processing={processing}
+                        errors={errors}
+                    />
+                )}
                 {(allowedModules.includes('settings.google-sheet') || isMasterAdmin) && (
                     <div className="card p-4">
                         <form onSubmit={submit} className="space-y-3">

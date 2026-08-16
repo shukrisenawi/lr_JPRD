@@ -134,10 +134,83 @@ function DataTable({ rows, columns }) {
     );
 }
 
-export default function Laporan({ report, pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null }) {
+function N8nMessageModal({ open, message, onChange, onClose, onSend, sending, error }) {
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3" role="dialog" aria-modal="true" aria-labelledby="n8n-message-title">
+            <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.1em] text-green-700">n8n</p>
+                        <h3 id="n8n-message-title" className="mt-0.5 text-base font-bold text-slate-900">Semak mesej culaan</h3>
+                        <p className="mt-1 text-xs text-slate-500">Edit teks jika perlu sebelum approve dan hantar.</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-md px-2 py-1 text-lg leading-none text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Tutup">&times;</button>
+                </div>
+                <textarea
+                    value={message}
+                    onChange={(e) => onChange(e.target.value)}
+                    rows={18}
+                    className="input-field mt-4 min-h-[22rem] w-full resize-y whitespace-pre-wrap font-mono text-xs leading-5"
+                />
+                {error && <p className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{error}</p>}
+                <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button type="button" onClick={onClose} disabled={sending} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50">Batal</button>
+                    <button type="button" onClick={onSend} disabled={sending || !message.trim()} className="rounded-md bg-gradient-to-r from-green-700 to-green-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400 disabled:cursor-not-allowed disabled:opacity-50">{sending ? 'Menghantar...' : 'Approve & Hantar'}</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null }) {
     const [tab, setTab] = useState('udm');
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
+    const [n8nModalOpen, setN8nModalOpen] = useState(false);
+    const [n8nMessage, setN8nMessage] = useState(culaan_message);
+    const [n8nSending, setN8nSending] = useState(false);
+    const [n8nError, setN8nError] = useState('');
+    const [n8nNotice, setN8nNotice] = useState('');
+
+    const openN8nModal = () => {
+        setN8nMessage(culaan_message);
+        setN8nError('');
+        setN8nNotice('');
+        setN8nModalOpen(true);
+    };
+
+    const sendN8nMessage = async () => {
+        setN8nSending(true);
+        setN8nError('');
+
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(route('laporan.n8n.send'), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                },
+                body: JSON.stringify({ message: n8nMessage }),
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload.message ?? 'Mesej gagal dihantar.');
+            }
+
+            setN8nModalOpen(false);
+            setN8nNotice(payload.message ?? 'Mesej berjaya dihantar.');
+        } catch (error) {
+            setN8nError(error.message ?? 'Mesej gagal dihantar.');
+        } finally {
+            setN8nSending(false);
+        }
+    };
 
     const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
     const partyCols = ['PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati'];
@@ -337,6 +410,11 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
                             </svg>
                             {pemilih_report?.uploaded_by && <span className="text-slate-500">Data terbaru dimuat naik oleh: <span className="font-bold text-slate-700">{pemilih_report.uploaded_by}</span></span>}
                             {pemilih_report?.uploaded_at && <span className="text-slate-500">Pada: <span className="font-bold text-slate-700">{fmtDate(pemilih_report.uploaded_at)}</span></span>}
+                            <button type="button" onClick={openN8nModal} className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-green-700 to-green-500 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400">
+                                <span aria-hidden="true">↗</span>
+                                Hantar n8n
+                            </button>
+                            {n8nNotice && <span className="font-semibold text-green-700">{n8nNotice}</span>}
                         </div>
                     )}
                 </div>
@@ -561,6 +639,15 @@ export default function Laporan({ report, pemilih_report = null, udm_snapshot = 
                     </>
                 )}
             </div>
+            <N8nMessageModal
+                open={n8nModalOpen}
+                message={n8nMessage}
+                onChange={setN8nMessage}
+                onClose={() => { if (!n8nSending) setN8nModalOpen(false); }}
+                onSend={sendN8nMessage}
+                sending={n8nSending}
+                error={n8nError}
+            />
         </AuthenticatedLayout>
     );
 }
