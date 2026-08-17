@@ -132,12 +132,15 @@ class SpokasController extends Controller
     public function saveRemark(Request $request, SpokasMigrationResult $result): RedirectResponse|JsonResponse
     {
         $this->ensureModuleAccess();
+        $decision = $request->validate([
+            'decision' => ['required', 'in:approved,rejected'],
+        ])['decision'];
         $remark = $this->validatedRemark($request, true);
         $name = $result->name ?: 'pemilih';
 
         $updated = SpokasMigrationResult::query()
             ->whereKey($result->id)
-            ->whereIn('category', ['name', 'approved', 'rejected'])
+            ->where('category', $decision)
             ->update(['remark' => $remark]);
         abort_unless($updated === 1, 422);
 

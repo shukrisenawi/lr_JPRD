@@ -260,7 +260,11 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
 
     const openRemarkModal = (item) => {
         setRemarkError('');
-        setRemarkModal({ item });
+        setRemarkModal({
+            item,
+            kind: tab,
+            decision: tab === 'approved' || tab === 'rejected' ? tab : null,
+        });
         setRemarkValue(rowRemarks[item.id] ?? item.remark ?? '');
     };
 
@@ -307,8 +311,13 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
         if (!remarkModal || remarkId !== null) return;
 
         const normalizedRemark = remarkValue.trim();
+        const decision = remarkModal.decision;
         if (!normalizedRemark) {
             setRemarkError('Remark wajib diisi.');
+            return;
+        }
+        if (!decision) {
+            setRemarkError('Sila pilih status approve atau reject.');
             return;
         }
 
@@ -317,7 +326,13 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
 
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const response = await fetch(route('admin.spokas.results.remark', remarkModal.item.id), {
+            const isNameMatch = remarkModal.kind === 'name';
+            const endpoint = isNameMatch
+                ? decision === 'approved'
+                    ? route('admin.spokas.results.approve', remarkModal.item.id)
+                    : route('admin.spokas.results.reject', remarkModal.item.id)
+                : route('admin.spokas.results.remark', remarkModal.item.id);
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -326,14 +341,19 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                     'X-Requested-With': 'XMLHttpRequest',
                     ...(token ? { 'X-CSRF-TOKEN': token } : {}),
                 },
-                body: JSON.stringify({ remark: normalizedRemark }),
+                body: JSON.stringify(isNameMatch
+                    ? { remark: normalizedRemark }
+                    : { decision, remark: normalizedRemark }),
             });
             const payload = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(payload.message || payload.errors?.remark?.[0] || 'Remark gagal disimpan.');
+                throw new Error(payload.message || payload.errors?.decision?.[0] || payload.errors?.remark?.[0] || 'Remark gagal disimpan.');
             }
 
+            if (isNameMatch) {
+                setActionedRows((current) => ({ ...current, [remarkModal.item.id]: decision }));
+            }
             setRowRemarks((current) => ({ ...current, [remarkModal.item.id]: normalizedRemark }));
             setRemarkModal(null);
         } catch (error) {
@@ -465,6 +485,19 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                             <p className="mt-0.5 text-sm font-bold text-slate-800">{remarkModal.item.name || '-'}</p>
                         </div>
 
+                        <label className="mt-4 block text-xs font-bold text-slate-700" htmlFor="spokas-remark-decision">Status <span className="text-red-600">*</span></label>
+                        <select
+                            id="spokas-remark-decision"
+                            value={remarkModal.decision ?? ''}
+                            onChange={(event) => setRemarkModal((current) => current ? { ...current, decision: event.target.value || null } : current)}
+                            className="input-field mt-1"
+                            disabled={remarkId !== null || remarkModal.kind !== 'name'}
+                        >
+                            <option value="" disabled>Pilih status</option>
+                            <option value="approved">Approve</option>
+                            <option value="rejected">Reject</option>
+                        </select>
+
                         <label className="mt-4 block text-xs font-bold text-slate-700" htmlFor="spokas-remark">Remark <span className="text-red-600">*</span></label>
                         <textarea
                             id="spokas-remark"
@@ -481,8 +514,8 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
 
                         <div className="mt-4 flex justify-end gap-2">
                             <button type="button" onClick={() => setRemarkModal(null)} disabled={remarkId !== null} className="btn-ghost">Batal</button>
-                            <button type="button" onClick={saveRemark} disabled={remarkId !== null || !remarkValue.trim()} className="btn-violet">
-                                {remarkId !== null ? 'Sedang simpan...' : 'Simpan Remark'}
+                            <button type="button" onClick={saveRemark} disabled={remarkId !== null || !remarkModal.decision || !remarkValue.trim()} className="btn-violet">
+                                {remarkId !== null ? 'Sedang simpan...' : remarkModal.kind === 'name' ? remarkModal.decision === 'rejected' ? 'Simpan & Reject' : 'Simpan & Approve' : 'Simpan Remark'}
                             </button>
                         </div>
                     </div>

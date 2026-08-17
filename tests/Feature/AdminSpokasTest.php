@@ -118,16 +118,9 @@ it('allows a master admin to approve or reject a name match after comparing iden
     $approvedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA APPROVE')->firstOrFail();
     $rejectedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA REJECT')->firstOrFail();
 
-    $this->postJson(route('admin.spokas.results.remark', $approvedResult), [
+    $this->postJson(route('admin.spokas.results.approve', $approvedResult), [
         'remark' => 'No. K/P tidak sama tetapi nama dan IC lama disahkan.',
     ])
-        ->assertOk()
-        ->assertJson([
-            'success' => true,
-            'message' => 'Remark nama NAMA SAMA APPROVE berjaya disimpan.',
-        ]);
-
-    $this->postJson(route('admin.spokas.results.approve', $approvedResult))
         ->assertOk()
         ->assertJson([
             'success' => true,
@@ -141,9 +134,11 @@ it('allows a master admin to approve or reject a name match after comparing iden
         ]);
 
     $this->postJson(route('admin.spokas.results.remark', $approvedResult), [
+        'decision' => 'approved',
         'remark' => 'Remark approve dikemas kini.',
     ])->assertOk();
     $this->postJson(route('admin.spokas.results.remark', $rejectedResult), [
+        'decision' => 'rejected',
         'remark' => 'Remark reject dikemas kini.',
     ])->assertOk();
 
