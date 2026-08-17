@@ -52,6 +52,7 @@ class SpokasMigrationService
                         'pemilih_old_ic' => null,
                         'previous_no_ahli' => null,
                         'reason' => null,
+                        'remark' => null,
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];
@@ -216,6 +217,7 @@ class SpokasMigrationService
                             'pemilih_old_ic' => $record['old_ic'],
                             'previous_no_ahli' => $record['no_ahli'],
                             'reason' => null,
+                            'remark' => null,
                         ]);
 
                         $summary['matched_count']++;

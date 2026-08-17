@@ -63,13 +63,14 @@ function CopyableValue({ value, label, tone = 'ic', copyKey, copiedKey, onCopy }
     );
 }
 
-function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onReject, processing, copiedKey, onCopy, actionedRows }) {
+function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onReject, onRemark, processing, copiedKey, onCopy, actionedRows, rowRemarks }) {
     const visible = results?.data ?? [];
     const totalPages = results?.last_page ?? 1;
     const currentPage = results?.current_page ?? 1;
     const total = results?.total ?? 0;
     const hasPemilih = kind !== 'not_found';
     const needsDecision = kind === 'name';
+    const showsRemark = ['name', 'approved', 'rejected'].includes(kind);
 
     return (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -102,6 +103,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                 {hasPemilih ? (
                                     <>
                                         <th className="px-3 py-2">No. K/P Lama Pemilih</th>
+                                        {showsRemark && <th className="px-3 py-2">Remark</th>}
                                         {needsDecision && <th className="px-3 py-2">Tindakan</th>}
                                     </>
                                 ) : (
@@ -141,9 +143,15 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                             <td className="px-3 py-2">
                                                 <CopyableValue value={item.pemilih_old_ic} label="IC lama pemilih" copyKey={`${item.id}-pemilih_old_ic`} copiedKey={copiedKey} onCopy={onCopy} />
                                             </td>
+                                            {showsRemark && (
+                                                <td className="max-w-xs whitespace-normal px-3 py-2 text-slate-600">
+                                                    {rowRemarks?.[item.id] || item.remark || '-'}
+                                                </td>
+                                            )}
                                             {needsDecision && (
                                                 <td className="px-3 py-2">
-                                                    <div className="flex gap-1">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        <button type="button" onClick={() => onRemark(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Remark</button>
                                                         <button type="button" onClick={() => onApprove(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">Approve</button>
                                                         <button type="button" onClick={() => onReject(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">Reject</button>
                                                     </div>
@@ -180,6 +188,9 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
     const [copiedKey, setCopiedKey] = useState(null);
     const [decisionId, setDecisionId] = useState(null);
     const [actionedRows, setActionedRows] = useState({});
+    const [rowRemarks, setRowRemarks] = useState({});
+    const [decisionModal, setDecisionModal] = useState(null);
+    const [remarkValue, setRemarkValue] = useState('');
     const [decisionError, setDecisionError] = useState('');
 
     useEffect(() => {
@@ -240,8 +251,24 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
         post(route('admin.spokas.rollback'), { preserveScroll: true });
     };
 
-    const decide = async (item, decision) => {
-        if (decisionId !== null || actionedRows[item.id]) return;
+    const openDecisionModal = (item, decision = null) => {
+        setDecisionError('');
+        setDecisionModal({ item, decision });
+        setRemarkValue(rowRemarks[item.id] ?? item.remark ?? '');
+    };
+
+    const decide = async (item, decision, remark) => {
+        if (decisionId !== null || actionedRows[item.id]) return false;
+
+        const normalizedRemark = remark.trim();
+        if (!decision) {
+            setDecisionError('Sila pilih tindakan approve atau reject.');
+            return false;
+        }
+        if (!normalizedRemark) {
+            setDecisionError('Remark wajib diisi sebelum tindakan diproses.');
+            return false;
+        }
 
         setDecisionError('');
         setDecisionId(item.id);
@@ -260,20 +287,30 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                     'X-Requested-With': 'XMLHttpRequest',
                     ...(token ? { 'X-CSRF-TOKEN': token } : {}),
                 },
-                body: JSON.stringify({}),
+                body: JSON.stringify({ remark: normalizedRemark }),
             });
             const payload = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(payload.message || 'Tindakan padanan nama gagal diproses.');
+                throw new Error(payload.message || payload.errors?.remark?.[0] || 'Tindakan padanan nama gagal diproses.');
             }
 
             setActionedRows((current) => ({ ...current, [item.id]: decision }));
+            setRowRemarks((current) => ({ ...current, [item.id]: normalizedRemark }));
+            setDecisionModal(null);
+            return true;
         } catch (error) {
             setDecisionError(error.message || 'Tindakan padanan nama gagal diproses.');
+            return false;
         } finally {
             setDecisionId(null);
         }
+    };
+
+    const submitDecision = () => {
+        if (!decisionModal) return;
+
+        void decide(decisionModal.item, decisionModal.decision, remarkValue);
     };
 
     const tabs = [
@@ -367,8 +404,10 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                             copiedKey={copiedKey}
                             onCopy={copyValue}
                             actionedRows={actionedRows}
-                            onApprove={(item) => decide(item, 'approved')}
-                            onReject={(item) => decide(item, 'rejected')}
+                            rowRemarks={rowRemarks}
+                            onRemark={(item) => openDecisionModal(item)}
+                            onApprove={(item) => openDecisionModal(item, 'approved')}
+                            onReject={(item) => openDecisionModal(item, 'rejected')}
                         />
                     </section>
                 ) : (
@@ -378,6 +417,60 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                     </section>
                 )}
             </div>
+
+            {decisionModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3" role="dialog" aria-modal="true" aria-labelledby="spokas-remark-title">
+                    <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl">
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <p className="label-section">Keputusan padanan nama</p>
+                                <h3 id="spokas-remark-title" className="mt-1 text-lg font-bold text-slate-900">Tambah remark</h3>
+                                <p className="mt-1 text-xs text-slate-500">Nyatakan sebab sebelum rekod ini diluluskan atau ditolak.</p>
+                            </div>
+                            <button type="button" onClick={() => setDecisionModal(null)} disabled={decisionId !== null} className="text-xl leading-none text-slate-400 hover:text-slate-700 disabled:opacity-50" aria-label="Tutup">&times;</button>
+                        </div>
+
+                        <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nama SPoKAS</p>
+                            <p className="mt-0.5 text-sm font-bold text-slate-800">{decisionModal.item.name || '-'}</p>
+                        </div>
+
+                        <label className="mt-4 block text-xs font-bold text-slate-700" htmlFor="spokas-decision">Tindakan</label>
+                        <select
+                            id="spokas-decision"
+                            value={decisionModal.decision ?? ''}
+                            onChange={(event) => setDecisionModal((current) => current ? { ...current, decision: event.target.value || null } : current)}
+                            className="input-field mt-1"
+                            disabled={decisionId !== null}
+                        >
+                            <option value="" disabled>Pilih tindakan</option>
+                            <option value="approved">Approve</option>
+                            <option value="rejected">Reject</option>
+                        </select>
+
+                        <label className="mt-4 block text-xs font-bold text-slate-700" htmlFor="spokas-remark">Remark <span className="text-red-600">*</span></label>
+                        <textarea
+                            id="spokas-remark"
+                            value={remarkValue}
+                            onChange={(event) => setRemarkValue(event.target.value)}
+                            rows="4"
+                            maxLength="1000"
+                            placeholder="Contoh: No. K/P lama dan nama sepadan dengan rekod pemilih."
+                            className="input-field mt-1 resize-y"
+                            disabled={decisionId !== null}
+                        />
+                        <p className="mt-1 text-right text-[10px] text-slate-400">{remarkValue.length}/1000</p>
+                        {decisionError && <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{decisionError}</p>}
+
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button type="button" onClick={() => setDecisionModal(null)} disabled={decisionId !== null} className="btn-ghost">Batal</button>
+                            <button type="button" onClick={submitDecision} disabled={decisionId !== null || !decisionModal.decision || !remarkValue.trim()} className={decisionModal.decision === 'rejected' ? 'btn-danger' : 'btn-emerald'}>
+                                {decisionId !== null ? 'Sedang simpan...' : decisionModal.decision === 'rejected' ? 'Simpan & Reject' : 'Simpan & Approve'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

@@ -59,10 +59,11 @@ class SpokasController extends Controller
     public function approveNameMatch(Request $request, SpokasMigrationResult $result): RedirectResponse|JsonResponse
     {
         $this->ensureModuleAccess();
+        $remark = $this->validatedRemark($request);
         $name = $result->name ?: 'pemilih';
         $memberNumber = $result->member_number ?: '-';
 
-        DB::transaction(function () use ($result): void {
+        DB::transaction(function () use ($result, $remark): void {
             $result = SpokasMigrationResult::query()->lockForUpdate()->findOrFail($result->id);
             abort_unless($result->category === 'name' && $result->pemilih_id !== null, 422);
 
@@ -76,7 +77,10 @@ class SpokasController extends Controller
             PemilihRecord::query()->lockForUpdate()->findOrFail($result->pemilih_id)->update([
                 'no_ahli' => $result->member_number,
             ]);
-            $result->update(['category' => 'approved']);
+            $result->update([
+                'category' => 'approved',
+                'remark' => $remark,
+            ]);
             SpokasMigrationRun::query()
                 ->whereKey($result->spokas_migration_run_id)
                 ->increment('updated_count');
@@ -97,12 +101,16 @@ class SpokasController extends Controller
     public function rejectNameMatch(Request $request, SpokasMigrationResult $result): RedirectResponse|JsonResponse
     {
         $this->ensureModuleAccess();
+        $remark = $this->validatedRemark($request);
         $name = $result->name ?: 'pemilih';
 
         $updated = SpokasMigrationResult::query()
             ->whereKey($result->id)
             ->where('category', 'name')
-            ->update(['category' => 'rejected']);
+            ->update([
+                'category' => 'rejected',
+                'remark' => $remark,
+            ]);
         abort_unless($updated === 1, 422);
 
         $message = "Nama {$name} telah ditolak.";
@@ -121,6 +129,13 @@ class SpokasController extends Controller
     private function ensureModuleAccess(): void
     {
         abort_unless(request()->user()?->canAccessModule('spokas'), 403);
+    }
+
+    private function validatedRemark(Request $request): string
+    {
+        return trim((string) $request->validate([
+            'remark' => ['required', 'string', 'max:1000'],
+        ])['remark']);
     }
 
     private function pageProps(Request $request, ?SpokasMigrationRun $run = null): array
@@ -160,7 +175,8 @@ class SpokasController extends Controller
                         ->orWhere('ic_birth', 'like', $like)
                         ->orWhere('pemilih_name', 'like', $like)
                         ->orWhere('pemilih_no_kp', 'like', $like)
-                        ->orWhere('reason', 'like', $like);
+                        ->orWhere('reason', 'like', $like)
+                        ->orWhere('remark', 'like', $like);
                 });
             }
 
@@ -208,6 +224,7 @@ class SpokasController extends Controller
             'pemilih_old_ic' => $result->pemilih_old_ic,
             'previous_no_ahli' => $result->previous_no_ahli,
             'reason' => $result->reason,
+            'remark' => $result->remark,
         ];
     }
 }

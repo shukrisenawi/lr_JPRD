@@ -22,6 +22,7 @@ class SpokasMigrationResult extends Model
         'pemilih_old_ic',
         'previous_no_ahli',
         'reason',
+        'remark',
     ];
 
     public function run(): BelongsTo
