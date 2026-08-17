@@ -118,21 +118,22 @@ it('allows a master admin to approve or reject a name match after comparing iden
     $approvedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA APPROVE')->firstOrFail();
     $rejectedResult = SpokasMigrationResult::query()->where('name', 'NAMA SAMA REJECT')->firstOrFail();
 
-    $this->postJson(route('admin.spokas.results.approve', $approvedResult))
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('remark');
-
-    $this->postJson(route('admin.spokas.results.approve', $approvedResult), [
+    $this->postJson(route('admin.spokas.results.remark', $approvedResult), [
         'remark' => 'No. K/P tidak sama tetapi nama dan IC lama disahkan.',
     ])
         ->assertOk()
         ->assertJson([
             'success' => true,
+            'message' => 'Remark nama NAMA SAMA APPROVE berjaya disimpan.',
+        ]);
+
+    $this->postJson(route('admin.spokas.results.approve', $approvedResult))
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
             'message' => 'Nama NAMA SAMA APPROVE berjaya dikemaskini. No. Ahli PAS LULUS-001 telah disimpan.',
         ]);
-    $this->postJson(route('admin.spokas.results.reject', $rejectedResult), [
-        'remark' => 'No. K/P lama tidak sepadan dengan rekod pemilih.',
-    ])
+    $this->postJson(route('admin.spokas.results.reject', $rejectedResult))
         ->assertOk()
         ->assertJson([
             'success' => true,
@@ -143,7 +144,7 @@ it('allows a master admin to approve or reject a name match after comparing iden
         ->and($approvedResult->fresh()->category)->toBe('approved')
         ->and($approvedResult->fresh()->remark)->toBe('No. K/P tidak sama tetapi nama dan IC lama disahkan.')
         ->and($rejectedResult->fresh()->category)->toBe('rejected')
-        ->and($rejectedResult->fresh()->remark)->toBe('No. K/P lama tidak sepadan dengan rekod pemilih.');
+        ->and($rejectedResult->fresh()->remark)->toBeNull();
 
     $this->actingAs($admin)
         ->get(route('admin.spokas.index', ['tab' => 'approved']))
@@ -157,7 +158,7 @@ it('allows a master admin to approve or reject a name match after comparing iden
     $this->actingAs($admin)
         ->get(route('admin.spokas.index', ['tab' => 'rejected']))
         ->assertInertia(fn ($page) => $page
-            ->where('results.data.0.remark', 'No. K/P lama tidak sepadan dengan rekod pemilih.'));
+            ->where('results.data.0.remark', null));
 });
 
 it('allows a master admin to open the spokas page', function () {

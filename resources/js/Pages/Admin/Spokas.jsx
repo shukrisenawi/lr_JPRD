@@ -189,9 +189,11 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
     const [decisionId, setDecisionId] = useState(null);
     const [actionedRows, setActionedRows] = useState({});
     const [rowRemarks, setRowRemarks] = useState({});
-    const [decisionModal, setDecisionModal] = useState(null);
+    const [remarkId, setRemarkId] = useState(null);
+    const [remarkModal, setRemarkModal] = useState(null);
     const [remarkValue, setRemarkValue] = useState('');
     const [decisionError, setDecisionError] = useState('');
+    const [remarkError, setRemarkError] = useState('');
 
     useEffect(() => {
         setTab(active_tab ?? 'ic');
@@ -251,27 +253,18 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
         post(route('admin.spokas.rollback'), { preserveScroll: true });
     };
 
-    const openDecisionModal = (item, decision = null) => {
-        setDecisionError('');
-        setDecisionModal({ item, decision });
+    const openRemarkModal = (item) => {
+        setRemarkError('');
+        setRemarkModal({ item });
         setRemarkValue(rowRemarks[item.id] ?? item.remark ?? '');
     };
 
-    const decide = async (item, decision, remark) => {
+    const decide = async (item, decision) => {
         if (decisionId !== null || actionedRows[item.id]) return false;
-
-        const normalizedRemark = remark.trim();
-        if (!decision) {
-            setDecisionError('Sila pilih tindakan approve atau reject.');
-            return false;
-        }
-        if (!normalizedRemark) {
-            setDecisionError('Remark wajib diisi sebelum tindakan diproses.');
-            return false;
-        }
 
         setDecisionError('');
         setDecisionId(item.id);
+        const savedRemark = (rowRemarks[item.id] ?? item.remark ?? '').trim();
 
         try {
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -287,7 +280,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                     'X-Requested-With': 'XMLHttpRequest',
                     ...(token ? { 'X-CSRF-TOKEN': token } : {}),
                 },
-                body: JSON.stringify({ remark: normalizedRemark }),
+                body: JSON.stringify({ remark: savedRemark || null }),
             });
             const payload = await response.json().catch(() => ({}));
 
@@ -296,8 +289,6 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
             }
 
             setActionedRows((current) => ({ ...current, [item.id]: decision }));
-            setRowRemarks((current) => ({ ...current, [item.id]: normalizedRemark }));
-            setDecisionModal(null);
             return true;
         } catch (error) {
             setDecisionError(error.message || 'Tindakan padanan nama gagal diproses.');
@@ -307,10 +298,44 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
         }
     };
 
-    const submitDecision = () => {
-        if (!decisionModal) return;
+    const saveRemark = async () => {
+        if (!remarkModal || remarkId !== null) return;
 
-        void decide(decisionModal.item, decisionModal.decision, remarkValue);
+        const normalizedRemark = remarkValue.trim();
+        if (!normalizedRemark) {
+            setRemarkError('Remark wajib diisi.');
+            return;
+        }
+
+        setRemarkError('');
+        setRemarkId(remarkModal.item.id);
+
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(route('admin.spokas.results.remark', remarkModal.item.id), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                },
+                body: JSON.stringify({ remark: normalizedRemark }),
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload.message || payload.errors?.remark?.[0] || 'Remark gagal disimpan.');
+            }
+
+            setRowRemarks((current) => ({ ...current, [remarkModal.item.id]: normalizedRemark }));
+            setRemarkModal(null);
+        } catch (error) {
+            setRemarkError(error.message || 'Remark gagal disimpan.');
+        } finally {
+            setRemarkId(null);
+        }
     };
 
     const tabs = [
@@ -400,14 +425,14 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                                 loadResults(tab, 1, searchValue);
                             }}
                             onPage={(page) => loadResults(tab, page, searchValue)}
-                            processing={processing || decisionId !== null}
+                            processing={processing || decisionId !== null || remarkId !== null}
                             copiedKey={copiedKey}
                             onCopy={copyValue}
                             actionedRows={actionedRows}
                             rowRemarks={rowRemarks}
-                            onRemark={(item) => openDecisionModal(item)}
-                            onApprove={(item) => openDecisionModal(item, 'approved')}
-                            onReject={(item) => openDecisionModal(item, 'rejected')}
+                            onRemark={(item) => openRemarkModal(item)}
+                            onApprove={(item) => decide(item, 'approved')}
+                            onReject={(item) => decide(item, 'rejected')}
                         />
                     </section>
                 ) : (
@@ -418,35 +443,22 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                 )}
             </div>
 
-            {decisionModal && (
+            {remarkModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3" role="dialog" aria-modal="true" aria-labelledby="spokas-remark-title">
                     <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl">
                         <div className="flex items-start justify-between gap-3">
                             <div>
-                                <p className="label-section">Keputusan padanan nama</p>
+                                <p className="label-section">Padanan nama</p>
                                 <h3 id="spokas-remark-title" className="mt-1 text-lg font-bold text-slate-900">Tambah remark</h3>
-                                <p className="mt-1 text-xs text-slate-500">Nyatakan sebab sebelum rekod ini diluluskan atau ditolak.</p>
+                                <p className="mt-1 text-xs text-slate-500">Simpan sebab atau catatan untuk rujukan keputusan approve atau reject.</p>
                             </div>
-                            <button type="button" onClick={() => setDecisionModal(null)} disabled={decisionId !== null} className="text-xl leading-none text-slate-400 hover:text-slate-700 disabled:opacity-50" aria-label="Tutup">&times;</button>
+                            <button type="button" onClick={() => setRemarkModal(null)} disabled={remarkId !== null} className="text-xl leading-none text-slate-400 hover:text-slate-700 disabled:opacity-50" aria-label="Tutup">&times;</button>
                         </div>
 
                         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Nama SPoKAS</p>
-                            <p className="mt-0.5 text-sm font-bold text-slate-800">{decisionModal.item.name || '-'}</p>
+                            <p className="mt-0.5 text-sm font-bold text-slate-800">{remarkModal.item.name || '-'}</p>
                         </div>
-
-                        <label className="mt-4 block text-xs font-bold text-slate-700" htmlFor="spokas-decision">Tindakan</label>
-                        <select
-                            id="spokas-decision"
-                            value={decisionModal.decision ?? ''}
-                            onChange={(event) => setDecisionModal((current) => current ? { ...current, decision: event.target.value || null } : current)}
-                            className="input-field mt-1"
-                            disabled={decisionId !== null}
-                        >
-                            <option value="" disabled>Pilih tindakan</option>
-                            <option value="approved">Approve</option>
-                            <option value="rejected">Reject</option>
-                        </select>
 
                         <label className="mt-4 block text-xs font-bold text-slate-700" htmlFor="spokas-remark">Remark <span className="text-red-600">*</span></label>
                         <textarea
@@ -457,15 +469,15 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
                             maxLength="1000"
                             placeholder="Contoh: No. K/P lama dan nama sepadan dengan rekod pemilih."
                             className="input-field mt-1 resize-y"
-                            disabled={decisionId !== null}
+                            disabled={remarkId !== null}
                         />
                         <p className="mt-1 text-right text-[10px] text-slate-400">{remarkValue.length}/1000</p>
-                        {decisionError && <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{decisionError}</p>}
+                        {remarkError && <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{remarkError}</p>}
 
                         <div className="mt-4 flex justify-end gap-2">
-                            <button type="button" onClick={() => setDecisionModal(null)} disabled={decisionId !== null} className="btn-ghost">Batal</button>
-                            <button type="button" onClick={submitDecision} disabled={decisionId !== null || !decisionModal.decision || !remarkValue.trim()} className={decisionModal.decision === 'rejected' ? 'btn-danger' : 'btn-emerald'}>
-                                {decisionId !== null ? 'Sedang simpan...' : decisionModal.decision === 'rejected' ? 'Simpan & Reject' : 'Simpan & Approve'}
+                            <button type="button" onClick={() => setRemarkModal(null)} disabled={remarkId !== null} className="btn-ghost">Batal</button>
+                            <button type="button" onClick={saveRemark} disabled={remarkId !== null || !remarkValue.trim()} className="btn-violet">
+                                {remarkId !== null ? 'Sedang simpan...' : 'Simpan Remark'}
                             </button>
                         </div>
                     </div>

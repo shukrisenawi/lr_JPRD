@@ -168,6 +168,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/spokas/rollback', [SpokasController::class, 'rollback'])->middleware('module:spokas')->name('admin.spokas.rollback');
     Route::post('/admin/spokas/results/{result}/approve', [SpokasController::class, 'approveNameMatch'])->middleware('module:spokas')->name('admin.spokas.results.approve');
     Route::post('/admin/spokas/results/{result}/reject', [SpokasController::class, 'rejectNameMatch'])->middleware('module:spokas')->name('admin.spokas.results.reject');
+    Route::post('/admin/spokas/results/{result}/remark', [SpokasController::class, 'saveRemark'])->middleware('module:spokas')->name('admin.spokas.results.remark');
 
     Route::get('/pusat-khidmat', [PusatKhidmatController::class, 'index'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.index');
     Route::post('/pusat-khidmat/manual', [PusatKhidmatController::class, 'storeManual'])->middleware('module:pusat-khidmat')->name('pusat-khidmat.manual.store');

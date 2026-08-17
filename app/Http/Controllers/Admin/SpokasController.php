@@ -77,10 +77,11 @@ class SpokasController extends Controller
             PemilihRecord::query()->lockForUpdate()->findOrFail($result->pemilih_id)->update([
                 'no_ahli' => $result->member_number,
             ]);
-            $result->update([
-                'category' => 'approved',
-                'remark' => $remark,
-            ]);
+            $decision = ['category' => 'approved'];
+            if ($remark !== null) {
+                $decision['remark'] = $remark;
+            }
+            $result->update($decision);
             SpokasMigrationRun::query()
                 ->whereKey($result->spokas_migration_run_id)
                 ->increment('updated_count');
@@ -104,13 +105,15 @@ class SpokasController extends Controller
         $remark = $this->validatedRemark($request);
         $name = $result->name ?: 'pemilih';
 
+        $decision = ['category' => 'rejected'];
+        if ($remark !== null) {
+            $decision['remark'] = $remark;
+        }
+
         $updated = SpokasMigrationResult::query()
             ->whereKey($result->id)
             ->where('category', 'name')
-            ->update([
-                'category' => 'rejected',
-                'remark' => $remark,
-            ]);
+            ->update($decision);
         abort_unless($updated === 1, 422);
 
         $message = "Nama {$name} telah ditolak.";
@@ -126,16 +129,43 @@ class SpokasController extends Controller
             ->with('success', $message);
     }
 
+    public function saveRemark(Request $request, SpokasMigrationResult $result): RedirectResponse|JsonResponse
+    {
+        $this->ensureModuleAccess();
+        $remark = $this->validatedRemark($request, true);
+        $name = $result->name ?: 'pemilih';
+
+        $updated = SpokasMigrationResult::query()
+            ->whereKey($result->id)
+            ->where('category', 'name')
+            ->update(['remark' => $remark]);
+        abort_unless($updated === 1, 422);
+
+        $message = "Remark nama {$name} berjaya disimpan.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     private function ensureModuleAccess(): void
     {
         abort_unless(request()->user()?->canAccessModule('spokas'), 403);
     }
 
-    private function validatedRemark(Request $request): string
+    private function validatedRemark(Request $request, bool $required = false): ?string
     {
-        return trim((string) $request->validate([
-            'remark' => ['required', 'string', 'max:1000'],
-        ])['remark']);
+        $validated = $request->validate([
+            'remark' => [$required ? 'required' : 'nullable', 'string', 'max:1000'],
+        ]);
+        $remark = trim((string) ($validated['remark'] ?? ''));
+
+        return $remark !== '' ? $remark : null;
     }
 
     private function pageProps(Request $request, ?SpokasMigrationRun $run = null): array
