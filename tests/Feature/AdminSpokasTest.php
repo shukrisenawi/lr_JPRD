@@ -163,6 +163,46 @@ it('allows a master admin to approve or reject a name match after comparing iden
             ->where('results.data.0.remark', 'Remark reject dikemas kini.'));
 });
 
+it('hides a name match when its member number was already assigned by an IC match', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    PemilihRecord::query()->create([
+        'identity_number' => 'pemilih-ic-assigned',
+        'no_kp' => '900101011234',
+        'name' => 'NAMA PEMILIH IC',
+        'status' => 'aktif',
+    ]);
+    PemilihRecord::query()->create([
+        'identity_number' => 'pemilih-name-duplicate-number',
+        'no_kp' => '910202021234',
+        'name' => 'NAMA PEMILIH NAMA',
+        'status' => 'aktif',
+    ]);
+    SpokasMember::query()->create([
+        'name' => 'NAMA SPoKAS IC',
+        'member_number' => 'DUPLICATE-001',
+        'ic_birth' => '900101011234',
+    ]);
+    SpokasMember::query()->create([
+        'name' => 'NAMA PEMILIH NAMA',
+        'member_number' => 'DUPLICATE-001',
+        'ic_birth' => null,
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.spokas.migrate'))
+        ->assertRedirect(route('admin.spokas.index'));
+
+    expect(SpokasMigrationResult::query()->where('category', 'ic')->count())->toBe(1)
+        ->and(SpokasMigrationResult::query()->where('category', 'name')->count())->toBe(1);
+
+    $this->actingAs($admin)
+        ->get(route('admin.spokas.index', ['tab' => 'name']))
+        ->assertInertia(fn ($page) => $page
+            ->where('result_counts.name', 0)
+            ->where('results.total', 0)
+            ->where('results.data', []));
+});
+
 it('allows a master admin to open the spokas page', function () {
     $admin = User::factory()->masterAdmin()->create();
 

@@ -188,6 +188,11 @@ class SpokasController extends Controller
         ];
 
         if ($run) {
+            $icMatchedMemberNumbers = fn () => SpokasMigrationResult::query()
+                ->where('spokas_migration_run_id', $run->id)
+                ->where('category', 'ic')
+                ->whereNotNull('member_number')
+                ->select('member_number');
             $resultCounts = array_replace($resultCounts, SpokasMigrationResult::query()
                 ->where('spokas_migration_run_id', $run->id)
                 ->selectRaw('category, count(*) as total')
@@ -195,9 +200,21 @@ class SpokasController extends Controller
                 ->pluck('total', 'category')
                 ->map(fn (mixed $total): int => (int) $total)
                 ->all());
+            if ($tab === 'name') {
+                $hiddenNameCount = SpokasMigrationResult::query()
+                    ->where('spokas_migration_run_id', $run->id)
+                    ->where('category', 'name')
+                    ->whereIn('member_number', $icMatchedMemberNumbers())
+                    ->count();
+                $resultCounts['name'] = max(0, $resultCounts['name'] - $hiddenNameCount);
+            }
             $query = SpokasMigrationResult::query()
                 ->where('spokas_migration_run_id', $run->id)
                 ->where('category', $tab);
+
+            if ($tab === 'name') {
+                $query->whereNotIn('member_number', $icMatchedMemberNumbers());
+            }
 
             if ($search !== '') {
                 $query->where(function ($builder) use ($search): void {
