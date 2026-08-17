@@ -71,6 +71,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
     const hasPemilih = kind !== 'not_found';
     const needsDecision = kind === 'name';
     const showsRemark = ['name', 'approved', 'rejected'].includes(kind);
+    const showsRemarkColumn = ['approved', 'rejected'].includes(kind);
 
     return (
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -103,7 +104,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                 {hasPemilih ? (
                                     <>
                                         <th className="px-3 py-2">No. K/P Lama Pemilih</th>
-                                        {showsRemark && <th className="px-3 py-2">Remark</th>}
+                                        {showsRemarkColumn && <th className="px-3 py-2">Remark</th>}
                                         {showsRemark && <th className="px-3 py-2">Tindakan</th>}
                                     </>
                                 ) : (
@@ -143,7 +144,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                             <td className="px-3 py-2">
                                                 <CopyableValue value={item.pemilih_old_ic} label="IC lama pemilih" copyKey={`${item.id}-pemilih_old_ic`} copiedKey={copiedKey} onCopy={onCopy} />
                                             </td>
-                                            {showsRemark && (
+                                            {showsRemarkColumn && (
                                                 <td className="max-w-xs whitespace-normal px-3 py-2 text-slate-600">
                                                     {rowRemarks?.[item.id] || item.remark || '-'}
                                                 </td>
