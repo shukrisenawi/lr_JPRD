@@ -137,7 +137,7 @@ class SpokasController extends Controller
 
         $updated = SpokasMigrationResult::query()
             ->whereKey($result->id)
-            ->where('category', 'name')
+            ->whereIn('category', ['name', 'approved', 'rejected'])
             ->update(['remark' => $remark]);
         abort_unless($updated === 1, 422);
 

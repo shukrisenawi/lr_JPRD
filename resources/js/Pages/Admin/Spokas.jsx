@@ -104,7 +104,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                     <>
                                         <th className="px-3 py-2">No. K/P Lama Pemilih</th>
                                         {showsRemark && <th className="px-3 py-2">Remark</th>}
-                                        {needsDecision && <th className="px-3 py-2">Tindakan</th>}
+                                        {showsRemark && <th className="px-3 py-2">Tindakan</th>}
                                     </>
                                 ) : (
                                     <th className="px-3 py-2">Sebab</th>
@@ -113,10 +113,10 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {visible.map((item) => (
-                                <tr key={`${kind}-${item.spokas_id}`} className={`hover:bg-emerald-50/40 ${actionedRows?.[item.id] ? 'bg-slate-100/70 opacity-60 line-through decoration-slate-400' : ''}`}>
+                                <tr key={`${kind}-${item.spokas_id}`} className={`hover:bg-emerald-50/40 ${needsDecision && actionedRows?.[item.id] ? 'bg-slate-100/70 opacity-60 line-through decoration-slate-400' : ''}`}>
                                     <td className="px-3 py-2 font-semibold text-slate-800">
                                         <span className="inline-flex items-center gap-1.5">
-                                            {actionedRows?.[item.id] && (
+                                            {needsDecision && actionedRows?.[item.id] && (
                                                 <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white ${actionedRows[item.id] === 'approved' ? 'bg-emerald-500' : 'bg-red-500'}`} title={actionedRows[item.id] === 'approved' ? 'Diluluskan' : 'Ditolak'}>
                                                     <Icon name={actionedRows[item.id] === 'approved' ? 'check' : 'x'} className="h-2.5 w-2.5" />
                                                 </span>
@@ -148,12 +148,16 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                                     {rowRemarks?.[item.id] || item.remark || '-'}
                                                 </td>
                                             )}
-                                            {needsDecision && (
+                                            {showsRemark && (
                                                 <td className="px-3 py-2">
                                                     <div className="flex flex-wrap gap-1">
-                                                        <button type="button" onClick={() => onRemark(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Remark</button>
-                                                        <button type="button" onClick={() => onApprove(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">Approve</button>
-                                                        <button type="button" onClick={() => onReject(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">Reject</button>
+                                                        <button type="button" onClick={() => onRemark(item)} disabled={processing || (needsDecision && Boolean(actionedRows?.[item.id]))} className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Remark</button>
+                                                        {needsDecision && (
+                                                            <>
+                                                                <button type="button" onClick={() => onApprove(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-emerald-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">Approve</button>
+                                                                <button type="button" onClick={() => onReject(item)} disabled={processing || Boolean(actionedRows?.[item.id])} className="rounded bg-red-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">Reject</button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                             )}

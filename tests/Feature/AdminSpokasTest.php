@@ -140,11 +140,18 @@ it('allows a master admin to approve or reject a name match after comparing iden
             'message' => 'Nama NAMA SAMA REJECT telah ditolak.',
         ]);
 
+    $this->postJson(route('admin.spokas.results.remark', $approvedResult), [
+        'remark' => 'Remark approve dikemas kini.',
+    ])->assertOk();
+    $this->postJson(route('admin.spokas.results.remark', $rejectedResult), [
+        'remark' => 'Remark reject dikemas kini.',
+    ])->assertOk();
+
     expect($approvedRecord->fresh()->no_ahli)->toBe('LULUS-001')
         ->and($approvedResult->fresh()->category)->toBe('approved')
-        ->and($approvedResult->fresh()->remark)->toBe('No. K/P tidak sama tetapi nama dan IC lama disahkan.')
+        ->and($approvedResult->fresh()->remark)->toBe('Remark approve dikemas kini.')
         ->and($rejectedResult->fresh()->category)->toBe('rejected')
-        ->and($rejectedResult->fresh()->remark)->toBeNull();
+        ->and($rejectedResult->fresh()->remark)->toBe('Remark reject dikemas kini.');
 
     $this->actingAs($admin)
         ->get(route('admin.spokas.index', ['tab' => 'approved']))
@@ -153,12 +160,12 @@ it('allows a master admin to approve or reject a name match after comparing iden
             ->where('result_counts.approved', 1)
             ->where('results.data.0.member_number', 'LULUS-001')
             ->where('results.data.0.pemilih_name', 'NAMA SAMA APPROVE')
-            ->where('results.data.0.remark', 'No. K/P tidak sama tetapi nama dan IC lama disahkan.'));
+            ->where('results.data.0.remark', 'Remark approve dikemas kini.'));
 
     $this->actingAs($admin)
         ->get(route('admin.spokas.index', ['tab' => 'rejected']))
         ->assertInertia(fn ($page) => $page
-            ->where('results.data.0.remark', null));
+            ->where('results.data.0.remark', 'Remark reject dikemas kini.'));
 });
 
 it('allows a master admin to open the spokas page', function () {
