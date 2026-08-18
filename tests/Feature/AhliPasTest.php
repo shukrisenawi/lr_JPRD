@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\User;
 use App\Support\CulaCodes;
@@ -104,6 +105,31 @@ it('lists ahli pas with non pas and missing cula codes', function () {
         ->assertInertia(fn ($page) => $page
             ->where('wrong_cula_members.total', 1)
             ->where('wrong_cula_members.data.0.name', 'CULA UMNO'));
+});
+
+it('builds the ahli pas salah cula message from unreviewed counts by udm', function () {
+    $user = User::factory()->withModules(['ahli-pas', 'laporan-hantar-status'])->create();
+
+    createAhliPasRecord(['name' => 'SALAH A 1', 'no_ahli' => 'PAS-001', 'dm' => 'UDM A', 'cula_code' => '1']);
+    createAhliPasRecord(['name' => 'SALAH A 2', 'no_ahli' => 'PAS-002', 'dm' => 'UDM A', 'cula_code' => null]);
+    createAhliPasRecord(['name' => 'SALAH B', 'no_ahli' => 'PAS-003', 'dm' => 'UDM B', 'cula_code' => '10']);
+    $reviewed = createAhliPasRecord(['name' => 'SUDAH SEMAK', 'no_ahli' => 'PAS-004', 'dm' => 'UDM B', 'cula_code' => '1']);
+    createAhliPasRecord(['name' => 'KOD PAS SAH', 'no_ahli' => 'PAS-005', 'dm' => 'UDM C', 'cula_code' => '2']);
+
+    CulaWorkItem::create([
+        'pemilih_record_id' => $reviewed->id,
+        'marked_by' => $user->id,
+        'marked_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get('/ahli-pas')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('wrong_cula_members.total', 3)
+            ->where('salah_cula_message', fn ($message) => str_contains($message, '1) UDM A 2️⃣🌸')
+                && str_contains($message, '2) UDM B 1️⃣🌸')
+                && str_contains($message, '3️⃣')));
 });
 
 it('shares the wrong cula ahli pas count for the navigation badge', function () {

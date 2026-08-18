@@ -52,6 +52,32 @@ class CulaanMessageService
         return implode("\n", $lines);
     }
 
+    public function buildAhliPasSalahCula(array $byUdm, ?Carbon $date = null): string
+    {
+        $date ??= now('Asia/Kuala_Lumpur');
+        $total = 0;
+
+        $lines = [
+            '📌BAKI SEMAKAN SALAH CULA AHLI PAS '.$date->format('j/n/y'),
+            '',
+            '♦️BELUM SEMAK IKUT UDM',
+        ];
+
+        foreach ($byUdm as $index => $udm) {
+            $count = (int) ($udm['total'] ?? 0);
+            $total += $count;
+            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan').' '.$this->formatNumber($count).'🌸';
+        }
+
+        $lines[] = '';
+        $lines[] = '🟩JUMLAH KESELURUHAN';
+        $lines[] = $this->formatNumber($total);
+        $lines[] = '';
+        $lines[] = '🌸Terima kasih atas komitmen UDM.. Ayuh kita Selesaikan.. Anda semua terbaik';
+
+        return implode("\n", $lines);
+    }
+
     private function formatNumber(int|float|string $value): string
     {
         return strtr(number_format((float) $value, 0, '.', ', '), self::DIGIT_EMOJIS);

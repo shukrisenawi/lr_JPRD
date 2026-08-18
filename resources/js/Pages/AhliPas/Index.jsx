@@ -1,5 +1,6 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, router } from "@inertiajs/react";
+import N8nMessageModal from "@/Components/N8nMessageModal";
+import { Head, router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 
 function Icon({ name, className = "h-5 w-5" }) {
@@ -272,7 +273,12 @@ export default function AhliPasIndex({
     wrong_cula_members,
     available_cula_codes = [],
     statistics,
+    salah_cula_message = "",
 }) {
+    const { auth } = usePage().props;
+    const canSendN8nMessage =
+        auth.user?.role?.is_master_admin ||
+        auth.user?.allowed_modules?.includes("laporan-hantar-status");
     const [form, setForm] = useState(filters);
     const [copiedNoAhli, setCopiedNoAhli] = useState("");
     const [detailMember, setDetailMember] = useState(null);
@@ -284,12 +290,56 @@ export default function AhliPasIndex({
     const [savingCula, setSavingCula] = useState(false);
     const [culaError, setCulaError] = useState("");
     const [localitySearch, setLocalitySearch] = useState("");
+    const [n8nModalOpen, setN8nModalOpen] = useState(false);
+    const [n8nMessage, setN8nMessage] = useState(salah_cula_message);
+    const [n8nSending, setN8nSending] = useState(false);
+    const [n8nError, setN8nError] = useState("");
+    const [n8nNotice, setN8nNotice] = useState("");
 
     useEffect(() => setForm(filters), [filters]);
     useEffect(
         () => setLocalWrongCulaMembers(wrong_cula_members),
         [wrong_cula_members],
     );
+
+    const openN8nModal = () => {
+        setN8nMessage(salah_cula_message);
+        setN8nError("");
+        setN8nNotice("");
+        setN8nModalOpen(true);
+    };
+
+    const sendN8nMessage = async () => {
+        setN8nSending(true);
+        setN8nError("");
+
+        try {
+            const response = await fetch(route("laporan.n8n.send"), {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN":
+                        document.querySelector('meta[name="csrf-token"]')
+                            ?.content ?? "",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify({ message: n8nMessage }),
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload.message ?? "Mesej gagal dihantar.");
+            }
+
+            setN8nModalOpen(false);
+            setN8nNotice(payload.message ?? "Mesej berjaya dihantar.");
+        } catch (error) {
+            setN8nError(error.message ?? "Mesej gagal dihantar.");
+        } finally {
+            setN8nSending(false);
+        }
+    };
 
     const copyNoAhli = async (value) => {
         try {
@@ -455,9 +505,39 @@ export default function AhliPasIndex({
     return (
         <AuthenticatedLayout
             header={
-                <div>
-                    <p className="label-section">Pemilih</p>
-                    <h2 className="mt-0.5 heading-lg">Ahli PAS</h2>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p className="label-section">Pemilih</p>
+                        <h2 className="mt-0.5 heading-lg">Ahli PAS</h2>
+                    </div>
+                    {canSendN8nMessage && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={openN8nModal}
+                                className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-green-700 to-green-500 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400"
+                            >
+                                <svg
+                                    aria-hidden="true"
+                                    className="h-3.5 w-3.5"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+                                </svg>
+                                Hantar Mesej
+                            </button>
+                            {n8nNotice && (
+                                <span className="text-xs font-semibold text-green-700">
+                                    {n8nNotice}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             }
         >
@@ -1125,6 +1205,19 @@ export default function AhliPasIndex({
                     </>
                 )}
             </div>
+            <N8nMessageModal
+                open={n8nModalOpen}
+                message={n8nMessage}
+                onChange={setN8nMessage}
+                onClose={() => {
+                    if (!n8nSending) setN8nModalOpen(false);
+                }}
+                onSend={sendN8nMessage}
+                sending={n8nSending}
+                error={n8nError}
+                title="Semak mesej baki Salah Cula"
+                description="Edit jumlah baki jika perlu sebelum approve dan hantar."
+            />
             {detailMember && (
                 <DetailModal
                     member={detailMember}

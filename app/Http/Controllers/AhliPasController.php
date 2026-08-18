@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
+use App\Services\CulaanMessageService;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +17,7 @@ class AhliPasController extends Controller
 {
     private const PAS_CULA_CODES = ['2', '3B', '3D', '3K', '3M', '3P', '3U'];
 
-    public function index(Request $request): Response
+    public function index(Request $request, CulaanMessageService $messageService): Response
     {
         $user = $request->user();
         $tab = $request->string('tab')->toString();
@@ -69,6 +70,8 @@ class AhliPasController extends Controller
             ->paginate(20, ['*'], 'salah_cula_page')
             ->withQueryString();
 
+        $wrongCulaByUdm = $this->groupByUdm($this->wrongCulaQuery(clone $base));
+
         return Inertia::render('AhliPas/Index', [
             'active_tab' => $tab,
             'filters' => $filters,
@@ -76,6 +79,7 @@ class AhliPasController extends Controller
             'available_localities' => $availableLocalities,
             'members' => $members,
             'wrong_cula_members' => $wrongCulaMembers,
+            'salah_cula_message' => $messageService->buildAhliPasSalahCula($wrongCulaByUdm),
             'available_cula_codes' => CulaCodes::options(),
             'statistics' => [
                 'total' => (clone $base)->count(),
