@@ -95,6 +95,8 @@ class CulaanMessageService
             '',
             '🟩JUMLAH BELUM SEMAK',
             $this->formatNumber($counts['total'] ?? 0),
+            '',
+            '🌸Terima kasih atas komitmen UDM.. Ayuh kita Selesaikan.. Anda semua terbaik',
         ]);
 
         return implode("\n", $lines);

@@ -144,5 +144,6 @@ it('builds the unreviewed Pusat Khidmat status from belum and telah cula records
                 && ! str_contains($message, '📌STATUS IKUT UDM')
                 && ! str_contains($message, '♦️BELUM CULA')
                 && ! str_contains($message, '♦️TELAH CULA')
+                && str_contains($message, '🌸Terima kasih atas komitmen UDM.. Ayuh kita Selesaikan.. Anda semua terbaik')
                 && str_contains($message, "🟩JUMLAH BELUM SEMAK\n2️⃣")));
 });
