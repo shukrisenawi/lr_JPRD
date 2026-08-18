@@ -606,7 +606,12 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                 ? filteredMergedMembers
                 : filteredScopeStats.flatMap((scope) => scope.members);
     const currentTabLabel = levelOptions.find((option) => option.key === activeTab)?.label ?? activeTab.toUpperCase();
-    const currentTabTitle = 'Senarai AJK ' + currentTabLabel;
+    const selectedPositionNames = selectedPositionIds
+        .map((id) => udmPositionStats.find((position) => String(position.id) === String(id))?.name)
+        .filter(Boolean);
+    const currentTabTitle = activeTab === 'udm-kumpulan' && selectedPositionNames.length > 0
+        ? 'Senarai AJK ' + selectedPositionNames.join(', ')
+        : 'Senarai AJK ' + currentTabLabel;
 
     return (
         <AuthenticatedLayout
