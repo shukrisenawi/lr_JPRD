@@ -58,7 +58,7 @@ class CulaanMessageService
         $total = 0;
 
         $lines = [
-            '📌BAKI SEMAKAN SALAH CULA AHLI PAS '.$date->format('j/n/y'),
+            '📌BAKI SEMAKAN AHLI PAS UDM '.$date->format('j/n/y'),
             '',
             '♦️BELUM SEMAK IKUT UDM',
         ];
