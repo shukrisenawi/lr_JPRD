@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PemilihRecord;
 use App\Models\PusatKhidmatData;
 use App\Models\Setting;
+use App\Services\CulaanMessageService;
 use App\Services\PusatKhidmatService;
 use App\Support\CulaCodes;
 use Illuminate\Http\JsonResponse;
@@ -14,9 +15,10 @@ use Inertia\Response;
 
 class PusatKhidmatController extends Controller
 {
-    public function index(PusatKhidmatService $service): Response
+    public function index(PusatKhidmatService $service, CulaanMessageService $messageService): Response
     {
-        $data = $service->getRecords(request()->user());
+        $user = request()->user();
+        $data = $service->getRecords($user);
         $lastSyncAt = Setting::valueOf('pusat_khidmat_last_sync_at');
 
         return Inertia::render('PusatKhidmat/Index', [
@@ -27,6 +29,7 @@ class PusatKhidmatController extends Controller
             'udms' => $data['udms'],
             'localities' => $data['localities'],
             'last_sync_at' => $lastSyncAt,
+            'pusat_khidmat_message' => $messageService->buildPusatKhidmatStatus($service->getUnreviewedCounts($user)),
         ]);
     }
 

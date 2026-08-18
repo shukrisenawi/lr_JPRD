@@ -78,6 +78,23 @@ class CulaanMessageService
         return implode("\n", $lines);
     }
 
+    public function buildPusatKhidmatStatus(array $counts, ?Carbon $date = null): string
+    {
+        $date ??= now('Asia/Kuala_Lumpur');
+
+        return implode("\n", [
+            '📌STATUS DATA KHIDMAT '.$date->format('j/n/y'),
+            '',
+            '♦️BELUM CULA',
+            $this->formatNumber($counts['belum_cula'] ?? 0),
+            '♦️TELAH CULA',
+            $this->formatNumber($counts['telah_cula'] ?? 0),
+            '',
+            '🟩JUMLAH BELUM SEMAK',
+            $this->formatNumber($counts['total'] ?? 0),
+        ]);
+    }
+
     private function formatNumber(int|float|string $value): string
     {
         return strtr(number_format((float) $value, 0, '.', ', '), self::DIGIT_EMOJIS);

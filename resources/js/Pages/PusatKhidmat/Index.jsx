@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -229,7 +230,7 @@ function Pagination({ currentPage, totalPages, totalRecords, pageSize, onPageCha
     );
 }
 
-export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [], udms = [], localities = [], last_sync_at: lastSyncAt }) {
+export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records: initialRecords, total_count: initialTotal, available_cula_codes: availableCulaCodes = [], udms = [], localities = [], last_sync_at: lastSyncAt, pusat_khidmat_message: pusatKhidmatMessage = '' }) {
     const { auth } = usePage().props;
     const accessLevel = auth.user?.access_level ?? 'jprd';
     const isMasterAdmin = auth.user?.role?.slug === 'master-admin';
@@ -238,6 +239,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const userScopeLocality = accessLevel === 'cawangan' ? auth.user?.scope_key?.split('|')[1] : null;
     const isScoped = accessLevel === 'udm' || accessLevel === 'cawangan';
     const isAdmin = isMasterAdmin;
+    const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
 
     const [sheetUrl, setSheetUrl] = useState(initialSheetUrl);
     const [editingUrl, setEditingUrl] = useState(false);
@@ -264,7 +266,49 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [pendingIds, setPendingIds] = useState(new Set());
     const [checkingIds, setCheckingIds] = useState(new Set());
+    const [n8nModalOpen, setN8nModalOpen] = useState(false);
+    const [n8nMessage, setN8nMessage] = useState(pusatKhidmatMessage);
+    const [n8nSending, setN8nSending] = useState(false);
+    const [n8nError, setN8nError] = useState('');
+    const [n8nNotice, setN8nNotice] = useState('');
     const pageSize = 20;
+
+    const openN8nModal = () => {
+        setN8nMessage(pusatKhidmatMessage);
+        setN8nError('');
+        setN8nNotice('');
+        setN8nModalOpen(true);
+    };
+
+    const sendN8nMessage = async () => {
+        setN8nSending(true);
+        setN8nError('');
+
+        try {
+            const response = await fetch(route('laporan.n8n.send'), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ message: n8nMessage }),
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload.message ?? 'Mesej gagal dihantar.');
+            }
+
+            setN8nModalOpen(false);
+            setN8nNotice(payload.message ?? 'Mesej berjaya dihantar.');
+        } catch (error) {
+            setN8nError(error.message ?? 'Mesej gagal dihantar.');
+        } finally {
+            setN8nSending(false);
+        }
+    };
 
     const unlinkedRecords = useMemo(() => records.filter((r) => !r.linked), [records]);
 
@@ -585,7 +629,23 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                             </p>
                         )}
                     </div>
-                    {isAdmin && (
+                    <div className="flex flex-wrap items-center gap-3">
+                        {canSendN8nMessage && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={openN8nModal}
+                                    className="inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-green-700 to-green-500 px-2.5 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400"
+                                >
+                                    <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+                                    </svg>
+                                    Hantar Status Khidmat
+                                </button>
+                                {n8nNotice && <span className="text-xs font-semibold text-green-700">{n8nNotice}</span>}
+                            </div>
+                        )}
+                        {isAdmin && (
                         <div className="flex flex-wrap gap-3">
                             <button
                                 type="button"
@@ -605,7 +665,8 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                 {syncing ? 'Mengambil...' : 'Get Data'}
                             </button>
                         </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             }
         >
@@ -976,6 +1037,19 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                     </div>
                 </div>
             )}
+            <N8nMessageModal
+                open={n8nModalOpen}
+                message={n8nMessage}
+                onChange={setN8nMessage}
+                onClose={() => {
+                    if (!n8nSending) setN8nModalOpen(false);
+                }}
+                onSend={sendN8nMessage}
+                sending={n8nSending}
+                error={n8nError}
+                title="Semak status Data Khidmat"
+                description="Edit jumlah jika perlu sebelum approve dan hantar."
+            />
         </section>
             </div>
         </AuthenticatedLayout>

@@ -177,6 +177,34 @@ class PusatKhidmatService
         ];
     }
 
+    public function getUnreviewedCounts(?User $user = null): array
+    {
+        $counts = [
+            'belum_cula' => 0,
+            'telah_cula' => 0,
+            'total' => 0,
+        ];
+
+        $records = $this->buildRecordsQuery($user)
+            ->whereNotNull('pemilih_record_id')
+            ->whereNull('checked_at')
+            ->get();
+
+        foreach ($records as $record) {
+            $code = (string) ($record->pemilihRecord?->cula_code ?? '');
+            $label = strtoupper((string) ($record->pemilihRecord?->cula_display_label ?? ''));
+            $isCulaDone = $code !== ''
+                && $code !== '0'
+                && $code !== '?'
+                && ! str_contains($label, 'BELUM DICULA');
+
+            $counts[$isCulaDone ? 'telah_cula' : 'belum_cula']++;
+            $counts['total']++;
+        }
+
+        return $counts;
+    }
+
     public function createManualRecord(array $data, User $user): PusatKhidmatData
     {
         return DB::transaction(function () use ($data, $user): PusatKhidmatData {
