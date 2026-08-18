@@ -183,7 +183,9 @@ class PusatKhidmatService
             'belum_cula' => 0,
             'telah_cula' => 0,
             'total' => 0,
+            'by_udm' => [],
         ];
+        $byUdm = [];
 
         $records = $this->buildRecordsQuery($user)
             ->whereNotNull('pemilih_record_id')
@@ -197,10 +199,24 @@ class PusatKhidmatService
                 && $code !== '0'
                 && $code !== '?'
                 && ! str_contains($label, 'BELUM DICULA');
+            $udm = $record->pemilihRecord?->dm;
+            $udm = filled($udm) && $udm !== '-' ? $udm : 'Tidak Ditetapkan';
+
+            $byUdm[$udm] ??= [
+                'udm' => $udm,
+                'belum_cula' => 0,
+                'telah_cula' => 0,
+                'total' => 0,
+            ];
+            $byUdm[$udm][$isCulaDone ? 'telah_cula' : 'belum_cula']++;
+            $byUdm[$udm]['total']++;
 
             $counts[$isCulaDone ? 'telah_cula' : 'belum_cula']++;
             $counts['total']++;
         }
+
+        $counts['by_udm'] = array_values($byUdm);
+        usort($counts['by_udm'], fn (array $a, array $b) => $b['total'] <=> $a['total'] ?: strnatcasecmp($a['udm'], $b['udm']));
 
         return $counts;
     }

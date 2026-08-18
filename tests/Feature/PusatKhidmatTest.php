@@ -78,6 +78,7 @@ it('builds the unreviewed Pusat Khidmat status from belum and telah cula records
         'identity_number' => (string) Str::uuid(),
         'no_kp' => '900101025551',
         'name' => 'BELUM CULA',
+        'dm' => 'UDM A',
         'status' => 'aktif',
         'is_manual' => false,
         'cula_code' => null,
@@ -86,6 +87,7 @@ it('builds the unreviewed Pusat Khidmat status from belum and telah cula records
         'identity_number' => (string) Str::uuid(),
         'no_kp' => '900101025552',
         'name' => 'TELAH CULA',
+        'dm' => 'UDM B',
         'status' => 'aktif',
         'is_manual' => false,
         'cula_code' => '2',
@@ -95,6 +97,7 @@ it('builds the unreviewed Pusat Khidmat status from belum and telah cula records
         'identity_number' => (string) Str::uuid(),
         'no_kp' => '900101025553',
         'name' => 'SUDAH SEMAK',
+        'dm' => 'UDM B',
         'status' => 'aktif',
         'is_manual' => false,
         'cula_code' => '2',
@@ -121,13 +124,22 @@ it('builds the unreviewed Pusat Khidmat status from belum and telah cula records
     $addData('row-tiada', null, 4);
 
     expect(app(PusatKhidmatService::class)->getUnreviewedCounts($admin))
-        ->toBe(['belum_cula' => 1, 'telah_cula' => 1, 'total' => 2]);
+        ->toBe([
+            'belum_cula' => 1,
+            'telah_cula' => 1,
+            'total' => 2,
+            'by_udm' => [
+                ['udm' => 'UDM A', 'belum_cula' => 1, 'telah_cula' => 0, 'total' => 1],
+                ['udm' => 'UDM B', 'belum_cula' => 0, 'telah_cula' => 1, 'total' => 1],
+            ],
+        ]);
 
     $this->actingAs($admin)
         ->get(route('pusat-khidmat.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->where('pusat_khidmat_message', fn ($message) => str_contains($message, "♦️BELUM CULA\n1️⃣")
-                && str_contains($message, "♦️TELAH CULA\n1️⃣")
+            ->where('pusat_khidmat_message', fn ($message) => str_contains($message, '1) UDM A')
+                && str_contains($message, '2) UDM B')
+                && str_contains($message, '🟩BAKI BELUM SEMAK 1️⃣')
                 && str_contains($message, "🟩JUMLAH BELUM SEMAK\n2️⃣")));
 });

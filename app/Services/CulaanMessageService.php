@@ -81,9 +81,22 @@ class CulaanMessageService
     public function buildPusatKhidmatStatus(array $counts, ?Carbon $date = null): string
     {
         $date ??= now('Asia/Kuala_Lumpur');
-
-        return implode("\n", [
+        $lines = [
             '📌STATUS DATA KHIDMAT '.$date->format('j/n/y'),
+            '',
+            '📌STATUS IKUT UDM',
+        ];
+
+        foreach ($counts['by_udm'] ?? [] as $index => $udm) {
+            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan');
+            $lines[] = '♦️BELUM CULA '.$this->formatNumber($udm['belum_cula'] ?? 0).'🌸';
+            $lines[] = '♦️TELAH CULA '.$this->formatNumber($udm['telah_cula'] ?? 0).'🌸';
+            $lines[] = '🟩BAKI BELUM SEMAK '.$this->formatNumber($udm['total'] ?? 0);
+            $lines[] = '';
+        }
+
+        $lines = array_merge($lines, [
+            '📌JUMLAH KESELURUHAN',
             '',
             '♦️BELUM CULA',
             $this->formatNumber($counts['belum_cula'] ?? 0),
@@ -93,6 +106,8 @@ class CulaanMessageService
             '🟩JUMLAH BELUM SEMAK',
             $this->formatNumber($counts['total'] ?? 0),
         ]);
+
+        return implode("\n", $lines);
     }
 
     private function formatNumber(int|float|string $value): string
