@@ -19,6 +19,129 @@ function Icon({ name, className = 'h-5 w-5' }) {
 
 function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+const memberExportColumns = ['Bil', 'Jawatan', 'Nama', 'No. KP', 'Peringkat', 'No. Tel', 'Kumpulan'];
+
+function buildMemberRows(members, groups = []) {
+    return members.map((member, index) => {
+        const group = groups.find((item) => item.id === member.committee_group_id);
+        const scope = member.parent_scope_name ? `${member.parent_scope_name} / ${member.scope_name || '-'}` : (member.scope_name || '-');
+
+        return [
+            index + 1,
+            member.position?.name || '-',
+            member.voter?.name || '-',
+            member.voter?.no_kp || member.voter?.old_ic || '-',
+            scope,
+            member.voter?.phone_mobile || member.voter?.phone_home || '-',
+            group?.name || 'Tanpa Kumpulan',
+        ];
+    });
+}
+
+function buildMemberListText(title, members, groups = []) {
+    return [
+        '*' + title + '*',
+        '',
+        ...members.map((member, index) => {
+            const group = groups.find((item) => item.id === member.committee_group_id);
+            const scope = member.parent_scope_name ? `${member.parent_scope_name} / ${member.scope_name || '-'}` : (member.scope_name || '-');
+            const position = member.position?.name || 'Tanpa Jawatan';
+            const name = member.voter?.name || '-';
+
+            return `${index + 1}. ${name} — ${position} — ${scope} — ${group?.name || 'Tanpa Kumpulan'}`;
+        }),
+    ].join('\n');
+}
+
+function downloadExcel(filename, title, columns, rows) {
+    const widths = columns.map((_, index) => {
+        if (index === 0) return 30;
+        if (index === 2) return 420;
+        if (index === 5) return 130;
+        return 160;
+    });
+    const alignments = columns.map((_, index) => (index === 0 || index === 1 || index === 3 || index === 4 || index === 5 ? 'center' : 'left'));
+    const colXml = widths.map((width) => `<Column ss:AutoFitWidth="1" ss:Width="${width}"/>`).join('');
+    const titleXml = `<Row><Cell ss:MergeAcross="${columns.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>`;
+    const headerXml = '<Row>' + columns.map((column, index) => `<Cell ss:StyleID="${alignments[index] === 'center' ? 'headerCenter' : 'header'}"><Data ss:Type="String">${escapeXml(column)}</Data></Cell>`).join('') + '</Row>';
+    const bodyXml = rows.map((row) => '<Row>' + row.map((value, index) => `<Cell ss:StyleID="${alignments[index] === 'center' ? 'cellCenter' : 'cell'}"><Data ss:Type="${index === 0 ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`).join('') + '</Row>').join('');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
+<Styles>
+<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style>
+<Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
+<Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
+<Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
+<Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
+<Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
+</Styles>
+<Worksheet ss:Name="Jawatankuasa"><Table>${colXml}${titleXml}${headerXml}${bodyXml}</Table></Worksheet>
+</Workbook>`;
+    const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+async function copyToClipboard(text) {
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch {
+        // Use the legacy fallback below when clipboard permissions are unavailable.
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+}
+
+function ExportButtons({ text, onExport }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        if (!await copyToClipboard(text)) return;
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <div className="flex items-center gap-2">
+            <button
+                type="button"
+                onClick={handleCopy}
+                className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                title="Salin senarai"
+            >
+                <Icon name={copied ? 'check' : 'copy'} className="h-3 w-3" />
+                {copied ? 'Disalin' : 'Copy'}
+            </button>
+            <button
+                type="button"
+                onClick={onExport}
+                className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                title="Eksport Excel"
+            >
+                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">X</span>
+                Excel
+            </button>
+        </div>
+    );
+}
+
 const levelMeta = {
     jprd: { label: 'JPRD', bg: 'bg-green-100', text: 'text-green-700' },
     udm: { label: 'UDM', bg: 'bg-sky-100', text: 'text-sky-700' },
@@ -223,20 +346,30 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
     );
 }
 
-function UdmPositionPopup({ position, members, onClose, onAvatarClick }) {
+function UdmPositionPopup({ position, members, groups, onClose, onAvatarClick }) {
     if (!position) return null;
+
+    const title = 'UDM — ' + position.name;
 
     return (
         <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 pt-8 sm:pt-16" onClick={onClose}>
             <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
                     <div>
-                        <p className="text-sm font-bold text-slate-800">UDM — {position.name}</p>
+                        <p className="text-sm font-bold text-slate-800">{title}</p>
                         <p className="text-xs text-slate-500">{members.length} orang ahli</p>
                     </div>
-                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-                        <Icon name="x" className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {members.length > 0 && (
+                            <ExportButtons
+                                text={buildMemberListText(title, members, groups)}
+                                onExport={() => downloadExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xls', title, memberExportColumns, buildMemberRows(members, groups))}
+                            />
+                        )}
+                        <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                            <Icon name="x" className="h-5 w-5" />
+                        </button>
+                    </div>
                 </div>
                 <div className="overflow-y-auto p-4">
                     {members.length === 0 ? (
@@ -465,6 +598,16 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
         return list;
     }, [positionStats, searchQuery, activeTab]);
 
+    const currentTabMembers = activeTab === 'jprd'
+        ? jprdGroupStats.flatMap((group) => group.members)
+        : activeTab === 'udm-jawatan'
+            ? filteredPositionStats.flatMap((position) => position.members)
+            : activeTab === 'udm-kumpulan'
+                ? filteredMergedMembers
+                : filteredScopeStats.flatMap((scope) => scope.members);
+    const currentTabLabel = levelOptions.find((option) => option.key === activeTab)?.label ?? activeTab.toUpperCase();
+    const currentTabTitle = 'Senarai AJK ' + currentTabLabel;
+
     return (
         <AuthenticatedLayout
             header={
@@ -512,6 +655,15 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     </div>
 
                     <div className="p-4">
+                        {currentTabMembers.length > 0 && (
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-green-100 bg-green-50/50 px-3 py-2">
+                                <p className="text-xs font-bold text-green-800">{currentTabTitle} ({currentTabMembers.length} orang)</p>
+                                <ExportButtons
+                                    text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
+                                    onExport={() => downloadExcel('AJK_' + currentTabLabel.replace(/[\/\s]+/g, '_') + '.xls', currentTabTitle, memberExportColumns, buildMemberRows(currentTabMembers, groups))}
+                                />
+                            </div>
+                        )}
                         {activeTab === 'udm-jawatan' ? (
                             filteredPositionStats.length === 0 ? (
                                 <p className="py-8 text-center text-xs text-slate-400">Tiada jawatan dengan ahli UDM.</p>
@@ -710,6 +862,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                 <UdmPositionPopup
                     position={detailPosition}
                     members={detailPosition.members}
+                    groups={groups}
                     onClose={() => setDetailPosition(null)}
                     onAvatarClick={setLightboxSrc}
                 />
