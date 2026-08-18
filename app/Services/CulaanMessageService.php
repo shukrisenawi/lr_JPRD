@@ -82,7 +82,7 @@ class CulaanMessageService
     {
         $date ??= now('Asia/Kuala_Lumpur');
         $lines = [
-            '📌STATUS DATA KHIDMAT '.$date->format('j/n/y'),
+            '📌STATUS SEMAK DATA KHIDMAT '.$date->format('j/n/y'),
             '',
         ];
 
