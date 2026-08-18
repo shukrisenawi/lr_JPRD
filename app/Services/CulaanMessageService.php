@@ -93,11 +93,6 @@ class CulaanMessageService
         $lines = array_merge($lines, [
             '📌JUMLAH KESELURUHAN',
             '',
-            '♦️BELUM CULA',
-            $this->formatNumber($counts['belum_cula'] ?? 0),
-            '♦️TELAH CULA',
-            $this->formatNumber($counts['telah_cula'] ?? 0),
-            '',
             '🟩JUMLAH BELUM SEMAK',
             $this->formatNumber($counts['total'] ?? 0),
         ]);
