@@ -139,7 +139,8 @@ it('builds the unreviewed Pusat Khidmat status from belum and telah cula records
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('pusat_khidmat_message', fn ($message) => str_contains($message, '1) UDM A')
-                && str_contains($message, '2) UDM B')
-                && str_contains($message, '🟩BAKI BELUM SEMAK 1️⃣')
+                && str_contains($message, '1) UDM A 1️⃣🌸')
+                && str_contains($message, '2) UDM B 1️⃣🌸')
+                && ! str_contains($message, '📌STATUS IKUT UDM')
                 && str_contains($message, "🟩JUMLAH BELUM SEMAK\n2️⃣")));
 });

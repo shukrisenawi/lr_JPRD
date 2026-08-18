@@ -84,15 +84,10 @@ class CulaanMessageService
         $lines = [
             '📌STATUS DATA KHIDMAT '.$date->format('j/n/y'),
             '',
-            '📌STATUS IKUT UDM',
         ];
 
         foreach ($counts['by_udm'] ?? [] as $index => $udm) {
-            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan');
-            $lines[] = '♦️BELUM CULA '.$this->formatNumber($udm['belum_cula'] ?? 0).'🌸';
-            $lines[] = '♦️TELAH CULA '.$this->formatNumber($udm['telah_cula'] ?? 0).'🌸';
-            $lines[] = '🟩BAKI BELUM SEMAK '.$this->formatNumber($udm['total'] ?? 0);
-            $lines[] = '';
+            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan').' '.$this->formatNumber($udm['total'] ?? 0).'🌸';
         }
 
         $lines = array_merge($lines, [
