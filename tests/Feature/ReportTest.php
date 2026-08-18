@@ -125,7 +125,42 @@ it('formats culaan message with current report values', function () {
         ->toContain('2️⃣8️⃣, 0️⃣5️⃣4️⃣')
         ->toContain('7️⃣, 7️⃣9️⃣4️⃣')
         ->toContain('7️⃣8️⃣▪️3️⃣')
-        ->toContain('1) Kg Bandar 1️⃣2️⃣3️⃣🌸');
+        ->toContain('1) Kg Bandar 1️⃣2️⃣3️⃣')
+        ->not->toContain('1) Kg Bandar 1️⃣2️⃣3️⃣🌸');
+});
+
+it('adds the flower icon only to n8n counts of five or below', function () {
+    $service = app(CulaanMessageService::class);
+
+    $reportMessage = $service->build([
+        'by_dm' => [
+            ['name' => 'Lima', 'belum_dicula' => 5],
+            ['name' => 'Enam', 'belum_dicula' => 6],
+        ],
+    ]);
+    $ahliPasMessage = $service->buildAhliPasSalahCula([
+        ['udm' => 'Lima', 'total' => 5],
+        ['udm' => 'Enam', 'total' => 6],
+    ]);
+    $pusatKhidmatMessage = $service->buildPusatKhidmatStatus([
+        'by_udm' => [
+            ['udm' => 'Lima', 'total' => 5],
+            ['udm' => 'Enam', 'total' => 6],
+        ],
+    ]);
+
+    expect($reportMessage)
+        ->toContain('1) Lima 5️⃣🌸')
+        ->toContain('2) Enam 6️⃣')
+        ->not->toContain('2) Enam 6️⃣🌸');
+    expect($ahliPasMessage)
+        ->toContain('1) Lima 5️⃣🌸')
+        ->toContain('2) Enam 6️⃣')
+        ->not->toContain('2) Enam 6️⃣🌸');
+    expect($pusatKhidmatMessage)
+        ->toContain('1) Lima 5️⃣🌸')
+        ->toContain('2) Enam 6️⃣')
+        ->not->toContain('2) Enam 6️⃣🌸');
 });
 
 it('sends an edited culaan message to the selected n8n webhook', function () {

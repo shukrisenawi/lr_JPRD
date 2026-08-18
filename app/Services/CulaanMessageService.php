@@ -40,7 +40,8 @@ class CulaanMessageService
         ];
 
         foreach ($report['by_dm'] ?? [] as $index => $udm) {
-            $lines[] = ($index + 1).') '.($udm['name'] ?? 'Tanpa DM').' '.$this->formatNumber($udm['belum_dicula'] ?? 0).'🌸';
+            $count = $udm['belum_dicula'] ?? 0;
+            $lines[] = ($index + 1).') '.($udm['name'] ?? 'Tanpa DM').' '.$this->formatNumberWithFlower($count);
         }
 
         $lines[] = '';
@@ -66,7 +67,7 @@ class CulaanMessageService
         foreach ($byUdm as $index => $udm) {
             $count = (int) ($udm['total'] ?? 0);
             $total += $count;
-            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan').' '.$this->formatNumber($count).'🌸';
+            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan').' '.$this->formatNumberWithFlower($count);
         }
 
         $lines[] = '';
@@ -87,7 +88,8 @@ class CulaanMessageService
         ];
 
         foreach ($counts['by_udm'] ?? [] as $index => $udm) {
-            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan').' '.$this->formatNumber($udm['total'] ?? 0).'🌸';
+            $count = $udm['total'] ?? 0;
+            $lines[] = ($index + 1).') '.($udm['udm'] ?? 'Tidak Ditetapkan').' '.$this->formatNumberWithFlower($count);
         }
 
         $lines = array_merge($lines, [
@@ -105,6 +107,11 @@ class CulaanMessageService
     private function formatNumber(int|float|string $value): string
     {
         return strtr(number_format((float) $value, 0, '.', ', '), self::DIGIT_EMOJIS);
+    }
+
+    private function formatNumberWithFlower(int|float|string $value): string
+    {
+        return $this->formatNumber($value).((float) $value <= 5 ? '🌸' : '');
     }
 
     private function formatPercent(int|float|string $value): string
