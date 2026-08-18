@@ -665,7 +665,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                 <p className="text-xs font-bold text-green-800">{currentTabTitle} ({currentTabMembers.length} orang)</p>
                                 <ExportButtons
                                     text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
-                                    onExport={() => downloadExcel('AJK_' + currentTabLabel.replace(/[\/\s]+/g, '_') + '.xls', currentTabTitle, memberExportColumns, buildMemberRows(currentTabMembers, groups))}
+                                    onExport={() => downloadExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', currentTabTitle, memberExportColumns, buildMemberRows(currentTabMembers, groups))}
                                 />
                             </div>
                         )}
