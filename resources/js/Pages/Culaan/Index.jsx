@@ -1119,7 +1119,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             return groups;
         }, {})).sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
         const exportGroups = groupByLocality ? localityGroups : [['', exportRows]];
-        let rowNumber = 0;
 
         const nowTitle = new Date();
         const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
@@ -1186,10 +1185,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 const dataRowsXml = voters
                     .sort((a, b) => String(a.no_kp || a.old_ic || '').padStart(20, '0')
                         .localeCompare(String(b.no_kp || b.old_ic || '').padStart(20, '0')))
-                    .map((voter) => {
-                        rowNumber += 1;
+                    .map((voter, index) => {
                         const cells = [
-                            { value: rowNumber, type: 'Number', align: 'center' },
+                            { value: index + 1, type: 'Number', align: 'center' },
                             { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
                             { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
                             { value: formatAddress(voter), type: 'String', align: 'left', wrap: true },
