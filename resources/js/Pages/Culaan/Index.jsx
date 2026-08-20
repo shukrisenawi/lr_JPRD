@@ -1182,6 +1182,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </Cell>
                     </Row>
                 ` : '';
+                const groupTitleSpacerXml = groupByLocality ? '<Row></Row>' : '';
                 const dataRowsXml = voters
                     .sort((a, b) => String(a.no_kp || a.old_ic || '').padStart(20, '0')
                         .localeCompare(String(b.no_kp || b.old_ic || '').padStart(20, '0')))
@@ -1212,7 +1213,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     ? '<Row></Row>'
                     : '';
 
-                return localityRowXml + headerRowXml + dataRowsXml + groupSeparatorXml;
+                return localityRowXml + groupTitleSpacerXml + headerRowXml + dataRowsXml + groupSeparatorXml;
             })
             .join('');
 
@@ -1220,7 +1221,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         if (groupByLocality && exportGroups.length > 1) {
             let rowNumber = titleRows.length + 1; // spacer row
             exportGroups.forEach(([, voters], groupIndex) => {
-                rowNumber += (groupByLocality ? 1 : 0) + 1 + voters.length; // locality heading, header, and data rows
+                rowNumber += (groupByLocality ? 2 : 0) + 1 + voters.length; // locality heading, spacer, header, and data rows
                 if (groupIndex < exportGroups.length - 1) {
                     rowNumber += 1; // separator row between locality groups
                     if (voters.length > 10) {
