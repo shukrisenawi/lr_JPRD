@@ -1111,18 +1111,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const align = ['center', 'center', 'left', 'left', 'center', 'center'];
         const columnWidths = [37, 100, 278, 369, 90, 46];
 
-        const dataRows = exportRows.map((voter, index) => {
-            const cells = [
-                { value: index + 1, type: 'Number', align: 'center' },
-                { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
-                { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
-                { value: formatAddress(voter), type: 'String', align: 'left', wrap: true },
-                { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
-                { value: '', type: 'String', align: 'center' },
-            ];
-
-            return cells;
-        });
+        const groupByLocality = !formState.locality;
+        const localityGroups = Object.entries(exportRows.reduce((groups, voter) => {
+            const locality = String(voter.locality ?? '').trim() || 'Tanpa Lokaliti';
+            groups[locality] ??= [];
+            groups[locality].push(voter);
+            return groups;
+        }, {})).sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
+        const exportGroups = groupByLocality ? localityGroups : [['', exportRows]];
+        let rowNumber = 0;
 
         const nowTitle = new Date();
         const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
@@ -1177,18 +1174,45 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             </Row>
         `;
 
-        const bodyRowsXml = dataRows
-            .map((cells) => `
-                <Row>
-                    ${cells.map((cell) => {
-                        let styleId = cell.align === 'center' ? 'cellCenter' : 'cell';
-                        if (cell.wrap) styleId += 'Wrap';
-                        return `<Cell ss:StyleID="${styleId}">
-                            <Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data>
-                        </Cell>`;
-                    }).join('')}
-                </Row>
-            `)
+        const bodyRowsXml = exportGroups
+            .map(([locality, voters]) => {
+                const localityRowXml = groupByLocality ? `
+                    <Row>
+                        <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleSub">
+                            <Data ss:Type="String">${escapeXml(locality)}</Data>
+                        </Cell>
+                    </Row>
+                ` : '';
+                const dataRowsXml = voters
+                    .sort((a, b) => String(a.no_kp || a.old_ic || '').padStart(20, '0')
+                        .localeCompare(String(b.no_kp || b.old_ic || '').padStart(20, '0')))
+                    .map((voter) => {
+                        rowNumber += 1;
+                        const cells = [
+                            { value: rowNumber, type: 'Number', align: 'center' },
+                            { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
+                            { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
+                            { value: formatAddress(voter), type: 'String', align: 'left', wrap: true },
+                            { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
+                            { value: '', type: 'String', align: 'center' },
+                        ];
+
+                        return `
+                            <Row>
+                                ${cells.map((cell) => {
+                                    let styleId = cell.align === 'center' ? 'cellCenter' : 'cell';
+                                    if (cell.wrap) styleId += 'Wrap';
+                                    return `<Cell ss:StyleID="${styleId}">
+                                        <Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data>
+                                    </Cell>`;
+                                }).join('')}
+                            </Row>
+                        `;
+                    })
+                    .join('');
+
+                return localityRowXml + dataRowsXml;
+            })
             .join('');
 
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
