@@ -127,6 +127,34 @@ it('filters culaan voters by udm and locality', function () {
             ->where('localities.1', 'LOKALITI DUA'));
 });
 
+it('exports the same address data shown in the culaan list', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025590',
+        'no_kp' => '900101025590',
+        'name' => 'PEMILIH EXPORT ALAMAT',
+        'dm' => 'UDM EXPORT',
+        'locality' => 'LOKALITI EXPORT',
+        'address' => 'JALAN EXPORT 10',
+        'alamat_kediaman' => '   ',
+        'alamat_kp' => '-',
+        'no_rumah' => '10',
+        'status' => 'aktif',
+        'is_manual' => false,
+        'cula_code' => '?',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('culaan.export', ['udm' => 'UDM EXPORT']))
+        ->assertOk()
+        ->assertJsonPath('voters.0.id', $voter->id)
+        ->assertJsonPath('voters.0.address', 'JALAN EXPORT 10')
+        ->assertJsonPath('voters.0.alamat_kediaman', '   ')
+        ->assertJsonPath('voters.0.alamat_kp', '-');
+});
+
 it('returns search suggestions only for active belum cula voters', function () {
     $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
 

@@ -250,8 +250,11 @@ class CulaanController extends Controller
             return response()->json(['voters' => []]);
         }
 
-        $voters = $this->buildEligibleVotersQuery($filters, true)
-            ->whereDoesntHave('culaWorkItem')
+        $query = $filters['data_error']
+            ? $this->buildDataErrorVotersQuery($filters)
+            : $this->buildEligibleVotersQuery($filters);
+
+        $voters = $query
             ->with('culaWorkItem.marker', 'hashtags')
             ->orderBy('no_kp')
             ->get()
@@ -674,7 +677,7 @@ class CulaanController extends Controller
             'no_ahli' => $voter->no_ahli,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
-            'address' => $voter->address,
+            'address' => $this->resolveAddress($voter),
             'age' => $this->calculateAge($voter->no_kp),
             'dm' => trim($voter->dm),
             'locality' => $voter->locality,
@@ -716,6 +719,19 @@ class CulaanController extends Controller
             : 0;
 
         return $data;
+    }
+
+    private function resolveAddress(PemilihRecord $voter): ?string
+    {
+        foreach ([$voter->address, $voter->alamat_kediaman, $voter->alamat_kp] as $value) {
+            $address = trim((string) $value);
+
+            if ($address !== '' && $address !== '-') {
+                return $address;
+            }
+        }
+
+        return null;
     }
 
     private function calculateAge(?string $noKp): ?int

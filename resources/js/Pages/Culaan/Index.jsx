@@ -67,19 +67,26 @@ function combineAddress(rum, alm) {
     return rum || alm;
 }
 
+function usableAddress(value) {
+    const address = String(value ?? '').trim();
+    return address !== '' && address !== '-' ? address : '';
+}
+
+function addressPart(voter) {
+    return usableAddress(voter.address)
+        || usableAddress(voter.alamat_kediaman)
+        || usableAddress(voter.alamat_kp);
+}
+
 function formatAddress(voter) {
-    const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
-    const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
-        ? voter.alamat_kediaman
-        : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+    const rum = usableAddress(voter.no_rumah);
+    const alm = addressPart(voter);
     return combineAddress(rum, alm);
 }
 
 function AddressDisplay({ voter, onRumahClick }) {
-    const rum = voter.no_rumah && voter.no_rumah !== '-' && voter.no_rumah !== '' ? voter.no_rumah : '';
-    const alm = (voter.alamat_kediaman && voter.alamat_kediaman !== '-' && voter.alamat_kediaman !== '')
-        ? voter.alamat_kediaman
-        : (voter.alamat_kp && voter.alamat_kp !== '-' && voter.alamat_kp !== '' ? voter.alamat_kp : (voter.address || ''));
+    const rum = usableAddress(voter.no_rumah);
+    const alm = addressPart(voter);
     if (!rum && !alm) return '-';
     if (!rum) return alm;
     const cleanAlm = addressHasRum(alm, rum) ? stripRum(alm, rum) : alm;
@@ -1074,11 +1081,14 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 udm: formState.udm,
                 locality: formState.locality,
                 show_marked: formState.show_marked ? '1' : '0',
+                data_error: formState.data_error ? '1' : '0',
                 group_id: formState.group_id || '',
                 keturunan: formState.keturunan,
                 jantina: formState.jantina,
                 umur_dari: formState.umur_dari ?? '',
                 umur_hingga: formState.umur_hingga ?? '',
+                filter_rumah: formState.filter_rumah ? '1' : '0',
+                filter_alamat: formState.filter_alamat ? '1' : '0',
                 show_all: formState.show_all ? '1' : '0',
                 filter_rumah_alamat: formState.filter_rumah_alamat ? '1' : '0',
             });
@@ -2464,10 +2474,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                                 <p className="mt-0.5 font-semibold text-slate-700">{detailVoter.locality || '-'}</p>
                             </div>
                             {(() => {
-                                const rum = detailVoter.no_rumah && detailVoter.no_rumah !== '-' && detailVoter.no_rumah !== '' ? detailVoter.no_rumah : '';
-                                const alm = (detailVoter.alamat_kediaman && detailVoter.alamat_kediaman !== '-' && detailVoter.alamat_kediaman !== '')
-                                    ? detailVoter.alamat_kediaman
-                                    : (detailVoter.alamat_kp && detailVoter.alamat_kp !== '-' && detailVoter.alamat_kp !== '' ? detailVoter.alamat_kp : detailVoter.address);
+                                const rum = usableAddress(detailVoter.no_rumah);
+                                const alm = addressPart(detailVoter);
                                 const alamat = combineAddress(rum, alm);
                                 return alamat !== '-' ? (
                                     <div className="col-span-2">
