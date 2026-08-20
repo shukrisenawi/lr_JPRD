@@ -1212,15 +1212,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                     ? '<Row></Row>'
                     : '';
 
-                return localityRowXml + dataRowsXml + groupSeparatorXml;
+                return localityRowXml + headerRowXml + dataRowsXml + groupSeparatorXml;
             })
             .join('');
 
         const pageBreakRows = [];
         if (groupByLocality && exportGroups.length > 1) {
-            let rowNumber = titleRows.length + 2; // spacer row and header row
+            let rowNumber = titleRows.length + 1; // spacer row
             exportGroups.forEach(([, voters], groupIndex) => {
-                rowNumber += 1 + voters.length; // locality heading and data rows
+                rowNumber += (groupByLocality ? 1 : 0) + 1 + voters.length; // locality heading, header, and data rows
                 if (groupIndex < exportGroups.length - 1) {
                     rowNumber += 1; // separator row between locality groups
                     pageBreakRows.push(rowNumber);
@@ -1338,7 +1338,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             ${columnXml}
             ${titleRowXml}
             <Row></Row>
-            ${headerRowXml}
             ${bodyRowsXml}
         </Table>
         <x:WorksheetOptions>
