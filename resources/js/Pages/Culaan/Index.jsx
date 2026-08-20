@@ -223,15 +223,6 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-function escapeXml(value) {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
-}
-
 function estimateExcelWidth(value) {
     const text = String(value ?? '').trim();
 
@@ -1106,11 +1097,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             } catch (_) { /* fallback to paginated data */ }
         }
 
-        const titleRows = [];
         const headers = ['No', 'No Kp', 'Nama', 'Alamat', 'Telefon', 'Cula'];
-        const align = ['center', 'center', 'left', 'left', 'center', 'center'];
-        const columnWidths = [37, 100, 278, 369, 90, 46];
-
+        const columnWidths = [5, 14, 40, 52, 14, 8];
         const groupByLocality = !formState.locality;
         const localityGroups = Object.entries(exportRows.reduce((groups, voter) => {
             const locality = String(voter.locality ?? '').trim() || 'Tanpa Lokaliti';
@@ -1119,238 +1107,139 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             return groups;
         }, {})).sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
         const exportGroups = groupByLocality ? localityGroups : [['', exportRows]];
-
+        const titleRows = [];
         const nowTitle = new Date();
         const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
 
         if (formState.udm) {
-            titleRows.push({
-                value: formState.udm,
-                styleId: 'titleMain',
-            });
-            titleRows.push({
-                value: dateStr,
-                styleId: 'titleDate',
-            });
+            titleRows.push({ value: formState.udm, size: 26, bold: true });
+            titleRows.push({ value: dateStr, size: 14, bold: false });
         }
-
         if (formState.locality) {
-            titleRows.push({
-                value: formState.locality,
-                styleId: 'titleSub',
-            });
+            titleRows.push({ value: formState.locality, size: 18, bold: true });
         }
-
         if (selectedGroup?.nama_group) {
-            titleRows.push({
-                value: `Pengundi ${selectedGroup.nama_group}`,
-                styleId: 'titleSub',
-            });
+            titleRows.push({ value: `Pengundi ${selectedGroup.nama_group}`, size: 18, bold: true });
         }
 
-        const columnXml = columnWidths
-            .map((w) => `<Column ss:AutoFitWidth="1" ss:Width="${w}"/>`)
-            .join('');
+        const ExcelJS = (await import('exceljs')).default;
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'CULA';
+        workbook.created = new Date();
+        const worksheet = workbook.addWorksheet('Culaan', {
+            pageSetup: {
+                paperSize: 9,
+                orientation: 'landscape',
+                fitToPage: true,
+                fitToWidth: 1,
+                fitToHeight: 0,
+                margins: {
+                    left: 0.25,
+                    right: 0.25,
+                    top: 0.5,
+                    bottom: 0.5,
+                    header: 0.3,
+                    footer: 0.3,
+                },
+            },
+        });
+        worksheet.views = [{ showGridLines: false }];
 
-        const titleRowXml = titleRows
-            .map((title) => `
-                <Row>
-                    <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="${title.styleId}">
-                        <Data ss:Type="String">${escapeXml(title.value)}</Data>
-                    </Cell>
-                </Row>
-            `)
-            .join('');
+        columnWidths.forEach((width, index) => {
+            worksheet.getColumn(index + 1).width = width;
+        });
 
-        const headerRowXml = `
-            <Row>
-                ${headers.map((header, i) => {
-                    const hStyle = align[i] === 'center' ? 'headerCenter' : 'header';
-                    return `<Cell ss:StyleID="${hStyle}">
-                        <Data ss:Type="String">${escapeXml(header)}</Data>
-                    </Cell>`;
-                }).join('')}
-            </Row>
-        `;
+        const thinBorder = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+        const centeredColumns = new Set([1, 2, 5, 6]);
+        const wrappedColumns = new Set([3, 4]);
 
-        const bodyRowsXml = exportGroups
-            .map(([locality, voters], groupIndex) => {
-                const localityRowXml = groupByLocality ? `
-                    <Row>
-                        <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleSub">
-                            <Data ss:Type="String">${escapeXml(locality)}</Data>
-                        </Cell>
-                    </Row>
-                ` : '';
-                const groupTitleSpacerXml = groupByLocality ? '<Row></Row>' : '';
-                const dataRowsXml = voters
-                    .sort((a, b) => String(a.no_kp || a.old_ic || '').padStart(20, '0')
-                        .localeCompare(String(b.no_kp || b.old_ic || '').padStart(20, '0')))
-                    .map((voter, index) => {
-                        const cells = [
-                            { value: index + 1, type: 'Number', align: 'center' },
-                            { value: voter.no_kp || voter.old_ic || '-', type: 'String', align: 'center' },
-                            { value: voter.name || '-', type: 'String', align: 'left', wrap: true },
-                            { value: formatAddress(voter), type: 'String', align: 'left', wrap: true },
-                            { value: voter.phone_mobile || voter.phone_home || '-', type: 'String', align: 'center' },
-                            { value: '', type: 'String', align: 'center' },
-                        ];
+        const addMergedTitleRow = (value, size, bold) => {
+            const row = worksheet.addRow([String(value ?? '')]);
+            worksheet.mergeCells(row.number, 1, row.number, headers.length);
+            const cell = row.getCell(1);
+            cell.font = { name: 'Calibri', size, bold };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            return row;
+        };
 
-                        return `
-                            <Row>
-                                ${cells.map((cell) => {
-                                    let styleId = cell.align === 'center' ? 'cellCenter' : 'cell';
-                                    if (cell.wrap) styleId += 'Wrap';
-                                    return `<Cell ss:StyleID="${styleId}">
-                                        <Data ss:Type="${cell.type}">${escapeXml(cell.value)}</Data>
-                                    </Cell>`;
-                                }).join('')}
-                            </Row>
-                        `;
-                    })
-                    .join('');
-                const groupSeparatorXml = groupByLocality && groupIndex < exportGroups.length - 1
-                    ? '<Row></Row>'
-                    : '';
+        const addHeaderRow = () => {
+            const row = worksheet.addRow(headers);
+            row.height = 22;
+            row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+                cell.font = { name: 'Calibri', size: 11, bold: true };
+                cell.alignment = {
+                    horizontal: centeredColumns.has(columnNumber) ? 'center' : 'left',
+                    vertical: 'middle',
+                };
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFE2E8F0' },
+                };
+                cell.border = thinBorder;
+            });
+            return row;
+        };
 
-                return localityRowXml + groupTitleSpacerXml + headerRowXml + dataRowsXml + groupSeparatorXml;
-            })
-            .join('');
+        const addDataRow = (voter, index) => {
+            const row = worksheet.addRow([
+                index + 1,
+                voter.no_kp || voter.old_ic || '-',
+                voter.name || '-',
+                formatAddress(voter),
+                voter.phone_mobile || voter.phone_home || '-',
+                '',
+            ]);
+            row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+                cell.font = { name: 'Calibri', size: 11 };
+                cell.alignment = {
+                    horizontal: centeredColumns.has(columnNumber) ? 'center' : 'left',
+                    vertical: 'middle',
+                    wrapText: wrappedColumns.has(columnNumber),
+                };
+                cell.border = thinBorder;
+            });
+            return row;
+        };
 
-        const pageBreakRows = [];
-        if (groupByLocality && exportGroups.length > 1) {
-            let rowNumber = titleRows.length + 1; // spacer row
-            exportGroups.forEach(([, voters], groupIndex) => {
-                rowNumber += (groupByLocality ? 2 : 0) + 1 + voters.length; // locality heading, spacer, header, and data rows
-                if (groupIndex < exportGroups.length - 1) {
-                    rowNumber += 1; // separator row between locality groups
-                    if (voters.length > 10) {
-                        pageBreakRows.push(rowNumber);
-                    }
+        titleRows.forEach((title) => {
+            addMergedTitleRow(title.value, title.size, title.bold);
+        });
+        worksheet.addRow([]);
+
+        if (exportGroups.length === 0) {
+            addHeaderRow();
+        }
+
+        exportGroups.forEach(([locality, voters], groupIndex) => {
+            if (groupByLocality) {
+                addMergedTitleRow(locality, 18, true);
+                worksheet.addRow([]);
+            }
+
+            addHeaderRow();
+            [...voters]
+                .sort((a, b) => String(a.no_kp || a.old_ic || '').padStart(20, '0')
+                    .localeCompare(String(b.no_kp || b.old_ic || '').padStart(20, '0')))
+                .forEach((voter, index) => {
+                    addDataRow(voter, index);
+                });
+
+            if (groupByLocality && groupIndex < exportGroups.length - 1) {
+                const separatorRow = worksheet.addRow([]);
+                if (voters.length > 10) {
+                    separatorRow.addPageBreak();
                 }
-            });
-        }
+            }
+        });
 
-        const pageBreaksXml = pageBreakRows.length > 0 ? `
-            <x:PageBreaks>
-                <x:RowBreaks>
-                    ${pageBreakRows.map((rowNumber) => `
-                        <x:RowBreak>
-                            <x:Row>${rowNumber}</x:Row>
-                        </x:RowBreak>
-                    `).join('')}
-                </x:RowBreaks>
-            </x:PageBreaks>
-        ` : '';
-
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
-    <Styles>
-        <Style ss:ID="Default" ss:Name="Normal">
-            <Alignment ss:Vertical="Center"/>
-            <Borders/>
-            <Font ss:FontName="Calibri" ss:Size="11"/>
-            <Interior/>
-            <NumberFormat/>
-            <Protection/>
-        </Style>
-        <Style ss:ID="titleMain">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-            <Font ss:FontName="Calibri" ss:Size="26" ss:Bold="1"/>
-            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
-        </Style>
-        <Style ss:ID="titleSub">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-            <Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/>
-            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
-        </Style>
-        <Style ss:ID="titleDate">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-            <Font ss:FontName="Calibri" ss:Size="14" ss:Bold="0"/>
-            <Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/>
-        </Style>
-        <Style ss:ID="header">
-            <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
-            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
-        </Style>
-        <Style ss:ID="headerCenter">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
-            <Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>
-        </Style>
-        <Style ss:ID="cell">
-            <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="Calibri" ss:Size="11"/>
-        </Style>
-        <Style ss:ID="cellCenter">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="Calibri" ss:Size="11"/>
-        </Style>
-        <Style ss:ID="cellWrap">
-            <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="Calibri" ss:Size="11"/>
-        </Style>
-        <Style ss:ID="cellCenterWrap">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="Calibri" ss:Size="11"/>
-        </Style>
-    </Styles>
-    <Worksheet ss:Name="Culaan">
-        <Table>
-            ${columnXml}
-            ${titleRowXml}
-            <Row></Row>
-            ${bodyRowsXml}
-        </Table>
-        <x:WorksheetOptions>
-            <x:Print/>
-        </x:WorksheetOptions>
-        ${pageBreaksXml}
-    </Worksheet>
-</Workbook>`;
-
-        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -1358,7 +1247,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const dd = String(now.getDate()).padStart(2, '0');
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const yyyy = now.getFullYear();
-        link.download = `CULA_${formState.udm || 'semua'}_${dd}-${mm}-${yyyy}.xls`;
+        link.download = `CULA_${formState.udm || 'semua'}_${dd}-${mm}-${yyyy}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
