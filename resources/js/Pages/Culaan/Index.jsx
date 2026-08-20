@@ -1115,7 +1115,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             headers[4],
             ...exportRows.map((voter) => voter.phone_mobile || voter.phone_home || '-'),
         ]);
-        const columnWidths = [noColumnWidth, 14, 30, 30, phoneColumnWidth, 4];
+        const columnWidths = [noColumnWidth, 14, 30, 30, phoneColumnWidth, 4.5];
         const titleRows = [];
         const nowTitle = new Date();
         const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
@@ -1138,15 +1138,15 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         const worksheet = workbook.addWorksheet('Culaan', {
             pageSetup: {
                 paperSize: 9,
-                orientation: 'landscape',
+                orientation: 'portrait',
                 fitToPage: true,
                 fitToWidth: 1,
                 fitToHeight: 0,
                 margins: {
                     left: 0.25,
                     right: 0.25,
-                    top: 0.5,
-                    bottom: 0.5,
+                    top: 0.75,
+                    bottom: 0.75,
                     header: 0.3,
                     footer: 0.3,
                 },
@@ -1184,6 +1184,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 cell.alignment = {
                     horizontal: centeredColumns.has(columnNumber) ? 'center' : 'left',
                     vertical: 'middle',
+                    wrapText: wrappedColumns.has(columnNumber),
                 };
                 cell.fill = {
                     type: 'pattern',
