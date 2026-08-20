@@ -1098,7 +1098,6 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         }
 
         const headers = ['No', 'No Kp', 'Nama', 'Alamat', 'Telefon', 'Cula'];
-        const columnWidths = [5, 14, 40, 52, 14, 8];
         const groupByLocality = !formState.locality;
         const localityGroups = Object.entries(exportRows.reduce((groups, voter) => {
             const locality = String(voter.locality ?? '').trim() || 'Tanpa Lokaliti';
@@ -1107,6 +1106,16 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             return groups;
         }, {})).sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
         const exportGroups = groupByLocality ? localityGroups : [['', exportRows]];
+        const getTextWidth = (values) => Math.max(4, ...values.map((value) => String(value ?? '').length + 2));
+        const noColumnWidth = getTextWidth([
+            headers[0],
+            ...exportGroups.flatMap(([, voters]) => voters.map((_, index) => index + 1)),
+        ]);
+        const phoneColumnWidth = getTextWidth([
+            headers[4],
+            ...exportRows.map((voter) => voter.phone_mobile || voter.phone_home || '-'),
+        ]);
+        const columnWidths = [noColumnWidth, 14, 30, 30, phoneColumnWidth, 4];
         const titleRows = [];
         const nowTitle = new Date();
         const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
