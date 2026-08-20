@@ -1174,7 +1174,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
         `;
 
         const bodyRowsXml = exportGroups
-            .map(([locality, voters]) => {
+            .map(([locality, voters], groupIndex) => {
                 const localityRowXml = groupByLocality ? `
                     <Row>
                         <Cell ss:MergeAcross="${headers.length - 1}" ss:StyleID="titleSub">
@@ -1208,8 +1208,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         `;
                     })
                     .join('');
+                const groupSeparatorXml = groupByLocality && groupIndex < exportGroups.length - 1
+                    ? '<Row></Row>'
+                    : '';
 
-                return localityRowXml + dataRowsXml;
+                return localityRowXml + dataRowsXml + groupSeparatorXml;
             })
             .join('');
 
@@ -1219,6 +1222,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             exportGroups.forEach(([, voters], groupIndex) => {
                 rowNumber += 1 + voters.length; // locality heading and data rows
                 if (groupIndex < exportGroups.length - 1) {
+                    rowNumber += 1; // separator row between locality groups
                     pageBreakRows.push(rowNumber);
                 }
             });
