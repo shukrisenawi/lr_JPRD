@@ -1223,7 +1223,9 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 rowNumber += (groupByLocality ? 1 : 0) + 1 + voters.length; // locality heading, header, and data rows
                 if (groupIndex < exportGroups.length - 1) {
                     rowNumber += 1; // separator row between locality groups
-                    pageBreakRows.push(rowNumber);
+                    if (voters.length > 10) {
+                        pageBreakRows.push(rowNumber);
+                    }
                 }
             });
         }
