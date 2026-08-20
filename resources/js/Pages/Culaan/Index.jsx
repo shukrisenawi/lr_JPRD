@@ -1213,6 +1213,29 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             })
             .join('');
 
+        const pageBreakRows = [];
+        if (groupByLocality && exportGroups.length > 1) {
+            let rowNumber = titleRows.length + 2; // spacer row and header row
+            exportGroups.forEach(([, voters], groupIndex) => {
+                rowNumber += 1 + voters.length; // locality heading and data rows
+                if (groupIndex < exportGroups.length - 1) {
+                    pageBreakRows.push(rowNumber);
+                }
+            });
+        }
+
+        const pageBreaksXml = pageBreakRows.length > 0 ? `
+            <x:PageBreaks>
+                <x:RowBreaks>
+                    ${pageBreakRows.map((rowNumber) => `
+                        <x:RowBreak>
+                            <x:Row>${rowNumber}</x:Row>
+                        </x:RowBreak>
+                    `).join('')}
+                </x:RowBreaks>
+            </x:PageBreaks>
+        ` : '';
+
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -1314,6 +1337,10 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             ${headerRowXml}
             ${bodyRowsXml}
         </Table>
+        <x:WorksheetOptions>
+            <x:Print/>
+        </x:WorksheetOptions>
+        ${pageBreaksXml}
     </Worksheet>
 </Workbook>`;
 
