@@ -1115,7 +1115,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
             headers[4],
             ...exportRows.map((voter) => voter.phone_mobile || voter.phone_home || '-'),
         ]);
-        const columnWidths = [noColumnWidth, 14, 30, 30, phoneColumnWidth, 4.5];
+        const columnWidths = [noColumnWidth, 14, 30, 30, phoneColumnWidth, 5];
         const titleRows = [];
         const nowTitle = new Date();
         const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
