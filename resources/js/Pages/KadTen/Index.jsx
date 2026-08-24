@@ -265,7 +265,7 @@ function PemimpinSearchModal({ level = 'udm', onSelect, onClose }) {
     );
 }
 
-function AddMemberModal({ kad, onClose }) {
+function AddMemberModal({ kad, onClose, onAdded }) {
     const [recommendations, setRecommendations] = useState([]);
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoters, setSelectedVoters] = useState([]);
@@ -318,7 +318,10 @@ function AddMemberModal({ kad, onClose }) {
             preserveState: true,
             only: ['kads'],
             onFinish: () => setAdding(false),
-            onSuccess: onClose,
+            onSuccess: () => {
+                onClose();
+                onAdded?.();
+            },
         });
     };
 
@@ -368,6 +371,7 @@ function KadCard({ kad, cardNumber, canManage, onEdit, onDelete, onDeleteMember,
     const [addModal, setAddModal] = useState(false);
     const complete = kad.member_count >= (kad.minimum_members || 10);
     const scope = kad.level === 'cawangan' ? `${kad.parent_scope_name || '-'} / ${kad.scope_name || '-'}` : (kad.scope_name || kad.level || '-');
+    const keepCardOpen = () => setExpanded(true);
 
     return (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -392,7 +396,7 @@ function KadCard({ kad, cardNumber, canManage, onEdit, onDelete, onDeleteMember,
                 <div className="flex flex-col gap-2 border-b border-slate-100 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4"><div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Senarai ahli</p><p className="mt-0.5 text-[10px] text-slate-400">{complete ? 'Kad sudah mencapai minimum 10 orang.' : `Masih perlu ${Math.max(0, (kad.minimum_members || 10) - kad.member_count)} orang untuk lengkap.`}</p></div>{canManage && <button type="button" onClick={() => setAddModal(true)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-green-700 hover:bg-green-50"><Icon name="plus" className="h-3.5 w-3.5" /> Tambah ahli</button>}</div>
                 {kad.members.length === 0 ? <div className="px-3 py-8 text-center text-[10px] text-slate-400">Tiada ahli dalam kad ini.</div> : <div className="divide-y divide-slate-100">{kad.members.map((member, index) => <div key={member.id} className="flex items-start gap-2.5 px-3 py-2.5 sm:px-4"><span className="w-5 shrink-0 pt-0.5 text-right text-[10px] font-bold text-slate-400">{index + 1}.</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-slate-800">{member.voter?.name || '-'}</p><p className="truncate text-[10px] text-slate-400">{member.voter?.no_kp || member.voter?.old_ic || '-'} | Rumah {member.voter?.no_rumah || '-'} | {member.voter?.dm || '-'} / {member.voter?.locality || '-'}</p><p className="mt-0.5 truncate text-[9px] text-sky-600">{member.match_reason || matchMeta[member.cluster_type]?.label || 'Pilihan manual'}</p></div><div className="hidden shrink-0 text-right text-[10px] text-slate-500 sm:block">{member.voter?.phone_mobile || member.voter?.phone_home || '-'}</div>{canManage && <button type="button" onClick={() => onDeleteMember(kad.id, member.id)} className="shrink-0 rounded p-1 text-rose-400 hover:bg-rose-50 hover:text-rose-600" title="Buang"><Icon name="x" className="h-3.5 w-3.5" /></button>}</div>)}</div>}
             </div>}
-            {addModal && <AddMemberModal kad={kad} onClose={() => setAddModal(false)} />}
+            {addModal && <AddMemberModal kad={kad} onClose={() => setAddModal(false)} onAdded={keepCardOpen} />}
         </div>
     );
 }
