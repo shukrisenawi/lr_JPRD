@@ -217,11 +217,10 @@ async function downloadKadWorkbook(kads, selectedKad = null) {
     URL.revokeObjectURL(url);
 }
 
-function PemimpinSearchModal({ onSelect, onClose }) {
+function PemimpinSearchModal({ level = 'udm', onSelect, onClose }) {
     const [searching, setSearching] = useState(false);
     const [results, setResults] = useState([]);
     const [query, setQuery] = useState('');
-    const [selectedLevel, setSelectedLevel] = useState('udm');
     const controller = useRef(null);
 
     useEffect(() => {
@@ -233,7 +232,7 @@ function PemimpinSearchModal({ onSelect, onClose }) {
         const abortController = new AbortController();
         controller.current = abortController;
         setSearching(true);
-        const params = new URLSearchParams({ q: query, level: selectedLevel });
+        const params = new URLSearchParams({ q: query, level });
         fetch(route('kad-ten.suggest-pemimpin') + '?' + params.toString(), {
             headers: { Accept: 'application/json' },
             signal: abortController.signal,
@@ -244,7 +243,7 @@ function PemimpinSearchModal({ onSelect, onClose }) {
             .finally(() => setSearching(false));
 
         return () => abortController.abort();
-    }, [query, selectedLevel]);
+    }, [query, level]);
 
     return (
         <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 px-3 pt-16 sm:pt-24" onClick={onClose}>
@@ -252,18 +251,11 @@ function PemimpinSearchModal({ onSelect, onClose }) {
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Pilih ketua Kad 10</p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">Pilih mana-mana pemilih aktif dalam skop UDM anda.</p>
+                        <p className="mt-0.5 text-[10px] text-slate-400">Pilih mana-mana pemilih aktif dalam skop anda.</p>
                     </div>
                     <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"><Icon name="x" className="h-5 w-5" /></button>
                 </div>
                 <div className="space-y-2 border-b border-slate-100 px-4 py-3">
-                    <div className="flex gap-1">
-                        {['udm', 'cawangan'].map(level => (
-                            <button key={level} type="button" onClick={() => setSelectedLevel(level)} className={'rounded-lg px-3 py-1.5 text-xs font-bold transition ' + (selectedLevel === level ? 'bg-green-600 text-white' : 'bg-white text-slate-600 hover:bg-green-50')}>
-                                {levelMeta[level].label}
-                            </button>
-                        ))}
-                    </div>
                     <div className="relative">
                         <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input type="text" value={query} onChange={event => setQuery(event.target.value)} placeholder="Cari nama, No KP atau lokaliti..." className="input-field w-full pl-9 text-xs" />
@@ -438,7 +430,7 @@ function EditKadModal({ kad, onClose }) {
         form.put(route('kad-ten.update', kad.id), { preserveScroll: true, onSuccess: onClose });
     };
 
-    return <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-3 pt-16 sm:pt-24" onClick={onClose}><div className="w-full max-w-md rounded-xl bg-white shadow-2xl" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between border-b border-slate-200 px-4 py-3"><p className="text-xs font-bold uppercase tracking-wider text-slate-600">Edit Kad 10</p><button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100"><Icon name="x" className="h-5 w-5" /></button></div><form onSubmit={submit} className="space-y-3 p-4"><div><label className="text-xs font-semibold text-slate-600">Nama kad</label><input type="text" value={form.data.name} onChange={event => form.setData('name', event.target.value)} className="input-field mt-1 w-full text-xs" placeholder="Contoh: Kad 10 Taman XXX" /></div><div><label className="text-xs font-semibold text-slate-600">Ketua <span className="text-rose-500">*</span></label>{selectedPemimpin ? <div className="mt-1 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5"><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-green-800">{selectedPemimpin.name}</p><p className="truncate text-[10px] text-green-600">{selectedPemimpin.no_kp || selectedPemimpin.old_ic || '-'} · {selectedPemimpin.position_name || 'Pemilih'}</p></div><button type="button" onClick={() => { setSelectedPemimpin(null); form.setData('pemimpin_id', ''); }} className="rounded-md p-1 text-rose-400 hover:bg-rose-50"><Icon name="x" className="h-4 w-4" /></button></div> : <button type="button" onClick={() => setSearchOpen(true)} className="mt-1 w-full rounded-lg border border-dashed border-green-300 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-50"><Icon name="search" className="mr-1 inline h-4 w-4" /> Cari ketua</button>}{form.errors.pemimpin_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.pemimpin_id}</p>}</div><div><label className="text-xs font-semibold text-slate-600">Nota</label><textarea value={form.data.notes} onChange={event => form.setData('notes', event.target.value)} className="input-field mt-1 w-full text-xs" rows="2" placeholder="Catatan tambahan" /></div><div className="flex justify-end gap-2"><button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button><button type="submit" disabled={form.processing} className="rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-500 disabled:opacity-50">{form.processing ? 'Menyimpan...' : 'Simpan'}</button></div></form></div>{searchOpen && <PemimpinSearchModal onSelect={selectPemimpin} onClose={() => setSearchOpen(false)} />}</div>;
+    return <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-3 pt-16 sm:pt-24" onClick={onClose}><div className="w-full max-w-md rounded-xl bg-white shadow-2xl" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between border-b border-slate-200 px-4 py-3"><p className="text-xs font-bold uppercase tracking-wider text-slate-600">Edit Kad 10</p><button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100"><Icon name="x" className="h-5 w-5" /></button></div><form onSubmit={submit} className="space-y-3 p-4"><div><label className="text-xs font-semibold text-slate-600">Nama kad</label><input type="text" value={form.data.name} onChange={event => form.setData('name', event.target.value)} className="input-field mt-1 w-full text-xs" placeholder="Contoh: Kad 10 Taman XXX" /></div><div><label className="text-xs font-semibold text-slate-600">Ketua <span className="text-rose-500">*</span></label>{selectedPemimpin ? <div className="mt-1 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5"><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-green-800">{selectedPemimpin.name}</p><p className="truncate text-[10px] text-green-600">{selectedPemimpin.no_kp || selectedPemimpin.old_ic || '-'} · {selectedPemimpin.position_name || 'Pemilih'}</p></div><button type="button" onClick={() => { setSelectedPemimpin(null); form.setData('pemimpin_id', ''); }} className="rounded-md p-1 text-rose-400 hover:bg-rose-50"><Icon name="x" className="h-4 w-4" /></button></div> : <button type="button" onClick={() => setSearchOpen(true)} className="mt-1 w-full rounded-lg border border-dashed border-green-300 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-50"><Icon name="search" className="mr-1 inline h-4 w-4" /> Cari ketua</button>}{form.errors.pemimpin_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.pemimpin_id}</p>}</div><div><label className="text-xs font-semibold text-slate-600">Nota</label><textarea value={form.data.notes} onChange={event => form.setData('notes', event.target.value)} className="input-field mt-1 w-full text-xs" rows="2" placeholder="Catatan tambahan" /></div><div className="flex justify-end gap-2"><button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button><button type="submit" disabled={form.processing} className="rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-500 disabled:opacity-50">{form.processing ? 'Menyimpan...' : 'Simpan'}</button></div></form></div>{searchOpen && <PemimpinSearchModal level={kad.level === 'cawangan' ? 'cawangan' : 'udm'} onSelect={selectPemimpin} onClose={() => setSearchOpen(false)} />}</div>;
 }
 
 export default function KadTenIndex({ kads = [], scopes = {}, filters = {}, can_manage: canManage = false }) {
