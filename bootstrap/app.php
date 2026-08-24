@@ -34,6 +34,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (HttpExceptionInterface $exception, Request $request) {
             if ($exception->getStatusCode() === 403 && ! $request->expectsJson() && $request->user()) {
+                $previousUrl = $request->session()->get('_previous.url');
+                $previousPath = is_string($previousUrl) ? parse_url($previousUrl, PHP_URL_PATH) : null;
+
+                if ($previousPath === null || $previousPath === $request->getPathInfo()) {
+                    return redirect()
+                        ->route('profile.edit')
+                        ->with('error', 'Anda tidak mempunyai akses ke halaman ini.');
+                }
+
                 return redirect()
                     ->back()
                     ->with('error', 'Anda tidak mempunyai akses ke halaman ini.');

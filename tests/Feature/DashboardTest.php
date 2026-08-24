@@ -10,6 +10,17 @@ it('redirects guests from dashboard to login', function () {
         ->assertRedirect('/login');
 });
 
+it('redirects authenticated users to their profile instead of looping on forbidden dashboard', function () {
+    $user = User::factory()->withModules(['kad-ten'])->create();
+
+    $this->actingAs($user)
+        ->from(route('dashboard'))
+        ->get(route('dashboard'))
+        ->assertRedirect(route('profile.edit'));
+
+    $this->assertAuthenticatedAs($user);
+});
+
 it('renders dashboard data for authenticated admin', function () {
     $user = User::factory()->create();
 
