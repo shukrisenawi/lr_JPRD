@@ -186,6 +186,22 @@ it('allows master admin to impersonate another user and keeps return session', f
     expect(session('impersonator_id'))->toBe($masterAdmin->id);
 });
 
+it('does not log out an impersonated user because of an old remember cookie', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $targetUser = User::factory()->withModules(['dashboard', 'kad-ten'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+    ]);
+
+    $this->withCookie('rm_7d', (string) now()->subMinute()->timestamp)
+        ->actingAs($masterAdmin)
+        ->post(route('admin.access.users.impersonate', $targetUser))
+        ->assertRedirect(route('dashboard'));
+
+    $this->get(route('kad-ten.index'))->assertOk();
+    $this->assertAuthenticatedAs($targetUser);
+});
+
 it('allows impersonated user session to return to original master admin', function () {
     $masterAdmin = User::factory()->masterAdmin()->create();
     $targetUser = User::factory()->withModules(['dashboard', 'laporan'])->create();

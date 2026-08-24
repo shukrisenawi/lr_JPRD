@@ -166,32 +166,30 @@ class KadTenController extends Controller
 
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
-            'committee_membership_id' => ['required', 'integer', Rule::exists('committee_memberships', 'id')],
+            'pemimpin_id' => ['required', 'integer', Rule::exists('pemilih_records', 'id')],
+            'level' => ['required', Rule::in(['udm', 'cawangan'])],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $membership = $this->managerMembership($request->user(), $validated['committee_membership_id']);
-        if (! $membership) {
-            return back()->withErrors(['committee_membership_id' => 'AJK ini bukan dalam skop UDM anda.']);
-        }
-
-        $voter = $membership->voter;
-        if ($voter->status !== 'aktif') {
-            return back()->withErrors(['committee_membership_id' => 'Hanya pemilih aktif boleh dilantik sebagai ketua.']);
+        $voter = $this->managerLeader($request->user(), $validated['pemimpin_id'], $validated['level']);
+        if (! $voter) {
+            return back()->withErrors(['pemimpin_id' => 'Ketua mesti pemilih aktif dalam skop UDM anda.']);
         }
 
         if (KadTen::query()->where('pemimpin_id', $voter->id)->exists()) {
-            return back()->withErrors(['committee_membership_id' => 'AJK ini sudah mempunyai Kad 10.']);
+            return back()->withErrors(['pemimpin_id' => 'Pemilih ini sudah mempunyai Kad 10.']);
         }
 
-        [$scopeName, $parentScopeName] = $this->resolveScope($membership->level, $membership->scope_key, $voter);
+        $scopeKey = $this->leaderScopeKey($validated['level'], $voter);
+        $membership = $this->membershipForLeader($voter, $validated['level'], $scopeKey);
+        [$scopeName, $parentScopeName] = $this->resolveScope($validated['level'], $scopeKey, $voter);
 
         KadTen::query()->create([
             'name' => $validated['name'] ?? null,
             'pemimpin_id' => $voter->id,
-            'committee_membership_id' => $membership->id,
-            'level' => $membership->level,
-            'scope_key' => $membership->scope_key,
+            'committee_membership_id' => $membership?->id,
+            'level' => $validated['level'],
+            'scope_key' => $scopeKey,
             'scope_name' => $scopeName,
             'parent_scope_name' => $parentScopeName,
             'created_by' => $request->user()->id,
@@ -209,43 +207,41 @@ class KadTenController extends Controller
 
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
-            'committee_membership_id' => ['required', 'integer', Rule::exists('committee_memberships', 'id')],
+            'pemimpin_id' => ['required', 'integer', Rule::exists('pemilih_records', 'id')],
+            'level' => ['required', Rule::in(['udm', 'cawangan'])],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $membership = $this->managerMembership($request->user(), $validated['committee_membership_id']);
-        if (! $membership) {
-            return back()->withErrors(['committee_membership_id' => 'AJK ini bukan dalam skop UDM anda.']);
+        $voter = $this->managerLeader($request->user(), $validated['pemimpin_id'], $validated['level']);
+        if (! $voter) {
+            return back()->withErrors(['pemimpin_id' => 'Ketua mesti pemilih aktif dalam skop UDM anda.']);
         }
 
-        $voter = $membership->voter;
-        if ($voter->status !== 'aktif') {
-            return back()->withErrors(['committee_membership_id' => 'Hanya pemilih aktif boleh dilantik sebagai ketua.']);
-        }
-
+        $scopeKey = $this->leaderScopeKey($validated['level'], $voter);
         $leaderTaken = KadTen::query()
             ->where('pemimpin_id', $voter->id)
             ->where('id', '!=', $kadTen->id)
             ->exists();
 
         if ($leaderTaken) {
-            return back()->withErrors(['committee_membership_id' => 'AJK ini sudah mempunyai Kad 10.']);
+            return back()->withErrors(['pemimpin_id' => 'Pemilih ini sudah mempunyai Kad 10.']);
         }
 
-        if ($this->hasMembersOutsideScope($kadTen, $membership)) {
+        if ($this->hasMembersOutsideScope($kadTen, $validated['level'], $scopeKey)) {
             return back()->withErrors([
-                'committee_membership_id' => 'Skop ketua baharu tidak sepadan dengan ahli sedia ada. Buang atau pindahkan ahli dahulu.',
+                'pemimpin_id' => 'Skop ketua baharu tidak sepadan dengan ahli sedia ada. Buang atau pindahkan ahli dahulu.',
             ]);
         }
 
-        [$scopeName, $parentScopeName] = $this->resolveScope($membership->level, $membership->scope_key, $voter);
+        $membership = $this->membershipForLeader($voter, $validated['level'], $scopeKey);
+        [$scopeName, $parentScopeName] = $this->resolveScope($validated['level'], $scopeKey, $voter);
 
         $kadTen->update([
             'name' => $validated['name'] ?? $kadTen->name,
             'pemimpin_id' => $voter->id,
-            'committee_membership_id' => $membership->id,
-            'level' => $membership->level,
-            'scope_key' => $membership->scope_key,
+            'committee_membership_id' => $membership?->id,
+            'level' => $validated['level'],
+            'scope_key' => $scopeKey,
             'scope_name' => $scopeName,
             'parent_scope_name' => $parentScopeName,
             'notes' => $validated['notes'] ?? $kadTen->notes,
@@ -438,52 +434,47 @@ class KadTenController extends Controller
         }
 
         $query = trim((string) $request->query('q', ''));
-        $level = $request->query('level');
-        $membershipsQuery = CommitteeMembership::query()
-            ->with(['voter', 'position'])
-            ->whereIn('level', ['udm', 'cawangan'])
-            ->whereHas('voter', fn (Builder $builder) => $builder->where('status', 'aktif'));
+        $level = in_array($request->query('level'), ['udm', 'cawangan'], true)
+            ? $request->query('level')
+            : 'udm';
+        $leadersQuery = PemilihRecord::query()
+            ->with('committeeMemberships.position')
+            ->where('status', 'aktif')
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '');
 
-        $this->applyManagerScopeToMembershipQuery($membershipsQuery, $request->user());
-
-        if (in_array($level, ['udm', 'cawangan'], true)) {
-            $membershipsQuery->where('level', $level);
+        $request->user()->applyScopeToPemilihQuery($leadersQuery);
+        if ($level === 'cawangan') {
+            $leadersQuery
+                ->whereNotNull('locality')
+                ->where('locality', '!=', '');
         }
+        $this->applySearchFilter($leadersQuery, $query);
 
-        if (mb_strlen($query) >= 2) {
-            $like = '%'.$query.'%';
-            $membershipsQuery->whereHas('voter', function (Builder $builder) use ($like): void {
-                $builder->where(function (Builder $subQuery) use ($like): void {
-                    $subQuery->whereRaw('LOWER(name) like ?', [$like])
-                        ->orWhere('no_kp', 'like', $like)
-                        ->orWhere('old_ic', 'like', $like)
-                        ->orWhereRaw('LOWER(locality) like ?', [$like]);
-                });
-            });
-        }
-
-        $results = $membershipsQuery
-            ->orderBy('level')
-            ->orderBy('scope_name')
+        $results = $leadersQuery
+            ->orderBy('name')
             ->limit(20)
             ->get()
-            ->map(fn (CommitteeMembership $membership) => [
-                'membership_id' => $membership->id,
-                'pemilih_id' => $membership->voter?->id,
-                'id' => $membership->voter?->id,
-                'name' => $membership->voter?->name,
-                'no_kp' => $membership->voter?->no_kp,
-                'old_ic' => $membership->voter?->old_ic,
-                'dm' => $membership->voter?->dm,
-                'locality' => $membership->voter?->locality,
-                'position_name' => $membership->position?->name,
-                'level' => $membership->level,
-                'scope_name' => $membership->scope_name,
-                'scope_key' => $membership->scope_key,
-                'parent_scope_name' => $membership->parent_scope_name,
-                'avatar_url' => $membership->voter?->avatarUrl(),
-                'phone_mobile' => $membership->voter?->phone_mobile,
-            ])
+            ->map(function (PemilihRecord $voter) use ($level): array {
+                $scopeKey = $this->leaderScopeKey($level, $voter);
+                $membership = $this->membershipForLeader($voter, $level, $scopeKey);
+
+                return [
+                    'id' => $voter->id,
+                    'name' => $voter->name,
+                    'no_kp' => $voter->no_kp,
+                    'old_ic' => $voter->old_ic,
+                    'dm' => $voter->dm,
+                    'locality' => $voter->locality,
+                    'position_name' => $membership?->position?->name,
+                    'level' => $level,
+                    'scope_name' => $level === 'cawangan' ? $voter->locality : $voter->dm,
+                    'scope_key' => $scopeKey,
+                    'parent_scope_name' => $level === 'cawangan' ? $voter->dm : null,
+                    'avatar_url' => $voter->avatarUrl(),
+                    'phone_mobile' => $voter->phone_mobile,
+                ];
+            })
             ->values();
 
         return response()->json(['suggestions' => $results]);
@@ -690,67 +681,61 @@ class KadTenController extends Controller
         abort_unless($this->isManager($user) && $kadTen->isManageableBy($user), 403, 'Kad 10 ini bukan dalam skop UDM anda.');
     }
 
-    private function managerMembership(User $user, int $membershipId): ?CommitteeMembership
+    private function managerLeader(User $user, int $voterId, string $level): ?PemilihRecord
     {
         if (! $this->isManager($user)) {
             return null;
         }
 
-        $query = CommitteeMembership::query()
-            ->with(['voter', 'position'])
-            ->whereKey($membershipId)
-            ->whereIn('level', ['udm', 'cawangan'])
-            ->whereHas('voter', fn (Builder $builder) => $builder->where('status', 'aktif'));
+        $query = PemilihRecord::query()
+            ->whereKey($voterId)
+            ->where('status', 'aktif')
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '');
+        $user->applyScopeToPemilihQuery($query);
 
-        $this->applyManagerScopeToMembershipQuery($query, $user);
-
-        $membership = $query->first();
-
-        return $membership && $membership->voter && $this->scopeMatchesMembership($membership, $membership->voter)
-            ? $membership
-            : null;
-    }
-
-    private function applyManagerScopeToMembershipQuery(Builder $query, User $user): void
-    {
-        $scope = $user->accessScope();
-        if ($scope === null || blank($scope['dm'])) {
-            $query->whereRaw('1 = 0');
-
-            return;
+        if ($level === 'cawangan') {
+            $query
+                ->whereNotNull('locality')
+                ->where('locality', '!=', '');
         }
 
-        $query->where(function (Builder $builder) use ($scope): void {
-            $builder->where(function (Builder $subQuery) use ($scope): void {
-                $subQuery->where('level', 'udm')
-                    ->where('scope_key', $scope['dm']);
-            })->orWhere(function (Builder $subQuery) use ($scope): void {
-                $subQuery->where('level', 'cawangan')
-                    ->where(function (Builder $scopeQuery) use ($scope): void {
-                        $scopeQuery->where('parent_scope_name', $scope['dm'])
-                            ->orWhere('scope_key', 'like', $scope['dm'].'|%');
-                    });
-            });
-        });
+        return $query->first();
     }
 
-    private function hasMembersOutsideScope(KadTen $kadTen, CommitteeMembership $membership): bool
+    private function leaderScopeKey(string $level, PemilihRecord $voter): string
+    {
+        if ($level === 'cawangan') {
+            return $voter->dm.'|'.$voter->locality;
+        }
+
+        return (string) $voter->dm;
+    }
+
+    private function membershipForLeader(PemilihRecord $voter, string $level, string $scopeKey): ?CommitteeMembership
+    {
+        return $voter->committeeMemberships
+            ->first(fn (CommitteeMembership $membership) => $membership->level === $level
+                && $membership->scope_key === $scopeKey);
+    }
+
+    private function hasMembersOutsideScope(KadTen $kadTen, string $level, string $scopeKey): bool
     {
         return $kadTen->members()
             ->with('voter')
             ->get()
             ->contains(fn (KadTenMember $member) => $member->voter
-                && ! $this->scopeMatchesMembership($membership, $member->voter));
+                && ! $this->scopeMatches($level, $scopeKey, $member->voter));
     }
 
-    private function scopeMatchesMembership(CommitteeMembership $membership, PemilihRecord $voter): bool
+    private function scopeMatches(string $level, string $scopeKey, PemilihRecord $voter): bool
     {
-        if ($membership->level === 'udm') {
-            return $voter->dm === $membership->scope_key;
+        if ($level === 'udm') {
+            return $voter->dm === $scopeKey;
         }
 
-        if ($membership->level === 'cawangan') {
-            [$dm, $locality] = array_pad(explode('|', (string) $membership->scope_key, 2), 2, null);
+        if ($level === 'cawangan') {
+            [$dm, $locality] = array_pad(explode('|', $scopeKey, 2), 2, null);
 
             return $voter->dm === $dm && $voter->locality === $locality;
         }

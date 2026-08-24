@@ -70,31 +70,58 @@ function kadTenRecord(PemilihRecord $leader, CommitteeMembership $membership, ?s
     ]);
 }
 
-it('allows only a scoped UDM to create a Kad 10 with an AJK membership', function () {
+it('allows a scoped UDM to create a Kad 10 with any active pemilih as leader', function () {
     $udmUser = kadTenUser();
     $leader = kadTenVoter(['name' => 'KETUA ALPHA']);
-    $membership = kadTenMembership($leader);
     $outsideLeader = kadTenVoter(['name' => 'KETUA BETA', 'dm' => 'UDM BETA']);
-    $outsideMembership = kadTenMembership($outsideLeader, 'udm', 'UDM BETA');
 
     $this->actingAs($udmUser)
         ->post(route('kad-ten.store'), [
             'name' => 'Kad Alpha',
-            'committee_membership_id' => $membership->id,
+            'pemimpin_id' => $leader->id,
+            'level' => 'udm',
         ])
         ->assertRedirect(route('kad-ten.index'));
 
-    expect(KadTen::query()->where('pemimpin_id', $leader->id)->exists())->toBeTrue();
+    expect(KadTen::query()->where('pemimpin_id', $leader->id)->value('committee_membership_id'))->toBeNull();
+
+    $cawanganLeader = kadTenVoter([
+        'name' => 'KETUA CAWANGAN BUKAN AJK',
+        'locality' => 'LOKALITI DUA',
+    ]);
 
     $this->actingAs($udmUser)
         ->post(route('kad-ten.store'), [
-            'committee_membership_id' => $outsideMembership->id,
+            'pemimpin_id' => $cawanganLeader->id,
+            'level' => 'cawangan',
         ])
-        ->assertSessionHasErrors('committee_membership_id');
+        ->assertRedirect(route('kad-ten.index'));
+
+    expect(KadTen::query()->where('pemimpin_id', $cawanganLeader->id)->value('scope_key'))
+        ->toBe('UDM ALPHA|LOKALITI DUA');
+
+    $this->actingAs($udmUser)
+        ->post(route('kad-ten.store'), [
+            'pemimpin_id' => $outsideLeader->id,
+            'level' => 'udm',
+        ])
+        ->assertSessionHasErrors('pemimpin_id');
 
     $this->actingAs(kadTenUser('jprd', null))
-        ->postJson(route('kad-ten.store'), ['committee_membership_id' => $outsideMembership->id])
+        ->postJson(route('kad-ten.store'), ['pemimpin_id' => $leader->id, 'level' => 'udm'])
         ->assertForbidden();
+});
+
+it('suggests non-AJK pemilih as Kad 10 leaders', function () {
+    $user = kadTenUser();
+    $leader = kadTenVoter(['name' => 'PEMILIH BUKAN AJK']);
+
+    $this->actingAs($user)
+        ->getJson(route('kad-ten.suggest-pemimpin', ['q' => 'BUKAN AJK', 'level' => 'udm']))
+        ->assertOk()
+        ->assertJsonPath('suggestions.0.id', $leader->id)
+        ->assertJsonPath('suggestions.0.level', 'udm')
+        ->assertJsonPath('suggestions.0.scope_key', 'UDM ALPHA');
 });
 
 it('returns recommendations ranked by address, house and locality within the Kad scope', function () {
