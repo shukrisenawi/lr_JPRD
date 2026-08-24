@@ -388,7 +388,7 @@ function KadCard({ kad, canManage, onEdit, onDelete, onDeleteMember, onExport })
                 <div className="flex min-w-0 items-start gap-3">
                     <span className={'mt-1 shrink-0 transition-transform duration-200 ' + (expanded ? 'rotate-180' : '')}><Icon name="chevronDown" className="h-4 w-4 text-slate-400" /></span>
                     <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
-                    <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{kad.pemimpin?.name || kad.name || 'Kad 10'}</p><p className="mt-0.5 truncate text-[10px] text-slate-500">{scope}</p></div>
+                    <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{kad.pemimpin?.name || kad.name || 'Kad 10'}<span className="ml-2 text-[10px] font-normal text-slate-400">· {kad.pemimpin?.no_kp || kad.pemimpin?.old_ic || '-'}</span></p><p className="mt-0.5 truncate text-[10px] text-slate-500">{scope}</p></div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center"><LevelBadge level={kad.level} /><span className={'rounded-full px-2 py-0.5 text-[10px] font-bold ' + (complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>{complete ? 'Lengkap' : 'Belum cukup'} · {kad.member_count}/{kad.minimum_members || 10}</span></div>
             </button>
@@ -397,7 +397,7 @@ function KadCard({ kad, canManage, onEdit, onDelete, onDeleteMember, onExport })
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <div className="flex min-w-0 flex-1 items-center gap-2.5">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">{kad.pemimpin?.avatar_url ? <img src={kad.pemimpin.avatar_url} alt="Avatar ketua" className="h-8 w-8 rounded-full object-cover" /> : <Icon name="user" className="h-4 w-4" />}</div>
-                        <div className="min-w-0"><p className="truncate text-[10px] text-slate-400">{kad.pemimpin?.no_kp || kad.pemimpin?.old_ic || '-'}{kad.pemimpin?.position_name ? ` · ${kad.pemimpin.position_name}` : ''}</p></div>
+                        <div className="min-w-0"><p className="truncate text-[10px] text-slate-400">{kad.pemimpin?.position_name || 'Ketua kad'}</p></div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
                         <button type="button" onClick={event => { event.stopPropagation(); onExport(kad); }} className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-600 hover:border-green-300 hover:text-green-700"><Icon name="download" className="h-3.5 w-3.5" /> Excel</button>
