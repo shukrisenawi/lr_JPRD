@@ -269,7 +269,7 @@ function PemimpinSearchModal({ level = 'udm', onSelect, onClose }) {
                                 <p className="truncate text-xs font-bold text-slate-800">{result.name}</p>
                                 <p className="truncate text-[10px] text-slate-400">{result.no_kp || result.old_ic || '-'} | {result.dm || '-'} / {result.locality || '-'}</p>
                             </div>
-                            <div className="shrink-0 text-right"><LevelBadge level={result.level} /><p className="mt-0.5 text-[9px] text-slate-400">{result.position_name || 'Pemilih'}</p></div>
+                            <div className="shrink-0 text-right"><p className="text-[9px] text-slate-400">{result.position_name || 'Pemilih'}</p></div>
                         </button>
                     ))}
                 </div>
