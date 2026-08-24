@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import Swal from 'sweetalert2';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -318,9 +319,16 @@ function AddMemberModal({ kad, onClose, onAdded }) {
             preserveState: true,
             only: ['kads'],
             onFinish: () => setAdding(false),
-            onSuccess: () => {
+            onSuccess: page => {
                 onClose();
                 onAdded?.();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berjaya',
+                    text: page?.props?.flash?.success || 'Ahli berjaya ditambah.',
+                    timer: 2000,
+                    showConfirmButton: false,
+                });
             },
         });
     };
