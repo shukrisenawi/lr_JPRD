@@ -63,8 +63,7 @@ function AssignModal({ voter, kads, onAssign, onClose }) {
                                 <Icon name="user" className="h-4 w-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-slate-800">{kad.name || 'Kad 10'}</p>
-                                {kad.pemimpin_name && <p className="text-[10px] text-slate-400">Ketua: {kad.pemimpin_name}</p>}
+                                <p className="text-xs font-bold text-slate-800">{kad.pemimpin_name || kad.name || 'Kad 10'}</p>
                             </div>
                             <span className="rounded bg-green-600 px-2.5 py-1 text-[10px] font-bold text-white">{assigning === kad.id ? '...' : 'Pilih'}</span>
                         </button>
