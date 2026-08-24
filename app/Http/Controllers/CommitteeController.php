@@ -100,9 +100,9 @@ class CommitteeController extends Controller
             ->values();
 
         $udmMessageGroupDefinitions = [
-            ['label' => 'JAWATANKUASA UDM', 'aliases' => ['JAWATANKUASA UTAMA', 'JAWATANKUASA UDM']],
-            ['label' => 'PACABA', 'aliases' => ['PASUKAN PACABA', 'PACABA']],
-            ['label' => 'BARONG', 'aliases' => ['PETUGAS BARUNG', 'BARONG']],
+            ['label' => 'JAWATANKUASA UDM', 'aliases' => ['JAWATANKUASA UTAMA', 'JAWATANKUASA UDM'], 'minimum_members' => 10],
+            ['label' => 'PACABA', 'aliases' => ['PASUKAN PACABA', 'PACABA'], 'minimum_members' => 1],
+            ['label' => 'BARONG', 'aliases' => ['PETUGAS BARUNG', 'BARONG'], 'minimum_members' => 1],
         ];
         $udmGroups = CommitteeGroup::query()
             ->whereJsonContains('levels', 'udm')
@@ -119,6 +119,7 @@ class CommitteeController extends Controller
                 return [
                     'label' => $definition['label'],
                     'group_id' => $group?->id,
+                    'minimum_members' => $definition['minimum_members'],
                 ];
             })
             ->values();
@@ -132,7 +133,7 @@ class CommitteeController extends Controller
                 ->whereIn('scope_key', $udmScopes->pluck('dm'))
                 ->whereIn('committee_group_id', $messageGroupIds)
                 ->select('scope_key', 'committee_group_id')
-                ->selectRaw('COUNT(*) as members_count')
+                ->selectRaw('COUNT(DISTINCT pemilih_record_id) as members_count')
                 ->groupBy('scope_key', 'committee_group_id')
                 ->get()
                 ->mapWithKeys(fn ($row) => [
@@ -146,7 +147,7 @@ class CommitteeController extends Controller
                     ->map(fn (array $group) => [
                         'label' => $group['label'],
                         'has_members' => $group['group_id'] !== null
-                            && ($udmGroupMemberCounts[$record->dm.'|'.$group['group_id']] ?? 0) > 0,
+                            && ($udmGroupMemberCounts[$record->dm.'|'.$group['group_id']] ?? 0) >= $group['minimum_members'],
                     ])
                     ->values()
                     ->all(),

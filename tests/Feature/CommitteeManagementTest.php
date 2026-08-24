@@ -128,11 +128,39 @@ it('shows UDM group update status based on committee members', function () {
             ])
             ->where('udm_n8n_message', fn ($message) => str_contains($message, '📌SENARAI JAWATANKUASA UDM JENERI ')
                 && str_contains($message, '📌JAWATANKUASA UDM YANG SUDAH HANTAR')
-                && str_contains($message, '1) UDM ALPHA 🌸🌸🌸🌸🌸')
-                && str_contains($message, '   - JAWATANKUASA UDM ✅')
+                && str_contains($message, '1) UDM ALPHA')
+                && ! str_contains($message, '1) UDM ALPHA 🌸🌸🌸🌸🌸')
+                && ! str_contains($message, '   - JAWATANKUASA UDM ✅')
                 && str_contains($message, '   - PACABA ✅')
                 && str_contains($message, '   - BARONG ✅')
                 && str_contains($message, '🌸Terima kasih atas komitmen UDM.. Ayuh kita Selesaikan.. Anda semua terbaik')));
+
+    foreach (range(2, 10) as $number) {
+        $voter = PemilihRecord::query()->create([
+            'identity_number' => sprintf('900101%06d', $number),
+            'no_kp' => sprintf('900101%06d', $number),
+            'name' => 'UDM MEMBER '.$number,
+            'dm' => 'UDM ALPHA',
+            'locality' => 'KG ALPHA',
+            'status' => 'aktif',
+        ]);
+
+        CommitteeMembership::query()->create([
+            'committee_group_id' => $group->id,
+            'pemilih_record_id' => $voter->id,
+            'committee_position_id' => $position->id,
+            'level' => 'udm',
+            'scope_key' => 'UDM ALPHA',
+            'scope_name' => 'UDM ALPHA',
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('jawatankuasa.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('udm_n8n_message', fn ($message) => str_contains($message, '1) UDM ALPHA 🌸🌸🌸🌸🌸')
+                && str_contains($message, '   - JAWATANKUASA UDM ✅')));
 });
 
 it('blocks jawatankuasa route when user role does not have module access', function () {
