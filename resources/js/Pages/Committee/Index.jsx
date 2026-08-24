@@ -676,26 +676,7 @@ const committeeTabs = [
     { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
 ];
 
-function buildUdmPendingMessage(statuses) {
-    const pending = statuses.filter((status) => !status.has_members);
-    const lines = [
-        '*SENARAI UDM BELUM KEMAS KINI KUMPULAN*',
-        '',
-    ];
-
-    if (pending.length === 0) {
-        lines.push('Semua UDM telah mengemaskini kumpulan.');
-    } else {
-        lines.push('*UDM TIADA AHLI*');
-        pending.forEach((status, index) => lines.push(`${index + 1}. ${status.name}`));
-    }
-
-    lines.push('', `Jumlah belum kemas kini: ${pending.length} UDM`);
-
-    return lines.join('\n');
-}
-
-const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, udmStatuses = [], activeTab, onTabChange }, ref) {
+const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, udmStatuses = [], udmN8nMessage = '', activeTab, onTabChange }, ref) {
     const userLevel = auth?.user?.access_level ?? 'jprd';
     const levelPriority = { jprd: 3, udm: 2, cawangan: 1 };
     const tabs = committeeTabs.filter(t => levelPriority[t.key] <= levelPriority[userLevel]);
@@ -830,7 +811,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const canSendN8nMessage = auth?.user?.role?.is_master_admin || auth?.user?.allowed_modules?.includes('laporan-hantar-status');
 
     const openUdmN8nModal = () => {
-        setN8nMessage(buildUdmPendingMessage(udmStatuses));
+        setN8nMessage(udmN8nMessage);
         setN8nError('');
         setN8nNotice('');
         setN8nModalOpen(true);
@@ -2088,7 +2069,7 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
 
 // ─── Main Export ──────────────────────────────────────────────────────────
 
-export default function CommitteeIndex({ groups, positions, memberships, scopes, udm_statuses = [] }) {
+export default function CommitteeIndex({ groups, positions, memberships, scopes, udm_statuses = [], udm_n8n_message = '' }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canKumpulan = allowedModules.includes('jawatankuasa.kumpulan');
@@ -2158,7 +2139,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
                 )}
 
                 {activeSection === 'senarai-jawatankuasa' && (
-                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} udmStatuses={udm_statuses} auth={auth} />
+                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} udmStatuses={udm_statuses} udmN8nMessage={udm_n8n_message} auth={auth} />
                 )}
             </div>
 

@@ -99,6 +99,60 @@ class CommitteeController extends Controller
             ])
             ->values();
 
+        $udmMessageGroupDefinitions = [
+            ['label' => 'JAWATANKUASA UDM', 'aliases' => ['JAWATANKUASA UTAMA', 'JAWATANKUASA UDM']],
+            ['label' => 'PACABA', 'aliases' => ['PASUKAN PACABA', 'PACABA']],
+            ['label' => 'BARONG', 'aliases' => ['PETUGAS BARUNG', 'BARONG']],
+        ];
+        $udmGroups = CommitteeGroup::query()
+            ->whereJsonContains('levels', 'udm')
+            ->get(['id', 'name']);
+
+        $udmMessageGroups = collect($udmMessageGroupDefinitions)
+            ->map(function (array $definition) use ($udmGroups) {
+                $group = $udmGroups->first(fn (CommitteeGroup $candidate) => in_array(
+                    Str::upper(trim($candidate->name)),
+                    $definition['aliases'],
+                    true
+                ));
+
+                return [
+                    'label' => $definition['label'],
+                    'group_id' => $group?->id,
+                ];
+            })
+            ->values();
+
+        $messageGroupIds = $udmMessageGroups->pluck('group_id')->filter()->values();
+        $udmGroupMemberCounts = $messageGroupIds->isEmpty()
+            ? collect()
+            : DB::table('committee_memberships')
+                ->where('level', 'udm')
+                ->whereNotNull('committee_group_id')
+                ->whereIn('scope_key', $udmScopes->pluck('dm'))
+                ->whereIn('committee_group_id', $messageGroupIds)
+                ->select('scope_key', 'committee_group_id')
+                ->selectRaw('COUNT(*) as members_count')
+                ->groupBy('scope_key', 'committee_group_id')
+                ->get()
+                ->mapWithKeys(fn ($row) => [
+                    $row->scope_key.'|'.$row->committee_group_id => (int) $row->members_count,
+                ]);
+
+        $udmMessageStatuses = $udmScopes
+            ->map(fn (PemilihRecord $record) => [
+                'name' => $record->dm,
+                'groups' => $udmMessageGroups
+                    ->map(fn (array $group) => [
+                        'label' => $group['label'],
+                        'has_members' => $group['group_id'] !== null
+                            && ($udmGroupMemberCounts[$record->dm.'|'.$group['group_id']] ?? 0) > 0,
+                    ])
+                    ->values()
+                    ->all(),
+            ])
+            ->values();
+
         return Inertia::render('Committee/Index', [
             'groups' => CommitteeGroup::query()
                 ->with(['positions' => function ($q) {
@@ -201,6 +255,7 @@ class CommitteeController extends Controller
                     ->values(),
             ],
             'udm_statuses' => $udmStatuses,
+            'udm_n8n_message' => $this->buildUdmN8nMessage($udmMessageStatuses),
         ]);
     }
 
@@ -912,6 +967,29 @@ class CommitteeController extends Controller
     }
 
     // ─── Private ──────────────────────────────────────────────────
+
+    private function buildUdmN8nMessage($statuses): string
+    {
+        $lines = [
+            '📌SENARAI JAWATANKUASA UDM JENERI '.now('Asia/Kuala_Lumpur')->format('j/n/y'),
+            '📌JAWATANKUASA UDM YANG SUDAH HANTAR',
+        ];
+
+        foreach ($statuses as $index => $status) {
+            $complete = collect($status['groups'])->every(fn (array $group) => $group['has_members']);
+            $lines[] = ($index + 1).') '.$status['name'].($complete ? ' 🌸🌸🌸🌸🌸' : '');
+
+            foreach ($status['groups'] as $group) {
+                $lines[] = '   - '.$group['label'].($group['has_members'] ? ' ✅' : '');
+            }
+        }
+
+        $lines[] = '';
+        $lines[] = '';
+        $lines[] = '🌸Terima kasih atas komitmen UDM.. Ayuh kita Selesaikan.. Anda semua terbaik';
+
+        return implode(PHP_EOL, $lines);
+    }
 
     private function resolveScope(string $level, string $scopeKey, PemilihRecord $voter): array
     {

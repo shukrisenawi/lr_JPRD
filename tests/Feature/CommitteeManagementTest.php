@@ -24,16 +24,44 @@ it('renders jawatankuasa page for authenticated user with module access', functi
 it('shows UDM group update status based on committee members', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
     $group = CommitteeGroup::query()->create([
-        'name' => 'AJK UDM',
+        'name' => 'JAWATANKUASA UTAMA',
         'levels' => ['udm'],
         'sort_order' => 1,
+    ]);
+    $pacabaGroup = CommitteeGroup::query()->create([
+        'name' => 'PASUKAN PACABA',
+        'levels' => ['udm'],
+        'sort_order' => 2,
+    ]);
+    $barongGroup = CommitteeGroup::query()->create([
+        'name' => 'PETUGAS BARUNG',
+        'levels' => ['udm'],
+        'sort_order' => 3,
     ]);
     $position = CommitteePosition::query()->create([
         'name' => 'Pengerusi',
         'slug' => 'pengerusi',
         'sort_order' => 1,
     ]);
+    $pacabaPosition = CommitteePosition::query()->create([
+        'name' => 'AJK Pacaba',
+        'slug' => 'ajk-pacaba',
+        'sort_order' => 2,
+    ]);
+    $barongPosition = CommitteePosition::query()->create([
+        'name' => 'AJK Barong',
+        'slug' => 'ajk-barong',
+        'sort_order' => 3,
+    ]);
     $group->positions()->attach($position->id, [
+        'level' => 'udm',
+        'sort_order' => 0,
+    ]);
+    $pacabaGroup->positions()->attach($pacabaPosition->id, [
+        'level' => 'udm',
+        'sort_order' => 0,
+    ]);
+    $barongGroup->positions()->attach($barongPosition->id, [
         'level' => 'udm',
         'sort_order' => 0,
     ]);
@@ -63,6 +91,22 @@ it('shows UDM group update status based on committee members', function () {
         'scope_key' => 'UDM ALPHA',
         'scope_name' => 'UDM ALPHA',
     ]);
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $pacabaGroup->id,
+        'pemilih_record_id' => $updatedUdmVoter->id,
+        'committee_position_id' => $pacabaPosition->id,
+        'level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+        'scope_name' => 'UDM ALPHA',
+    ]);
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $barongGroup->id,
+        'pemilih_record_id' => $updatedUdmVoter->id,
+        'committee_position_id' => $barongPosition->id,
+        'level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+        'scope_name' => 'UDM ALPHA',
+    ]);
 
     $this->actingAs($user)
         ->get(route('jawatankuasa.index'))
@@ -72,7 +116,7 @@ it('shows UDM group update status based on committee members', function () {
                 [
                     'key' => 'UDM ALPHA',
                     'name' => 'UDM ALPHA',
-                    'members_count' => 1,
+                    'members_count' => 3,
                     'has_members' => true,
                 ],
                 [
@@ -81,7 +125,14 @@ it('shows UDM group update status based on committee members', function () {
                     'members_count' => 0,
                     'has_members' => false,
                 ],
-            ]));
+            ])
+            ->where('udm_n8n_message', fn ($message) => str_contains($message, '📌SENARAI JAWATANKUASA UDM JENERI ')
+                && str_contains($message, '📌JAWATANKUASA UDM YANG SUDAH HANTAR')
+                && str_contains($message, '1) UDM ALPHA 🌸🌸🌸🌸🌸')
+                && str_contains($message, '   - JAWATANKUASA UDM ✅')
+                && str_contains($message, '   - PACABA ✅')
+                && str_contains($message, '   - BARONG ✅')
+                && str_contains($message, '🌸Terima kasih atas komitmen UDM.. Ayuh kita Selesaikan.. Anda semua terbaik')));
 });
 
 it('blocks jawatankuasa route when user role does not have module access', function () {
