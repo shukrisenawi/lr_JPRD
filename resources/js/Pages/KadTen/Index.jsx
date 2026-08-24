@@ -164,7 +164,7 @@ async function downloadKadWorkbook(kads, selectedKad = null) {
         };
         addTitle('KAD 10', 18, 'FFFFFFFF').getCell(1).fill = titleFill;
         addTitle(kad.pemimpin?.name || kad.name || 'Senarai jagaan ketua', 14);
-        addTitle(`Ketua: ${kad.pemimpin?.name || '-'} | ${kad.pemimpin?.no_kp || kad.pemimpin?.old_ic || '-'}`, 11);
+        addTitle(`${kad.pemimpin?.no_kp || kad.pemimpin?.old_ic || '-'}${kad.pemimpin?.position_name ? ` · ${kad.pemimpin.position_name}` : ''}`, 11);
         const scope = kad.level === 'cawangan' ? `${kad.parent_scope_name || '-'} / ${kad.scope_name || '-'}` : (kad.scope_name || kad.level || '-');
         addTitle(`Skop: ${scope} | Status: ${kad.is_complete ? 'Lengkap' : 'Belum cukup'} (${kad.member_count || 0}/${kad.minimum_members || 10})`, 11);
         sheet.addRow([]);
@@ -397,7 +397,7 @@ function KadCard({ kad, canManage, onEdit, onDelete, onDeleteMember, onExport })
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                     <div className="flex min-w-0 flex-1 items-center gap-2.5">
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">{kad.pemimpin?.avatar_url ? <img src={kad.pemimpin.avatar_url} alt="Avatar ketua" className="h-8 w-8 rounded-full object-cover" /> : <Icon name="user" className="h-4 w-4" />}</div>
-                        <div className="min-w-0"><p className="truncate text-xs font-bold text-emerald-800">{kad.pemimpin?.name || '-'}</p><p className="truncate text-[10px] text-slate-400">{kad.pemimpin?.no_kp || kad.pemimpin?.old_ic || '-'}{kad.pemimpin?.position_name ? ` · ${kad.pemimpin.position_name}` : ''}</p></div>
+                        <div className="min-w-0"><p className="truncate text-[10px] text-slate-400">{kad.pemimpin?.no_kp || kad.pemimpin?.old_ic || '-'}{kad.pemimpin?.position_name ? ` · ${kad.pemimpin.position_name}` : ''}</p></div>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
                         <button type="button" onClick={event => { event.stopPropagation(); onExport(kad); }} className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-slate-600 hover:border-green-300 hover:text-green-700"><Icon name="download" className="h-3.5 w-3.5" /> Excel</button>
