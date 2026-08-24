@@ -387,7 +387,7 @@ function KadCard({ kad, canManage, onEdit, onDelete, onDeleteMember, onExport })
             <button type="button" onClick={() => setExpanded(current => !current)} className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left transition hover:bg-green-50/50 sm:px-4">
                 <div className="flex min-w-0 items-start gap-3">
                     <span className={'mt-1 shrink-0 transition-transform duration-200 ' + (expanded ? 'rotate-180' : '')}><Icon name="chevronDown" className="h-4 w-4 text-slate-400" /></span>
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700"><Icon name="users" className="h-5 w-5" /></div>
+                    <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
                     <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{kad.pemimpin?.name || kad.name || 'Kad 10'}</p><p className="mt-0.5 truncate text-[10px] text-slate-500">{scope}</p></div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center"><LevelBadge level={kad.level} /><span className={'rounded-full px-2 py-0.5 text-[10px] font-bold ' + (complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>{complete ? 'Lengkap' : 'Belum cukup'} · {kad.member_count}/{kad.minimum_members || 10}</span></div>
