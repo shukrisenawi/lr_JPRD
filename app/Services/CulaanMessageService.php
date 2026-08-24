@@ -25,7 +25,7 @@ class CulaanMessageService
         $date ??= now('Asia/Kuala_Lumpur');
 
         $lines = [
-            '📌CULAN TERKINI JPrD JENERI '.$date->format('j/n/y'),
+            '📌CULAAN TERKINI JPrD JENERI '.$date->format('j/n/y'),
             '',
             '♦️JUM PEMILIH',
             $this->formatNumber($summary['total_voters'] ?? 0),

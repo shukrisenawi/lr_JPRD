@@ -120,7 +120,7 @@ it('formats culaan message with current report values', function () {
     ], Carbon::create(2026, 8, 2, 12, 0, 0, 'Asia/Kuala_Lumpur'));
 
     expect($message)
-        ->toContain('📌CULAN TERKINI JPrD JENERI 2/8/26')
+        ->toContain('📌CULAAN TERKINI JPrD JENERI 2/8/26')
         ->toContain('3️⃣5️⃣, 8️⃣4️⃣8️⃣')
         ->toContain('2️⃣8️⃣, 0️⃣5️⃣4️⃣')
         ->toContain('7️⃣, 7️⃣9️⃣4️⃣')

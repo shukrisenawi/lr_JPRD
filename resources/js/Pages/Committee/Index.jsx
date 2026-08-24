@@ -676,7 +676,7 @@ const committeeTabs = [
     { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
 ];
 
-const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, udmStatuses = [], udmN8nMessage = '', activeTab, onTabChange }, ref) {
+const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, udmN8nMessage = '', activeTab, onTabChange }, ref) {
     const userLevel = auth?.user?.access_level ?? 'jprd';
     const levelPriority = { jprd: 3, udm: 2, cawangan: 1 };
     const tabs = committeeTabs.filter(t => levelPriority[t.key] <= levelPriority[userLevel]);
@@ -807,7 +807,6 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
     const currentScopes = scopes[resolvedTab] ?? [];
 
-    const pendingUdmStatuses = useMemo(() => udmStatuses.filter((status) => !status.has_members), [udmStatuses]);
     const canSendN8nMessage = auth?.user?.role?.is_master_admin || auth?.user?.allowed_modules?.includes('laporan-hantar-status');
 
     const openUdmN8nModal = () => {
@@ -1090,48 +1089,20 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                 </button>
                             ))}
                         </div>
+                        {canSendN8nMessage && (
+                            <button
+                                type="button"
+                                onClick={openUdmN8nModal}
+                                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-green-700 to-green-500 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400"
+                            >
+                                <Icon name="send" className="h-3.5 w-3.5" />
+                                Hantar Status Kemaskini Jawatan
+                            </button>
+                        )}
+                        {n8nNotice && <span className="text-[10px] font-semibold text-green-700">{n8nNotice}</span>}
                     </div>
                 </div>
             </div>
-
-            {udmStatuses.length > 0 && (
-                <div className="border-b border-sky-100 bg-sky-50/40 px-3 py-3">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Status UDM</p>
-                            <p className="mt-0.5 text-[10px] text-slate-500">UDM bertanda tick telah mempunyai ahli dalam kumpulan.</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700">{pendingUdmStatuses.length} belum kemas kini</span>
-                            {canSendN8nMessage && (
-                                <button
-                                    type="button"
-                                    onClick={openUdmN8nModal}
-                                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-green-700 to-green-500 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400"
-                                >
-                                    <Icon name="send" className="h-3.5 w-3.5" />
-                                    n8n
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    <div className="mt-2 grid max-h-36 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2 lg:grid-cols-4">
-                        {udmStatuses.map((status) => (
-                            <div key={status.key} className="flex items-center justify-between gap-2 rounded-md border border-white bg-white px-2.5 py-1.5 shadow-sm">
-                                <span className="truncate text-[10px] font-bold text-slate-700" title={status.name}>{status.name}</span>
-                                {status.has_members ? (
-                                    <span role="img" className="inline-flex shrink-0 items-center justify-center rounded-full bg-green-100 p-1 text-green-700" title="Sudah kemas kini" aria-label={`${status.name} sudah kemas kini`}>
-                                        <Icon name="check" className="h-3 w-3" />
-                                    </span>
-                                ) : (
-                                    <span className="shrink-0 text-[9px] font-semibold text-amber-600">Belum</span>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    {n8nNotice && <p className="mt-2 text-[10px] font-semibold text-green-700">{n8nNotice}</p>}
-                </div>
-            )}
 
             <div className="p-3">
                 <form onSubmit={submit} className="space-y-3">
@@ -2069,7 +2040,7 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
 
 // ─── Main Export ──────────────────────────────────────────────────────────
 
-export default function CommitteeIndex({ groups, positions, memberships, scopes, udm_statuses = [], udm_n8n_message = '' }) {
+export default function CommitteeIndex({ groups, positions, memberships, scopes, udm_n8n_message = '' }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canKumpulan = allowedModules.includes('jawatankuasa.kumpulan');
@@ -2139,7 +2110,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
                 )}
 
                 {activeSection === 'senarai-jawatankuasa' && (
-                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} udmStatuses={udm_statuses} udmN8nMessage={udm_n8n_message} auth={auth} />
+                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} udmN8nMessage={udm_n8n_message} auth={auth} />
                 )}
             </div>
 

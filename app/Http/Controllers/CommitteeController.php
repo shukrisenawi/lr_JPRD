@@ -985,7 +985,6 @@ class CommitteeController extends Controller
         }
 
         $lines[] = '';
-        $lines[] = '';
         $lines[] = '🌸Terima kasih atas komitmen UDM.. Ayuh kita Selesaikan.. Anda semua terbaik';
 
         return implode(PHP_EOL, $lines);
