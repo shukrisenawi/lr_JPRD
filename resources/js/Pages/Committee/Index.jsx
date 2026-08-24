@@ -2,6 +2,7 @@ import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import N8nMessageModal from '@/Components/N8nMessageModal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -28,9 +29,10 @@ function Icon({ name, className = 'h-5 w-5' }) {
         chevronDown: <><path d="m6 9 6 6 6-6" /></>,
         eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
         link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></>,
-        x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
-        camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></>,
-    };
+         x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
+         camera: <><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></>,
+         send: <><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></>,
+     };
 
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
 }
@@ -674,7 +676,26 @@ const committeeTabs = [
     { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
 ];
 
-const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, activeTab, onTabChange }, ref) {
+function buildUdmPendingMessage(statuses) {
+    const pending = statuses.filter((status) => !status.has_members);
+    const lines = [
+        '*SENARAI UDM BELUM KEMAS KINI KUMPULAN*',
+        '',
+    ];
+
+    if (pending.length === 0) {
+        lines.push('Semua UDM telah mengemaskini kumpulan.');
+    } else {
+        lines.push('*UDM TIADA AHLI*');
+        pending.forEach((status, index) => lines.push(`${index + 1}. ${status.name}`));
+    }
+
+    lines.push('', `Jumlah belum kemas kini: ${pending.length} UDM`);
+
+    return lines.join('\n');
+}
+
+const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, udmStatuses = [], activeTab, onTabChange }, ref) {
     const userLevel = auth?.user?.access_level ?? 'jprd';
     const levelPriority = { jprd: 3, udm: 2, cawangan: 1 };
     const tabs = committeeTabs.filter(t => levelPriority[t.key] <= levelPriority[userLevel]);
@@ -734,6 +755,11 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [cropFile, setCropFile] = useState(null);
     const [cropTargetMember, setCropTargetMember] = useState(null);
+    const [n8nModalOpen, setN8nModalOpen] = useState(false);
+    const [n8nMessage, setN8nMessage] = useState('');
+    const [n8nSending, setN8nSending] = useState(false);
+    const [n8nError, setN8nError] = useState('');
+    const [n8nNotice, setN8nNotice] = useState('');
       const avatarInputRefs = useRef({});
   
       const handleFileSelect = (m, e) => {
@@ -799,6 +825,47 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     }, [memberships]);
 
     const currentScopes = scopes[resolvedTab] ?? [];
+
+    const pendingUdmStatuses = useMemo(() => udmStatuses.filter((status) => !status.has_members), [udmStatuses]);
+    const canSendN8nMessage = auth?.user?.role?.is_master_admin || auth?.user?.allowed_modules?.includes('laporan-hantar-status');
+
+    const openUdmN8nModal = () => {
+        setN8nMessage(buildUdmPendingMessage(udmStatuses));
+        setN8nError('');
+        setN8nNotice('');
+        setN8nModalOpen(true);
+    };
+
+    const sendUdmN8nMessage = async () => {
+        setN8nSending(true);
+        setN8nError('');
+
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(route('laporan.n8n.send'), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                },
+                body: JSON.stringify({ message: n8nMessage }),
+            });
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload.message ?? 'Mesej gagal dihantar.');
+            }
+
+            setN8nModalOpen(false);
+            setN8nNotice('Senarai UDM berjaya dihantar ke n8n.');
+        } catch (error) {
+            setN8nError(error.message ?? 'Mesej gagal dihantar.');
+        } finally {
+            setN8nSending(false);
+        }
+    };
 
     const filteredMemberships = useMemo(() => {
         return memberships.filter((membership) => {
@@ -1045,6 +1112,45 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     </div>
                 </div>
             </div>
+
+            {udmStatuses.length > 0 && (
+                <div className="border-b border-sky-100 bg-sky-50/40 px-3 py-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-sky-700">Status UDM</p>
+                            <p className="mt-0.5 text-[10px] text-slate-500">UDM bertanda tick telah mempunyai ahli dalam kumpulan.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-700">{pendingUdmStatuses.length} belum kemas kini</span>
+                            {canSendN8nMessage && (
+                                <button
+                                    type="button"
+                                    onClick={openUdmN8nModal}
+                                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-green-700 to-green-500 px-3 py-1.5 text-[10px] font-bold text-white shadow-sm transition hover:from-green-600 hover:to-green-400"
+                                >
+                                    <Icon name="send" className="h-3.5 w-3.5" />
+                                    n8n
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <div className="mt-2 grid max-h-36 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2 lg:grid-cols-4">
+                        {udmStatuses.map((status) => (
+                            <div key={status.key} className="flex items-center justify-between gap-2 rounded-md border border-white bg-white px-2.5 py-1.5 shadow-sm">
+                                <span className="truncate text-[10px] font-bold text-slate-700" title={status.name}>{status.name}</span>
+                                {status.has_members ? (
+                                    <span role="img" className="inline-flex shrink-0 items-center justify-center rounded-full bg-green-100 p-1 text-green-700" title="Sudah kemas kini" aria-label={`${status.name} sudah kemas kini`}>
+                                        <Icon name="check" className="h-3 w-3" />
+                                    </span>
+                                ) : (
+                                    <span className="shrink-0 text-[9px] font-semibold text-amber-600">Belum</span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                    {n8nNotice && <p className="mt-2 text-[10px] font-semibold text-green-700">{n8nNotice}</p>}
+                </div>
+            )}
 
             <div className="p-3">
                 <form onSubmit={submit} className="space-y-3">
@@ -1348,6 +1454,17 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     onClose={() => setWhatsappModal(null)}
                 />
             )}
+            <N8nMessageModal
+                open={n8nModalOpen}
+                message={n8nMessage}
+                onChange={setN8nMessage}
+                onClose={() => { if (!n8nSending) setN8nModalOpen(false); }}
+                onSend={sendUdmN8nMessage}
+                sending={n8nSending}
+                error={n8nError}
+                title="Hantar status kumpulan UDM"
+                description="Semak senarai UDM yang masih tiada ahli sebelum hantar melalui n8n."
+            />
         </>
     );
 });
@@ -1971,7 +2088,7 @@ function CommitteeLaporanModal({ memberships, scopes, groups, isOpen, onClose })
 
 // ─── Main Export ──────────────────────────────────────────────────────────
 
-export default function CommitteeIndex({ groups, positions, memberships, scopes }) {
+export default function CommitteeIndex({ groups, positions, memberships, scopes, udm_statuses = [] }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canKumpulan = allowedModules.includes('jawatankuasa.kumpulan');
@@ -2041,7 +2158,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes 
                 )}
 
                 {activeSection === 'senarai-jawatankuasa' && (
-                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} auth={auth} />
+                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} udmStatuses={udm_statuses} auth={auth} />
                 )}
             </div>
 

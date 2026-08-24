@@ -32,22 +32,22 @@ class CommitteeController extends Controller
             if (filled($scope['dm']) && filled($scope['locality'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'cawangan')
-                             ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
-                      });
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
+                        });
                 });
             } elseif (filled($scope['dm'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'udm')
-                             ->where('scope_key', $scope['dm']);
-                      })
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'cawangan')
-                             ->where('parent_scope_name', $scope['dm']);
-                      });
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'udm')
+                                ->where('scope_key', $scope['dm']);
+                        })
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('parent_scope_name', $scope['dm']);
+                        });
                 });
             }
         }
@@ -74,6 +74,30 @@ class CommitteeController extends Controller
         if ($scope !== null && filled($scope['locality'])) {
             $cawanganQuery->where('locality', $scope['locality']);
         }
+
+        $udmScopes = (clone $udmQuery)
+            ->select('dm')
+            ->distinct()
+            ->orderBy('dm')
+            ->get();
+
+        $udmMemberCounts = CommitteeMembership::query()
+            ->where('level', 'udm')
+            ->whereNotNull('committee_group_id')
+            ->whereIn('scope_key', $udmScopes->pluck('dm'))
+            ->select('scope_key')
+            ->selectRaw('COUNT(*) as members_count')
+            ->groupBy('scope_key')
+            ->pluck('members_count', 'scope_key');
+
+        $udmStatuses = $udmScopes
+            ->map(fn (PemilihRecord $record) => [
+                'key' => $record->dm,
+                'name' => $record->dm,
+                'members_count' => (int) ($udmMemberCounts[$record->dm] ?? 0),
+                'has_members' => (int) ($udmMemberCounts[$record->dm] ?? 0) > 0,
+            ])
+            ->values();
 
         return Inertia::render('Committee/Index', [
             'groups' => CommitteeGroup::query()
@@ -156,14 +180,10 @@ class CommitteeController extends Controller
                         'parent_scope_name' => null,
                     ],
                 ],
-                'udm' => $udmQuery
-                    ->select('dm')
-                    ->distinct()
-                    ->orderBy('dm')
-                    ->get()
-                    ->map(fn (PemilihRecord $record) => [
-                        'key' => $record->dm,
-                        'name' => $record->dm,
+                'udm' => $udmStatuses
+                    ->map(fn (array $status) => [
+                        'key' => $status['key'],
+                        'name' => $status['name'],
                         'parent_scope_name' => null,
                     ])
                     ->values(),
@@ -180,6 +200,7 @@ class CommitteeController extends Controller
                     ])
                     ->values(),
             ],
+            'udm_statuses' => $udmStatuses,
         ]);
     }
 
@@ -198,22 +219,22 @@ class CommitteeController extends Controller
             if (filled($scope['dm']) && filled($scope['locality'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'cawangan')
-                             ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
-                      });
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
+                        });
                 });
             } elseif (filled($scope['dm'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'udm')
-                             ->where('scope_key', $scope['dm']);
-                      })
-                      ->orWhere(function ($sq) use ($scope) {
-                          $sq->where('level', 'cawangan')
-                             ->where('parent_scope_name', $scope['dm']);
-                      });
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'udm')
+                                ->where('scope_key', $scope['dm']);
+                        })
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('parent_scope_name', $scope['dm']);
+                        });
                 });
             }
         }
@@ -439,7 +460,7 @@ class CommitteeController extends Controller
         $builder = PemilihRecord::query()
             ->where(function ($q) {
                 $q->where('status', 'aktif')
-                  ->orWhere('is_manual', true);
+                    ->orWhere('is_manual', true);
             })
             ->where(function ($builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
@@ -465,12 +486,12 @@ class CommitteeController extends Controller
         $selectedLevel = $request->query('level');
 
         if ($selectedLevel === 'udm' && filled($selectedScopeKey)) {
-            $builder->orderByRaw("CASE WHEN dm = ? THEN 0 ELSE 1 END", [$selectedScopeKey]);
+            $builder->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$selectedScopeKey]);
         } elseif ($selectedLevel === 'cawangan' && filled($selectedScopeKey)) {
             $parts = explode('|', $selectedScopeKey);
             $dm = $parts[0] ?? '';
             $locality = $parts[1] ?? '';
-            $builder->orderByRaw("CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END", [$dm, $locality]);
+            $builder->orderByRaw('CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END', [$dm, $locality]);
         } else {
             $user = $request->user();
             $scope = $user?->accessScope();
@@ -478,9 +499,9 @@ class CommitteeController extends Controller
             if ($scope !== null && filled($scope['dm'])) {
                 $dm = $scope['dm'];
                 if (filled($scope['locality'])) {
-                    $builder->orderByRaw("CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END", [$dm, $scope['locality']]);
+                    $builder->orderByRaw('CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END', [$dm, $scope['locality']]);
                 } else {
-                    $builder->orderByRaw("CASE WHEN dm = ? THEN 0 ELSE 1 END", [$dm]);
+                    $builder->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$dm]);
                 }
             }
         }

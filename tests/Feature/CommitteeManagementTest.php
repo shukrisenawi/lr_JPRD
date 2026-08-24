@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\CommitteeGroup;
+use App\Models\CommitteeMembership;
+use App\Models\CommitteePosition;
 use App\Models\PemilihRecord;
 use App\Models\User;
 
@@ -14,7 +17,71 @@ it('renders jawatankuasa page for authenticated user with module access', functi
             ->where('positions', [])
             ->where('memberships', [])
             ->where('scopes.jprd.0.key', 'jprd')
-            ->where('scopes.jprd.0.name', 'JPRD'));
+            ->where('scopes.jprd.0.name', 'JPRD')
+            ->where('udm_statuses', []));
+});
+
+it('shows UDM group update status based on committee members', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+    $group = CommitteeGroup::query()->create([
+        'name' => 'AJK UDM',
+        'levels' => ['udm'],
+        'sort_order' => 1,
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'Pengerusi',
+        'slug' => 'pengerusi',
+        'sort_order' => 1,
+    ]);
+    $group->positions()->attach($position->id, [
+        'level' => 'udm',
+        'sort_order' => 0,
+    ]);
+
+    $updatedUdmVoter = PemilihRecord::query()->create([
+        'identity_number' => '900101025555',
+        'no_kp' => '900101025555',
+        'name' => 'ALI BIN ABU',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'KG ALPHA',
+        'status' => 'aktif',
+    ]);
+    PemilihRecord::query()->create([
+        'identity_number' => '900202025555',
+        'no_kp' => '900202025555',
+        'name' => 'SITI BINTI ABU',
+        'dm' => 'UDM BETA',
+        'locality' => 'KG BETA',
+        'status' => 'aktif',
+    ]);
+
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $group->id,
+        'pemilih_record_id' => $updatedUdmVoter->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+        'scope_name' => 'UDM ALPHA',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('jawatankuasa.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('udm_statuses', [
+                [
+                    'key' => 'UDM ALPHA',
+                    'name' => 'UDM ALPHA',
+                    'members_count' => 1,
+                    'has_members' => true,
+                ],
+                [
+                    'key' => 'UDM BETA',
+                    'name' => 'UDM BETA',
+                    'members_count' => 0,
+                    'has_members' => false,
+                ],
+            ]));
 });
 
 it('blocks jawatankuasa route when user role does not have module access', function () {
@@ -35,7 +102,7 @@ it('allows authorized user to create, update, and delete committee positions', f
         ])
         ->assertRedirect(route('jawatankuasa.index'));
 
-    $positionId = \App\Models\CommitteePosition::query()->where('name', 'Pengerusi')->value('id');
+    $positionId = CommitteePosition::query()->where('name', 'Pengerusi')->value('id');
 
     expect($positionId)->not->toBeNull();
 
@@ -71,7 +138,7 @@ it('creates multiple committee positions from comma separated names and keeps th
         ])
         ->assertRedirect(route('jawatankuasa.index'));
 
-    $positions = \App\Models\CommitteePosition::query()
+    $positions = CommitteePosition::query()
         ->orderBy('sort_order')
         ->pluck('name', 'sort_order')
         ->all();
@@ -86,7 +153,7 @@ it('creates multiple committee positions from comma separated names and keeps th
 it('requires unique committee position name', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
 
-    \App\Models\CommitteePosition::query()->create([
+    CommitteePosition::query()->create([
         'name' => 'Setiausaha',
         'slug' => 'setiausaha',
         'sort_order' => 1,
@@ -103,7 +170,7 @@ it('requires unique committee position name', function () {
 it('rejects committee position name that only differs by surrounding spaces', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
 
-    \App\Models\CommitteePosition::query()->create([
+    CommitteePosition::query()->create([
         'name' => 'Pengerusi',
         'slug' => 'pengerusi',
         'sort_order' => 1,
@@ -120,13 +187,13 @@ it('rejects committee position name that only differs by surrounding spaces', fu
 it('prevents updating committee position to an existing name', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
 
-    $first = \App\Models\CommitteePosition::query()->create([
+    $first = CommitteePosition::query()->create([
         'name' => 'Pengerusi',
         'slug' => 'pengerusi',
         'sort_order' => 1,
     ]);
 
-    $second = \App\Models\CommitteePosition::query()->create([
+    $second = CommitteePosition::query()->create([
         'name' => 'Setiausaha',
         'slug' => 'setiausaha',
         'sort_order' => 2,
@@ -145,7 +212,7 @@ it('prevents updating committee position to an existing name', function () {
 
 it('prevents deleting committee position that is already assigned', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'Bendahari',
         'slug' => 'bendahari',
         'sort_order' => 1,
@@ -159,7 +226,7 @@ it('prevents deleting committee position that is already assigned', function () 
         'status' => 'aktif',
     ]);
 
-    \App\Models\CommitteeMembership::query()->create([
+    CommitteeMembership::query()->create([
         'pemilih_record_id' => $voter->id,
         'committee_position_id' => $position->id,
         'level' => 'jprd',
@@ -211,7 +278,7 @@ it('returns only active voter suggestions for jawatankuasa search', function () 
 
 it('allows authorized user to add active voter as ahli jprd', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'Pengerusi',
         'slug' => 'pengerusi',
         'sort_order' => 1,
@@ -245,7 +312,7 @@ it('allows authorized user to add active voter as ahli jprd', function () {
 
 it('allows authorized user to add active voter as ahli udm', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'Setiausaha',
         'slug' => 'setiausaha',
         'sort_order' => 1,
@@ -279,7 +346,7 @@ it('allows authorized user to add active voter as ahli udm', function () {
 
 it('allows authorized user to add active voter as ahli cawangan', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'AJK',
         'slug' => 'ajk',
         'sort_order' => 3,
@@ -314,7 +381,7 @@ it('allows authorized user to add active voter as ahli cawangan', function () {
 
 it('prevents adding inactive voter as ahli jawatankuasa', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'AJK',
         'slug' => 'ajk',
         'sort_order' => 3,
@@ -340,7 +407,7 @@ it('prevents adding inactive voter as ahli jawatankuasa', function () {
 
 it('prevents duplicate committee membership in same scope', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'Ketua Penerangan',
         'slug' => 'ketua-penerangan',
         'sort_order' => 5,
@@ -354,7 +421,7 @@ it('prevents duplicate committee membership in same scope', function () {
         'status' => 'aktif',
     ]);
 
-    \App\Models\CommitteeMembership::query()->create([
+    CommitteeMembership::query()->create([
         'pemilih_record_id' => $voter->id,
         'committee_position_id' => $position->id,
         'level' => 'udm',
@@ -375,7 +442,7 @@ it('prevents duplicate committee membership in same scope', function () {
 
 it('allows authorized user to delete committee membership', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'AJK',
         'slug' => 'ajk',
         'sort_order' => 3,
@@ -389,7 +456,7 @@ it('allows authorized user to delete committee membership', function () {
         'status' => 'aktif',
     ]);
 
-    $membership = \App\Models\CommitteeMembership::query()->create([
+    $membership = CommitteeMembership::query()->create([
         'pemilih_record_id' => $voter->id,
         'committee_position_id' => $position->id,
         'level' => 'cawangan',
