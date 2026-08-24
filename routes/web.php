@@ -138,6 +138,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/kad-ten/{kadTen}/members/{member}', [KadTenController::class, 'destroyMember'])->middleware('module:kad-ten')->name('kad-ten.members.destroy');
     Route::get('/kad-ten/search-pemilih', [KadTenController::class, 'searchPemilih'])->middleware('module:kad-ten')->name('kad-ten.search-pemilih');
     Route::get('/kad-ten/suggest-pemimpin', [KadTenController::class, 'suggestPemimpin'])->middleware('module:kad-ten')->name('kad-ten.suggest-pemimpin');
+    Route::get('/kad-ten/{kadTen}/recommendations', [KadTenController::class, 'recommendations'])->middleware('module:kad-ten')->name('kad-ten.recommendations');
     Route::get('/kad-ten/{pemilihRecord}/clusters', [KadTenController::class, 'clustersFor'])->middleware('module:kad-ten')->name('kad-ten.clusters');
     Route::get('/kad-ten/senarai-pemilih', [KadTenController::class, 'senaraiPemilih'])->middleware('module:kad-ten')->name('kad-ten.senarai-pemilih');
     Route::post('/kad-ten/{kadTen}/assign-voter', [KadTenController::class, 'assignVoter'])->middleware('module:kad-ten')->name('kad-ten.assign-voter');

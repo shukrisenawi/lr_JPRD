@@ -12,8 +12,17 @@ class KadTenMember extends Model
         'pemilih_record_id',
         'cluster_type',
         'cluster_value',
+        'match_score',
+        'match_reason',
         'created_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'match_score' => 'integer',
+        ];
+    }
 
     public function kadTen(): BelongsTo
     {

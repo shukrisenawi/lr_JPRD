@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -10,7 +10,7 @@ function Icon({ name, className = 'h-5 w-5' }) {
         x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
         plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
     };
-    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
+    return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
 }
 
 function AssignModal({ voter, kads, onAssign, onClose }) {
@@ -96,7 +96,7 @@ function Pagination({ voters, onPage }) {
     );
 }
 
-export default function SenaraiPemilih({ filters, voters, udms, localities, kads }) {
+export default function SenaraiPemilih({ filters, voters, udms, localities, kads, can_manage: canManage = false }) {
     const tabs = [
         { key: 'index', label: 'Kad Saya' },
         { key: 'senarai-pemilih', label: 'Senarai Pemilih' },
@@ -108,6 +108,10 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
     });
     const [localVoters, setLocalVoters] = useState(voters);
     const [selectedVoter, setSelectedVoter] = useState(null);
+
+    useEffect(() => {
+        setLocalVoters(voters);
+    }, [voters]);
 
     const applyFilters = (next) => {
         const params = {};
@@ -158,7 +162,8 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <p className="label-section">Kad 10</p>
-                        <h2 className="mt-0.5 heading-lg">Senarai Pemilih (Culaan 2 & 3)</h2>
+                        <h2 className="mt-0.5 heading-lg">Senarai Pemilih Belum Diagih</h2>
+                        <p className="mt-1 text-xs font-medium text-slate-500">Hanya kod cula 2, 3B, 3D, 3K, 3M, 3P dan 3U.</p>
                     </div>
                 </div>
             }
@@ -228,7 +233,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                                         <th className="px-3 py-2 text-left font-bold text-slate-500">Lokaliti</th>
                                         <th className="px-3 py-2 text-left font-bold text-slate-500">Telefon</th>
                                         <th className="px-3 py-2 text-left font-bold text-slate-500">Cula</th>
-                                        <th className="px-3 py-2 text-center font-bold text-slate-500 w-16">Tindakan</th>
+                                         {canManage && <th className="px-3 py-2 text-center font-bold text-slate-500 w-16">Tindakan</th>}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -247,12 +252,12 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                                                     {voter.cula_display_label || voter.cula_code || '-'}
                                                 </span>
                                             </td>
-                                            <td className="px-3 py-2 text-center">
-                                                <button type="button" onClick={() => setSelectedVoter(voter)}
-                                                    className="rounded-lg bg-green-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-green-500 transition">
-                                                    Pilih
-                                                </button>
-                                            </td>
+                                             {canManage && <td className="px-3 py-2 text-center">
+                                                 <button type="button" onClick={() => setSelectedVoter(voter)}
+                                                     className="rounded-lg bg-green-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-green-500 transition">
+                                                     Pilih ketua
+                                                 </button>
+                                             </td>}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -266,7 +271,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                 </div>
             </div>
 
-            {selectedVoter && (
+             {selectedVoter && canManage && (
                 <AssignModal voter={selectedVoter} kads={kads} onAssign={handleAssign} onClose={() => setSelectedVoter(null)} />
             )}
         </AuthenticatedLayout>
