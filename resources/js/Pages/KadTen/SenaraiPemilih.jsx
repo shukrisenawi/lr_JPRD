@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -74,27 +75,6 @@ function AssignModal({ voter, kads, onAssign, onClose }) {
     );
 }
 
-function Pagination({ voters, onPage }) {
-    if (!voters || voters.last_page <= 1) return null;
-    return (
-        <div className="mt-3 flex flex-col gap-3 border-t border-slate-200 px-1 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs font-medium text-slate-500">
-                Papar {voters.from ?? 0} - {voters.to ?? 0} daripada {voters.total} rekod
-            </p>
-            <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => onPage(voters.current_page - 1)} disabled={!voters.prev_page_url}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40">Sebelum</button>
-                {voters.links?.filter(l => /^\d+$/.test(String(l.label))).map(l => (
-                    <button key={l.label} type="button" onClick={() => onPage(Number(l.label))}
-                        className={'rounded-lg px-3 py-1.5 text-xs font-bold transition ' + (l.active ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:text-green-700')}>{l.label}</button>
-                ))}
-                <button type="button" onClick={() => onPage(voters.current_page + 1)} disabled={!voters.next_page_url}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40">Seterusnya</button>
-            </div>
-        </div>
-    );
-}
-
 export default function SenaraiPemilih({ filters, voters, udms, localities, kads, can_manage: canManage = false }) {
     const tabs = [
         { key: 'index', label: 'Kad Saya' },
@@ -131,29 +111,12 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
         applyFilters(next);
     };
 
-    const goToPage = (page) => {
-        const params = {};
-        if (form.udm) params.udm = form.udm;
-        if (form.locality) params.locality = form.locality;
-        if (form.q) params.q = form.q;
-        params.page = page;
-        router.get(route('kad-ten.senarai-pemilih'), params, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
-    const handleAssign = (voterId, kad) => {
-        setLocalVoters(prev => ({
-            ...prev,
-            data: (prev.data ?? []).filter(v => v.id !== voterId),
-            total: Math.max(0, (prev.total ?? 0) - 1),
-        }));
+    const handleAssign = (voterId) => {
+        setLocalVoters(prev => (prev ?? []).filter(v => v.id !== voterId));
         setSelectedVoter(null);
     };
 
-    const rows = localVoters.data ?? [];
+    const rows = localVoters ?? [];
 
     return (
         <AuthenticatedLayout
@@ -212,7 +175,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
 
                 <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                     <div className="border-b border-slate-100 px-4 py-2.5 flex items-center justify-between">
-                        <p className="text-xs font-bold text-slate-600">{localVoters.total ?? 0} pemilih ditemui</p>
+                         <p className="text-xs font-bold text-slate-600">{localVoters.length} pemilih ditemui</p>
                     </div>
 
                     {rows.length === 0 ? (
@@ -238,14 +201,14 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                                 <tbody className="divide-y divide-slate-100">
                                     {rows.map((voter, i) => (
                                         <tr key={voter.id} className="hover:bg-green-50/50 transition">
-                                            <td className="px-3 py-2 text-slate-400 font-bold">{(localVoters.from ?? 1) + i}</td>
+                                             <td className="px-3 py-2 text-slate-400 font-bold">{i + 1}</td>
                                             <td className="px-3 py-2">
                                                 <p className="font-semibold text-slate-800">{voter.name}</p>
                                             </td>
                                             <td className="px-3 py-2 text-slate-600">{voter.no_kp || voter.old_ic || '-'}</td>
                                             <td className="px-3 py-2 text-slate-600">{voter.dm || '-'}</td>
                                             <td className="px-3 py-2 text-slate-600">{voter.locality || '-'}</td>
-                                            <td className="px-3 py-2 text-slate-600">{voter.phone_mobile || voter.phone_home || '-'}</td>
+                                             <td className="px-3 py-2 text-slate-600">{formatPhoneNumber(voter.phone_mobile || voter.phone_home)}</td>
                                             <td className="px-3 py-2">
                                                 <span className="inline-block rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
                                                     {voter.cula_display_label || voter.cula_code || '-'}
@@ -264,10 +227,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                         </div>
                     )}
 
-                    <div className="px-4">
-                        <Pagination voters={localVoters} onPage={goToPage} />
-                    </div>
-                </div>
+                 </div>
             </div>
 
              {selectedVoter && canManage && (

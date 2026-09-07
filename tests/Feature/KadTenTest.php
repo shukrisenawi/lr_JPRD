@@ -211,6 +211,17 @@ it('allows more than ten members and reports completion based on the minimum', f
             ->where('kads.0.is_complete', true));
 });
 
+it('loads all eligible voters in the unassigned Kad 10 list without pagination', function () {
+    $user = kadTenUser();
+
+    collect(range(1, 21))->each(fn () => kadTenVoter());
+
+    $this->actingAs($user)
+        ->get(route('kad-ten.senarai-pemilih'))
+        ->assertInertia(fn ($page) => $page
+            ->where('voters', fn ($voters) => count($voters) === 21));
+});
+
 it('lets only a master admin auto-create cards from the main committee and randomly assign up to ten members', function () {
     $admin = User::factory()->masterAdmin()->create();
     $group = CommitteeGroup::query()->create([

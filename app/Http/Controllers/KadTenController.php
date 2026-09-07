@@ -714,9 +714,9 @@ class KadTenController extends Controller
 
         $voters = $query
             ->orderBy('name')
-            ->paginate(20)
-            ->withQueryString()
-            ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
+            ->get()
+            ->map(fn (PemilihRecord $voter) => $this->transformVoter($voter))
+            ->values();
 
         $udmQuery = $this->eligibleVoterQueryForUser($user)
             ->whereNotNull('dm')

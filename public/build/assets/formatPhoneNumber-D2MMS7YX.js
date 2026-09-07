@@ -1,0 +1,1 @@
+function n(r){const t=String(r??"").trim();if(!t)return"-";const i=t.replace(/\D/g,""),e=i.startsWith("60")?`0${i.slice(2)}`:i;return e.length===10?`${e.slice(0,3)}-${e.slice(3,6)} ${e.slice(6)}`:e.length===11?`${e.slice(0,3)}-${e.slice(3,7)} ${e.slice(7)}`:t}export{n as f};

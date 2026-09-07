@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
+import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -28,7 +29,6 @@ function Icon({ name, className = 'h-5 w-5' }) {
 
 const matchMeta = {
     no_rumah: { label: 'No. rumah sama', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-    manual: { label: 'Pilihan manual', className: 'bg-slate-100 text-slate-600 border-slate-200' },
 };
 
 const hiddenMatchLabels = new Set(['UDM sama', 'Lokaliti sama', 'Alamat sama']);
@@ -44,7 +44,8 @@ function visibleMatchReason(reason) {
 function MatchBadge({ type, score }) {
     if (['alamat', 'localiti', 'udm'].includes(type)) return null;
 
-    const meta = matchMeta[type] || matchMeta.manual;
+    const meta = matchMeta[type];
+    if (!meta) return null;
 
     return (
         <span className={'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-bold ' + meta.className}>
@@ -183,9 +184,9 @@ async function downloadKadWorkbook(kads, selectedKad = null) {
                 addressFor(voter),
                 voter.dm || '-',
                 voter.locality || '-',
-                voter.phone_mobile || voter.phone_home || '-',
+                formatPhoneNumber(voter.phone_mobile || voter.phone_home),
                 voter.cula_display_label || voter.cula_code || '-',
-                visibleMatchReason(member.match_reason) || matchMeta[member.cluster_type]?.label || 'Pilihan manual',
+                visibleMatchReason(member.match_reason) || matchMeta[member.cluster_type]?.label || '',
             ]);
             row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
                 cell.font = { name: 'Calibri', size: 10 };
@@ -369,7 +370,7 @@ function AddMemberModal({ kad, onClose, onAdded }) {
                                     <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.no_kp || voter.old_ic || '-'} | Rumah {voter.no_rumah || '-'} | {voter.dm || '-'} / {voter.locality || '-'}</p>
                                     <p className="mt-0.5 truncate text-[10px] text-slate-400">{visibleMatchReason(voter.match_reason) || 'Padanan manual'}{voter.address ? ` | ${voter.address}` : ''}</p>
                                 </div>
-                                <div className="shrink-0 text-right text-[10px] text-slate-500">{voter.phone_mobile || voter.phone_home || '-'}</div>
+                                <div className="shrink-0 text-right text-[10px] text-slate-500">{formatPhoneNumber(voter.phone_mobile || voter.phone_home)}</div>
                             </label>
                         ))}
                     </div>}
@@ -412,7 +413,7 @@ function KadCard({ kad, cardNumber, canManage, expanded, onToggle, onEdit, onDel
 
             {expanded && <div className="border-t border-slate-100">
                 <div className="flex flex-col gap-2 border-b border-slate-100 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4"><div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Senarai ahli</p><p className="mt-0.5 text-[10px] text-slate-400">{complete ? 'Kad sudah mencapai minimum 10 orang.' : `Masih perlu ${Math.max(0, (kad.minimum_members || 10) - kad.member_count)} orang untuk lengkap.`}</p></div>{canManage && <button type="button" onClick={() => setAddModal(true)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-green-700 hover:bg-green-50"><Icon name="plus" className="h-3.5 w-3.5" /> Tambah ahli</button>}</div>
-                {kad.members.length === 0 ? <div className="px-3 py-8 text-center text-[10px] text-slate-400">Tiada ahli dalam kad ini.</div> : <div className="divide-y divide-slate-100">{kad.members.map((member, index) => <div key={member.id} className="flex items-start gap-2.5 px-3 py-2.5 sm:px-4"><span className="w-5 shrink-0 pt-0.5 text-right text-[10px] font-bold text-slate-400">{index + 1}.</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-slate-800">{member.voter?.name || '-'}</p><p className="truncate text-[10px] text-slate-400">{member.voter?.no_kp || member.voter?.old_ic || '-'} | Rumah {member.voter?.no_rumah || '-'} | {member.voter?.dm || '-'} / {member.voter?.locality || '-'}</p><p className="mt-0.5 truncate text-[9px] text-sky-600">{visibleMatchReason(member.match_reason) || matchMeta[member.cluster_type]?.label || 'Pilihan manual'}</p></div><div className="shrink-0 text-right text-[10px] text-slate-500">{member.voter?.phone_mobile || member.voter?.phone_home || '-'}</div>{canManage && <button type="button" onClick={() => onDeleteMember(kad.id, member.id)} className="shrink-0 rounded p-1 text-rose-400 hover:bg-rose-50 hover:text-rose-600" title="Buang"><Icon name="x" className="h-3.5 w-3.5" /></button>}</div>)}</div>}
+                {kad.members.length === 0 ? <div className="px-3 py-8 text-center text-[10px] text-slate-400">Tiada ahli dalam kad ini.</div> : <div className="divide-y divide-slate-100">{kad.members.map((member, index) => <div key={member.id} className="flex items-start gap-2.5 px-3 py-2.5 sm:px-4"><span className="w-5 shrink-0 pt-0.5 text-right text-[10px] font-bold text-slate-400">{index + 1}.</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-slate-800">{member.voter?.name || '-'}</p><p className="truncate text-[10px] text-slate-400">{member.voter?.no_kp || member.voter?.old_ic || '-'} | Rumah {member.voter?.no_rumah || '-'} | {member.voter?.dm || '-'} / {member.voter?.locality || '-'}</p>{(visibleMatchReason(member.match_reason) || matchMeta[member.cluster_type]?.label) && <p className="mt-0.5 truncate text-[9px] text-sky-600">{visibleMatchReason(member.match_reason) || matchMeta[member.cluster_type]?.label}</p>}</div><div className="shrink-0 text-right text-[10px] text-slate-500">{formatPhoneNumber(member.voter?.phone_mobile || member.voter?.phone_home)}</div>{canManage && <button type="button" onClick={() => onDeleteMember(kad.id, member.id)} className="shrink-0 rounded p-1 text-rose-400 hover:bg-rose-50 hover:text-rose-600" title="Buang"><Icon name="x" className="h-3.5 w-3.5" /></button>}</div>)}</div>}
             </div>}
             {addModal && <AddMemberModal kad={kad} onClose={() => setAddModal(false)} onAdded={keepCardOpen} />}
         </div>
