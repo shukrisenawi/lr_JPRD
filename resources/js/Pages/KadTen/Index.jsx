@@ -476,22 +476,10 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
     const userLevel = auth?.user?.access_level || 'jprd';
     const canAutoInput = canAutoInputProp && auth?.user?.role?.is_master_admin === true;
     const kads = kadsPaginator?.data ?? [];
-    const currentPage = kadsPaginator?.current_page ?? 1;
     const totalKads = kadStats.total ?? kadsPaginator?.total ?? kads.length;
     const totalMembers = kadStats.members ?? kads.reduce((total, kad) => total + (kad.member_count || 0), 0);
     const completeKads = kadStats.complete ?? kads.filter(kad => kad.is_complete).length;
-    const firstKadRef = useRef(null);
-    const firstPageRender = useRef(true);
     const toggleKad = kadId => setExpandedKadId(current => current === kadId ? null : kadId);
-
-    useEffect(() => {
-        if (firstPageRender.current) {
-            firstPageRender.current = false;
-            return;
-        }
-
-        firstKadRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, [currentPage]);
 
     const selectPemimpin = (leader) => {
         setSelectedPemimpin(leader);
@@ -579,7 +567,6 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
             {!canManage && <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold text-slate-700">Tapis pemantauan mengikut UDM</p><p className="mt-0.5 text-[10px] text-slate-400">JPRD boleh melihat satu UDM atau semua UDM.</p></div><select value={udmFilter} onChange={event => applyUdmFilter(event.target.value)} className="input-field w-full text-xs sm:w-64"><option value="">Semua UDM</option>{(scopes.udm || []).map(scope => <option key={scope.key} value={scope.key}>{scope.name}</option>)}</select></div>}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jumlah kad</p><p className="mt-1 text-xl font-black text-slate-800">{totalKads}</p></div><div className="rounded-xl border border-green-200 bg-green-50 px-3 py-3"><p className="text-[10px] font-bold uppercase tracking-wider text-green-700">Lengkap</p><p className="mt-1 text-xl font-black text-green-800">{completeKads}</p></div><div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3"><p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Belum cukup</p><p className="mt-1 text-xl font-black text-amber-800">{Math.max(0, totalKads - completeKads)}</p></div><div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jumlah ahli</p><p className="mt-1 text-xl font-black text-slate-800">{totalMembers}</p></div></div>
             <div className="flex gap-1 border-b border-slate-200"><button type="button" className="rounded-t-lg border-x border-t border-slate-200 bg-white px-4 py-2 text-xs font-bold text-green-700">Kad 10</button><button type="button" onClick={() => router.get(route('kad-ten.senarai-pemilih'))} className="rounded-t-lg px-4 py-2 text-xs font-bold text-slate-500 hover:bg-green-50 hover:text-green-700">Senarai pemilih belum diagih</button></div>
-            <div ref={firstKadRef} aria-hidden="true" className="h-0" />
             {!kads.length ? <div className="rounded-xl border border-dashed border-green-300 bg-white py-14 text-center shadow-sm"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="users" className="h-8 w-8" /></div><p className="mt-4 text-sm font-bold text-slate-600">Belum ada Kad 10</p><p className="mx-auto mt-1 max-w-md px-4 text-xs text-slate-400">{canManage ? 'Cipta kad, pilih mana-mana pemilih sebagai ketua, kemudian pilih ahli yang paling hampir untuk dijaga.' : 'JPRD boleh memantau Kad 10 yang telah diwujudkan oleh UDM.'}</p>{canManage && <button type="button" onClick={() => setCreateModalOpen(true)} className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-500">Cipta Kad 10 pertama</button>}</div> : <div className="grid gap-3">{kads.map((kad, index) => <KadCard key={kad.id} kad={kad} cardNumber={index + 1} expanded={expandedKadId === kad.id} onToggle={toggleKad} canManage={canManage && userLevel === 'udm'} onEdit={setEditKad} onDelete={handleDelete} onDeleteMember={handleDeleteMember} onExport={exportWorkbook} />)}</div>}
             <Pagination pagination={kadsPaginator} onPage={goToPage} />
         </div>
