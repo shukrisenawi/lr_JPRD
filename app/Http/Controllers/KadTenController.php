@@ -309,7 +309,7 @@ class KadTenController extends Controller
                         'cluster_type' => 'manual',
                         'cluster_value' => null,
                         'match_score' => null,
-                        'match_reason' => 'Agihan rawak oleh master admin',
+                        'match_reason' => null,
                         'created_by' => $admin->id,
                         'created_at' => $now,
                         'updated_at' => $now,

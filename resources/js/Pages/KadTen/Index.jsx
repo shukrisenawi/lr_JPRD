@@ -27,14 +27,23 @@ function Icon({ name, className = 'h-5 w-5' }) {
 }
 
 const matchMeta = {
-    alamat: { label: 'Alamat sama', className: 'bg-blue-50 text-blue-700 border-blue-200' },
     no_rumah: { label: 'No. rumah sama', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-    localiti: { label: 'Lokaliti sama', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    udm: { label: 'UDM sama', className: 'bg-slate-100 text-slate-600 border-slate-200' },
     manual: { label: 'Pilihan manual', className: 'bg-slate-100 text-slate-600 border-slate-200' },
 };
 
+const hiddenMatchLabels = new Set(['UDM sama', 'Lokaliti sama', 'Alamat sama']);
+
+function visibleMatchReason(reason) {
+    return String(reason || '')
+        .split(',')
+        .map(part => part.trim())
+        .filter(part => part && !hiddenMatchLabels.has(part) && !part.toLowerCase().startsWith('agihan rawak'))
+        .join(', ');
+}
+
 function MatchBadge({ type, score }) {
+    if (['alamat', 'localiti', 'udm'].includes(type)) return null;
+
     const meta = matchMeta[type] || matchMeta.manual;
 
     return (
@@ -176,7 +185,7 @@ async function downloadKadWorkbook(kads, selectedKad = null) {
                 voter.locality || '-',
                 voter.phone_mobile || voter.phone_home || '-',
                 voter.cula_display_label || voter.cula_code || '-',
-                member.match_reason || matchMeta[member.cluster_type]?.label || 'Pilihan manual',
+                visibleMatchReason(member.match_reason) || matchMeta[member.cluster_type]?.label || 'Pilihan manual',
             ]);
             row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
                 cell.font = { name: 'Calibri', size: 10 };
@@ -358,7 +367,7 @@ function AddMemberModal({ kad, onClose, onAdded }) {
                                 <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-1.5"><p className="truncate text-xs font-bold text-slate-800">{voter.name}</p><MatchBadge type={voter.match_type} score={voter.match_score} /></div>
                                     <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.no_kp || voter.old_ic || '-'} | Rumah {voter.no_rumah || '-'} | {voter.dm || '-'} / {voter.locality || '-'}</p>
-                                    <p className="mt-0.5 truncate text-[10px] text-slate-400">{voter.match_reason || 'Padanan manual'}{voter.address ? ` | ${voter.address}` : ''}</p>
+                                    <p className="mt-0.5 truncate text-[10px] text-slate-400">{visibleMatchReason(voter.match_reason) || 'Padanan manual'}{voter.address ? ` | ${voter.address}` : ''}</p>
                                 </div>
                                 <div className="shrink-0 text-right text-[10px] text-slate-500">{voter.phone_mobile || voter.phone_home || '-'}</div>
                             </label>
@@ -374,17 +383,18 @@ function AddMemberModal({ kad, onClose, onAdded }) {
     );
 }
 
-function KadCard({ kad, cardNumber, canManage, onEdit, onDelete, onDeleteMember, onExport }) {
-    const [expanded, setExpanded] = useState(false);
+function KadCard({ kad, cardNumber, canManage, expanded, onToggle, onEdit, onDelete, onDeleteMember, onExport }) {
     const [addModal, setAddModal] = useState(false);
     const complete = kad.member_count >= (kad.minimum_members || 10);
     const scope = kad.level === 'cawangan' ? `${kad.parent_scope_name || '-'} / ${kad.scope_name || '-'}` : (kad.scope_name || kad.level || '-');
-    const keepCardOpen = () => setExpanded(true);
+    const keepCardOpen = () => {
+        if (!expanded) onToggle(kad.id);
+    };
 
     return (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex w-full items-start justify-between gap-3 px-3 py-3 sm:px-4">
-                <button type="button" onClick={() => setExpanded(current => !current)} className="flex min-w-0 flex-1 items-start gap-3 text-left transition hover:bg-green-50/50">
+                <button type="button" onClick={() => onToggle(kad.id)} className="flex min-w-0 flex-1 items-start gap-3 text-left transition hover:bg-green-50/50">
                     <div className="flex min-w-0 items-start gap-3">
                         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[10px] font-bold text-slate-500">{String(cardNumber).padStart(2, '0')}</span>
                         <span className="mt-0.5 h-9 w-1 shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
@@ -402,7 +412,7 @@ function KadCard({ kad, cardNumber, canManage, onEdit, onDelete, onDeleteMember,
 
             {expanded && <div className="border-t border-slate-100">
                 <div className="flex flex-col gap-2 border-b border-slate-100 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4"><div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Senarai ahli</p><p className="mt-0.5 text-[10px] text-slate-400">{complete ? 'Kad sudah mencapai minimum 10 orang.' : `Masih perlu ${Math.max(0, (kad.minimum_members || 10) - kad.member_count)} orang untuk lengkap.`}</p></div>{canManage && <button type="button" onClick={() => setAddModal(true)} className="inline-flex items-center justify-center gap-1 rounded-md border border-green-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-green-700 hover:bg-green-50"><Icon name="plus" className="h-3.5 w-3.5" /> Tambah ahli</button>}</div>
-                {kad.members.length === 0 ? <div className="px-3 py-8 text-center text-[10px] text-slate-400">Tiada ahli dalam kad ini.</div> : <div className="divide-y divide-slate-100">{kad.members.map((member, index) => <div key={member.id} className="flex items-start gap-2.5 px-3 py-2.5 sm:px-4"><span className="w-5 shrink-0 pt-0.5 text-right text-[10px] font-bold text-slate-400">{index + 1}.</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-slate-800">{member.voter?.name || '-'}</p><p className="truncate text-[10px] text-slate-400">{member.voter?.no_kp || member.voter?.old_ic || '-'} | Rumah {member.voter?.no_rumah || '-'} | {member.voter?.dm || '-'} / {member.voter?.locality || '-'}</p><p className="mt-0.5 truncate text-[9px] text-sky-600">{member.match_reason || matchMeta[member.cluster_type]?.label || 'Pilihan manual'}</p></div><div className="hidden shrink-0 text-right text-[10px] text-slate-500 sm:block">{member.voter?.phone_mobile || member.voter?.phone_home || '-'}</div>{canManage && <button type="button" onClick={() => onDeleteMember(kad.id, member.id)} className="shrink-0 rounded p-1 text-rose-400 hover:bg-rose-50 hover:text-rose-600" title="Buang"><Icon name="x" className="h-3.5 w-3.5" /></button>}</div>)}</div>}
+                {kad.members.length === 0 ? <div className="px-3 py-8 text-center text-[10px] text-slate-400">Tiada ahli dalam kad ini.</div> : <div className="divide-y divide-slate-100">{kad.members.map((member, index) => <div key={member.id} className="flex items-start gap-2.5 px-3 py-2.5 sm:px-4"><span className="w-5 shrink-0 pt-0.5 text-right text-[10px] font-bold text-slate-400">{index + 1}.</span><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold text-slate-800">{member.voter?.name || '-'}</p><p className="truncate text-[10px] text-slate-400">{member.voter?.no_kp || member.voter?.old_ic || '-'} | Rumah {member.voter?.no_rumah || '-'} | {member.voter?.dm || '-'} / {member.voter?.locality || '-'}</p><p className="mt-0.5 truncate text-[9px] text-sky-600">{visibleMatchReason(member.match_reason) || matchMeta[member.cluster_type]?.label || 'Pilihan manual'}</p></div><div className="shrink-0 text-right text-[10px] text-slate-500">{member.voter?.phone_mobile || member.voter?.phone_home || '-'}</div>{canManage && <button type="button" onClick={() => onDeleteMember(kad.id, member.id)} className="shrink-0 rounded p-1 text-rose-400 hover:bg-rose-50 hover:text-rose-600" title="Buang"><Icon name="x" className="h-3.5 w-3.5" /></button>}</div>)}</div>}
             </div>}
             {addModal && <AddMemberModal kad={kad} onClose={() => setAddModal(false)} onAdded={keepCardOpen} />}
         </div>
@@ -435,12 +445,14 @@ export default function KadTenIndex({ kads = [], scopes = {}, filters = {}, can_
     const [editKad, setEditKad] = useState(null);
     const [exporting, setExporting] = useState(false);
     const [autoInputProcessing, setAutoInputProcessing] = useState(false);
+    const [expandedKadId, setExpandedKadId] = useState(null);
     const [selectedPemimpin, setSelectedPemimpin] = useState(null);
     const [pemimpinSearchOpen, setPemimpinSearchOpen] = useState(false);
     const [udmFilter, setUdmFilter] = useState(filters.udm || '');
     const createForm = useForm({ name: '', pemimpin_id: '', level: 'udm', notes: '' });
     const userLevel = auth?.user?.access_level || 'jprd';
     const canAutoInput = canAutoInputProp && auth?.user?.role?.is_master_admin === true;
+    const toggleKad = kadId => setExpandedKadId(current => current === kadId ? null : kadId);
 
     const selectPemimpin = (leader) => {
         setSelectedPemimpin(leader);
@@ -524,7 +536,7 @@ export default function KadTenIndex({ kads = [], scopes = {}, filters = {}, can_
             {!canManage && <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold text-slate-700">Tapis pemantauan mengikut UDM</p><p className="mt-0.5 text-[10px] text-slate-400">JPRD boleh melihat satu UDM atau semua UDM.</p></div><select value={udmFilter} onChange={event => applyUdmFilter(event.target.value)} className="input-field w-full text-xs sm:w-64"><option value="">Semua UDM</option>{(scopes.udm || []).map(scope => <option key={scope.key} value={scope.key}>{scope.name}</option>)}</select></div>}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jumlah kad</p><p className="mt-1 text-xl font-black text-slate-800">{kads.length}</p></div><div className="rounded-xl border border-green-200 bg-green-50 px-3 py-3"><p className="text-[10px] font-bold uppercase tracking-wider text-green-700">Lengkap</p><p className="mt-1 text-xl font-black text-green-800">{completeKads}</p></div><div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3"><p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Belum cukup</p><p className="mt-1 text-xl font-black text-amber-800">{Math.max(0, kads.length - completeKads)}</p></div><div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jumlah ahli</p><p className="mt-1 text-xl font-black text-slate-800">{totalMembers}</p></div></div>
             <div className="flex gap-1 border-b border-slate-200"><button type="button" className="rounded-t-lg border-x border-t border-slate-200 bg-white px-4 py-2 text-xs font-bold text-green-700">Kad 10</button><button type="button" onClick={() => router.get(route('kad-ten.senarai-pemilih'))} className="rounded-t-lg px-4 py-2 text-xs font-bold text-slate-500 hover:bg-green-50 hover:text-green-700">Senarai pemilih belum diagih</button></div>
-            {!kads.length ? <div className="rounded-xl border border-dashed border-green-300 bg-white py-14 text-center shadow-sm"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="users" className="h-8 w-8" /></div><p className="mt-4 text-sm font-bold text-slate-600">Belum ada Kad 10</p><p className="mx-auto mt-1 max-w-md px-4 text-xs text-slate-400">{canManage ? 'Cipta kad, pilih mana-mana pemilih sebagai ketua, kemudian pilih ahli yang paling hampir untuk dijaga.' : 'JPRD boleh memantau Kad 10 yang telah diwujudkan oleh UDM.'}</p>{canManage && <button type="button" onClick={() => setCreateModalOpen(true)} className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-500">Cipta Kad 10 pertama</button>}</div> : <div className="grid gap-3">{kads.map((kad, index) => <KadCard key={kad.id} kad={kad} cardNumber={index + 1} canManage={canManage && userLevel === 'udm'} onEdit={setEditKad} onDelete={handleDelete} onDeleteMember={handleDeleteMember} onExport={exportWorkbook} />)}</div>}
+            {!kads.length ? <div className="rounded-xl border border-dashed border-green-300 bg-white py-14 text-center shadow-sm"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="users" className="h-8 w-8" /></div><p className="mt-4 text-sm font-bold text-slate-600">Belum ada Kad 10</p><p className="mx-auto mt-1 max-w-md px-4 text-xs text-slate-400">{canManage ? 'Cipta kad, pilih mana-mana pemilih sebagai ketua, kemudian pilih ahli yang paling hampir untuk dijaga.' : 'JPRD boleh memantau Kad 10 yang telah diwujudkan oleh UDM.'}</p>{canManage && <button type="button" onClick={() => setCreateModalOpen(true)} className="mt-4 rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-500">Cipta Kad 10 pertama</button>}</div> : <div className="grid gap-3">{kads.map((kad, index) => <KadCard key={kad.id} kad={kad} cardNumber={index + 1} expanded={expandedKadId === kad.id} onToggle={toggleKad} canManage={canManage && userLevel === 'udm'} onEdit={setEditKad} onDelete={handleDelete} onDeleteMember={handleDeleteMember} onExport={exportWorkbook} />)}</div>}
         </div>
 
         {createModalOpen && <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-3 pt-16 sm:pt-24" onClick={() => setCreateModalOpen(false)}><div className="w-full max-w-md rounded-xl bg-white shadow-2xl" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between border-b border-slate-200 px-4 py-3"><div><p className="text-xs font-bold uppercase tracking-wider text-slate-600">Cipta Kad 10</p><p className="mt-0.5 text-[10px] text-slate-400">Nama ketua digunakan sebagai rujukan kad.</p></div><button type="button" onClick={() => setCreateModalOpen(false)} className="rounded-md p-1 text-slate-400 hover:bg-slate-100"><Icon name="x" className="h-5 w-5" /></button></div><form onSubmit={submitCreate} className="space-y-3 p-4"><div><label className="text-xs font-semibold text-slate-600">Ketua <span className="text-rose-500">*</span></label>{selectedPemimpin ? <div className="mt-1 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5"><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-green-800">{selectedPemimpin.name}</p><p className="truncate text-[10px] text-green-600">{selectedPemimpin.no_kp || selectedPemimpin.old_ic || '-'} · {selectedPemimpin.position_name || 'Pemilih'}</p></div><button type="button" onClick={() => { setSelectedPemimpin(null); createForm.setData('pemimpin_id', ''); createForm.setData('name', ''); }} className="rounded-md p-1 text-rose-400 hover:bg-rose-50"><Icon name="x" className="h-4 w-4" /></button></div> : <button type="button" onClick={() => setPemimpinSearchOpen(true)} className="mt-1 w-full rounded-lg border border-dashed border-green-300 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-50"><Icon name="search" className="mr-1 inline h-4 w-4" /> Cari & pilih ketua</button>}{createForm.errors.pemimpin_id && <p className="mt-1 text-[10px] text-rose-600">{createForm.errors.pemimpin_id}</p>}</div><div><label className="text-xs font-semibold text-slate-600">Nota</label><textarea value={createForm.data.notes} onChange={event => createForm.setData('notes', event.target.value)} className="input-field mt-1 w-full text-xs" rows="2" placeholder="Catatan tambahan" /></div><div className="flex justify-end gap-2"><button type="button" onClick={() => setCreateModalOpen(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button><button type="submit" disabled={createForm.processing} className="rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-500 disabled:opacity-50">{createForm.processing ? 'Mencipta...' : 'Cipta kad'}</button></div></form></div>{pemimpinSearchOpen && <PemimpinSearchModal onSelect={selectPemimpin} onClose={() => setPemimpinSearchOpen(false)} />}</div>}

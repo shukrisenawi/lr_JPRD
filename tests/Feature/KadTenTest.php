@@ -256,6 +256,7 @@ it('lets only a master admin auto-create cards from the main committee and rando
     expect(KadTen::query()->withCount('members')->pluck('members_count')->min())->toBe(10);
     expect(KadTen::query()->withCount('members')->pluck('members_count')->max())->toBe(10);
     expect(KadTenMember::query()->count())->toBe(20);
+    expect(KadTenMember::query()->whereNotNull('match_reason')->count())->toBe(0);
     expect(KadTenMember::query()->whereIn('pemilih_record_id', $leaders->pluck('id'))->count())->toBe(0);
     expect(KadTenMember::query()->select('pemilih_record_id')->distinct()->count())->toBe(20);
 
