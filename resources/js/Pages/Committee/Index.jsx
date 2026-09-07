@@ -1498,7 +1498,13 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
     if (!group || !position) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-16 sm:pt-24" onClick={onClose}>
+        <div
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-16 sm:pt-24"
+            onClick={(event) => {
+                event.stopPropagation();
+                onClose();
+            }}
+        >
             <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                     <div>
