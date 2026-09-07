@@ -308,6 +308,7 @@ class KadTenController extends Controller
 
                 $selected = $availableVoters
                     ->filter(fn (PemilihRecord $voter): bool => $this->kadScopeMatchesVoter($kad, $voter))
+                    ->sortByDesc(fn (PemilihRecord $voter): int => $this->matchDetails($leader, $voter)['score'])
                     ->take($capacity)
                     ->values();
 
@@ -346,7 +347,7 @@ class KadTenController extends Controller
         }
 
         $message = sprintf(
-            'Auto input selesai: %d ketua diproses, %d Kad 10 baharu dicipta dan %d ahli diagihkan secara rawak (maksimum 10 orang setiap ketua).',
+            'Auto input selesai: %d ketua diproses, %d Kad 10 baharu dicipta dan %d ahli diagihkan dengan mengutamakan padanan terdekat (maksimum 10 orang setiap ketua).',
             $summary['leaders_count'],
             $summary['cards_created'],
             $summary['members_assigned']

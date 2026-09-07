@@ -240,7 +240,7 @@ it('loads all eligible voters in the unassigned Kad 10 list without pagination',
             ->where('voters', fn ($voters) => count($voters) === 21));
 });
 
-it('lets only a master admin auto-create cards from the main committee and randomly assign up to ten members', function () {
+it('lets only a master admin auto-create cards from the main committee and assign up to ten members', function () {
     $admin = User::factory()->masterAdmin()->create();
     $group = CommitteeGroup::query()->create([
         'name' => 'JAWATANKUASA UTAMA',
@@ -299,6 +299,58 @@ it('lets only a master admin auto-create cards from the main committee and rando
         ->get(route('kad-ten.index'))
         ->assertInertia(fn ($page) => $page
             ->where('can_auto_input', true));
+});
+
+it('prioritizes the closest eligible voters before filling the ten-member limit', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $group = CommitteeGroup::query()->create([
+        'name' => 'JAWATANKUASA UTAMA',
+        'levels' => ['jprd'],
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'AJK Utama',
+        'slug' => 'ajk-utama',
+        'sort_order' => 1,
+    ]);
+    $leader = kadTenVoter([
+        'name' => 'AJK UTAMA',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI SATU',
+        'no_rumah' => '10',
+        'address' => 'JALAN ALPHA 10',
+    ]);
+
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $group->id,
+        'pemilih_record_id' => $leader->id,
+        'committee_position_id' => $position->id,
+        'level' => 'jprd',
+        'scope_key' => 'jprd',
+        'scope_name' => 'JPRD',
+    ]);
+
+    $closest = collect(range(1, 10))->map(fn (int $number) => kadTenVoter([
+        'name' => 'PEMILIH HAMPIR '.$number,
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI SATU',
+        'no_rumah' => '10',
+        'address' => 'JALAN ALPHA 10',
+    ]));
+    $far = kadTenVoter([
+        'name' => 'PEMILIH JAUH',
+        'dm' => 'UDM BETA',
+        'locality' => 'LOKALITI LAIN',
+        'no_rumah' => '99',
+        'address' => 'JALAN BETA 99',
+    ]);
+
+    $this->actingAs($admin)
+        ->postJson(route('kad-ten.auto-input'))
+        ->assertOk()
+        ->assertJsonPath('members_assigned', 10);
+
+    expect(KadTenMember::query()->whereIn('pemilih_record_id', $closest->pluck('id'))->count())->toBe(10);
+    expect(KadTenMember::query()->where('pemilih_record_id', $far->id)->exists())->toBeFalse();
 });
 
 it('keeps JPRD read-only and prevents deleting a member through another Kad route', function () {

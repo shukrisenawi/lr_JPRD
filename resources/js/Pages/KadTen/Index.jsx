@@ -534,7 +534,7 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
         Swal.fire({
             icon: 'warning',
             title: 'Jalankan auto input?',
-            text: 'Semua ahli Jawatankuasa Utama akan dijadikan ketua. Sehingga 10 pemilih akan diagihkan secara rawak di bawah setiap ketua.',
+            text: 'Semua ahli Jawatankuasa Utama akan dijadikan ketua. Pemilih paling hampir akan didahulukan sehingga 10 orang di bawah setiap ketua.',
             showCancelButton: true,
             confirmButtonText: 'Ya, teruskan',
             cancelButtonText: 'Batal',
