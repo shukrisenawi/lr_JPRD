@@ -26,7 +26,7 @@ class KadTenController extends Controller
 
     private const MAX_AUTO_MEMBERS = 10;
 
-    private const MAIN_COMMITTEE_GROUP_NAMES = ['JAWATANKUASA UTAMA', 'JAWATANKUASA UDM'];
+    private const UDM_COMMITTEE_GROUP_NAMES = ['JAWATANKUASA UDM', 'JAWATANKUASA UTAMA'];
 
     public function index(Request $request): Response
     {
@@ -223,21 +223,23 @@ class KadTenController extends Controller
         $this->ensureMasterAdmin($admin);
 
         $mainGroupIds = CommitteeGroup::query()
+            ->whereJsonContains('levels', 'udm')
             ->where(function (Builder $query): void {
-                foreach (self::MAIN_COMMITTEE_GROUP_NAMES as $name) {
+                foreach (self::UDM_COMMITTEE_GROUP_NAMES as $name) {
                     $query->orWhereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($name)]);
                 }
             })
             ->pluck('id');
 
         if ($mainGroupIds->isEmpty()) {
-            return $this->autoInputError($request, 'Kumpulan Jawatankuasa Utama belum diwujudkan.');
+            return $this->autoInputError($request, 'Kumpulan Jawatankuasa UDM belum diwujudkan.');
         }
 
         $summary = DB::transaction(function () use ($admin, $mainGroupIds): array {
             $leaders = CommitteeMembership::query()
                 ->with('voter')
                 ->whereIn('committee_group_id', $mainGroupIds)
+                ->where('level', 'udm')
                 ->whereHas('voter', function (Builder $query): void {
                     $query->where('status', 'aktif');
                 })
@@ -440,7 +442,7 @@ class KadTenController extends Controller
         });
 
         if ($summary['leaders_count'] === 0) {
-            return $this->autoInputError($request, 'Tiada ahli aktif dalam kumpulan Jawatankuasa Utama.');
+            return $this->autoInputError($request, 'Tiada ahli aktif dalam kumpulan Jawatankuasa UDM.');
         }
 
         $message = sprintf(
@@ -448,6 +450,41 @@ class KadTenController extends Controller
             $summary['leaders_count'],
             $summary['cards_created'],
             $summary['members_assigned']
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                ...$summary,
+            ]);
+        }
+
+        return redirect()
+            ->route('kad-ten.index')
+            ->with('success', $message);
+    }
+
+    public function resetAutoInput(Request $request): RedirectResponse|JsonResponse
+    {
+        $this->ensureMasterAdmin($request->user());
+
+        $summary = DB::transaction(function (): array {
+            $membersDeleted = KadTenMember::query()->count();
+            $cardsDeleted = KadTen::query()->count();
+
+            KadTenMember::query()->delete();
+            KadTen::query()->delete();
+
+            return [
+                'cards_deleted' => $cardsDeleted,
+                'members_deleted' => $membersDeleted,
+            ];
+        });
+
+        $message = sprintf(
+            'Reset Kad 10 selesai: %d ketua dan %d ahli dikosongkan. Senarai Jawatankuasa UDM tidak dipadam.',
+            $summary['cards_deleted'],
+            $summary['members_deleted']
         );
 
         if ($request->expectsJson()) {

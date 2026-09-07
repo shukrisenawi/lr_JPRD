@@ -240,31 +240,49 @@ it('loads all eligible voters in the unassigned Kad 10 list without pagination',
             ->where('voters', fn ($voters) => count($voters) === 21));
 });
 
-it('lets only a master admin auto-create cards from the main committee and assign up to ten members', function () {
+it('lets only a master admin auto-create cards from the UDM main committee and assign up to ten members', function () {
     $admin = User::factory()->masterAdmin()->create();
     $group = CommitteeGroup::query()->create([
-        'name' => 'JAWATANKUASA UTAMA',
-        'levels' => ['jprd'],
+        'name' => 'JAWATANKUASA UDM',
+        'levels' => ['udm'],
     ]);
     $position = CommitteePosition::query()->create([
         'name' => 'AJK Utama',
         'slug' => 'ajk-utama',
         'sort_order' => 1,
     ]);
+    $ignoredGroup = CommitteeGroup::query()->create([
+        'name' => 'JAWATANKUASA UTAMA',
+        'levels' => ['jprd'],
+    ]);
+    $ignoredPosition = CommitteePosition::query()->create([
+        'name' => 'AJK Utama JPRD',
+        'slug' => 'ajk-utama-jprd',
+        'sort_order' => 1,
+    ]);
     $leaders = collect(range(1, 2))->map(fn (int $number) => kadTenVoter([
         'name' => 'AJK UTAMA '.$number,
     ]));
+    $ignoredLeader = kadTenVoter(['name' => 'AJK JPRD DIABAIKAN', 'dm' => 'UDM BETA']);
 
     foreach ($leaders as $leader) {
         CommitteeMembership::query()->create([
             'committee_group_id' => $group->id,
             'pemilih_record_id' => $leader->id,
             'committee_position_id' => $position->id,
-            'level' => 'jprd',
-            'scope_key' => 'jprd',
-            'scope_name' => 'JPRD',
+            'level' => 'udm',
+            'scope_key' => 'UDM ALPHA',
+            'scope_name' => 'UDM ALPHA',
         ]);
     }
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $ignoredGroup->id,
+        'pemilih_record_id' => $ignoredLeader->id,
+        'committee_position_id' => $ignoredPosition->id,
+        'level' => 'jprd',
+        'scope_key' => 'jprd',
+        'scope_name' => 'JPRD',
+    ]);
 
     collect(range(1, 25))->each(fn (int $number) => kadTenVoter([
         'name' => 'PEMILIH RAWAK '.$number,
@@ -282,6 +300,7 @@ it('lets only a master admin auto-create cards from the main committee and assig
         ->assertJsonPath('members_assigned', 20);
 
     expect(KadTen::query()->count())->toBe(2);
+    expect(KadTen::query()->where('level', 'udm')->where('scope_key', 'UDM ALPHA')->count())->toBe(2);
     expect(KadTen::query()->withCount('members')->pluck('members_count')->min())->toBe(10);
     expect(KadTen::query()->withCount('members')->pluck('members_count')->max())->toBe(10);
     expect(KadTenMember::query()->count())->toBe(20);
@@ -304,8 +323,8 @@ it('lets only a master admin auto-create cards from the main committee and assig
 it('prioritizes the closest eligible voters before filling the ten-member limit', function () {
     $admin = User::factory()->masterAdmin()->create();
     $group = CommitteeGroup::query()->create([
-        'name' => 'JAWATANKUASA UTAMA',
-        'levels' => ['jprd'],
+        'name' => 'JAWATANKUASA UDM',
+        'levels' => ['udm'],
     ]);
     $position = CommitteePosition::query()->create([
         'name' => 'AJK Utama',
@@ -324,9 +343,9 @@ it('prioritizes the closest eligible voters before filling the ten-member limit'
         'committee_group_id' => $group->id,
         'pemilih_record_id' => $leader->id,
         'committee_position_id' => $position->id,
-        'level' => 'jprd',
-        'scope_key' => 'jprd',
-        'scope_name' => 'JPRD',
+        'level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+        'scope_name' => 'UDM ALPHA',
     ]);
 
     $closest = collect(range(1, 10))->map(fn (int $number) => kadTenVoter([
@@ -336,8 +355,15 @@ it('prioritizes the closest eligible voters before filling the ten-member limit'
         'no_rumah' => '10',
         'address' => 'JALAN ALPHA 10',
     ]));
-    $far = kadTenVoter([
-        'name' => 'PEMILIH JAUH',
+    $farSameUdm = kadTenVoter([
+        'name' => 'PEMILIH JAUH DALAM UDM',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI LAIN',
+        'no_rumah' => '99',
+        'address' => 'JALAN BETA 99',
+    ]);
+    $farOtherUdm = kadTenVoter([
+        'name' => 'PEMILIH UDM LAIN',
         'dm' => 'UDM BETA',
         'locality' => 'LOKALITI LAIN',
         'no_rumah' => '99',
@@ -350,7 +376,34 @@ it('prioritizes the closest eligible voters before filling the ten-member limit'
         ->assertJsonPath('members_assigned', 10);
 
     expect(KadTenMember::query()->whereIn('pemilih_record_id', $closest->pluck('id'))->count())->toBe(10);
-    expect(KadTenMember::query()->where('pemilih_record_id', $far->id)->exists())->toBeFalse();
+    expect(KadTenMember::query()->where('pemilih_record_id', $farSameUdm->id)->exists())->toBeFalse();
+    expect(KadTenMember::query()->where('pemilih_record_id', $farOtherUdm->id)->exists())->toBeFalse();
+});
+
+it('lets only a master admin reset Kad 10 cards and members without deleting committee memberships', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $leader = kadTenVoter(['name' => 'KETUA UDM']);
+    $membership = kadTenMembership($leader);
+    $kad = kadTenRecord($leader, $membership);
+    $member = kadTenVoter(['name' => 'AHLI UDM']);
+    KadTenMember::query()->create([
+        'kad_ten_id' => $kad->id,
+        'pemilih_record_id' => $member->id,
+    ]);
+
+    $this->actingAs(kadTenUser())
+        ->postJson(route('kad-ten.reset-auto-input'))
+        ->assertForbidden();
+
+    $this->actingAs($admin)
+        ->postJson(route('kad-ten.reset-auto-input'))
+        ->assertOk()
+        ->assertJsonPath('cards_deleted', 1)
+        ->assertJsonPath('members_deleted', 1);
+
+    expect(KadTen::query()->count())->toBe(0);
+    expect(KadTenMember::query()->count())->toBe(0);
+    expect(CommitteeMembership::query()->count())->toBe(1);
 });
 
 it('keeps JPRD read-only and prevents deleting a member through another Kad route', function () {

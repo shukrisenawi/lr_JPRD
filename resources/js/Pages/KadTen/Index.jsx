@@ -468,6 +468,7 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
     const [editKad, setEditKad] = useState(null);
     const [exporting, setExporting] = useState(false);
     const [autoInputProcessing, setAutoInputProcessing] = useState(false);
+    const [resetting, setResetting] = useState(false);
     const [expandedKadId, setExpandedKadId] = useState(null);
     const [selectedPemimpin, setSelectedPemimpin] = useState(null);
     const [pemimpinSearchOpen, setPemimpinSearchOpen] = useState(false);
@@ -534,7 +535,7 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
         Swal.fire({
             icon: 'warning',
             title: 'Jalankan auto input?',
-            text: 'Semua ahli Jawatankuasa Utama akan dijadikan ketua. Pemilih paling hampir akan didahulukan sehingga 10 orang di bawah setiap ketua.',
+            text: 'Semua ahli Jawatankuasa UDM akan dijadikan ketua. Pemilih daripada UDM ketua akan dipilih dengan padanan paling hampir sehingga 10 orang.',
             showCancelButton: true,
             confirmButtonText: 'Ya, teruskan',
             cancelButtonText: 'Batal',
@@ -567,7 +568,42 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
                     Swal.fire({
                         icon: 'error',
                         title: 'Auto input gagal',
-                        text: 'Sila semak kumpulan Jawatankuasa Utama dan cuba lagi.',
+                        text: 'Sila semak kumpulan Jawatankuasa UDM dan cuba lagi.',
+                    });
+                },
+            });
+        });
+    };
+    const resetKadTen = () => {
+        if (resetting) return;
+        Swal.fire({
+            icon: 'warning',
+            title: 'Reset semua Kad 10?',
+            text: 'Semua ketua dan ahli dalam Kad 10 akan dikosongkan. Senarai Jawatankuasa UDM tidak akan dipadam.',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, reset',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#dc2626',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            setResetting(true);
+            router.post(route('kad-ten.reset-auto-input'), {}, {
+                preserveScroll: true,
+                onFinish: () => setResetting(false),
+                onSuccess: page => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Reset selesai',
+                        text: page?.props?.flash?.success || 'Kad 10 telah dikosongkan.',
+                        timer: 2500,
+                        showConfirmButton: false,
+                    });
+                },
+                onError: () => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Reset gagal',
+                        text: 'Sila cuba lagi.',
                     });
                 },
             });
@@ -576,6 +612,7 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
 
     return <AuthenticatedLayout header={<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="label-section">Kad 10</p><h2 className="mt-0.5 heading-lg">Agihan ahli di bawah ketua</h2><p className="mt-1 text-xs font-medium text-slate-500">Cari padanan terdekat berdasarkan rumah, alamat dan lokaliti.</p></div><div className="flex flex-wrap gap-2">{canAutoInput && <button type="button" disabled={autoInputProcessing} onClick={runAutoInput} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 shadow-sm hover:bg-amber-100 disabled:opacity-50"><Icon name="target" className="h-4 w-4" /> {autoInputProcessing ? 'Memproses...' : 'Auto input'}</button>}{totalKads > 0 && <button type="button" disabled={exporting} onClick={() => exportWorkbook(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-bold text-green-700 shadow-sm hover:bg-green-50 disabled:opacity-50"><Icon name="download" className="h-4 w-4" /> {exporting ? 'Menyedia...' : 'Eksport halaman'}</button>}{canManage ? <button type="button" onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-green-500"><Icon name="plus" className="h-4 w-4" /> Cipta Kad 10</button> : canAutoInput ? null : <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500"><Icon name="lock" className="h-3.5 w-3.5" /> Paparan JPRD</span>}</div></div>}>
         <Head title="Kad 10" />
+        {canAutoInput && <div className="flex justify-end"><button type="button" disabled={resetting || autoInputProcessing} onClick={resetKadTen} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 shadow-sm hover:bg-rose-100 disabled:opacity-50">{resetting ? 'Mereset...' : 'Reset Kad 10'}</button></div>}
         <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
             {!canManage && <div ref={scrollTargetRef} className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold text-slate-700">Tapis pemantauan mengikut UDM</p><p className="mt-0.5 text-[10px] text-slate-400">JPRD boleh melihat satu UDM atau semua UDM.</p></div><select value={udmFilter} onChange={event => applyUdmFilter(event.target.value)} className="input-field w-full text-xs sm:w-64"><option value="">Semua UDM</option>{(scopes.udm || []).map(scope => <option key={scope.key} value={scope.key}>{scope.name}</option>)}</select></div>}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jumlah kad</p><p className="mt-1 text-xl font-black text-slate-800">{totalKads}</p></div><div className="rounded-xl border border-green-200 bg-green-50 px-3 py-3"><p className="text-[10px] font-bold uppercase tracking-wider text-green-700">Lengkap</p><p className="mt-1 text-xl font-black text-green-800">{completeKads}</p></div><div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3"><p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Belum cukup</p><p className="mt-1 text-xl font-black text-amber-800">{Math.max(0, totalKads - completeKads)}</p></div><div className="rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm"><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jumlah ahli</p><p className="mt-1 text-xl font-black text-slate-800">{totalMembers}</p></div></div>
