@@ -265,9 +265,58 @@ class KadTenController extends Controller
                 ->whereNotIn('id', $leaderIds)
                 ->whereDoesntHave('kadTenMemberships')
                 ->lockForUpdate()
-                ->get()
+                ->get([
+                    'id',
+                    'dm',
+                    'locality',
+                    'no_rumah',
+                    'address',
+                    'alamat_kp',
+                    'alamat_kediaman',
+                ])
                 ->shuffle()
                 ->values();
+            $availableVotersById = $availableVoters->keyBy('id')->all();
+            $availableVoterOrder = array_keys($availableVotersById);
+            $matchIndexes = [
+                'address_house_locality' => [],
+                'address_locality' => [],
+                'house_locality' => [],
+                'address' => [],
+                'house' => [],
+                'locality' => [],
+                'dm' => [],
+            ];
+            $scopeIndexes = [
+                'udm' => [],
+                'cawangan' => [],
+            ];
+
+            // Bina indeks sekali supaya tidak membandingkan semua calon untuk setiap ketua.
+            foreach ($availableVotersById as $voter) {
+                $voterId = (int) $voter->id;
+                $dm = $this->normalizedValue($voter->dm);
+                $locality = $this->normalizedValue($voter->locality);
+                $house = $this->normalizedValue($voter->no_rumah);
+                $address = $this->normalizedValue($this->effectiveAddress($voter));
+                $matchKeys = [
+                    'address_house_locality' => $address !== '' && $house !== '' && $locality !== '' ? $address.'|'.$house.'|'.$locality : null,
+                    'address_locality' => $address !== '' && $locality !== '' ? $address.'|'.$locality : null,
+                    'house_locality' => $house !== '' && $locality !== '' ? $house.'|'.$locality : null,
+                    'address' => $address,
+                    'house' => $house,
+                    'locality' => $locality,
+                    'dm' => $dm,
+                ];
+                foreach ($matchKeys as $indexName => $key) {
+                    if ($key !== null && $key !== '') {
+                        $matchIndexes[$indexName][$key][] = $voterId;
+                    }
+                }
+
+                $scopeIndexes['udm'][(string) $voter->dm][] = $voterId;
+                $scopeIndexes['cawangan'][(string) $voter->dm.'|'.(string) $voter->locality][] = $voterId;
+            }
 
             $cardsCreated = 0;
             $membersAssigned = 0;
@@ -306,10 +355,61 @@ class KadTenController extends Controller
                     continue;
                 }
 
-                $selected = $availableVoters
-                    ->filter(fn (PemilihRecord $voter): bool => $this->kadScopeMatchesVoter($kad, $voter))
-                    ->sortByDesc(fn (PemilihRecord $voter): int => $this->matchDetails($leader, $voter)['score'])
-                    ->take($capacity)
+                $scopeIds = match ($kad->level) {
+                    'udm' => $scopeIndexes['udm'][(string) $kad->scope_key] ?? [],
+                    'cawangan' => $scopeIndexes['cawangan'][(string) $kad->scope_key] ?? [],
+                    default => null,
+                };
+                $scopeSet = $scopeIds === null ? null : array_fill_keys($scopeIds, true);
+                $leaderDm = $this->normalizedValue($leader->dm);
+                $leaderLocality = $this->normalizedValue($leader->locality);
+                $leaderHouse = $this->normalizedValue($leader->no_rumah);
+                $leaderAddress = $this->normalizedValue($this->effectiveAddress($leader));
+                $matchGroups = [
+                    ['address_house_locality', $leaderAddress !== '' && $leaderHouse !== '' && $leaderLocality !== '' ? $leaderAddress.'|'.$leaderHouse.'|'.$leaderLocality : null],
+                    ['address_locality', $leaderAddress !== '' && $leaderLocality !== '' ? $leaderAddress.'|'.$leaderLocality : null],
+                    ['house_locality', $leaderHouse !== '' && $leaderLocality !== '' ? $leaderHouse.'|'.$leaderLocality : null],
+                    ['address', $leaderAddress],
+                    ['house', $leaderHouse],
+                    ['locality', $leaderLocality],
+                    ['dm', $leaderDm],
+                ];
+                $selectedIds = [];
+                $selectedLookup = [];
+                foreach ($matchGroups as [$indexName, $key]) {
+                    if ($key === null || $key === '') {
+                        continue;
+                    }
+                    foreach ($matchIndexes[$indexName][$key] ?? [] as $voterId) {
+                        if (! isset($availableVotersById[$voterId])
+                            || ($scopeSet !== null && ! isset($scopeSet[$voterId]))
+                            || isset($selectedLookup[$voterId])) {
+                            continue;
+                        }
+                        $selectedLookup[$voterId] = true;
+                        $selectedIds[] = $voterId;
+                        if (count($selectedIds) >= $capacity) {
+                            break 2;
+                        }
+                    }
+                }
+
+                $scopedVoterOrder = $scopeIds ?? $availableVoterOrder;
+                if (count($selectedIds) < $capacity) {
+                    foreach ($scopedVoterOrder as $voterId) {
+                        if (! isset($availableVotersById[$voterId]) || isset($selectedLookup[$voterId])) {
+                            continue;
+                        }
+                        $selectedLookup[$voterId] = true;
+                        $selectedIds[] = $voterId;
+                        if (count($selectedIds) >= $capacity) {
+                            break;
+                        }
+                    }
+                }
+
+                $selected = collect($selectedIds)
+                    ->map(fn (int $voterId): PemilihRecord => $availableVotersById[$voterId])
                     ->values();
 
                 foreach ($selected as $voter) {
@@ -327,11 +427,8 @@ class KadTenController extends Controller
                     ]);
                 }
 
-                $selectedIds = $selected->pluck('id')->all();
-                if ($selectedIds !== []) {
-                    $availableVoters = $availableVoters
-                        ->reject(fn (PemilihRecord $voter): bool => in_array($voter->id, $selectedIds, true))
-                        ->values();
+                foreach ($selectedIds as $voterId) {
+                    unset($availableVotersById[$voterId]);
                 }
             }
 
