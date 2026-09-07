@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
 
 function Icon({ name, className = 'h-5 w-5' }) {
@@ -12,6 +12,28 @@ function Icon({ name, className = 'h-5 w-5' }) {
         plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
     };
     return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
+}
+
+function Pagination({ pagination, onPage }) {
+    if (!pagination?.last_page || pagination.last_page <= 1) return null;
+
+    return (
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs font-medium text-slate-500">
+                Papar {pagination.from ?? 0} - {pagination.to ?? 0} daripada {pagination.total ?? 0} pemilih
+            </p>
+            <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => onPage(pagination.current_page - 1)} disabled={!pagination.prev_page_url}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40">Sebelum</button>
+                {pagination.links?.filter(link => /^\d+$/.test(String(link.label))).map(link => (
+                    <button key={link.label} type="button" onClick={() => onPage(Number(link.label))}
+                        className={'rounded-lg px-3 py-1.5 text-xs font-bold transition ' + (link.active ? 'bg-green-600 text-white shadow-sm' : 'border border-slate-200 bg-white text-slate-600 hover:text-green-700')}>{link.label}</button>
+                ))}
+                <button type="button" onClick={() => onPage(pagination.current_page + 1)} disabled={!pagination.next_page_url}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm disabled:cursor-not-allowed disabled:opacity-40">Seterusnya</button>
+            </div>
+        </div>
+    );
 }
 
 function AssignModal({ voter, kads, onAssign, onClose }) {
@@ -87,9 +109,17 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
     });
     const [localVoters, setLocalVoters] = useState(voters);
     const [selectedVoter, setSelectedVoter] = useState(null);
+    const listTopRef = useRef(null);
+    const firstPageRender = useRef(true);
 
     useEffect(() => {
         setLocalVoters(voters);
+        if (firstPageRender.current) {
+            firstPageRender.current = false;
+            return;
+        }
+
+        listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, [voters]);
 
     const applyFilters = (next) => {
@@ -111,12 +141,27 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
         applyFilters(next);
     };
 
+    const goToPage = page => {
+        const params = { page };
+        if (form.udm) params.udm = form.udm;
+        if (form.locality) params.locality = form.locality;
+        if (form.q) params.q = form.q;
+        router.get(route('kad-ten.senarai-pemilih'), params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
     const handleAssign = (voterId) => {
-        setLocalVoters(prev => (prev ?? []).filter(v => v.id !== voterId));
+        setLocalVoters(prev => ({
+            ...prev,
+            data: (prev?.data ?? []).filter(voter => voter.id !== voterId),
+        }));
         setSelectedVoter(null);
     };
 
-    const rows = localVoters ?? [];
+    const rows = localVoters?.data ?? [];
 
     return (
         <AuthenticatedLayout
@@ -132,7 +177,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
         >
             <Head title="Kad 10 - Senarai Pemilih" />
 
-            <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
+            <div ref={listTopRef} className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
                 <div className="flex gap-1 border-b border-slate-200 pb-0">
                     {tabs.map(t => (
                         <button key={t.key} type="button" onClick={() => {
@@ -175,7 +220,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
 
                 <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                     <div className="border-b border-slate-100 px-4 py-2.5 flex items-center justify-between">
-                         <p className="text-xs font-bold text-slate-600">{localVoters.length} pemilih ditemui</p>
+                          <p className="text-xs font-bold text-slate-600">{localVoters?.total ?? rows.length} pemilih ditemui</p>
                     </div>
 
                     {rows.length === 0 ? (
@@ -201,7 +246,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                                 <tbody className="divide-y divide-slate-100">
                                     {rows.map((voter, i) => (
                                         <tr key={voter.id} className="hover:bg-green-50/50 transition">
-                                             <td className="px-3 py-2 text-slate-400 font-bold">{i + 1}</td>
+                                              <td className="px-3 py-2 text-slate-400 font-bold">{(localVoters?.from ?? 1) + i}</td>
                                             <td className="px-3 py-2">
                                                 <p className="font-semibold text-slate-800">{voter.name}</p>
                                             </td>
@@ -225,9 +270,11 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                                 </tbody>
                             </table>
                         </div>
-                    )}
+                     )}
 
-                 </div>
+                    <Pagination pagination={localVoters} onPage={goToPage} />
+
+                  </div>
             </div>
 
              {selectedVoter && canManage && (

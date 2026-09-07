@@ -229,7 +229,7 @@ it('paginates Kad 10 cards at twenty per page', function () {
             ->where('kad_stats.total', 21));
 });
 
-it('loads all eligible voters in the unassigned Kad 10 list without pagination', function () {
+it('paginates the unassigned Kad 10 list at twenty voters per page', function () {
     $user = kadTenUser();
 
     collect(range(1, 21))->each(fn () => kadTenVoter());
@@ -237,7 +237,18 @@ it('loads all eligible voters in the unassigned Kad 10 list without pagination',
     $this->actingAs($user)
         ->get(route('kad-ten.senarai-pemilih'))
         ->assertInertia(fn ($page) => $page
-            ->where('voters', fn ($voters) => count($voters) === 21));
+            ->where('voters.per_page', 20)
+            ->where('voters.total', 21)
+            ->where('voters.from', 1)
+            ->where('voters.to', 20)
+            ->where('voters.data', fn ($voters) => count($voters) === 20));
+
+    $this->actingAs($user)
+        ->get(route('kad-ten.senarai-pemilih', ['page' => 2]))
+        ->assertInertia(fn ($page) => $page
+            ->where('voters.current_page', 2)
+            ->where('voters.from', 21)
+            ->where('voters.data', fn ($voters) => count($voters) === 1));
 });
 
 it('lets only a master admin auto-create cards from the UDM main committee and assign up to ten members', function () {
