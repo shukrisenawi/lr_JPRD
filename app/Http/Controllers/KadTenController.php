@@ -50,10 +50,16 @@ class KadTenController extends Controller
             });
         }
 
+        $kadStats = (clone $kadsQuery)
+            ->withoutEagerLoads()
+            ->withCount('members')
+            ->get(['kad_tens.id']);
+
         $kads = $kadsQuery
             ->latest()
-            ->get()
-            ->map(fn (KadTen $kad) => [
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (KadTen $kad) => [
                 'id' => $kad->id,
                 'name' => $kad->name,
                 'committee_membership_id' => $kad->committee_membership_id,
@@ -103,8 +109,7 @@ class KadTenController extends Controller
                 'minimum_members' => self::MINIMUM_MEMBERS,
                 'is_complete' => $kad->members->count() >= self::MINIMUM_MEMBERS,
                 'created_at' => $kad->created_at,
-            ])
-            ->values();
+            ]);
 
         $udmQuery = PemilihRecord::query()
             ->where('status', 'aktif')
@@ -132,6 +137,11 @@ class KadTenController extends Controller
 
         return Inertia::render('KadTen/Index', [
             'kads' => $kads,
+            'kad_stats' => [
+                'total' => $kadStats->count(),
+                'complete' => $kadStats->where('members_count', '>=', self::MINIMUM_MEMBERS)->count(),
+                'members' => $kadStats->sum('members_count'),
+            ],
             'filters' => ['udm' => $udmFilter],
             'scopes' => [
                 'jprd' => [

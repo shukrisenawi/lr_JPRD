@@ -207,8 +207,26 @@ it('allows more than ten members and reports completion based on the minimum', f
         ->get(route('kad-ten.index'))
         ->assertInertia(fn ($page) => $page
             ->where('can_manage', true)
-            ->where('kads.0.member_count', 11)
-            ->where('kads.0.is_complete', true));
+            ->where('kads.data.0.member_count', 11)
+            ->where('kads.data.0.is_complete', true));
+});
+
+it('paginates Kad 10 cards at twenty per page', function () {
+    $user = kadTenUser();
+
+    collect(range(1, 21))->each(function (): void {
+        $leader = kadTenVoter();
+        $membership = kadTenMembership($leader);
+        kadTenRecord($leader, $membership);
+    });
+
+    $this->actingAs($user)
+        ->get(route('kad-ten.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('kads.per_page', 20)
+            ->where('kads.total', 21)
+            ->where('kads.data', fn ($data) => count($data) === 20)
+            ->where('kad_stats.total', 21));
 });
 
 it('loads all eligible voters in the unassigned Kad 10 list without pagination', function () {
