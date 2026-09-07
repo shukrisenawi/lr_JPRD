@@ -1428,6 +1428,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
     const suggestionsAbort = useRef(null);
+    const pointerDownInsideRef = useRef(false);
 
     const form = useForm({
         pemilih_record_id: '',
@@ -1500,9 +1501,15 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
     return (
         <div
             className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-16 sm:pt-24"
+            onPointerDown={(event) => {
+                pointerDownInsideRef.current = event.target !== event.currentTarget;
+            }}
             onClick={(event) => {
                 event.stopPropagation();
-                onClose();
+                if (event.target === event.currentTarget && !pointerDownInsideRef.current) {
+                    onClose();
+                }
+                pointerDownInsideRef.current = false;
             }}
         >
             <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
