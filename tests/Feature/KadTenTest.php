@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CommitteeGroup;
 use App\Models\CommitteeMembership;
 use App\Models\CommitteePosition;
 use App\Models\KadTen;
@@ -210,6 +211,66 @@ it('allows more than ten members and reports completion based on the minimum', f
             ->where('kads.0.is_complete', true));
 });
 
+it('lets only a master admin auto-create cards from the main committee and randomly assign up to ten members', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $group = CommitteeGroup::query()->create([
+        'name' => 'JAWATANKUASA UTAMA',
+        'levels' => ['jprd'],
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'AJK Utama',
+        'slug' => 'ajk-utama',
+        'sort_order' => 1,
+    ]);
+    $leaders = collect(range(1, 2))->map(fn (int $number) => kadTenVoter([
+        'name' => 'AJK UTAMA '.$number,
+    ]));
+
+    foreach ($leaders as $leader) {
+        CommitteeMembership::query()->create([
+            'committee_group_id' => $group->id,
+            'pemilih_record_id' => $leader->id,
+            'committee_position_id' => $position->id,
+            'level' => 'jprd',
+            'scope_key' => 'jprd',
+            'scope_name' => 'JPRD',
+        ]);
+    }
+
+    collect(range(1, 25))->each(fn (int $number) => kadTenVoter([
+        'name' => 'PEMILIH RAWAK '.$number,
+    ]));
+
+    $this->actingAs(kadTenUser())
+        ->postJson(route('kad-ten.auto-input'))
+        ->assertForbidden();
+
+    $this->actingAs($admin)
+        ->postJson(route('kad-ten.auto-input'))
+        ->assertOk()
+        ->assertJsonPath('leaders_count', 2)
+        ->assertJsonPath('cards_created', 2)
+        ->assertJsonPath('members_assigned', 20);
+
+    expect(KadTen::query()->count())->toBe(2);
+    expect(KadTen::query()->withCount('members')->pluck('members_count')->min())->toBe(10);
+    expect(KadTen::query()->withCount('members')->pluck('members_count')->max())->toBe(10);
+    expect(KadTenMember::query()->count())->toBe(20);
+    expect(KadTenMember::query()->whereIn('pemilih_record_id', $leaders->pluck('id'))->count())->toBe(0);
+    expect(KadTenMember::query()->select('pemilih_record_id')->distinct()->count())->toBe(20);
+
+    $this->actingAs($admin)
+        ->postJson(route('kad-ten.auto-input'))
+        ->assertOk()
+        ->assertJsonPath('cards_created', 0)
+        ->assertJsonPath('members_assigned', 0);
+
+    $this->actingAs($admin)
+        ->get(route('kad-ten.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('can_auto_input', true));
+});
+
 it('keeps JPRD read-only and prevents deleting a member through another Kad route', function () {
     $leader = kadTenVoter(['name' => 'KETUA ALPHA']);
     $membership = kadTenMembership($leader);
@@ -225,7 +286,9 @@ it('keeps JPRD read-only and prevents deleting a member through another Kad rout
 
     $this->actingAs($jprd)
         ->get(route('kad-ten.index'))
-        ->assertInertia(fn ($page) => $page->where('can_manage', false));
+        ->assertInertia(fn ($page) => $page
+            ->where('can_manage', false)
+            ->where('can_auto_input', false));
 
     $this->actingAs($jprd)
         ->deleteJson(route('kad-ten.members.destroy', [$kad, $memberRecord]))

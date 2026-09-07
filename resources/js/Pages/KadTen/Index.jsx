@@ -429,16 +429,18 @@ function EditKadModal({ kad, onClose }) {
     return <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-3 pt-16 sm:pt-24" onClick={onClose}><div className="w-full max-w-md rounded-xl bg-white shadow-2xl" onClick={event => event.stopPropagation()}><div className="flex items-center justify-between border-b border-slate-200 px-4 py-3"><p className="text-xs font-bold uppercase tracking-wider text-slate-600">Edit Kad 10</p><button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100"><Icon name="x" className="h-5 w-5" /></button></div><form onSubmit={submit} className="space-y-3 p-4"><div><label className="text-xs font-semibold text-slate-600">Ketua <span className="text-rose-500">*</span></label>{selectedPemimpin ? <div className="mt-1 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5"><div className="min-w-0 flex-1"><p className="truncate text-xs font-bold text-green-800">{selectedPemimpin.name}</p><p className="truncate text-[10px] text-green-600">{selectedPemimpin.no_kp || selectedPemimpin.old_ic || '-'} · {selectedPemimpin.position_name || 'Pemilih'}</p></div><button type="button" onClick={() => { setSelectedPemimpin(null); form.setData('pemimpin_id', ''); form.setData('name', ''); }} className="rounded-md p-1 text-rose-400 hover:bg-rose-50"><Icon name="x" className="h-4 w-4" /></button></div> : <button type="button" onClick={() => setSearchOpen(true)} className="mt-1 w-full rounded-lg border border-dashed border-green-300 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-50"><Icon name="search" className="mr-1 inline h-4 w-4" /> Cari ketua</button>}{form.errors.pemimpin_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.pemimpin_id}</p>}</div><div><label className="text-xs font-semibold text-slate-600">Nota</label><textarea value={form.data.notes} onChange={event => form.setData('notes', event.target.value)} className="input-field mt-1 w-full text-xs" rows="2" placeholder="Catatan tambahan" /></div><div className="flex justify-end gap-2"><button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button><button type="submit" disabled={form.processing} className="rounded-lg bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-500 disabled:opacity-50">{form.processing ? 'Menyimpan...' : 'Simpan'}</button></div></form></div>{searchOpen && <PemimpinSearchModal level={kad.level === 'cawangan' ? 'cawangan' : 'udm'} onSelect={selectPemimpin} onClose={() => setSearchOpen(false)} />}</div>;
 }
 
-export default function KadTenIndex({ kads = [], scopes = {}, filters = {}, can_manage: canManage = false }) {
+export default function KadTenIndex({ kads = [], scopes = {}, filters = {}, can_manage: canManage = false, can_auto_input: canAutoInputProp = false }) {
     const { auth } = usePage().props;
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [editKad, setEditKad] = useState(null);
     const [exporting, setExporting] = useState(false);
+    const [autoInputProcessing, setAutoInputProcessing] = useState(false);
     const [selectedPemimpin, setSelectedPemimpin] = useState(null);
     const [pemimpinSearchOpen, setPemimpinSearchOpen] = useState(false);
     const [udmFilter, setUdmFilter] = useState(filters.udm || '');
     const createForm = useForm({ name: '', pemimpin_id: '', level: 'udm', notes: '' });
     const userLevel = auth?.user?.access_level || 'jprd';
+    const canAutoInput = canAutoInputProp && auth?.user?.role?.is_master_admin === true;
 
     const selectPemimpin = (leader) => {
         setSelectedPemimpin(leader);
@@ -471,8 +473,52 @@ export default function KadTenIndex({ kads = [], scopes = {}, filters = {}, can_
         setUdmFilter(value);
         router.get(route('kad-ten.index'), value ? { udm: value } : {}, { preserveState: true, preserveScroll: true, replace: true });
     };
+    const runAutoInput = () => {
+        if (autoInputProcessing) return;
+        Swal.fire({
+            icon: 'warning',
+            title: 'Jalankan auto input?',
+            text: 'Semua ahli Jawatankuasa Utama akan dijadikan ketua. Sehingga 10 pemilih akan diagihkan secara rawak di bawah setiap ketua.',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, teruskan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#16a34a',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            setAutoInputProcessing(true);
+            router.post(route('kad-ten.auto-input'), {}, {
+                preserveScroll: true,
+                onFinish: () => setAutoInputProcessing(false),
+                onSuccess: page => {
+                    if (page?.props?.flash?.error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Auto input gagal',
+                            text: page.props.flash.error,
+                        });
+                        return;
+                    }
 
-    return <AuthenticatedLayout header={<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="label-section">Kad 10</p><h2 className="mt-0.5 heading-lg">Agihan ahli di bawah ketua</h2><p className="mt-1 text-xs font-medium text-slate-500">Cari padanan terdekat berdasarkan rumah, alamat dan lokaliti.</p></div><div className="flex flex-wrap gap-2">{kads.length > 0 && <button type="button" disabled={exporting} onClick={() => exportWorkbook(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-bold text-green-700 shadow-sm hover:bg-green-50 disabled:opacity-50"><Icon name="download" className="h-4 w-4" /> {exporting ? 'Menyedia...' : 'Eksport semua'}</button>}{canManage ? <button type="button" onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-green-500"><Icon name="plus" className="h-4 w-4" /> Cipta Kad 10</button> : <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500"><Icon name="lock" className="h-3.5 w-3.5" /> Paparan JPRD</span>}</div></div>}>
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Auto input selesai',
+                        text: page?.props?.flash?.success || 'Kad 10 berjaya dijana.',
+                        timer: 2500,
+                        showConfirmButton: false,
+                    });
+                },
+                onError: () => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Auto input gagal',
+                        text: 'Sila semak kumpulan Jawatankuasa Utama dan cuba lagi.',
+                    });
+                },
+            });
+        });
+    };
+
+    return <AuthenticatedLayout header={<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="label-section">Kad 10</p><h2 className="mt-0.5 heading-lg">Agihan ahli di bawah ketua</h2><p className="mt-1 text-xs font-medium text-slate-500">Cari padanan terdekat berdasarkan rumah, alamat dan lokaliti.</p></div><div className="flex flex-wrap gap-2">{canAutoInput && <button type="button" disabled={autoInputProcessing} onClick={runAutoInput} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 shadow-sm hover:bg-amber-100 disabled:opacity-50"><Icon name="target" className="h-4 w-4" /> {autoInputProcessing ? 'Memproses...' : 'Auto input'}</button>}{kads.length > 0 && <button type="button" disabled={exporting} onClick={() => exportWorkbook(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-bold text-green-700 shadow-sm hover:bg-green-50 disabled:opacity-50"><Icon name="download" className="h-4 w-4" /> {exporting ? 'Menyedia...' : 'Eksport semua'}</button>}{canManage ? <button type="button" onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-green-500"><Icon name="plus" className="h-4 w-4" /> Cipta Kad 10</button> : canAutoInput ? null : <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500"><Icon name="lock" className="h-3.5 w-3.5" /> Paparan JPRD</span>}</div></div>}>
         <Head title="Kad 10" />
         <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
             {!canManage && <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold text-slate-700">Tapis pemantauan mengikut UDM</p><p className="mt-0.5 text-[10px] text-slate-400">JPRD boleh melihat satu UDM atau semua UDM.</p></div><select value={udmFilter} onChange={event => applyUdmFilter(event.target.value)} className="input-field w-full text-xs sm:w-64"><option value="">Semua UDM</option>{(scopes.udm || []).map(scope => <option key={scope.key} value={scope.key}>{scope.name}</option>)}</select></div>}

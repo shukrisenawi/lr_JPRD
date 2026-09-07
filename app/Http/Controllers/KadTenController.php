@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CommitteeGroup;
 use App\Models\CommitteeMembership;
 use App\Models\KadTen;
 use App\Models\KadTenMember;
@@ -22,6 +23,10 @@ class KadTenController extends Controller
     private const ALLOWED_CULA_CODES = ['2', '3B', '3D', '3K', '3M', '3P', '3U'];
 
     private const MINIMUM_MEMBERS = 10;
+
+    private const MAX_AUTO_MEMBERS = 10;
+
+    private const MAIN_COMMITTEE_GROUP_NAMES = ['JAWATANKUASA UTAMA', 'JAWATANKUASA UDM'];
 
     public function index(Request $request): Response
     {
@@ -157,6 +162,7 @@ class KadTenController extends Controller
                     ->values(),
             ],
             'can_manage' => $this->isManager($user),
+            'can_auto_input' => $user->isMasterAdmin(),
         ]);
     }
 
@@ -199,6 +205,153 @@ class KadTenController extends Controller
         return redirect()
             ->route('kad-ten.index')
             ->with('success', 'Kad 10 berjaya dicipta.');
+    }
+
+    public function autoInput(Request $request): RedirectResponse|JsonResponse
+    {
+        $admin = $request->user();
+        $this->ensureMasterAdmin($admin);
+
+        $mainGroupIds = CommitteeGroup::query()
+            ->where(function (Builder $query): void {
+                foreach (self::MAIN_COMMITTEE_GROUP_NAMES as $name) {
+                    $query->orWhereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($name)]);
+                }
+            })
+            ->pluck('id');
+
+        if ($mainGroupIds->isEmpty()) {
+            return $this->autoInputError($request, 'Kumpulan Jawatankuasa Utama belum diwujudkan.');
+        }
+
+        $summary = DB::transaction(function () use ($admin, $mainGroupIds): array {
+            $leaders = CommitteeMembership::query()
+                ->with('voter')
+                ->whereIn('committee_group_id', $mainGroupIds)
+                ->whereHas('voter', function (Builder $query): void {
+                    $query->where('status', 'aktif');
+                })
+                ->orderBy('id')
+                ->get()
+                ->unique('pemilih_record_id')
+                ->values();
+
+            if ($leaders->isEmpty()) {
+                return [
+                    'leaders_count' => 0,
+                    'cards_created' => 0,
+                    'members_assigned' => 0,
+                ];
+            }
+
+            $leaderIds = $leaders->pluck('pemilih_record_id')->values();
+            $existingKads = KadTen::query()
+                ->whereIn('pemimpin_id', $leaderIds)
+                ->withCount('members')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('pemimpin_id');
+            $availableVoters = $this->eligibleVoterBaseQuery()
+                ->whereNotIn('id', $leaderIds)
+                ->whereDoesntHave('kadTenMemberships')
+                ->lockForUpdate()
+                ->get()
+                ->shuffle()
+                ->values();
+
+            $cardsCreated = 0;
+            $membersAssigned = 0;
+
+            foreach ($leaders as $membership) {
+                $leader = $membership->voter;
+                if (! $leader) {
+                    continue;
+                }
+
+                $kad = $existingKads->get($leader->id);
+                if (! $kad) {
+                    [$scopeName, $parentScopeName] = $this->resolveScope(
+                        $membership->level,
+                        (string) $membership->scope_key,
+                        $leader
+                    );
+                    $kad = KadTen::query()->create([
+                        'name' => $leader->name,
+                        'pemimpin_id' => $leader->id,
+                        'committee_membership_id' => $membership->id,
+                        'level' => $membership->level,
+                        'scope_key' => $membership->scope_key,
+                        'scope_name' => $scopeName,
+                        'parent_scope_name' => $parentScopeName,
+                        'created_by' => $admin->id,
+                    ]);
+                    $cardsCreated++;
+                    $memberCount = 0;
+                } else {
+                    $memberCount = (int) $kad->members_count;
+                }
+
+                $capacity = max(0, self::MAX_AUTO_MEMBERS - $memberCount);
+                if ($capacity === 0) {
+                    continue;
+                }
+
+                $selected = $availableVoters
+                    ->filter(fn (PemilihRecord $voter): bool => $this->kadScopeMatchesVoter($kad, $voter))
+                    ->take($capacity)
+                    ->values();
+
+                foreach ($selected as $voter) {
+                    $now = now();
+                    $membersAssigned += KadTenMember::query()->insertOrIgnore([
+                        'kad_ten_id' => $kad->id,
+                        'pemilih_record_id' => $voter->id,
+                        'cluster_type' => 'manual',
+                        'cluster_value' => null,
+                        'match_score' => null,
+                        'match_reason' => 'Agihan rawak oleh master admin',
+                        'created_by' => $admin->id,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
+
+                $selectedIds = $selected->pluck('id')->all();
+                if ($selectedIds !== []) {
+                    $availableVoters = $availableVoters
+                        ->reject(fn (PemilihRecord $voter): bool => in_array($voter->id, $selectedIds, true))
+                        ->values();
+                }
+            }
+
+            return [
+                'leaders_count' => $leaders->count(),
+                'cards_created' => $cardsCreated,
+                'members_assigned' => $membersAssigned,
+            ];
+        });
+
+        if ($summary['leaders_count'] === 0) {
+            return $this->autoInputError($request, 'Tiada ahli aktif dalam kumpulan Jawatankuasa Utama.');
+        }
+
+        $message = sprintf(
+            'Auto input selesai: %d ketua diproses, %d Kad 10 baharu dicipta dan %d ahli diagihkan secara rawak (maksimum 10 orang setiap ketua).',
+            $summary['leaders_count'],
+            $summary['cards_created'],
+            $summary['members_assigned']
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                ...$summary,
+            ]);
+        }
+
+        return redirect()
+            ->route('kad-ten.index')
+            ->with('success', $message);
     }
 
     public function update(Request $request, KadTen $kadTen): RedirectResponse
@@ -674,6 +827,22 @@ class KadTenController extends Controller
     private function ensureManager(User $user): void
     {
         abort_unless($this->isManager($user), 403, 'Hanya pengguna UDM boleh mengurus Kad 10.');
+    }
+
+    private function ensureMasterAdmin(User $user): void
+    {
+        abort_unless($user->isMasterAdmin(), 403, 'Hanya master admin boleh menjalankan auto input Kad 10.');
+    }
+
+    private function autoInputError(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message], 422);
+        }
+
+        return redirect()
+            ->route('kad-ten.index')
+            ->with('error', $message);
     }
 
     private function ensureCanManage(User $user, KadTen $kadTen): void

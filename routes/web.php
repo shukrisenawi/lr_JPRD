@@ -132,6 +132,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/kad-ten', [KadTenController::class, 'index'])->middleware('module:kad-ten')->name('kad-ten.index');
     Route::post('/kad-ten', [KadTenController::class, 'store'])->middleware('module:kad-ten')->name('kad-ten.store');
+    Route::post('/kad-ten/auto-input', [KadTenController::class, 'autoInput'])->middleware('module:kad-ten')->name('kad-ten.auto-input');
     Route::put('/kad-ten/{kadTen}', [KadTenController::class, 'update'])->middleware('module:kad-ten')->name('kad-ten.update');
     Route::delete('/kad-ten/{kadTen}', [KadTenController::class, 'destroy'])->middleware('module:kad-ten')->name('kad-ten.destroy');
     Route::post('/kad-ten/{kadTen}/members', [KadTenController::class, 'storeMember'])->middleware('module:kad-ten')->name('kad-ten.members.store');
