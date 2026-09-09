@@ -43,6 +43,11 @@ class PemilihRecord extends Model
     protected $appends = [
         'avatar_url',
         'birthday_image_url',
+        'is_member',
+    ];
+
+    protected $hidden = [
+        'no_ahli',
     ];
 
     protected function casts(): array
@@ -79,6 +84,13 @@ class PemilihRecord extends Model
     public function getBirthdayImageUrlAttribute(): ?string
     {
         return $this->birthdayImageUrl();
+    }
+
+    public function getIsMemberAttribute(): bool
+    {
+        $memberNumber = trim((string) $this->no_ahli);
+
+        return $memberNumber !== '' && $memberNumber !== '-';
     }
 
     public function creator(): BelongsTo

@@ -59,7 +59,9 @@ class TambahPemilihController extends Controller
         $createdVoterId = (int) $request->query('created');
         $createdVoter = null;
         if ($createdVoterId) {
-            $createdVoter = PemilihRecord::with('hashtags')->find($createdVoterId);
+            $createdQuery = PemilihRecord::with('hashtags')->where('is_manual', true);
+            $user->applyScopeToPemilihQuery($createdQuery);
+            $createdVoter = $createdQuery->find($createdVoterId);
         }
 
         return Inertia::render('TambahPemilih/Index', [
@@ -76,7 +78,6 @@ class TambahPemilihController extends Controller
         $validated = $request->validate([
             'no_kp' => 'nullable|string|max:20',
             'old_ic' => 'nullable|string|max:20',
-            'no_ahli' => 'nullable|string|max:255',
             'name' => 'required|string|max:255',
             'dm' => 'nullable|string|max:255',
             'locality' => 'nullable|string|max:255',
@@ -92,9 +93,6 @@ class TambahPemilihController extends Controller
         ]);
 
         $user = $request->user();
-        if (! $user->canAccessModule('kemaskini-no-ahli')) {
-            unset($validated['no_ahli']);
-        }
 
         $scope = $user->accessScope();
         if ($scope !== null) {
@@ -155,7 +153,6 @@ class TambahPemilihController extends Controller
             'name' => 'required|string|max:255',
             'no_kp' => 'nullable|string|max:20',
             'old_ic' => 'nullable|string|max:20',
-            'no_ahli' => 'nullable|string|max:255',
             'phone_mobile' => 'nullable|string|max:20',
             'phone_home' => 'nullable|string|max:20',
             'address' => 'nullable|string',
@@ -170,9 +167,6 @@ class TambahPemilihController extends Controller
         ]);
 
         $user = $request->user();
-        if (! $user->canAccessModule('kemaskini-no-ahli')) {
-            unset($validated['no_ahli']);
-        }
 
         $scope = $user->accessScope();
         if ($scope !== null) {

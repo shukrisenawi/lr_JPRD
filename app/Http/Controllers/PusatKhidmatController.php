@@ -57,18 +57,30 @@ class PusatKhidmatController extends Controller
         ], 201);
     }
 
-    public function toggleCheck(PusatKhidmatData $record): JsonResponse
+    public function toggleCheck(Request $request, PusatKhidmatData $record): JsonResponse
     {
+        $record->loadMissing('pemilihRecord');
         $isChecked = $record->checked_at !== null;
+
+        if (! $isChecked && $record->is_manual && $record->pemilihRecord?->created_by === $request->user()->id) {
+            abort(422, 'Rekod manual perlu disemak oleh pengguna lain.');
+        }
 
         $record->update([
             'checked_at' => $isChecked ? null : now(),
+            'checked_by' => $isChecked ? null : $request->user()->id,
         ]);
+
+        $record->load('checkedBy');
 
         return response()->json([
             'ok' => true,
             'checked' => ! $isChecked,
-            'checked_at' => $record->fresh()->checked_at?->toDateTimeString(),
+            'checked_at' => $record->checked_at?->toDateTimeString(),
+            'checked_by' => $record->checkedBy ? [
+                'id' => $record->checkedBy->id,
+                'name' => $record->checkedBy->name,
+            ] : null,
         ]);
     }
 
@@ -86,8 +98,10 @@ class PusatKhidmatController extends Controller
 
         PusatKhidmatData::query()
             ->where('pemilih_record_id', $pemilihRecord->id)
-            ->whereNull('checked_at')
-            ->update(['checked_at' => now()]);
+            ->update([
+                'checked_at' => null,
+                'checked_by' => null,
+            ]);
 
         return response()->json([
             'ok' => true,
@@ -103,6 +117,8 @@ class PusatKhidmatController extends Controller
 
     public function sync(PusatKhidmatService $service): JsonResponse
     {
+        abort_unless(request()->user()?->isMasterAdmin(), 403);
+
         try {
             $result = $service->fetchAndSync(request()->user());
 
@@ -124,6 +140,8 @@ class PusatKhidmatController extends Controller
 
     public function updateSheetUrl(Request $request, PusatKhidmatService $service): JsonResponse
     {
+        abort_unless($request->user()?->isMasterAdmin(), 403);
+
         $request->validate([
             'url' => 'required|url',
         ]);

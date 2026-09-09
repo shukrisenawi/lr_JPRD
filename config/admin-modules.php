@@ -84,10 +84,6 @@ return [
         'label' => 'VCC',
         'description' => 'Senarai semua pemilih VCC.',
     ],
-    'kemaskini-no-ahli' => [
-        'label' => 'Kemaskini No Ahli',
-        'description' => 'Benarkan kemaskini nombor ahli pemilih.',
-    ],
     'pusat-khidmat' => [
         'label' => 'Pusat Khidmat',
         'description' => 'Data Pusat Khidmat dari Google Sheet.',

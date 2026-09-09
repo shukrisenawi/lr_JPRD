@@ -468,7 +468,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             const payload = await res.json();
             if (!res.ok) throw new Error(payload.message || 'Gagal.');
 
-            setRecords((prev) => prev.map((r) => r.id === recordId ? { ...r, checked_at: payload.checked_at } : r));
+            setRecords((prev) => prev.map((r) => r.id === recordId ? { ...r, checked_at: payload.checked_at, checked_by: payload.checked_by } : r));
             router.reload({ only: ['badgeCounts'], preserveState: true, preserveScroll: true });
         } catch (e) {
             setSuccessModal(e instanceof Error ? e.message : 'Ralat tidak diketahui.');
@@ -497,7 +497,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
             const payload = await res.json();
             if (!res.ok) throw new Error(payload.message || 'Gagal.');
             updateRecordCula(selectedRecord.id, code, label);
-            setRecords((prev) => prev.map((r) => r.id === selectedRecord.id ? { ...r, checked_at: new Date().toISOString().slice(0, 19).replace('T', ' ') } : r));
+            setRecords((prev) => prev.map((r) => r.id === selectedRecord.id ? { ...r, checked_at: null, checked_by: null } : r));
             setSuccessModal(`Kod culaan ${getName(selectedRecord)} (${label}) berjaya dikemaskini.`);
             router.reload({ only: ['badgeCounts'], preserveState: true, preserveScroll: true });
         } catch (e) {
@@ -905,8 +905,9 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                             <div className="mt-3 rounded-lg border border-green-100 bg-green-50/60 p-2.5">
                                                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-green-700">Data Pemilih</p>
                                                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                                                    {record.pemilih.no_ahli && (
-                                                        <p><span className="text-slate-500">No Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.no_ahli}</span></p>
+                                                    <p><span className="text-slate-500">Ahli:</span> <span className="font-bold text-slate-800">{record.pemilih.is_member ? 'Ya' : 'Tidak'}</span></p>
+                                                    {record.checked_by?.name && (
+                                                        <p><span className="text-slate-500">Disemak oleh:</span> <span className="font-bold text-slate-800">{record.checked_by.name}</span></p>
                                                     )}
                                                     {(record.pemilih.cula_display_label || record.pemilih.cula_code) && (
                                                         <p className="flex items-center gap-1">
@@ -948,7 +949,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                                 type="button"
                                                                 onClick={() => handleCheckToggle(record.id)}
                                                                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition ${semakStatuses.get(record.id) ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-400 hover:border-blue-500 hover:text-blue-500'}`}
-                                                                title={semakStatuses.get(record.id) ? 'Buang dari Siap Semak' : 'Tanda untuk semak'}
+                                                                 title={semakStatuses.get(record.id) ? 'Buang pengesahan semakan' : 'Sahkan semakan kedua'}
                                                             >
                                                                 ✓
                                                             </button>
@@ -962,7 +963,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                         onClick={() => handleCheckToggle(record.id)}
                                                         className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm hover:bg-slate-50"
                                                     >
-                                                        Kembali Data
+                                                         Kembali Ke Semakan
                                                     </button>
                                                 </div>
                                             )}

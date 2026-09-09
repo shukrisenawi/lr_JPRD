@@ -18,12 +18,14 @@ class ModuleRegistry
                 $keys = array_merge($keys, array_keys($module['children']));
             }
         }
+
         return $keys;
     }
 
     public static function children(string $key): array
     {
         $module = self::all()[$key] ?? [];
+
         return $module['children'] ?? [];
     }
 

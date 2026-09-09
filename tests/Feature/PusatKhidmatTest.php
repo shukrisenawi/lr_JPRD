@@ -68,6 +68,35 @@ it('does not allow duplicate manual Pusat Khidmat data for the same No KP', func
     expect(PusatKhidmatData::query()->where('no_kp', '900101025555')->count())->toBe(1);
 });
 
+it('requires a different user to review a manual Pusat Khidmat record', function () {
+    $creator = User::factory()->masterAdmin()->create();
+    $reviewer = User::factory()->masterAdmin()->create();
+
+    $created = $this->actingAs($creator)
+        ->postJson(route('pusat-khidmat.manual.store'), [
+            'name' => 'Pemohon Perlu Semakan',
+            'no_kp' => '900101025556',
+        ])
+        ->assertCreated()
+        ->json('record.id');
+
+    $this->actingAs($creator)
+        ->postJson(route('pusat-khidmat.check', $created))
+        ->assertStatus(422);
+
+    $this->actingAs($reviewer)
+        ->postJson(route('pusat-khidmat.check', $created))
+        ->assertOk()
+        ->assertJsonPath('checked', true)
+        ->assertJsonPath('checked_by.id', $reviewer->id)
+        ->assertJsonPath('checked_by.name', $reviewer->name);
+
+    $this->assertDatabaseHas('pusat_khidmat_data', [
+        'id' => $created,
+        'checked_by' => $reviewer->id,
+    ]);
+});
+
 it('builds the unreviewed Pusat Khidmat status from belum and telah cula records', function () {
     $admin = User::factory()->masterAdmin()->create();
     $sheetKey = md5(PusatKhidmatService::DEFAULT_SHEET_URL);

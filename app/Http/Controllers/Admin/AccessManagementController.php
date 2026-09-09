@@ -117,7 +117,7 @@ class AccessManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
-            'access_level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+            'access_level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
             'scope_key' => ['nullable', 'string', 'max:255'],
             'expires_at' => ['nullable', 'date'],
         ]);
@@ -128,9 +128,9 @@ class AccessManagementController extends Controller
             'email_verified_at' => now(),
             'password' => Hash::make($validated['password']),
             'role_id' => $validated['role_id'],
-            'access_level' => $validated['access_level'],
-            'scope_key' => $validated['access_level'] === 'jprd' ? null : $validated['scope_key'],
-            'expires_at' => $validated['expires_at'],
+            'access_level' => $validated['access_level'] ?? 'jprd',
+            'scope_key' => ($validated['access_level'] ?? 'jprd') === 'jprd' ? null : ($validated['scope_key'] ?? null),
+            'expires_at' => $validated['expires_at'] ?? null,
         ]);
 
         return redirect()
@@ -147,7 +147,7 @@ class AccessManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
-            'access_level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
+            'access_level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
             'scope_key' => ['nullable', 'string', 'max:255'],
             'expires_at' => ['nullable', 'date'],
         ]);
@@ -156,9 +156,9 @@ class AccessManagementController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role_id' => $validated['role_id'],
-            'access_level' => $validated['access_level'],
-            'scope_key' => $validated['access_level'] === 'jprd' ? null : $validated['scope_key'],
-            'expires_at' => $validated['expires_at'],
+            'access_level' => $validated['access_level'] ?? 'jprd',
+            'scope_key' => ($validated['access_level'] ?? 'jprd') === 'jprd' ? null : ($validated['scope_key'] ?? null),
+            'expires_at' => $validated['expires_at'] ?? null,
         ];
 
         if (filled($validated['password'] ?? null)) {
@@ -249,14 +249,15 @@ class AccessManagementController extends Controller
                 ->with('error', 'Anda tidak boleh reset kata laluan akaun sendiri.');
         }
 
+        $temporaryPassword = Str::password(24);
         $user->update([
-            'password' => Hash::make('123'),
+            'password' => Hash::make($temporaryPassword),
             'must_change_password' => true,
         ]);
 
         return redirect()
             ->route('admin.access.index')
-            ->with('success', "Kata laluan {$user->name} telah direset kepada 123.");
+            ->with('success', "Kata laluan sementara {$user->name}: {$temporaryPassword}. Pengguna perlu menukarnya selepas log masuk.");
     }
 
     public function storeRole(Request $request): RedirectResponse

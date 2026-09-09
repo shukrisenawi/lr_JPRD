@@ -124,7 +124,7 @@ it('allows a master admin to approve or reject a name match after comparing iden
         ->assertOk()
         ->assertJson([
             'success' => true,
-            'message' => 'Nama NAMA SAMA APPROVE berjaya dikemaskini. No. Ahli PAS LULUS-001 telah disimpan.',
+            'message' => 'Nama NAMA SAMA APPROVE berjaya dikemaskini. Status ahli telah disimpan.',
         ]);
     $this->postJson(route('admin.spokas.results.reject', $rejectedResult))
         ->assertOk()
@@ -153,7 +153,8 @@ it('allows a master admin to approve or reject a name match after comparing iden
         ->assertInertia(fn ($page) => $page
             ->where('active_tab', 'approved')
             ->where('result_counts.approved', 1)
-            ->where('results.data.0.member_number', 'LULUS-001')
+            ->where('results.data.0.is_member', true)
+            ->missing('results.data.0.member_number')
             ->where('results.data.0.pemilih_name', 'NAMA SAMA APPROVE')
             ->where('results.data.0.remark', 'Remark approve dikemas kini.'));
 

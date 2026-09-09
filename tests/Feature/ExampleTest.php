@@ -1,6 +1,6 @@
 <?php
 
-it('redirects root to dashboard', function () {
+it('redirects guests from root to login', function () {
     $this->get('/')
-        ->assertRedirect('/dashboard');
+        ->assertRedirect('/login');
 });

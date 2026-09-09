@@ -36,6 +36,21 @@ class ProgramAttendee extends Model
         'marked' => 'boolean',
     ];
 
+    protected $appends = [
+        'is_member',
+    ];
+
+    protected $hidden = [
+        'no_ahli',
+    ];
+
+    public function getIsMemberAttribute(): bool
+    {
+        $memberNumber = trim((string) $this->no_ahli);
+
+        return $memberNumber !== '' && $memberNumber !== '-';
+    }
+
     public function voter(): BelongsTo
     {
         return $this->belongsTo(PemilihRecord::class, 'voter_id', 'id');

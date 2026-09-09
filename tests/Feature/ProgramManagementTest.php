@@ -1,6 +1,10 @@
 <?php
 
+use App\Models\CommitteeMembership;
+use App\Models\CommitteePosition;
+use App\Models\PemilihRecord;
 use App\Models\Program;
+use App\Models\ProgramGroup;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -17,9 +21,9 @@ function programPemilihFixture(): string
 HTML;
 }
 
-function createProgramGroupFor(User $user, string $name = 'Zon Ujian'): \App\Models\ProgramGroup
+function createProgramGroupFor(User $user, string $name = 'Zon Ujian'): ProgramGroup
 {
-    return \App\Models\ProgramGroup::query()->create([
+    return ProgramGroup::query()->create([
         'name' => $name,
         'user_id' => $user->id,
     ]);
@@ -45,7 +49,7 @@ it('allows authorized user to create, update, and delete a group program', funct
         ])
         ->assertRedirect(route('program.index'));
 
-    $groupId = \App\Models\ProgramGroup::query()->where('name', 'Zon Utara')->value('id');
+    $groupId = ProgramGroup::query()->where('name', 'Zon Utara')->value('id');
 
     expect($groupId)->not->toBeNull();
 
@@ -529,7 +533,7 @@ it('shows attendee jawatankuasa badges on selected program', function () {
         'attended_at' => now(),
     ]);
 
-    $voter = \App\Models\PemilihRecord::query()->create([
+    $voter = PemilihRecord::query()->create([
         'identity_number' => '900101025555',
         'no_kp' => '900101025555',
         'name' => 'ALI BIN ABU',
@@ -538,13 +542,13 @@ it('shows attendee jawatankuasa badges on selected program', function () {
         'status' => 'aktif',
     ]);
 
-    $position = \App\Models\CommitteePosition::query()->create([
+    $position = CommitteePosition::query()->create([
         'name' => 'Pengerusi',
         'slug' => 'pengerusi',
         'sort_order' => 1,
     ]);
 
-    \App\Models\CommitteeMembership::query()->create([
+    CommitteeMembership::query()->create([
         'pemilih_record_id' => $voter->id,
         'committee_position_id' => $position->id,
         'level' => 'udm',
@@ -744,11 +748,11 @@ it('blocks shared user from updating or deleting shared program', function () {
             'tarikh' => '2026-05-11',
             'masa' => '10:30',
         ])
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 
     $this->actingAs($sharedUser)
         ->delete(route('program.destroy', $program))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 });
 
 it('blocks program route when user role does not have program module access', function () {
@@ -756,5 +760,5 @@ it('blocks program route when user role does not have program module access', fu
 
     $this->actingAs($user)
         ->get(route('program.index'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 });

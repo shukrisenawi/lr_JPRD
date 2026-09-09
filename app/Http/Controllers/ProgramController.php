@@ -139,8 +139,11 @@ class ProgramController extends Controller
                 ->values()
                 ->all();
             $pemilihRecords = PemilihRecord::query()
-                ->whereIn('no_kp', $icNumbers)
-                ->orWhereIn('old_ic', $oldIcs)
+                ->where(function (Builder $query) use ($icNumbers, $oldIcs) {
+                    $query->whereIn('no_kp', $icNumbers)
+                        ->orWhereIn('old_ic', $oldIcs);
+                })
+                ->tap(fn (Builder $query) => $user->applyScopeToPemilihQuery($query))
                 ->get(['id', 'no_kp', 'old_ic', 'no_ahli', 'avatar', 'updated_at']);
             $pemilihRecordsByIc = [];
             foreach ($pemilihRecords as $record) {
@@ -231,7 +234,7 @@ class ProgramController extends Controller
                             'name' => $attendee->name,
                             'no_kp' => $attendee->no_kp,
                             'old_ic' => $attendee->old_ic,
-                            'no_ahli' => $attendee->no_ahli ?? $icToNoAhli[$attendee->no_kp] ?? $icToNoAhli[$attendee->old_ic] ?? null,
+                            'is_member' => $this->hasMemberNumber($attendee->no_ahli ?? $icToNoAhli[$attendee->no_kp] ?? $icToNoAhli[$attendee->old_ic] ?? null),
                             'pemilih_record_id' => $icToPemilihId[$attendee->no_kp] ?? $icToPemilihId[$attendee->old_ic] ?? null,
                             'phone_mobile' => $attendee->phone_mobile,
                             'phone_home' => $attendee->phone_home,
@@ -298,7 +301,7 @@ class ProgramController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateProgram($request);
-        $validated['committee_group_filters'] = $validated['committee_group_filters']
+        $validated['committee_group_filters'] = ($validated['committee_group_filters'] ?? null)
             ? [$validated['committee_group_filters']]
             : null;
         $gambarPath = $request->hasFile('gambar')
@@ -316,7 +319,9 @@ class ProgramController extends Controller
             $program->sharedUsers()->sync($group->default_shared_user_ids);
         }
 
-        return back()->with('success', 'Program baharu berjaya ditambah.');
+        return redirect()
+            ->route('program.index', ['program' => $program->id])
+            ->with('success', 'Program baharu berjaya ditambah.');
     }
 
     public function update(Request $request, Program $program): RedirectResponse
@@ -324,7 +329,7 @@ class ProgramController extends Controller
         $this->ensureOwner($request->user()->id, $program);
 
         $validated = $this->validateProgram($request);
-        $validated['committee_group_filters'] = $validated['committee_group_filters']
+        $validated['committee_group_filters'] = ($validated['committee_group_filters'] ?? null)
             ? [$validated['committee_group_filters']]
             : null;
         $payload = [...$validated];
@@ -342,7 +347,7 @@ class ProgramController extends Controller
         $program->update($payload);
 
         return redirect()
-            ->route('program.index')
+            ->route('program.index', ['program' => $program->id])
             ->with('success', 'Program berjaya dikemas kini.');
     }
 
@@ -403,6 +408,7 @@ class ProgramController extends Controller
 
         $memberships = CommitteeMembership::whereIn('committee_position_id', $positionIds)
             ->when($level, fn ($q) => $q->where('level', $level))
+            ->whereHas('voter', fn (Builder $query) => $request->user()->applyScopeToPemilihQuery($query))
             ->with('voter')
             ->get()
             ->unique('pemilih_record_id')
@@ -453,6 +459,19 @@ class ProgramController extends Controller
 
         $user = $request->user();
         $count = 0;
+
+        $memberIds = collect($validated['members'] ?? [])
+            ->pluck('pemilih_record_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+        $allowedMemberIds = PemilihRecord::query()->whereIn('id', $memberIds)
+            ->tap(fn (Builder $query) => $user->applyScopeToPemilihQuery($query))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        abort_unless($memberIds->diff($allowedMemberIds)->isEmpty(), 403);
 
         foreach (($validated['members'] ?? []) as $member) {
             $voterId = $member['pemilih_record_id'];
@@ -596,7 +615,6 @@ class ProgramController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'no_kp' => ['nullable', 'string', 'max:50'],
             'old_ic' => ['nullable', 'string', 'max:50'],
-            'no_ahli' => ['nullable', 'string', 'max:255'],
             'phone_mobile' => ['nullable', 'string', 'max:50'],
             'phone_home' => ['nullable', 'string', 'max:50'],
             'dm' => ['nullable', 'string', 'max:255'],
@@ -611,11 +629,6 @@ class ProgramController extends Controller
         ]);
 
         $subProgramIds = $validated['sub_program_ids'] ?? [];
-
-        $user = $request->user();
-        if (! $user->canAccessModule('kemaskini-no-ahli')) {
-            unset($validated['no_ahli']);
-        }
 
         $existing = $program->attendees()->where('voter_id', $validated['voter_id'])->first();
 
@@ -670,14 +683,7 @@ class ProgramController extends Controller
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
         }
 
-        $pemilihRecord = PemilihRecord::query()
-            ->where(function ($q) use ($attendee) {
-                $q->where('no_kp', $attendee->no_kp);
-                if ($attendee->old_ic) {
-                    $q->orWhere('old_ic', $attendee->old_ic);
-                }
-            })
-            ->first();
+        $pemilihRecord = $this->findPemilihForAttendee($request->user(), $attendee);
 
         if ($pemilihRecord) {
             CulaWorkItem::query()->firstOrCreate(
@@ -701,14 +707,7 @@ class ProgramController extends Controller
             throw (new ModelNotFoundException)->setModel(ProgramAttendee::class, [$attendee->id]);
         }
 
-        $pemilihRecord = PemilihRecord::query()
-            ->where(function ($q) use ($attendee) {
-                $q->where('no_kp', $attendee->no_kp);
-                if ($attendee->old_ic) {
-                    $q->orWhere('old_ic', $attendee->old_ic);
-                }
-            })
-            ->first();
+        $pemilihRecord = $this->findPemilihForAttendee($request->user(), $attendee);
 
         if ($pemilihRecord) {
             CulaWorkItem::query()
@@ -737,14 +736,7 @@ class ProgramController extends Controller
             'cula_display_label' => $request->input('cula_display_label'),
         ]);
 
-        $pemilihRecord = PemilihRecord::query()
-            ->where(function ($q) use ($attendee) {
-                $q->where('no_kp', $attendee->no_kp);
-                if ($attendee->old_ic) {
-                    $q->orWhere('old_ic', $attendee->old_ic);
-                }
-            })
-            ->first();
+        $pemilihRecord = $this->findPemilihForAttendee($request->user(), $attendee);
 
         if ($pemilihRecord) {
             $pemilihRecord->update([
@@ -1342,6 +1334,32 @@ class ProgramController extends Controller
         abort_unless((int) $attendee->user_id === (int) $user->id, 403);
     }
 
+    private function hasMemberNumber(?string $memberNumber): bool
+    {
+        $memberNumber = trim((string) $memberNumber);
+
+        return $memberNumber !== '' && $memberNumber !== '-';
+    }
+
+    private function findPemilihForAttendee(User $user, ProgramAttendee $attendee): ?PemilihRecord
+    {
+        if (! filled($attendee->no_kp) && ! filled($attendee->old_ic)) {
+            return null;
+        }
+
+        $query = PemilihRecord::query()->where(function (Builder $builder) use ($attendee) {
+            if (filled($attendee->no_kp)) {
+                $builder->where('no_kp', $attendee->no_kp);
+            }
+            if (filled($attendee->old_ic)) {
+                $builder->orWhere('old_ic', $attendee->old_ic);
+            }
+        });
+        $user->applyScopeToPemilihQuery($query);
+
+        return $query->first();
+    }
+
     private function buildCommitteeBadgeMap($attendees)
     {
         $identityNumbers = $attendees
@@ -1357,9 +1375,12 @@ class ProgramController extends Controller
         }
 
         $voters = PemilihRecord::query()
-            ->whereIn('identity_number', $identityNumbers)
-            ->orWhereIn('no_kp', $identityNumbers)
-            ->orWhereIn('old_ic', $identityNumbers)
+            ->where(function (Builder $query) use ($identityNumbers) {
+                $query->whereIn('identity_number', $identityNumbers)
+                    ->orWhereIn('no_kp', $identityNumbers)
+                    ->orWhereIn('old_ic', $identityNumbers);
+            })
+            ->tap(fn (Builder $query) => request()->user()?->applyScopeToPemilihQuery($query))
             ->get();
 
         $membershipByVoterId = CommitteeMembership::query()

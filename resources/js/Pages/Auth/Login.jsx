@@ -77,12 +77,12 @@ function StatusBanner({ status }) {
     );
 }
 
-export default function Login({ status, defaultCredentials, lastUser }) {
+export default function Login({ status, lastUser }) {
     const hasLastUser = Boolean(lastUser?.email);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        email: defaultCredentials?.email ?? '',
-        password: defaultCredentials?.password ?? '',
+        email: lastUser?.email ?? '',
+        password: '',
     });
 
     const submit = (e) => {

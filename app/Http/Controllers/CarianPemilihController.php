@@ -83,28 +83,6 @@ class CarianPemilihController extends Controller
         ]);
     }
 
-    public function updateNoAhli(Request $request)
-    {
-        $user = $request->user();
-        if (! $user->canAccessModule('kemaskini-no-ahli')) {
-            abort(403, 'Anda tidak mempunyai akses untuk mengemaskini No. Ahli.');
-        }
-
-        $validated = $request->validate([
-            'record_id' => 'required|integer|exists:pemilih_records,id',
-            'no_ahli' => 'nullable|string|max:255',
-        ]);
-
-        $record = PemilihRecord::findOrFail($validated['record_id']);
-        $record->no_ahli = $validated['no_ahli'];
-        $record->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'No. Ahli berjaya dikemaskini.',
-        ]);
-    }
-
     public function uploadAvatar(Request $request, PemilihRecord $pemilihRecord): JsonResponse
     {
         $validated = $request->validate([

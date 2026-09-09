@@ -47,7 +47,7 @@ class CulaanController extends Controller
 
         return Inertia::render('Culaan/Index', [
             'filters' => $filters,
-            'requires_udm' => false,
+            'requires_udm' => true,
             'summary' => [
                 'total' => $voters->total(),
             ],
@@ -119,9 +119,10 @@ class CulaanController extends Controller
             return response()->json(['message' => 'Tiada ID pemilih diterima.'], 422);
         }
 
-        $records = PemilihRecord::whereIn('id', $voterIds)
-            ->whereNotNull('cula_remark')
-            ->get();
+        $recordsQuery = PemilihRecord::whereIn('id', $voterIds)
+            ->whereNotNull('cula_remark');
+        $request->user()?->applyScopeToPemilihQuery($recordsQuery);
+        $records = $recordsQuery->get();
 
         $count = 0;
         foreach ($records as $record) {
@@ -342,11 +343,6 @@ class CulaanController extends Controller
             ->where('pemilih_record_id', $pemilihRecord->id)
             ->delete();
 
-        $pemilihRecord->update([
-            'cula_code' => '?',
-            'cula_display_label' => null,
-        ]);
-
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Tanda culaan berjaya dibuka semula.',
@@ -373,6 +369,10 @@ class CulaanController extends Controller
             ->where('is_manual', false);
 
         request()->user()?->applyScopeToPemilihQuery($query);
+
+        if ($filters['udm'] === '') {
+            $query->whereRaw('1 = 0');
+        }
 
         $query->when(
             ! $filters['show_marked'] && ! $filters['show_all'] && empty($filters['hashtags']),
@@ -674,7 +674,7 @@ class CulaanController extends Controller
             'name' => $voter->name,
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,
-            'no_ahli' => $voter->no_ahli,
+            'is_member' => $voter->is_member,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
             'address' => $this->resolveAddress($voter),
@@ -915,6 +915,10 @@ class CulaanController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
+        if ($filters['udm'] === '') {
+            $query->whereRaw('1 = 0');
+        }
+
         $this->applyHashtagFilter($query, $filters);
 
         if (($filters['custom_mode'] || $filters['show_all']) && is_array($filters['cula_codes']) && count($filters['cula_codes']) > 0) {
@@ -1000,6 +1004,10 @@ class CulaanController extends Controller
             ->when($filters['locality'] !== '', fn (Builder $b) => $b->where('locality', $filters['locality']));
 
         request()->user()?->applyScopeToPemilihQuery($query);
+
+        if ($filters['udm'] === '') {
+            $query->whereRaw('1 = 0');
+        }
 
         $this->applyHashtagFilter($query, $filters);
 

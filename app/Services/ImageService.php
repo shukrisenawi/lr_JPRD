@@ -13,7 +13,12 @@ class ImageService
         $threshold = 300;
 
         $tmpPath = $file->getRealPath();
-        [$width, $height] = getimagesize($tmpPath);
+        $size = @getimagesize($tmpPath);
+        if (! is_array($size)) {
+            return $file->store($path, $disk);
+        }
+
+        [$width, $height] = $size;
 
         if ($width <= $threshold && $height <= $threshold) {
             return $file->store($path, $disk);
@@ -36,7 +41,7 @@ class ImageService
             default => null,
         };
 
-        if (!$src) {
+        if (! $src) {
             return $file->store($path, $disk);
         }
 
@@ -49,12 +54,12 @@ class ImageService
 
         imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
-        $storedName = md5(uniqid()) . '.' . $file->getClientOriginalExtension();
-        $storedPath = $path . '/' . $storedName;
+        $storedName = md5(uniqid()).'.'.$file->getClientOriginalExtension();
+        $storedPath = $path.'/'.$storedName;
         $fullPath = Storage::disk($disk)->path($storedPath);
 
         $dir = dirname($fullPath);
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 

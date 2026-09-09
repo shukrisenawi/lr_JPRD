@@ -140,26 +140,11 @@ function formatDate(value) {
     return year && month && day ? `${day}/${month}/${year}` : "-";
 }
 
-function NoAhliBadge({ member, copiedNoAhli, onCopy }) {
-    const copied = copiedNoAhli === member.no_ahli;
-    return (
-        <button
-            type="button"
-            onClick={() => onCopy(member.no_ahli)}
-            title="Klik untuk salin No. Ahli"
-            aria-label={`Salin No. Ahli ${member.no_ahli}`}
-            className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold transition ${copied ? "bg-emerald-600 text-white" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
-        >
-            {copied ? "Disalin" : member.no_ahli}
-        </button>
-    );
-}
-
 function DetailModal({ member, onClose }) {
     const address =
         member.alamat_kediaman || member.alamat_kp || member.address || "-";
     const fields = [
-        ["No. Ahli", member.no_ahli],
+        ["Status Ahli", member.is_member ? "Ya" : "Tidak"],
         ["No. KP", member.no_kp || member.old_ic || "-"],
         ["UDM", member.dm || "-"],
         ["Lokaliti", member.locality || "-"],
@@ -280,7 +265,6 @@ export default function AhliPasIndex({
         auth.user?.role?.is_master_admin ||
         auth.user?.allowed_modules?.includes("laporan-hantar-status");
     const [form, setForm] = useState(filters);
-    const [copiedNoAhli, setCopiedNoAhli] = useState("");
     const [detailMember, setDetailMember] = useState(null);
     const [localWrongCulaMembers, setLocalWrongCulaMembers] =
         useState(wrong_cula_members);
@@ -338,35 +322,6 @@ export default function AhliPasIndex({
             setN8nError(error.message ?? "Mesej gagal dihantar.");
         } finally {
             setN8nSending(false);
-        }
-    };
-
-    const copyNoAhli = async (value) => {
-        try {
-            if (navigator.clipboard?.writeText)
-                await navigator.clipboard.writeText(value);
-            else {
-                const input = document.createElement("textarea");
-                input.value = value;
-                input.setAttribute("readonly", "");
-                input.style.position = "fixed";
-                input.style.opacity = "0";
-                document.body.appendChild(input);
-                input.select();
-                const copied = document.execCommand("copy");
-                input.remove();
-                if (!copied) throw new Error("copy-failed");
-            }
-            setCopiedNoAhli(value);
-            setTimeout(
-                () =>
-                    setCopiedNoAhli((current) =>
-                        current === value ? "" : current,
-                    ),
-                1500,
-            );
-        } catch {
-            setCopiedNoAhli("");
         }
     };
 
@@ -672,7 +627,7 @@ export default function AhliPasIndex({
                                                     q: event.target.value,
                                                 })
                                             }
-                                            placeholder="Nama / No KP / No. Ahli"
+                                             placeholder="Nama / No KP"
                                             className="input-field w-full pl-9"
                                         />
                                     </div>
@@ -699,7 +654,7 @@ export default function AhliPasIndex({
                                     </p>
                                 </div>
                                 <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold text-green-700">
-                                    No. Ahli tersedia
+                                    Status ahli: Ya
                                 </span>
                             </div>
                             {rows.length === 0 ? (
@@ -744,16 +699,10 @@ export default function AhliPasIndex({
                                                 </div>
                                                 <div>
                                                     <dt className="font-bold text-green-700">
-                                                        No. Ahli
+                                                         Status Ahli
                                                     </dt>
                                                     <dd className="mt-1">
-                                                        <NoAhliBadge
-                                                            member={member}
-                                                            copiedNoAhli={
-                                                                copiedNoAhli
-                                                            }
-                                                            onCopy={copyNoAhli}
-                                                        />
+                                                         <span className="inline-flex rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold text-green-700">{member.is_member ? "Ya" : "Tidak"}</span>
                                                     </dd>
                                                 </div>
                                                 <div>
@@ -875,7 +824,7 @@ export default function AhliPasIndex({
                                                     q: event.target.value,
                                                 })
                                             }
-                                            placeholder="Nama / No KP / No. Ahli"
+                                             placeholder="Nama / No KP"
                                             className="input-field w-full pl-9"
                                         />
                                     </div>
@@ -956,16 +905,10 @@ export default function AhliPasIndex({
                                                 <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-amber-100 pt-3 text-xs">
                                                     <div>
                                                         <dt className="font-bold text-amber-700">
-                                                            No. Ahli
+                                                            Status Ahli
                                                         </dt>
                                                         <dd className="mt-1">
-                                                            <NoAhliBadge
-                                                                member={member}
-                                                                copiedNoAhli={
-                                                                    copiedNoAhli
-                                                                }
-                                                                onCopy={copyNoAhli}
-                                                            />
+                                                             <span className="inline-flex rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold text-green-700">{member.is_member ? "Ya" : "Tidak"}</span>
                                                         </dd>
                                                     </div>
                                                     <div>

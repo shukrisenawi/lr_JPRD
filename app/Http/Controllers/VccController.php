@@ -182,6 +182,10 @@ class VccController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
+        $voterQuery = PemilihRecord::query()->whereKey($data['voter_id']);
+        $request->user()?->applyScopeToPemilihQuery($voterQuery);
+        abort_unless($voterQuery->exists(), 404);
+
         VoterCommunication::create([
             'voter_id' => $data['voter_id'],
             'user_id' => $request->user()->id,
@@ -572,7 +576,7 @@ class VccController extends Controller
             'name' => $voter->name,
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,
-            'no_ahli' => $voter->no_ahli,
+            'is_member' => $voter->is_member,
             'date_of_birth' => $voter->date_of_birth,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,

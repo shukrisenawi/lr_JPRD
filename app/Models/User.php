@@ -78,6 +78,7 @@ class User extends Authenticatable
 
         if ($level === 'cawangan') {
             $parts = explode('|', $key, 2);
+
             return ['dm' => $parts[0] ?? $key, 'locality' => $parts[1] ?? null];
         }
 
@@ -99,6 +100,18 @@ class User extends Authenticatable
         if (filled($scope['locality'])) {
             $query->where('locality', $scope['locality']);
         }
+    }
+
+    public function canAccessPemilihRecord(PemilihRecord $record): bool
+    {
+        $scope = $this->accessScope();
+
+        if ($scope === null) {
+            return true;
+        }
+
+        return (! filled($scope['dm']) || $record->dm === $scope['dm'])
+            && (! filled($scope['locality']) || $record->locality === $scope['locality']);
     }
 
     #[Computed]

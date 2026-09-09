@@ -86,7 +86,7 @@ test('authenticated user can view their uploaded avatar', function () {
     ]);
 
     $this->actingAs($user)
-        ->get('/profile/avatar')
+        ->get(route('profile.avatar', $user))
         ->assertOk();
 });
 

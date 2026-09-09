@@ -11,8 +11,7 @@ test('login screen can be rendered', function () {
     $response->assertStatus(200)
         ->assertInertia(fn ($page) => $page
             ->component('Auth/Login')
-            ->where('defaultCredentials.email', 'admin@jprd')
-            ->where('defaultCredentials.password', '123'));
+            ->missing('defaultCredentials'));
 });
 
 test('users can authenticate using the login screen', function () {

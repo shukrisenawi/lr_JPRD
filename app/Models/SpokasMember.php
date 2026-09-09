@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class SpokasMember extends Model
 {
+    protected $hidden = [
+        'member_number',
+    ];
+
     protected $fillable = [
         'name',
         'member_number',

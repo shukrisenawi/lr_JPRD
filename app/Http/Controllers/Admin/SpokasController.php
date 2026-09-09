@@ -61,7 +61,6 @@ class SpokasController extends Controller
         $this->ensureModuleAccess();
         $remark = $this->validatedRemark($request);
         $name = $result->name ?: 'pemilih';
-        $memberNumber = $result->member_number ?: '-';
 
         DB::transaction(function () use ($result, $remark): void {
             $result = SpokasMigrationResult::query()->lockForUpdate()->findOrFail($result->id);
@@ -87,7 +86,7 @@ class SpokasController extends Controller
                 ->increment('updated_count');
         });
 
-        $message = "Nama {$name} berjaya dikemaskini. No. Ahli PAS {$memberNumber} telah disimpan.";
+        $message = "Nama {$name} berjaya dikemaskini. Status ahli telah disimpan.";
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -221,7 +220,6 @@ class SpokasController extends Controller
                     $like = "%{$search}%";
                     $builder
                         ->where('name', 'like', $like)
-                        ->orWhere('member_number', 'like', $like)
                         ->orWhere('ic_birth', 'like', $like)
                         ->orWhere('pemilih_name', 'like', $like)
                         ->orWhere('pemilih_no_kp', 'like', $like)
@@ -264,7 +262,7 @@ class SpokasController extends Controller
             'id' => $result->id,
             'spokas_id' => $result->spokas_member_id,
             'name' => $result->name,
-            'member_number' => $result->member_number,
+            'is_member' => $this->hasMemberNumber($result->member_number),
             'ic_birth' => $result->ic_birth,
             'ic_old' => $result->ic_old,
             'match_by' => $result->match_by,
@@ -272,9 +270,15 @@ class SpokasController extends Controller
             'pemilih_name' => $result->pemilih_name,
             'pemilih_no_kp' => $result->pemilih_no_kp,
             'pemilih_old_ic' => $result->pemilih_old_ic,
-            'previous_no_ahli' => $result->previous_no_ahli,
             'reason' => $result->reason,
             'remark' => $result->remark,
         ];
+    }
+
+    private function hasMemberNumber(?string $memberNumber): bool
+    {
+        $memberNumber = trim((string) $memberNumber);
+
+        return $memberNumber !== '' && $memberNumber !== '-';
     }
 }

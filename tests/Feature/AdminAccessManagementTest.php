@@ -30,9 +30,9 @@ it('prevents non master admin from opening access management page', function () 
 
     $this->actingAs($user)
         ->get(route('admin.access.index'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 
-    $this->assertGuest();
+    $this->assertAuthenticatedAs($user);
 });
 
 it('allows master admin to create a user with selected role', function () {
@@ -93,9 +93,9 @@ it('blocks access to module routes when user role does not have permission', fun
 
     $this->actingAs($user)
         ->get(route('laporan.index'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 
-    $this->assertGuest();
+    $this->assertAuthenticatedAs($user);
 });
 
 it('logs out user and redirects to login when forbidden page is accessed', function () {
@@ -103,9 +103,9 @@ it('logs out user and redirects to login when forbidden page is accessed', funct
 
     $this->actingAs($user)
         ->get(route('laporan.index'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 
-    $this->assertGuest();
+    $this->assertAuthenticatedAs($user);
 });
 
 it('allows master admin to update existing user details', function () {

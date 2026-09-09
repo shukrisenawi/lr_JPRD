@@ -165,7 +165,7 @@ class PemilihReportService
                 'name' => $voter['name'],
                 'no_kp' => $voter['no_kp'],
                 'old_ic' => $voter['old_ic'],
-                'no_ahli' => $voter['no_ahli'] ?? null,
+                'is_member' => $this->hasMemberNumber($voter['no_ahli'] ?? null),
                 'age' => $this->calculateAge($voter['no_kp']),
                 'phone_mobile' => $voter['phone_mobile'],
                 'phone_home' => $voter['phone_home'],
@@ -207,7 +207,6 @@ class PemilihReportService
                         $kw->where(DB::raw('LOWER(name)'), 'like', $like)
                             ->orWhere(DB::raw('LOWER(dm)'), 'like', $like)
                             ->orWhere(DB::raw('LOWER(locality)'), 'like', $like)
-                            ->orWhere(DB::raw('LOWER(no_ahli)'), 'like', $like)
                             ->orWhere('no_kp', 'like', $like)
                             ->orWhere('old_ic', 'like', $like)
                             ->orWhere('phone_home', 'like', $like)
@@ -252,7 +251,7 @@ class PemilihReportService
                     'name' => $record->name,
                     'no_kp' => $record->no_kp,
                     'old_ic' => $record->old_ic,
-                    'no_ahli' => $record->no_ahli,
+                    'is_member' => $record->is_member,
                     'age' => $this->calculateAge($record->no_kp),
                     'phone_mobile' => $record->phone_mobile,
                     'phone_home' => $record->phone_home,
@@ -275,6 +274,13 @@ class PemilihReportService
             ->all();
 
         return $records;
+    }
+
+    private function hasMemberNumber(?string $memberNumber): bool
+    {
+        $memberNumber = trim((string) $memberNumber);
+
+        return $memberNumber !== '' && $memberNumber !== '-';
     }
 
     public function syncUploadedVoters(string $path): void

@@ -52,53 +52,7 @@ function SearchIcon({ className = 'h-5 w-5' }) {
     );
 }
 
-function NoAhliModal({ voter, onClose, onSaved }) {
-    const [value, setValue] = useState(voter?.no_ahli || '');
-    const [saving, setSaving] = useState(false);
-
-    const handleSave = async () => {
-        if (!voter) return;
-        setSaving(true);
-        try {
-            const res = await fetch(route('carian-pemilih.update-no-ahli'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
-                body: JSON.stringify({ record_id: voter.record_id, no_ahli: value }),
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || `HTTP ${res.status}`);
-            }
-            const data = await res.json();
-            if (data.success) {
-                onSaved(value);
-                onClose();
-            } else {
-                alert(data.message || 'Gagal mengemaskini No. Ahli.');
-            }
-        } catch (e) {
-            alert('Gagal mengemaskini No. Ahli.');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-            <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl" onClick={e => e.stopPropagation()}>
-                <h3 className="mb-3 text-sm font-bold text-slate-800">Kemaskini No. Ahli</h3>
-                <p className="mb-2 text-xs text-slate-500">{voter?.name}</p>
-                <input type="text" value={value} onChange={e => setValue(e.target.value)} className="input-field w-full text-xs" placeholder="Masukkan No. Ahli" autoFocus />
-                <div className="mt-3 flex justify-end gap-2">
-                    <button onClick={onClose} className="rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-300">Batal</button>
-                    <button onClick={handleSave} disabled={saving} className="btn-primary text-xs">{saving ? 'Menyimpan...' : 'Simpan'}</button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, canEditNoAhli, isCulaPending, onCulaSiap, onHashtagsSaved }) {
+function ResultCard({ voter, onClear, onOpenTelegram, tgReady, isCulaPending, onCulaSiap, onHashtagsSaved }) {
     const [avatarUrl, setAvatarUrl] = useState(voter?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -147,7 +101,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
 
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
-        ['No. Ahli', voter.no_ahli || '-'], ['Umur', voter.age ?? '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
+        ['Status Ahli', voter.is_member ? 'Ya' : 'Tidak'], ['Umur', voter.age ?? '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['UDM', voter.dm], ['Lokaliti', voter.locality], ['Bangsa', voter.race], ['Status Culaan', voter.cula_display_label || voter.cula_code],
         ['No. Rumah', voter.no_rumah || '-'], ['No. Siri', voter.no_siri || '-'],
         ['Alamat', displayAddress],
@@ -183,7 +137,6 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
                             <button onClick={() => onOpenTelegram(voter, 'kemascula')} disabled={!tgReady} className="btn-primary">Cula</button>
                         )}
                         <button onClick={() => onOpenTelegram(voter, 'kemastel')} disabled={!tgReady} className="btn-emerald">Tukar Tel</button>
-                        {canEditNoAhli && <button onClick={() => onUpdateNoAhli(voter)} className="btn-primary">Kemaskini No Ahli</button>}
                     </>}
                     <button onClick={onClear} className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-600 text-white shadow-sm transition hover:bg-slate-500" title="Tutup"><XIcon className="h-3.5 w-3.5" /></button>
                 </div>
@@ -210,7 +163,6 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, onUpdateNoAhli, c
 
 function SearchPanel() {
         const { auth, available_cula_codes: initialCulaCodes, available_dms, localities_by_dm } = usePage().props;
-        const canEditNoAhli = auth.user?.allowed_modules?.includes('kemaskini-no-ahli');
 
     const [q, setQ] = useState('');
     const [searching, setSearching] = useState(false);
@@ -224,15 +176,12 @@ function SearchPanel() {
     const [selectedCulaCodes, setSelectedCulaCodes] = useState([]);
     const [showCulaFilter, setShowCulaFilter] = useState(false);
     const [openingTg, setOpeningTg] = useState(false);
-    const [editNoAhli, setEditNoAhli] = useState(null);
-    const [flash, setFlash] = useState('');
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
     const ac = useRef(null);
     const rid = useRef(0);
     useEffect(() => () => ac.current?.abort(), []);
-    useEffect(() => { if (flash) { const t = setTimeout(() => setFlash(''), 2000); return () => clearTimeout(t); } }, [flash]);
 
     const fetchSuggestions = async (searchQ, dm, locality, culaCodes) => {
         ac.current?.abort();
@@ -327,7 +276,7 @@ function SearchPanel() {
             <section className="card relative">
                 <div className="px-4 py-3">
                     <p className="label-section">Carian Pemilih</p>
-                    <p className="text-muted mt-0.5">Cari nama, No Kp, nombor telefon atau No. Ahli.</p>
+                    <p className="text-muted mt-0.5">Cari nama, No Kp atau nombor telefon.</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                         {!isUdmLevel && (
                             <div className="relative flex-1 basis-full sm:basis-[180px]">
@@ -405,7 +354,7 @@ function SearchPanel() {
                     </div>
                     <div className="relative mt-2">
                         <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input type="search" value={q} onChange={handleChange} onFocus={(e) => e.target.select()} placeholder="Ali, 900101025555, 0123456789, A0001" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
+                        <input type="search" value={q} onChange={handleChange} onFocus={(e) => e.target.select()} placeholder="Ali, 900101025555, 0123456789" className="input-field py-2 pl-10 pr-10 focus:ring-2" />
                         {q ? (
                             <button
                                 type="button"
@@ -453,12 +402,8 @@ function SearchPanel() {
                 )}
             </section>
 
-            {flash && <div className="flash-msg">{flash}</div>}
-            {editNoAhli && canEditNoAhli && <NoAhliModal voter={editNoAhli} onClose={() => setEditNoAhli(null)}
-                onSaved={(val) => { setSelected(prev => prev ? { ...prev, no_ahli: val } : prev); setFlash('No. Ahli berjaya dikemaskini!'); }} />}
             <ResultCard key={selected?.record_id ?? 'no-voter'} voter={selected} onClear={() => { clearSearch(); setOpeningTg(false); }}
                 onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selected, 'kemascula'))}
-                onUpdateNoAhli={(v) => setEditNoAhli(v)} canEditNoAhli={canEditNoAhli}
                 isCulaPending={culaPendingIds.has(selected?.id)} onCulaSiap={(v) => { setSelectedVoterForCula(v); setShowCulaModal(true); }}
                 onHashtagsSaved={(hashtags) => setSelected((prev) => prev ? { ...prev, hashtags } : prev)} />
 

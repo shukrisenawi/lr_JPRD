@@ -160,7 +160,7 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
     if (!voter) return null;
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
-        ['No. Ahli', voter.no_ahli || '-'], ['Umur', voter.age ?? '-'],
+        ['Status Ahli', voter.is_member ? 'Ya' : 'Tidak'], ['Umur', voter.age ?? '-'],
         ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'], ['Bangsa', voter.race || '-'], ['Status Culaan', voter.cula_display_label || voter.cula_code || '-'], ['Alamat', voter.address || '-'],
     ];
@@ -195,60 +195,7 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
     );
 }
 
-function NoAhliModal({ attendee, onClose, onSaved }) {
-    const [value, setValue] = useState(attendee?.no_ahli || '');
-    const [saving, setSaving] = useState(false);
-
-    const handleSave = async () => {
-        if (!attendee) return;
-        setSaving(true);
-        try {
-            const res = await fetch(route('carian-pemilih.update-no-ahli'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content, 'Accept': 'application/json' },
-                body: JSON.stringify({ record_id: attendee.pemilih_record_id, no_ahli: value }),
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error(txt || `HTTP ${res.status}`);
-            }
-            const data = await res.json();
-            if (data.success) {
-                onSaved(value);
-                onClose();
-            } else {
-                alert(data.message || 'Gagal mengemaskini No. Ahli.');
-            }
-        } catch (e) {
-            alert('Gagal mengemaskini No. Ahli.');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    return (
-        <Modal show={Boolean(attendee)} onClose={onClose} maxWidth="sm">
-            <div className="rounded-xl border border-green-200 bg-green-50/50 p-3">
-                <div className="flex items-center justify-between gap-2 border-b border-green-200 pb-2">
-                    <div className="min-w-0">
-                        <p className="text-xs font-bold text-green-900 truncate">Kemaskini No. Ahli</p>
-                        <p className="text-xs text-green-700">{attendee?.name}</p>
-                    </div>
-                    <button onClick={onClose} className="text-green-400 hover:text-green-600"><svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg></button>
-                </div>
-                <div className="mt-2">
-                    <input type="text" value={value} onChange={e => setValue(e.target.value)} className="input-field w-full text-xs" placeholder="Masukkan No. Ahli" autoFocus />
-                </div>
-                <div className="mt-3 flex gap-2 border-t border-green-200 pt-2">
-                    <button onClick={onClose} className="flex-1 rounded-md bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-300">Batal</button>
-                    <button onClick={handleSave} disabled={saving} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">{saving ? 'Menyimpan...' : 'Simpan'}</button>
-                </div>
-            </div>
-        </Modal>
-    );
-}
-
-function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpdateNoAhli, isCulaPending, onCulaSiap, onRestoreCula }) {
+function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, isCulaPending, onCulaSiap, onRestoreCula }) {
     const [avatarUrl, setAvatarUrl] = useState(attendee?.avatar_url || null);
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -290,7 +237,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
 
     const fields = [
         ['Nama', attendee.name], ['No Kp', attendee.no_kp || attendee.old_ic || '-'],
-        ['No. Ahli', attendee.no_ahli || '-'], ['Tel', attendee.phone_mobile || attendee.phone_home || '-'],
+        ['Status Ahli', attendee.is_member ? 'Ya' : 'Tidak'], ['Tel', attendee.phone_mobile || attendee.phone_home || '-'],
         ['UDM', attendee.dm || '-'], ['Lokaliti', attendee.locality || '-'], ['Bangsa', attendee.race || '-'],
         ['Status Culaan', attendee.cula_display_label || attendee.cula_code || '-'],
     ];
@@ -342,9 +289,6 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, onUpd
                         <button onClick={() => onOpenTelegram(attendee, 'kemascula')} disabled={!tgReady} className="flex-1 rounded-md bg-green-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 disabled:opacity-50">Cula</button>
                     )}
                     <button onClick={() => onOpenTelegram(attendee, 'kemastel')} disabled={!tgReady} className="flex-1 rounded-md bg-amber-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-amber-400 disabled:opacity-50">Tukar Tel</button>
-                    {onUpdateNoAhli && (
-                        <button onClick={() => onUpdateNoAhli(attendee)} className="flex-1 rounded-md bg-yellow-500 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-yellow-400">No Ahli</button>
-                    )}
                 </div>
             </div>
             {cropFile && (
@@ -1101,7 +1045,6 @@ function MesyuaratView({ program, onClose }) {
 export default function ProgramIndex({ programs, selectedProgram, shareableUsers, groups, committeeGroupOptions, groupPemilihOptions, available_cula_codes: initialCulaCodes }) {
     const { auth } = usePage().props;
     const isAdmin = auth?.user?.role?.is_master_admin;
-    const canEditNoAhli = auth?.user?.allowed_modules?.includes('kemaskini-no-ahli');
     const tabs = [
         { key: 'senarai-program', label: 'Senarai Program' },
         { key: 'tambah-program', label: 'Tambah Program' },
@@ -1123,7 +1066,6 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const [selShare, setSelShare] = useState(null);
     const [mesyuaratProgram, setMesyuaratProgram] = useState(null);
     const [deletingAtt, setDeletingAtt] = useState(null);
-    const [editNoAhli, setEditNoAhli] = useState(null);
     const [openingTg, setOpeningTg] = useState(false);
     const [attendeeSearch, setAttendeeSearch] = useState('');
     const [subTab, setSubTab] = useState(null);
@@ -1433,7 +1375,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                               )}
                                                              <div className="min-w-0 flex-1">
                                                                  <p className="flex items-center gap-1 truncate text-xs font-bold text-slate-800">
-                                                                     {a.no_ahli && <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-green-500" title={`No. Ahli: ${a.no_ahli}`} />}{a.name}
+                                                                      <span className="mr-1 inline-flex rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">Ahli: {a.is_member ? 'Ya' : 'Tidak'}</span>{a.name}
                                                                  </p>
                                                                 <p className="text-[11px] font-medium text-slate-500">{a.no_kp || a.old_ic || '-'}</p>
                                                             </div>
@@ -1518,12 +1460,11 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                 ))}
             </div>
 
-            <AttendeeDetailModal key={selAttendee?.id ?? 'no-attendee'} attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} onUpdateNoAhli={canEditNoAhli ? (a) => setEditNoAhli(a) : null} isCulaPending={culaPendingIds.has(selAttendee?.id)} onCulaSiap={(a) => { setSelectedVoterForCula(a); setShowCulaModal(true); }} onRestoreCula={(a) => { setCulaPendingIds((prev) => { const n = new Set(prev); n.delete(a.id); return n; }); }} />
+            <AttendeeDetailModal key={selAttendee?.id ?? 'no-attendee'} attendee={selAttendee} onClose={() => setSelAttendee(null)} onOpenTelegram={openTg} tgReady={!openingTg && Boolean(cmd(selAttendee, 'kemascula'))} isCulaPending={culaPendingIds.has(selAttendee?.id)} onCulaSiap={(a) => { setSelectedVoterForCula(a); setShowCulaModal(true); }} onRestoreCula={(a) => { setCulaPendingIds((prev) => { const n = new Set(prev); n.delete(a.id); return n; }); }} />
             <AttendeeProgramsModal attendee={selAttendeeProgs} onClose={() => setSelAttendeeProgs(null)} />
             <AttendeeSubProgramEditor key={selEditSub?.id} attendee={selEditSub} subPrograms={selectedProgram?.sub_programs ?? []} onClose={() => setSelEditSub(null)} />
             <ProgramImageModal program={selImage} onClose={() => setSelImage(null)} />
             <ProgramShareModal program={selShare} users={shareableUsers} shareForm={sf} onClose={closeShare} onSubmit={submitShare} />
-            {editNoAhli && canEditNoAhli && <NoAhliModal attendee={editNoAhli} onClose={() => setEditNoAhli(null)} onSaved={(val) => { router.reload({ preserveState: true, preserveScroll: true }); }} />}
             <MesyuaratView program={mesyuaratProgram} onClose={closeMesyuarat} />
             {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
             {showCulaModal && selectedVoterForCula && (

@@ -200,7 +200,7 @@ function UserCard({ user, roles, currentUserId, udms, cawangans }) {
     };
     const del = () => { if (window.confirm(`Padam ${user.name}?`)) router.delete(route('admin.access.users.destroy', user.id), { preserveScroll: true }); };
     const imp = () => { if (window.confirm(`Masuk sebagai ${user.name}?`)) router.post(route('admin.access.users.impersonate', user.id), {}, { replace: true }); };
-    const resetPw = () => { if (window.confirm(`Reset kata laluan ${user.name} kepada 123?`)) router.post(route('admin.access.users.reset-password', user.id), {}, { preserveScroll: true }); };
+    const resetPw = () => { if (window.confirm(`Jana kata laluan sementara baharu untuk ${user.name}?`)) router.post(route('admin.access.users.reset-password', user.id), {}, { preserveScroll: true }); };
 
     return (
         <div className="rounded-lg border border-slate-200 bg-white px-3 py-3 shadow-sm">
@@ -221,7 +221,7 @@ function UserCard({ user, roles, currentUserId, udms, cawangans }) {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     {user.can_impersonate && <button onClick={imp} title="Masuk sebagai" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-amber-300 bg-white text-amber-600 transition hover:bg-amber-50"><Icon name="login" className="h-3.5 w-3.5" /></button>}
-                    {!isMe && <button onClick={resetPw} title="Reset kata laluan kepada 123" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-sky-300 bg-white text-sky-600 transition hover:bg-sky-50"><Icon name="lock" className="h-3.5 w-3.5" /></button>}
+                    {!isMe && <button onClick={resetPw} title="Jana kata laluan sementara" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-sky-300 bg-white text-sky-600 transition hover:bg-sky-50"><Icon name="lock" className="h-3.5 w-3.5" /></button>}
                     <button onClick={() => setEditing((p) => !p)} title={editing ? 'Tutup' : 'Edit'} className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-green-300 bg-white text-green-700 transition hover:bg-green-50"><Icon name="edit" className="h-3.5 w-3.5" /></button>
                     {!isMe ? <button onClick={del} title="Padam" className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-red-300 bg-white text-red-600 transition hover:bg-red-50"><Icon name="trash" className="h-3.5 w-3.5" /></button> : <span title="Akaun saya" className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-r from-green-700 to-green-600 text-white"><Icon name="user" className="h-3.5 w-3.5" /></span>}
                 </div>

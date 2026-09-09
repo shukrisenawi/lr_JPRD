@@ -25,7 +25,7 @@ it('blocks culaan route when user role does not have module access', function ()
 
     $this->actingAs($user)
         ->get(route('culaan.index'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 });
 
 it('shows empty culaan list until udm is selected', function () {

@@ -168,7 +168,7 @@ it('blocks jawatankuasa route when user role does not have module access', funct
 
     $this->actingAs($user)
         ->get(route('jawatankuasa.index'))
-        ->assertRedirect(route('login'));
+        ->assertRedirect(route('profile.edit', absolute: false));
 });
 
 it('allows authorized user to create, update, and delete committee positions', function () {

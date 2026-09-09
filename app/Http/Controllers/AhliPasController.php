@@ -140,8 +140,7 @@ class AhliPasController extends Controller
                 $builder->where(function (Builder $nested) use ($like) {
                     $nested->where('name', 'like', $like)
                         ->orWhere('no_kp', 'like', $like)
-                        ->orWhere('old_ic', 'like', $like)
-                        ->orWhere('no_ahli', 'like', $like);
+                        ->orWhere('old_ic', 'like', $like);
                 });
             });
     }

@@ -47,6 +47,8 @@ it('renders ahli pas list and statistics using only records with no ahli', funct
             ->where('members.per_page', 20)
             ->where('members.total', 1)
             ->where('members.data.0.name', 'AHLI SATU')
+            ->where('members.data.0.is_member', true)
+            ->missing('members.data.0.no_ahli')
             ->where('available_cula_codes', fn ($codes) => collect($codes)->pluck('code')->all() === collect(CulaCodes::options())->pluck('code')->all())
             ->where('statistics.total', 1)
             ->where('statistics.by_udm.0.udm', 'UDM A')
@@ -156,7 +158,7 @@ it('requires the ahli pas role permission', function () {
 
     $this->actingAs($user)
         ->get('/ahli-pas')
-        ->assertRedirect('/');
+        ->assertRedirect(route('profile.edit', absolute: false));
 
     $this->assertAuthenticatedAs($user);
 });

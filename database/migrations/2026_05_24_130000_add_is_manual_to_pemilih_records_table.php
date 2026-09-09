@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('pemilih_records', 'is_manual')) {
+        if (! Schema::hasColumn('pemilih_records', 'is_manual')) {
             Schema::table('pemilih_records', function (Blueprint $table) {
                 $table->boolean('is_manual')->default(false)->after('source_file');
             });

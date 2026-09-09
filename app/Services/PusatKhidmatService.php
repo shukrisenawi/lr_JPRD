@@ -58,10 +58,11 @@ class PusatKhidmatService
         $updatedCount = 0;
 
         DB::transaction(function () use ($rows, $headers, $sheetKey, &$newCount, &$updatedCount) {
-            $existingFingerprints = PusatKhidmatData::query()
+            $existingRows = PusatKhidmatData::query()
                 ->where('sheet_key', $sheetKey)
-                ->pluck('row_fingerprint', 'row_key')
-                ->all();
+                ->where('is_manual', false)
+                ->get()
+                ->keyBy('position');
 
             $processedRowKeys = [];
 
@@ -79,9 +80,9 @@ class PusatKhidmatService
                 $fingerprint = sha1(json_encode($row, JSON_UNESCAPED_UNICODE));
                 $processedRowKeys[] = $fingerprint;
 
-                $existingFingerprint = $existingFingerprints[$fingerprint] ?? null;
+                $existingRecord = $existingRows[$index + 1] ?? null;
 
-                if ($existingFingerprint === null) {
+                if ($existingRecord === null) {
                     $pemilihRecordId = null;
                     if (! empty($row['no_kp'])) {
                         $pemilihRecordId = PemilihRecord::query()
@@ -102,7 +103,7 @@ class PusatKhidmatService
                     ]);
 
                     $newCount++;
-                } elseif ($existingFingerprint !== $fingerprint) {
+                } elseif ($existingRecord->row_fingerprint !== $fingerprint) {
                     $pemilihRecordId = null;
                     if (! empty($row['no_kp'])) {
                         $pemilihRecordId = PemilihRecord::query()
@@ -111,12 +112,15 @@ class PusatKhidmatService
                             ->value('id');
                     }
 
-                    PusatKhidmatData::query()->where('row_key', $fingerprint)->update([
+                    PusatKhidmatData::query()->whereKey($existingRecord->id)->update([
+                        'row_key' => $fingerprint,
                         'row_fingerprint' => $fingerprint,
                         'position' => $index + 1,
                         'no_kp' => $row['no_kp'] ?? null,
                         'pemilih_record_id' => $pemilihRecordId,
                         'payload' => $row,
+                        'checked_at' => null,
+                        'checked_by' => null,
                     ]);
 
                     $updatedCount++;
@@ -292,7 +296,7 @@ class PusatKhidmatService
     {
         $sheetKey = md5($this->getSheetUrl());
         $query = PusatKhidmatData::query()
-            ->with('pemilihRecord')
+            ->with('pemilihRecord', 'checkedBy')
             ->where(function ($query) use ($sheetKey) {
                 $query->where('sheet_key', $sheetKey)
                     ->orWhere('is_manual', true);
@@ -374,13 +378,18 @@ class PusatKhidmatService
             'row_key' => $record->row_key,
             'position' => $record->position,
             'no_kp' => $record->no_kp,
-            'payload' => $record->payload,
+            'payload' => $this->sanitizePayload($record->payload ?? []),
             'status' => $record->status,
             'checked_at' => $record->checked_at ? $record->checked_at->toDateTimeString() : null,
+            'checked_by' => $record->checkedBy ? [
+                'id' => $record->checkedBy->id,
+                'name' => $record->checkedBy->name,
+            ] : null,
             'pemilih' => $pemilih ? [
                 'id' => $pemilih->id,
                 'name' => $pemilih->name,
                 'no_kp' => $pemilih->no_kp,
+                'is_member' => $pemilih->is_member,
                 'dm' => $pemilih->dm,
                 'locality' => $pemilih->locality,
                 'no_rumah' => $pemilih->no_rumah,
@@ -390,6 +399,21 @@ class PusatKhidmatService
             ] : null,
             'linked' => $pemilih !== null,
         ];
+    }
+
+    private function sanitizePayload(array $payload): array
+    {
+        return collect($payload)
+            ->reject(function (mixed $value, mixed $key): bool {
+                $normalizedKey = strtoupper((string) $key);
+                $normalizedKey = preg_replace('/[^A-Z0-9]+/', '_', $normalizedKey) ?? '';
+
+                return str_contains($normalizedKey, 'NO_AHLI')
+                    || str_contains($normalizedKey, 'NOMBOR_AHLI')
+                    || str_contains($normalizedKey, 'MEMBER_NUMBER')
+                    || str_contains($normalizedKey, 'MEMBER_NO');
+            })
+            ->all();
     }
 
     private function fetchSheetRows(string $sheetId): array

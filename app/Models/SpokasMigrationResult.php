@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SpokasMigrationResult extends Model
 {
+    protected $hidden = [
+        'member_number',
+        'previous_no_ahli',
+    ];
+
     protected $fillable = [
         'spokas_migration_run_id',
         'category',

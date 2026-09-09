@@ -83,7 +83,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                 <form onSubmit={onSearch} className="flex gap-1 sm:w-72">
                     <div className="relative min-w-0 flex-1">
                         <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input type="search" value={search} onChange={(event) => onSearch(event, true)} placeholder="Cari nama atau nombor..." className="input-field w-full pl-9 text-xs" />
+                         <input type="search" value={search} onChange={(event) => onSearch(event, true)} placeholder="Cari nama atau IC..." className="input-field w-full pl-9 text-xs" />
                     </div>
                     <button type="submit" className="btn-ghost px-2 text-[11px]">Cari</button>
                 </form>
@@ -97,7 +97,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                         <thead className="border-b border-slate-100 bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500">
                             <tr>
                                 <th className="px-3 py-2">Nama SPoKAS</th>
-                                <th className="px-3 py-2">No. Ahli PAS</th>
+                                <th className="px-3 py-2">Status Ahli</th>
                                 <th className="px-3 py-2">No. K/P Baru SPoKAS</th>
                                 {hasPemilih && <th className="px-3 py-2">No. K/P Baru Pemilih</th>}
                                 <th className="px-3 py-2">No. K/P Lama SPoKAS</th>
@@ -126,7 +126,7 @@ function ResultTable({ results, kind, search, onSearch, onPage, onApprove, onRej
                                         </span>
                                     </td>
                                     <td className="px-3 py-2">
-                                        <CopyableValue value={item.member_number} label="No. Ahli" tone="member" copyKey={`${item.id}-member_number`} copiedKey={copiedKey} onCopy={onCopy} />
+                                         <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${item.is_member ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{item.is_member ? 'Ya' : 'Tidak'}</span>
                                     </td>
                                     <td className="px-3 py-2">
                                         <CopyableValue value={item.ic_birth} label="IC baru SPOKAS" copyKey={`${item.id}-ic_birth`} copiedKey={copiedKey} onCopy={onCopy} />

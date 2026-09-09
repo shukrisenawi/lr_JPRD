@@ -20,6 +20,7 @@ class PusatKhidmatData extends Model
         'status',
         'is_manual',
         'checked_at',
+        'checked_by',
     ];
 
     protected function casts(): array
@@ -34,5 +35,10 @@ class PusatKhidmatData extends Model
     public function pemilihRecord(): BelongsTo
     {
         return $this->belongsTo(PemilihRecord::class, 'pemilih_record_id');
+    }
+
+    public function checkedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'checked_by');
     }
 }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
-use App\Support\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -24,30 +24,13 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): Response
     {
-        $dbUsername = config('database.connections.mysql.username');
-        $shouldPrefillAdmin = config('app.env') === 'local' && $dbUsername === 'root';
-
         $lastUser = $this->readLastUserCookie();
-        $defaultCredentials = $shouldPrefillAdmin
-            ? [
-                'email' => 'admin@jprd',
-                'password' => '123',
-            ]
-            : null;
 
         $payload = [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
             'lastUser' => $lastUser,
-            'defaultCredentials' => $defaultCredentials,
         ];
-
-        if ($lastUser !== null) {
-            $payload['defaultCredentials'] = [
-                'email' => $lastUser['email'],
-                'password' => '',
-            ];
-        }
 
         return Inertia::render('Auth/Login', $payload);
     }
@@ -65,12 +48,6 @@ class AuthenticatedSessionController extends Controller
         $user->update(['last_login_at' => now()]);
 
         $this->writeLastUserCookie($user);
-
-        if ($request->input('password') === '123' && !$user->isMasterAdmin()) {
-            $user->update(['must_change_password' => true]);
-
-            return redirect()->route('profile.edit');
-        }
 
         return redirect()->intended($this->firstAccessibleRoute($request));
     }
@@ -92,7 +69,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Serve a user's avatar publicly (no auth) for the login page.
      */
-    public function publicAvatar(Request $request, User $user): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function publicAvatar(Request $request, User $user): BinaryFileResponse
     {
         abort_unless($user->avatar, 404);
         abort_unless(Storage::disk('public')->exists($user->avatar), 404);
@@ -117,8 +94,8 @@ class AuthenticatedSessionController extends Controller
     {
         $user = $request->user();
         $moduleRoutes = [
-            'laporan' => 'laporan.index',
             'dashboard' => 'dashboard',
+            'laporan' => 'laporan.index',
             'carian-pemilih' => 'carian-pemilih.index',
             'ahli-pas' => 'ahli-pas.index',
             'program' => 'program.index',
@@ -128,9 +105,9 @@ class AuthenticatedSessionController extends Controller
             'settings' => 'settings.edit',
         ];
 
-        foreach (ModuleRegistry::keys() as $module) {
-            if ($user?->canAccessModule($module) && isset($moduleRoutes[$module])) {
-                return route($moduleRoutes[$module], absolute: false);
+        foreach ($moduleRoutes as $module => $routeName) {
+            if ($user?->canAccessModule($module)) {
+                return route($routeName, absolute: false);
             }
         }
 
@@ -142,7 +119,7 @@ class AuthenticatedSessionController extends Controller
      */
     private function readLastUserCookie(): ?array
     {
-        /** @var \Illuminate\Http\Request $req */
+        /** @var Request $req */
         $req = request();
         $raw = $req->cookie(self::LAST_USER_COOKIE);
 

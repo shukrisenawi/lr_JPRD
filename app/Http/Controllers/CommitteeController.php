@@ -537,6 +537,7 @@ class CommitteeController extends Controller
                     });
                 }
             });
+        $request->user()?->applyScopeToPemilihQuery($builder);
 
         $selectedScopeKey = $request->query('scope_key');
         $selectedLevel = $request->query('level');
@@ -570,6 +571,7 @@ class CommitteeController extends Controller
                 'name' => $record->name,
                 'dm' => $record->dm,
                 'locality' => $record->locality,
+                'status' => $record->status,
             ])
             ->values();
 
@@ -677,9 +679,9 @@ class CommitteeController extends Controller
         }
 
         if ($existing !== []) {
-            return redirect()
-                ->route('jawatankuasa.index')
-                ->with('warning', 'Jawatan sudah wujud: '.implode(', ', $existing).'.');
+            return back()->withErrors([
+                'name' => 'Jawatan sudah wujud: '.implode(', ', $existing).'.',
+            ]);
         }
 
         if ($inserted > 0) {
@@ -881,13 +883,15 @@ class CommitteeController extends Controller
         $validated = $request->validate([
             'pemilih_record_id' => ['required', 'integer', Rule::exists('pemilih_records', 'id')],
             'committee_position_id' => ['required', 'integer', Rule::exists('committee_positions', 'id')],
-            'committee_group_id' => ['required', 'integer', Rule::exists('committee_groups', 'id')],
+            'committee_group_id' => ['nullable', 'integer', Rule::exists('committee_groups', 'id')],
             'level' => ['required', Rule::in(['jprd', 'udm', 'cawangan'])],
             'scope_key' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $voter = PemilihRecord::query()->findOrFail($validated['pemilih_record_id']);
+        $voterQuery = PemilihRecord::query()->whereKey($validated['pemilih_record_id']);
+        $request->user()->applyScopeToPemilihQuery($voterQuery);
+        $voter = $voterQuery->firstOrFail();
 
         if ($voter->status !== 'aktif' && ! $voter->is_manual) {
             return back()->withErrors([
@@ -904,7 +908,7 @@ class CommitteeController extends Controller
         $exists = CommitteeMembership::query()
             ->where('pemilih_record_id', $voter->id)
             ->where('committee_position_id', $validated['committee_position_id'])
-            ->where('committee_group_id', $validated['committee_group_id'])
+            ->where('committee_group_id', $validated['committee_group_id'] ?? null)
             ->where('level', $validated['level'])
             ->where('scope_key', $validated['scope_key'])
             ->exists();
@@ -916,7 +920,7 @@ class CommitteeController extends Controller
         }
 
         CommitteeMembership::query()->create([
-            'committee_group_id' => $validated['committee_group_id'],
+            'committee_group_id' => $validated['committee_group_id'] ?? null,
             'pemilih_record_id' => $voter->id,
             'committee_position_id' => $validated['committee_position_id'],
             'level' => $validated['level'],
@@ -936,7 +940,7 @@ class CommitteeController extends Controller
     {
         $user = $request->user();
 
-        if ($user->isMasterAdmin() || $user->access_level === 'jprd') {
+        if ($user->isMasterAdmin() || in_array($user->access_level, [null, 'jprd'], true)) {
             $membership->delete();
 
             return redirect()

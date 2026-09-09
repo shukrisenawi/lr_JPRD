@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureModuleAccess;
+use App\Http\Middleware\EnsurePemilihScope;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectIfMustChangePassword;
 use Illuminate\Foundation\Application;
@@ -17,10 +18,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->validateCsrfTokens(except: [
-            'carian-pemilih/update-no-ahli',
-        ]);
-
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
@@ -29,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'module' => EnsureModuleAccess::class,
+            'scope.pemilih' => EnsurePemilihScope::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

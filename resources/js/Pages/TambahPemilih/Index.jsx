@@ -32,7 +32,7 @@ function ListIcon({ className = 'h-5 w-5' }) {
 
 function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '', no_kp: '', old_ic: '', no_ahli: '', phone_mobile: '', phone_home: '',
+        name: '', no_kp: '', old_ic: '', phone_mobile: '', phone_home: '',
         address: '', dm: '', locality: '', gender: '', race: '',
         cula_code: '', cula_display_label: '',
         hashtags: [],
@@ -284,7 +284,7 @@ function DetailModal({ voter, onClose }) {
 
     const fields = [
         ['Nama', voter.name], ['No KP', voter.no_kp || '-'],
-        ['No. Ahli', voter.no_ahli || '-'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
+        ['Status Ahli', voter.is_member ? 'Ya' : 'Tidak'], ['Tel. Bimbit', voter.phone_mobile || '-'], ['Tel. Rumah', voter.phone_home || '-'],
         ['Alamat', displayAddress], ['UDM', voter.dm || '-'], ['Lokaliti', voter.locality || '-'],
         ['No. Rumah', voter.no_rumah || '-'], ['No. Siri', voter.no_siri || '-'],
         ['Kod Cula', voter.cula_code || '-'], ['Bangsa', voter.race || '-'],
@@ -333,12 +333,11 @@ function DetailModal({ voter, onClose }) {
     );
 }
 
-function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, canEditNoAhli }) {
+function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
     const { data, setData, put, processing, errors } = useForm({
         name: voter.name || '',
         no_kp: voter.no_kp || '',
         old_ic: voter.old_ic || '',
-        no_ahli: voter.no_ahli || '',
         phone_mobile: voter.phone_mobile || '',
         phone_home: voter.phone_home || '',
         address: voter.address || '',
@@ -389,12 +388,6 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose, canEditNoAh
                             <input type="text" value={data.no_kp} onChange={e => setData('no_kp', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="900101025555" />
                             {errors.no_kp && <p className="text-xs font-bold text-rose-500">{errors.no_kp}</p>}
                         </div>
-                        {canEditNoAhli && (
-                            <div>
-                                <label className="label-field">No. Ahli</label>
-                                <input type="text" value={data.no_ahli} onChange={e => setData('no_ahli', e.target.value)} className="input-field w-full py-[5px] text-xs" placeholder="A0001" />
-                            </div>
-                        )}
                     </div>
 
                     <div className="grid gap-y-[6px] gap-x-1 sm:grid-cols-2">
@@ -472,7 +465,6 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
     const { auth } = usePage().props;
     const currentUser = auth.user;
     const isMasterAdmin = currentUser.role?.is_master_admin === true;
-    const canEditNoAhli = currentUser?.allowed_modules?.includes('kemaskini-no-ahli');
     const canModify = (voter) => isMasterAdmin || voter.created_by === currentUser.id;
 
     const [detailVoter, setDetailVoter] = useState(null);
@@ -525,7 +517,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
     return (
         <>
             {detailVoter && <DetailModal voter={detailVoter} onClose={() => setDetailVoter(null)} />}
-            {editVoter && <EditModal voter={editVoter} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} onClose={() => setEditVoter(null)} canEditNoAhli={canEditNoAhli} />}
+            {editVoter && <EditModal voter={editVoter} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} onClose={() => setEditVoter(null)} />}
 
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
@@ -534,7 +526,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                             <tr className="border-b border-slate-200 bg-slate-50">
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Nama</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">No KP</th>
-                                <th className="px-3 py-2.5 font-bold text-slate-600">No. Ahli</th>
+                                <th className="px-3 py-2.5 font-bold text-slate-600">Status Ahli</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Tel. Bimbit</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">Kod Cula</th>
                                 <th className="px-3 py-2.5 font-bold text-slate-600">UDM</th>
@@ -563,7 +555,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                                             </div>
                                         </td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.no_kp || '-'}</td>
-                                        <td className="px-3 py-2.5 text-slate-600">{voter.no_ahli || '-'}</td>
+                                        <td className="px-3 py-2.5 text-slate-600">{voter.is_member ? 'Ya' : 'Tidak'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.phone_mobile || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.cula_code || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.dm || '-'}</td>

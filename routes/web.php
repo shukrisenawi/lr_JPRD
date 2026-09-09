@@ -32,7 +32,7 @@ Route::get('/', function () {
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('module:laporan')->name('laporan.index');
     Route::post('/laporan/n8n', [LaporanController::class, 'sendN8nMessage'])->middleware('module:laporan-hantar-status')->name('laporan.n8n.send');
@@ -40,7 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/ahli-pas', [AhliPasController::class, 'index'])->middleware('module:ahli-pas')->name('ahli-pas.index');
     Route::post('/ahli-pas/{pemilihRecord}/cula', [AhliPasController::class, 'updateCula'])->middleware('module:ahli-pas')->name('ahli-pas.cula.update');
     Route::get('/carian-pemilih/search', [CarianPemilihController::class, 'search'])->middleware('module:carian-pemilih')->name('carian-pemilih.search');
-    Route::post('/carian-pemilih/update-no-ahli', [CarianPemilihController::class, 'updateNoAhli'])->middleware('module:carian-pemilih')->name('carian-pemilih.update-no-ahli');
     Route::post('/carian-pemilih/{pemilihRecord}/update-cula', [CarianPemilihController::class, 'updateCula'])->middleware('module:carian-pemilih')->name('carian-pemilih.update-cula');
     Route::post('/pemilih/{pemilihRecord}/avatar', [CarianPemilihController::class, 'uploadAvatar'])->name('pemilih.avatar.upload');
     Route::get('/pemilih/hashtags', [PemilihHashtagController::class, 'suggestions'])->name('pemilih.hashtags.suggestions');
