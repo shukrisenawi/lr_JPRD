@@ -1241,6 +1241,11 @@ class PemilihReportService
     private function normalizeSearch(string $value): string
     {
         $value = mb_strtolower(trim($value));
+        $value = preg_replace_callback(
+            '/(?<!\d)(\d{6})-(\d{2})-(\d{4})(?!\d)/',
+            static fn (array $matches): string => $matches[1].$matches[2].$matches[3],
+            $value,
+        ) ?? $value;
 
         return preg_replace('/\s+/', ' ', $value) ?? $value;
     }

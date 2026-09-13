@@ -341,6 +341,28 @@ HTML);
         ->getJson('/carian-pemilih/search?q=0198888777')
         ->assertOk()
         ->assertJsonPath('suggestions.0.name', 'SITI AMINAH');
+
+    $this->actingAs($user)
+        ->getJson('/carian-pemilih/search?q=900101-02-5555')
+        ->assertOk()
+        ->assertJsonPath('suggestions.0.name', 'ALI BIN ABU');
+});
+
+it('finds database voters with a formatted ic search', function () {
+    $user = User::factory()->create();
+
+    PemilihRecord::create([
+        'identity_number' => '900101025555',
+        'no_kp' => '900101025555',
+        'name' => 'ALI BIN ABU',
+        'status' => 'aktif',
+        'is_manual' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->getJson('/carian-pemilih/search?q=900101-02-5555')
+        ->assertOk()
+        ->assertJsonPath('suggestions.0.name', 'ALI BIN ABU');
 });
 
 it('rebuilds cached laporan data when source file changes', function () {
