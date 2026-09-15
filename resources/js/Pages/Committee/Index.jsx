@@ -1256,14 +1256,24 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                             <span className="text-xs font-bold text-slate-800">{group.name}</span>
                                             {group.description && <span className="text-[10px] text-slate-400 truncate">— {group.description}</span>}
                                         </div>
-                                        <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
                                             <button
                                                 type="button"
-                                                onClick={(e) => { e.stopPropagation(); setWhatsappModal(group); }}
+                                                onClick={(e) => { e.stopPropagation(); setWhatsappModal({ group, vacantOnly: false }); }}
                                                 className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                             >
                                                 <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white mr-1">C</span>
                                                 Copy
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setWhatsappModal({ group, vacantOnly: true }); }}
+                                                className="whitespace-nowrap rounded-md border border-amber-200 bg-white px-2 py-1 text-[10px] font-bold text-amber-700 transition hover:bg-amber-50"
+                                                title="Copy jawatan kosong"
+                                            >
+                                                <span className="mr-1 rounded bg-amber-500 px-1 py-0.5 text-[9px] font-black text-white">K</span>
+                                                <span className="sm:hidden">Kosong</span>
+                                                <span className="hidden sm:inline">Copy Jawatan Kosong</span>
                                             </button>
                                             <button
                                                 type="button"
@@ -1402,7 +1412,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             )}
             {whatsappModal && (
                 <WhatsAppCopyModal
-                    group={whatsappModal}
+                    group={whatsappModal.group}
+                    vacantOnly={whatsappModal.vacantOnly}
                     onClose={() => setWhatsappModal(null)}
                 />
             )}
@@ -1607,13 +1618,27 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
 
 // ─── WhatsAppCopyModal ────────────────────────────────────────────────────
 
-function WhatsAppCopyModal({ group, onClose }) {
+function WhatsAppCopyModal({ group, vacantOnly = false, onClose }) {
     const [copied, setCopied] = useState(false);
+    const vacantPositions = group.positionsWithMembers.filter(pos => pos.members.length === 0);
 
     const buildText = () => {
         const lines = [];
         lines.push('*' + group.name + '*');
         lines.push('');
+
+        if (vacantOnly) {
+            lines.push('*JAWATAN KOSONG*');
+            if (vacantPositions.length === 0) {
+                lines.push('Tiada jawatan kosong.');
+            } else {
+                vacantPositions.forEach((pos, i) => {
+                    lines.push((i + 1) + '. ' + pos.name);
+                });
+            }
+            return lines.join('\n');
+        }
+
         group.positionsWithMembers.forEach(pos => {
             if (pos.members.length === 0) return;
             lines.push('*' + pos.name + '*');
@@ -1653,8 +1678,8 @@ function WhatsAppCopyModal({ group, onClose }) {
             <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
                     <div>
-                        <p className="text-sm font-bold text-slate-800">Salin untuk WhatsApp</p>
-                        <p className="text-xs text-slate-500">{group.name}</p>
+                        <p className="text-sm font-bold text-slate-800">{vacantOnly ? 'Salin Jawatan Kosong untuk WhatsApp' : 'Salin untuk WhatsApp'}</p>
+                        <p className="text-xs text-slate-500">{group.name}{vacantOnly ? ' · ' + vacantPositions.length + ' jawatan kosong' : ''}</p>
                     </div>
                     <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                         <Icon name="x" className="h-5 w-5" />
@@ -1676,7 +1701,7 @@ function WhatsAppCopyModal({ group, onClose }) {
                         {copied ? (
                             <><Icon name="check" className="h-4 w-4" /> Disalin!</>
                         ) : (
-                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Salin</>
+                            <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 2 2 2"/></svg> {vacantOnly ? 'Salin Jawatan Kosong' : 'Salin'}</>
                         )}
                     </button>
                 </div>
