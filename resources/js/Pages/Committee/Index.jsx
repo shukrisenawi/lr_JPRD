@@ -56,6 +56,11 @@ function LevelBadge({ level, size = 'sm' }) {
     return <span className={'inline-block rounded-md font-bold ' + meta.bg + ' ' + meta.text + ' ' + sizing}>{meta.label}</span>;
 }
 
+function voterSearchUrl(voter) {
+    const query = voter?.no_kp || voter?.old_ic || voter?.name || '';
+    return route('carian-pemilih.index') + '?q=' + encodeURIComponent(query);
+}
+
 // ─── GroupManager ─────────────────────────────────────────────────────────
 
 function GroupManager({ groups, positions: allPositions }) {
@@ -1344,8 +1349,11 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                          </p>
                                                                                     </div>
                                                                                     <div className="flex shrink-0 items-center gap-1">
+                                                                                         <a href={voterSearchUrl(m.voter)} target="_blank" rel="noopener noreferrer" aria-label={'Cari ' + m.voter.name + ' di Carian Pemilih'} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50" title="Cari pemilih">
+                                                                                             <Icon name="search" className="h-3.5 w-3.5" />
+                                                                                         </a>
                                                                                          <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/*" onChange={(e) => handleFileSelect(m, e)} className="hidden" />
-                                                                                       <button onClick={() => avatarInputRefs.current[avatarId]?.click()} disabled={uploadingAvatar[avatarId]} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploadingAvatar[avatarId] ? <span className="text-[10px] font-bold">...</span> : <Icon name="camera" className="h-3.5 w-3.5" />}</button>
+                                                                                        <button onClick={() => avatarInputRefs.current[avatarId]?.click()} disabled={uploadingAvatar[avatarId]} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploadingAvatar[avatarId] ? <span className="text-[10px] font-bold">...</span> : <Icon name="camera" className="h-3.5 w-3.5" />}</button>
                                                                                   </div>
                                                                               </div>
                                                                              {m.notes && <p className="mt-1 text-[10px] font-medium text-amber-700">{m.notes}</p>}

@@ -164,7 +164,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, isCulaPending, on
 function SearchPanel() {
         const { auth, available_cula_codes: initialCulaCodes, available_dms, localities_by_dm } = usePage().props;
 
-    const [q, setQ] = useState('');
+    const [q, setQ] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [selected, setSelected] = useState(null);
