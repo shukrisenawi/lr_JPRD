@@ -164,7 +164,9 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, isCulaPending, on
 function SearchPanel() {
         const { auth, available_cula_codes: initialCulaCodes, available_dms, localities_by_dm } = usePage().props;
 
-    const [q, setQ] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
+    const initialQuery = new URLSearchParams(window.location.search).get('q') ?? '';
+    const autoOpenInitialResult = useRef(Boolean(initialQuery));
+    const [q, setQ] = useState(() => initialQuery);
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [selected, setSelected] = useState(null);
@@ -201,14 +203,26 @@ function SearchPanel() {
             const ct = res.headers.get('content-type') ?? '';
             if (res.redirected || !res.ok || !ct.includes('application/json')) throw new Error();
             const p = await res.json();
-            if (rid.current === reqId) { setSuggestions(p.suggestions ?? []); setErr(''); }
+            const nextSuggestions = p.suggestions ?? [];
+            if (rid.current === reqId) {
+                if (autoOpenInitialResult.current && nextSuggestions.length === 1) {
+                    setQ(nextSuggestions[0].name ?? searchQ);
+                    setSelected(nextSuggestions[0]);
+                    setSuggestions([]);
+                } else {
+                    setSuggestions(nextSuggestions);
+                }
+                autoOpenInitialResult.current = false;
+                setErr('');
+            }
         } catch (error) {
-            if (error.name !== 'AbortError') { setSuggestions([]); setErr('Carian gagal. Sila cuba lagi.'); }
+            if (error.name !== 'AbortError') { autoOpenInitialResult.current = false; setSuggestions([]); setErr('Carian gagal. Sila cuba lagi.'); }
         } finally { if (rid.current === reqId) setSearching(false); }
     };
 
     const handleChange = async (e) => {
         const nq = e.target.value;
+        autoOpenInitialResult.current = false;
         setQ(nq); setSelected(null); setErr('');
         fetchSuggestions(nq, selectedDm, selectedLocality, selectedCulaCodes);
     };
