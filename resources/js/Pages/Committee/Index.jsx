@@ -680,7 +680,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const userLevel = auth?.user?.access_level ?? 'jprd';
     const levelPriority = { jprd: 3, udm: 2, cawangan: 1 };
     const tabs = committeeTabs.filter(t => levelPriority[t.key] <= levelPriority[userLevel]);
-    const defaultTab = userLevel === 'jprd' ? 'jprd' : userLevel;
+    const defaultTab = tabs.some((tab) => tab.key === 'udm') ? 'udm' : (tabs[0]?.key ?? 'jprd');
     const [activeTabLocal, setActiveTabLocal] = useState(defaultTab);
     const resolvedTab = activeTab ?? activeTabLocal;
     const setResolvedTab = onTabChange ?? setActiveTabLocal;
