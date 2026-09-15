@@ -11,6 +11,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRe
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -1324,7 +1325,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                             <div className={'grid gap-1.5 ' + (pos.members.length > 1 ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1')}>
                                                                  {pos.members.map((m, i) => {
                                                                       const canRemove = auth.user?.role?.is_master_admin || auth.user?.access_level === 'jprd' || (auth.user?.access_level === 'udm' && m.level !== 'jprd') || (auth.user?.access_level === 'cawangan' && m.level === 'cawangan');
-                                                                     const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.key !== `${pos.id}-${m.scope_key || ''}`);
+                                                                      const phone = m.voter?.phone_mobile || m.voter?.phone_home;
+                                                                      const voterPositions = (voterGroupPositions[m.voter?.id] || []).filter(p => p.key !== `${pos.id}-${m.scope_key || ''}`);
                                                                      const multiKey = `${pos.id}-${m.id}`;
                                                                       const showMore = multiPosExpand[multiKey];
                                                                       const avatarId = m.id;
@@ -1336,7 +1338,10 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                     ) : null}
                                                                                     <div className="min-w-0 flex-1">
                                                                                         <p className="text-xs font-bold text-slate-800">{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
-                                                                                        <p className="text-xs text-slate-500">{m.voter.no_kp || m.voter.old_ic || '-'}</p>
+                                                                                         <p className="text-xs text-slate-500">
+                                                                                             <span>{m.voter.no_kp || m.voter.old_ic || '-'}</span>
+                                                                                             {phone && <span className="ml-2">Tel:{formatPhoneNumber(phone)}</span>}
+                                                                                         </p>
                                                                                     </div>
                                                                                     <div className="flex shrink-0 items-center gap-1">
                                                                                          <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/*" onChange={(e) => handleFileSelect(m, e)} className="hidden" />
