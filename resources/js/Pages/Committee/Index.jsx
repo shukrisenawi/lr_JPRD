@@ -725,12 +725,15 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     }, [resolvedTab]);
 
     useEffect(() => {
-        if (positionsForForm.length > 0) {
-            form.setData('committee_position_id', positionsForForm[0].id);
-        } else {
-            form.setData('committee_position_id', '');
-        }
-    }, [positionsForForm]);
+        const selectedPositionId = String(form.data.committee_position_id ?? '');
+        const selectedPositionIsAvailable = positionsForForm.some(
+            (position) => String(position.id) === selectedPositionId
+        );
+
+        if (selectedPositionIsAvailable) return;
+
+        form.setData('committee_position_id', positionsForForm[0]?.id ?? '');
+    }, [positionsForForm, form.data.committee_position_id]);
 
     const [expandedGroupId, setExpandedGroupId] = useState(null);
     const expandedGroupRef = useRef(null);
@@ -942,7 +945,6 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                 form.reset('pemilih_record_id', 'voter_search', 'notes');
                 form.setData((current) => ({
                     ...current,
-                    committee_position_id: positionsForForm[0]?.id ?? '',
                     committee_group_id: selectedGroupId || '',
                     level: resolvedTab,
                 }));
