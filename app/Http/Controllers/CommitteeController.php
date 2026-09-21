@@ -221,6 +221,7 @@ class CommitteeController extends Controller
                         'dm' => $membership->voter?->dm,
                         'locality' => $membership->voter?->locality,
                         'status' => $membership->voter?->status,
+                        'is_manual' => $membership->voter?->is_manual,
                         'avatar' => $membership->voter?->avatar,
                         'updated_at' => $membership->voter?->updated_at,
                         'avatar_url' => $membership->voter?->avatarUrl(),
@@ -373,6 +374,7 @@ class CommitteeController extends Controller
                         'dm' => $membership->voter?->dm,
                         'locality' => $membership->voter?->locality,
                         'status' => $membership->voter?->status,
+                        'is_manual' => $membership->voter?->is_manual,
                         'avatar' => $membership->voter?->avatar,
                         'updated_at' => $membership->voter?->updated_at,
                         'avatar_url' => $membership->voter?->avatarUrl(),
@@ -459,6 +461,7 @@ class CommitteeController extends Controller
                     'dm' => $membership->voter?->dm,
                     'locality' => $membership->voter?->locality,
                     'status' => $membership->voter?->status,
+                    'is_manual' => $membership->voter?->is_manual,
                     'avatar' => $membership->voter?->avatar,
                     'updated_at' => $membership->voter?->updated_at,
                     'avatar_url' => $membership->voter?->avatarUrl(),
@@ -572,6 +575,7 @@ class CommitteeController extends Controller
                 'dm' => $record->dm,
                 'locality' => $record->locality,
                 'status' => $record->status,
+                'is_manual' => $record->is_manual,
             ])
             ->values();
 

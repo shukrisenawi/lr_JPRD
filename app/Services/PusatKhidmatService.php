@@ -380,6 +380,7 @@ class PusatKhidmatService
             'no_kp' => $record->no_kp,
             'payload' => $this->sanitizePayload($record->payload ?? []),
             'status' => $record->status,
+            'is_manual' => $record->is_manual,
             'checked_at' => $record->checked_at ? $record->checked_at->toDateTimeString() : null,
             'checked_by' => $record->checkedBy ? [
                 'id' => $record->checkedBy->id,
@@ -396,6 +397,7 @@ class PusatKhidmatService
                 'cula_code' => $pemilih->cula_code,
                 'cula_display_label' => $pemilih->cula_display_label,
                 'status' => $pemilih->status,
+                'is_manual' => $pemilih->is_manual,
             ] : null,
             'linked' => $pemilih !== null,
         ];

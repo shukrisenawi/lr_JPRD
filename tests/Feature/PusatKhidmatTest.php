@@ -25,6 +25,7 @@ it('allows a master admin to add manual Pusat Khidmat data', function () {
         ->assertJsonPath('ok', true)
         ->assertJsonPath('record.payload.NAMA PEMOHON', 'Nur Aisyah Tester')
         ->assertJsonPath('record.payload.NO KAD PENGENALAN', '900101025555')
+        ->assertJsonPath('record.is_manual', true)
         ->assertJsonPath('record.linked', true);
 
     $this->assertDatabaseHas('pemilih_records', [

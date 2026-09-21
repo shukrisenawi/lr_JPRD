@@ -225,7 +225,7 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
                         {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-800">{createdVoter.name}</p>
+                        <p className={`text-sm font-bold ${createdVoter.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{createdVoter.name}</p>
                         <p className="text-xs text-slate-500">{createdVoter.no_kp || '-'}</p>
                     </div>
                     <input ref={avatarRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
@@ -310,7 +310,7 @@ function DetailModal({ voter, onClose }) {
                         <button onClick={() => avatarRef.current?.click()} disabled={uploading} className="absolute -bottom-1 -right-1 rounded-full border border-green-200 bg-white p-0.5 text-green-700 shadow-sm transition hover:bg-green-50 disabled:opacity-50" title="Muat Naik Avatar">{uploading ? <span className="text-[10px] font-bold">...</span> : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" /><circle cx="12" cy="13" r="4" /></svg>}</button>
                     </div>
                     <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-bold text-slate-800 truncate">{voter.name}</h3>
+                        <h3 className={`text-sm font-bold truncate ${voter.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{voter.name}</h3>
                         <p className="text-xs text-slate-500">{voter.dm || '-'}</p>
                     </div>
                     <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -551,7 +551,7 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                                                     <img src={voter.avatar_url} alt="" className="h-6 w-6 shrink-0 cursor-pointer rounded-full object-cover border border-slate-200" onClick={() => setLightboxSrc(voter.avatar_url)} />
                                                 ) : null}
                                                 {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
-                                                <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                <span className={`font-semibold ${voter.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{voter.name}</span>
                                             </div>
                                         </td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.no_kp || '-'}</td>

@@ -842,7 +842,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                     {globalIndex}
                                                 </span>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="text-sm font-bold leading-5 text-slate-800">{name}</p>
+                                                    <p className={`text-sm font-bold leading-5 ${record.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{name}</p>
                                                     <div className="mt-1 flex flex-wrap items-center gap-1">
                                                         {record.pemilih?.dm && (
                                                             <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
@@ -990,7 +990,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                 <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCulaModal(false)} onKeyDown={(e) => e.key === 'Escape' && setShowCulaModal(false)} tabIndex={-1}>
                     <div role="document" className="mx-4 w-full max-w-lg rounded-xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between gap-2">
-                            <h3 className="text-sm font-bold text-slate-800">Kemaskini Cula — {getName(selectedRecord)}</h3>
+                            <h3 className={`text-sm font-bold ${selectedRecord?.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>Kemaskini Cula — {getName(selectedRecord)}</h3>
                             <button
                                 type="button"
                                 onClick={() => { setShowCulaModal(false); setSelectedRecord(null); }}
