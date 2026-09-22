@@ -74,26 +74,13 @@ function GroupManager({ groups, positions: allPositions }) {
     const [expandedId, setExpandedId] = useState(null);
     const [addModal, setAddModal] = useState(null); // { groupId, level } or null
     const [selectedPositionIds, setSelectedPositionIds] = useState([]);
-    const expandedRef = useRef(null);
     const [animExpandId, setAnimExpandId] = useState(null);
     const [positionSearch, setPositionSearch] = useState('');
     const [modalPositionSearch, setModalPositionSearch] = useState('');
 
     useEffect(() => {
         if (expandedId === null) setPositionSearch('');
-        const handleClickOutside = (event) => {
-            if (expandedRef.current && !expandedRef.current.contains(event.target)) {
-                if (addModal) return;
-                setExpandedId(null);
-                setAddModal(null);
-                setSelectedPositionIds([]);
-            }
-        };
-        if (expandedId !== null) {
-            document.addEventListener('click', handleClickOutside);
-        }
-        return () => document.removeEventListener('click', handleClickOutside);
-    }, [expandedId, addModal]);
+    }, [expandedId]);
 
     const submitCreate = (e) => {
         e.preventDefault();
@@ -299,7 +286,7 @@ function GroupManager({ groups, positions: allPositions }) {
                             }
 
                             return (
-                                <div key={group.id} ref={isExpanded ? expandedRef : null} className="rounded-lg border border-green-100 bg-white shadow-sm transition hover:border-green-300 hover:shadow-md">
+                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm transition hover:border-green-300 hover:shadow-md">
                                     <div className="flex items-start justify-between gap-2 p-2.5">
                                         <div className="min-w-0 flex-1">
                                             <p className="text-xs font-bold text-slate-800">{group.name}</p>
@@ -872,7 +859,6 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     }, [positionsForForm, form.data.committee_position_id]);
 
     const [expandedGroupId, setExpandedGroupId] = useState(null);
-    const expandedGroupRef = useRef(null);
 
     const [multiPosExpand, setMultiPosExpand] = useState({});
     const [quickAddModal, setQuickAddModal] = useState(null);
@@ -927,18 +913,6 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             setUploadingAvatar(prev => ({ ...prev, [id]: false }));
         }
     };
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (expandedGroupRef.current && !expandedGroupRef.current.contains(event.target)) {
-                setExpandedGroupId(null);
-            }
-        };
-        if (expandedGroupId !== null) {
-            document.addEventListener('click', handleClickOutside);
-        }
-        return () => document.removeEventListener('click', handleClickOutside);
-    }, [expandedGroupId]);
 
     const voterMembershipsMap = useMemo(() => {
         const map = {};
@@ -1399,7 +1373,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                             const isExpanded = expandedGroupId === group.id;
                             const hasVacantPositions = group.positionsWithMembers.some((pos) => pos.members.length === 0);
                             return (
-                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm overflow-hidden" ref={isExpanded ? expandedGroupRef : null}>
+                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm overflow-hidden">
                                     <button
                                         type="button"
                                         onClick={() => setExpandedGroupId(isExpanded ? null : group.id)}
