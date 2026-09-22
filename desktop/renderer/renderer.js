@@ -28,7 +28,7 @@ const elements = {
 const columns = [
     ['siap_cula', 'Siap', 'ready'], ['JP', 'JP', 'jp'], ['L', 'L', 'demo'], ['P', 'P', 'demo'], ['M', 'M', 'demo'], ['C', 'C', 'demo'], ['I', 'I', 'demo'],
     ['PAS', 'PAS', 'party'], ['PLK', 'PLK', 'party'], ['PAS_TOTAL', 'PAS', 'aggregate'], ['1A', '1A', 'party'], ['1B', '1B', 'party'], ['1P', '1P', 'party'], ['BN', 'BN', 'party'], ['BN_TOTAL', 'BN', 'aggregate'], ['PBBM', 'B', 'party'], ['PH', 'PH', 'party'],
-    ['Atas Pagar', 'AP', 'party'], ['Tak Kenal', 'TK', 'party'], ['Mati', 'Mati', 'party'], ['CULA', 'Baki', 'total'],
+    ['Atas Pagar', 'AP', 'party'], ['Tak Kenal', 'TK', 'party'], ['Mati', 'MT', 'party'], ['CULA', 'Baki', 'total'],
 ];
 
 let settings = { hasApiKey: false };
