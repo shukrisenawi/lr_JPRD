@@ -98,6 +98,46 @@ it('serves birthday voter data to an external app with a bearer API key', functi
         ->assertJsonPath('data.0.BN', 1);
 });
 
+it('keeps the UDM JP total equal to the voter total including mati records', function () {
+    $plainTextKey = 'udm-report-secret-key';
+
+    ApiKey::query()->create([
+        'name' => 'UDM Monitor',
+        'key' => $plainTextKey,
+    ]);
+
+    PemilihRecord::query()->create([
+        'identity_number' => '900101010101',
+        'name' => 'Pemilih Aktif',
+        'dm' => 'UDM 01',
+        'locality' => 'Lokaliti 1',
+        'gender' => 'L',
+        'race' => 'M',
+        'cula_code' => '1',
+        'status' => 'aktif',
+        'is_manual' => false,
+    ]);
+    PemilihRecord::query()->create([
+        'identity_number' => '900101010102',
+        'name' => 'Pemilih Mati',
+        'dm' => 'UDM 01',
+        'locality' => 'Lokaliti 1',
+        'gender' => 'P',
+        'race' => 'M',
+        'cula_code' => '8',
+        'status' => 'aktif',
+        'is_manual' => false,
+    ]);
+
+    $this->getJson(route('api.reports.udm'), [
+        'Authorization' => 'Bearer '.$plainTextKey,
+    ])
+        ->assertOk()
+        ->assertJsonPath('summary.total_voters', 2)
+        ->assertJsonPath('data.0.total', 2)
+        ->assertJsonPath('data.0.JP', 2);
+});
+
 it('rejects invalid and expired API keys', function () {
     $birthday = Carbon::today('Asia/Kuala_Lumpur');
 

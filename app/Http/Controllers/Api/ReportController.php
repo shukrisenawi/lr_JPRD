@@ -64,7 +64,7 @@ class ReportController extends Controller
                 'name' => $row['name'],
                 'total' => (int) $row['total'],
                 'siap_cula' => (int) ($completedByDm[$row['code']] ?? 0),
-                'JP' => (int) $row['total'] - $getCulaSum($culaBreakdown, ['8']),
+                'JP' => (int) $row['total'],
                 'L' => (int) $row['male'],
                 'P' => (int) $row['female'],
                 'M' => $getCulaSum($raceBreakdown, ['MELAYU', 'M']),

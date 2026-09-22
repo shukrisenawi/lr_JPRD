@@ -464,7 +464,7 @@ class PemilihReportService
                 'key' => $key,
                 'name' => $dm['name'],
                 'siap_cula' => $completedCounts[$dmCode] ?? 0,
-                'JP' => ($dm['total'] ?? 0) - $getCulaSum($culaB, ['8']),
+                'JP' => $dm['total'] ?? 0,
                 'L' => $dm['male'] ?? 0,
                 'P' => $dm['female'] ?? 0,
                 'M' => $getRaceCount($raceB, ['MELAYU', 'M']),

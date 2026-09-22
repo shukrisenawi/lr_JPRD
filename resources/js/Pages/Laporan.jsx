@@ -185,8 +185,8 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         }
     };
 
-    const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
-    const partyCols = ['PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati'];
+    const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
+    const partyCols = ['PAS', 'PBBM', 'BN', 'PH', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati'];
 
     const filteredLocs = useMemo(() => {
         const kw = search.trim().toLowerCase();
@@ -235,7 +235,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
             return {
                 ...row,
                 siap_cula: completedByDmMap[row.key] ?? 0,
-                JP: (row.total ?? 0) - getCulaSum(culaB, ['8']),
+                JP: row.total ?? 0,
                 L: row.male ?? 0,
                 P: row.female ?? 0,
                 M: getRaceCount(raceB, ['MELAYU', 'M']),
@@ -246,7 +246,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                 PBBM: getCulaSum(culaB, ['10']),
                 BN: getCulaSum(culaB, ['1', '1A', '1B', '1P']),
                 PH: getCulaSum(culaB, ['5']),
-                GTA: 0,
                 PLK: getCulaSum(culaB, ['3B', '3D', '3K', '3M', '3P', '3U']),
                 'Atas Pagar': getCulaSum(culaB, ['4']),
                 'Tak Kenal': getCulaSum(culaB, ['7']),
@@ -256,7 +255,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                 completed_PBBM: completedSum(['10']),
                 completed_BN: completedSum(['1', '1A', '1B', '1P']),
                 completed_PH: completedSum(['5']),
-                completed_GTA: 0,
                 completed_PLK: completedSum(['3B', '3D', '3K', '3M', '3P', '3U']),
                 completed_AP: completedSum(['4']),
                 completed_TK: completedSum(['7']),
@@ -265,7 +263,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
     const udmTableRows = allUdmTableRows.slice(0, 25);
     const udmTableTotal = useMemo(() => {
-        const totalKeys = ['siap_cula', 'JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'GTA', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
+        const totalKeys = ['siap_cula', 'JP', 'L', 'P', 'M', 'C', 'I', 'S', 'PAS', 'PBBM', 'BN', 'PH', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
         const total = { key: '__total__', name: 'Jumlah Keseluruhan', isTotal: true };
 
         for (const key of totalKeys) {
@@ -344,7 +342,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         { key: 'PBBM', label: 'PBBM', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PBBM), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'BN', label: 'BN', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'PH', label: 'PH', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PH), headerClass: groupH.party, cellClass: groupC.party },
-        { key: 'GTA', label: 'GTA', format: (v, r) => fmtDiff(v, diffMap[r.key]?.GTA), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'PLK', label: 'PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PLK), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Atas Pagar', label: 'AP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Atas Pagar']), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'Tak Kenal', label: 'TK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['Tak Kenal']), headerClass: groupH.party, cellClass: groupC.party },
