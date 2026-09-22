@@ -294,7 +294,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     }, [udm_snapshot, allUdmTableRows]);
     const udmTableTotal = useMemo(() => {
         const totalKeys = ['siap_cula', 'JP', 'L', 'P', 'M', 'C', 'I', 'PAS', 'PLK', 'PAS_TOTAL', '1ABP_TOTAL', 'BN', 'BN_TOTAL', 'PBBM', 'PH', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
-        const total = { key: '__total__', name: 'Jumlah Keseluruhan', isTotal: true };
+        const total = { key: '__total__', name: 'Jumlah', isTotal: true };
 
         for (const key of totalKeys) {
             total[key] = key === 'siap_cula'
