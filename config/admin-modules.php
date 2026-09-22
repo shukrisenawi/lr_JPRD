@@ -44,6 +44,7 @@ return [
             'jawatankuasa.kumpulan' => ['label' => 'Kumpulan'],
             'jawatankuasa.jawatan' => ['label' => 'Jawatan'],
             'jawatankuasa.senarai' => ['label' => 'Senarai Jawatankuasa'],
+            'jawatankuasa.ajk-bukan-pas' => ['label' => 'AJK Bukan PAS'],
         ],
     ],
     'jawatankuasa.laporan' => [

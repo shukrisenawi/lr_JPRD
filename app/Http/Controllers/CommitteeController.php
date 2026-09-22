@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\CommitteeGroup;
 use App\Models\CommitteeMembership;
 use App\Models\CommitteePosition;
+use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
+use App\Support\CulaCodes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +19,8 @@ use Inertia\Response;
 
 class CommitteeController extends Controller
 {
+    private const PAS_CULA_CODES = ['2', '3B', '3D', '3K', '3M', '3P', '3U'];
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -504,6 +508,132 @@ class CommitteeController extends Controller
         ]);
     }
 
+    public function ajkBukanPas(Request $request): Response
+    {
+        $scope = $request->user()->accessScope();
+        $membershipsQuery = CommitteeMembership::query()
+            ->with(['position', 'voter'])
+            ->whereHas('voter', function ($query) {
+                $query->where(function ($query) {
+                    $query->whereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhere('cula_code', '?')
+                        ->orWhere('cula_code', 'TIADA')
+                        ->orWhereNotIn('cula_code', self::PAS_CULA_CODES);
+                });
+            })
+            ->orderByRaw("CASE level WHEN 'jprd' THEN 0 WHEN 'udm' THEN 1 ELSE 2 END")
+            ->orderBy('scope_name')
+            ->orderBy('id');
+
+        $this->applyCommitteeScope($membershipsQuery, $scope);
+
+        $memberships = $membershipsQuery->get();
+        $groupNames = CommitteeGroup::query()->pluck('name', 'id');
+        $canViewMemberNumber = $request->user()->canViewMemberNumber();
+
+        $members = $memberships
+            ->groupBy('pemilih_record_id')
+            ->map(function ($assignments) use ($groupNames, $canViewMemberNumber) {
+                $voter = $assignments->first()?->voter;
+
+                if (! $voter) {
+                    return null;
+                }
+
+                $member = [
+                    'id' => $voter->id,
+                    'record_id' => $voter->id,
+                    'name' => $voter->name,
+                    'no_kp' => $voter->no_kp,
+                    'old_ic' => $voter->old_ic,
+                    'phone_mobile' => $voter->phone_mobile,
+                    'phone_home' => $voter->phone_home,
+                    'dm' => $voter->dm,
+                    'locality' => $voter->locality,
+                    'gender' => $voter->gender,
+                    'race' => $voter->race,
+                    'date_of_birth' => $voter->date_of_birth?->format('Y-m-d'),
+                    'address' => $voter->address,
+                    'alamat_kp' => $voter->alamat_kp,
+                    'alamat_kediaman' => $voter->alamat_kediaman,
+                    'status' => $voter->status,
+                    'is_manual' => $voter->is_manual,
+                    'is_member' => $voter->is_member,
+                    'cula_code' => $voter->cula_code,
+                    'cula_display_label' => $voter->cula_display_label,
+                    'cula_remark' => $voter->cula_remark,
+                    'catatan' => $voter->catatan,
+                    'avatar_url' => $voter->avatarUrl(),
+                    'memberships' => $assignments
+                        ->map(fn (CommitteeMembership $membership) => [
+                            'id' => $membership->id,
+                            'level' => $membership->level,
+                            'scope_name' => $membership->scope_name,
+                            'parent_scope_name' => $membership->parent_scope_name,
+                            'group_name' => $groupNames[$membership->committee_group_id] ?? 'Tanpa Kumpulan',
+                            'position_name' => $membership->position?->name ?? 'Tanpa Jawatan',
+                            'notes' => $membership->notes,
+                        ])
+                        ->values()
+                        ->all(),
+                ];
+
+                if ($canViewMemberNumber) {
+                    $member['no_ahli'] = $voter->no_ahli;
+                }
+
+                return $member;
+            })
+            ->filter()
+            ->sortBy(fn (array $member) => mb_strtolower((string) $member['name']))
+            ->values();
+
+        return Inertia::render('Committee/AjkBukanPas', [
+            'members' => $members,
+            'total_assignments' => $memberships->count(),
+            'level_counts' => $memberships->groupBy('level')->map->count()->all(),
+            'available_cula_codes' => CulaCodes::options(),
+            'can_view_member_number' => $canViewMemberNumber,
+        ]);
+    }
+
+    public function updateAjkBukanPasCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $validated = $request->validate([
+            'cula_code' => ['required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
+            'cula_display_label' => ['required', 'string', 'max:255'],
+        ]);
+
+        $recordQuery = PemilihRecord::query()->whereKey($pemilihRecord->id);
+        $request->user()->applyScopeToPemilihQuery($recordQuery);
+        $record = $recordQuery->firstOrFail();
+
+        $membershipQuery = CommitteeMembership::query()
+            ->where('pemilih_record_id', $record->id);
+        $this->applyCommitteeScope($membershipQuery, $request->user()->accessScope());
+        abort_unless($membershipQuery->exists(), 404);
+
+        $record->update([
+            'cula_code' => $validated['cula_code'],
+            'cula_display_label' => $validated['cula_display_label'],
+        ]);
+
+        CulaWorkItem::query()->firstOrCreate(
+            ['pemilih_record_id' => $record->id],
+            [
+                'marked_by' => $request->user()->id,
+                'marked_at' => now(),
+                'notes' => null,
+            ],
+        );
+
+        return response()->json([
+            'message' => 'Kod culaan berjaya dikemaskini.',
+            'voter_id' => $record->id,
+        ]);
+    }
+
     public function search(Request $request): JsonResponse
     {
         $query = trim((string) $request->query('q', ''));
@@ -976,6 +1106,35 @@ class CommitteeController extends Controller
     }
 
     // ─── Private ──────────────────────────────────────────────────
+
+    private function applyCommitteeScope($query, ?array $scope): void
+    {
+        if ($scope === null) {
+            return;
+        }
+
+        if (filled($scope['dm']) && filled($scope['locality'])) {
+            $query->where(function ($q) use ($scope) {
+                $q->where('level', 'jprd')
+                    ->orWhere(function ($sq) use ($scope) {
+                        $sq->where('level', 'cawangan')
+                            ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
+                    });
+            });
+        } elseif (filled($scope['dm'])) {
+            $query->where(function ($q) use ($scope) {
+                $q->where('level', 'jprd')
+                    ->orWhere(function ($sq) use ($scope) {
+                        $sq->where('level', 'udm')
+                            ->where('scope_key', $scope['dm']);
+                    })
+                    ->orWhere(function ($sq) use ($scope) {
+                        $sq->where('level', 'cawangan')
+                            ->where('parent_scope_name', $scope['dm']);
+                    });
+            });
+        }
+    }
 
     private function buildUdmN8nMessage($statuses): string
     {
