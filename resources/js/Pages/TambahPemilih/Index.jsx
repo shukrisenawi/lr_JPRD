@@ -33,8 +33,8 @@ function ListIcon({ className = 'h-5 w-5' }) {
 function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '', no_kp: '', old_ic: '', phone_mobile: '', phone_home: '',
-        address: '', dm: '', locality: '', gender: '', race: '',
-        cula_code: '', cula_display_label: '',
+        address: '', dm: '', locality: '', gender: '', race: 'Melayu',
+        cula_code: '2', cula_display_label: '2 - PAS',
         hashtags: [],
     });
 
