@@ -72,9 +72,17 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             icon: <HeaderIcon name="users" className="h-4 w-4" />,
             items: [
                 { key: 'carian-pemilih', href: 'carian-pemilih.index', routePattern: 'carian-pemilih.*', label: 'Carian Pemilih' },
-                { key: 'ahli-pas', href: 'ahli-pas.index', routePattern: 'ahli-pas.*', label: 'Ahli PAS', badge: ahliPasSalahCula },
                 { key: 'tambah-pemilih', href: 'tambah-pemilih.index', routePattern: 'tambah-pemilih.*', label: 'Tambah Pemilih' },
                 { key: 'group-pemilih', href: 'group-pemilih.index', routePattern: 'group-pemilih.*', label: 'Group Pemilih' },
+            ],
+        },
+        {
+            label: 'Semak Semula',
+            icon: <HeaderIcon name="fileText" className="h-4 w-4" />,
+            items: [
+                { key: 'ahli-pas', href: 'ahli-pas.index', routePattern: 'ahli-pas.*', label: 'Ahli PAS', badge: ahliPasSalahCula },
+                { key: 'jawatankuasa.ajk-bukan-pas', href: 'jawatankuasa.ajk-bukan-pas', routePattern: 'jawatankuasa.ajk-bukan-pas', label: 'AJK Bukan PAS', badge: ajkBukanPas },
+                { key: 'pusat-khidmat', href: 'pusat-khidmat.index', routePattern: 'pusat-khidmat.*', label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
             ],
         },
         {
@@ -87,8 +95,6 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                 { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
-                { key: 'jawatankuasa.ajk-bukan-pas', href: 'jawatankuasa.ajk-bukan-pas', routePattern: 'jawatankuasa.ajk-bukan-pas', label: 'AJK Bukan PAS', badge: ajkBukanPas },
-                { key: 'pusat-khidmat', href: 'pusat-khidmat.index', routePattern: 'pusat-khidmat.*', label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
                 { key: 'spokas', href: 'admin.spokas.index', routePattern: 'admin.spokas.*', label: 'SPoKAS' },
             ],
         },
@@ -233,9 +239,13 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 ].filter(Boolean) },
                                 { label: 'Pemilih', items: [
                                     canAccess('carian-pemilih') && { href: route('carian-pemilih.index'), active: route().current('carian-pemilih.*'), label: 'Carian Pemilih' },
-                                    canAccess('ahli-pas') && { href: route('ahli-pas.index'), active: route().current('ahli-pas.*'), label: 'Ahli PAS', badge: ahliPasSalahCula },
                                     canAccess('tambah-pemilih') && { href: route('tambah-pemilih.index'), active: route().current('tambah-pemilih.*'), label: 'Tambah Pemilih' },
                                     canAccess('group-pemilih') && { href: route('group-pemilih.index'), active: route().current('group-pemilih.*'), label: 'Group Pemilih' },
+                                ].filter(Boolean) },
+                                { label: 'Semak Semula', items: [
+                                    canAccess('ahli-pas') && { href: route('ahli-pas.index'), active: route().current('ahli-pas.*'), label: 'Ahli PAS', badge: ahliPasSalahCula },
+                                    canAccess('jawatankuasa.ajk-bukan-pas') && { href: route('jawatankuasa.ajk-bukan-pas'), active: route().current('jawatankuasa.ajk-bukan-pas'), label: 'AJK Bukan PAS', badge: ajkBukanPas },
+                                    canAccess('pusat-khidmat') && { href: route('pusat-khidmat.index'), active: route().current('pusat-khidmat.*'), label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
                                 ].filter(Boolean) },
                                 { label: 'Operasi', items: [
                                     canAccess('dashboard') && { href: route('dashboard'), active: route().current('dashboard'), label: 'Cula Manual' },
@@ -244,8 +254,6 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'Kad 10' },
-                                    canAccess('jawatankuasa.ajk-bukan-pas') && { href: route('jawatankuasa.ajk-bukan-pas'), active: route().current('jawatankuasa.ajk-bukan-pas'), label: 'AJK Bukan PAS', badge: ajkBukanPas },
-                                    canAccess('pusat-khidmat') && { href: route('pusat-khidmat.index'), active: route().current('pusat-khidmat.*'), label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
                                     canAccess('spokas') && { href: route('admin.spokas.index'), active: route().current('admin.spokas.*'), label: 'SPoKAS' },
                                 ].filter(Boolean) },
                                 { label: 'Pentadbiran', items: [
