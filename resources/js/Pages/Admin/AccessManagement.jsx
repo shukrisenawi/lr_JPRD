@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 function Icon({ name, className = 'h-4 w-4' }) {
     const paths = {
@@ -258,21 +258,35 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
     const myId = auth.user?.id ?? null;
     const [tab, setTab] = useState('cipta-pengguna');
     const [userSearch, setUserSearch] = useState(initialSearch);
+    const lastLoadedSearch = useRef((initialSearch ?? '').trim());
 
     useEffect(() => {
         setUserSearch(initialSearch ?? '');
+        lastLoadedSearch.current = (initialSearch ?? '').trim();
     }, [initialSearch]);
 
-    const loadUsers = (nextSearch) => {
+    const loadUsers = useCallback((nextSearch) => {
+        const normalizedSearch = nextSearch.trim();
+        lastLoadedSearch.current = normalizedSearch;
+
         router.get(route('admin.access.index'), {
-            search: nextSearch.trim() || undefined,
+            search: normalizedSearch || undefined,
         }, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
             only: ['users', 'search'],
         });
-    };
+    }, []);
+
+    useEffect(() => {
+        const nextSearch = userSearch.trim();
+        if (nextSearch === lastLoadedSearch.current) return;
+
+        const timeout = window.setTimeout(() => loadUsers(userSearch), 300);
+
+        return () => window.clearTimeout(timeout);
+    }, [loadUsers, userSearch]);
 
     const submitUserSearch = (e) => {
         e.preventDefault();
