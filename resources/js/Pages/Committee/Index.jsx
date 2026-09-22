@@ -676,6 +676,138 @@ function PositionManager({ positions }) {
 
 function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+function SearchableScopeSelect({ id, value, scopes, onChange }) {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const containerRef = useRef(null);
+    const searchInputRef = useRef(null);
+
+    const selectedScope = scopes.find((scope) => scope.key === value);
+    const groupedScopes = useMemo(() => {
+        const search = query.trim().toLowerCase();
+        const groups = new Map();
+
+        scopes.forEach((scope) => {
+            const parentName = scope.parent_scope_name || 'Tanpa UDM';
+            const matches = !search
+                || scope.name.toLowerCase().includes(search)
+                || parentName.toLowerCase().includes(search);
+
+            if (!matches) return;
+
+            if (!groups.has(parentName)) groups.set(parentName, []);
+            groups.get(parentName).push(scope);
+        });
+
+        return [...groups.entries()];
+    }, [scopes, query]);
+
+    useEffect(() => {
+        if (!open) return;
+        searchInputRef.current?.focus();
+
+        const close = () => {
+            setOpen(false);
+            setQuery('');
+        };
+        const handleClickOutside = (event) => {
+            if (!containerRef.current?.contains(event.target)) close();
+        };
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') close();
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [open]);
+
+    const toggleOpen = () => {
+        if (open) setQuery('');
+        setOpen(!open);
+    };
+
+    const selectScope = (scopeKey) => {
+        onChange(scopeKey);
+        setQuery('');
+        setOpen(false);
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <button
+                id={id}
+                type="button"
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                onClick={toggleOpen}
+                disabled={scopes.length === 0}
+                className="input-field mt-1 flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+            >
+                <span className="min-w-0 truncate">
+                    {selectedScope
+                        ? `${selectedScope.parent_scope_name ? selectedScope.parent_scope_name + ' / ' : ''}${selectedScope.name}`
+                        : 'Pilih Cawangan'}
+                </span>
+                <Icon name="chevronDown" className={'h-4 w-4 shrink-0 text-slate-400 transition-transform ' + (open ? 'rotate-180' : '')} />
+            </button>
+
+            {open && (
+                <div className="absolute left-0 right-0 z-30 mt-1.5 overflow-hidden rounded-lg border border-green-200 bg-white shadow-lg shadow-green-900/10">
+                    <div className="border-b border-slate-100 p-2">
+                        <div className="relative">
+                            <Icon name="search" className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="search"
+                                value={query}
+                                onChange={(event) => setQuery(event.target.value)}
+                                placeholder="Cari UDM atau cawangan..."
+                                className="input-field w-full py-1.5 pl-8 pr-2 text-xs"
+                                ref={searchInputRef}
+                            />
+                        </div>
+                    </div>
+
+                    <div role="listbox" aria-labelledby={id} className="max-h-64 overflow-y-auto p-1.5">
+                        {groupedScopes.length === 0 ? (
+                            <p className="px-2 py-4 text-center text-xs text-slate-400">Tiada cawangan dijumpai.</p>
+                        ) : (
+                            groupedScopes.map(([udm, udmScopes]) => (
+                                <div key={udm}>
+                                    <p className="sticky top-0 z-10 bg-sky-50 px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-sky-700">
+                                        {udm}
+                                    </p>
+                                    <div className="py-0.5">
+                                        {udmScopes.map((scope) => (
+                                            <button
+                                                key={scope.key}
+                                                type="button"
+                                                role="option"
+                                                aria-selected={scope.key === value}
+                                                onClick={() => selectScope(scope.key)}
+                                                className={'flex w-full items-center rounded-md px-2 py-1.5 text-left text-xs transition hover:bg-green-50 hover:text-green-700 ' + (scope.key === value ? 'bg-green-50 font-bold text-green-700' : 'text-slate-700')}
+                                            >
+                                                <span className="truncate">{scope.name}</span>
+                                                {scope.key === value && <Icon name="check" className="ml-auto h-3.5 w-3.5 shrink-0" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                    <p className="border-t border-slate-100 px-3 py-1.5 text-[10px] text-slate-400">
+                        {groupedScopes.reduce((total, [, udmScopes]) => total + udmScopes.length, 0)} cawangan
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
 const committeeTabs = [
     { key: 'jprd', label: 'JPRD', desc: 'Peringkat kawasan', icon: 'users' },
     { key: 'udm', label: 'UDM', desc: 'Unit daerah mengundi', icon: 'mapPin' },
@@ -1191,18 +1323,27 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
                         <div>
                             <InputLabel htmlFor="committee-scope" value={resolvedTab === 'jprd' ? 'Peringkat' : 'Scope'} />
-                            <select
-                                id="committee-scope"
-                                value={form.data.scope_key}
-                                onChange={(event) => form.setData('scope_key', event.target.value)}
-                                className="input-field mt-1 text-xs"
-                            >
-                                {currentScopes.map((scope) => (
-                                    <option key={scope.key} value={scope.key}>
-                                        {scope.parent_scope_name ? scope.parent_scope_name + ' / ' + scope.name : scope.name}
-                                    </option>
-                                ))}
-                            </select>
+                            {resolvedTab === 'cawangan' ? (
+                                <SearchableScopeSelect
+                                    id="committee-scope"
+                                    value={form.data.scope_key}
+                                    scopes={currentScopes}
+                                    onChange={(scopeKey) => form.setData('scope_key', scopeKey)}
+                                />
+                            ) : (
+                                <select
+                                    id="committee-scope"
+                                    value={form.data.scope_key}
+                                    onChange={(event) => form.setData('scope_key', event.target.value)}
+                                    className="input-field mt-1 text-xs"
+                                >
+                                    {currentScopes.map((scope) => (
+                                        <option key={scope.key} value={scope.key}>
+                                            {scope.parent_scope_name ? scope.parent_scope_name + ' / ' + scope.name : scope.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                             <InputError className="mt-1" message={form.errors.scope_key} />
                         </div>
                     </div>
