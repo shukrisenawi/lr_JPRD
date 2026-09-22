@@ -415,7 +415,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                 ) : (
                     <>
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <StatCard label="Jumlah Pemilih" value={report.summary.total_voters} detail="Dalam fail semasa" color="violet" />
+                            <StatCard label="Jumlah Pemilih" value={report.summary.total_voters} detail="Dalam fail semasa (termasuk mati)" color="violet" />
                             <StatCard label="Sudah Dicula" value={report.summary.with_cula} detail="Ada status culaan" color="emerald" />
                             <StatCard label="Belum Dicula" value={report.summary.belum_dicula} detail="Kod kosong/?" color="amber" />
                             <StatCard label="Peratus Siap" value={report.summary.coverage_percent} detail={`${fmt(report.summary.total_localities)} lokaliti`} color="cyan" />
