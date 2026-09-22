@@ -86,6 +86,7 @@ class ReportController extends Controller
                 '1A' => $getCulaSum($culaBreakdown, ['1A']),
                 '1B' => $getCulaSum($culaBreakdown, ['1B']),
                 '1P' => $getCulaSum($culaBreakdown, ['1P']),
+                '1ABP_TOTAL' => $getCulaSum($culaBreakdown, ['1A', '1B', '1P']),
                 'PAS_TOTAL' => $getCulaSum($culaBreakdown, ['2', '3B', '3D', '3K', '3M', '3P', '3U']),
                 'PBBM' => $getCulaSum($culaBreakdown, ['10']),
                 'BN' => $getCulaSum($culaBreakdown, ['1']),

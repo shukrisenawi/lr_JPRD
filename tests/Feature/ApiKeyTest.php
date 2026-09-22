@@ -176,6 +176,7 @@ it('returns individual BN cula columns in the UDM report', function () {
         ->assertJsonPath('data.0.1A', 1)
         ->assertJsonPath('data.0.1B', 1)
         ->assertJsonPath('data.0.1P', 1)
+        ->assertJsonPath('data.0.1ABP_TOTAL', 3)
         ->assertJsonPath('data.0.PLK', 1)
         ->assertJsonPath('data.0.PAS', 1)
         ->assertJsonPath('data.0.PAS_TOTAL', 2)

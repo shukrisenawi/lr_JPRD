@@ -476,6 +476,7 @@ class PemilihReportService
                 '1A' => $getCulaSum($culaB, ['1A']),
                 '1B' => $getCulaSum($culaB, ['1B']),
                 '1P' => $getCulaSum($culaB, ['1P']),
+                '1ABP_TOTAL' => $getCulaSum($culaB, ['1A', '1B', '1P']),
                 'PAS_TOTAL' => $getCulaSum($culaB, ['2', '3B', '3D', '3K', '3M', '3P', '3U']),
                 'PBBM' => $getCulaSum($culaB, ['10']),
                 'BN' => $getCulaSum($culaB, ['1']),

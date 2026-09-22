@@ -120,7 +120,7 @@ function DataTable({ rows, columns }) {
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 text-xs">
                     <thead className="table-header">
-                        <tr>{columns.map((c) => <th key={c.key} title={c.title} className={`px-2.5 py-1.5 ${c.headerClass ?? ''}`}>{c.label}</th>)}</tr>
+                        <tr>{columns.map((c) => <th key={c.key} title={c.title} aria-label={c.ariaLabel} className={`px-2.5 py-1.5 ${c.headerClass ?? ''}`}>{c.label}</th>)}</tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
                         {rows.map((row, i) => (
@@ -185,8 +185,8 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         }
     };
 
-    const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'PAS', 'PLK', 'PAS_TOTAL', '1A', '1B', '1P', 'BN', 'BN_TOTAL', 'PBBM', 'PH', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
-    const partyCols = ['PAS', 'BN', '1A', '1B', '1P', 'PBBM', 'PH', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati'];
+    const diffCols = ['JP', 'L', 'P', 'M', 'C', 'I', 'PAS', 'PLK', 'PAS_TOTAL', '1ABP_TOTAL', 'BN', 'BN_TOTAL', 'PBBM', 'PH', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
+    const partyCols = ['PAS', 'BN', '1ABP_TOTAL', 'PBBM', 'PH', 'PLK', 'Atas Pagar', 'Tak Kenal', 'Mati'];
 
     const filteredLocs = useMemo(() => {
         const kw = search.trim().toLowerCase();
@@ -243,9 +243,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                 I: getRaceCount(raceB, ['INDIA', 'I'], 'active_total'),
                 S: getRaceCount(raceB, ['SIAM', 'S'], 'active_total'),
                 PAS: getCulaSum(culaB, ['2']),
-                '1A': getCulaSum(culaB, ['1A']),
-                '1B': getCulaSum(culaB, ['1B']),
-                '1P': getCulaSum(culaB, ['1P']),
+                '1ABP_TOTAL': getCulaSum(culaB, ['1A', '1B', '1P']),
                 PAS_TOTAL: getCulaSum(culaB, ['2', '3B', '3D', '3K', '3M', '3P', '3U']),
                 PBBM: getCulaSum(culaB, ['10']),
                 BN: getCulaSum(culaB, ['1']),
@@ -295,7 +293,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         return diffs;
     }, [udm_snapshot, allUdmTableRows]);
     const udmTableTotal = useMemo(() => {
-        const totalKeys = ['siap_cula', 'JP', 'L', 'P', 'M', 'C', 'I', 'PAS', 'PLK', 'PAS_TOTAL', '1A', '1B', '1P', 'BN', 'BN_TOTAL', 'PBBM', 'PH', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
+        const totalKeys = ['siap_cula', 'JP', 'L', 'P', 'M', 'C', 'I', 'PAS', 'PLK', 'PAS_TOTAL', '1ABP_TOTAL', 'BN', 'BN_TOTAL', 'PBBM', 'PH', 'Atas Pagar', 'Tak Kenal', 'Mati', 'CULA'];
         const total = { key: '__total__', name: 'Jumlah Keseluruhan', isTotal: true };
 
         for (const key of totalKeys) {
@@ -341,7 +339,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const dmCols = [
         { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span>, headerClass: 'sticky-th', cellClass: 'sticky-td' },
 
-        { key: 'siap_cula', label: 'Siap', format: (v, r) => r.isTotal ? fmt(v) : fmtSiapDiff(v, diffMap[r.key]?.siap_increase), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
+        { key: 'siap_cula', label: <svg aria-hidden="true" className="mx-auto h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg>, ariaLabel: 'Siap', title: 'Siap', format: (v, r) => r.isTotal ? fmt(v) : fmtSiapDiff(v, diffMap[r.key]?.siap_increase), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
         { key: 'L', label: 'L', format: (v, r) => fmtDiff(v, diffMap[r.key]?.L), headerClass: groupH.demo, cellClass: groupC.demo },
         { key: 'P', label: 'P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.P), headerClass: groupH.demo, cellClass: groupC.demo },
@@ -351,9 +349,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         { key: 'PAS', label: 'PAS', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PAS), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'PLK', label: 'PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PLK), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'PAS_TOTAL', label: 'PAS', title: 'PAS + PLK', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PAS_TOTAL), headerClass: groupH.aggregate, cellClass: groupC.aggregate },
-        { key: '1A', label: '1A', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['1A']), headerClass: groupH.party, cellClass: groupC.party },
-        { key: '1B', label: '1B', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['1B']), headerClass: groupH.party, cellClass: groupC.party },
-        { key: '1P', label: '1P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['1P']), headerClass: groupH.party, cellClass: groupC.party },
+        { key: '1ABP_TOTAL', label: '1(A,B,P)', title: '1A + 1B + 1P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.['1ABP_TOTAL']), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'BN', label: 'BN', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN), headerClass: groupH.party, cellClass: groupC.party },
         { key: 'BN_TOTAL', label: 'BN', title: 'BN + 1A + 1B + 1P', format: (v, r) => fmtDiff(v, diffMap[r.key]?.BN_TOTAL), headerClass: groupH.aggregate, cellClass: groupC.aggregate },
         { key: 'PBBM', label: 'B', format: (v, r) => fmtDiff(v, diffMap[r.key]?.PBBM), headerClass: groupH.party, cellClass: groupC.party },

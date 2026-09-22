@@ -27,7 +27,7 @@ const elements = {
 
 const columns = [
     ['siap_cula', 'Siap', 'ready'], ['JP', 'JP', 'jp'], ['L', 'L', 'demo'], ['P', 'P', 'demo'], ['M', 'M', 'demo'], ['C', 'C', 'demo'], ['I', 'I', 'demo'],
-    ['PAS', 'PAS', 'party'], ['PLK', 'PLK', 'party'], ['PAS_TOTAL', 'PAS', 'aggregate'], ['1A', '1A', 'party'], ['1B', '1B', 'party'], ['1P', '1P', 'party'], ['BN', 'BN', 'party'], ['BN_TOTAL', 'BN', 'aggregate'], ['PBBM', 'B', 'party'], ['PH', 'PH', 'party'],
+    ['PAS', 'PAS', 'party'], ['PLK', 'PLK', 'party'], ['PAS_TOTAL', 'PAS', 'aggregate'], ['1ABP_TOTAL', '1(A,B,P)', 'party'], ['BN', 'BN', 'party'], ['BN_TOTAL', 'BN', 'aggregate'], ['PBBM', 'B', 'party'], ['PH', 'PH', 'party'],
     ['Atas Pagar', 'AP', 'party'], ['Tak Kenal', 'TK', 'party'], ['Mati', 'MT', 'party'], ['CULA', 'Baki', 'total'],
 ];
 
@@ -115,7 +115,7 @@ function renderTable(rows) {
             <td>${escapeHtml(row.name || row.code || '-')}</td>
             ${columns.map(([key, _label, group]) => `<td class="metric-${group}">${fmt(row[key])}</td>`).join('')}
         </tr>
-    `).join('') : '<tr><td class="table-empty" colspan="22">Tiada rekod UDM untuk dipaparkan.</td></tr>';
+    `).join('') : '<tr><td class="table-empty" colspan="20">Tiada rekod UDM untuk dipaparkan.</td></tr>';
 
     const totals = columns.reduce((result, [key]) => {
         result[key] = rows.reduce((total, row) => total + (Number(row[key]) || 0), 0);
