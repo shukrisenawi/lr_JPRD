@@ -1072,10 +1072,12 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
     const submit = (event) => {
         event.preventDefault();
+        const groupId = selectedGroupId;
         form.post(route('jawatankuasa.memberships.store'), {
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
+                setExpandedGroupId(groupId || null);
                 setSelectedVoter(null);
                 setSuggestions([]);
                 form.reset('pemilih_record_id', 'voter_search', 'notes');
@@ -1571,6 +1573,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     scopes={scopes}
                     currentScopeKey={form.data.scope_key}
                     onClose={() => setQuickAddModal(null)}
+                    onAdded={() => setExpandedGroupId(quickAddModal.group.id)}
                 />
             )}
             {whatsappModal && (
@@ -1597,7 +1600,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
 // ─── QuickAddMemberModal ──────────────────────────────────────────────────
 
-function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, onClose }) {
+function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, onClose, onAdded }) {
     const [searching, setSearching] = useState(false);
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
@@ -1663,6 +1666,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
             preserveState: true,
             preserveScroll: true,
             onSuccess: () => {
+                onAdded?.();
                 setSelectedVoter(null);
                 setSuggestions([]);
                 onClose();
