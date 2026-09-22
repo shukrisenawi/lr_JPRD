@@ -287,14 +287,15 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
             if (!p) continue;
             const rowDiffs = {};
             for (const col of diffCols) {
+                if (p[col] === undefined) continue;
                 if (['JP', 'L', 'P', 'M', 'C', 'I', 'S'].includes(col) && p.active_total === undefined) continue;
-                if (['PAS_TOTAL', 'BN_TOTAL'].includes(col) && p[col] === undefined) continue;
                 const d = (row[col] ?? 0) - (p[col] ?? 0);
                 if (d !== 0) rowDiffs[col] = d;
             }
 
             let siapSum = 0;
             for (const col of partyCols) {
+                if (p[col] === undefined) continue;
                 const d = (row[col] ?? 0) - (p[col] ?? 0);
                 if (d > 0) siapSum += d;
             }
