@@ -510,27 +510,28 @@ class CommitteeController extends Controller
 
     public function ajkBukanPas(Request $request): Response
     {
-        $scope = $request->user()->accessScope();
+        $user = $request->user();
         $membershipsQuery = CommitteeMembership::query()
             ->with(['position', 'voter'])
             ->whereHas('voter', function ($query) {
-                $query->where(function ($query) {
-                    $query->whereNull('cula_code')
-                        ->orWhere('cula_code', '')
-                        ->orWhere('cula_code', '?')
-                        ->orWhere('cula_code', 'TIADA')
-                        ->orWhereNotIn('cula_code', self::PAS_CULA_CODES);
-                });
+                $query->where('is_manual', false)
+                    ->where(function ($query) {
+                        $query->whereNull('cula_code')
+                            ->orWhere('cula_code', '')
+                            ->orWhere('cula_code', '?')
+                            ->orWhere('cula_code', 'TIADA')
+                            ->orWhereNotIn('cula_code', self::PAS_CULA_CODES);
+                    });
             })
             ->orderByRaw("CASE level WHEN 'jprd' THEN 0 WHEN 'udm' THEN 1 ELSE 2 END")
             ->orderBy('scope_name')
             ->orderBy('id');
 
-        $this->applyCommitteeScope($membershipsQuery, $scope);
+        $membershipsQuery->visibleTo($user);
 
         $memberships = $membershipsQuery->get();
         $groupNames = CommitteeGroup::query()->pluck('name', 'id');
-        $canViewMemberNumber = $request->user()->canViewMemberNumber();
+        $canViewMemberNumber = $user->canViewMemberNumber();
 
         $members = $memberships
             ->groupBy('pemilih_record_id')
@@ -605,13 +606,15 @@ class CommitteeController extends Controller
             'cula_display_label' => ['required', 'string', 'max:255'],
         ]);
 
-        $recordQuery = PemilihRecord::query()->whereKey($pemilihRecord->id);
+        $recordQuery = PemilihRecord::query()
+            ->whereKey($pemilihRecord->id)
+            ->where('is_manual', false);
         $request->user()->applyScopeToPemilihQuery($recordQuery);
         $record = $recordQuery->firstOrFail();
 
         $membershipQuery = CommitteeMembership::query()
             ->where('pemilih_record_id', $record->id);
-        $this->applyCommitteeScope($membershipQuery, $request->user()->accessScope());
+        $membershipQuery->visibleTo($request->user());
         abort_unless($membershipQuery->exists(), 404);
 
         $record->update([
@@ -1106,35 +1109,6 @@ class CommitteeController extends Controller
     }
 
     // ─── Private ──────────────────────────────────────────────────
-
-    private function applyCommitteeScope($query, ?array $scope): void
-    {
-        if ($scope === null) {
-            return;
-        }
-
-        if (filled($scope['dm']) && filled($scope['locality'])) {
-            $query->where(function ($q) use ($scope) {
-                $q->where('level', 'jprd')
-                    ->orWhere(function ($sq) use ($scope) {
-                        $sq->where('level', 'cawangan')
-                            ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
-                    });
-            });
-        } elseif (filled($scope['dm'])) {
-            $query->where(function ($q) use ($scope) {
-                $q->where('level', 'jprd')
-                    ->orWhere(function ($sq) use ($scope) {
-                        $sq->where('level', 'udm')
-                            ->where('scope_key', $scope['dm']);
-                    })
-                    ->orWhere(function ($sq) use ($scope) {
-                        $sq->where('level', 'cawangan')
-                            ->where('parent_scope_name', $scope['dm']);
-                    });
-            });
-        }
-    }
 
     private function buildUdmN8nMessage($statuses): string
     {

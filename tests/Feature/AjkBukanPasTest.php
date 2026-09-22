@@ -54,11 +54,18 @@ it('lists committee members with non-PAS cula codes across all levels', function
         'no_kp' => '900101010004',
         'cula_code' => '3P',
     ]);
+    $manual = createAjkBukanPasVoter([
+        'name' => 'PEMILIH MANUAL',
+        'no_kp' => '900101010005',
+        'cula_code' => '1',
+        'is_manual' => true,
+    ]);
 
     $addMembership($nonPas, 'jprd', 'jprd');
     $addMembership($belumCula, 'udm', 'UDM ALPHA');
     $addMembership($pasMember, 'cawangan', 'UDM ALPHA|KAMPUNG ALPHA');
     $addMembership($pasLuar, 'cawangan', 'UDM ALPHA|KAMPUNG BETA');
+    $addMembership($manual, 'jprd', 'jprd');
 
     $this->actingAs($user)
         ->get(route('jawatankuasa.ajk-bukan-pas'))
@@ -69,6 +76,7 @@ it('lists committee members with non-PAS cula codes across all levels', function
             ->where('members', fn ($members) => collect($members)->pluck('name')->values()->all() === ['AHLI BELUM CULA', 'AHLI BUKAN PAS'])
             ->where('members.0.memberships.0.level', 'udm')
             ->where('members.1.memberships.0.level', 'jprd')
+            ->where('badgeCounts.ajkBukanPas', 2)
             ->where('available_cula_codes.0.code', '1'));
 });
 
@@ -108,6 +116,53 @@ it('applies the users committee scope to the AJK Bukan PAS list', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('members', fn ($members) => collect($members)->pluck('name')->values()->all() === ['DALAM SKOP']));
+});
+
+it('limits AJK Bukan PAS records to the users access level and UDM scope', function () {
+    $user = User::factory()->withModules(['jawatankuasa.ajk-bukan-pas'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'AJK UDM',
+        'slug' => 'ajk-udm',
+        'sort_order' => 1,
+    ]);
+
+    $addMembership = function (string $name, string $level, string $scopeKey, ?string $parentScopeName = null) use ($position): void {
+        $voter = createAjkBukanPasVoter([
+            'name' => $name,
+            'no_kp' => '900101'.str_pad((string) (crc32($name) % 1000000), 6, '0', STR_PAD_LEFT),
+            'cula_code' => '1',
+        ]);
+
+        CommitteeMembership::query()->create([
+            'pemilih_record_id' => $voter->id,
+            'committee_position_id' => $position->id,
+            'level' => $level,
+            'scope_key' => $scopeKey,
+            'scope_name' => $level === 'jprd'
+                ? 'JPRD'
+                : (str($scopeKey)->after('|')->value() ?: $scopeKey),
+            'parent_scope_name' => $parentScopeName,
+        ]);
+    };
+
+    $addMembership('JPRD GLOBAL', 'jprd', 'jprd');
+    $addMembership('UDM DALAM SKOP', 'udm', 'UDM ALPHA');
+    $addMembership('UDM LUAR SKOP', 'udm', 'UDM BETA');
+    $addMembership('CAWANGAN DALAM SKOP', 'cawangan', 'UDM ALPHA|KAMPUNG ALPHA', 'UDM ALPHA');
+    $addMembership('CAWANGAN LUAR SKOP', 'cawangan', 'UDM BETA|KAMPUNG BETA', 'UDM BETA');
+
+    $this->actingAs($user)
+        ->get(route('jawatankuasa.ajk-bukan-pas'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('members', fn ($members) => collect($members)->pluck('name')->values()->all() === ['CAWANGAN DALAM SKOP', 'UDM DALAM SKOP'])
+            ->where('total_assignments', 2)
+            ->where('level_counts.udm', 1)
+            ->where('level_counts.cawangan', 1)
+            ->where('badgeCounts.ajkBukanPas', 2));
 });
 
 it('updates cula for an AJK Bukan PAS member in the users scope', function () {

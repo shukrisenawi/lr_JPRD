@@ -118,7 +118,7 @@ class AccessManagementController extends Controller
             'password' => ['required', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
             'access_level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
-            'scope_key' => ['nullable', 'string', 'max:255'],
+            'scope_key' => ['nullable', 'string', 'max:255', 'required_if:access_level,udm,cawangan'],
             'expires_at' => ['nullable', 'date'],
         ]);
 
@@ -148,7 +148,7 @@ class AccessManagementController extends Controller
             'password' => ['nullable', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
             'access_level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
-            'scope_key' => ['nullable', 'string', 'max:255'],
+            'scope_key' => ['nullable', 'string', 'max:255', 'required_if:access_level,udm,cawangan'],
             'expires_at' => ['nullable', 'date'],
         ]);
 

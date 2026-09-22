@@ -90,6 +90,15 @@ class User extends Authenticatable
         return null;
     }
 
+    public function committeeAccessLevels(): array
+    {
+        return match ($this->access_level ?? 'jprd') {
+            'cawangan' => ['cawangan'],
+            'udm' => ['udm', 'cawangan'],
+            default => ['jprd', 'udm', 'cawangan'],
+        };
+    }
+
     public function applyScopeToPemilihQuery($query): void
     {
         $scope = $this->accessScope();

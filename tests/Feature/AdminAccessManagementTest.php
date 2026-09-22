@@ -22,6 +22,9 @@ it('allows master admin to open access management page', function () {
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'lihat-no-ahli' && $module['label'] === 'Lihat No. Ahli'))
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'laporan-hantar-status' && $module['label'] === 'Hantar Mesej n8n'))
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'spokas' && $module['label'] === 'SPoKAS'))
+            ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'jawatankuasa'
+                && collect($module['children'] ?? [])->contains(fn ($child) => $child['key'] === 'jawatankuasa.ajk-bukan-pas'
+                    && $child['label'] === 'AJK Bukan PAS')))
             ->where('users.0.id', $managedUser->id)
             ->where('users.0.avatar_url', $managedUser->avatarUrl()));
 });
@@ -88,6 +91,45 @@ it('allows master admin to update role module access', function () {
         'hashtag-pemilih',
         'spokas',
     ]);
+});
+
+it('allows a role to grant direct access to AJK Bukan PAS', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $role = Role::factory()->withModules(['dashboard'])->create([
+        'name' => 'Operator AJK Bukan PAS',
+        'slug' => 'operator-ajk-bukan-pas',
+    ]);
+
+    $this->actingAs($masterAdmin)
+        ->put(route('admin.access.roles.update', $role), [
+            'name' => $role->name,
+            'access_modules' => ['dashboard', 'jawatankuasa.ajk-bukan-pas'],
+        ])
+        ->assertRedirect(route('admin.access.index'));
+
+    $user = User::factory()->create(['role_id' => $role->id]);
+
+    expect($user->fresh()->canAccessModule('jawatankuasa.ajk-bukan-pas'))->toBeTrue();
+
+    $this->actingAs($user)
+        ->get(route('jawatankuasa.ajk-bukan-pas'))
+        ->assertOk();
+});
+
+it('requires a scope when assigning a non JPRD access level', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $role = Role::factory()->create();
+
+    $this->actingAs($masterAdmin)
+        ->post(route('admin.access.users.store'), [
+            'name' => 'Pengguna UDM Tanpa Skop',
+            'email' => 'udm-tanpa-skop@example.com',
+            'password' => 'rahsia123',
+            'password_confirmation' => 'rahsia123',
+            'role_id' => $role->id,
+            'access_level' => 'udm',
+        ])
+        ->assertSessionHasErrors('scope_key');
 });
 
 it('blocks access to module routes when user role does not have permission', function () {

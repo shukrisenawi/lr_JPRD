@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\CommitteeMembership;
 use App\Models\PemilihRecord;
 use App\Models\PusatKhidmatData;
 use App\Models\User;
@@ -80,6 +81,7 @@ class HandleInertiaRequests extends Middleware
                 'pusatKhidmatBelumSemak' => $this->getPusatKhidmatBelumSemakCount($request->user()),
                 'belumDicula' => $this->getBelumDiculaCount($request->user()),
                 'ahliPasSalahCula' => $this->getAhliPasSalahCulaCount($request->user()),
+                'ajkBukanPas' => $this->getAjkBukanPasCount($request->user()),
             ],
         ];
     }
@@ -165,6 +167,32 @@ class HandleInertiaRequests extends Middleware
             $user->applyScopeToPemilihQuery($query);
 
             return $query->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getAjkBukanPasCount($user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        try {
+            $query = CommitteeMembership::query()
+                ->visibleTo($user)
+                ->whereHas('voter', function ($query) {
+                    $query->where('is_manual', false)
+                        ->where(function ($query) {
+                            $query->whereNull('cula_code')
+                                ->orWhere('cula_code', '')
+                                ->orWhere('cula_code', '?')
+                                ->orWhere('cula_code', 'TIADA')
+                                ->orWhereNotIn('cula_code', ['2', '3B', '3D', '3K', '3M', '3P', '3U']);
+                        });
+                });
+
+            return $query->distinct()->count('pemilih_record_id');
         } catch (\Exception $e) {
             return 0;
         }

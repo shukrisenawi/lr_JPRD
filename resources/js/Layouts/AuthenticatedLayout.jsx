@@ -55,6 +55,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const pusatKhidmatBelumSemak = badgeCounts?.pusatKhidmatBelumSemak ?? 0;
     const belumDicula = badgeCounts?.belumDicula ?? 0;
     const ahliPasSalahCula = badgeCounts?.ahliPasSalahCula ?? 0;
+    const ajkBukanPas = badgeCounts?.ajkBukanPas ?? 0;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const isLight = variant === 'light';
@@ -86,7 +87,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                 { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
-                { key: 'jawatankuasa.ajk-bukan-pas', href: 'jawatankuasa.ajk-bukan-pas', routePattern: 'jawatankuasa.ajk-bukan-pas', label: 'AJK Bukan PAS' },
+                { key: 'jawatankuasa.ajk-bukan-pas', href: 'jawatankuasa.ajk-bukan-pas', routePattern: 'jawatankuasa.ajk-bukan-pas', label: 'AJK Bukan PAS', badge: ajkBukanPas },
                 { key: 'pusat-khidmat', href: 'pusat-khidmat.index', routePattern: 'pusat-khidmat.*', label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
                 { key: 'spokas', href: 'admin.spokas.index', routePattern: 'admin.spokas.*', label: 'SPoKAS' },
             ],
@@ -243,7 +244,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'Kad 10' },
-                                    canAccess('jawatankuasa.ajk-bukan-pas') && { href: route('jawatankuasa.ajk-bukan-pas'), active: route().current('jawatankuasa.ajk-bukan-pas'), label: 'AJK Bukan PAS' },
+                                    canAccess('jawatankuasa.ajk-bukan-pas') && { href: route('jawatankuasa.ajk-bukan-pas'), active: route().current('jawatankuasa.ajk-bukan-pas'), label: 'AJK Bukan PAS', badge: ajkBukanPas },
                                     canAccess('pusat-khidmat') && { href: route('pusat-khidmat.index'), active: route().current('pusat-khidmat.*'), label: 'Data Pusat Khidmat', badge: pusatKhidmatBelumSemak },
                                     canAccess('spokas') && { href: route('admin.spokas.index'), active: route().current('admin.spokas.*'), label: 'SPoKAS' },
                                 ].filter(Boolean) },
