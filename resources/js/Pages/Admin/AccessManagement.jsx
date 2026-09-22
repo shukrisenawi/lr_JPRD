@@ -5,7 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function Icon({ name, className = 'h-4 w-4' }) {
     const paths = {
@@ -21,6 +21,7 @@ function Icon({ name, className = 'h-4 w-4' }) {
         crown: <><path d="m2 6 5 5 5-8 5 8 5-5-3 12H5L2 6Z" /><path d="M5 21h14" /></>,
         clock: <><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></>,
         mapPin: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
+        search: <><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></>,
     };
 
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -252,10 +253,31 @@ const levelMeta = {
 
 const levelOrder = ['jprd', 'udm', 'cawangan'];
 
-export default function AccessManagement({ roles, users, modules, udms, cawangans }) {
+export default function AccessManagement({ roles, users, modules, udms, cawangans, search: initialSearch = '' }) {
     const { auth } = usePage().props;
     const myId = auth.user?.id ?? null;
     const [tab, setTab] = useState('cipta-pengguna');
+    const [userSearch, setUserSearch] = useState(initialSearch);
+
+    useEffect(() => {
+        setUserSearch(initialSearch ?? '');
+    }, [initialSearch]);
+
+    const loadUsers = (nextSearch) => {
+        router.get(route('admin.access.index'), {
+            search: nextSearch.trim() || undefined,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+            only: ['users', 'search'],
+        });
+    };
+
+    const submitUserSearch = (e) => {
+        e.preventDefault();
+        loadUsers(userSearch);
+    };
 
     const groupedUsers = useMemo(() => {
         const groups = {};
@@ -340,6 +362,19 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                         <div className="card p-3">
                             <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Pengguna</p>
                             <h3 className="mt-0.5 text-sm font-bold text-slate-950">Akaun sedia ada</h3>
+                            <form onSubmit={submitUserSearch} className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-end">
+                                <div className="min-w-0 flex-1">
+                                    <InputLabel htmlFor="user-search" value="Cari pengguna" />
+                                    <div className="relative mt-1">
+                                        <FieldIcon name="search" />
+                                        <TextInput id="user-search" type="search" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="input-field w-full pl-10" placeholder="Nama, email atau UDM..." />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <PrimaryButton type="submit" className="shrink-0 px-4 py-2">Cari</PrimaryButton>
+                                    {userSearch && <button type="button" onClick={() => { setUserSearch(''); loadUsers(''); }} className="btn-ghost shrink-0 px-3 py-2 text-xs">Kosongkan</button>}
+                                </div>
+                            </form>
                             <div className="mt-3 space-y-4">
                                 {levelOrder.map((lvl) => {
                                     const lvlData = groupedUsers[lvl];
@@ -376,6 +411,7 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                                         </div>
                                     );
                                 })}
+                                {users.length === 0 && <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs font-semibold text-slate-400">{initialSearch ? `Tiada pengguna sepadan dengan "${initialSearch}".` : 'Tiada pengguna untuk dipaparkan.'}</p>}
                             </div>
                         </div>
                     </section>

@@ -23,6 +23,9 @@ class AccessManagementController extends Controller
     {
         abort_unless(request()->user()?->isMasterAdmin(), 403);
 
+        $search = request()->query('search');
+        $search = is_string($search) ? trim($search) : '';
+
         return Inertia::render('Admin/AccessManagement', [
             'roles' => Role::query()
                 ->orderByDesc('is_master_admin')
@@ -40,6 +43,15 @@ class AccessManagementController extends Controller
                 ])
                 ->values(),
             'users' => User::query()
+                ->when($search !== '', function ($query) use ($search) {
+                    $like = "%{$search}%";
+
+                    $query->where(function ($nested) use ($like) {
+                        $nested->where('name', 'like', $like)
+                            ->orWhere('email', 'like', $like)
+                            ->orWhere('scope_key', 'like', $like);
+                    });
+                })
                 ->with('role')
                 ->orderBy('name')
                 ->get()
@@ -63,6 +75,7 @@ class AccessManagementController extends Controller
                         : null,
                 ])
                 ->values(),
+            'search' => $search,
             'udms' => PemilihRecord::query()
                 ->where('status', 'aktif')
                 ->where('is_manual', false)

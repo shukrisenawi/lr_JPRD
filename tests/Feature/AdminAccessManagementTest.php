@@ -39,6 +39,36 @@ it('prevents non master admin from opening access management page', function () 
     $this->assertAuthenticatedAs($user);
 });
 
+it('filters access management users by name, email, and UDM', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $nameMatch = User::factory()->create([
+        'name' => 'Nama Carian Utama',
+        'email' => 'nama-tidak-sepadan@example.com',
+    ]);
+    $emailMatch = User::factory()->create([
+        'name' => 'Pengguna Biasa',
+        'email' => 'carian-email@example.com',
+    ]);
+    $udmMatch = User::factory()->create([
+        'name' => 'Pengguna UDM',
+        'email' => 'udm-tidak-sepadan@example.com',
+        'access_level' => 'udm',
+        'scope_key' => 'UDM SELATAN',
+    ]);
+
+    foreach ([
+        ['Nama Carian', $nameMatch],
+        ['carian-email', $emailMatch],
+        ['udm selatan', $udmMatch],
+    ] as [$search, $expected]) {
+        $this->actingAs($masterAdmin)
+            ->get(route('admin.access.index', ['search' => $search]))
+            ->assertInertia(fn ($page) => $page
+                ->where('search', $search)
+                ->where('users', fn ($users) => collect($users)->pluck('id')->values()->all() === [$expected->id]));
+    }
+});
+
 it('allows master admin to create a user with selected role', function () {
     $masterAdmin = User::factory()->masterAdmin()->create();
 
