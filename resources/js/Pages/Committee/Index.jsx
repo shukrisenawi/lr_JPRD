@@ -56,7 +56,11 @@ function LevelBadge({ level, size = 'sm' }) {
     return <span className={'inline-block rounded-md font-bold ' + meta.bg + ' ' + meta.text + ' ' + sizing}>{meta.label}</span>;
 }
 
-function voterSearchUrl(voter) {
+function voterActionUrl(voter) {
+    if (voter?.is_manual) {
+        return route('tambah-pemilih.index');
+    }
+
     const query = voter?.no_kp || voter?.old_ic || voter?.name || '';
     return route('carian-pemilih.index') + '?q=' + encodeURIComponent(query);
 }
@@ -1492,7 +1496,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                          </p>
                                                                                     </div>
                                                                                     <div className="flex shrink-0 items-center gap-1">
-                                                                                         <a href={voterSearchUrl(m.voter)} target="_blank" rel="noopener noreferrer" aria-label={'Cari ' + m.voter.name + ' di Carian Pemilih'} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50" title="Cari pemilih">
+                                                                                          <a href={voterActionUrl(m.voter)} target="_blank" rel="noopener noreferrer" aria-label={m.voter.is_manual ? 'Edit ' + m.voter.name + ' di Tambah Pemilih' : 'Cari ' + m.voter.name + ' di Carian Pemilih'} className="shrink-0 rounded border border-green-200 bg-white p-1 text-green-700 transition hover:bg-green-50" title={m.voter.is_manual ? 'Edit pemilih manual' : 'Cari pemilih'}>
                                                                                              <Icon name="search" className="h-3.5 w-3.5" />
                                                                                          </a>
                                                                                          <input ref={(el) => { avatarInputRefs.current[avatarId] = el; }} type="file" accept="image/*" onChange={(e) => handleFileSelect(m, e)} className="hidden" />
