@@ -138,6 +138,38 @@ it('keeps the UDM JP total equal to the voter total including mati records', fun
         ->assertJsonPath('data.0.JP', 2);
 });
 
+it('returns individual BN cula columns in the UDM report', function () {
+    $plainTextKey = 'udm-report-bn-secret-key';
+
+    ApiKey::query()->create([
+        'name' => 'UDM Monitor BN',
+        'key' => $plainTextKey,
+    ]);
+
+    foreach (['1', '1A', '1B', '1P'] as $index => $culaCode) {
+        PemilihRecord::query()->create([
+            'identity_number' => '90010101010'.($index + 1),
+            'name' => 'Pemilih '.$culaCode,
+            'dm' => 'UDM 01',
+            'locality' => 'Lokaliti 1',
+            'gender' => 'L',
+            'race' => 'M',
+            'cula_code' => $culaCode,
+            'status' => 'aktif',
+            'is_manual' => false,
+        ]);
+    }
+
+    $this->getJson(route('api.reports.udm'), [
+        'Authorization' => 'Bearer '.$plainTextKey,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.0.BN', 1)
+        ->assertJsonPath('data.0.1A', 1)
+        ->assertJsonPath('data.0.1B', 1)
+        ->assertJsonPath('data.0.1P', 1);
+});
+
 it('rejects invalid and expired API keys', function () {
     $birthday = Carbon::today('Asia/Kuala_Lumpur');
 
