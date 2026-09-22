@@ -21,6 +21,10 @@ return [
         'label' => 'Ahli PAS',
         'description' => 'Senarai dan statistik ahli PAS mengikut skop pengguna.',
     ],
+    'lihat-no-ahli' => [
+        'label' => 'Lihat No. Ahli',
+        'description' => 'Paparkan nombor ahli PAS pada halaman Ahli PAS.',
+    ],
     'hashtag-pemilih' => [
         'label' => 'Hashtag Pemilih',
         'description' => 'Urus hashtag pada rekod pemilih.',

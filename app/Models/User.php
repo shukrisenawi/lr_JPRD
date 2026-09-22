@@ -58,6 +58,11 @@ class User extends Authenticatable
         return $this->role?->hasModuleAccess($module) ?? false;
     }
 
+    public function canViewMemberNumber(): bool
+    {
+        return $this->canAccessModule('lihat-no-ahli');
+    }
+
     public function isExpired(): bool
     {
         return $this->expires_at?->isPast() ?? false;

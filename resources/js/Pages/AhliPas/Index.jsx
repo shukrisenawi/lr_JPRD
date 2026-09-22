@@ -140,10 +140,11 @@ function formatDate(value) {
     return year && month && day ? `${day}/${month}/${year}` : "-";
 }
 
-function DetailModal({ member, onClose }) {
+function DetailModal({ member, onClose, canViewMemberNumber }) {
     const address =
         member.alamat_kediaman || member.alamat_kp || member.address || "-";
     const fields = [
+        ...(canViewMemberNumber ? [["No. Ahli", member.no_ahli || "-"]] : []),
         ["Status Ahli", member.is_member ? "Ya" : "Tidak"],
         ["No. KP", member.no_kp || member.old_ic || "-"],
         ["UDM", member.dm || "-"],
@@ -259,8 +260,10 @@ export default function AhliPasIndex({
     available_cula_codes = [],
     statistics,
     salah_cula_message = "",
+    can_view_member_number = false,
 }) {
     const { auth } = usePage().props;
+    const canViewMemberNumber = can_view_member_number === true;
     const canSendN8nMessage =
         auth.user?.role?.is_master_admin ||
         auth.user?.allowed_modules?.includes("laporan-hantar-status");
@@ -627,7 +630,7 @@ export default function AhliPasIndex({
                                                     q: event.target.value,
                                                 })
                                             }
-                                             placeholder="Nama / No KP"
+                                            placeholder={canViewMemberNumber ? "Nama / No KP / No. Ahli" : "Nama / No KP"}
                                             className="input-field w-full pl-9"
                                         />
                                     </div>
@@ -687,6 +690,16 @@ export default function AhliPasIndex({
                                                 </div>
                                             </div>
                                             <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-green-100 pt-3 text-xs">
+                                                {canViewMemberNumber && (
+                                                    <div>
+                                                        <dt className="font-bold text-green-700">
+                                                            No. Ahli
+                                                        </dt>
+                                                        <dd className="mt-0.5 break-words font-mono font-semibold text-slate-800">
+                                                            {member.no_ahli || "-"}
+                                                        </dd>
+                                                    </div>
+                                                )}
                                                 <div>
                                                     <dt className="font-bold text-green-700">
                                                         No. KP
@@ -824,7 +837,7 @@ export default function AhliPasIndex({
                                                     q: event.target.value,
                                                 })
                                             }
-                                             placeholder="Nama / No KP"
+                                            placeholder={canViewMemberNumber ? "Nama / No KP / No. Ahli" : "Nama / No KP"}
                                             className="input-field w-full pl-9"
                                         />
                                     </div>
@@ -903,6 +916,16 @@ export default function AhliPasIndex({
                                                     </div>
                                                 </div>
                                                 <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-amber-100 pt-3 text-xs">
+                                                    {canViewMemberNumber && (
+                                                        <div>
+                                                            <dt className="font-bold text-amber-700">
+                                                                No. Ahli
+                                                            </dt>
+                                                            <dd className="mt-0.5 break-words font-mono font-semibold text-slate-800">
+                                                                {member.no_ahli || "-"}
+                                                            </dd>
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <dt className="font-bold text-amber-700">
                                                             Status Ahli
@@ -1164,6 +1187,7 @@ export default function AhliPasIndex({
             {detailMember && (
                 <DetailModal
                     member={detailMember}
+                    canViewMemberNumber={canViewMemberNumber}
                     onClose={() => setDetailMember(null)}
                 />
             )}

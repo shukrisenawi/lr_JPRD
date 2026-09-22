@@ -48,6 +48,7 @@ it('renders ahli pas list and statistics using only records with no ahli', funct
             ->where('members.total', 1)
             ->where('members.data.0.name', 'AHLI SATU')
             ->where('members.data.0.is_member', true)
+            ->where('can_view_member_number', false)
             ->missing('members.data.0.no_ahli')
             ->where('available_cula_codes', fn ($codes) => collect($codes)->pluck('code')->all() === collect(CulaCodes::options())->pluck('code')->all())
             ->where('statistics.total', 1)
@@ -61,6 +62,50 @@ it('renders ahli pas list and statistics using only records with no ahli', funct
         ->assertInertia(fn ($page) => $page
             ->component('AhliPas/Index')
             ->where('active_tab', 'statistik'));
+
+    $this->actingAs($user)
+        ->get('/ahli-pas?q=PAS-001')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('members.total', 0));
+});
+
+it('shows no ahli to a role with the member number permission', function () {
+    $user = User::factory()->withModules(['ahli-pas', 'lihat-no-ahli'])->create();
+
+    createAhliPasRecord([
+        'name' => 'AHLI DENGAN NO',
+        'no_ahli' => 'PAS-123',
+    ]);
+
+    $this->actingAs($user)
+        ->get('/ahli-pas')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can_view_member_number', true)
+            ->where('members.data.0.no_ahli', 'PAS-123'));
+
+    $this->actingAs($user)
+        ->get('/ahli-pas?q=PAS-123')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('members.total', 1));
+});
+
+it('shows no ahli to master admin without an explicit role permission', function () {
+    $user = User::factory()->masterAdmin()->create();
+
+    createAhliPasRecord([
+        'name' => 'AHLI MASTER',
+        'no_ahli' => 'PAS-999',
+    ]);
+
+    $this->actingAs($user)
+        ->get('/ahli-pas')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can_view_member_number', true)
+            ->where('members.data.0.no_ahli', 'PAS-999'));
 });
 
 it('applies the users locality scope to ahli pas', function () {

@@ -9,6 +9,7 @@ use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,6 +24,7 @@ class AhliPasController extends Controller
         $tab = $request->string('tab')->toString();
         $tab = in_array($tab, ['senarai', 'salah-cula', 'statistik'], true) ? $tab : 'senarai';
         $base = $this->baseQuery($user);
+        $canViewMemberNumber = $user?->canViewMemberNumber() ?? false;
 
         $availableDms = (clone $base)
             ->whereNotNull('dm')
@@ -52,7 +54,7 @@ class AhliPasController extends Controller
             'q' => $request->string('q')->trim()->toString(),
         ];
 
-        $membersQuery = $this->applyFilters(clone $base, $filters);
+        $membersQuery = $this->applyFilters(clone $base, $filters, $canViewMemberNumber);
         $members = $membersQuery
             ->select(['id', 'name', 'no_kp', 'old_ic', 'no_ahli', 'dm', 'locality'])
             ->orderBy('name')
@@ -60,7 +62,7 @@ class AhliPasController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $wrongCulaMembers = $this->wrongCulaQuery($this->applyFilters(clone $base, $filters))
+        $wrongCulaMembers = $this->wrongCulaQuery($this->applyFilters(clone $base, $filters, $canViewMemberNumber))
             ->select([
                 'id', 'name', 'no_kp', 'old_ic', 'no_ahli', 'dm', 'locality', 'cula_code', 'cula_display_label',
                 'phone_mobile', 'phone_home', 'gender', 'race', 'date_of_birth', 'address', 'alamat_kp', 'alamat_kediaman', 'catatan',
@@ -70,6 +72,9 @@ class AhliPasController extends Controller
             ->paginate(20, ['*'], 'salah_cula_page')
             ->withQueryString();
 
+        $this->exposeMemberNumbers($members, $canViewMemberNumber);
+        $this->exposeMemberNumbers($wrongCulaMembers, $canViewMemberNumber);
+
         $wrongCulaByUdm = $this->groupByUdm($this->wrongCulaQuery(clone $base));
 
         return Inertia::render('AhliPas/Index', [
@@ -77,6 +82,7 @@ class AhliPasController extends Controller
             'filters' => $filters,
             'available_dms' => $availableDms,
             'available_localities' => $availableLocalities,
+            'can_view_member_number' => $canViewMemberNumber,
             'members' => $members,
             'wrong_cula_members' => $wrongCulaMembers,
             'salah_cula_message' => $messageService->buildAhliPasSalahCula($wrongCulaByUdm),
@@ -129,20 +135,35 @@ class AhliPasController extends Controller
         return $query;
     }
 
-    private function applyFilters(Builder $query, array $filters): Builder
+    private function applyFilters(Builder $query, array $filters, bool $canViewMemberNumber): Builder
     {
         return $query
             ->when($filters['udm'], fn (Builder $builder, string $udm) => $builder->where('dm', $udm))
             ->when($filters['locality'], fn (Builder $builder, string $locality) => $builder->where('locality', $locality))
-            ->when($filters['q'], function (Builder $builder, string $search) {
+            ->when($filters['q'], function (Builder $builder, string $search) use ($canViewMemberNumber) {
                 $like = "%{$search}%";
 
-                $builder->where(function (Builder $nested) use ($like) {
+                $builder->where(function (Builder $nested) use ($like, $canViewMemberNumber) {
                     $nested->where('name', 'like', $like)
                         ->orWhere('no_kp', 'like', $like)
                         ->orWhere('old_ic', 'like', $like);
+
+                    if ($canViewMemberNumber) {
+                        $nested->orWhere('no_ahli', 'like', $like);
+                    }
                 });
             });
+    }
+
+    private function exposeMemberNumbers(LengthAwarePaginator $members, bool $canViewMemberNumber): void
+    {
+        if (! $canViewMemberNumber) {
+            return;
+        }
+
+        $members->getCollection()->each(
+            fn (PemilihRecord $member) => $member->makeVisible('no_ahli')
+        );
     }
 
     private function wrongCulaQuery(Builder $query): Builder
