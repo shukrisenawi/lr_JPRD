@@ -153,7 +153,7 @@ function GroupMembersPopup({ group, onClose, onAvatarClick }) {
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{m.voter?.name}</p>
+                                        <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{m.voter?.name}</p>
                                         <p className="text-[10px] text-slate-400">
                                             <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
                                             {(m.voter?.phone_mobile || m.voter?.phone_home) && (

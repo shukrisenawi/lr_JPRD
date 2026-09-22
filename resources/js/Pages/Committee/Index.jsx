@@ -1273,7 +1273,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                 className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
                                             >
                                                 <div className="min-w-0">
-                                                 <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{voter.name}</p>
+                                                 <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
                                                 </div>
                                                 <div className="shrink-0 text-right text-xs text-slate-500">
                                                     <p>{voter.dm || '-'}</p>
@@ -1485,7 +1485,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                         <img src={m.voter.avatar_url} alt="" className="mt-0.5 h-10 w-10 shrink-0 cursor-pointer self-center rounded-full border border-slate-200 object-cover" onClick={() => setLightboxSrc(m.voter.avatar_url)} />
                                                                                     ) : null}
                                                                                     <div className="min-w-0 flex-1">
-                                                                                         <p className={`text-xs font-bold ${m.voter.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
+                                                                                         <p className={`text-xs font-bold ${m.voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
                                                                                          <p className="text-xs text-slate-500">
                                                                                              <span>{m.voter.no_kp || m.voter.old_ic || '-'}</span>
                                                                                              {phone && <span className="ml-2">Tel:{formatPhoneNumber(phone)}</span>}
@@ -1720,7 +1720,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                                             className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
                                         >
                                             <div className="min-w-0">
-                                                 <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{voter.name}</p>
+                                                 <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
                                             </div>
                                             <div className="shrink-0 text-right text-xs text-slate-500">
                                                 <p>{voter.dm || '-'}</p>
@@ -1740,7 +1740,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                                     <Icon name="user" className="h-4 w-4" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                    <p className={`text-xs font-bold ${selectedVoter.is_manual ? 'text-blue-900' : 'text-green-800'}`}>{selectedVoter.name}</p>
+                                    <p className={`text-xs font-bold ${selectedVoter.is_manual ? 'text-blue-700' : 'text-green-800'}`}>{selectedVoter.name}</p>
                                     <p className="text-xs text-green-600">
                                         UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
                                     </p>
@@ -1929,7 +1929,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
                         <div className="space-y-3">
                             {results.map(({ voter, memberships: vms }) => (
                                 <div key={voter.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-                                    <p className={`text-sm font-bold ${voter.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{voter.name}</p>
+                                    <p className={`text-sm font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
                                     <p className="text-xs text-slate-400">No Kp: {voter.no_kp || voter.old_ic || '-'}</p>
                                     <div className="mt-2 space-y-1">
                                         {vms.map((m) => {
@@ -2056,7 +2056,7 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
                                                     <Icon name="user" className="h-4 w-4" />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-900' : 'text-slate-800'))}>{m.voter?.name}</p>
+                                                    <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
                                                     <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
                                                 </div>
                                                 <div className="shrink-0 text-right">

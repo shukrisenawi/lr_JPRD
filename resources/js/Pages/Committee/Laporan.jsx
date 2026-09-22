@@ -324,7 +324,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
                                                     )}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
-                                                    <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-900' : 'text-slate-800'))}>{m.voter?.name}</p>
+                                                    <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
                                                     <p className="text-[10px] text-slate-400">
                                                         <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
                                                         {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
@@ -388,7 +388,7 @@ function UdmPositionPopup({ position, members, groups, onClose, onAvatarClick })
                                         )}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{m.voter?.name}</p>
+                                        <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{m.voter?.name}</p>
                                         <p className="text-[10px] text-slate-400">
                                             <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
                                             {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
@@ -748,7 +748,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                                 )}
                                                             </div>
                                                             <div className="min-w-0 flex-1">
-                                                                <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-900' : 'text-slate-800'}`}>{m.voter?.name}</p>
+                                                                <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{m.voter?.name}</p>
                                                                 <p className="text-[10px] text-slate-400">
                                                                     {m.voter?.no_kp || m.voter?.old_ic || '-'}
                                                                     {m.scope_name ? <span className="text-sky-500"> — {m.scope_name}</span> : ''}
@@ -951,7 +951,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                 )}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-900' : 'text-slate-800'))}>{m.voter?.name}</p>
+                                                <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
                                                 <p className="text-[10px] text-slate-400">
                                                     <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
                                                     {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
