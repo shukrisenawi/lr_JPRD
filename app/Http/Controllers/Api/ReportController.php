@@ -44,6 +44,16 @@ class ReportController extends Controller
             return $total;
         };
 
+        $getRaceCount = static function (array $breakdown, array $names, string $metric = 'total'): int {
+            foreach ($breakdown as $item) {
+                if (in_array(strtoupper((string) ($item['code'] ?? '')), $names, true)) {
+                    return (int) ($item[$metric] ?? $item['total'] ?? 0);
+                }
+            }
+
+            return 0;
+        };
+
         $completedSum = static function (array $completed, array $codes): int {
             $total = 0;
             foreach ($codes as $code) {
@@ -53,7 +63,7 @@ class ReportController extends Controller
             return $total;
         };
 
-        $rows = array_map(function (array $row) use ($culaByDm, $dmDetails, $completedByDm, $completedCulaByDm, $getCulaSum, $completedSum): array {
+        $rows = array_map(function (array $row) use ($culaByDm, $dmDetails, $completedByDm, $completedCulaByDm, $getCulaSum, $getRaceCount, $completedSum): array {
             $culaBreakdown = $culaByDm[$row['key']] ?? [];
             $raceBreakdown = $dmDetails[$row['key']] ?? [];
             $completed = $completedCulaByDm[$row['code']] ?? [];
@@ -64,19 +74,22 @@ class ReportController extends Controller
                 'name' => $row['name'],
                 'total' => (int) $row['total'],
                 'siap_cula' => (int) ($completedByDm[$row['code']] ?? 0),
-                'JP' => (int) $row['total'],
-                'L' => (int) $row['male'],
-                'P' => (int) $row['female'],
-                'M' => $getCulaSum($raceBreakdown, ['MELAYU', 'M']),
-                'C' => $getCulaSum($raceBreakdown, ['CINA', 'C']),
-                'I' => $getCulaSum($raceBreakdown, ['INDIA', 'I']),
-                'S' => $getCulaSum($raceBreakdown, ['SIAM', 'S']),
+                'active_total' => (int) ($row['active_total'] ?? max(0, $row['total'] - $getCulaSum($culaBreakdown, ['8']))),
+                'JP' => (int) ($row['active_total'] ?? max(0, $row['total'] - $getCulaSum($culaBreakdown, ['8']))),
+                'L' => (int) ($row['active_male'] ?? $row['male']),
+                'P' => (int) ($row['active_female'] ?? $row['female']),
+                'M' => $getRaceCount($raceBreakdown, ['MELAYU', 'M'], 'active_total'),
+                'C' => $getRaceCount($raceBreakdown, ['CINA', 'C'], 'active_total'),
+                'I' => $getRaceCount($raceBreakdown, ['INDIA', 'I'], 'active_total'),
+                'S' => $getRaceCount($raceBreakdown, ['SIAM', 'S'], 'active_total'),
                 'PAS' => $getCulaSum($culaBreakdown, ['2']),
                 '1A' => $getCulaSum($culaBreakdown, ['1A']),
                 '1B' => $getCulaSum($culaBreakdown, ['1B']),
                 '1P' => $getCulaSum($culaBreakdown, ['1P']),
+                'PAS_TOTAL' => $getCulaSum($culaBreakdown, ['2', '3B', '3D', '3K', '3M', '3P', '3U']),
                 'PBBM' => $getCulaSum($culaBreakdown, ['10']),
                 'BN' => $getCulaSum($culaBreakdown, ['1']),
+                'BN_TOTAL' => $getCulaSum($culaBreakdown, ['1', '1A', '1B', '1P']),
                 'PH' => $getCulaSum($culaBreakdown, ['5']),
                 'GTA' => 0,
                 'PLK' => $getCulaSum($culaBreakdown, ['3B', '3D', '3K', '3M', '3P', '3U']),

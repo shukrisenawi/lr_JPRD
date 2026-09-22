@@ -30,7 +30,7 @@ class PemilihReportService
 
     public const DEFAULT_SAMPLE_PATH = 'F:\\OneDrive\\PAS\\pemilih.xls';
 
-    private const REPORT_SCHEMA_VERSION = 3;
+    private const REPORT_SCHEMA_VERSION = 4;
 
     public function buildFromPath(?string $path = null): array
     {
@@ -428,10 +428,10 @@ class PemilihReportService
             $dmCode = explode('|', $key)[0];
             $dmCulaCompleted = $completedCulaByDm[$dmCode] ?? [];
 
-            $getRaceCount = function (array $breakdown, array $names): int {
+            $getRaceCount = function (array $breakdown, array $names, string $metric = 'total'): int {
                 foreach ($breakdown as $r) {
                     if (in_array(strtoupper($r['code']), $names)) {
-                        return $r['total'];
+                        return (int) ($r[$metric] ?? $r['total'] ?? 0);
                     }
                 }
 
@@ -464,19 +464,22 @@ class PemilihReportService
                 'key' => $key,
                 'name' => $dm['name'],
                 'siap_cula' => $completedCounts[$dmCode] ?? 0,
-                'JP' => $dm['total'] ?? 0,
-                'L' => $dm['male'] ?? 0,
-                'P' => $dm['female'] ?? 0,
-                'M' => $getRaceCount($raceB, ['MELAYU', 'M']),
-                'C' => $getRaceCount($raceB, ['CINA', 'C']),
-                'I' => $getRaceCount($raceB, ['INDIA', 'I']),
-                'S' => $getRaceCount($raceB, ['SIAM', 'S']),
+                'active_total' => $dm['active_total'] ?? max(0, ($dm['total'] ?? 0) - $getCulaSum($culaB, ['8'])),
+                'JP' => $dm['active_total'] ?? max(0, ($dm['total'] ?? 0) - $getCulaSum($culaB, ['8'])),
+                'L' => $dm['active_male'] ?? $dm['male'] ?? 0,
+                'P' => $dm['active_female'] ?? $dm['female'] ?? 0,
+                'M' => $getRaceCount($raceB, ['MELAYU', 'M'], 'active_total'),
+                'C' => $getRaceCount($raceB, ['CINA', 'C'], 'active_total'),
+                'I' => $getRaceCount($raceB, ['INDIA', 'I'], 'active_total'),
+                'S' => $getRaceCount($raceB, ['SIAM', 'S'], 'active_total'),
                 'PAS' => $getCulaSum($culaB, ['2']),
                 '1A' => $getCulaSum($culaB, ['1A']),
                 '1B' => $getCulaSum($culaB, ['1B']),
                 '1P' => $getCulaSum($culaB, ['1P']),
+                'PAS_TOTAL' => $getCulaSum($culaB, ['2', '3B', '3D', '3K', '3M', '3P', '3U']),
                 'PBBM' => $getCulaSum($culaB, ['10']),
                 'BN' => $getCulaSum($culaB, ['1']),
+                'BN_TOTAL' => $getCulaSum($culaB, ['1', '1A', '1B', '1P']),
                 'PH' => $getCulaSum($culaB, ['5']),
                 'GTA' => 0,
                 'PLK' => $getCulaSum($culaB, ['3B', '3D', '3K', '3M', '3P', '3U']),
@@ -694,6 +697,7 @@ class PemilihReportService
             $raceCode = $this->fallbackLabel($row['Bangsa'] ?? '', 'Tiada');
             $culaCode = $this->normalizeCulaCode($row['Kod Cula'] ?? '');
             $culaDetail = $this->culaDetail($culaCode);
+            $includeInActiveTotals = $culaCode !== '8';
 
             $genderKey = in_array($genderCode, ['L', 'P'], true) ? $genderCode : 'LAIN';
             $gender[$genderKey]++;
@@ -707,11 +711,15 @@ class PemilihReportService
                 'male' => 0,
                 'female' => 0,
                 'other_gender' => 0,
+                'active_total' => 0,
+                'active_male' => 0,
+                'active_female' => 0,
+                'active_other_gender' => 0,
                 'with_cula' => 0,
                 'belum_dicula' => 0,
                 'coverage_percent' => 0,
             ];
-            $this->incrementGroup($dm[$dmKey], $genderKey, $culaDetail['is_completed']);
+            $this->incrementGroup($dm[$dmKey], $genderKey, $culaDetail['is_completed'], $includeInActiveTotals);
 
             $dmCula[$dmKey] ??= [
                 'key' => $dmKey,
@@ -736,6 +744,10 @@ class PemilihReportService
                     'male' => 0,
                     'female' => 0,
                     'other_gender' => 0,
+                    'active_total' => 0,
+                    'active_male' => 0,
+                    'active_female' => 0,
+                    'active_other_gender' => 0,
                     'with_cula' => 0,
                     'belum_dicula' => 0,
                     'coverage_percent' => 0,
@@ -744,7 +756,7 @@ class PemilihReportService
                 'race_breakdown' => [],
                 'localities' => [],
             ];
-            $this->incrementSummary($dmDetails[$dmKey]['summary'], $genderKey, $culaDetail['is_completed']);
+            $this->incrementSummary($dmDetails[$dmKey]['summary'], $genderKey, $culaDetail['is_completed'], $includeInActiveTotals);
 
             $localityKey = $localityCode.'|'.$localityName.'|'.$dmKey;
             $localities[$localityKey] ??= [
@@ -757,12 +769,16 @@ class PemilihReportService
                 'male' => 0,
                 'female' => 0,
                 'other_gender' => 0,
+                'active_total' => 0,
+                'active_male' => 0,
+                'active_female' => 0,
+                'active_other_gender' => 0,
                 'with_cula' => 0,
                 'belum_dicula' => 0,
                 'coverage_percent' => 0,
                 'cula_breakdown' => [],
             ];
-            $this->incrementGroup($localities[$localityKey], $genderKey, $culaDetail['is_completed']);
+            $this->incrementGroup($localities[$localityKey], $genderKey, $culaDetail['is_completed'], $includeInActiveTotals);
             $localities[$localityKey]['cula_breakdown'][$culaCode] ??= [
                 ...$culaDetail,
                 'total' => 0,
@@ -773,8 +789,12 @@ class PemilihReportService
                 'code' => $raceCode,
                 'label' => $raceCode,
                 'total' => 0,
+                'active_total' => 0,
             ];
             $dmDetails[$dmKey]['race_breakdown'][$raceCode]['total']++;
+            if ($includeInActiveTotals) {
+                $dmDetails[$dmKey]['race_breakdown'][$raceCode]['active_total']++;
+            }
 
             $dmDetails[$dmKey]['localities'][$localityKey] ??= [
                 'key' => $localityKey,
@@ -784,19 +804,27 @@ class PemilihReportService
                 'male' => 0,
                 'female' => 0,
                 'other_gender' => 0,
+                'active_total' => 0,
+                'active_male' => 0,
+                'active_female' => 0,
+                'active_other_gender' => 0,
                 'with_cula' => 0,
                 'belum_dicula' => 0,
                 'coverage_percent' => 0,
                 'race_breakdown' => [],
                 'cula_breakdown' => [],
             ];
-            $this->incrementGroup($dmDetails[$dmKey]['localities'][$localityKey], $genderKey, $culaDetail['is_completed']);
+            $this->incrementGroup($dmDetails[$dmKey]['localities'][$localityKey], $genderKey, $culaDetail['is_completed'], $includeInActiveTotals);
             $dmDetails[$dmKey]['localities'][$localityKey]['race_breakdown'][$raceCode] ??= [
                 'code' => $raceCode,
                 'label' => $raceCode,
                 'total' => 0,
+                'active_total' => 0,
             ];
             $dmDetails[$dmKey]['localities'][$localityKey]['race_breakdown'][$raceCode]['total']++;
+            if ($includeInActiveTotals) {
+                $dmDetails[$dmKey]['localities'][$localityKey]['race_breakdown'][$raceCode]['active_total']++;
+            }
             $dmDetails[$dmKey]['localities'][$localityKey]['cula_breakdown'][$culaCode] ??= [
                 ...$culaDetail,
                 'total' => 0,
@@ -848,7 +876,7 @@ class PemilihReportService
         ];
     }
 
-    private function incrementGroup(array &$group, string $genderKey, bool $hasCula): void
+    private function incrementGroup(array &$group, string $genderKey, bool $hasCula, bool $includeInActiveTotals): void
     {
         $group['total']++;
 
@@ -858,6 +886,16 @@ class PemilihReportService
             default => $group['other_gender']++,
         };
 
+        if ($includeInActiveTotals) {
+            $group['active_total']++;
+
+            match ($genderKey) {
+                'L' => $group['active_male']++,
+                'P' => $group['active_female']++,
+                default => $group['active_other_gender']++,
+            };
+        }
+
         if ($hasCula) {
             $group['with_cula']++;
         } elseif (array_key_exists('belum_dicula', $group)) {
@@ -865,7 +903,7 @@ class PemilihReportService
         }
     }
 
-    private function incrementSummary(array &$summary, string $genderKey, bool $hasCula): void
+    private function incrementSummary(array &$summary, string $genderKey, bool $hasCula, bool $includeInActiveTotals): void
     {
         $summary['total_voters']++;
 
@@ -874,6 +912,16 @@ class PemilihReportService
             'P' => $summary['female']++,
             default => $summary['other_gender']++,
         };
+
+        if ($includeInActiveTotals) {
+            $summary['active_total']++;
+
+            match ($genderKey) {
+                'L' => $summary['active_male']++,
+                'P' => $summary['active_female']++,
+                default => $summary['active_other_gender']++,
+            };
+        }
 
         if ($hasCula) {
             $summary['with_cula']++;

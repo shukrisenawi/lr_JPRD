@@ -98,7 +98,7 @@ it('serves birthday voter data to an external app with a bearer API key', functi
         ->assertJsonPath('data.0.BN', 1);
 });
 
-it('keeps the UDM JP total equal to the voter total including mati records', function () {
+it('excludes mati records from UDM demographic columns while retaining the overall total', function () {
     $plainTextKey = 'udm-report-secret-key';
 
     ApiKey::query()->create([
@@ -123,7 +123,7 @@ it('keeps the UDM JP total equal to the voter total including mati records', fun
         'dm' => 'UDM 01',
         'locality' => 'Lokaliti 1',
         'gender' => 'P',
-        'race' => 'M',
+        'race' => 'C',
         'cula_code' => '8',
         'status' => 'aktif',
         'is_manual' => false,
@@ -135,7 +135,15 @@ it('keeps the UDM JP total equal to the voter total including mati records', fun
         ->assertOk()
         ->assertJsonPath('summary.total_voters', 2)
         ->assertJsonPath('data.0.total', 2)
-        ->assertJsonPath('data.0.JP', 2);
+        ->assertJsonPath('data.0.active_total', 1)
+        ->assertJsonPath('data.0.JP', 1)
+        ->assertJsonPath('data.0.L', 1)
+        ->assertJsonPath('data.0.P', 0)
+        ->assertJsonPath('data.0.M', 1)
+        ->assertJsonPath('data.0.C', 0)
+        ->assertJsonPath('data.0.I', 0)
+        ->assertJsonPath('data.0.S', 0)
+        ->assertJsonPath('data.0.Mati', 1);
 });
 
 it('returns individual BN cula columns in the UDM report', function () {
@@ -146,7 +154,7 @@ it('returns individual BN cula columns in the UDM report', function () {
         'key' => $plainTextKey,
     ]);
 
-    foreach (['1', '1A', '1B', '1P'] as $index => $culaCode) {
+    foreach (['1', '1A', '1B', '1P', '2', '3P'] as $index => $culaCode) {
         PemilihRecord::query()->create([
             'identity_number' => '90010101010'.($index + 1),
             'name' => 'Pemilih '.$culaCode,
@@ -167,7 +175,11 @@ it('returns individual BN cula columns in the UDM report', function () {
         ->assertJsonPath('data.0.BN', 1)
         ->assertJsonPath('data.0.1A', 1)
         ->assertJsonPath('data.0.1B', 1)
-        ->assertJsonPath('data.0.1P', 1);
+        ->assertJsonPath('data.0.1P', 1)
+        ->assertJsonPath('data.0.PLK', 1)
+        ->assertJsonPath('data.0.PAS', 1)
+        ->assertJsonPath('data.0.PAS_TOTAL', 2)
+        ->assertJsonPath('data.0.BN_TOTAL', 4);
 });
 
 it('rejects invalid and expired API keys', function () {

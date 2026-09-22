@@ -144,6 +144,8 @@ td:nth-child(3) { background-color: rgba(239, 246, 255, .75); color: #1e40af; }
 td:nth-child(n+4):nth-child(-n+9) { background-color: rgba(236, 253, 245, .72); color: #065f46; }
 td:nth-child(n+10):nth-child(-n+18) { background-color: rgba(255, 251, 235, .72); color: #92400e; }
 td:last-child { background-color: rgba(245, 243, 255, .85); color: #5b21b6; font-weight: 600; }
+th.metric-aggregate { background: #ede9fe; color: #4c1d95; }
+td.metric-aggregate { background-color: rgba(245, 243, 255, .85); color: #5b21b6; font-weight: 600; }
 tbody tr:nth-child(even) td:first-child { background-color: #f8fafc; }
 tbody tr:hover td { background-color: #f0fdf4 !important; color: #14532d; }
 .table-empty { height: 110px; color: var(--muted); font-size: 14px; text-align: center !important; }
