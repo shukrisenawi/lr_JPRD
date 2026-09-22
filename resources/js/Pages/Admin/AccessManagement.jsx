@@ -384,10 +384,9 @@ export default function AccessManagement({ roles, users, modules, udms, cawangan
                                         <TextInput id="user-search" type="search" value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="input-field w-full pl-10" placeholder="Nama, email atau UDM..." />
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <PrimaryButton type="submit" className="shrink-0 px-4 py-2">Cari</PrimaryButton>
-                                    {userSearch && <button type="button" onClick={() => { setUserSearch(''); loadUsers(''); }} className="btn-ghost shrink-0 px-3 py-2 text-xs">Kosongkan</button>}
-                                </div>
+                                {userSearch && <div className="flex gap-2">
+                                    <button type="button" onClick={() => { setUserSearch(''); loadUsers(''); }} className="btn-ghost shrink-0 px-3 py-2 text-xs">Kosongkan</button>
+                                </div>}
                             </form>
                             <div className="mt-3 space-y-4">
                                 {levelOrder.map((lvl) => {
