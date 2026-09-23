@@ -123,6 +123,19 @@ it('allows master admin to update role module access', function () {
     ]);
 });
 
+it('omits removed modules from role access data', function () {
+    $masterAdmin = User::factory()->masterAdmin()->create();
+    $role = Role::factory()->create([
+        'access_modules' => ['dashboard', 'kemaskini-no-ahli'],
+    ]);
+
+    $this->actingAs($masterAdmin)
+        ->get(route('admin.access.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('roles', fn ($roles) => collect($roles)
+                ->firstWhere('id', $role->id)['access_modules'] === ['dashboard']));
+});
+
 it('allows a role to grant direct access to AJK Bukan PAS', function () {
     $masterAdmin = User::factory()->masterAdmin()->create();
     $role = Role::factory()->withModules(['dashboard'])->create([

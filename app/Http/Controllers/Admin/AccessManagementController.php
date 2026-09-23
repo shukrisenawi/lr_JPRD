@@ -25,6 +25,7 @@ class AccessManagementController extends Controller
 
         $search = request()->query('search');
         $search = is_string($search) ? trim($search) : '';
+        $moduleKeys = ModuleRegistry::keys();
 
         return Inertia::render('Admin/AccessManagement', [
             'roles' => Role::query()
@@ -37,8 +38,8 @@ class AccessManagementController extends Controller
                     'slug' => $role->slug,
                     'is_master_admin' => $role->is_master_admin,
                     'access_modules' => $role->is_master_admin
-                        ? ModuleRegistry::keys()
-                        : ($role->access_modules ?? []),
+                        ? $moduleKeys
+                        : array_values(array_unique(array_intersect($role->access_modules ?? [], $moduleKeys))),
                     'user_count' => $role->users()->count(),
                 ])
                 ->values(),
