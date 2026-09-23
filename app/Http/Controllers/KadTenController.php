@@ -54,6 +54,7 @@ class KadTenController extends Controller
             ->withoutEagerLoads()
             ->withCount('members')
             ->get(['kad_tens.id']);
+        $totalMembers = $kadStats->sum('members_count');
 
         $kads = $kadsQuery
             ->latest()
@@ -140,7 +141,8 @@ class KadTenController extends Controller
             'kad_stats' => [
                 'total' => $kadStats->count(),
                 'complete' => $kadStats->where('members_count', '>=', self::MINIMUM_MEMBERS)->count(),
-                'members' => $kadStats->sum('members_count'),
+                'members' => $totalMembers,
+                'required_leaders' => (int) ceil($totalMembers / self::MINIMUM_MEMBERS),
             ],
             'filters' => ['udm' => $udmFilter],
             'scopes' => [

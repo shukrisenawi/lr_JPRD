@@ -208,7 +208,9 @@ it('allows more than ten members and reports completion based on the minimum', f
         ->assertInertia(fn ($page) => $page
             ->where('can_manage', true)
             ->where('kads.data.0.member_count', 11)
-            ->where('kads.data.0.is_complete', true));
+            ->where('kads.data.0.is_complete', true)
+            ->where('kad_stats.members', 11)
+            ->where('kad_stats.required_leaders', 2));
 });
 
 it('paginates Kad 10 cards at twenty per page', function () {
@@ -226,7 +228,8 @@ it('paginates Kad 10 cards at twenty per page', function () {
             ->where('kads.per_page', 20)
             ->where('kads.total', 21)
             ->where('kads.data', fn ($data) => count($data) === 20)
-            ->where('kad_stats.total', 21));
+            ->where('kad_stats.total', 21)
+            ->where('kad_stats.required_leaders', 0));
 });
 
 it('paginates the unassigned Kad 10 list at twenty voters per page', function () {
