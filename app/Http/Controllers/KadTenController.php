@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CommitteeGroup;
+use App\Models\Cawangan;
 use App\Models\CommitteeMembership;
 use App\Models\KadTen;
 use App\Models\KadTenMember;
@@ -25,8 +25,6 @@ class KadTenController extends Controller
     private const MINIMUM_MEMBERS = 10;
 
     private const MAX_AUTO_MEMBERS = 10;
-
-    private const UDM_COMMITTEE_GROUP_NAMES = ['JAWATANKUASA UDM', 'JAWATANKUASA UTAMA'];
 
     public function index(Request $request): Response
     {
@@ -229,27 +227,14 @@ class KadTenController extends Controller
         $admin = $request->user();
         $this->ensureMasterAdmin($admin);
 
-        $mainGroupIds = CommitteeGroup::query()
-            ->whereJsonContains('levels', 'udm')
-            ->where(function (Builder $query): void {
-                foreach (self::UDM_COMMITTEE_GROUP_NAMES as $name) {
-                    $query->orWhereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($name)]);
-                }
-            })
-            ->pluck('id');
-
-        if ($mainGroupIds->isEmpty()) {
-            return $this->autoInputError($request, 'Kumpulan Jawatankuasa UDM belum diwujudkan.');
-        }
-
-        $summary = DB::transaction(function () use ($admin, $mainGroupIds): array {
+        $summary = DB::transaction(function () use ($admin): array {
             $leaders = CommitteeMembership::query()
                 ->with('voter')
-                ->whereIn('committee_group_id', $mainGroupIds)
-                ->where('level', 'udm')
+                ->whereIn('level', ['udm', 'cawangan'])
                 ->whereHas('voter', function (Builder $query): void {
                     $query->where('status', 'aktif');
                 })
+                ->orderByRaw("CASE WHEN level = 'udm' THEN 0 ELSE 1 END")
                 ->orderBy('id')
                 ->get()
                 ->unique('pemilih_record_id')
@@ -258,35 +243,39 @@ class KadTenController extends Controller
             if ($leaders->isEmpty()) {
                 return [
                     'leaders_count' => 0,
+                    'source_leaders_count' => 0,
                     'cards_created' => 0,
                     'members_assigned' => 0,
+                    'existing_cards_count' => 0,
+                    'required_leaders' => 0,
                 ];
             }
 
-            $leaderIds = $leaders->pluck('pemilih_record_id')->values();
             $existingKads = KadTen::query()
-                ->whereIn('pemimpin_id', $leaderIds)
                 ->withCount('members')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('pemimpin_id');
-            $availableVoters = $this->eligibleVoterBaseQuery()
-                ->whereNotIn('id', $leaderIds)
-                ->whereDoesntHave('kadTenMemberships')
-                ->lockForUpdate()
-                ->get([
-                    'id',
-                    'dm',
-                    'locality',
-                    'no_rumah',
-                    'address',
-                    'alamat_kp',
-                    'alamat_kediaman',
-                ])
-                ->shuffle()
+            $requiredLeaders = (int) ceil(
+                $this->eligibleVoterQueryForScope($admin)->count() / self::MINIMUM_MEMBERS
+            );
+            $existingLeaderIds = $existingKads->keys()
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+            $leadersToAdd = $leaders
+                ->reject(fn (CommitteeMembership $membership): bool => in_array(
+                    (int) $membership->pemilih_record_id,
+                    $existingLeaderIds,
+                    true
+                ))
+                ->take(max(0, $requiredLeaders - $existingKads->count()))
                 ->values();
-            $availableVotersById = $availableVoters->keyBy('id')->all();
-            $availableVoterOrder = array_keys($availableVotersById);
+
+            // Ahli hanya diagihkan ketika larian pertama. Larian berikutnya menambah ketua baharu sahaja.
+            $assignMembers = $existingKads->isEmpty();
+            $leaderIds = $leaders->pluck('pemilih_record_id')->values();
+            $availableVotersById = [];
+            $availableVoterOrder = [];
             $matchIndexes = [
                 'address_house_locality' => [],
                 'address_locality' => [],
@@ -301,72 +290,98 @@ class KadTenController extends Controller
                 'cawangan' => [],
             ];
 
-            // Bina indeks sekali supaya tidak membandingkan semua calon untuk setiap ketua.
-            foreach ($availableVotersById as $voter) {
-                $voterId = (int) $voter->id;
-                $dm = $this->normalizedValue($voter->dm);
-                $locality = $this->normalizedValue($voter->locality);
-                $house = $this->normalizedValue($voter->no_rumah);
-                $address = $this->normalizedValue($this->effectiveAddress($voter));
-                $matchKeys = [
-                    'address_house_locality' => $address !== '' && $house !== '' && $locality !== '' ? $address.'|'.$house.'|'.$locality : null,
-                    'address_locality' => $address !== '' && $locality !== '' ? $address.'|'.$locality : null,
-                    'house_locality' => $house !== '' && $locality !== '' ? $house.'|'.$locality : null,
-                    'address' => $address,
-                    'house' => $house,
-                    'locality' => $locality,
-                    'dm' => $dm,
-                ];
-                foreach ($matchKeys as $indexName => $key) {
-                    if ($key !== null && $key !== '') {
-                        $matchIndexes[$indexName][$key][] = $voterId;
+            if ($assignMembers && $leadersToAdd->isNotEmpty()) {
+                $availableVoters = $this->eligibleVoterBaseQuery()
+                    ->whereNotIn('id', $leaderIds)
+                    ->whereDoesntHave('kadTenMemberships')
+                    ->lockForUpdate()
+                    ->get([
+                        'id',
+                        'dm',
+                        'locality',
+                        'no_rumah',
+                        'address',
+                        'alamat_kp',
+                        'alamat_kediaman',
+                    ])
+                    ->shuffle()
+                    ->values();
+                $availableVotersById = $availableVoters->keyBy('id')->all();
+                $availableVoterOrder = array_keys($availableVotersById);
+                $cawanganIdsByLocation = Cawangan::query()
+                    ->get(['id', 'udm', 'name'])
+                    ->groupBy(fn (Cawangan $cawangan): string => $this->normalizedValue($cawangan->udm).'|'.$this->normalizedValue($cawangan->name))
+                    ->map(fn ($cawangans) => $cawangans->pluck('id')->map(fn ($id): int => (int) $id)->all());
+
+                // Bina indeks sekali supaya tidak membandingkan semua calon untuk setiap ketua.
+                foreach ($availableVotersById as $voter) {
+                    $voterId = (int) $voter->id;
+                    $dm = $this->normalizedValue($voter->dm);
+                    $locality = $this->normalizedValue($voter->locality);
+                    $house = $this->normalizedValue($voter->no_rumah);
+                    $address = $this->normalizedValue($this->effectiveAddress($voter));
+                    $matchKeys = [
+                        'address_house_locality' => $address !== '' && $house !== '' && $locality !== '' ? $address.'|'.$house.'|'.$locality : null,
+                        'address_locality' => $address !== '' && $locality !== '' ? $address.'|'.$locality : null,
+                        'house_locality' => $house !== '' && $locality !== '' ? $house.'|'.$locality : null,
+                        'address' => $address,
+                        'house' => $house,
+                        'locality' => $locality,
+                        'dm' => $dm,
+                    ];
+                    foreach ($matchKeys as $indexName => $key) {
+                        if ($key !== null && $key !== '') {
+                            $matchIndexes[$indexName][$key][] = $voterId;
+                        }
+                    }
+
+                    $scopeIndexes['udm'][(string) $voter->dm][] = $voterId;
+                    $scopeIndexes['cawangan'][(string) $voter->dm.'|'.(string) $voter->locality][] = $voterId;
+                    foreach ($cawanganIdsByLocation[$dm.'|'.$locality] ?? [] as $cawanganId) {
+                        $scopeIndexes['cawangan'][(string) $cawanganId][] = $voterId;
                     }
                 }
-
-                $scopeIndexes['udm'][(string) $voter->dm][] = $voterId;
-                $scopeIndexes['cawangan'][(string) $voter->dm.'|'.(string) $voter->locality][] = $voterId;
             }
 
             $cardsCreated = 0;
             $membersAssigned = 0;
+            $leadersAdded = 0;
 
-            foreach ($leaders as $membership) {
+            foreach ($leadersToAdd as $membership) {
                 $leader = $membership->voter;
                 if (! $leader) {
                     continue;
                 }
 
-                $kad = $existingKads->get($leader->id);
-                if (! $kad) {
-                    [$scopeName, $parentScopeName] = $this->resolveScope(
-                        $membership->level,
-                        (string) $membership->scope_key,
-                        $leader
-                    );
-                    $kad = KadTen::query()->create([
-                        'name' => $leader->name,
-                        'pemimpin_id' => $leader->id,
-                        'committee_membership_id' => $membership->id,
-                        'level' => $membership->level,
-                        'scope_key' => $membership->scope_key,
-                        'scope_name' => $scopeName,
-                        'parent_scope_name' => $parentScopeName,
-                        'created_by' => $admin->id,
-                    ]);
-                    $cardsCreated++;
-                    $memberCount = 0;
-                } else {
-                    $memberCount = (int) $kad->members_count;
-                }
+                [$scopeName, $parentScopeName] = $this->resolveScope(
+                    $membership->level,
+                    (string) $membership->scope_key,
+                    $leader
+                );
+                $kad = KadTen::query()->create([
+                    'name' => $leader->name,
+                    'pemimpin_id' => $leader->id,
+                    'committee_membership_id' => $membership->id,
+                    'level' => $membership->level,
+                    'scope_key' => $membership->scope_key,
+                    'scope_name' => $scopeName,
+                    'parent_scope_name' => $parentScopeName,
+                    'created_by' => $admin->id,
+                ]);
+                $cardsCreated++;
+                $leadersAdded++;
 
-                $capacity = max(0, self::MAX_AUTO_MEMBERS - $memberCount);
-                if ($capacity === 0) {
+                if (! $assignMembers) {
                     continue;
                 }
 
+                $capacity = self::MAX_AUTO_MEMBERS;
+
                 $scopeIds = match ($kad->level) {
                     'udm' => $scopeIndexes['udm'][(string) $kad->scope_key] ?? [],
-                    'cawangan' => $scopeIndexes['cawangan'][(string) $kad->scope_key] ?? [],
+                    'cawangan' => $scopeIndexes['cawangan'][(string) $kad->scope_key]
+                        ?? $scopeIndexes['cawangan'][(string) $leader->dm.'|'.(string) $leader->locality]
+                        ?? [],
                     default => null,
                 };
                 $scopeSet = $scopeIds === null ? null : array_fill_keys($scopeIds, true);
@@ -442,22 +457,28 @@ class KadTenController extends Controller
             }
 
             return [
-                'leaders_count' => $leaders->count(),
+                'leaders_count' => $leadersAdded,
+                'source_leaders_count' => $leaders->count(),
                 'cards_created' => $cardsCreated,
                 'members_assigned' => $membersAssigned,
+                'existing_cards_count' => $existingKads->count(),
+                'required_leaders' => $requiredLeaders,
             ];
         });
 
-        if ($summary['leaders_count'] === 0) {
-            return $this->autoInputError($request, 'Tiada ahli aktif dalam kumpulan Jawatankuasa UDM.');
+        if ($summary['source_leaders_count'] === 0) {
+            return $this->autoInputError($request, 'Tiada ahli aktif dalam jawatankuasa UDM atau cawangan.');
         }
 
         $message = sprintf(
-            'Auto input selesai: %d ketua diproses, %d Kad 10 baharu dicipta dan %d ahli diagihkan dengan mengutamakan padanan terdekat (maksimum 10 orang setiap ketua).',
+            'Auto input selesai: %d ketua baharu diproses, %d Kad 10 baharu dicipta dan %d ahli diagihkan dengan mengutamakan padanan terdekat (maksimum 10 orang setiap ketua).',
             $summary['leaders_count'],
             $summary['cards_created'],
             $summary['members_assigned']
         );
+        if ($summary['existing_cards_count'] > 0 && $summary['leaders_count'] > 0) {
+            $message .= ' Larian seterusnya hanya menambah ketua baharu tanpa mengagihkan ahli tambahan.';
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -1056,9 +1077,7 @@ class KadTenController extends Controller
         }
 
         if ($level === 'cawangan') {
-            [$dm, $locality] = array_pad(explode('|', $scopeKey, 2), 2, null);
-
-            return $voter->dm === $dm && $voter->locality === $locality;
+            return $this->cawanganMatchesVoter($scopeKey, $voter);
         }
 
         return false;
@@ -1105,6 +1124,14 @@ class KadTenController extends Controller
         }
 
         if ($kadTen->level === 'cawangan') {
+            $cawangan = Cawangan::query()->find($kadTen->scope_key);
+            if ($cawangan) {
+                $query->where('dm', $cawangan->udm)
+                    ->where('locality', $cawangan->name);
+
+                return;
+            }
+
             [$dm, $locality] = array_pad(explode('|', (string) $kadTen->scope_key, 2), 2, null);
             $query->where('dm', $dm)->where('locality', $locality);
         }
@@ -1117,12 +1144,23 @@ class KadTenController extends Controller
         }
 
         if ($kadTen->level === 'cawangan') {
-            [$dm, $locality] = array_pad(explode('|', (string) $kadTen->scope_key, 2), 2, null);
-
-            return $voter->dm === $dm && $voter->locality === $locality;
+            return $this->cawanganMatchesVoter((string) $kadTen->scope_key, $voter);
         }
 
         return true;
+    }
+
+    private function cawanganMatchesVoter(string $scopeKey, PemilihRecord $voter): bool
+    {
+        $cawangan = Cawangan::query()->find($scopeKey);
+        if ($cawangan) {
+            return $this->normalizedValue($voter->dm) === $this->normalizedValue($cawangan->udm)
+                && $this->normalizedValue($voter->locality) === $this->normalizedValue($cawangan->name);
+        }
+
+        [$dm, $locality] = array_pad(explode('|', $scopeKey, 2), 2, null);
+
+        return $voter->dm === $dm && $voter->locality === $locality;
     }
 
     private function applySearchFilter(Builder $query, string $search): void

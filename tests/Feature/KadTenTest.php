@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Cawangan;
 use App\Models\CommitteeGroup;
 use App\Models\CommitteeMembership;
 use App\Models\CommitteePosition;
@@ -403,6 +404,112 @@ it('prioritizes the closest eligible voters before filling the ten-member limit'
     expect(KadTenMember::query()->whereIn('pemilih_record_id', $closest->pluck('id'))->count())->toBe(10);
     expect(KadTenMember::query()->where('pemilih_record_id', $farSameUdm->id)->exists())->toBeFalse();
     expect(KadTenMember::query()->where('pemilih_record_id', $farOtherUdm->id)->exists())->toBeFalse();
+});
+
+it('uses all UDM and cawangan committee groups and only adds new leaders after the first run', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $udmGroup = CommitteeGroup::query()->create([
+        'name' => 'PASUKAN PACABA',
+        'levels' => ['udm'],
+    ]);
+    $secondUdmGroup = CommitteeGroup::query()->create([
+        'name' => 'PETUGAS BARUNG',
+        'levels' => ['udm'],
+    ]);
+    $cawanganGroup = CommitteeGroup::query()->create([
+        'name' => 'JAWATANKUASA CAWANGAN',
+        'levels' => ['cawangan'],
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'AJK',
+        'slug' => 'ajk',
+        'sort_order' => 1,
+    ]);
+    $cawangan = Cawangan::query()->create([
+        'name' => 'CAWANGAN ALPHA',
+        'udm' => 'UDM ALPHA',
+    ]);
+    $firstLeader = kadTenVoter([
+        'name' => 'KETUA PACABA',
+        'locality' => 'LOKALITI UDM',
+    ]);
+    $secondLeader = kadTenVoter([
+        'name' => 'KETUA BARUNG',
+        'locality' => 'LOKALITI UDM',
+    ]);
+    $cawanganLeader = kadTenVoter([
+        'name' => 'KETUA CAWANGAN',
+        'locality' => 'CAWANGAN ALPHA',
+    ]);
+
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $udmGroup->id,
+        'pemilih_record_id' => $firstLeader->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+        'scope_name' => 'UDM ALPHA',
+    ]);
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $secondUdmGroup->id,
+        'pemilih_record_id' => $secondLeader->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+        'scope_name' => 'UDM ALPHA',
+    ]);
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $cawanganGroup->id,
+        'cawangan_id' => $cawangan->id,
+        'pemilih_record_id' => $cawanganLeader->id,
+        'committee_position_id' => $position->id,
+        'level' => 'cawangan',
+        'scope_key' => (string) $cawangan->id,
+        'scope_name' => $cawangan->name,
+        'parent_scope_name' => $cawangan->udm,
+    ]);
+
+    collect(range(1, 30))->each(fn (int $number) => kadTenVoter([
+        'name' => 'AHLI CAWANGAN '.$number,
+        'locality' => 'CAWANGAN ALPHA',
+    ]));
+
+    $this->actingAs($admin)
+        ->postJson(route('kad-ten.auto-input'))
+        ->assertOk()
+        ->assertJsonPath('leaders_count', 3)
+        ->assertJsonPath('cards_created', 3)
+        ->assertJsonPath('members_assigned', 30);
+
+    expect(KadTen::query()->count())->toBe(3);
+    expect(KadTenMember::query()->count())->toBe(30);
+    expect(KadTen::query()->where('level', 'cawangan')->value('scope_key'))
+        ->toBe((string) $cawangan->id);
+
+    $newLeader = kadTenVoter([
+        'name' => 'KETUA BAHARU',
+        'locality' => 'LOKALITI UDM',
+    ]);
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $secondUdmGroup->id,
+        'pemilih_record_id' => $newLeader->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+        'scope_name' => 'UDM ALPHA',
+    ]);
+
+    $this->actingAs($admin)
+        ->postJson(route('kad-ten.auto-input'))
+        ->assertOk()
+        ->assertJsonPath('leaders_count', 1)
+        ->assertJsonPath('cards_created', 1)
+        ->assertJsonPath('members_assigned', 0);
+
+    $newKad = KadTen::query()->where('pemimpin_id', $newLeader->id)->firstOrFail();
+    expect(KadTen::query()->count())->toBe(4);
+    expect(KadTenMember::query()->count())->toBe(30);
+    expect($newKad->members()->count())->toBe(0);
 });
 
 it('lets only a master admin reset Kad 10 cards and members without deleting committee memberships', function () {

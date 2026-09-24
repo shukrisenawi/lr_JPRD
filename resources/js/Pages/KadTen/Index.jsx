@@ -536,7 +536,7 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
         Swal.fire({
             icon: 'warning',
             title: 'Jalankan auto input?',
-            text: 'Semua ahli Jawatankuasa UDM akan dijadikan ketua. Pemilih daripada UDM ketua akan dipilih dengan padanan paling hampir sehingga 10 orang.',
+            text: 'Ketua diambil daripada semua kumpulan jawatankuasa UDM dan cawangan. Larian pertama mengisi sehingga 10 ahli setiap kad; larian seterusnya hanya menambah ketua baharu.',
             showCancelButton: true,
             confirmButtonText: 'Ya, teruskan',
             cancelButtonText: 'Batal',
