@@ -194,6 +194,24 @@ function JprdMemberActions({ member, canAddToJprd, selectedMemberIds, onToggleMe
     );
 }
 
+function SelectAllJprdMembers({ members, selectedMemberIds, onSelectAll }) {
+    const memberKeys = [...new Set(members.map(memberVoterKey))];
+    const allSelected = memberKeys.length > 0 && memberKeys.every((memberKey) => selectedMemberIds.includes(memberKey));
+
+    return (
+        <label className="flex cursor-pointer items-center gap-1 rounded-md border border-emerald-200 bg-white px-2 py-1 text-[10px] font-bold text-emerald-700 transition hover:bg-emerald-50" title={allSelected ? 'Nyahpilih semua pemilih' : 'Pilih semua pemilih'}>
+            <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={() => onSelectAll(members)}
+                aria-label={allSelected ? 'Nyahpilih semua pemilih' : 'Pilih semua pemilih'}
+                className="h-3 w-3 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            Semua
+        </label>
+    );
+}
+
 const normalizeLabel = (value) => String(value || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -314,7 +332,7 @@ function AddToJprdModal({ members, groups, onClose, onSuccess }) {
     );
 }
 
-function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, selectedMemberIds, onToggleMember, onAddToJprd, onClose, onAvatarClick }) {
+function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, selectedMemberIds, onToggleMember, onSelectAllMembers, onAddToJprd, onClose, onAvatarClick }) {
     const [copiedGroupId, setCopiedGroupId] = useState(null);
     if (!scope) return null;
 
@@ -420,16 +438,20 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
                                                 return ' — kemaskini: ' + dd + '/' + mm + '/' + yy + ' ' + hh + ':' + mi;
                                             })()}</p>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleCopyGroup(gid, g)}
-                                            className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
-                                            title="Salin senarai untuk WhatsApp"
-                                        >
-                                            <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">{copiedGroupId === gid ? <Icon name="check" className="h-2.5 w-2.5" /> : 'C'}</span>
-                                            {copiedGroupId === gid ? 'Disalin' : 'Copy'}
-                                        </button>
-                                        <button
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCopyGroup(gid, g)}
+                                                className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
+                                                title="Salin senarai untuk WhatsApp"
+                                            >
+                                                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">{copiedGroupId === gid ? <Icon name="check" className="h-2.5 w-2.5" /> : 'C'}</span>
+                                                {copiedGroupId === gid ? 'Disalin' : 'Copy'}
+                                            </button>
+                                            {level === 'udm' && canAddToJprd && (
+                                                <SelectAllJprdMembers members={g.members} selectedMemberIds={selectedMemberIds} onSelectAll={onSelectAllMembers} />
+                                            )}
+                                            <button
                                             type="button"
                                             onClick={() => {
                                                 const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
@@ -465,7 +487,8 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
                                         >
                                             <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">X</span>
                                             Excel
-                                        </button>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2">
                                         {g.members.map((m) => {
@@ -505,7 +528,7 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
     );
 }
 
-function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMemberIds, onToggleMember, onAddToJprd, onClose, onAvatarClick }) {
+function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMemberIds, onToggleMember, onSelectAllMembers, onAddToJprd, onClose, onAvatarClick }) {
     if (!position) return null;
 
     const title = 'UDM — ' + position.name;
@@ -519,6 +542,9 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                         <p className="text-xs text-slate-500">{members.length} orang ahli</p>
                     </div>
                     <div className="flex items-center gap-2">
+                        {canAddToJprd && members.length > 0 && (
+                            <SelectAllJprdMembers members={members} selectedMemberIds={selectedMemberIds} onSelectAll={onSelectAllMembers} />
+                        )}
                         {members.length > 0 && (
                             <ExportButtons
                                 text={buildMemberListText(title, members, groups)}
@@ -582,6 +608,16 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
         setSelectedJprdMemberIds((current) => current.includes(memberKey)
             ? current.filter((id) => id !== memberKey)
             : [...current, memberKey]);
+    };
+
+    const toggleJprdMembers = (members) => {
+        const memberKeys = [...new Set(members.map(memberVoterKey))];
+        setSelectedJprdMemberIds((current) => {
+            const allSelected = memberKeys.length > 0 && memberKeys.every((memberKey) => current.includes(memberKey));
+            return allSelected
+                ? current.filter((memberKey) => !memberKeys.includes(memberKey))
+                : [...new Set([...current, ...memberKeys])];
+        });
     };
 
     const openSingleJprdModal = (member) => setJprdMembers([member]);
@@ -849,10 +885,15 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                         {currentTabMembers.length > 0 && (
                             <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-green-100 bg-green-50/50 px-3 py-2">
                                 <p className="text-xs font-bold text-green-800">{currentTabTitle} ({currentTabMembers.length} orang)</p>
-                                <ExportButtons
-                                    text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
-                                    onExport={() => downloadExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', currentTabTitle, memberExportColumns, buildMemberRows(currentTabMembers, groups))}
-                                />
+                                <div className="flex items-center gap-2">
+                                    {canAddToJprd && ['udm', 'udm-jawatan', 'udm-kumpulan'].includes(activeTab) && (
+                                        <SelectAllJprdMembers members={currentTabMembers} selectedMemberIds={selectedJprdMemberIds} onSelectAll={toggleJprdMembers} />
+                                    )}
+                                    <ExportButtons
+                                        text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
+                                        onExport={() => downloadExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', currentTabTitle, memberExportColumns, buildMemberRows(currentTabMembers, groups))}
+                                    />
+                                </div>
                             </div>
                         )}
                         {canAddToJprd && selectedJprdMemberIds.length > 0 && (
@@ -1057,6 +1098,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                     canAddToJprd={canAddToJprd}
                     selectedMemberIds={selectedJprdMemberIds}
                     onToggleMember={toggleJprdMember}
+                    onSelectAllMembers={toggleJprdMembers}
                     onAddToJprd={openSingleJprdModal}
                     onClose={() => setDetailScope(null)}
                     onAvatarClick={setLightboxSrc}
@@ -1071,6 +1113,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                     canAddToJprd={canAddToJprd}
                     selectedMemberIds={selectedJprdMemberIds}
                     onToggleMember={toggleJprdMember}
+                    onSelectAllMembers={toggleJprdMembers}
                     onAddToJprd={openSingleJprdModal}
                     onClose={() => setDetailPosition(null)}
                     onAvatarClick={setLightboxSrc}
