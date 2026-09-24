@@ -173,6 +173,12 @@ function AddToJprdButton({ member, canAddToJprd, onAdd }) {
     );
 }
 
+const normalizeLabel = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
 function AddToJprdModal({ member, groups, onClose }) {
     const sourceGroup = groups.find((group) => group.id === member.committee_group_id);
     const jprdGroups = useMemo(() => groups
@@ -182,12 +188,24 @@ function AddToJprdModal({ member, groups, onClose }) {
             positions: (group.positions || []).filter((position) => position.pivot_level === 'jprd'),
         }))
         .filter((group) => group.positions.length > 0), [groups]);
-    const sourceGroupName = String(sourceGroup?.name || '').trim().toLowerCase();
-    const defaultGroup = jprdGroups.find((group) => String(group.name || '').trim().toLowerCase() === sourceGroupName);
+    const sourceGroupName = normalizeLabel(sourceGroup?.name);
+    const sourcePositionName = normalizeLabel(member.position?.name);
+    const defaultGroup = useMemo(() => {
+        const positionMatch = jprdGroups
+            .filter((group) => {
+                const groupName = normalizeLabel(group.name);
+                return groupName.length >= 4 && sourcePositionName.includes(groupName);
+            })
+            .sort((a, b) => normalizeLabel(b.name).length - normalizeLabel(a.name).length)[0];
+
+        return positionMatch || jprdGroups.find((group) => normalizeLabel(group.name) === sourceGroupName) || null;
+    }, [jprdGroups, sourceGroupName, sourcePositionName]);
+    const defaultPosition = defaultGroup?.positions.find((position) => normalizeLabel(position.name) === 'ajk')
+        || defaultGroup?.positions.find((position) => normalizeLabel(position.name).includes('ajk'));
     const form = useForm({
         pemilih_record_id: member.pemilih_record_id || member.voter?.id || '',
         committee_group_id: defaultGroup?.id || '',
-        committee_position_id: '',
+        committee_position_id: defaultPosition?.id || '',
         notes: '',
     });
     const selectedGroup = jprdGroups.find((group) => String(group.id) === String(form.data.committee_group_id));
@@ -236,7 +254,7 @@ function AddToJprdModal({ member, groups, onClose }) {
                             <option value="">Pilih kumpulan JPRD</option>
                             {jprdGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
                         </select>
-                        {defaultGroup && String(form.data.committee_group_id) === String(defaultGroup.id) && <p className="mt-1 text-[10px] text-emerald-600">Kumpulan yang sama di peringkat JPRD dipilih secara automatik.</p>}
+                        {defaultGroup && String(form.data.committee_group_id) === String(defaultGroup.id) && <p className="mt-1 text-[10px] text-emerald-600">Padanan kumpulan JPRD dipilih secara automatik berdasarkan jawatan UDM.</p>}
                         {form.errors.committee_group_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.committee_group_id}</p>}
                     </div>
 
@@ -255,6 +273,7 @@ function AddToJprdModal({ member, groups, onClose }) {
                         </select>
                         {!jprdGroups.length && <p className="mt-1 text-[10px] text-rose-600">Tiada kumpulan dan jawatan JPRD tersedia.</p>}
                         {selectedGroup && !positions.length && <p className="mt-1 text-[10px] text-rose-600">Kumpulan ini belum mempunyai jawatan JPRD.</p>}
+                        {defaultPosition && selectedGroup?.id === defaultGroup?.id && String(form.data.committee_position_id) === String(defaultPosition.id) && <p className="mt-1 text-[10px] text-emerald-600">Jawatan AJK dipilih secara automatik.</p>}
                         {form.errors.committee_position_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.committee_position_id}</p>}
                     </div>
 
