@@ -817,7 +817,7 @@ const committeeTabs = [
     { key: 'cawangan', label: 'Cawangan', desc: 'Peringkat cawangan', icon: 'userCog' },
 ];
 
-const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, udmN8nMessage = '', activeTab, onTabChange }, ref) {
+const MembershipManager = forwardRef(function MembershipManager({ groups, memberships, scopes, auth, udmN8nMessage = '', activeTab, onTabChange, initialCawanganId = '', openCawanganAccordion = false }, ref) {
     const userLevel = auth?.user?.access_level ?? 'jprd';
     const levelPriority = { jprd: 3, udm: 2, cawangan: 1 };
     const tabs = committeeTabs.filter(t => levelPriority[t.key] <= levelPriority[userLevel]);
@@ -838,12 +838,15 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         return (group.positions || []).filter((p) => p.pivot_level === resolvedTab);
     }, [groups, selectedGroupId, resolvedTab]);
 
+    const initialCawanganScope = String(initialCawanganId || '');
     const form = useForm({
         pemilih_record_id: '',
         committee_position_id: '',
         committee_group_id: '',
         level: 'jprd',
-        scope_key: scopes.jprd?.[0]?.key ?? 'jprd',
+        scope_key: initialCawanganScope && scopes.cawangan?.some((scope) => String(scope.key) === initialCawanganScope)
+            ? initialCawanganScope
+            : (scopes.jprd?.[0]?.key ?? 'jprd'),
         voter_search: '',
         notes: '',
     });
@@ -852,7 +855,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         form.setData((current) => ({
             ...current,
             level: resolvedTab,
-            scope_key: scopes[resolvedTab]?.[0]?.key ?? '',
+            scope_key: resolvedTab === 'cawangan' && initialCawanganScope && scopes.cawangan?.some((scope) => String(scope.key) === initialCawanganScope)
+                ? initialCawanganScope
+                : (scopes[resolvedTab]?.[0]?.key ?? ''),
         }));
         setSelectedGroupId('');
         setSelectedVoter(null);
@@ -1010,8 +1015,17 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
                 return { ...group, positionsWithMembers, totalMembers };
             })
-            .filter(g => g.totalMembers > 0);
+            .filter(g => g.totalMembers > 0 || (resolvedTab === 'cawangan' && g.positionsWithMembers.length > 0));
     }, [groups, resolvedTab, filteredMemberships]);
+
+    useEffect(() => {
+        if (!openCawanganAccordion || resolvedTab !== 'cawangan' || expandedGroupId !== null) return;
+
+        const cawanganGroup = groupsWithMembers.find((group) => /jawatankuasa\s*cawangan/i.test(group.name))
+            ?? groupsWithMembers.find((group) => (group.levels || []).includes('cawangan'));
+
+        if (cawanganGroup) setExpandedGroupId(cawanganGroup.id);
+    }, [expandedGroupId, groupsWithMembers, openCawanganAccordion, resolvedTab]);
 
     const handleSearchChange = async (event) => {
         const value = event.target.value;
@@ -2238,6 +2252,15 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
     const canKumpulan = allowedModules.includes('jawatankuasa.kumpulan');
     const canJawatan = allowedModules.includes('jawatankuasa.jawatan');
     const canSenarai = allowedModules.includes('jawatankuasa.senarai');
+    const committeeTarget = useMemo(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        return {
+            tab: params.get('tab') === 'cawangan' ? 'cawangan' : null,
+            cawanganId: params.get('cawangan_id') || '',
+            openCawanganAccordion: params.get('open_cawangan') === '1',
+        };
+    }, []);
 
     const [searchOpen, setSearchOpen] = useState(false);
     const membershipRef = useRef(null);
@@ -2249,10 +2272,12 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
     ];
 
     const [activeSection, setActiveSection] = useState(() => {
+        if (committeeTarget.tab === 'cawangan' && canSenarai) return 'senarai-jawatankuasa';
         if (canSenarai) return 'senarai-jawatankuasa';
         if (canKumpulan) return 'kumpulan';
         return 'jawatan';
     });
+    const [activeCommitteeTab, setActiveCommitteeTab] = useState(committeeTarget.tab);
 
     return (
         <AuthenticatedLayout
@@ -2302,7 +2327,18 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
                 )}
 
                 {activeSection === 'senarai-jawatankuasa' && (
-                    <MembershipManager ref={membershipRef} groups={groups} memberships={memberships} scopes={scopes} udmN8nMessage={udm_n8n_message} auth={auth} />
+                    <MembershipManager
+                        ref={membershipRef}
+                        groups={groups}
+                        memberships={memberships}
+                        scopes={scopes}
+                        udmN8nMessage={udm_n8n_message}
+                        auth={auth}
+                        activeTab={activeCommitteeTab || undefined}
+                        onTabChange={activeCommitteeTab ? setActiveCommitteeTab : undefined}
+                        initialCawanganId={committeeTarget.cawanganId}
+                        openCawanganAccordion={committeeTarget.openCawanganAccordion}
+                    />
                 )}
             </div>
 

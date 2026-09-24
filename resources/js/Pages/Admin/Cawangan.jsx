@@ -22,6 +22,8 @@ function Icon({ name, className = 'h-5 w-5' }) {
 
 function CawanganCard({ cawangan, udms, editing = false, onEdit, onCancel, onDelete }) {
     const editForm = useForm({ name: cawangan.name, udm: cawangan.udm });
+    const hasMembers = Number(cawangan.committee_members_count) > 0;
+    const committeeUrl = `${route('jawatankuasa.index')}?tab=cawangan&cawangan_id=${encodeURIComponent(cawangan.id)}&open_cawangan=1`;
 
     const submit = (event) => {
         event.preventDefault();
@@ -58,16 +60,17 @@ function CawanganCard({ cawangan, udms, editing = false, onEdit, onCancel, onDel
     }
 
     return (
-        <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className={'flex flex-col gap-3 rounded-lg border p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between ' + (hasMembers ? 'border-slate-200 bg-white' : 'border-orange-300 bg-orange-50/70 shadow-orange-100')}>
             <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700"><Icon name="branch" className="h-5 w-5" /></div>
+                <div className={'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ' + (hasMembers ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700')}><Icon name="branch" className="h-5 w-5" /></div>
                 <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900">{cawangan.name}</p>
+                    <p className={'truncate text-sm font-bold ' + (hasMembers ? 'text-slate-900' : 'text-orange-950')}>{cawangan.name}</p>
                     <p className="mt-0.5 text-xs text-slate-500">UDM: <span className="font-semibold text-sky-700">{cawangan.udm}</span></p>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600"><Icon name="users" className="h-3 w-3" />{cawangan.committee_members_count} AJK</span>
+            <div className="flex flex-wrap items-center gap-2">
+                <span className={'inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ' + (hasMembers ? 'bg-slate-100 text-slate-600' : 'bg-orange-100 text-orange-800')}><Icon name="users" className="h-3 w-3" />{cawangan.committee_members_count} AJK</span>
+                {!hasMembers && <a href={committeeUrl} className="inline-flex items-center gap-1 rounded-md border border-orange-400 bg-orange-500 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:border-orange-500 hover:bg-orange-600"><Icon name="plus" className="h-3 w-3" />Tambah AJK</a>}
                 <button type="button" onClick={() => onEdit(cawangan.id)} className="rounded-md border border-emerald-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-emerald-700 hover:bg-emerald-50"><Icon name="edit" className="mr-1 inline h-3 w-3" />Edit</button>
                 <button type="button" onClick={() => onDelete(cawangan)} className="rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50"><Icon name="trash" className="mr-1 inline h-3 w-3" />Padam</button>
             </div>
