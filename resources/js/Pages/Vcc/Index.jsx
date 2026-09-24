@@ -64,6 +64,15 @@ function excelTextCell(value) {
     return { value: value ?? '-', type: 'String' };
 }
 
+function parseBirthDateFilter(value) {
+    const match = String(value ?? '').match(/^(\d{2})-(\d{2})$/);
+
+    return {
+        day: match?.[1] ?? '',
+        month: match?.[2] ?? '',
+    };
+}
+
 function Pagination({ voters, onNavigate }) {
     if (!voters || voters.last_page <= 1) return null;
 
@@ -154,6 +163,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [callSaving, setCallSaving] = useState(false);
     const [callError, setCallError] = useState('');
     const [hashtagFilterOpen, setHashtagFilterOpen] = useState(false);
+    const initialBirthDate = parseBirthDateFilter(filters.tarikh_lahir);
+    const [birthDateDay, setBirthDateDay] = useState(initialBirthDate.day);
+    const [birthDateMonth, setBirthDateMonth] = useState(initialBirthDate.month);
     const orderedHashtags = [...available_hashtags].sort((a, b) => {
         const aIsXaktif = String(a.name).trim().toLowerCase() === '#xaktif';
         const bIsXaktif = String(b.name).trim().toLowerCase() === '#xaktif';
@@ -196,6 +208,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             has_phone: Boolean(filters.has_phone),
             birthday_image_status: filters.birthday_image_status ?? '',
         });
+        const birthDate = parseBirthDateFilter(filters.tarikh_lahir);
+        setBirthDateDay(birthDate.day);
+        setBirthDateMonth(birthDate.month);
     }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.tarikh_lahir, filters.cula_codes, filters.hashtags, filters.has_phone, filters.birthday_image_status]);
 
     const initialMonth = useRef(true);
@@ -254,6 +269,27 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         }
         setFormState(nextState);
         applyFilters(nextState);
+    };
+
+    const updateBirthDateFilter = (part, value) => {
+        let nextDay = part === 'day' ? value : birthDateDay;
+        const nextMonth = part === 'month' ? value : birthDateMonth;
+
+        if (nextDay && nextMonth && Number(nextDay) > new Date(2000, Number(nextMonth), 0).getDate()) {
+            nextDay = '';
+        }
+
+        setBirthDateDay(nextDay);
+        setBirthDateMonth(nextMonth);
+
+        const nextDate = nextDay && nextMonth ? `${nextDay}-${nextMonth}` : '';
+        const nextState = { ...formState, tarikh_lahir: nextDate };
+        if (nextDate) nextState.bulan_lahir = '';
+        setFormState(nextState);
+
+        if (nextDate || formState.tarikh_lahir) {
+            applyFilters(nextState);
+        }
     };
 
     const toggleHashtag = (hashtag) => {
@@ -969,14 +1005,35 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
 
                                 <div>
-                                    <label htmlFor="vcc-tarikh-lahir" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tarikh Lahir</label>
-                                    <input
-                                        id="vcc-tarikh-lahir"
-                                        type="date"
-                                        value={formState.tarikh_lahir}
-                                        onChange={(event) => updateFilter('tarikh_lahir', event.target.value)}
-                                        className="input-field mt-1"
-                                    />
+                                    <label htmlFor="vcc-tarikh-lahir-hari" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tarikh Lahir</label>
+                                    <div className="mt-1 grid grid-cols-2 gap-1">
+                                        <select
+                                            id="vcc-tarikh-lahir-hari"
+                                            value={birthDateDay}
+                                            onChange={(event) => updateBirthDateFilter('day', event.target.value)}
+                                            aria-label="Tarikh lahir"
+                                            className="input-field"
+                                        >
+                                            <option value="">Tarikh</option>
+                                            {Array.from({ length: 31 }, (_, index) => {
+                                                const day = String(index + 1).padStart(2, '0');
+                                                return <option key={day} value={day}>{day}</option>;
+                                            })}
+                                        </select>
+                                        <select
+                                            id="vcc-tarikh-lahir-bulan"
+                                            value={birthDateMonth}
+                                            onChange={(event) => updateBirthDateFilter('month', event.target.value)}
+                                            aria-label="Bulan lahir"
+                                            className="input-field"
+                                        >
+                                            <option value="">Bulan</option>
+                                            {['JAN','FEB','MAC','APR','MEI','JUN','JUL','OGO','SEP','OKT','NOV','DIS'].map((nama, index) => {
+                                                const month = String(index + 1).padStart(2, '0');
+                                                return <option key={month} value={month}>{nama}</option>;
+                                            })}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>

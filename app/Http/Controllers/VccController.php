@@ -279,7 +279,12 @@ class VccController extends Controller
             ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
             ->when($filters['bulan_lahir'] !== '', fn (Builder $builder) => $builder->whereRaw('LENGTH(no_kp) >= 6')
                 ->whereIn(DB::raw('CAST(SUBSTRING(no_kp, 3, 2) AS UNSIGNED)'), array_map('intval', explode(',', $filters['bulan_lahir']))))
-            ->when($filters['tarikh_lahir'] !== '', fn (Builder $builder) => $builder->whereDate('date_of_birth', $filters['tarikh_lahir']))
+            ->when($filters['tarikh_lahir'] !== '', function (Builder $builder) use ($filters) {
+                [$day, $month] = array_map('intval', explode('-', $filters['tarikh_lahir']));
+
+                $builder->whereDay('date_of_birth', $day)
+                    ->whereMonth('date_of_birth', $month);
+            })
             ->when($filters['cula_codes'] !== '', fn (Builder $builder) => $builder->whereIn('cula_code', explode(',', $filters['cula_codes'])))
             ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
                 $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
@@ -676,11 +681,17 @@ class VccController extends Controller
     {
         $value = trim((string) $value);
 
-        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+            $day = (int) $matches[3];
+            $month = (int) $matches[2];
+        } elseif (preg_match('/^(\d{1,2})-(\d{1,2})$/', $value, $matches)) {
+            $day = (int) $matches[1];
+            $month = (int) $matches[2];
+        } else {
             return '';
         }
 
-        return checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1]) ? $value : '';
+        return checkdate($month, $day, 2000) ? sprintf('%02d-%02d', $day, $month) : '';
     }
 
     private function generateWhatsAppLink(?string $phone): ?string
