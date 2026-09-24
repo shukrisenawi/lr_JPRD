@@ -1314,7 +1314,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                         </div>
 
                         <div>
-                            <InputLabel htmlFor="committee-scope" value={resolvedTab === 'jprd' ? 'Peringkat' : 'Scope'} />
+                            <InputLabel htmlFor="committee-scope" value={resolvedTab === 'jprd' ? 'Peringkat' : (resolvedTab === 'cawangan' ? 'Cawangan' : 'UDM')} />
                             {resolvedTab === 'cawangan' ? (
                                 <SearchableScopeSelect
                                     id="committee-scope"
@@ -1350,7 +1350,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                 <div className="min-w-0 flex-1">
                                     <p className="text-xs font-bold text-green-800">{selectedVoter.name}</p>
                                     <p className="text-xs text-green-600">
-                                        UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
+                                        UDM: {selectedVoter.dm || '-'} | Lokaliti: {selectedVoter.locality || '-'}
                                     </p>
                                 </div>
                             </div>
@@ -1737,7 +1737,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                                 <div className="min-w-0 flex-1">
                                     <p className={`text-xs font-bold ${selectedVoter.is_manual ? 'text-blue-700' : 'text-green-800'}`}>{selectedVoter.name}</p>
                                     <p className="text-xs text-green-600">
-                                        UDM: {selectedVoter.dm || '-'} | Cawangan: {selectedVoter.locality || '-'}
+                                        UDM: {selectedVoter.dm || '-'} | Lokaliti: {selectedVoter.locality || '-'}
                                     </p>
                                 </div>
                             </div>

@@ -78,13 +78,26 @@ class User extends Authenticatable
         }
 
         if ($level === 'udm') {
-            return ['dm' => $key, 'locality' => null];
+            return ['dm' => $key, 'locality' => null, 'cawangan_id' => null];
         }
 
         if ($level === 'cawangan') {
+            $cawangan = Cawangan::query()->find($key);
+            if ($cawangan) {
+                return [
+                    'dm' => $cawangan->udm,
+                    'locality' => null,
+                    'cawangan_id' => $cawangan->id,
+                ];
+            }
+
             $parts = explode('|', $key, 2);
 
-            return ['dm' => $parts[0] ?? $key, 'locality' => $parts[1] ?? null];
+            return [
+                'dm' => $parts[0] ?? $key,
+                'locality' => $parts[1] ?? null,
+                'cawangan_id' => null,
+            ];
         }
 
         return null;

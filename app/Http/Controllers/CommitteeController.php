@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cawangan;
 use App\Models\CommitteeGroup;
 use App\Models\CommitteeMembership;
 use App\Models\CommitteePosition;
@@ -34,7 +35,15 @@ class CommitteeController extends Controller
             ->latest('id');
 
         if ($scope !== null) {
-            if (filled($scope['dm']) && filled($scope['locality'])) {
+            if (filled($scope['cawangan_id'])) {
+                $membershipsQuery->where(function ($q) use ($scope) {
+                    $q->where('level', 'jprd')
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('cawangan_id', $scope['cawangan_id']);
+                        });
+                });
+            } elseif (filled($scope['dm']) && filled($scope['locality'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
                         ->orWhere(function ($sq) use ($scope) {
@@ -51,7 +60,10 @@ class CommitteeController extends Controller
                         })
                         ->orWhere(function ($sq) use ($scope) {
                             $sq->where('level', 'cawangan')
-                                ->where('parent_scope_name', $scope['dm']);
+                                ->where(function ($scopeQuery) use ($scope) {
+                                    $scopeQuery->where('parent_scope_name', $scope['dm'])
+                                        ->orWhereIn('cawangan_id', Cawangan::query()->where('udm', $scope['dm'])->pluck('id'));
+                                });
                         });
                 });
             }
@@ -66,18 +78,12 @@ class CommitteeController extends Controller
             $udmQuery->where('dm', $scope['dm']);
         }
 
-        $cawanganQuery = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereNotNull('dm')
-            ->where('dm', '!=', '')
-            ->whereNotNull('locality')
-            ->where('locality', '!=', '');
+        $cawanganQuery = Cawangan::query();
         if ($scope !== null && filled($scope['dm'])) {
-            $cawanganQuery->where('dm', $scope['dm']);
+            $cawanganQuery->where('udm', $scope['dm']);
         }
-        if ($scope !== null && filled($scope['locality'])) {
-            $cawanganQuery->where('locality', $scope['locality']);
+        if ($scope !== null && filled($scope['cawangan_id'])) {
+            $cawanganQuery->whereKey($scope['cawangan_id']);
         }
 
         $udmScopes = (clone $udmQuery)
@@ -203,6 +209,7 @@ class CommitteeController extends Controller
                     'id' => $membership->id,
                     'pemilih_record_id' => $membership->pemilih_record_id,
                     'committee_group_id' => $membership->committee_group_id,
+                    'cawangan_id' => $membership->cawangan_id,
                     'updated_at' => $membership->updated_at,
                     'level' => $membership->level,
                     'scope_key' => $membership->scope_key,
@@ -249,15 +256,14 @@ class CommitteeController extends Controller
                     ])
                     ->values(),
                 'cawangan' => $cawanganQuery
-                    ->select('dm', 'locality')
-                    ->distinct()
-                    ->orderBy('dm')
-                    ->orderBy('locality')
+                    ->orderBy('udm')
+                    ->orderBy('name')
                     ->get()
-                    ->map(fn (PemilihRecord $record) => [
-                        'key' => $record->dm.'|'.$record->locality,
-                        'name' => $record->locality,
-                        'parent_scope_name' => $record->dm,
+                    ->map(fn (Cawangan $cawangan) => [
+                        'key' => (string) $cawangan->id,
+                        'name' => $cawangan->name,
+                        'parent_scope_name' => $cawangan->udm,
+                        'cawangan_id' => $cawangan->id,
                     ])
                     ->values(),
             ],
@@ -278,7 +284,15 @@ class CommitteeController extends Controller
             ->latest('id');
 
         if ($scope !== null) {
-            if (filled($scope['dm']) && filled($scope['locality'])) {
+            if (filled($scope['cawangan_id'])) {
+                $membershipsQuery->where(function ($q) use ($scope) {
+                    $q->where('level', 'jprd')
+                        ->orWhere(function ($sq) use ($scope) {
+                            $sq->where('level', 'cawangan')
+                                ->where('cawangan_id', $scope['cawangan_id']);
+                        });
+                });
+            } elseif (filled($scope['dm']) && filled($scope['locality'])) {
                 $membershipsQuery->where(function ($q) use ($scope) {
                     $q->where('level', 'jprd')
                         ->orWhere(function ($sq) use ($scope) {
@@ -287,15 +301,19 @@ class CommitteeController extends Controller
                         });
                 });
             } elseif (filled($scope['dm'])) {
-                $membershipsQuery->where(function ($q) use ($scope) {
+                $cawanganIds = Cawangan::query()->where('udm', $scope['dm'])->pluck('id');
+                $membershipsQuery->where(function ($q) use ($scope, $cawanganIds) {
                     $q->where('level', 'jprd')
                         ->orWhere(function ($sq) use ($scope) {
                             $sq->where('level', 'udm')
                                 ->where('scope_key', $scope['dm']);
                         })
-                        ->orWhere(function ($sq) use ($scope) {
+                        ->orWhere(function ($sq) use ($scope, $cawanganIds) {
                             $sq->where('level', 'cawangan')
-                                ->where('parent_scope_name', $scope['dm']);
+                                ->where(function ($scopeQuery) use ($scope, $cawanganIds) {
+                                    $scopeQuery->where('parent_scope_name', $scope['dm'])
+                                        ->orWhereIn('cawangan_id', $cawanganIds);
+                                });
                         });
                 });
             }
@@ -310,18 +328,12 @@ class CommitteeController extends Controller
             $udmQuery->where('dm', $scope['dm']);
         }
 
-        $cawanganQuery = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereNotNull('dm')
-            ->where('dm', '!=', '')
-            ->whereNotNull('locality')
-            ->where('locality', '!=', '');
+        $cawanganQuery = Cawangan::query();
         if ($scope !== null && filled($scope['dm'])) {
-            $cawanganQuery->where('dm', $scope['dm']);
+            $cawanganQuery->where('udm', $scope['dm']);
         }
-        if ($scope !== null && filled($scope['locality'])) {
-            $cawanganQuery->where('locality', $scope['locality']);
+        if ($scope !== null && filled($scope['cawangan_id'])) {
+            $cawanganQuery->whereKey($scope['cawangan_id']);
         }
 
         return Inertia::render('Committee/Laporan', [
@@ -356,6 +368,7 @@ class CommitteeController extends Controller
                     'id' => $membership->id,
                     'pemilih_record_id' => $membership->pemilih_record_id,
                     'committee_group_id' => $membership->committee_group_id,
+                    'cawangan_id' => $membership->cawangan_id,
                     'updated_at' => $membership->updated_at,
                     'level' => $membership->level,
                     'scope_key' => $membership->scope_key,
@@ -406,15 +419,14 @@ class CommitteeController extends Controller
                     ])
                     ->values(),
                 'cawangan' => $cawanganQuery
-                    ->select('dm', 'locality')
-                    ->distinct()
-                    ->orderBy('dm')
-                    ->orderBy('locality')
+                    ->orderBy('udm')
+                    ->orderBy('name')
                     ->get()
-                    ->map(fn (PemilihRecord $record) => [
-                        'key' => $record->dm.'|'.$record->locality,
-                        'name' => $record->locality,
-                        'parent_scope_name' => $record->dm,
+                    ->map(fn (Cawangan $cawangan) => [
+                        'key' => (string) $cawangan->id,
+                        'name' => $cawangan->name,
+                        'parent_scope_name' => $cawangan->udm,
+                        'cawangan_id' => $cawangan->id,
                     ])
                     ->values(),
             ],
@@ -444,6 +456,7 @@ class CommitteeController extends Controller
                 'id' => $membership->id,
                 'pemilih_record_id' => $membership->pemilih_record_id,
                 'committee_group_id' => $membership->committee_group_id,
+                'cawangan_id' => $membership->cawangan_id,
                 'updated_at' => $membership->updated_at,
                 'level' => $membership->level,
                 'scope_key' => $membership->scope_key,
@@ -683,10 +696,15 @@ class CommitteeController extends Controller
         if ($selectedLevel === 'udm' && filled($selectedScopeKey)) {
             $builder->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$selectedScopeKey]);
         } elseif ($selectedLevel === 'cawangan' && filled($selectedScopeKey)) {
-            $parts = explode('|', $selectedScopeKey);
-            $dm = $parts[0] ?? '';
-            $locality = $parts[1] ?? '';
-            $builder->orderByRaw('CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END', [$dm, $locality]);
+            $cawangan = Cawangan::query()->find($selectedScopeKey);
+            if ($cawangan) {
+                $builder->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$cawangan->udm]);
+            } else {
+                $parts = explode('|', $selectedScopeKey);
+                $dm = $parts[0] ?? '';
+                $locality = $parts[1] ?? '';
+                $builder->orderByRaw('CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END', [$dm, $locality]);
+            }
         } else {
             $user = $request->user();
             $scope = $user?->accessScope();
@@ -1038,7 +1056,31 @@ class CommitteeController extends Controller
             ]);
         }
 
-        [$scopeName, $parentScopeName] = $this->resolveScope(
+        if ($validated['level'] === 'cawangan') {
+            $cawangan = Cawangan::query()->find($validated['scope_key']);
+            $userScope = $request->user()->accessScope();
+
+            if ($userScope !== null && filled($userScope['cawangan_id'])
+                && (! $cawangan || (int) $cawangan->id !== (int) $userScope['cawangan_id'])) {
+                return back()->withErrors([
+                    'scope_key' => 'Cawangan yang dipilih bukan dalam skop pengguna ini.',
+                ]);
+            }
+
+            if ($cawangan && filled($userScope['dm'] ?? null) && $cawangan->udm !== $userScope['dm']) {
+                return back()->withErrors([
+                    'scope_key' => 'Cawangan yang dipilih mesti berada di bawah UDM anda.',
+                ]);
+            }
+
+            if ($cawangan && filled($voter->dm) && $voter->dm !== $cawangan->udm) {
+                return back()->withErrors([
+                    'scope_key' => 'Cawangan yang dipilih mesti berada di bawah UDM pemilih.',
+                ]);
+            }
+        }
+
+        [$scopeName, $parentScopeName, $cawanganId] = $this->resolveScope(
             $validated['level'],
             $validated['scope_key'],
             $voter
@@ -1060,6 +1102,7 @@ class CommitteeController extends Controller
 
         CommitteeMembership::query()->create([
             'committee_group_id' => $validated['committee_group_id'] ?? null,
+            'cawangan_id' => $cawanganId,
             'pemilih_record_id' => $voter->id,
             'committee_position_id' => $validated['committee_position_id'],
             'level' => $validated['level'],
@@ -1214,10 +1257,30 @@ class CommitteeController extends Controller
 
         $scope = $user->accessScope();
 
+        if ($user->access_level === 'cawangan' && $scope !== null) {
+            $inScope = $membership->level === 'cawangan'
+                && (filled($scope['cawangan_id'])
+                    ? (int) $membership->cawangan_id === (int) $scope['cawangan_id']
+                    : $membership->scope_key === $user->scope_key);
+
+            if ($inScope) {
+                $membership->delete();
+
+                return redirect()
+                    ->route('jawatankuasa.index')
+                    ->with('success', 'Ahli jawatankuasa berjaya dibuang.');
+            }
+        }
+
         if ($user->access_level === 'udm' && $scope !== null && filled($scope['dm'])) {
             $inScope = match ($membership->level) {
                 'udm' => $membership->scope_key === $scope['dm'],
-                'cawangan' => $membership->parent_scope_name === $scope['dm'],
+                'cawangan' => $membership->parent_scope_name === $scope['dm']
+                    || (filled($membership->cawangan_id)
+                        && Cawangan::query()
+                            ->whereKey($membership->cawangan_id)
+                            ->where('udm', $scope['dm'])
+                            ->exists()),
                 default => false,
             };
 
@@ -1267,18 +1330,23 @@ class CommitteeController extends Controller
     private function resolveScope(string $level, string $scopeKey, PemilihRecord $voter): array
     {
         return match ($level) {
-            'jprd' => ['JPRD', null],
-            'udm' => [$scopeKey, null],
+            'jprd' => ['JPRD', null, null],
+            'udm' => [$scopeKey, null, null],
             'cawangan' => $this->resolveCawanganScope($scopeKey, $voter),
         };
     }
 
     private function resolveCawanganScope(string $scopeKey, PemilihRecord $voter): array
     {
+        $cawangan = Cawangan::query()->find($scopeKey);
+        if ($cawangan) {
+            return [$cawangan->name, $cawangan->udm, $cawangan->id];
+        }
+
         $parts = explode('|', $scopeKey, 2);
         $parent = $parts[0] ?? $voter->dm ?? '';
         $scopeName = $parts[1] ?? $voter->locality ?? '';
 
-        return [$scopeName, $parent !== '' ? $parent : null];
+        return [$scopeName, $parent !== '' ? $parent : null, null];
     }
 }

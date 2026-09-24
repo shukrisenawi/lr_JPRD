@@ -304,16 +304,9 @@ class PusatKhidmatService
             ->where('status', 'aktif')
             ->orderBy('position');
 
-        $scope = $user?->accessScope();
-
-        if ($scope !== null) {
-            $query->whereHas('pemilihRecord', function ($q) use ($scope) {
-                if (filled($scope['dm'])) {
-                    $q->where('dm', $scope['dm']);
-                }
-                if (filled($scope['locality'])) {
-                    $q->where('locality', $scope['locality']);
-                }
+        if ($user) {
+            $query->whereHas('pemilihRecord', function ($q) use ($user) {
+                $user->applyScopeToPemilihQuery($q);
             });
         }
 

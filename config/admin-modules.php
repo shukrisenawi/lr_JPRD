@@ -55,6 +55,10 @@ return [
         'label' => 'Senarai AJK UDM',
         'description' => 'Senarai kumpulan jawatan dan ahli jawatankuasa untuk UDM semasa.',
     ],
+    'cawangan' => [
+        'label' => 'Cawangan',
+        'description' => 'Urus cawangan dan pemindahan data AJK daripada lokaliti lama.',
+    ],
     'group-pemilih' => [
         'label' => 'Group Pemilih',
         'description' => 'Urus group untuk tapisan data pemilih.',

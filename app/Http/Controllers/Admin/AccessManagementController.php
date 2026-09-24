@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cawangan;
 use App\Models\PemilihRecord;
 use App\Models\Role;
 use App\Models\User;
@@ -87,22 +88,14 @@ class AccessManagementController extends Controller
                 ->orderBy('dm')
                 ->pluck('dm')
                 ->all(),
-            'cawangans' => PemilihRecord::query()
-                ->where('status', 'aktif')
-                ->where('is_manual', false)
-                ->whereNotNull('dm')
-                ->where('dm', '!=', '')
-                ->whereNotNull('locality')
-                ->where('locality', '!=', '')
-                ->select('dm', 'locality')
-                ->distinct()
-                ->orderBy('dm')
-                ->orderBy('locality')
+            'cawangans' => Cawangan::query()
+                ->orderBy('udm')
+                ->orderBy('name')
                 ->get()
-                ->map(fn (PemilihRecord $r) => [
-                    'key' => $r->dm.'|'.$r->locality,
-                    'name' => $r->locality,
-                    'dm' => $r->dm,
+                ->map(fn (Cawangan $cawangan) => [
+                    'key' => (string) $cawangan->id,
+                    'name' => $cawangan->name,
+                    'dm' => $cawangan->udm,
                 ])
                 ->values()
                 ->all(),
@@ -136,6 +129,12 @@ class AccessManagementController extends Controller
             'expires_at' => ['nullable', 'date'],
         ]);
 
+        if (($validated['access_level'] ?? 'jprd') === 'cawangan'
+            && ! Cawangan::query()->whereKey($validated['scope_key'] ?? null)->exists()
+            && ! str_contains((string) ($validated['scope_key'] ?? ''), '|')) {
+            return back()->withErrors(['scope_key' => 'Sila pilih cawangan yang sah.']);
+        }
+
         User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -165,6 +164,12 @@ class AccessManagementController extends Controller
             'scope_key' => ['nullable', 'string', 'max:255', 'required_if:access_level,udm,cawangan'],
             'expires_at' => ['nullable', 'date'],
         ]);
+
+        if (($validated['access_level'] ?? 'jprd') === 'cawangan'
+            && ! Cawangan::query()->whereKey($validated['scope_key'] ?? null)->exists()
+            && ! str_contains((string) ($validated['scope_key'] ?? ''), '|')) {
+            return back()->withErrors(['scope_key' => 'Sila pilih cawangan yang sah.']);
+        }
 
         $updates = [
             'name' => $validated['name'],

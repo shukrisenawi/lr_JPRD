@@ -10,6 +10,7 @@ class CommitteeMembership extends Model
 {
     protected $fillable = [
         'committee_group_id',
+        'cawangan_id',
         'pemilih_record_id',
         'committee_position_id',
         'level',
@@ -38,14 +39,27 @@ class CommitteeMembership extends Model
                 ->where('scope_key', $scope['dm'].'|'.$scope['locality']);
         }
 
+        if (filled($scope['cawangan_id'])) {
+            return $query
+                ->where('level', 'cawangan')
+                ->where('cawangan_id', $scope['cawangan_id']);
+        }
+
         if (filled($scope['dm'])) {
-            return $query->where(function (Builder $query) use ($scope) {
+            $cawanganIds = Cawangan::query()
+                ->where('udm', $scope['dm'])
+                ->pluck('id');
+
+            return $query->where(function (Builder $query) use ($scope, $cawanganIds) {
                 $query->where(function (Builder $query) use ($scope) {
                     $query->where('level', 'udm')
                         ->where('scope_key', $scope['dm']);
-                })->orWhere(function (Builder $query) use ($scope) {
+                })->orWhere(function (Builder $query) use ($scope, $cawanganIds) {
                     $query->where('level', 'cawangan')
-                        ->where('parent_scope_name', $scope['dm']);
+                        ->where(function (Builder $scopeQuery) use ($scope, $cawanganIds) {
+                            $scopeQuery->where('parent_scope_name', $scope['dm'])
+                                ->orWhereIn('cawangan_id', $cawanganIds);
+                        });
                 });
             });
         }
@@ -56,6 +70,11 @@ class CommitteeMembership extends Model
     public function voter(): BelongsTo
     {
         return $this->belongsTo(PemilihRecord::class, 'pemilih_record_id');
+    }
+
+    public function cawangan(): BelongsTo
+    {
+        return $this->belongsTo(Cawangan::class);
     }
 
     public function position(): BelongsTo

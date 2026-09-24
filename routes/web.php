@@ -7,6 +7,7 @@ use App\Http\Controllers\AhliPasController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\CarianPemilihController;
+use App\Http\Controllers\CawanganController;
 use App\Http\Controllers\CommitteeController;
 use App\Http\Controllers\CopiedRecordController;
 use App\Http\Controllers\CulaanBotController;
@@ -166,6 +167,12 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/admin/access/impersonation/stop', [AccessManagementController::class, 'stopImpersonation'])->name('admin.access.impersonation.destroy');
     Route::post('/admin/access/roles', [AccessManagementController::class, 'storeRole'])->name('admin.access.roles.store');
     Route::put('/admin/access/roles/{role}', [AccessManagementController::class, 'updateRole'])->name('admin.access.roles.update');
+
+    Route::get('/admin/cawangan', [CawanganController::class, 'index'])->middleware('module:cawangan')->name('admin.cawangan.index');
+    Route::post('/admin/cawangan', [CawanganController::class, 'store'])->middleware('module:cawangan')->name('admin.cawangan.store');
+    Route::put('/admin/cawangan/{cawangan}', [CawanganController::class, 'update'])->middleware('module:cawangan')->name('admin.cawangan.update');
+    Route::delete('/admin/cawangan/{cawangan}', [CawanganController::class, 'destroy'])->middleware('module:cawangan')->name('admin.cawangan.destroy');
+    Route::post('/admin/cawangan/repair', [CawanganController::class, 'repair'])->middleware('module:cawangan')->name('admin.cawangan.repair');
 
     Route::get('/admin/api-keys', [ApiKeyController::class, 'index'])->name('admin.api-keys.index');
     Route::post('/admin/api-keys', [ApiKeyController::class, 'store'])->name('admin.api-keys.store');

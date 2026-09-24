@@ -100,15 +100,7 @@ class HandleInertiaRequests extends Middleware
                 ->whereNull('checked_at')
                 ->whereHas('pemilihRecord', function ($q) use ($user) {
                     $q->where('status', 'aktif');
-
-                    if ($user->access_level === 'udm') {
-                        $q->where('dm', $user->scope_key);
-                    } elseif ($user->access_level === 'cawangan') {
-                        $scopeParts = explode('|', $user->scope_key);
-                        if (count($scopeParts) >= 2) {
-                            $q->where('dm', $scopeParts[0])->where('locality', $scopeParts[1]);
-                        }
-                    }
+                    $user->applyScopeToPemilihQuery($q);
                 });
 
             return $query->count();
