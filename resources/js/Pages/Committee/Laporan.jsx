@@ -175,25 +175,39 @@ function AddToJprdButton({ member, canAddToJprd, onAdd }) {
 
 const memberVoterKey = (member) => String(member.pemilih_record_id || member.voter?.id || member.id);
 
-function JprdGroupNames({ member, jprdGroupNamesByMemberKey }) {
-    const groupNames = jprdGroupNamesByMemberKey.get(memberVoterKey(member)) || [];
-    if (groupNames.length === 0) return null;
+function JprdAssignments({ member, jprdAssignmentsByMemberKey }) {
+    const assignments = jprdAssignmentsByMemberKey.get(memberVoterKey(member)) || [];
+    if (assignments.length === 0) return null;
 
-    return <p className="mt-0.5 text-[9px] text-emerald-700"><span className="font-bold">JPRD:</span> {groupNames.join(', ')}</p>;
+    return <p className="mt-0.5 text-[9px] text-emerald-700"><span className="font-bold">JPRD:</span> {assignments.join(', ')}</p>;
 }
 
-function JprdMemberActions({ member, canAddToJprd, selectedMemberIds, jprdMemberKeys, onToggleMember, onRemove, onAdd }) {
+function JprdMemberActions({ member, canAddToJprd, selectedMemberIds, jprdMemberKeys, jprdAssignmentsByMemberKey, onToggleMember, onRemove, onAdd }) {
     if (!canAddToJprd) return null;
 
     const memberKey = memberVoterKey(member);
     const isJprdMember = jprdMemberKeys.has(memberKey);
+    const jprdAssignments = jprdAssignmentsByMemberKey.get(memberKey) || [];
+    const handleChange = () => {
+        if (!isJprdMember) {
+            onToggleMember(member);
+            return;
+        }
+
+        if (jprdAssignments.length > 1) {
+            window.alert(`Tidak boleh dipadam kerana ${member.voter?.name || 'pemilih'} mempunyai lebih daripada satu jawatankuasa JPRD.`);
+            return;
+        }
+
+        onRemove([member]);
+    };
 
     return (
         <div className="flex shrink-0 items-center gap-2">
             <input
                 type="checkbox"
                 checked={isJprdMember || selectedMemberIds.includes(memberKey)}
-                onChange={() => isJprdMember ? onRemove([member]) : onToggleMember(member)}
+                onChange={handleChange}
                 aria-label={isJprdMember ? `Buang ${member.voter?.name || 'pemilih'} daripada jawatankuasa JPRD` : `Pilih ${member.voter?.name || 'pemilih'} untuk ditambah ke jawatankuasa JPRD`}
                 title={isJprdMember ? 'Buang daripada jawatankuasa JPRD' : 'Pilih untuk ditambah ke jawatankuasa JPRD'}
                 className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
@@ -342,7 +356,7 @@ function AddToJprdModal({ members, groups, onClose, onSuccess }) {
     );
 }
 
-function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, selectedMemberIds, jprdMemberKeys, jprdGroupNamesByMemberKey, onToggleMember, onRemoveJprdMember, onSelectAllMembers, onAddToJprd, onClose, onAvatarClick }) {
+function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, selectedMemberIds, jprdMemberKeys, jprdAssignmentsByMemberKey, onToggleMember, onRemoveJprdMember, onSelectAllMembers, onAddToJprd, onClose, onAvatarClick }) {
     const [copiedGroupId, setCopiedGroupId] = useState(null);
     if (!scope) return null;
 
@@ -521,10 +535,10 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
                                                         {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
                                                     </p>
                                                     <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
-                                                    <JprdGroupNames member={m} jprdGroupNamesByMemberKey={jprdGroupNamesByMemberKey} />
+                                                    <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
                                                     {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                 </div>
-                                                <JprdMemberActions member={m} canAddToJprd={level === 'udm' && canAddToJprd} selectedMemberIds={selectedMemberIds} jprdMemberKeys={jprdMemberKeys} onToggleMember={onToggleMember} onRemove={onRemoveJprdMember} onAdd={onAddToJprd} />
+                                                 <JprdMemberActions member={m} canAddToJprd={level === 'udm' && canAddToJprd} selectedMemberIds={selectedMemberIds} jprdMemberKeys={jprdMemberKeys} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} onToggleMember={onToggleMember} onRemove={onRemoveJprdMember} onAdd={onAddToJprd} />
                                             </div>
                                             );
                                         })}
@@ -539,7 +553,7 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
     );
 }
 
-function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMemberIds, jprdMemberKeys, jprdGroupNamesByMemberKey, onToggleMember, onRemoveJprdMember, onSelectAllMembers, onAddToJprd, onClose, onAvatarClick }) {
+function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMemberIds, jprdMemberKeys, jprdAssignmentsByMemberKey, onToggleMember, onRemoveJprdMember, onSelectAllMembers, onAddToJprd, onClose, onAvatarClick }) {
     if (!position) return null;
 
     const title = 'UDM — ' + position.name;
@@ -590,9 +604,9 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                                             {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
                                         </p>
                                         <span className="mt-0.5 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.scope_name || 'Tiada UDM'}</span>
-                                        <JprdGroupNames member={m} jprdGroupNamesByMemberKey={jprdGroupNamesByMemberKey} />
+                                        <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
                                     </div>
-                                    <JprdMemberActions member={m} canAddToJprd={canAddToJprd} selectedMemberIds={selectedMemberIds} jprdMemberKeys={jprdMemberKeys} onToggleMember={onToggleMember} onRemove={onRemoveJprdMember} onAdd={onAddToJprd} />
+                                    <JprdMemberActions member={m} canAddToJprd={canAddToJprd} selectedMemberIds={selectedMemberIds} jprdMemberKeys={jprdMemberKeys} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} onToggleMember={onToggleMember} onRemove={onRemoveJprdMember} onAdd={onAddToJprd} />
                                 </div>
                             ))}
                         </div>
@@ -623,8 +637,8 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
     const jprdMemberKeys = useMemo(() => new Set(
         [...jprdMembershipKeys].filter((memberKey) => !optimisticallyRemovedJprdMemberIds.includes(memberKey))
     ), [jprdMembershipKeys, optimisticallyRemovedJprdMemberIds]);
-    const jprdGroupNamesByMemberKey = useMemo(() => {
-        const groupNamesByMemberKey = new Map();
+    const jprdAssignmentsByMemberKey = useMemo(() => {
+        const assignmentsByMemberKey = new Map();
         memberships
             .filter((member) => member.level === 'jprd' && member.scope_key === 'jprd')
             .forEach((member) => {
@@ -632,11 +646,12 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                 if (!jprdMemberKeys.has(memberKey)) return;
 
                 const groupName = groups.find((group) => String(group.id) === String(member.committee_group_id))?.name || 'Tanpa Kumpulan';
-                const groupNames = groupNamesByMemberKey.get(memberKey) || [];
-                if (!groupNames.includes(groupName)) groupNames.push(groupName);
-                groupNamesByMemberKey.set(memberKey, groupNames);
+                const assignment = `${groupName} — ${member.position?.name || 'Tanpa Jawatan'}`;
+                const assignments = assignmentsByMemberKey.get(memberKey) || [];
+                if (!assignments.includes(assignment)) assignments.push(assignment);
+                assignmentsByMemberKey.set(memberKey, assignments);
             });
-        return groupNamesByMemberKey;
+        return assignmentsByMemberKey;
     }, [memberships, groups, jprdMemberKeys]);
 
     useEffect(() => {
@@ -1054,10 +1069,10 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                                             <div className="shrink-0 text-right">
                                                                 <span className="inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.position?.name}</span>
                                                                 <p className="text-[9px] text-slate-400">{grp?.name}</p>
-                                                                <JprdGroupNames member={m} jprdGroupNamesByMemberKey={jprdGroupNamesByMemberKey} />
+                                                                <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
                                                                 {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                             </div>
-                                                            <JprdMemberActions member={m} canAddToJprd={canAddToJprd} selectedMemberIds={selectedJprdMemberIds} jprdMemberKeys={jprdMemberKeys} onToggleMember={toggleJprdMember} onRemove={removeJprdMembers} onAdd={openSingleJprdModal} />
+                                                            <JprdMemberActions member={m} canAddToJprd={canAddToJprd} selectedMemberIds={selectedJprdMemberIds} jprdMemberKeys={jprdMemberKeys} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} onToggleMember={toggleJprdMember} onRemove={removeJprdMembers} onAdd={openSingleJprdModal} />
                                                         </div>
                                                     );
                                                 })}
@@ -1157,7 +1172,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                     canAddToJprd={canAddToJprd}
                     selectedMemberIds={selectedJprdMemberIds}
                     jprdMemberKeys={jprdMemberKeys}
-                    jprdGroupNamesByMemberKey={jprdGroupNamesByMemberKey}
+                    jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey}
                     onToggleMember={toggleJprdMember}
                     onRemoveJprdMember={removeJprdMembers}
                     onSelectAllMembers={toggleJprdMembers}
@@ -1175,7 +1190,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                     canAddToJprd={canAddToJprd}
                     selectedMemberIds={selectedJprdMemberIds}
                     jprdMemberKeys={jprdMemberKeys}
-                    jprdGroupNamesByMemberKey={jprdGroupNamesByMemberKey}
+                    jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey}
                     onToggleMember={toggleJprdMember}
                     onRemoveJprdMember={removeJprdMembers}
                     onSelectAllMembers={toggleJprdMembers}
