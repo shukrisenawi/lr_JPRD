@@ -55,6 +55,11 @@ class KadTenController extends Controller
             ->withCount('members')
             ->get(['kad_tens.id']);
         $totalMembers = $kadStats->sum('members_count');
+        $eligibleVotersQuery = $this->eligibleVoterQueryForScope($user);
+        if ($udmFilter !== '') {
+            $eligibleVotersQuery->where('dm', $udmFilter);
+        }
+        $requiredLeaders = (int) ceil($eligibleVotersQuery->count() / self::MINIMUM_MEMBERS);
 
         $kads = $kadsQuery
             ->latest()
@@ -142,7 +147,7 @@ class KadTenController extends Controller
                 'total' => $kadStats->count(),
                 'complete' => $kadStats->where('members_count', '>=', self::MINIMUM_MEMBERS)->count(),
                 'members' => $totalMembers,
-                'required_leaders' => (int) ceil($totalMembers / self::MINIMUM_MEMBERS),
+                'required_leaders' => $requiredLeaders,
             ],
             'filters' => ['udm' => $udmFilter],
             'scopes' => [
@@ -1071,7 +1076,13 @@ class KadTenController extends Controller
 
     private function eligibleVoterQueryForUser(User $user): Builder
     {
-        $query = $this->eligibleVoterBaseQuery()->whereDoesntHave('kadTenMemberships');
+        return $this->eligibleVoterQueryForScope($user)
+            ->whereDoesntHave('kadTenMemberships');
+    }
+
+    private function eligibleVoterQueryForScope(User $user): Builder
+    {
+        $query = $this->eligibleVoterBaseQuery();
         $user->applyScopeToPemilihQuery($query);
 
         return $query;

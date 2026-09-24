@@ -229,7 +229,7 @@ it('paginates Kad 10 cards at twenty per page', function () {
             ->where('kads.total', 21)
             ->where('kads.data', fn ($data) => count($data) === 20)
             ->where('kad_stats.total', 21)
-            ->where('kad_stats.required_leaders', 0));
+            ->where('kad_stats.required_leaders', 3));
 });
 
 it('paginates the unassigned Kad 10 list at twenty voters per page', function () {
@@ -252,6 +252,17 @@ it('paginates the unassigned Kad 10 list at twenty voters per page', function ()
             ->where('voters.current_page', 2)
             ->where('voters.from', 21)
             ->where('voters.data', fn ($voters) => count($voters) === 1));
+});
+
+it('calculates required Kad 10 leaders from all eligible voters', function () {
+    $user = kadTenUser();
+
+    collect(range(1, 100))->each(fn () => kadTenVoter());
+
+    $this->actingAs($user)
+        ->get(route('kad-ten.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('kad_stats.required_leaders', 10));
 });
 
 it('lets only a master admin auto-create cards from the UDM main committee and assign up to ten members', function () {
