@@ -1081,28 +1081,12 @@ class CommitteeController extends Controller
         abort_unless($this->canManageJprd($user), 403, 'Hanya pengguna JPRD boleh mengisi jawatan JPRD.');
 
         $validated = $request->validate([
-            'pemilih_record_id' => ['required', 'integer', Rule::exists('pemilih_records', 'id')],
+            'pemilih_record_ids' => ['required', 'array', 'min:1'],
+            'pemilih_record_ids.*' => ['required', 'integer', 'distinct', Rule::exists('pemilih_records', 'id')],
             'committee_position_id' => ['required', 'integer', Rule::exists('committee_positions', 'id')],
             'committee_group_id' => ['required', 'integer', Rule::exists('committee_groups', 'id')],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
-
-        $voter = PemilihRecord::query()->findOrFail($validated['pemilih_record_id']);
-
-        if (! CommitteeMembership::query()
-            ->where('pemilih_record_id', $voter->id)
-            ->where('level', 'udm')
-            ->exists()) {
-            return back()->withErrors([
-                'pemilih_record_id' => 'Pemilih ini tidak mempunyai keahlian jawatankuasa UDM.',
-            ]);
-        }
-
-        if ($voter->status !== 'aktif' && ! $voter->is_manual) {
-            return back()->withErrors([
-                'pemilih_record_id' => 'Hanya pemilih aktif boleh dilantik.',
-            ]);
-        }
 
         $group = CommitteeGroup::query()->findOrFail($validated['committee_group_id']);
         if (! in_array('jprd', $group->levels ?? [], true)) {
@@ -1123,35 +1107,70 @@ class CommitteeController extends Controller
             ]);
         }
 
-        $exists = CommitteeMembership::query()
-            ->where('pemilih_record_id', $voter->id)
+        $voters = PemilihRecord::query()
+            ->whereIn('id', $validated['pemilih_record_ids'])
+            ->get()
+            ->keyBy('id');
+
+        foreach ($validated['pemilih_record_ids'] as $voterId) {
+            $voter = $voters->get($voterId);
+            if (! CommitteeMembership::query()
+                ->where('pemilih_record_id', $voter->id)
+                ->where('level', 'udm')
+                ->exists()) {
+                return back()->withErrors([
+                    'pemilih_record_ids' => 'Pemilih '.$voter->name.' tidak mempunyai keahlian jawatankuasa UDM.',
+                ]);
+            }
+
+            if ($voter->status !== 'aktif' && ! $voter->is_manual) {
+                return back()->withErrors([
+                    'pemilih_record_ids' => 'Pemilih '.$voter->name.' tidak aktif dan tidak boleh dilantik.',
+                ]);
+            }
+        }
+
+        $existingIds = CommitteeMembership::query()
+            ->whereIn('pemilih_record_id', $validated['pemilih_record_ids'])
             ->where('committee_position_id', $validated['committee_position_id'])
-            ->where('committee_group_id', $group->id)
+            ->where('committee_group_id', $validated['committee_group_id'])
             ->where('level', 'jprd')
             ->where('scope_key', 'jprd')
-            ->exists();
+            ->pluck('pemilih_record_id')
+            ->all();
 
-        if ($exists) {
+        $newVoterIds = array_values(array_diff($validated['pemilih_record_ids'], $existingIds));
+
+        if (count($newVoterIds) === 0) {
             return back()->withErrors([
-                'committee_position_id' => 'Pelantikan JPRD yang sama sudah wujud.',
+                'pemilih_record_ids' => 'Semua pemilih yang dipilih sudah mempunyai pelantikan JPRD yang sama.',
             ]);
         }
 
-        CommitteeMembership::query()->create([
-            'committee_group_id' => $group->id,
-            'pemilih_record_id' => $voter->id,
-            'committee_position_id' => $validated['committee_position_id'],
-            'level' => 'jprd',
-            'scope_key' => 'jprd',
-            'scope_name' => 'JPRD',
-            'parent_scope_name' => null,
-            'created_by' => $user->id,
-            'notes' => $validated['notes'] ?? null,
-        ]);
+        DB::transaction(function () use ($newVoterIds, $validated, $group, $user) {
+            foreach ($newVoterIds as $voterId) {
+                CommitteeMembership::query()->create([
+                    'committee_group_id' => $group->id,
+                    'pemilih_record_id' => $voterId,
+                    'committee_position_id' => $validated['committee_position_id'],
+                    'level' => 'jprd',
+                    'scope_key' => 'jprd',
+                    'scope_name' => 'JPRD',
+                    'parent_scope_name' => null,
+                    'created_by' => $user->id,
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+            }
+        });
+
+        $message = count($newVoterIds).' pemilih UDM berjaya ditambah ke jawatankuasa JPRD.';
+        if (count($existingIds) > 0) {
+            $message .= ' '.count($existingIds).' pelantikan yang sama telah diabaikan.';
+        }
 
         return redirect()
             ->route('jawatankuasa.laporan')
-            ->with('success', 'Pemilih UDM berjaya ditambah ke jawatankuasa JPRD.');
+            ->with('success', $message);
     }
 
     public function destroyMembership(Request $request, CommitteeMembership $membership): RedirectResponse

@@ -402,7 +402,7 @@ it('allows authorized user to add active voter as ahli jprd', function () {
     ]);
 });
 
-it('allows a JPRD user to add an existing UDM member into a JPRD group', function () {
+it('allows a JPRD user to add multiple existing UDM members into a JPRD group', function () {
     $user = User::factory()
         ->withModules(['dashboard', 'jawatankuasa.laporan'])
         ->create(['access_level' => 'jprd']);
@@ -434,10 +434,26 @@ it('allows a JPRD user to add an existing UDM member into a JPRD group', functio
         'scope_key' => 'PADANG CHICHAK',
         'scope_name' => 'PADANG CHICHAK',
     ]);
+    $secondVoter = PemilihRecord::query()->create([
+        'identity_number' => '900101025556',
+        'no_kp' => '900101025556',
+        'name' => 'SITI BINTI ABU',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'status' => 'aktif',
+    ]);
+    $secondUdmMembership = CommitteeMembership::query()->create([
+        'committee_group_id' => $group->id,
+        'pemilih_record_id' => $secondVoter->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'PADANG CHICHAK',
+        'scope_name' => 'PADANG CHICHAK',
+    ]);
 
     $this->actingAs($user)
         ->post(route('jawatankuasa.memberships.from-udm'), [
-            'pemilih_record_id' => $udmMembership->pemilih_record_id,
+            'pemilih_record_ids' => [$udmMembership->pemilih_record_id, $secondUdmMembership->pemilih_record_id],
             'committee_group_id' => $group->id,
             'committee_position_id' => $position->id,
         ])
@@ -451,8 +467,17 @@ it('allows a JPRD user to add an existing UDM member into a JPRD group', functio
         'scope_key' => 'jprd',
         'scope_name' => 'JPRD',
     ]);
+    $this->assertDatabaseHas('committee_memberships', [
+        'pemilih_record_id' => $secondVoter->id,
+        'committee_group_id' => $group->id,
+        'committee_position_id' => $position->id,
+        'level' => 'jprd',
+        'scope_key' => 'jprd',
+        'scope_name' => 'JPRD',
+    ]);
 
-    expect(CommitteeMembership::query()->where('pemilih_record_id', $voter->id)->count())->toBe(2);
+    expect(CommitteeMembership::query()->where('pemilih_record_id', $voter->id)->count())->toBe(2)
+        ->and(CommitteeMembership::query()->where('pemilih_record_id', $secondVoter->id)->count())->toBe(2);
 });
 
 it('prevents a UDM user from adding an UDM member into a JPRD group', function () {
@@ -495,7 +520,7 @@ it('prevents a UDM user from adding an UDM member into a JPRD group', function (
 
     $response = $this->actingAs($user)
         ->postJson(route('jawatankuasa.memberships.from-udm'), [
-            'pemilih_record_id' => $voter->id,
+            'pemilih_record_ids' => [$voter->id],
             'committee_group_id' => $group->id,
             'committee_position_id' => $position->id,
         ]);
