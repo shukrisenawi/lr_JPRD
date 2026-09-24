@@ -698,6 +698,16 @@ class CommitteeController extends Controller
         } elseif ($selectedLevel === 'cawangan' && filled($selectedScopeKey)) {
             $cawangan = Cawangan::query()->find($selectedScopeKey);
             if ($cawangan) {
+                $builder->where(function ($scopeQuery) use ($cawangan) {
+                    $scopeQuery->where('dm', $cawangan->udm)
+                        ->orWhere(function ($manualQuery) {
+                            $manualQuery->where('is_manual', true)
+                                ->where(function ($dmQuery) {
+                                    $dmQuery->whereNull('dm')
+                                        ->orWhere('dm', '');
+                                });
+                        });
+                });
                 $builder->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$cawangan->udm]);
             } else {
                 $parts = explode('|', $selectedScopeKey);

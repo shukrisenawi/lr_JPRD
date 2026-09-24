@@ -1617,6 +1617,11 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
         voter_search: '',
         notes: '',
     });
+    const currentScope = (scopes[level] ?? []).find((scope) => String(scope.key) === String(form.data.scope_key));
+    const formError = form.errors.scope_key
+        || form.errors.committee_group_id
+        || form.errors.committee_position_id
+        || form.errors.level;
 
     const handleSearchChange = async (event) => {
         const value = event.target.value;
@@ -1696,6 +1701,11 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                     <div>
                         <p className="text-sm font-bold text-slate-800">Tambah Ahli — {position.name}</p>
                         <p className="text-[10px] text-slate-500">Kumpulan: {group.name}</p>
+                        {currentScope && (
+                            <p className="text-[10px] text-slate-500">
+                                Scope: {currentScope.name}{currentScope.parent_scope_name ? ` (${currentScope.parent_scope_name})` : ''}
+                            </p>
+                        )}
                     </div>
                     <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
                         <Icon name="x" className="h-5 w-5" />
@@ -1769,6 +1779,12 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                         />
                         <InputError className="mt-1" message={form.errors.notes} />
                     </div>
+
+                    {formError && (
+                        <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+                            {formError}
+                        </div>
+                    )}
 
                     <div className="flex justify-end gap-2">
                         <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50">

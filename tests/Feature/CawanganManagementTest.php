@@ -153,6 +153,36 @@ it('uses registered cawangan scopes for new committee memberships', function () 
             ->where('scopes.cawangan.0.parent_scope_name', 'UDM ALPHA'));
 });
 
+it('limits cawangan voter search to the selected cawangan UDM', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+    $matchingVoter = cawanganVoter([
+        'name' => 'PEMILIH CARI UDM ALPHA',
+        'dm' => 'UDM ALPHA',
+    ]);
+    $otherVoter = cawanganVoter([
+        'name' => 'PEMILIH CARI UDM BETA',
+        'dm' => 'UDM BETA',
+    ]);
+    $cawangan = Cawangan::query()->create([
+        'name' => 'Cawangan Taman Murni',
+        'udm' => 'UDM ALPHA',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->getJson(route('jawatankuasa.search', [
+            'q' => 'PEMILIH CARI',
+            'level' => 'cawangan',
+            'scope_key' => (string) $cawangan->id,
+        ]));
+
+    $suggestionIds = collect($response->json('suggestions'))->pluck('id');
+
+    $response->assertOk();
+    expect($suggestionIds)
+        ->toContain($matchingVoter->id)
+        ->not->toContain($otherVoter->id);
+});
+
 it('limits a cawangan user to the registered branch scope', function () {
     $voter = cawanganVoter();
     $position = CommitteePosition::query()->create([
