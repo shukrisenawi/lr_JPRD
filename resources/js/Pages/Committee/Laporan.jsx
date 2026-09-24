@@ -198,7 +198,8 @@ function JprdMemberActions({ member, canAddToJprd, selectedMemberIds, jprdMember
 
 function SelectAllJprdMembers({ members, selectedMemberIds, jprdMemberKeys, onSelectAll }) {
     const memberKeys = [...new Set(members.map(memberVoterKey))];
-    const allSelected = memberKeys.length > 0 && memberKeys.every((memberKey) => jprdMemberKeys.has(memberKey) || selectedMemberIds.includes(memberKey));
+    const selectableKeys = memberKeys.filter((memberKey) => !jprdMemberKeys.has(memberKey));
+    const allSelected = selectableKeys.length > 0 && selectableKeys.every((memberKey) => selectedMemberIds.includes(memberKey));
 
     return (
         <label className="flex cursor-pointer items-center gap-1 rounded-md border border-emerald-200 bg-white px-2 py-1 text-[10px] font-bold text-emerald-700 transition hover:bg-emerald-50" title={allSelected ? 'Nyahpilih semua pemilih' : 'Pilih semua pemilih'}>
@@ -604,11 +605,19 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
     const [copiedGroupFlag, setCopiedGroupFlag] = useState(false);
     const [selectedJprdMemberIds, setSelectedJprdMemberIds] = useState([]);
     const [jprdMembers, setJprdMembers] = useState([]);
-    const jprdMemberKeys = useMemo(() => new Set(
+    const [optimisticallyRemovedJprdMemberIds, setOptimisticallyRemovedJprdMemberIds] = useState([]);
+    const jprdMembershipKeys = useMemo(() => new Set(
         memberships
             .filter((member) => member.level === 'jprd' && member.scope_key === 'jprd')
             .map(memberVoterKey)
     ), [memberships]);
+    const jprdMemberKeys = useMemo(() => new Set(
+        [...jprdMembershipKeys].filter((memberKey) => !optimisticallyRemovedJprdMemberIds.includes(memberKey))
+    ), [jprdMembershipKeys, optimisticallyRemovedJprdMemberIds]);
+
+    useEffect(() => {
+        setOptimisticallyRemovedJprdMemberIds((current) => current.filter((memberKey) => jprdMembershipKeys.has(memberKey)));
+    }, [jprdMembershipKeys]);
 
     const toggleJprdMember = (member) => {
         const memberKey = memberVoterKey(member);
@@ -619,20 +628,22 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
 
     const removeJprdMembers = (members) => {
         const memberKeys = [...new Set(members.map(memberVoterKey))];
-        if (memberKeys.length === 0) return;
+        const removableKeys = memberKeys.filter((memberKey) => jprdMembershipKeys.has(memberKey));
+        if (removableKeys.length === 0) return;
 
-        setSelectedJprdMemberIds((current) => current.filter((memberKey) => !memberKeys.includes(memberKey)));
+        setSelectedJprdMemberIds((current) => current.filter((memberKey) => !removableKeys.includes(memberKey)));
+        setOptimisticallyRemovedJprdMemberIds((current) => [...new Set([...current, ...removableKeys])]);
         router.delete(route('jawatankuasa.memberships.from-udm.destroy'), {
-            data: { pemilih_record_ids: memberKeys },
+            data: { pemilih_record_ids: removableKeys },
             preserveScroll: true,
             preserveState: true,
+            onError: () => setOptimisticallyRemovedJprdMemberIds((current) => current.filter((memberKey) => !removableKeys.includes(memberKey))),
         });
     };
 
     const toggleJprdMembers = (members, allSelected) => {
         const memberKeys = [...new Set(members.map(memberVoterKey))];
         if (allSelected) {
-            removeJprdMembers(members.filter((member) => jprdMemberKeys.has(memberVoterKey(member))));
             setSelectedJprdMemberIds((current) => current.filter((memberKey) => !memberKeys.includes(memberKey)));
             return;
         }
