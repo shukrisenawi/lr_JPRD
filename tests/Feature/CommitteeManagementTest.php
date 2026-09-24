@@ -21,6 +21,19 @@ it('renders jawatankuasa page for authenticated user with module access', functi
             ->where('udm_statuses', []));
 });
 
+it('renders the committee report with the JPRD transfer control for JPRD users', function () {
+    $user = User::factory()
+        ->withModules(['dashboard', 'jawatankuasa.laporan'])
+        ->create(['access_level' => 'jprd']);
+
+    $this->actingAs($user)
+        ->get(route('jawatankuasa.laporan'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Committee/Laporan')
+            ->where('can_add_to_jprd', true));
+});
+
 it('shows UDM group update status based on committee members', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
     $group = CommitteeGroup::query()->create([
@@ -386,6 +399,112 @@ it('allows authorized user to add active voter as ahli jprd', function () {
         'level' => 'jprd',
         'scope_key' => 'jprd',
         'scope_name' => 'JPRD',
+    ]);
+});
+
+it('allows a JPRD user to add an existing UDM member into a JPRD group', function () {
+    $user = User::factory()
+        ->withModules(['dashboard', 'jawatankuasa.laporan'])
+        ->create(['access_level' => 'jprd']);
+    $group = CommitteeGroup::query()->create([
+        'name' => 'JAWATANKUASA UTAMA',
+        'levels' => ['jprd', 'udm'],
+        'sort_order' => 1,
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'Pengerusi',
+        'slug' => 'pengerusi',
+        'sort_order' => 1,
+    ]);
+    $group->positions()->attach($position->id, ['level' => 'udm', 'sort_order' => 0]);
+    $group->positions()->attach($position->id, ['level' => 'jprd', 'sort_order' => 0]);
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025555',
+        'no_kp' => '900101025555',
+        'name' => 'ALI BIN ABU',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'status' => 'aktif',
+    ]);
+    $udmMembership = CommitteeMembership::query()->create([
+        'committee_group_id' => $group->id,
+        'pemilih_record_id' => $voter->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'PADANG CHICHAK',
+        'scope_name' => 'PADANG CHICHAK',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('jawatankuasa.memberships.from-udm'), [
+            'pemilih_record_id' => $udmMembership->pemilih_record_id,
+            'committee_group_id' => $group->id,
+            'committee_position_id' => $position->id,
+        ])
+        ->assertRedirect(route('jawatankuasa.laporan'));
+
+    $this->assertDatabaseHas('committee_memberships', [
+        'pemilih_record_id' => $voter->id,
+        'committee_group_id' => $group->id,
+        'committee_position_id' => $position->id,
+        'level' => 'jprd',
+        'scope_key' => 'jprd',
+        'scope_name' => 'JPRD',
+    ]);
+
+    expect(CommitteeMembership::query()->where('pemilih_record_id', $voter->id)->count())->toBe(2);
+});
+
+it('prevents a UDM user from adding an UDM member into a JPRD group', function () {
+    $user = User::factory()
+        ->withModules(['dashboard', 'jawatankuasa.laporan'])
+        ->create([
+            'access_level' => 'udm',
+            'scope_key' => 'PADANG CHICHAK',
+        ]);
+    $group = CommitteeGroup::query()->create([
+        'name' => 'JAWATANKUASA UTAMA',
+        'levels' => ['jprd', 'udm'],
+        'sort_order' => 1,
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'Pengerusi',
+        'slug' => 'pengerusi',
+        'sort_order' => 1,
+    ]);
+    $group->positions()->attach($position->id, ['level' => 'jprd', 'sort_order' => 0]);
+    $voter = PemilihRecord::query()->create([
+        'identity_number' => '900101025555',
+        'no_kp' => '900101025555',
+        'name' => 'ALI BIN ABU',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU KURA',
+        'status' => 'aktif',
+    ]);
+    CommitteeMembership::query()->create([
+        'committee_group_id' => $group->id,
+        'pemilih_record_id' => $voter->id,
+        'committee_position_id' => $position->id,
+        'level' => 'udm',
+        'scope_key' => 'PADANG CHICHAK',
+        'scope_name' => 'PADANG CHICHAK',
+    ]);
+
+    expect($user->access_level)->toBe('udm')
+        ->and($user->isMasterAdmin())->toBeFalse();
+
+    $response = $this->actingAs($user)
+        ->postJson(route('jawatankuasa.memberships.from-udm'), [
+            'pemilih_record_id' => $voter->id,
+            'committee_group_id' => $group->id,
+            'committee_position_id' => $position->id,
+        ]);
+
+    $response->assertForbidden();
+
+    $this->assertDatabaseMissing('committee_memberships', [
+        'pemilih_record_id' => $voter->id,
+        'level' => 'jprd',
     ]);
 });
 

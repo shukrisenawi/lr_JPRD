@@ -1,4 +1,4 @@
-import { Head, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
@@ -12,6 +12,7 @@ function Icon({ name, className = 'h-5 w-5' }) {
         phone: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z" /></>,
         x: <><path d="M18 6 6 18" /><path d="m6 6 12 12" /></>,
         copy: <><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></>,
+        userPlus: <><path d="M15 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8" cy="7" r="4" /><path d="M19 8v6" /><path d="M22 11h-6" /></>,
         check: <><path d="M20 6 9 17l-5-5" /></>,
     };
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -156,7 +157,121 @@ const levelOptions = [
     { key: 'udm-kumpulan', label: 'Pilih Kumpulan UDM' },
 ];
 
-function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvatarClick }) {
+function AddToJprdButton({ member, canAddToJprd, onAdd }) {
+    if (!canAddToJprd) return null;
+
+    return (
+        <button
+            type="button"
+            onClick={() => onAdd(member)}
+            title="Tambah ke jawatankuasa JPRD"
+            aria-label={`Tambah ${member.voter?.name || 'pemilih'} ke jawatankuasa JPRD`}
+            className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 p-1.5 text-emerald-700 transition hover:bg-emerald-100"
+        >
+            <Icon name="userPlus" className="h-4 w-4" />
+        </button>
+    );
+}
+
+function AddToJprdModal({ member, groups, onClose }) {
+    const sourceGroup = groups.find((group) => group.id === member.committee_group_id);
+    const jprdGroups = useMemo(() => groups
+        .filter((group) => (group.levels || []).includes('jprd'))
+        .map((group) => ({
+            ...group,
+            positions: (group.positions || []).filter((position) => position.pivot_level === 'jprd'),
+        }))
+        .filter((group) => group.positions.length > 0), [groups]);
+    const sourceGroupName = String(sourceGroup?.name || '').trim().toLowerCase();
+    const defaultGroup = jprdGroups.find((group) => String(group.name || '').trim().toLowerCase() === sourceGroupName);
+    const form = useForm({
+        pemilih_record_id: member.pemilih_record_id || member.voter?.id || '',
+        committee_group_id: defaultGroup?.id || '',
+        committee_position_id: '',
+        notes: '',
+    });
+    const selectedGroup = jprdGroups.find((group) => String(group.id) === String(form.data.committee_group_id));
+    const positions = selectedGroup?.positions || [];
+
+    const submit = (event) => {
+        event.preventDefault();
+        form.post(route('jawatankuasa.memberships.from-udm'), {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: onClose,
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[70] flex items-start justify-center bg-black/50 px-3 pt-12 sm:pt-20" onClick={onClose}>
+            <div className="w-full max-w-md rounded-xl bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+                    <div>
+                        <p className="text-sm font-bold text-slate-800">Tambah ke Jawatankuasa JPRD</p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">Pilih kumpulan dan jawatan untuk mengisi kekosongan JPRD.</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                        <Icon name="x" className="h-5 w-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={submit} className="space-y-3 p-4">
+                    <div className="rounded-lg border border-sky-100 bg-sky-50 px-3 py-2">
+                        <p className="text-xs font-bold text-slate-800">{member.voter?.name || '-'}</p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                            {member.voter?.no_kp || member.voter?.old_ic || '-'} · UDM: {member.scope_name || member.voter?.dm || '-'}
+                        </p>
+                        {sourceGroup?.name && <p className="mt-0.5 text-[10px] text-sky-700">Kumpulan asal: {sourceGroup.name}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="jprd-target-group" className="block text-xs font-bold text-slate-600">Kumpulan JPRD <span className="text-rose-500">*</span></label>
+                        <select
+                            id="jprd-target-group"
+                            value={form.data.committee_group_id}
+                            onChange={(event) => form.setData((current) => ({ ...current, committee_group_id: event.target.value, committee_position_id: '' }))}
+                            className="input-field mt-1 w-full text-xs"
+                            required
+                        >
+                            <option value="">Pilih kumpulan JPRD</option>
+                            {jprdGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+                        </select>
+                        {defaultGroup && String(form.data.committee_group_id) === String(defaultGroup.id) && <p className="mt-1 text-[10px] text-emerald-600">Kumpulan yang sama di peringkat JPRD dipilih secara automatik.</p>}
+                        {form.errors.committee_group_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.committee_group_id}</p>}
+                    </div>
+
+                    <div>
+                        <label htmlFor="jprd-target-position" className="block text-xs font-bold text-slate-600">Jawatan JPRD <span className="text-rose-500">*</span></label>
+                        <select
+                            id="jprd-target-position"
+                            value={form.data.committee_position_id}
+                            onChange={(event) => form.setData('committee_position_id', event.target.value)}
+                            className="input-field mt-1 w-full text-xs"
+                            disabled={!selectedGroup}
+                            required
+                        >
+                            <option value="">Pilih jawatan JPRD</option>
+                            {positions.map((position) => <option key={position.id} value={position.id}>{position.name}</option>)}
+                        </select>
+                        {!jprdGroups.length && <p className="mt-1 text-[10px] text-rose-600">Tiada kumpulan dan jawatan JPRD tersedia.</p>}
+                        {selectedGroup && !positions.length && <p className="mt-1 text-[10px] text-rose-600">Kumpulan ini belum mempunyai jawatan JPRD.</p>}
+                        {form.errors.committee_position_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.committee_position_id}</p>}
+                    </div>
+
+                    {form.errors.pemilih_record_id && <p className="text-[10px] text-rose-600">{form.errors.pemilih_record_id}</p>}
+                    <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                        <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button>
+                        <button type="submit" disabled={form.processing || !jprdGroups.length} className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50">
+                            {form.processing ? 'Menyimpan...' : 'Tambah ke JPRD'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, onAddToJprd, onClose, onAvatarClick }) {
     const [copiedGroupId, setCopiedGroupId] = useState(null);
     if (!scope) return null;
 
@@ -332,6 +447,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
                                                     <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
                                                     {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                 </div>
+                                                <AddToJprdButton member={m} canAddToJprd={level === 'udm' && canAddToJprd} onAdd={onAddToJprd} />
                                             </div>
                                             );
                                         })}
@@ -346,7 +462,7 @@ function DetailPopup({ scope, members, level, groups, highlight, onClose, onAvat
     );
 }
 
-function UdmPositionPopup({ position, members, groups, onClose, onAvatarClick }) {
+function UdmPositionPopup({ position, members, groups, canAddToJprd, onAddToJprd, onClose, onAvatarClick }) {
     if (!position) return null;
 
     const title = 'UDM — ' + position.name;
@@ -395,6 +511,7 @@ function UdmPositionPopup({ position, members, groups, onClose, onAvatarClick })
                                         </p>
                                         <span className="mt-0.5 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.scope_name || 'Tiada UDM'}</span>
                                     </div>
+                                    <AddToJprdButton member={m} canAddToJprd={canAddToJprd} onAdd={onAddToJprd} />
                                 </div>
                             ))}
                         </div>
@@ -405,7 +522,7 @@ function UdmPositionPopup({ position, members, groups, onClose, onAvatarClick })
     );
 }
 
-export default function CommitteeLaporan({ memberships, scopes, groups }) {
+export default function CommitteeLaporan({ memberships, scopes, groups, can_add_to_jprd: canAddToJprd = false }) {
     const [activeTab, setActiveTab] = useState('jprd');
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const [detailScope, setDetailScope] = useState(null);
@@ -414,6 +531,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPositionIds, setSelectedPositionIds] = useState([]);
     const [copiedGroupFlag, setCopiedGroupFlag] = useState(false);
+    const [jprdMember, setJprdMember] = useState(null);
 
     const handleCopyGroupText = async (groupName, members) => {
         const lines = [];
@@ -762,6 +880,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                                                                 <p className="text-[9px] text-slate-400">{grp?.name}</p>
                                                                 {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                             </div>
+                                                            <AddToJprdButton member={m} canAddToJprd={canAddToJprd} onAdd={setJprdMember} />
                                                         </div>
                                                     );
                                                 })}
@@ -858,6 +977,8 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     level={activeTab}
                     groups={groups}
                     highlight={searchQuery}
+                    canAddToJprd={canAddToJprd}
+                    onAddToJprd={setJprdMember}
                     onClose={() => setDetailScope(null)}
                     onAvatarClick={setLightboxSrc}
                 />
@@ -868,6 +989,8 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
                     position={detailPosition}
                     members={detailPosition.members}
                     groups={groups}
+                    canAddToJprd={canAddToJprd}
+                    onAddToJprd={setJprdMember}
                     onClose={() => setDetailPosition(null)}
                     onAvatarClick={setLightboxSrc}
                 />
@@ -971,6 +1094,15 @@ export default function CommitteeLaporan({ memberships, scopes, groups }) {
 
             {lightboxSrc && (
                 <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+            )}
+
+            {jprdMember && (
+                <AddToJprdModal
+                    key={jprdMember.id}
+                    member={jprdMember}
+                    groups={groups}
+                    onClose={() => setJprdMember(null)}
+                />
             )}
         </AuthenticatedLayout>
     );

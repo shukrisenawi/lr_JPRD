@@ -7,6 +7,7 @@ use App\Models\CommitteeMembership;
 use App\Models\CommitteePosition;
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
+use App\Models\User;
 use App\Support\CulaCodes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -417,6 +418,7 @@ class CommitteeController extends Controller
                     ])
                     ->values(),
             ],
+            'can_add_to_jprd' => $this->canManageJprd($user),
         ]);
     }
 
@@ -1073,6 +1075,85 @@ class CommitteeController extends Controller
             ->with('success', 'Ahli jawatankuasa berjaya ditambah.');
     }
 
+    public function storeJprdMembershipFromUdm(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($this->canManageJprd($user), 403, 'Hanya pengguna JPRD boleh mengisi jawatan JPRD.');
+
+        $validated = $request->validate([
+            'pemilih_record_id' => ['required', 'integer', Rule::exists('pemilih_records', 'id')],
+            'committee_position_id' => ['required', 'integer', Rule::exists('committee_positions', 'id')],
+            'committee_group_id' => ['required', 'integer', Rule::exists('committee_groups', 'id')],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $voter = PemilihRecord::query()->findOrFail($validated['pemilih_record_id']);
+
+        if (! CommitteeMembership::query()
+            ->where('pemilih_record_id', $voter->id)
+            ->where('level', 'udm')
+            ->exists()) {
+            return back()->withErrors([
+                'pemilih_record_id' => 'Pemilih ini tidak mempunyai keahlian jawatankuasa UDM.',
+            ]);
+        }
+
+        if ($voter->status !== 'aktif' && ! $voter->is_manual) {
+            return back()->withErrors([
+                'pemilih_record_id' => 'Hanya pemilih aktif boleh dilantik.',
+            ]);
+        }
+
+        $group = CommitteeGroup::query()->findOrFail($validated['committee_group_id']);
+        if (! in_array('jprd', $group->levels ?? [], true)) {
+            return back()->withErrors([
+                'committee_group_id' => 'Kumpulan yang dipilih bukan untuk peringkat JPRD.',
+            ]);
+        }
+
+        $positionInGroup = DB::table('committee_group_position')
+            ->where('committee_group_id', $group->id)
+            ->where('committee_position_id', $validated['committee_position_id'])
+            ->where('level', 'jprd')
+            ->exists();
+
+        if (! $positionInGroup) {
+            return back()->withErrors([
+                'committee_position_id' => 'Jawatan ini tidak tersedia dalam kumpulan JPRD yang dipilih.',
+            ]);
+        }
+
+        $exists = CommitteeMembership::query()
+            ->where('pemilih_record_id', $voter->id)
+            ->where('committee_position_id', $validated['committee_position_id'])
+            ->where('committee_group_id', $group->id)
+            ->where('level', 'jprd')
+            ->where('scope_key', 'jprd')
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors([
+                'committee_position_id' => 'Pelantikan JPRD yang sama sudah wujud.',
+            ]);
+        }
+
+        CommitteeMembership::query()->create([
+            'committee_group_id' => $group->id,
+            'pemilih_record_id' => $voter->id,
+            'committee_position_id' => $validated['committee_position_id'],
+            'level' => 'jprd',
+            'scope_key' => 'jprd',
+            'scope_name' => 'JPRD',
+            'parent_scope_name' => null,
+            'created_by' => $user->id,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return redirect()
+            ->route('jawatankuasa.laporan')
+            ->with('success', 'Pemilih UDM berjaya ditambah ke jawatankuasa JPRD.');
+    }
+
     public function destroyMembership(Request $request, CommitteeMembership $membership): RedirectResponse
     {
         $user = $request->user();
@@ -1109,6 +1190,11 @@ class CommitteeController extends Controller
     }
 
     // ─── Private ──────────────────────────────────────────────────
+
+    private function canManageJprd(User $user): bool
+    {
+        return $user->isMasterAdmin() || ($user->access_level ?? 'jprd') === 'jprd';
+    }
 
     private function buildUdmN8nMessage($statuses): string
     {

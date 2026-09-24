@@ -92,6 +92,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::put('/jawatankuasa/positions/{position}', [CommitteeController::class, 'updatePosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.update');
     Route::delete('/jawatankuasa/positions/{position}', [CommitteeController::class, 'destroyPosition'])->middleware('module:jawatankuasa.jawatan')->name('jawatankuasa.positions.destroy');
     Route::post('/jawatankuasa/memberships', [CommitteeController::class, 'storeMembership'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.memberships.store');
+    Route::post('/jawatankuasa/memberships/from-udm', [CommitteeController::class, 'storeJprdMembershipFromUdm'])->middleware('module:jawatankuasa.laporan')->name('jawatankuasa.memberships.from-udm');
     Route::delete('/jawatankuasa/memberships/{membership}', [CommitteeController::class, 'destroyMembership'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.memberships.destroy');
     Route::get('/tambah-pemilih', [TambahPemilihController::class, 'index'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.index');
     Route::post('/tambah-pemilih', [TambahPemilihController::class, 'store'])->middleware('module:tambah-pemilih')->name('tambah-pemilih.store');
