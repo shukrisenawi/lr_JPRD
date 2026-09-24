@@ -1173,6 +1173,33 @@ class CommitteeController extends Controller
             ->with('success', $message);
     }
 
+    public function destroyJprdMembershipsFromUdm(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($this->canManageJprd($user), 403, 'Hanya pengguna JPRD boleh mengurus jawatankuasa JPRD.');
+
+        $validated = $request->validate([
+            'pemilih_record_ids' => ['required', 'array', 'min:1'],
+            'pemilih_record_ids.*' => ['required', 'integer', 'distinct', Rule::exists('pemilih_records', 'id')],
+        ]);
+
+        $deleted = CommitteeMembership::query()
+            ->whereIn('pemilih_record_id', $validated['pemilih_record_ids'])
+            ->where('level', 'jprd')
+            ->where('scope_key', 'jprd')
+            ->delete();
+
+        if ($deleted === 0) {
+            return back()->withErrors([
+                'pemilih_record_ids' => 'Tiada pelantikan JPRD untuk pemilih yang dipilih.',
+            ]);
+        }
+
+        return redirect()
+            ->route('jawatankuasa.laporan')
+            ->with('success', $deleted.' pelantikan JPRD berjaya dibuang.');
+    }
+
     public function destroyMembership(Request $request, CommitteeMembership $membership): RedirectResponse
     {
         $user = $request->user();
