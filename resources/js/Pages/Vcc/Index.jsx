@@ -1323,7 +1323,12 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
                                                         <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
                                                         <td className="sticky left-0 z-10 bg-white px-2 py-2">
-                                                            <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                            <div className="flex flex-col items-start">
+                                                                <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                                {voter.call_status !== 'unmarked' && voter.call_remark && (
+                                                                    <span className="max-w-[18rem] break-words text-xs font-normal text-slate-500">- {voter.call_remark}</span>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                         <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
@@ -1417,8 +1422,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                 <tr key={voter.id} className="border-t border-slate-100 hover:bg-slate-50">
                                                     <td className="px-2 py-2 text-center font-bold text-slate-500">{globalIdx}</td>
                                                     <td className="sticky left-0 z-10 bg-white px-2 py-2">
-                                                        <div className="flex items-center gap-1">
+                                                        <div className="flex flex-col items-start">
                                                             <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                            {voter.call_status !== 'unmarked' && voter.call_remark && (
+                                                                <span className="max-w-[18rem] break-words text-xs font-normal text-slate-500">- {voter.call_remark}</span>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
