@@ -181,7 +181,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                 <div className="flex gap-1 border-b border-slate-200 pb-0">
                     {tabs.map(t => (
                         <button key={t.key} type="button" onClick={() => {
-                            if (t.key === 'index') router.get(route('kad-ten.index'));
+                            if (t.key === 'index') router.get(route('kad-ten.index'), form.udm ? { udm: form.udm } : {}, { preserveState: true, preserveScroll: true, replace: true });
                         }}
                             className={'rounded-t-lg px-4 py-2 text-xs font-bold transition ' + (t.key === 'senarai-pemilih' ? 'border-x border-t border-slate-200 bg-white text-green-700' : 'text-slate-500 hover:bg-green-50 hover:text-green-700')}>
                             {t.label}
