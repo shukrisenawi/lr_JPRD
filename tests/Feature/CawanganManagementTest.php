@@ -153,7 +153,7 @@ it('uses registered cawangan scopes for new committee memberships', function () 
             ->where('scopes.cawangan.0.parent_scope_name', 'UDM ALPHA'));
 });
 
-it('limits cawangan voter search to the selected cawangan UDM', function () {
+it('prioritizes the selected cawangan UDM without hiding other voters', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
     $matchingVoter = cawanganVoter([
         'name' => 'PEMILIH CARI UDM ALPHA',
@@ -178,9 +178,9 @@ it('limits cawangan voter search to the selected cawangan UDM', function () {
     $suggestionIds = collect($response->json('suggestions'))->pluck('id');
 
     $response->assertOk();
-    expect($suggestionIds)
-        ->toContain($matchingVoter->id)
-        ->not->toContain($otherVoter->id);
+    expect($suggestionIds->all())->toContain($matchingVoter->id);
+    expect($suggestionIds->all())->toContain($otherVoter->id);
+    expect($suggestionIds->first())->toBe($matchingVoter->id);
 });
 
 it('limits a cawangan user to the registered branch scope', function () {

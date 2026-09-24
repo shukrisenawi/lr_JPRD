@@ -1618,6 +1618,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
         notes: '',
     });
     const currentScope = (scopes[level] ?? []).find((scope) => String(scope.key) === String(form.data.scope_key));
+    const priorityUdm = currentScope?.parent_scope_name ?? (level === 'udm' ? currentScope?.name : null);
     const formError = form.errors.scope_key
         || form.errors.committee_group_id
         || form.errors.committee_position_id
@@ -1742,7 +1743,7 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                                                  <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
                                             </div>
                                             <div className="shrink-0 text-right text-xs text-slate-500">
-                                                <p>{voter.dm || '-'}</p>
+                                                <p className={priorityUdm && voter.dm === priorityUdm ? 'font-bold text-green-700' : ''}>{voter.dm || '-'}</p>
                                                 <p className="mt-0.5">{voter.locality || '-'}</p>
                                             </div>
                                         </button>
