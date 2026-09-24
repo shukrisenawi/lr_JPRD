@@ -667,13 +667,19 @@ function PositionManager({ positions }) {
 
 function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-function SearchableScopeSelect({ id, value, scopes, onChange }) {
+function SearchableScopeSelect({ id, value, scopes, memberships, onChange }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const containerRef = useRef(null);
     const searchInputRef = useRef(null);
 
     const selectedScope = scopes.find((scope) => scope.key === value);
+    const scopesWithMembers = useMemo(() => new Set(
+        (memberships ?? [])
+            .filter((membership) => membership.level === 'cawangan' && membership.committee_group_id != null)
+            .map((membership) => membership.scope_key)
+            .filter(Boolean)
+    ), [memberships]);
     const groupedScopes = useMemo(() => {
         const search = query.trim().toLowerCase();
         const groups = new Map();
@@ -772,19 +778,25 @@ function SearchableScopeSelect({ id, value, scopes, onChange }) {
                                         {udm}
                                     </p>
                                     <div className="py-0.5">
-                                        {udmScopes.map((scope) => (
-                                            <button
-                                                key={scope.key}
-                                                type="button"
-                                                role="option"
-                                                aria-selected={scope.key === value}
-                                                onClick={() => selectScope(scope.key)}
-                                                className={'flex w-full items-center rounded-md px-2 py-1.5 text-left text-xs transition hover:bg-green-50 hover:text-green-700 ' + (scope.key === value ? 'bg-green-50 font-bold text-green-700' : 'text-slate-700')}
-                                            >
-                                                <span className="truncate">{scope.name}</span>
-                                                {scope.key === value && <Icon name="check" className="ml-auto h-3.5 w-3.5 shrink-0" />}
-                                            </button>
-                                        ))}
+                                        {udmScopes.map((scope) => {
+                                            const hasMembers = scopesWithMembers.has(scope.key);
+                                            const isSelected = scope.key === value;
+
+                                            return (
+                                                <button
+                                                    key={scope.key}
+                                                    type="button"
+                                                    role="option"
+                                                    aria-selected={isSelected}
+                                                    onClick={() => selectScope(scope.key)}
+                                                    title={hasMembers ? 'Sudah ada pemilih dalam kumpulan' : undefined}
+                                                    className={'flex w-full items-center rounded-md px-2 py-1.5 text-left text-xs transition hover:bg-green-50 hover:text-green-700 ' + (isSelected ? 'bg-green-50 font-bold text-green-700' : hasMembers ? 'font-semibold text-emerald-700' : 'text-slate-700')}
+                                                >
+                                                    <span className="truncate">{scope.name}</span>
+                                                    {isSelected && <Icon name="check" className="ml-auto h-3.5 w-3.5 shrink-0" />}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ))
@@ -1308,6 +1320,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                     id="committee-scope"
                                     value={form.data.scope_key}
                                     scopes={currentScopes}
+                                    memberships={memberships}
                                     onChange={(scopeKey) => form.setData('scope_key', scopeKey)}
                                 />
                             ) : (
