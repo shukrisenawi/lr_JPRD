@@ -153,6 +153,36 @@ it('uses registered cawangan scopes for new committee memberships', function () 
             ->where('scopes.cawangan.0.parent_scope_name', 'UDM ALPHA'));
 });
 
+it('allows a voter from another UDM in the selected cawangan', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+    $voter = cawanganVoter(['dm' => 'UDM ALPHA']);
+    $position = CommitteePosition::query()->create([
+        'name' => 'AJK Lintas UDM',
+        'slug' => 'ajk-lintas-udm',
+        'sort_order' => 2,
+    ]);
+    $cawangan = Cawangan::query()->create([
+        'name' => 'Cawangan UDM BETA',
+        'udm' => 'UDM BETA',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('jawatankuasa.memberships.store'), [
+            'pemilih_record_id' => $voter->id,
+            'committee_position_id' => $position->id,
+            'level' => 'cawangan',
+            'scope_key' => (string) $cawangan->id,
+        ])
+        ->assertRedirect(route('jawatankuasa.index'));
+
+    $this->assertDatabaseHas('committee_memberships', [
+        'pemilih_record_id' => $voter->id,
+        'committee_position_id' => $position->id,
+        'cawangan_id' => $cawangan->id,
+        'scope_key' => (string) $cawangan->id,
+    ]);
+});
+
 it('prioritizes the selected cawangan UDM without hiding other voters', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
     $matchingVoter = cawanganVoter([

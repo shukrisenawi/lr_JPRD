@@ -1072,12 +1072,6 @@ class CommitteeController extends Controller
                     'scope_key' => 'Cawangan yang dipilih mesti berada di bawah UDM anda.',
                 ]);
             }
-
-            if ($cawangan && filled($voter->dm) && $voter->dm !== $cawangan->udm) {
-                return back()->withErrors([
-                    'scope_key' => 'Cawangan yang dipilih mesti berada di bawah UDM pemilih.',
-                ]);
-            }
         }
 
         [$scopeName, $parentScopeName, $cawanganId] = $this->resolveScope(
