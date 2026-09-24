@@ -230,8 +230,9 @@ class VccController extends Controller
     {
         $data = $request->validate([
             'voter_id' => 'required|exists:pemilih_records,id',
-            'status' => 'required|in:no_response,support,oppose,other',
+            'status' => 'required|in:unmarked,no_response,support,oppose,other',
             'notes' => 'nullable|string|max:1000',
+            'contact_date' => 'nullable|date_format:Y-m-d',
         ]);
 
         $voterQuery = PemilihRecord::query()->whereKey($data['voter_id']);
@@ -247,7 +248,10 @@ class VccController extends Controller
         $attributes = [
             'user_id' => $request->user()->id,
             'status' => $data['status'],
-            'notes' => $data['notes'] ?? null,
+            'contact_date' => $data['status'] === 'unmarked'
+                ? null
+                : ($data['contact_date'] ?? now()->toDateString()),
+            'notes' => $data['status'] === 'unmarked' ? null : ($data['notes'] ?? null),
         ];
 
         if ($communication) {
@@ -263,7 +267,8 @@ class VccController extends Controller
         return response()->json([
             'message' => 'Status panggilan berjaya disimpan.',
             'call_status' => $data['status'],
-            'call_remark' => $data['notes'] ?? null,
+            'call_remark' => $attributes['notes'],
+            'contact_date' => $attributes['contact_date'],
         ]);
     }
 
@@ -705,6 +710,7 @@ class VccController extends Controller
             'date_of_birth' => $voter->date_of_birth,
             'call_status' => $callStatus,
             'call_remark' => $latestCall?->notes,
+            'call_contact_date' => $latestCall?->contact_date?->format('Y-m-d'),
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
             'whatsapp_link' => $this->generateWhatsAppLink($voter->phone_mobile),

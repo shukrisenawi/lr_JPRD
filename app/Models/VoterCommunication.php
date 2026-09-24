@@ -12,8 +12,16 @@ class VoterCommunication extends Model
         'user_id',
         'type',
         'status',
+        'contact_date',
         'notes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'contact_date' => 'date',
+        ];
+    }
 
     public function voter(): BelongsTo
     {

@@ -73,6 +73,14 @@ function parseBirthDateFilter(value) {
     };
 }
 
+function todayDateValue() {
+    const date = new Date();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${date.getFullYear()}-${month}-${day}`;
+}
+
 const responseStatusTabs = [
     { value: 'unmarked', label: 'Senarai Pemilih' },
     { value: 'no_response', label: 'Belum Respon' },
@@ -144,6 +152,24 @@ function CallStatusButton({ voter, onClick }) {
     );
 }
 
+function CancelStatusButton({ onClick, disabled }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            className="flex items-center justify-center rounded border border-rose-200 bg-white p-1 text-rose-500 hover:border-rose-400 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Batal status respon"
+            aria-label="Batal status respon"
+        >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m9 9 6 6m0-6-6 6" />
+            </svg>
+        </button>
+    );
+}
+
 export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [], available_cula_codes: initialCulaCodes = [], available_hashtags = [] }) {
     const { auth } = usePage().props;
     const suggestionsAbort = useRef(null);
@@ -170,8 +196,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [callModalVoter, setCallModalVoter] = useState(null);
     const [callStatus, setCallStatus] = useState('no_response');
     const [callRemark, setCallRemark] = useState('');
+    const [callContactDate, setCallContactDate] = useState(todayDateValue());
     const [callSaving, setCallSaving] = useState(false);
     const [callError, setCallError] = useState('');
+    const [cancelingCallIds, setCancelingCallIds] = useState(new Set());
     const [hashtagFilterOpen, setHashtagFilterOpen] = useState(false);
     const initialBirthDate = parseBirthDateFilter(filters.tarikh_lahir);
     const [birthDateDay, setBirthDateDay] = useState(initialBirthDate.day);
@@ -386,9 +414,14 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         setSearchError('');
     };
 
-    const updateLocalCall = (voterId, status, remark) => {
+    const updateLocalCall = (voterId, status, remark, contactDate) => {
         const update = (voter) => voter.id === voterId
-            ? { ...voter, call_status: status, ...(remark !== undefined ? { call_remark: remark } : {}) }
+            ? {
+                ...voter,
+                call_status: status,
+                ...(remark !== undefined ? { call_remark: remark } : {}),
+                ...(contactDate !== undefined ? { call_contact_date: contactDate } : {}),
+            }
             : voter;
 
         setSuggestions((current) => current.map(update));
@@ -399,6 +432,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         setCallModalVoter(voter);
         setCallStatus(voter.call_status === 'unmarked' ? 'no_response' : (voter.call_status ?? 'no_response'));
         setCallRemark(voter.call_remark ?? '');
+        setCallContactDate(voter.call_contact_date ?? todayDateValue());
         setCallError('');
     };
 
@@ -421,19 +455,51 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                     voter_id: callModalVoter.id,
                     status: callStatus,
                     notes: callRemark,
+                    contact_date: callContactDate,
                 }),
             });
 
             if (!response.ok) throw new Error('Call status update failed');
 
             const payload = await response.json();
-            updateLocalCall(callModalVoter.id, payload.call_status ?? callStatus, payload.call_remark ?? callRemark);
+            updateLocalCall(callModalVoter.id, payload.call_status ?? callStatus, payload.call_remark ?? callRemark, payload.contact_date ?? callContactDate);
             setCallModalVoter(null);
             router.reload({ preserveScroll: true });
         } catch (_) {
             setCallError('Status panggilan tidak berjaya disimpan.');
         } finally {
             setCallSaving(false);
+        }
+    };
+
+    const cancelCallStatus = async (voter) => {
+        setCancelingCallIds((current) => new Set([...current, voter.id]));
+        setActionError('');
+
+        try {
+            const response = await fetch(route('vcc.communication.call'), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ voter_id: voter.id, status: 'unmarked' }),
+            });
+
+            if (!response.ok) throw new Error('Call status reset failed');
+
+            updateLocalCall(voter.id, 'unmarked', null, null);
+            router.reload({ preserveScroll: true });
+        } catch (_) {
+            setActionError('Status respon tidak berjaya dibatalkan.');
+        } finally {
+            setCancelingCallIds((current) => {
+                const next = new Set(current);
+                next.delete(voter.id);
+                return next;
+            });
         }
     };
 
@@ -1308,7 +1374,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                                  WA
                                                                              </a>
                                                                          )}
-                                                                         <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
+                                                                          <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
+                                                                          {voter.call_status !== 'unmarked' && (
+                                                                              <CancelStatusButton
+                                                                                  onClick={() => cancelCallStatus(voter)}
+                                                                                  disabled={cancelingCallIds.has(voter.id)}
+                                                                              />
+                                                                          )}
                                                                      </>
                                                                 )}
                                                                  {!voter.is_manual && (
@@ -1398,7 +1470,13 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                              WA
                                                                          </a>
                                                                      )}
-                                                                     <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
+                                                                      <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
+                                                                      {voter.call_status !== 'unmarked' && (
+                                                                          <CancelStatusButton
+                                                                              onClick={() => cancelCallStatus(voter)}
+                                                                              disabled={cancelingCallIds.has(voter.id)}
+                                                                          />
+                                                                      )}
                                                                  </>
                                                             )}
                                                                  {!voter.is_manual && (
@@ -1460,6 +1538,16 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                     <option value="oppose">Tidak Menyokong</option>
                                     <option value="other">Lain-Lain</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label htmlFor="vcc-call-contact-date" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tarikh Contact</label>
+                                <input
+                                    id="vcc-call-contact-date"
+                                    type="date"
+                                    value={callContactDate}
+                                    onChange={(event) => setCallContactDate(event.target.value)}
+                                    className="input-field mt-1 w-full"
+                                />
                             </div>
                             <div>
                                 <label htmlFor="vcc-call-remark" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Respon / Remark</label>
