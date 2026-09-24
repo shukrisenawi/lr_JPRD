@@ -21,10 +21,13 @@ use Inertia\Response;
 
 class VccController extends Controller
 {
+    private const RESPONSE_STATUSES = ['no_response', 'support', 'oppose', 'other'];
+
     public function index(Request $request, HashtagService $hashtagService): Response
     {
         $filters = $this->resolveFilters($request);
         $voters = $this->paginateVoters($filters);
+        $callStatusCounts = $this->callStatusCounts($filters);
 
         $totalBirthdayImages = PemilihRecord::where('status', 'aktif')
             ->where('is_manual', false)
@@ -38,6 +41,7 @@ class VccController extends Controller
             'summary' => [
                 'total' => $voters->total(),
                 'total_birthday_images' => $totalBirthdayImages,
+                'call_status_counts' => $callStatusCounts,
             ],
             'udms' => $this->availableUdms(),
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
@@ -196,7 +200,9 @@ class VccController extends Controller
             if ($communication) {
                 $communication->update([
                     'user_id' => $request->user()->id,
-                    'status' => 'called',
+                    'status' => in_array($communication->status, self::RESPONSE_STATUSES, true)
+                        ? $communication->status
+                        : 'unmarked',
                     'notes' => filled($data['notes'] ?? null) ? $data['notes'] : $communication->notes,
                 ]);
             } else {
@@ -204,7 +210,7 @@ class VccController extends Controller
                     'voter_id' => $data['voter_id'],
                     'user_id' => $request->user()->id,
                     'type' => 'call',
-                    'status' => 'called',
+                    'status' => 'unmarked',
                     'notes' => $data['notes'] ?? null,
                 ]);
             }
@@ -224,7 +230,7 @@ class VccController extends Controller
     {
         $data = $request->validate([
             'voter_id' => 'required|exists:pemilih_records,id',
-            'status' => 'required|in:called,not_called',
+            'status' => 'required|in:no_response,support,oppose,other',
             'notes' => 'nullable|string|max:1000',
         ]);
 
@@ -284,6 +290,18 @@ class VccController extends Controller
 
                 $builder->whereDay('date_of_birth', $day)
                     ->whereMonth('date_of_birth', $month);
+            })
+            ->when($filters['call_status'] !== '', function (Builder $builder) use ($filters) {
+                if ($filters['call_status'] === 'unmarked') {
+                    $builder->where(function (Builder $query) {
+                        $query->whereDoesntHave('latestCallCommunication')
+                            ->orWhereHas('latestCallCommunication', fn (Builder $callQuery) => $callQuery->whereNotIn('status', self::RESPONSE_STATUSES));
+                    });
+
+                    return;
+                }
+
+                $builder->whereHas('latestCallCommunication', fn (Builder $callQuery) => $callQuery->where('status', $filters['call_status']));
             })
             ->when($filters['cula_codes'] !== '', fn (Builder $builder) => $builder->whereIn('cula_code', explode(',', $filters['cula_codes'])))
             ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
@@ -571,6 +589,11 @@ class VccController extends Controller
             $perUdmCount = (int) $rawPerUdm;
         }
 
+        $requestedCallStatus = trim((string) $request->query('call_status', 'unmarked'));
+        $callStatus = in_array($requestedCallStatus, ['unmarked', ...self::RESPONSE_STATUSES], true)
+            ? $requestedCallStatus
+            : 'unmarked';
+
         return [
             'udm' => $requestedUdm,
             'locality' => $requestedLocality,
@@ -584,6 +607,7 @@ class VccController extends Controller
             'per_udm_count' => $perUdmCount,
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
             'tarikh_lahir' => $this->normalizeDateFilter($request->query('tarikh_lahir', '')),
+            'call_status' => $callStatus,
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
             'has_phone' => $request->has('has_phone') ? $request->boolean('has_phone') : true,
             'birthday_image_status' => trim((string) $request->query('birthday_image_status', '')),
@@ -599,6 +623,30 @@ class VccController extends Controller
         $voterQuery = $this->buildEligibleVotersQuery($candidateFilters);
 
         return $hashtagService->availableWithCounts($voterQuery, request()->user(), $filters['udm'], $filters['locality']);
+    }
+
+    private function callStatusCounts(array $filters): array
+    {
+        $candidateFilters = $filters;
+        $candidateFilters['call_status'] = '';
+        $query = $this->buildEligibleVotersQuery($candidateFilters);
+
+        $counts = [
+            'unmarked' => (clone $query)
+                ->where(function (Builder $statusQuery) {
+                    $statusQuery->whereDoesntHave('latestCallCommunication')
+                        ->orWhereHas('latestCallCommunication', fn (Builder $callQuery) => $callQuery->whereNotIn('status', self::RESPONSE_STATUSES));
+                })
+                ->count(),
+        ];
+
+        foreach (self::RESPONSE_STATUSES as $status) {
+            $counts[$status] = (clone $query)
+                ->whereHas('latestCallCommunication', fn (Builder $callQuery) => $callQuery->where('status', $status))
+                ->count();
+        }
+
+        return $counts;
     }
 
     private function availableGroups(string $udm = ''): array
@@ -642,6 +690,9 @@ class VccController extends Controller
     private function transformVoter(PemilihRecord $voter): array
     {
         $latestCall = $voter->latestCallCommunication;
+        $callStatus = in_array($latestCall?->status, self::RESPONSE_STATUSES, true)
+            ? $latestCall->status
+            : 'unmarked';
 
         return [
             'id' => $voter->id,
@@ -652,7 +703,7 @@ class VccController extends Controller
             'old_ic' => $voter->old_ic,
             'is_member' => $voter->is_member,
             'date_of_birth' => $voter->date_of_birth,
-            'call_status' => $latestCall?->status ?? 'not_called',
+            'call_status' => $callStatus,
             'call_remark' => $latestCall?->notes,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,

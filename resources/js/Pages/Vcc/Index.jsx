@@ -73,6 +73,14 @@ function parseBirthDateFilter(value) {
     };
 }
 
+const responseStatusTabs = [
+    { value: 'unmarked', label: 'Senarai Pemilih' },
+    { value: 'no_response', label: 'Belum Respon' },
+    { value: 'support', label: 'Menyokong' },
+    { value: 'oppose', label: 'Tidak Menyokong' },
+    { value: 'other', label: 'Lain-Lain' },
+];
+
 function Pagination({ voters, onNavigate }) {
     if (!voters || voters.last_page <= 1) return null;
 
@@ -116,19 +124,21 @@ function Pagination({ voters, onNavigate }) {
 }
 
 function CallStatusButton({ voter, onClick }) {
-    const called = voter.call_status === 'called';
+    const status = voter.call_status ?? 'unmarked';
+    const marked = status !== 'unmarked';
+    const statusLabel = responseStatusTabs.find((tab) => tab.value === status)?.label ?? 'Senarai Pemilih';
 
     return (
         <button
             type="button"
             onClick={onClick}
-            className={`flex items-center justify-center rounded border bg-white p-1 ${called ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50' : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'}`}
-            title={called ? 'Panggilan sudah direkodkan' : 'Rekod status panggilan'}
-            aria-label={called ? 'Panggilan sudah direkodkan' : 'Rekod status panggilan'}
+            className={`flex items-center justify-center rounded border bg-white p-1 ${marked ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50' : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'}`}
+            title={`Status: ${statusLabel}`}
+            aria-label={`Status: ${statusLabel}`}
         >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92z" />
-                {called && <path d="m9 12 2 2 4-4" />}
+                <circle cx="12" cy="12" r="9" />
+                <path d="m8 12 2.5 2.5L16 9" />
             </svg>
         </button>
     );
@@ -158,7 +168,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [callModalVoter, setCallModalVoter] = useState(null);
-    const [callStatus, setCallStatus] = useState('not_called');
+    const [callStatus, setCallStatus] = useState('no_response');
     const [callRemark, setCallRemark] = useState('');
     const [callSaving, setCallSaving] = useState(false);
     const [callError, setCallError] = useState('');
@@ -184,6 +194,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         per_udm_count: filters.per_udm_count ?? 20,
         bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
         tarikh_lahir: filters.tarikh_lahir ?? '',
+        call_status: filters.call_status ?? 'unmarked',
         cula_codes: filters.cula_codes ?? '',
         hashtags: Array.isArray(filters.hashtags) ? filters.hashtags : [],
         has_phone: Boolean(filters.has_phone),
@@ -203,6 +214,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             per_udm_count: filters.per_udm_count ?? 20,
             bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
             tarikh_lahir: filters.tarikh_lahir ?? '',
+            call_status: filters.call_status ?? 'unmarked',
             cula_codes: filters.cula_codes ?? '',
             hashtags: Array.isArray(filters.hashtags) ? filters.hashtags : [],
             has_phone: Boolean(filters.has_phone),
@@ -211,7 +223,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         const birthDate = parseBirthDateFilter(filters.tarikh_lahir);
         setBirthDateDay(birthDate.day);
         setBirthDateMonth(birthDate.month);
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.tarikh_lahir, filters.cula_codes, filters.hashtags, filters.has_phone, filters.birthday_image_status]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.tarikh_lahir, filters.call_status, filters.cula_codes, filters.hashtags, filters.has_phone, filters.birthday_image_status]);
 
     const initialMonth = useRef(true);
     useEffect(() => {
@@ -333,6 +345,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             per_udm_count: formState.per_udm_count ?? '',
             bulan_lahir: formState.bulan_lahir ?? '',
             tarikh_lahir: formState.tarikh_lahir ?? '',
+            call_status: formState.call_status ?? 'unmarked',
             cula_codes: formState.cula_codes ?? '',
             has_phone: formState.has_phone ? '1' : '0',
             birthday_image_status: formState.birthday_image_status ?? '',
@@ -384,7 +397,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
     const openCallModal = (voter) => {
         setCallModalVoter(voter);
-        setCallStatus(voter.call_status ?? 'not_called');
+        setCallStatus(voter.call_status === 'unmarked' ? 'no_response' : (voter.call_status ?? 'no_response'));
         setCallRemark(voter.call_remark ?? '');
         setCallError('');
     };
@@ -416,6 +429,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             const payload = await response.json();
             updateLocalCall(callModalVoter.id, payload.call_status ?? callStatus, payload.call_remark ?? callRemark);
             setCallModalVoter(null);
+            router.reload({ preserveScroll: true });
         } catch (_) {
             setCallError('Status panggilan tidak berjaya disimpan.');
         } finally {
@@ -573,7 +587,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
     const logCommunication = async (voterId, type, notes = '') => {
         try {
-            const response = await fetch(route('vcc.communication.log'), {
+            await fetch(route('vcc.communication.log'), {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -583,7 +597,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 },
                 body: JSON.stringify({ voter_id: voterId, type, notes }),
             });
-            if (response.ok && type === 'call') updateLocalCall(voterId, 'called');
         } catch (_) {}
     };
 
@@ -615,6 +628,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 per_udm_count: formState.per_udm_count ?? '',
                 bulan_lahir: formState.bulan_lahir ?? '',
                 tarikh_lahir: formState.tarikh_lahir ?? '',
+                call_status: formState.call_status ?? 'unmarked',
                 cula_codes: formState.cula_codes ?? '',
                 has_phone: formState.has_phone ? '1' : '0',
                 birthday_image_status: formState.birthday_image_status ?? '',
@@ -1045,6 +1059,29 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
+                            <div className="mt-3 overflow-x-auto border-t border-slate-100 pt-3">
+                                <div className="flex min-w-max gap-1.5">
+                                    {responseStatusTabs.map((tab) => {
+                                        const selected = formState.call_status === tab.value;
+                                        const count = Number(localSummary.call_status_counts?.[tab.value] ?? 0);
+
+                                        return (
+                                            <button
+                                                key={tab.value}
+                                                type="button"
+                                                onClick={() => updateFilter('call_status', tab.value)}
+                                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-bold transition ${selected ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700'}`}
+                                            >
+                                                {tab.label}
+                                                <span className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none ${selected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                                    {count}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
                             <div className="mt-3">
                                 <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
                                 <div className="mt-1 flex flex-wrap gap-1">
@@ -1408,7 +1445,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                     <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-600">Rekod Panggilan</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-600">Status Respon</p>
                                 <h3 className="mt-1 text-sm font-bold text-slate-800">{callModalVoter.name}</h3>
                             </div>
                             <button type="button" onClick={() => setCallModalVoter(null)} disabled={callSaving} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200 disabled:opacity-50">Tutup</button>
@@ -1418,8 +1455,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                             <div>
                                 <label htmlFor="vcc-call-status" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Status</label>
                                 <select id="vcc-call-status" value={callStatus} onChange={(event) => setCallStatus(event.target.value)} className="input-field mt-1 w-full">
-                                    <option value="not_called">Belum call</option>
-                                    <option value="called">Sudah call</option>
+                                    <option value="no_response">Belum Respon</option>
+                                    <option value="support">Menyokong</option>
+                                    <option value="oppose">Tidak Menyokong</option>
+                                    <option value="other">Lain-Lain</option>
                                 </select>
                             </div>
                             <div>

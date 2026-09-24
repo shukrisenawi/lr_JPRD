@@ -49,23 +49,25 @@ it('filters VCC voters by birth date and stores the call response', function () 
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.tarikh_lahir', '24-09')
+            ->where('filters.call_status', 'unmarked')
             ->where('summary.total', 2)
+            ->where('summary.call_status_counts.unmarked', 2)
             ->where('voters.data', fn ($data) => collect($data)->pluck('id')->sort()->values()->all() === collect([$match->id, $sameBirthday->id])->sort()->values()->all()));
 
     $this->actingAs($user)
         ->postJson(route('vcc.communication.call'), [
             'voter_id' => $match->id,
-            'status' => 'called',
+            'status' => 'support',
             'notes' => 'Akan hadir ke program.',
         ])
         ->assertOk()
-        ->assertJsonPath('call_status', 'called')
+        ->assertJsonPath('call_status', 'support')
         ->assertJsonPath('call_remark', 'Akan hadir ke program.');
 
     $this->assertDatabaseHas('voter_communications', [
         'voter_id' => $match->id,
         'type' => 'call',
-        'status' => 'called',
+        'status' => 'support',
         'notes' => 'Akan hadir ke program.',
     ]);
 
@@ -73,14 +75,14 @@ it('filters VCC voters by birth date and stores the call response', function () 
         ->get(route('vcc.index', [
             'bulan_lahir' => '',
             'tarikh_lahir' => '24-09',
+            'call_status' => 'support',
             'has_phone' => false,
             'per_udm_count' => '',
         ]))
         ->assertInertia(fn ($page) => $page
-            ->where('voters.data', function ($data) use ($match) {
-                $voter = collect($data)->firstWhere('id', $match->id);
-
-                return $voter['call_status'] === 'called'
-                    && $voter['call_remark'] === 'Akan hadir ke program.';
-            }));
+            ->where('filters.call_status', 'support')
+            ->where('summary.total', 1)
+            ->where('voters.data.0.id', $match->id)
+            ->where('voters.data.0.call_status', 'support')
+            ->where('voters.data.0.call_remark', 'Akan hadir ke program.'));
 });
