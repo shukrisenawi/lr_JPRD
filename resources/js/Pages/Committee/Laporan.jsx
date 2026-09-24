@@ -179,7 +179,7 @@ function JprdAssignments({ member, jprdAssignmentsByMemberKey }) {
     const assignments = jprdAssignmentsByMemberKey.get(memberVoterKey(member)) || [];
     if (assignments.length === 0) return null;
 
-    return <p className="mt-0.5 text-[9px] text-emerald-700"><span className="font-bold">JPRD:</span> {assignments.join(', ')}</p>;
+    return <p className="mt-0.5 max-w-full break-words whitespace-normal text-[9px] text-emerald-700"><span className="font-bold">JPRD:</span> {assignments.join(', ')}</p>;
 }
 
 function JprdMemberActions({ member, canAddToJprd, selectedMemberIds, jprdMemberKeys, jprdAssignmentsByMemberKey, onToggleMember, onRemove, onAdd }) {
@@ -1062,14 +1062,14 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                                                     {m.voter?.no_kp || m.voter?.old_ic || '-'}
                                                                     {m.scope_name ? <span className="text-sky-500"> — {m.scope_name}</span> : ''}
                                                                 </p>
-                                                                {(m.voter?.phone_mobile || m.voter?.phone_home) && (
-                                                                    <p className="text-[10px] text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</p>
-                                                                )}
-                                                            </div>
-                                                            <div className="shrink-0 text-right">
-                                                                <span className="inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.position?.name}</span>
+                                                                 {(m.voter?.phone_mobile || m.voter?.phone_home) && (
+                                                                     <p className="text-[10px] text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</p>
+                                                                 )}
+                                                                 <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
+                                                             </div>
+                                                            <div className="min-w-0 max-w-[42%] shrink text-right">
+                                                                <span className="inline-block max-w-full break-words whitespace-normal rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.position?.name}</span>
                                                                 <p className="text-[9px] text-slate-400">{grp?.name}</p>
-                                                                <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
                                                                 {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}
                                                             </div>
                                                             <JprdMemberActions member={m} canAddToJprd={canAddToJprd} selectedMemberIds={selectedJprdMemberIds} jprdMemberKeys={jprdMemberKeys} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} onToggleMember={toggleJprdMember} onRemove={removeJprdMembers} onAdd={openSingleJprdModal} />
