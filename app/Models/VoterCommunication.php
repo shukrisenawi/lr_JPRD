@@ -11,6 +11,7 @@ class VoterCommunication extends Model
         'voter_id',
         'user_id',
         'type',
+        'status',
         'notes',
     ];
 

@@ -57,7 +57,7 @@ class VccController extends Controller
 
         if ($exportAll) {
             $voters = $this->buildEligibleVotersQuery($filters)
-                ->with('culaWorkItem.marker', 'hashtags')
+                ->with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication')
                 ->orderBy('dm')
                 ->orderBy('locality')
                 ->orderBy('no_kp')
@@ -75,7 +75,7 @@ class VccController extends Controller
         $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($query)) ?: []));
 
         $suggestions = $this->buildEligibleVotersQuery($filters)
-            ->with('culaWorkItem.marker', 'hashtags')
+            ->with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication')
             ->where(function (Builder $builder) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     $like = '%'.$keyword.'%';
@@ -186,14 +186,79 @@ class VccController extends Controller
         $request->user()?->applyScopeToPemilihQuery($voterQuery);
         abort_unless($voterQuery->exists(), 404);
 
-        VoterCommunication::create([
-            'voter_id' => $data['voter_id'],
-            'user_id' => $request->user()->id,
-            'type' => $data['type'],
-            'notes' => $data['notes'] ?? null,
-        ]);
+        if ($data['type'] === 'call') {
+            $communication = VoterCommunication::query()
+                ->where('voter_id', $data['voter_id'])
+                ->where('type', 'call')
+                ->latest('id')
+                ->first();
+
+            if ($communication) {
+                $communication->update([
+                    'user_id' => $request->user()->id,
+                    'status' => 'called',
+                    'notes' => filled($data['notes'] ?? null) ? $data['notes'] : $communication->notes,
+                ]);
+            } else {
+                VoterCommunication::create([
+                    'voter_id' => $data['voter_id'],
+                    'user_id' => $request->user()->id,
+                    'type' => 'call',
+                    'status' => 'called',
+                    'notes' => $data['notes'] ?? null,
+                ]);
+            }
+        } else {
+            VoterCommunication::create([
+                'voter_id' => $data['voter_id'],
+                'user_id' => $request->user()->id,
+                'type' => $data['type'],
+                'notes' => $data['notes'] ?? null,
+            ]);
+        }
 
         return response()->json(['message' => 'Komunikasi direkodkan.']);
+    }
+
+    public function updateCallStatus(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'voter_id' => 'required|exists:pemilih_records,id',
+            'status' => 'required|in:called,not_called',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $voterQuery = PemilihRecord::query()->whereKey($data['voter_id']);
+        $request->user()?->applyScopeToPemilihQuery($voterQuery);
+        $voter = $voterQuery->firstOrFail();
+
+        $communication = VoterCommunication::query()
+            ->where('voter_id', $voter->id)
+            ->where('type', 'call')
+            ->latest('id')
+            ->first();
+
+        $attributes = [
+            'user_id' => $request->user()->id,
+            'status' => $data['status'],
+            'notes' => $data['notes'] ?? null,
+        ];
+
+        if ($communication) {
+            $communication->update($attributes);
+        } else {
+            VoterCommunication::create([
+                'voter_id' => $voter->id,
+                'type' => 'call',
+                ...$attributes,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Status panggilan berjaya disimpan.',
+            'call_status' => $data['status'],
+            'call_remark' => $data['notes'] ?? null,
+        ]);
     }
 
     private function buildEligibleVotersQuery(array $filters, bool $skipMarkedFilter = false): Builder
@@ -214,6 +279,7 @@ class VccController extends Controller
             ->when($filters['custom_mode'], fn (Builder $builder) => $this->applyCustomDemographicFilters($builder, $filters))
             ->when($filters['bulan_lahir'] !== '', fn (Builder $builder) => $builder->whereRaw('LENGTH(no_kp) >= 6')
                 ->whereIn(DB::raw('CAST(SUBSTRING(no_kp, 3, 2) AS UNSIGNED)'), array_map('intval', explode(',', $filters['bulan_lahir']))))
+            ->when($filters['tarikh_lahir'] !== '', fn (Builder $builder) => $builder->whereDate('date_of_birth', $filters['tarikh_lahir']))
             ->when($filters['cula_codes'] !== '', fn (Builder $builder) => $builder->whereIn('cula_code', explode(',', $filters['cula_codes'])))
             ->when($filters['has_phone'], fn (Builder $builder) => $builder->where(function (Builder $q) {
                 $q->whereNotNull('phone_mobile')->where('phone_mobile', '!=', '')
@@ -260,7 +326,7 @@ class VccController extends Controller
             return $this->paginateDistributedVoters($filters);
         }
 
-        $query->with('culaWorkItem.marker', 'hashtags');
+        $query->with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication');
 
         if ($filters['udm'] === '') {
             $query->orderBy('dm');
@@ -306,7 +372,7 @@ class VccController extends Controller
             $offset = ($page - 1) * $perPage;
             $sliceIds = $allIds->slice($offset, $perPage)->values();
 
-            $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags')
+            $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication')
                 ->whereIn('id', $sliceIds)
                 ->orderBy('dm')
                 ->orderBy('locality')
@@ -331,7 +397,7 @@ class VccController extends Controller
         $offset = ($page - 1) * $perPage;
         $sliceIds = $ids->slice($offset, $perPage)->values();
 
-        $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags')
+        $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication')
             ->whereIn('id', $sliceIds)
             ->orderBy('locality')
             ->orderBy('no_kp')
@@ -512,6 +578,7 @@ class VccController extends Controller
             'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
             'per_udm_count' => $perUdmCount,
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
+            'tarikh_lahir' => $this->normalizeDateFilter($request->query('tarikh_lahir', '')),
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
             'has_phone' => $request->has('has_phone') ? $request->boolean('has_phone') : true,
             'birthday_image_status' => trim((string) $request->query('birthday_image_status', '')),
@@ -569,6 +636,8 @@ class VccController extends Controller
 
     private function transformVoter(PemilihRecord $voter): array
     {
+        $latestCall = $voter->latestCallCommunication;
+
         return [
             'id' => $voter->id,
             'avatar_url' => $voter->avatarUrl(),
@@ -578,6 +647,8 @@ class VccController extends Controller
             'old_ic' => $voter->old_ic,
             'is_member' => $voter->is_member,
             'date_of_birth' => $voter->date_of_birth,
+            'call_status' => $latestCall?->status ?? 'not_called',
+            'call_remark' => $latestCall?->notes,
             'phone_mobile' => $voter->phone_mobile,
             'phone_home' => $voter->phone_home,
             'whatsapp_link' => $this->generateWhatsAppLink($voter->phone_mobile),
@@ -599,6 +670,17 @@ class VccController extends Controller
             'alamat_kp' => $voter->alamat_kp,
             'alamat_kediaman' => $voter->alamat_kediaman,
         ];
+    }
+
+    private function normalizeDateFilter(mixed $value): string
+    {
+        $value = trim((string) $value);
+
+        if (! preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $matches)) {
+            return '';
+        }
+
+        return checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1]) ? $value : '';
     }
 
     private function generateWhatsAppLink(?string $phone): ?string

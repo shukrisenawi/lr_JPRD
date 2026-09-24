@@ -108,6 +108,13 @@ class PemilihRecord extends Model
         return $this->hasOne(CulaWorkItem::class, 'pemilih_record_id');
     }
 
+    public function latestCallCommunication(): HasOne
+    {
+        return $this->hasOne(VoterCommunication::class, 'voter_id')
+            ->where('type', 'call')
+            ->latestOfMany();
+    }
+
     public function kadTenMemberships(): HasMany
     {
         return $this->hasMany(KadTenMember::class, 'pemilih_record_id');

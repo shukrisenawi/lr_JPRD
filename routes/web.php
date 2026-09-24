@@ -132,6 +132,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::delete('/vcc/{pemilihRecord}/mark', [VccController::class, 'destroyMark'])->middleware('module:vcc')->name('vcc.mark.destroy');
     Route::post('/vcc/{pemilihRecord}/update-cula', [VccController::class, 'updateCula'])->middleware('module:vcc')->name('vcc.update-cula');
     Route::post('/vcc/communication/log', [VccController::class, 'logCommunication'])->middleware('module:vcc')->name('vcc.communication.log');
+    Route::post('/vcc/communication/call', [VccController::class, 'updateCallStatus'])->middleware('module:vcc')->name('vcc.communication.call');
 
     Route::get('/kad-ten', [KadTenController::class, 'index'])->middleware('module:kad-ten')->name('kad-ten.index');
     Route::post('/kad-ten', [KadTenController::class, 'store'])->middleware('module:kad-ten')->name('kad-ten.store');

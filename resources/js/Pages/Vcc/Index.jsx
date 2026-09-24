@@ -106,6 +106,25 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
+function CallStatusButton({ voter, onClick }) {
+    const called = voter.call_status === 'called';
+
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex items-center justify-center rounded border bg-white p-1 ${called ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50' : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'}`}
+            title={called ? 'Panggilan sudah direkodkan' : 'Rekod status panggilan'}
+            aria-label={called ? 'Panggilan sudah direkodkan' : 'Rekod status panggilan'}
+        >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.29 1.73.5 2.63.62A2 2 0 0 1 22 16.92z" />
+                {called && <path d="m9 12 2 2 4-4" />}
+            </svg>
+        </button>
+    );
+}
+
 export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [], available_cula_codes: initialCulaCodes = [], available_hashtags = [] }) {
     const { auth } = usePage().props;
     const suggestionsAbort = useRef(null);
@@ -129,6 +148,11 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
+    const [callModalVoter, setCallModalVoter] = useState(null);
+    const [callStatus, setCallStatus] = useState('not_called');
+    const [callRemark, setCallRemark] = useState('');
+    const [callSaving, setCallSaving] = useState(false);
+    const [callError, setCallError] = useState('');
     const [hashtagFilterOpen, setHashtagFilterOpen] = useState(false);
     const orderedHashtags = [...available_hashtags].sort((a, b) => {
         const aIsXaktif = String(a.name).trim().toLowerCase() === '#xaktif';
@@ -145,8 +169,9 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         jantina: filters.jantina ?? '',
         umur_dari: filters.umur_dari ?? '',
         umur_hingga: filters.umur_hingga ?? '',
-            per_udm_count: filters.per_udm_count ?? 20,
+        per_udm_count: filters.per_udm_count ?? 20,
         bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
+        tarikh_lahir: filters.tarikh_lahir ?? '',
         cula_codes: filters.cula_codes ?? '',
         hashtags: Array.isArray(filters.hashtags) ? filters.hashtags : [],
         has_phone: Boolean(filters.has_phone),
@@ -163,14 +188,15 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             jantina: filters.jantina ?? '',
             umur_dari: filters.umur_dari ?? '',
             umur_hingga: filters.umur_hingga ?? '',
-        per_udm_count: filters.per_udm_count ?? 20,
+            per_udm_count: filters.per_udm_count ?? 20,
             bulan_lahir: filters.bulan_lahir ?? String(new Date().getMonth() + 1),
+            tarikh_lahir: filters.tarikh_lahir ?? '',
             cula_codes: filters.cula_codes ?? '',
             hashtags: Array.isArray(filters.hashtags) ? filters.hashtags : [],
             has_phone: Boolean(filters.has_phone),
             birthday_image_status: filters.birthday_image_status ?? '',
         });
-    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.cula_codes, filters.hashtags, filters.has_phone, filters.birthday_image_status]);
+    }, [filters.locality, filters.show_marked, filters.udm, filters.group_id, filters.custom_mode, filters.keturunan, filters.jantina, filters.umur_dari, filters.umur_hingga, filters.per_udm_count, filters.bulan_lahir, filters.tarikh_lahir, filters.cula_codes, filters.hashtags, filters.has_phone, filters.birthday_image_status]);
 
     const initialMonth = useRef(true);
     useEffect(() => {
@@ -220,6 +246,12 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             nextState.locality = '';
             nextState.group_id = '';
         }
+        if (key === 'tarikh_lahir' && value !== '') {
+            nextState.bulan_lahir = '';
+        }
+        if (key === 'bulan_lahir' && value !== '') {
+            nextState.tarikh_lahir = '';
+        }
         setFormState(nextState);
         applyFilters(nextState);
     };
@@ -264,6 +296,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             umur_hingga: formState.umur_hingga ?? '',
             per_udm_count: formState.per_udm_count ?? '',
             bulan_lahir: formState.bulan_lahir ?? '',
+            tarikh_lahir: formState.tarikh_lahir ?? '',
             cula_codes: formState.cula_codes ?? '',
             has_phone: formState.has_phone ? '1' : '0',
             birthday_image_status: formState.birthday_image_status ?? '',
@@ -302,6 +335,56 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
         setSuggestions([]);
         setSearching(false);
         setSearchError('');
+    };
+
+    const updateLocalCall = (voterId, status, remark) => {
+        const update = (voter) => voter.id === voterId
+            ? { ...voter, call_status: status, ...(remark !== undefined ? { call_remark: remark } : {}) }
+            : voter;
+
+        setSuggestions((current) => current.map(update));
+        setLocalVoters((current) => ({ ...current, data: (current.data ?? []).map(update) }));
+    };
+
+    const openCallModal = (voter) => {
+        setCallModalVoter(voter);
+        setCallStatus(voter.call_status ?? 'not_called');
+        setCallRemark(voter.call_remark ?? '');
+        setCallError('');
+    };
+
+    const saveCallStatus = async () => {
+        if (!callModalVoter) return;
+
+        setCallSaving(true);
+        setCallError('');
+
+        try {
+            const response = await fetch(route('vcc.communication.call'), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    voter_id: callModalVoter.id,
+                    status: callStatus,
+                    notes: callRemark,
+                }),
+            });
+
+            if (!response.ok) throw new Error('Call status update failed');
+
+            const payload = await response.json();
+            updateLocalCall(callModalVoter.id, payload.call_status ?? callStatus, payload.call_remark ?? callRemark);
+            setCallModalVoter(null);
+        } catch (_) {
+            setCallError('Status panggilan tidak berjaya disimpan.');
+        } finally {
+            setCallSaving(false);
+        }
     };
 
     const updateLocalCollections = (voter, marked) => {
@@ -454,7 +537,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
     const logCommunication = async (voterId, type, notes = '') => {
         try {
-            await fetch(route('vcc.communication.log'), {
+            const response = await fetch(route('vcc.communication.log'), {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -464,6 +547,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 },
                 body: JSON.stringify({ voter_id: voterId, type, notes }),
             });
+            if (response.ok && type === 'call') updateLocalCall(voterId, 'called');
         } catch (_) {}
     };
 
@@ -494,6 +578,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 umur_hingga: formState.umur_hingga ?? '',
                 per_udm_count: formState.per_udm_count ?? '',
                 bulan_lahir: formState.bulan_lahir ?? '',
+                tarikh_lahir: formState.tarikh_lahir ?? '',
                 cula_codes: formState.cula_codes ?? '',
                 has_phone: formState.has_phone ? '1' : '0',
                 birthday_image_status: formState.birthday_image_status ?? '',
@@ -823,7 +908,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
-                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_5rem_5rem_10rem_12rem] xl:items-end">
+                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_5rem_5rem_10rem_12rem_12rem] xl:items-end">
                                 <div>
                                     <label htmlFor="vcc-per-udm" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
@@ -881,6 +966,17 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         <option value="uploaded">Telah dimuat naik</option>
                                         <option value="not_uploaded">Belum dimuat naik</option>
                                     </select>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="vcc-tarikh-lahir" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Tarikh Lahir</label>
+                                    <input
+                                        id="vcc-tarikh-lahir"
+                                        type="date"
+                                        value={formState.tarikh_lahir}
+                                        onChange={(event) => updateFilter('tarikh_lahir', event.target.value)}
+                                        className="input-field mt-1"
+                                    />
                                 </div>
 
                                 <div>
@@ -1112,13 +1208,14 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Padam gambar hari jadi" role="img"><title>Padam gambar hari jadi</title><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 13H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                                                             </button>
                                                                         )}
-                                                                        {voter.whatsapp_link && (
-                                                                            <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
-                                                                                className="rounded border border-green-200 bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100">
-                                                                                WA
-                                                                            </a>
-                                                                        )}
-                                                                    </>
+                                                                         {voter.whatsapp_link && (
+                                                                             <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
+                                                                                 className="rounded border border-green-200 bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100">
+                                                                                 WA
+                                                                             </a>
+                                                                         )}
+                                                                         <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
+                                                                     </>
                                                                 )}
                                                                  {!voter.is_manual && (
                                                                      <>
@@ -1201,13 +1298,14 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-label="Padam gambar hari jadi" role="img"><title>Padam gambar hari jadi</title><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 13H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                                                                         </button>
                                                                     )}
-                                                                    {voter.whatsapp_link && (
-                                                                        <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
-                                                                            className="rounded border border-green-200 bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100">
-                                                                            WA
-                                                                        </a>
-                                                                    )}
-                                                                </>
+                                                                     {voter.whatsapp_link && (
+                                                                         <a href={voter.whatsapp_link} target="_blank" rel="noopener noreferrer" onClick={() => logCommunication(voter.id, 'whatsapp')}
+                                                                             className="rounded border border-green-200 bg-green-50 px-1 py-0.5 text-xs font-bold text-green-700 hover:bg-green-100">
+                                                                             WA
+                                                                         </a>
+                                                                     )}
+                                                                     <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
+                                                                 </>
                                                             )}
                                                                  {!voter.is_manual && (
                                                                      <>
@@ -1246,6 +1344,50 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                     src={lightboxSrc}
                     onClose={() => setLightboxSrc(null)}
                 />
+            )}
+
+            {callModalVoter && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => !callSaving && setCallModalVoter(null)}>
+                    <div className="mx-4 w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-600">Rekod Panggilan</p>
+                                <h3 className="mt-1 text-sm font-bold text-slate-800">{callModalVoter.name}</h3>
+                            </div>
+                            <button type="button" onClick={() => setCallModalVoter(null)} disabled={callSaving} className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200 disabled:opacity-50">Tutup</button>
+                        </div>
+
+                        <div className="mt-4 space-y-3">
+                            <div>
+                                <label htmlFor="vcc-call-status" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Status</label>
+                                <select id="vcc-call-status" value={callStatus} onChange={(event) => setCallStatus(event.target.value)} className="input-field mt-1 w-full">
+                                    <option value="not_called">Belum call</option>
+                                    <option value="called">Sudah call</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor="vcc-call-remark" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Respon / Remark</label>
+                                <textarea
+                                    id="vcc-call-remark"
+                                    value={callRemark}
+                                    onChange={(event) => setCallRemark(event.target.value)}
+                                    rows="4"
+                                    maxLength="1000"
+                                    className="input-field mt-1 w-full resize-y"
+                                    placeholder="Contoh: Akan hadir, minta hubungi semula..."
+                                />
+                            </div>
+                        </div>
+
+                        {callError && <p className="mt-2 text-xs font-semibold text-red-600">{callError}</p>}
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button type="button" onClick={() => setCallModalVoter(null)} disabled={callSaving} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Batal</button>
+                            <button type="button" onClick={saveCallStatus} disabled={callSaving} className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+                                {callSaving ? 'Menyimpan...' : 'Simpan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {showCulaModal && selectedVoterForCula && (
