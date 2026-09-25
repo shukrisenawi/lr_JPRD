@@ -12,6 +12,7 @@ class Aktiviti extends Model
     protected $fillable = [
         'tajuk',
         'kategori',
+        'peringkat',
         'tarikh',
         'masa',
         'tempat',
@@ -23,6 +24,7 @@ class Aktiviti extends Model
     {
         return [
             'tarikh' => 'date:Y-m-d',
+            'peringkat' => 'array',
         ];
     }
 

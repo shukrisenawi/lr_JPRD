@@ -30,6 +30,7 @@ export default function AktivitiCard({ activity, isPast = false, onEdit, onDelet
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                         {activity.kategori && <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] ${isPast ? 'bg-slate-100 text-slate-600' : 'bg-green-50 text-green-700'}`}>{activity.kategori}</span>}
+                        {activity.peringkat?.map((peringkat) => <span key={peringkat} className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-sky-700">{peringkat}</span>)}
                         {isPast && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">Selesai</span>}
                     </div>
                     <Heading className="mt-1.5 break-words text-base font-black leading-tight text-slate-900 sm:text-lg">{activity.tajuk}</Heading>

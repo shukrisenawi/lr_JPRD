@@ -9,6 +9,7 @@ import { useState } from 'react';
 const emptyActivity = () => ({
     tajuk: '',
     kategori: '',
+    peringkat: [],
     tarikh: '',
     masa: '',
     tempat: '',
@@ -32,13 +33,20 @@ function Icon({ name, className = 'h-5 w-5' }) {
     );
 }
 
-function ActivityFormModal({ show, editing, form, onClose, onSubmit }) {
+function ActivityFormModal({ show, editing, form, peringkatOptions, onClose, onSubmit }) {
     if (!show) return null;
 
     const field = (name) => ({
         value: form.data[name],
         onChange: (event) => form.setData(name, event.target.value),
     });
+
+    const togglePeringkat = (peringkat) => {
+        const current = Array.isArray(form.data.peringkat) ? form.data.peringkat : [];
+        form.setData('peringkat', current.includes(peringkat)
+            ? current.filter((value) => value !== peringkat)
+            : [...current, peringkat]);
+    };
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="lg" title={editing ? 'Ubah aktiviti' : 'Tambah aktiviti'}>
@@ -93,6 +101,23 @@ function ActivityFormModal({ show, editing, form, onClose, onSubmit }) {
                     </div>
 
                     <div>
+                        <InputLabel value="Peringkat aktiviti" />
+                        <p className="mt-1 text-[11px] text-slate-500">Pilih satu atau lebih peringkat yang terlibat.</p>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                            {peringkatOptions.map((peringkat) => {
+                                const checked = Array.isArray(form.data.peringkat) && form.data.peringkat.includes(peringkat);
+                                return (
+                                    <label key={peringkat} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold transition ${checked ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`}>
+                                        <input type="checkbox" checked={checked} onChange={() => togglePeringkat(peringkat)} className="h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                        <span>{peringkat}</span>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        <InputError message={form.errors.peringkat || form.errors['peringkat.0']} className="mt-1" />
+                    </div>
+
+                    <div>
                         <InputLabel htmlFor="aktiviti-catatan" value="Catatan (pilihan)" />
                         <textarea id="aktiviti-catatan" rows="3" className="input-field mt-1.5 resize-y" placeholder="Maklumat ringkas untuk ahli luar..." {...field('catatan')} />
                         <InputError message={form.errors.catatan} className="mt-1" />
@@ -108,9 +133,10 @@ function ActivityFormModal({ show, editing, form, onClose, onSubmit }) {
     );
 }
 
-function PublicAccessPanel({ publicLink, hasPublicPassword }) {
+function PublicAccessPanel({ publicLink, hasPublicPassword, passwordEnabled }) {
     const form = useForm({ password: '', password_confirmation: '' });
     const [copied, setCopied] = useState(false);
+    const [toggling, setToggling] = useState(false);
 
     const copyLink = async () => {
         try {
@@ -130,6 +156,14 @@ function PublicAccessPanel({ publicLink, hasPublicPassword }) {
         });
     };
 
+    const togglePassword = () => {
+        setToggling(true);
+        router.put(route('aktiviti.public-password.status.update'), { enabled: !passwordEnabled }, {
+            preserveScroll: true,
+            onFinish: () => setToggling(false),
+        });
+    };
+
     return (
         <section className="overflow-hidden rounded-2xl border border-green-200 bg-white shadow-sm">
             <div className="bg-gradient-to-br from-green-800 to-emerald-700 p-5 text-white sm:p-6">
@@ -140,7 +174,7 @@ function PublicAccessPanel({ publicLink, hasPublicPassword }) {
                     </div>
                     <div className="rounded-xl bg-white/10 p-2.5"><Icon name="link" className="h-5 w-5" /></div>
                 </div>
-                <p className="mt-3 text-xs leading-relaxed text-green-50">Kongsi satu pautan. Ahli luar perlu memasukkan password sebelum melihat aktiviti akan datang.</p>
+                <p className="mt-3 text-xs leading-relaxed text-green-50">Kongsi satu pautan untuk memaparkan aktiviti akan datang kepada ahli luar.</p>
             </div>
 
             <div className="space-y-5 p-5 sm:p-6">
@@ -154,7 +188,20 @@ function PublicAccessPanel({ publicLink, hasPublicPassword }) {
                 </div>
 
                 <div className="border-t border-slate-100 pt-5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                                <Icon name="lock" className={`h-4 w-4 ${passwordEnabled ? 'text-green-700' : 'text-slate-400'}`} />
+                                <h3 className="text-sm font-black text-slate-900">Password {passwordEnabled ? 'ON' : 'OFF'}</h3>
+                            </div>
+                            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{passwordEnabled ? 'Ahli luar perlu memasukkan password.' : hasPublicPassword ? 'Pautan boleh dibuka terus tanpa password.' : 'Cipta password dahulu untuk menghidupkan perlindungan.'}</p>
+                        </div>
+                        <button type="button" role="switch" aria-checked={passwordEnabled} aria-label="Hidupkan atau matikan password pautan awam" disabled={!hasPublicPassword || toggling} onClick={togglePassword} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${passwordEnabled ? 'bg-green-600' : 'bg-slate-300'} disabled:cursor-not-allowed disabled:opacity-50`}>
+                            <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${passwordEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-2">
                         <Icon name="lock" className="h-4 w-4 text-green-700" />
                         <h3 className="text-sm font-black text-slate-900">{hasPublicPassword ? 'Tukar password' : 'Cipta password'}</h3>
                     </div>
@@ -189,7 +236,7 @@ function EmptyState({ past = false }) {
     );
 }
 
-export default function Index({ upcomingActivities = [], pastActivities = [], publicLink, hasPublicPassword }) {
+export default function Index({ upcomingActivities = [], pastActivities = [], peringkatOptions = ['JPRD', 'UDM', 'CAWANGAN'], publicLink, hasPublicPassword, passwordEnabled }) {
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [showPast, setShowPast] = useState(false);
@@ -208,6 +255,7 @@ export default function Index({ upcomingActivities = [], pastActivities = [], pu
         form.setData({
             tajuk: activity.tajuk ?? '',
             kategori: activity.kategori ?? '',
+            peringkat: activity.peringkat ?? [],
             tarikh: activity.tarikh ?? '',
             masa: activity.masa ?? '',
             tempat: activity.tempat ?? '',
@@ -285,11 +333,11 @@ export default function Index({ upcomingActivities = [], pastActivities = [], pu
                         )}
                     </section>
 
-                    <PublicAccessPanel publicLink={publicLink} hasPublicPassword={hasPublicPassword} />
+                    <PublicAccessPanel publicLink={publicLink} hasPublicPassword={hasPublicPassword} passwordEnabled={passwordEnabled} />
                 </div>
             </div>
 
-            <ActivityFormModal show={showForm} editing={editing} form={form} onClose={closeForm} onSubmit={submit} />
+            <ActivityFormModal show={showForm} editing={editing} form={form} peringkatOptions={peringkatOptions} onClose={closeForm} onSubmit={submit} />
         </AuthenticatedLayout>
     );
 }

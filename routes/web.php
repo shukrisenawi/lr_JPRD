@@ -87,6 +87,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::get('/aktiviti', [AktivitiController::class, 'index'])->middleware('module:aktiviti')->name('aktiviti.index');
     Route::post('/aktiviti', [AktivitiController::class, 'store'])->middleware('module:aktiviti')->name('aktiviti.store');
     Route::put('/aktiviti/public-password', [AktivitiController::class, 'updatePublicPassword'])->middleware('module:aktiviti')->name('aktiviti.public-password.update');
+    Route::put('/aktiviti/public-password/status', [AktivitiController::class, 'updatePublicPasswordStatus'])->middleware('module:aktiviti')->name('aktiviti.public-password.status.update');
     Route::put('/aktiviti/{aktiviti}', [AktivitiController::class, 'update'])->middleware('module:aktiviti')->name('aktiviti.update');
     Route::delete('/aktiviti/{aktiviti}', [AktivitiController::class, 'destroy'])->middleware('module:aktiviti')->name('aktiviti.destroy');
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');

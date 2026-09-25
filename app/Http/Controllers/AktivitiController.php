@@ -9,12 +9,17 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AktivitiController extends Controller
 {
+    private const PERINGKAT_OPTIONS = ['JPRD', 'UDM', 'CAWANGAN'];
+
     private const PASSWORD_KEY = 'aktiviti_public_password_hash';
+
+    private const PASSWORD_ENABLED_KEY = 'aktiviti_public_password_enabled';
 
     private const TOKEN_KEY = 'aktiviti_public_token';
 
@@ -34,8 +39,10 @@ class AktivitiController extends Controller
             'pastActivities' => $past
                 ->map(fn (Aktiviti $aktiviti) => $this->serializeActivity($aktiviti))
                 ->values(),
+            'peringkatOptions' => self::PERINGKAT_OPTIONS,
             'publicLink' => route('aktiviti.public', ['token' => $this->publicToken()]),
             'hasPublicPassword' => filled(Setting::valueOf(self::PASSWORD_KEY)),
+            'passwordEnabled' => $this->publicPasswordEnabled(),
         ]);
     }
 
@@ -67,6 +74,7 @@ class AktivitiController extends Controller
 
     public function updatePublicPassword(Request $request): RedirectResponse
     {
+        $existingPasswordHash = Setting::valueOf(self::PASSWORD_KEY);
         $validated = $request->validate([
             'password' => ['required', 'string', 'min:6', 'max:72', 'confirmed'],
         ], [
@@ -75,8 +83,29 @@ class AktivitiController extends Controller
         ]);
 
         Setting::setValue(self::PASSWORD_KEY, Hash::make($validated['password']));
+        if (blank($existingPasswordHash)) {
+            Setting::setValue(self::PASSWORD_ENABLED_KEY, '1');
+        }
 
         return back()->with('success', 'Password pautan awam berjaya ditetapkan.');
+    }
+
+    public function updatePublicPasswordStatus(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+        $enabled = $request->boolean('enabled');
+
+        if ($enabled && blank(Setting::valueOf(self::PASSWORD_KEY))) {
+            return back()->withErrors(['password' => 'Cipta password dahulu sebelum menghidupkan perlindungan pautan.']);
+        }
+
+        Setting::setValue(self::PASSWORD_ENABLED_KEY, $enabled ? '1' : '0');
+
+        return back()->with('success', $enabled
+            ? 'Perlindungan password pautan awam dihidupkan.'
+            : 'Perlindungan password pautan awam dimatikan.');
     }
 
     public function publicIndex(Request $request, string $token): Response
@@ -84,15 +113,17 @@ class AktivitiController extends Controller
         abort_unless($this->tokenIsValid($token), 404);
 
         $passwordHash = Setting::valueOf(self::PASSWORD_KEY);
+        $passwordEnabled = $this->publicPasswordEnabled($passwordHash);
         $sessionHash = $request->session()->get(self::ACCESS_SESSION_KEY);
-        $hasAccess = filled($passwordHash)
+        $hasAccess = ! $passwordEnabled || (filled($passwordHash)
             && filled($sessionHash)
-            && hash_equals((string) $passwordHash, (string) $sessionHash);
+            && hash_equals((string) $passwordHash, (string) $sessionHash));
 
         return Inertia::render('Aktiviti/Public', [
             'token' => $token,
             'hasAccess' => $hasAccess,
             'passwordConfigured' => filled($passwordHash),
+            'passwordEnabled' => $passwordEnabled,
             'activities' => $hasAccess
                 ? $this->upcomingQuery()
                     ->get()
@@ -106,10 +137,14 @@ class AktivitiController extends Controller
     {
         abort_unless($this->tokenIsValid($token), 404);
 
+        $passwordHash = Setting::valueOf(self::PASSWORD_KEY);
+        if (! $this->publicPasswordEnabled($passwordHash)) {
+            return to_route('aktiviti.public', ['token' => $token]);
+        }
+
         $validated = $request->validate([
             'password' => ['required', 'string', 'max:72'],
         ]);
-        $passwordHash = Setting::valueOf(self::PASSWORD_KEY);
 
         if (blank($passwordHash) || ! Hash::check($validated['password'], $passwordHash)) {
             return back()->withErrors(['password' => 'Password tidak tepat.']);
@@ -125,6 +160,8 @@ class AktivitiController extends Controller
         $validated = $request->validate([
             'tajuk' => ['required', 'string', 'max:255'],
             'kategori' => ['nullable', 'string', 'max:100'],
+            'peringkat' => ['required', 'array', 'min:1'],
+            'peringkat.*' => ['string', Rule::in(self::PERINGKAT_OPTIONS)],
             'tarikh' => ['required', 'date_format:Y-m-d'],
             'masa' => ['required', 'date_format:H:i'],
             'tempat' => ['nullable', 'string', 'max:255'],
@@ -136,6 +173,8 @@ class AktivitiController extends Controller
                 $validated[$field] = trim($validated[$field]) ?: null;
             }
         }
+
+        $validated['peringkat'] = array_values(array_unique($validated['peringkat']));
 
         return $validated;
     }
@@ -192,6 +231,7 @@ class AktivitiController extends Controller
             'id' => $aktiviti->id,
             'tajuk' => $aktiviti->tajuk,
             'kategori' => $aktiviti->kategori,
+            'peringkat' => array_values($aktiviti->peringkat ?? []),
             'tarikh' => $aktiviti->tarikh?->format('Y-m-d'),
             'tarikh_label' => $date?->isoFormat('dddd, D MMMM YYYY'),
             'tarikh_hari' => $date?->format('d'),
@@ -226,5 +266,13 @@ class AktivitiController extends Controller
         $storedToken = Setting::valueOf(self::TOKEN_KEY);
 
         return filled($storedToken) && hash_equals((string) $storedToken, $token);
+    }
+
+    private function publicPasswordEnabled(?string $passwordHash = null): bool
+    {
+        $passwordHash ??= Setting::valueOf(self::PASSWORD_KEY);
+
+        return filled($passwordHash)
+            && (string) Setting::valueOf(self::PASSWORD_ENABLED_KEY, '1') === '1';
     }
 }
