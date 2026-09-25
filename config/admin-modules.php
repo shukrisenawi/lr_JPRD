@@ -37,6 +37,10 @@ return [
         'label' => 'Program',
         'description' => 'Cipta program dan rekod kehadiran pemilih.',
     ],
+    'aktiviti' => [
+        'label' => 'Aktiviti',
+        'description' => 'Urus aktiviti akan datang dan pautan jadual awam berpassword.',
+    ],
     'jawatankuasa' => [
         'label' => 'Jawatankuasa',
         'description' => 'Urus jawatan dan ahli jawatankuasa JPRD, UDM dan Cawangan.',

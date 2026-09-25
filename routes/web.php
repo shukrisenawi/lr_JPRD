@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AccessManagementController;
 use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\SpokasController;
 use App\Http\Controllers\AhliPasController;
+use App\Http\Controllers\AktivitiController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\CarianPemilihController;
@@ -32,6 +33,14 @@ Route::get('/', function () {
     // sama ada app di root atau subdirectory.
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
+
+Route::get('/aktiviti/awam/{token}', [AktivitiController::class, 'publicIndex'])
+    ->where('token', '[A-Za-z0-9_-]+')
+    ->name('aktiviti.public');
+Route::post('/aktiviti/awam/{token}/access', [AktivitiController::class, 'publicAccess'])
+    ->middleware('throttle:10,1')
+    ->where('token', '[A-Za-z0-9_-]+')
+    ->name('aktiviti.public.access');
 
 Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
@@ -75,6 +84,11 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/program/{program}/files', [ProgramController::class, 'uploadFile'])->middleware('module:program')->name('program.files.upload');
     Route::get('/program/{program}/files/{file}/download', [ProgramController::class, 'downloadFile'])->middleware('module:program')->name('program.files.download');
     Route::delete('/program/{program}/files/{file}', [ProgramController::class, 'destroyFile'])->middleware('module:program')->name('program.files.destroy');
+    Route::get('/aktiviti', [AktivitiController::class, 'index'])->middleware('module:aktiviti')->name('aktiviti.index');
+    Route::post('/aktiviti', [AktivitiController::class, 'store'])->middleware('module:aktiviti')->name('aktiviti.store');
+    Route::put('/aktiviti/public-password', [AktivitiController::class, 'updatePublicPassword'])->middleware('module:aktiviti')->name('aktiviti.public-password.update');
+    Route::put('/aktiviti/{aktiviti}', [AktivitiController::class, 'update'])->middleware('module:aktiviti')->name('aktiviti.update');
+    Route::delete('/aktiviti/{aktiviti}', [AktivitiController::class, 'destroy'])->middleware('module:aktiviti')->name('aktiviti.destroy');
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');
     Route::get('/jawatankuasa/senarai-ajk', [CommitteeController::class, 'laporan'])->middleware('module:jawatankuasa.laporan')->name('jawatankuasa.laporan');
     Route::get('/jawatankuasa/senarai-ajk-udm', [CommitteeController::class, 'senaraiAjkUdm'])->middleware('module:jawatankuasa.senarai-udm')->name('jawatankuasa.senarai-ajk-udm');

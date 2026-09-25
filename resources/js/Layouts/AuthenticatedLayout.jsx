@@ -86,11 +86,12 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             ],
         },
         {
-            label: 'Operasi',
-            icon: <HeaderIcon name="calendar" className="h-4 w-4" />,
-            items: [
-                { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
-                { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
+                label: 'Operasi',
+                icon: <HeaderIcon name="calendar" className="h-4 w-4" />,
+                items: [
+                    { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
+                    { key: 'aktiviti', href: 'aktiviti.index', routePattern: 'aktiviti.*', label: 'Aktiviti' },
+                    { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
                 { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan', badge: belumDicula },
                 { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                 { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
@@ -250,6 +251,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 ].filter(Boolean) },
                                 { label: 'Operasi', items: [
                                     canAccess('dashboard') && { href: route('dashboard'), active: route().current('dashboard'), label: 'Cula Manual' },
+                                    canAccess('aktiviti') && { href: route('aktiviti.index'), active: route().current('aktiviti.*'), label: 'Aktiviti' },
                                     canAccess('program') && { href: route('program.index'), active: route().current('program.*'), label: 'Program' },
                                     canAccess('culaan') && { href: route('culaan.index'), active: route().current('culaan.*'), label: 'Culaan', badge: belumDicula },
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },
