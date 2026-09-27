@@ -188,9 +188,9 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                             </div>
                         </div>
 
-                        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <div className="mt-4 grid gap-4 md:grid-cols-2">
                             {udmSummaries.length > 0 ? udmSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} onEdit={openEdit} onDelete={deleteVehicle} />) : (
-                                <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50/50 px-5 py-12 text-center md:col-span-2 xl:col-span-3">
+                                <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50/50 px-5 py-12 text-center md:col-span-2">
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div>
                                     <h3 className="mt-3 text-sm font-black text-slate-800">Belum ada UDM</h3>
                                     <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">UDM aktif akan muncul di sini apabila data pemilih tersedia.</p>
