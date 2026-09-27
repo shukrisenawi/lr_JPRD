@@ -16,6 +16,7 @@ use App\Http\Controllers\CulaanController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupPemilihController;
 use App\Http\Controllers\KadTenController;
+use App\Http\Controllers\KenderaanController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PemilihHashtagController;
 use App\Http\Controllers\ProfileController;
@@ -90,6 +91,10 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::put('/aktiviti/public-password/status', [AktivitiController::class, 'updatePublicPasswordStatus'])->middleware('module:aktiviti')->name('aktiviti.public-password.status.update');
     Route::put('/aktiviti/{aktiviti}', [AktivitiController::class, 'update'])->middleware('module:aktiviti')->name('aktiviti.update');
     Route::delete('/aktiviti/{aktiviti}', [AktivitiController::class, 'destroy'])->middleware('module:aktiviti')->name('aktiviti.destroy');
+    Route::get('/kenderaan', [KenderaanController::class, 'index'])->middleware('module:kenderaan')->name('kenderaan.index');
+    Route::post('/kenderaan', [KenderaanController::class, 'store'])->middleware('module:kenderaan')->name('kenderaan.store');
+    Route::put('/kenderaan/{kenderaan}', [KenderaanController::class, 'update'])->middleware('module:kenderaan')->name('kenderaan.update');
+    Route::delete('/kenderaan/{kenderaan}', [KenderaanController::class, 'destroy'])->middleware('module:kenderaan')->name('kenderaan.destroy');
     Route::get('/jawatankuasa', [CommitteeController::class, 'index'])->middleware('module:jawatankuasa')->name('jawatankuasa.index');
     Route::get('/jawatankuasa/senarai-ajk', [CommitteeController::class, 'laporan'])->middleware('module:jawatankuasa.laporan')->name('jawatankuasa.laporan');
     Route::get('/jawatankuasa/senarai-ajk-udm', [CommitteeController::class, 'senaraiAjkUdm'])->middleware('module:jawatankuasa.senarai-udm')->name('jawatankuasa.senarai-ajk-udm');

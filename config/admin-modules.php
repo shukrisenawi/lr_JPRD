@@ -41,6 +41,10 @@ return [
         'label' => 'Aktiviti',
         'description' => 'Urus aktiviti akan datang dan pautan jadual awam berpassword.',
     ],
+    'kenderaan' => [
+        'label' => 'Kenderaan',
+        'description' => 'Urus nombor plat dan jenis kenderaan mengikut UDM.',
+    ],
     'jawatankuasa' => [
         'label' => 'Jawatankuasa',
         'description' => 'Urus jawatan dan ahli jawatankuasa JPRD, UDM dan Cawangan.',
