@@ -140,6 +140,40 @@ class KadTenController extends Controller
             $cawanganQuery->where('locality', $scope['locality']);
         }
 
+        $udmScopes = $udmQuery
+            ->select('dm')
+            ->distinct()
+            ->orderBy('dm')
+            ->get();
+        $pasCulaByUdm = $this->eligibleVoterQueryForScope($user)
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->select('dm')
+            ->selectRaw('COUNT(*) as voter_count')
+            ->groupBy('dm')
+            ->pluck('voter_count', 'dm');
+        $summaryKads = KadTen::query()
+            ->kadTenForUser($user)
+            ->with('pemimpin:id,dm')
+            ->get(['id', 'pemimpin_id']);
+        $existingKadCounts = $summaryKads
+            ->filter(fn (KadTen $kad): bool => filled($kad->pemimpin?->dm))
+            ->groupBy(fn (KadTen $kad): string => (string) $kad->pemimpin->dm)
+            ->map(fn ($kads): int => $kads->count());
+        $udmSummaries = $udmScopes
+            ->map(function (PemilihRecord $record) use ($existingKadCounts, $pasCulaByUdm): array {
+                $pasCula = (int) ($pasCulaByUdm[$record->dm] ?? 0);
+
+                return [
+                    'key' => $record->dm,
+                    'name' => $record->dm,
+                    'existing_leaders' => (int) ($existingKadCounts[$record->dm] ?? 0),
+                    'required_leaders' => (int) ceil($pasCula / self::MINIMUM_MEMBERS),
+                    'pas_cula' => $pasCula,
+                ];
+            })
+            ->values();
+
         return Inertia::render('KadTen/Index', [
             'kads' => $kads,
             'kad_stats' => [
@@ -154,11 +188,7 @@ class KadTenController extends Controller
                 'jprd' => [
                     ['key' => 'jprd', 'name' => 'JPRD', 'parent_scope_name' => null],
                 ],
-                'udm' => $udmQuery
-                    ->select('dm')
-                    ->distinct()
-                    ->orderBy('dm')
-                    ->get()
+                'udm' => $udmScopes
                     ->map(fn (PemilihRecord $record) => [
                         'key' => $record->dm,
                         'name' => $record->dm,
@@ -178,6 +208,7 @@ class KadTenController extends Controller
                     ])
                     ->values(),
             ],
+            'udm_summaries' => $udmSummaries,
             'can_manage' => $this->isManager($user),
             'can_auto_input' => $user->isMasterAdmin(),
         ]);

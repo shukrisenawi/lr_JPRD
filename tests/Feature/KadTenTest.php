@@ -272,6 +272,32 @@ it('calculates required Kad 10 leaders from the total PAS cula count', function 
             ->where('kad_stats.required_leaders', 10));
 });
 
+it('returns a leader summary for every UDM in the JPRD all-UDM view', function () {
+    $jprd = kadTenUser('jprd', null);
+    $alphaLeader = kadTenVoter(['name' => 'KETUA ALPHA']);
+    $alphaMembership = kadTenMembership($alphaLeader);
+    kadTenRecord($alphaLeader, $alphaMembership);
+
+    collect(range(1, 10))->each(fn () => kadTenVoter(['dm' => 'UDM ALPHA']));
+    collect(range(1, 20))->each(fn () => kadTenVoter(['dm' => 'UDM BETA']));
+
+    $this->actingAs($jprd)
+        ->get(route('kad-ten.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('can_manage', false)
+            ->where('filters.udm', '')
+            ->where('udm_summaries', function ($summaries) {
+                $byUdm = collect($summaries)->keyBy('key');
+
+                return $byUdm['UDM ALPHA']['existing_leaders'] === 1
+                    && $byUdm['UDM ALPHA']['required_leaders'] === 2
+                    && $byUdm['UDM ALPHA']['pas_cula'] === 11
+                    && $byUdm['UDM BETA']['existing_leaders'] === 0
+                    && $byUdm['UDM BETA']['required_leaders'] === 2
+                    && $byUdm['UDM BETA']['pas_cula'] === 20;
+            }));
+});
+
 it('lets only a master admin auto-create cards from the UDM main committee and assign up to ten members', function () {
     $admin = User::factory()->masterAdmin()->create();
     $group = CommitteeGroup::query()->create([
