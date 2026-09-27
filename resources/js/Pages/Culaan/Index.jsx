@@ -186,6 +186,25 @@ function StatCard({ label, value, detail, color = 'violet' }) {
     );
 }
 
+function UdmSummaryCard({ summary, onSelect }) {
+    const complete = summary.total > 0 && summary.sudah_dicula >= summary.total;
+
+    return (
+        <button type="button" onClick={() => onSelect(summary.key)} className="group flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-green-300 hover:shadow-md">
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{summary.name}</p><p className="mt-0.5 text-[10px] text-slate-400">Ringkasan culaan UDM</p></div>
+                <span className={'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ' + (complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>{complete ? 'Lengkap' : 'Belum lengkap'}</span>
+            </div>
+            <div className="border-t border-slate-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sudah cula / jumlah pemilih</p>
+                <p className="mt-0.5 text-2xl font-black text-slate-800">{fmt(summary.sudah_dicula)}<span className="text-sm font-bold text-slate-400"> / {fmt(summary.total)}</span></p>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${Math.min(100, summary.peratus_siap ?? 0)}%` }} /></div>
+            <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500"><span>{fmt(summary.belum_dicula)} belum cula · {fmtP(summary.peratus_siap)}</span><span className="text-green-700 group-hover:text-green-600">Lihat senarai -&gt;</span></div>
+        </button>
+    );
+}
+
 function ChartPanel({ title, children, action, compact = false }) {
     return (
         <section className="card p-3">
@@ -298,7 +317,7 @@ function Pagination({ voters, onNavigate }) {
     );
 }
 
-export default function CulaanIndex({ filters, summary, udms, localities, groups, voters, requires_udm, report, report_by_group = [], available_cula_codes = [], available_hashtags = [], available_races = [], pemilih_report = null, data_error_count = 0 }) {
+export default function CulaanIndex({ filters, summary, udms, udm_summaries: udmSummaries = [], localities, groups, voters, requires_udm, report, report_by_group = [], available_cula_codes = [], available_hashtags = [], available_races = [], pemilih_report = null, data_error_count = 0 }) {
     const { auth } = usePage().props;
     const allowedModules = auth.user?.allowed_modules ?? [];
     const canSenarai = allowedModules.includes('culaan.senarai');
@@ -911,7 +930,8 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
     };
 
     const visibleTotal = search.trim().length >= 2 ? rows.length : localSummary.total;
-    const shouldPromptUdm = requires_udm && !formState.udm;
+    const showUdmSummary = !formState.udm && !isLaporanLike && !isDataErrorTab && udmSummaries.length > 0;
+    const shouldPromptUdm = requires_udm && !formState.udm && !showUdmSummary;
     const showLocalityColumn = formState.locality === '';
     const showUdmColumn = formState.udm === '';
     const selectedGroup = groups.find((g) => String(g.id) === String(formState.group_id));
@@ -1552,7 +1572,7 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                         </div>
                     </div>
 
-                    {tab === 'senarai' && !isDataErrorTab && (
+                    {tab === 'senarai' && !isDataErrorTab && !showUdmSummary && (
                         <div className="flex items-center gap-3 rounded-xl border border-green-600 bg-white px-4 py-3 shadow-sm shadow-green-600/20 overflow-hidden">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
                             <div className="min-w-0 flex-1 text-right">
@@ -1609,7 +1629,11 @@ export default function CulaanIndex({ filters, summary, udms, localities, groups
                 })()}
 
                 {tab === 'senarai' && (
-                    <section>
+                    showUdmSummary ? (
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                            {udmSummaries.map((summaryItem) => <UdmSummaryCard key={summaryItem.key} summary={summaryItem} onSelect={(udm) => updateFilter('udm', udm)} />)}
+                        </div>
+                    ) : <section>
                         {rows.length === 0 ? (
                             <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                                 {searching ? 'Mencari...' : shouldPromptUdm ? 'Pilih UDM untuk memaparkan senarai culaan.' : 'Tiada pemilih untuk paparan ini.'}

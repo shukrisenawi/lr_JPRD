@@ -45,6 +45,11 @@ class CulaanController extends Controller
             }
         }
 
+        $udms = $this->availableUdms();
+        $udmSummaries = $filters['udm'] === ''
+            ? $this->buildUdmSummaries($filters, $udms)
+            : [];
+
         return Inertia::render('Culaan/Index', [
             'filters' => $filters,
             'requires_udm' => true,
@@ -54,7 +59,8 @@ class CulaanController extends Controller
             'report' => $report,
             'report_by_group' => $reportByGroup,
             'pemilih_report' => $reportService->getMetadata(),
-            'udms' => $this->availableUdms(),
+            'udms' => $udms,
+            'udm_summaries' => $udmSummaries,
             'localities' => $this->availableLocalities($filters['udm'], $filters['locality']),
             'groups' => $groups,
             'voters' => $voters,
@@ -905,7 +911,49 @@ class CulaanController extends Controller
             ->all();
     }
 
-    private function buildReportData(array $filters): array
+    private function buildUdmSummaries(array $filters, array $udms): array
+    {
+        if ($udms === []) {
+            return [];
+        }
+
+        $summaryFilters = $filters;
+        $summaryFilters['udm'] = '';
+        $query = $this->buildReportQuery($summaryFilters, false);
+        $totalByUdm = (clone $query)
+            ->selectRaw('TRIM(dm) as dm')
+            ->selectRaw('COUNT(*) as total')
+            ->groupByRaw('TRIM(dm)')
+            ->pluck('total', 'dm');
+        $sudahCulaByUdm = (clone $query)
+            ->whereNotNull('cula_code')
+            ->where('cula_code', '!=', '')
+            ->where('cula_code', '!=', '?')
+            ->where('cula_code', '!=', 'TIADA')
+            ->selectRaw('TRIM(dm) as dm')
+            ->selectRaw('COUNT(*) as total')
+            ->groupByRaw('TRIM(dm)')
+            ->pluck('total', 'dm');
+
+        return collect($udms)
+            ->map(function (string $udm) use ($totalByUdm, $sudahCulaByUdm): array {
+                $total = (int) ($totalByUdm[$udm] ?? 0);
+                $sudahDicula = (int) ($sudahCulaByUdm[$udm] ?? 0);
+
+                return [
+                    'key' => $udm,
+                    'name' => $udm,
+                    'sudah_dicula' => $sudahDicula,
+                    'belum_dicula' => max(0, $total - $sudahDicula),
+                    'total' => $total,
+                    'peratus_siap' => $total > 0 ? round(($sudahDicula / $total) * 100, 1) : 0,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function buildReportQuery(array $filters, bool $requireUdm = true): Builder
     {
         $query = PemilihRecord::query()
             ->where('status', 'aktif')
@@ -915,7 +963,7 @@ class CulaanController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
-        if ($filters['udm'] === '') {
+        if ($requireUdm && $filters['udm'] === '') {
             $query->whereRaw('1 = 0');
         }
 
@@ -932,6 +980,13 @@ class CulaanController extends Controller
         }
 
         $this->applyRumahAlamatFilters($query, $filters);
+
+        return $query;
+    }
+
+    private function buildReportData(array $filters): array
+    {
+        $query = $this->buildReportQuery($filters);
 
         $total = (clone $query)->count();
 

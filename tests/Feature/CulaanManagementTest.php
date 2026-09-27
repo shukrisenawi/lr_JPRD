@@ -73,6 +73,42 @@ it('shows empty culaan list until udm is selected', function () {
             ->where('voters.data', []));
 });
 
+it('summarizes cula status for every UDM when no UDM is selected', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    $records = [
+        ['identity_number' => '900101025570', 'name' => 'ALPHA BELUM', 'dm' => 'UDM ALPHA', 'cula_code' => '?'],
+        ['identity_number' => '900101025571', 'name' => 'ALPHA SUDAH', 'dm' => 'UDM ALPHA', 'cula_code' => '2'],
+        ['identity_number' => '900101025572', 'name' => 'BETA SUDAH 1', 'dm' => 'UDM BETA', 'cula_code' => '3B'],
+        ['identity_number' => '900101025573', 'name' => 'BETA SUDAH 2', 'dm' => 'UDM BETA', 'cula_code' => '2'],
+        ['identity_number' => '900101025574', 'name' => 'BETA BELUM', 'dm' => 'UDM BETA', 'cula_code' => 'TIADA'],
+    ];
+
+    foreach ($records as $record) {
+        PemilihRecord::query()->create([
+            ...$record,
+            'no_kp' => $record['identity_number'],
+            'locality' => 'LOKALITI RINGKASAN',
+            'status' => 'aktif',
+            'is_manual' => false,
+            'cula_display_label' => $record['cula_code'] === '?' ? 'BELUM DICULA' : $record['cula_code'].' - PAS',
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('culaan.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', '')
+            ->where('udm_summaries', function ($summaries) {
+                $byUdm = collect($summaries)->keyBy('key');
+
+                return $byUdm['UDM ALPHA']['sudah_dicula'] === 1
+                    && $byUdm['UDM ALPHA']['total'] === 2
+                    && $byUdm['UDM BETA']['sudah_dicula'] === 2
+                    && $byUdm['UDM BETA']['total'] === 3;
+            }));
+});
+
 it('filters culaan voters by udm and locality', function () {
     $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
 
