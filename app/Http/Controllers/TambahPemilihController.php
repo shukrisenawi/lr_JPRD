@@ -54,7 +54,18 @@ class TambahPemilihController extends Controller
             ->with('creator:id,name', 'hashtags')
             ->orderBy('created_at', 'desc');
         $user->applyScopeToPemilihQuery($manualQuery);
-        $manualVoters = $manualQuery->paginate(20);
+        $manualSearch = $request->string('search')->trim()->toString();
+        if ($manualSearch !== '') {
+            $manualQuery->where(function ($query) use ($manualSearch) {
+                foreach ([
+                    'name', 'no_kp', 'old_ic', 'identity_number',
+                    'phone_mobile', 'phone_home', 'address', 'dm', 'locality',
+                ] as $column) {
+                    $query->orWhere($column, 'like', "%{$manualSearch}%");
+                }
+            });
+        }
+        $manualVoters = $manualQuery->paginate(20)->withQueryString();
 
         $createdVoterId = (int) $request->query('created');
         $createdVoter = null;
@@ -69,6 +80,7 @@ class TambahPemilihController extends Controller
             'localitiesByDm' => $localitiesByDm,
             'culaCodes' => $culaCodes,
             'manualVoters' => $manualVoters,
+            'manual_search' => $manualSearch,
             'created_voter' => $createdVoter,
         ]);
     }

@@ -2,8 +2,8 @@ import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import HashtagInput from '@/Components/HashtagInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { useMemo, useRef, useState } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
 
 function UserPlusIcon({ className = 'h-5 w-5' }) {
@@ -461,17 +461,39 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
     );
 }
 
-function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
+function SenaraiTab({ manualVoters, manualSearch = '', dms, localitiesByDm, culaCodes }) {
     const { auth } = usePage().props;
     const currentUser = auth.user;
     const isMasterAdmin = currentUser.role?.is_master_admin === true;
     const canModify = (voter) => isMasterAdmin || voter.created_by === currentUser.id;
 
+    const [search, setSearch] = useState(manualSearch);
     const [detailVoter, setDetailVoter] = useState(null);
     const [editVoter, setEditVoter] = useState(null);
     const [uploadingAvatar, setUploadingAvatar] = useState({});
     const [lightboxSrc, setLightboxSrc] = useState(null);
     const avatarInputRefs = useRef({});
+
+    useEffect(() => {
+        setSearch(manualSearch);
+    }, [manualSearch]);
+
+    const navigate = (page = 1, nextSearch = manualSearch) => {
+        const params = { tab: 'senarai', page };
+        const query = nextSearch.trim();
+        if (query) params.search = query;
+
+        router.get(route('tambah-pemilih.index'), params, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
+    const handleSearch = (event) => {
+        event.preventDefault();
+        navigate(1, search);
+    };
 
     const handleAvatarUpload = async (voter, e) => {
         const file = e.target.files?.[0];
@@ -518,6 +540,36 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
         <>
             {detailVoter && <DetailModal voter={detailVoter} onClose={() => setDetailVoter(null)} />}
             {editVoter && <EditModal voter={editVoter} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} onClose={() => setEditVoter(null)} />}
+
+            <form onSubmit={handleSearch} className="mb-3 rounded-xl border border-green-200 bg-white p-3 shadow-sm sm:p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <div className="min-w-0 flex-1">
+                        <label htmlFor="manual-voter-search" className="label-field">Cari Pemilih Manual</label>
+                        <div className="relative mt-0.5">
+                            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                            <input
+                                id="manual-voter-search"
+                                type="search"
+                                value={search}
+                                onChange={event => setSearch(event.target.value)}
+                                placeholder="Nama, No KP, telefon, UDM atau lokaliti"
+                                className="input-field w-full pl-9"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <button type="submit" className="btn-primary">Cari</button>
+                        {manualSearch && (
+                            <button type="button" onClick={() => { setSearch(''); navigate(1, ''); }} className="rounded-md bg-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-300">
+                                Reset
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </form>
 
             <div className="card overflow-hidden">
                 <div className="overflow-x-auto">
@@ -590,11 +642,15 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
                             {manualVoters.from}-{manualVoters.to} dari {manualVoters.total}
                         </p>
                         <div className="flex gap-1">
-                            {manualVoters.links.filter(l => l.label !== '&laquo; Previous' && l.label !== 'Next &raquo;').map((link, i) => (
-                                <Link key={i} href={link.url || '#'}
-                                    className={`rounded px-2 py-1 text-xs font-bold transition ${link.active ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }} />
-                            ))}
+                            {manualVoters.links.filter(l => l.label !== '&laquo; Previous' && l.label !== 'Next &raquo;').map((link, i) => {
+                                const page = link.url ? Number(new URL(link.url, window.location.origin).searchParams.get('page') || 1) : null;
+
+                                return (
+                                    <button key={i} type="button" disabled={!page} onClick={() => navigate(page)}
+                                        className={`rounded px-2 py-1 text-xs font-bold transition ${link.active ? 'bg-green-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }} />
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -604,8 +660,12 @@ function SenaraiTab({ manualVoters, dms, localitiesByDm, culaCodes }) {
 }
 
 export default function TambahPemilih() {
-    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] }, culaCodes = [], created_voter: createdVoter } = usePage().props;
-    const [tab, setTab] = useState('tambah');
+    const { dms = [], localitiesByDm = {}, manualVoters = { data: [] }, manual_search: manualSearch = '', culaCodes = [], created_voter: createdVoter } = usePage().props;
+    const [tab, setTab] = useState(() => (
+        typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'senarai'
+            ? 'senarai'
+            : 'tambah'
+    ));
 
     const tabs = [
         { key: 'tambah', label: 'Tambah Pemilih', desc: 'Daftar pemilih baru secara manual.', icon: UserPlusIcon },
@@ -641,7 +701,7 @@ export default function TambahPemilih() {
                 </div>
 
                 {tab === 'tambah' && <FormTab dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} createdVoter={createdVoter} />}
-                {tab === 'senarai' && <SenaraiTab manualVoters={manualVoters} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} />}
+                {tab === 'senarai' && <SenaraiTab manualVoters={manualVoters} manualSearch={manualSearch} dms={dms} localitiesByDm={localitiesByDm} culaCodes={culaCodes} />}
             </div>
         </AuthenticatedLayout>
     );
