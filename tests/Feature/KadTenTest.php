@@ -538,6 +538,44 @@ it('lets only a master admin reset Kad 10 cards and members without deleting com
     expect(CommitteeMembership::query()->count())->toBe(1);
 });
 
+it('changes only Kad 10 members to Cula 2 through the bulk action', function () {
+    $user = kadTenUser();
+    $leader = kadTenVoter([
+        'name' => 'KETUA ALPHA',
+        'cula_code' => '3B',
+        'cula_display_label' => '3B - PAS LUAR KEDAH (BORNEO)',
+    ]);
+    $kad = kadTenRecord($leader, kadTenMembership($leader));
+    $member = kadTenVoter([
+        'name' => 'AHLI ALPHA',
+        'cula_code' => '3B',
+        'cula_display_label' => '3B - PAS LUAR KEDAH (BORNEO)',
+    ]);
+    $unassigned = kadTenVoter([
+        'name' => 'TIDAK DIAGIHKAN',
+        'cula_code' => '3B',
+        'cula_display_label' => '3B - PAS LUAR KEDAH (BORNEO)',
+    ]);
+    KadTenMember::query()->create([
+        'kad_ten_id' => $kad->id,
+        'pemilih_record_id' => $member->id,
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('kad-ten.update-members-cula'))
+        ->assertOk()
+        ->assertJsonPath('updated', 1);
+
+    expect($member->refresh()->cula_code)->toBe('2')
+        ->and($member->cula_display_label)->toBe('2 - PAS')
+        ->and($leader->refresh()->cula_code)->toBe('3B')
+        ->and($unassigned->refresh()->cula_code)->toBe('3B');
+
+    $this->actingAs(kadTenUser('jprd', null))
+        ->postJson(route('kad-ten.update-members-cula'))
+        ->assertForbidden();
+});
+
 it('keeps JPRD read-only and prevents deleting a member through another Kad route', function () {
     $leader = kadTenVoter(['name' => 'KETUA ALPHA']);
     $membership = kadTenMembership($leader);

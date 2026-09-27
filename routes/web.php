@@ -154,6 +154,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/kad-ten', [KadTenController::class, 'store'])->middleware('module:kad-ten')->name('kad-ten.store');
     Route::post('/kad-ten/auto-input', [KadTenController::class, 'autoInput'])->middleware('module:kad-ten')->name('kad-ten.auto-input');
     Route::post('/kad-ten/reset-auto-input', [KadTenController::class, 'resetAutoInput'])->middleware('module:kad-ten')->name('kad-ten.reset-auto-input');
+    Route::post('/kad-ten/update-members-cula', [KadTenController::class, 'updateMembersCula'])->middleware('module:kad-ten')->name('kad-ten.update-members-cula');
     Route::put('/kad-ten/{kadTen}', [KadTenController::class, 'update'])->middleware('module:kad-ten')->name('kad-ten.update');
     Route::delete('/kad-ten/{kadTen}', [KadTenController::class, 'destroy'])->middleware('module:kad-ten')->name('kad-ten.destroy');
     Route::post('/kad-ten/{kadTen}/members', [KadTenController::class, 'storeMember'])->middleware('module:kad-ten')->name('kad-ten.members.store');

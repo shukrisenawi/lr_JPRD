@@ -469,6 +469,7 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
     const [exporting, setExporting] = useState(false);
     const [autoInputProcessing, setAutoInputProcessing] = useState(false);
     const [resetting, setResetting] = useState(false);
+    const [updatingCula, setUpdatingCula] = useState(false);
     const [expandedKadId, setExpandedKadId] = useState(null);
     const [selectedPemimpin, setSelectedPemimpin] = useState(null);
     const [pemimpinSearchOpen, setPemimpinSearchOpen] = useState(false);
@@ -610,8 +611,43 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
             });
         });
     };
+    const updateMembersToCulaTwo = () => {
+        if (updatingCula || totalMembers === 0) return;
+        Swal.fire({
+            icon: 'warning',
+            title: 'Tukar ahli kepada Cula 2?',
+            text: 'Semua ahli dalam Kad 10 anda akan ditukar kepada Cula 2. Ketua Kad 10 tidak akan diubah.',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, tukar',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#16a34a',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            setUpdatingCula(true);
+            router.post(route('kad-ten.update-members-cula'), {}, {
+                preserveScroll: true,
+                onFinish: () => setUpdatingCula(false),
+                onSuccess: page => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berjaya',
+                        text: page?.props?.flash?.success || 'Ahli Kad 10 berjaya ditukar kepada Cula 2.',
+                        timer: 2500,
+                        showConfirmButton: false,
+                    });
+                },
+                onError: () => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Pertukaran gagal',
+                        text: 'Ahli Kad 10 tidak berjaya ditukar kepada Cula 2. Sila cuba lagi.',
+                    });
+                },
+            });
+        });
+    };
 
-    return <AuthenticatedLayout header={<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="label-section">Kad 10</p><h2 className="mt-0.5 heading-lg">Agihan ahli di bawah ketua</h2><p className="mt-1 text-xs font-medium text-slate-500">Cari padanan terdekat berdasarkan rumah, alamat dan lokaliti.</p></div><div className="flex flex-wrap gap-2">{canAutoInput && <button type="button" disabled={autoInputProcessing} onClick={runAutoInput} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 shadow-sm hover:bg-amber-100 disabled:opacity-50"><Icon name="target" className="h-4 w-4" /> {autoInputProcessing ? 'Memproses...' : 'Auto input'}</button>}{totalKads > 0 && <button type="button" disabled={exporting} onClick={() => exportWorkbook(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-bold text-green-700 shadow-sm hover:bg-green-50 disabled:opacity-50"><Icon name="download" className="h-4 w-4" /> {exporting ? 'Menyedia...' : 'Eksport halaman'}</button>}{canManage ? <button type="button" onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-green-500"><Icon name="plus" className="h-4 w-4" /> Cipta Kad 10</button> : canAutoInput ? null : <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500"><Icon name="lock" className="h-3.5 w-3.5" /> Paparan JPRD</span>}</div></div>}>
+    return <AuthenticatedLayout header={<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><p className="label-section">Kad 10</p><h2 className="mt-0.5 heading-lg">Agihan ahli di bawah ketua</h2><p className="mt-1 text-xs font-medium text-slate-500">Cari padanan terdekat berdasarkan rumah, alamat dan lokaliti.</p></div><div className="flex flex-wrap gap-2">{canAutoInput && <button type="button" disabled={autoInputProcessing} onClick={runAutoInput} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800 shadow-sm hover:bg-amber-100 disabled:opacity-50"><Icon name="target" className="h-4 w-4" /> {autoInputProcessing ? 'Memproses...' : 'Auto input'}</button>}{canManage && totalMembers > 0 && <button type="button" disabled={updatingCula} onClick={updateMembersToCulaTwo} className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 shadow-sm hover:bg-violet-100 disabled:opacity-50">{updatingCula ? 'Menukar...' : 'Tukar ahli ke Cula 2'}</button>}{totalKads > 0 && <button type="button" disabled={exporting} onClick={() => exportWorkbook(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-bold text-green-700 shadow-sm hover:bg-green-50 disabled:opacity-50"><Icon name="download" className="h-4 w-4" /> {exporting ? 'Menyedia...' : 'Eksport halaman'}</button>}{canManage ? <button type="button" onClick={() => setCreateModalOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-green-500"><Icon name="plus" className="h-4 w-4" /> Cipta Kad 10</button> : canAutoInput ? null : <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500"><Icon name="lock" className="h-3.5 w-3.5" /> Paparan JPRD</span>}</div></div>}>
         <Head title="Kad 10" />
         {canAutoInput && <div className="flex justify-end"><button type="button" disabled={resetting || autoInputProcessing} onClick={resetKadTen} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 shadow-sm hover:bg-rose-100 disabled:opacity-50">{resetting ? 'Mereset...' : 'Reset Kad 10'}</button></div>}
         <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">

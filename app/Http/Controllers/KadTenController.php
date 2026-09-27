@@ -527,6 +527,40 @@ class KadTenController extends Controller
             ->with('success', $message);
     }
 
+    public function updateMembersCula(Request $request): RedirectResponse|JsonResponse
+    {
+        $user = $request->user();
+        $this->ensureManager($user);
+
+        $memberIds = KadTenMember::query()
+            ->whereHas('kadTen', fn (Builder $query) => $query->kadTenForManager($user))
+            ->distinct()
+            ->pluck('pemilih_record_id');
+
+        $updated = $memberIds->isEmpty() ? 0 : DB::transaction(fn (): int => PemilihRecord::query()
+            ->whereIn('id', $memberIds)
+            ->update([
+                'cula_code' => '2',
+                'cula_display_label' => '2 - '.CulaCodes::label('2'),
+                'updated_at' => now(),
+            ]));
+
+        $message = $updated > 0
+            ? $updated.' ahli Kad 10 berjaya ditukar kepada Cula 2.'
+            : 'Tiada ahli Kad 10 untuk ditukar kepada Cula 2.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'updated' => $updated,
+            ]);
+        }
+
+        return redirect()
+            ->route('kad-ten.index')
+            ->with('success', $message);
+    }
+
     public function update(Request $request, KadTen $kadTen): RedirectResponse
     {
         $this->ensureCanManage($request->user(), $kadTen);
