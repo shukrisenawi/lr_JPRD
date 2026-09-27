@@ -255,14 +255,20 @@ it('paginates the unassigned Kad 10 list at twenty voters per page', function ()
             ->where('voters.data', fn ($voters) => count($voters) === 1));
 });
 
-it('calculates required Kad 10 leaders from all eligible voters', function () {
+it('calculates required Kad 10 leaders from the total PAS cula count', function () {
     $user = kadTenUser();
 
     collect(range(1, 100))->each(fn () => kadTenVoter());
+    collect(range(1, 5))->each(fn (int $number) => kadTenVoter([
+        'name' => 'BUKAN PAS '.$number,
+        'cula_code' => '1',
+        'cula_display_label' => '1 - UMNO',
+    ]));
 
     $this->actingAs($user)
         ->get(route('kad-ten.index'))
         ->assertInertia(fn ($page) => $page
+            ->where('kad_stats.pas_cula', 100)
             ->where('kad_stats.required_leaders', 10));
 });
 

@@ -53,11 +53,12 @@ class KadTenController extends Controller
             ->withCount('members')
             ->get(['kad_tens.id']);
         $totalMembers = $kadStats->sum('members_count');
-        $eligibleVotersQuery = $this->eligibleVoterQueryForScope($user);
+        $pasCulaQuery = $this->eligibleVoterQueryForScope($user);
         if ($udmFilter !== '') {
-            $eligibleVotersQuery->where('dm', $udmFilter);
+            $pasCulaQuery->where('dm', $udmFilter);
         }
-        $requiredLeaders = (int) ceil($eligibleVotersQuery->count() / self::MINIMUM_MEMBERS);
+        $totalPasCula = $pasCulaQuery->count();
+        $requiredLeaders = (int) ceil($totalPasCula / self::MINIMUM_MEMBERS);
 
         $kads = $kadsQuery
             ->latest()
@@ -145,6 +146,7 @@ class KadTenController extends Controller
                 'total' => $kadStats->count(),
                 'complete' => $kadStats->where('members_count', '>=', self::MINIMUM_MEMBERS)->count(),
                 'members' => $totalMembers,
+                'pas_cula' => $totalPasCula,
                 'required_leaders' => $requiredLeaders,
             ],
             'filters' => ['udm' => $udmFilter],
