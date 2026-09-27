@@ -26,6 +26,13 @@ it('searches manual voters and keeps search parameters in pagination links', fun
         'name' => 'BINTI LAIN',
         'no_kp' => '880202026666',
     ]);
+    PemilihRecord::create([
+        'identity_number' => '810819025199',
+        'name' => 'KHALIL BASYA BIN MOHAMMAD',
+        'no_kp' => '810819025199',
+        'status' => 'xaktif',
+        'is_manual' => false,
+    ]);
 
     $this->actingAs($user)
         ->get('/tambah-pemilih?tab=senarai&search=AHMAD')
@@ -35,6 +42,22 @@ it('searches manual voters and keeps search parameters in pagination links', fun
             ->where('manual_search', 'AHMAD')
             ->where('manualVoters.total', 1)
             ->where('manualVoters.data.0.name', 'AHMAD MANUAL'));
+
+    $this->actingAs($user)
+        ->get('/tambah-pemilih?tab=senarai&search=810819025199')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('manualVoters.total', 1)
+            ->where('manualVoters.data.0.name', 'KHALIL BASYA BIN MOHAMMAD')
+            ->where('manualVoters.data.0.is_manual', false)
+            ->where('manualVoters.data.0.status', 'xaktif'));
+
+    $this->actingAs($user)
+        ->post('/tambah-pemilih', [
+            'name' => 'CUBA DUPLIKAT',
+            'no_kp' => '810819025199',
+        ])
+        ->assertSessionHasErrors('no_kp');
 
     foreach (range(1, 21) as $index) {
         createTambahPemilihRecord([

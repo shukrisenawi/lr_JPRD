@@ -465,7 +465,7 @@ function SenaraiTab({ manualVoters, manualSearch = '', dms, localitiesByDm, cula
     const { auth } = usePage().props;
     const currentUser = auth.user;
     const isMasterAdmin = currentUser.role?.is_master_admin === true;
-    const canModify = (voter) => isMasterAdmin || voter.created_by === currentUser.id;
+    const canModify = (voter) => voter.is_manual && (isMasterAdmin || voter.created_by === currentUser.id);
 
     const [search, setSearch] = useState(manualSearch);
     const [detailVoter, setDetailVoter] = useState(null);
@@ -559,6 +559,7 @@ function SenaraiTab({ manualVoters, manualSearch = '', dms, localitiesByDm, cula
                                 className="input-field w-full pl-9"
                             />
                         </div>
+                        <p className="mt-1 text-[11px] text-slate-500">Carian turut menyemak rekod sedia ada termasuk rekod tidak aktif.</p>
                     </div>
                     <div className="flex gap-2">
                         <button type="submit" className="btn-primary">Cari</button>
@@ -591,7 +592,7 @@ function SenaraiTab({ manualVoters, manualSearch = '', dms, localitiesByDm, cula
                             {manualVoters.data.length === 0 ? (
                                 <tr>
                                     <td colSpan="9" className="px-3 py-8 text-center text-sm text-slate-500">
-                                        Tiada pemilih manual lagi.
+                                        {manualSearch ? 'Tiada rekod sepadan.' : 'Tiada pemilih manual lagi.'}
                                     </td>
                                 </tr>
                             ) : (
@@ -604,6 +605,7 @@ function SenaraiTab({ manualVoters, manualSearch = '', dms, localitiesByDm, cula
                                                 ) : null}
                                                 {lightboxSrc && <AvatarLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
                                                 <span className={`font-semibold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</span>
+                                                {!voter.is_manual && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">Sedia ada</span>}
                                             </div>
                                         </td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.no_kp || '-'}</td>

@@ -50,12 +50,14 @@ class TambahPemilihController extends Controller
 
         $culaCodes = CulaCodes::options();
 
-        $manualQuery = PemilihRecord::where('is_manual', true)
+        $manualQuery = PemilihRecord::query()
             ->with('creator:id,name', 'hashtags')
             ->orderBy('created_at', 'desc');
         $user->applyScopeToPemilihQuery($manualQuery);
         $manualSearch = $request->string('search')->trim()->toString();
-        if ($manualSearch !== '') {
+        if ($manualSearch === '') {
+            $manualQuery->where('is_manual', true);
+        } else {
             $manualQuery->where(function ($query) use ($manualSearch) {
                 foreach ([
                     'name', 'no_kp', 'old_ic', 'identity_number',
