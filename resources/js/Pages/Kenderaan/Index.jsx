@@ -37,10 +37,10 @@ function VehicleRow({ vehicle, onEdit, onDelete }) {
                 </div>
             </div>
             <div className="flex shrink-0 gap-2 pl-12 sm:pl-0">
-                <button type="button" onClick={() => onEdit(vehicle)} className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-emerald-700 transition hover:bg-emerald-50">
+                <button type="button" onClick={(event) => { event.stopPropagation(); onEdit(vehicle); }} className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-emerald-700 transition hover:bg-emerald-50">
                     <Icon name="edit" className="h-3.5 w-3.5" />Edit
                 </button>
-                <button type="button" onClick={() => onDelete(vehicle)} className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">
+                <button type="button" onClick={(event) => { event.stopPropagation(); onDelete(vehicle); }} className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">
                     <Icon name="trash" className="h-3.5 w-3.5" />Padam
                 </button>
             </div>
@@ -48,10 +48,15 @@ function VehicleRow({ vehicle, onEdit, onDelete }) {
     );
 }
 
-function UdmCard({ summary, onEdit, onDelete }) {
+function UdmCard({ summary, onSelect, onEdit, onDelete }) {
+    const selectCard = () => onSelect(summary.udm);
+
     return (
-        <section className="overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm">
-            <div className="flex items-start justify-between gap-3 border-b border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 px-4 py-4">
+        <section
+            className="cursor-pointer overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md"
+            onClick={selectCard}
+        >
+            <button type="button" onClick={(event) => { event.stopPropagation(); selectCard(); }} aria-label={`Lihat kenderaan ${summary.udm}`} className="flex w-full items-start justify-between gap-3 border-b border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 px-4 py-4 text-left transition hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500">
                 <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white shadow-sm shadow-green-600/20">
                         <Icon name="layers" className="h-5 w-5" />
@@ -65,7 +70,7 @@ function UdmCard({ summary, onEdit, onDelete }) {
                     <p className="text-lg font-black leading-none text-green-700">{summary.count}</p>
                     <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Kenderaan</p>
                 </div>
-            </div>
+            </button>
 
             {summary.vehicles.length > 0 ? (
                 <div className="divide-y divide-slate-100">
@@ -139,6 +144,14 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         router.delete(route('kenderaan.destroy', vehicle.id), { preserveScroll: true });
     };
 
+    const selectUdm = (udm) => {
+        router.get(route('kenderaan.index'), { udm }, {
+            preserveScroll: false,
+            preserveState: false,
+            replace: true,
+        });
+    };
+
     const changeUdm = (event) => {
         const value = event.target.value;
         router.get(route('kenderaan.index'), value ? { udm: value } : {}, {
@@ -189,7 +202,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                         </div>
 
                         <div className="mt-4 grid gap-4 md:grid-cols-2">
-                            {udmSummaries.length > 0 ? udmSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} onEdit={openEdit} onDelete={deleteVehicle} />) : (
+                            {udmSummaries.length > 0 ? udmSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
                                 <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50/50 px-5 py-12 text-center md:col-span-2">
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div>
                                     <h3 className="mt-3 text-sm font-black text-slate-800">Belum ada UDM</h3>
