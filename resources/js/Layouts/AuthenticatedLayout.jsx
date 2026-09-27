@@ -104,7 +104,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             label: 'Pentadbiran',
             icon: <HeaderIcon name="gear" className="h-4 w-4" />,
             items: [
-                { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.*', label: 'Jawatankuasa' },
+                { key: 'jawatankuasa', href: 'jawatankuasa.index', routePattern: 'jawatankuasa.index', label: 'Jawatankuasa' },
                 { key: 'jawatankuasa.laporan', href: 'jawatankuasa.laporan', routePattern: 'jawatankuasa.laporan', label: 'Senarai AJK' },
                 ...(user.access_level === 'udm' ? [{ key: 'jawatankuasa.senarai-udm', href: 'jawatankuasa.senarai-ajk-udm', routePattern: 'jawatankuasa.senarai-ajk-udm', label: 'Senarai AJK UDM' }] : []),
                 { key: 'cawangan', href: 'admin.cawangan.index', routePattern: 'admin.cawangan.*', label: 'Cawangan' },
@@ -130,9 +130,10 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
-                                         const accessibleItems = item.items.filter(i => canAccess(i.key) || ['akses', 'api-keys'].includes(i.key));
+                                        const accessibleItems = item.items.filter(i => canAccess(i.key) || ['akses', 'api-keys'].includes(i.key));
                                         if (accessibleItems.length === 0) return null;
                                         const hasSubBadge = accessibleItems.some(sub => sub.badge > 0);
+                                        const hasActiveSubmenu = accessibleItems.some(sub => route().current(sub.routePattern));
                                         if (accessibleItems.length === 1) {
                                             const sub = accessibleItems[0];
                                             return (
@@ -146,7 +147,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                         return (
                                             <Dropdown key={item.label}>
                                                 <Dropdown.Trigger>
-                                                    <button type="button" className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition mx-[2px] text-slate-600 hover:bg-green-100 hover:text-green-700">
+                                                    <button type="button" aria-current={hasActiveSubmenu ? 'page' : undefined} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition mx-[2px] ${hasActiveSubmenu ? 'bg-green-600 text-white shadow-sm shadow-green-600/20' : 'text-slate-600 hover:bg-green-100 hover:text-green-700'}`}>
                                                         <NavIcon>{item.icon}</NavIcon>
                                                         <span>{item.label}</span>
                                                         {hasSubBadge && <GlowingDot />}
@@ -155,7 +156,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                                 </Dropdown.Trigger>
                                                 <Dropdown.Content align="left" widthClasses="w-52">
                                                     {accessibleItems.map(sub => (
-                                                        <Dropdown.Link key={sub.key} href={navHref(sub)} badge={sub.badge}>
+                                                        <Dropdown.Link key={sub.key} href={navHref(sub)} active={route().current(sub.routePattern)} badge={sub.badge}>
                                                             {sub.label}
                                                         </Dropdown.Link>
                                                     ))}
@@ -262,7 +263,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('spokas') && { href: route('admin.spokas.index'), active: route().current('admin.spokas.*'), label: 'SPoKAS' },
                                 ].filter(Boolean) },
                                 { label: 'Pentadbiran', items: [
-                                    canAccess('jawatankuasa') && { href: route('jawatankuasa.index'), active: route().current('jawatankuasa.*'), label: 'Jawatankuasa' },
+                                    canAccess('jawatankuasa') && { href: route('jawatankuasa.index'), active: route().current('jawatankuasa.index'), label: 'Jawatankuasa' },
                                     canAccess('jawatankuasa.laporan') && { href: route('jawatankuasa.laporan'), active: route().current('jawatankuasa.laporan'), label: 'Senarai AJK' },
                                     canAccess('jawatankuasa.senarai-udm') && user.access_level === 'udm' && { href: route('jawatankuasa.senarai-ajk-udm'), active: route().current('jawatankuasa.senarai-ajk-udm'), label: 'Senarai AJK UDM' },
                                     canAccess('cawangan') && { href: route('admin.cawangan.index'), active: route().current('admin.cawangan.*'), label: 'Cawangan' },
@@ -278,9 +279,10 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     const sub = g.items[0];
                                     return <ResponsiveNavLink key={g.label} href={sub.href} active={sub.active} variant={variant} badge={sub.badge}>{sub.label}</ResponsiveNavLink>;
                                 }
+                                const hasActiveSubmenu = g.items.some(sub => sub.active);
                                 return (
                                     <div key={g.label}>
-                                        <div className="flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                        <div className={`flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${hasActiveSubmenu ? 'bg-green-50 text-green-800' : 'text-slate-400'}`} aria-current={hasActiveSubmenu ? 'page' : undefined}>
                                             <span>{g.label}</span>
                                             {hasSubBadge && <GlowingDot />}
                                         </div>
