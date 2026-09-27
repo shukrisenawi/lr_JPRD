@@ -698,12 +698,18 @@ class CommitteeController extends Controller
         } elseif ($selectedLevel === 'cawangan' && filled($selectedScopeKey)) {
             $cawangan = Cawangan::query()->find($selectedScopeKey);
             if ($cawangan) {
-                $builder->orderByRaw('CASE WHEN dm = ? THEN 0 ELSE 1 END', [$cawangan->udm]);
+                $builder->orderByRaw(
+                    'CASE WHEN LOWER(locality) = LOWER(?) THEN 0 WHEN LOWER(dm) = LOWER(?) THEN 1 ELSE 2 END',
+                    [$cawangan->name, $cawangan->udm]
+                );
             } else {
                 $parts = explode('|', $selectedScopeKey);
                 $dm = $parts[0] ?? '';
                 $locality = $parts[1] ?? '';
-                $builder->orderByRaw('CASE WHEN dm = ? AND locality = ? THEN 0 ELSE 1 END', [$dm, $locality]);
+                $builder->orderByRaw(
+                    'CASE WHEN LOWER(dm) = LOWER(?) AND LOWER(locality) = LOWER(?) THEN 0 WHEN LOWER(dm) = LOWER(?) THEN 1 ELSE 2 END',
+                    [$dm, $locality, $dm]
+                );
             }
         } else {
             $user = $request->user();

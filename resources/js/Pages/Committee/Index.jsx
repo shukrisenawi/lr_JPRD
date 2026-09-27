@@ -50,6 +50,19 @@ const levelOptions = [
     { key: 'cawangan', label: 'Cawangan' },
 ];
 
+function scopeValueMatches(value, expected) {
+    return Boolean(value && expected && String(value).trim().toLowerCase() === String(expected).trim().toLowerCase());
+}
+
+function getVoterScopeMatches(voter, level, scope) {
+    const priorityUdm = level === 'udm' ? scope?.name : scope?.parent_scope_name;
+    const sameUdm = scopeValueMatches(voter?.dm, priorityUdm);
+    const sameCawangan = level === 'cawangan'
+        && scopeValueMatches(voter?.locality, scope?.name);
+
+    return { sameUdm, sameCawangan };
+}
+
 function LevelBadge({ level, size = 'sm' }) {
     const meta = levelMeta[level] || { label: level, bg: 'bg-slate-100', text: 'text-slate-700' };
     const sizing = size === 'sm' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs';
@@ -942,6 +955,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     }, [memberships]);
 
     const currentScopes = scopes[resolvedTab] ?? [];
+    const currentScope = currentScopes.find((scope) => String(scope.key) === String(form.data.scope_key));
 
     const canSendN8nMessage = auth?.user?.role?.is_master_admin || auth?.user?.allowed_modules?.includes('laporan-hantar-status');
 
@@ -1271,22 +1285,26 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                     {searching ? (
                                         <div className="px-3 py-2 text-xs text-slate-400">Mencari...</div>
                                     ) : (
-                                        suggestions.map((voter) => (
-                                            <button
-                                                key={voter.id}
-                                                type="button"
-                                                onClick={() => selectVoter(voter)}
-                                                className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
-                                            >
-                                                <div className="min-w-0">
-                                                 <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
-                                                </div>
-                                                <div className="shrink-0 text-right text-xs text-slate-500">
-                                                    <p>{voter.dm || '-'}</p>
-                                                    <p className="mt-0.5">{voter.locality || '-'}</p>
-                                                </div>
-                                            </button>
-                                        ))
+                                        suggestions.map((voter) => {
+                                            const scopeMatches = getVoterScopeMatches(voter, resolvedTab, currentScope);
+
+                                            return (
+                                                <button
+                                                    key={voter.id}
+                                                    type="button"
+                                                    onClick={() => selectVoter(voter)}
+                                                    className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
+                                                >
+                                                    <div className="min-w-0">
+                                                        <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
+                                                    </div>
+                                                    <div className="shrink-0 text-right text-xs text-slate-500">
+                                                        <p className={scopeMatches.sameUdm ? 'font-bold text-green-700' : ''}>{voter.dm || '-'}</p>
+                                                        <p className={'mt-0.5 ' + (scopeMatches.sameCawangan ? 'font-bold text-green-700' : '')}>{voter.locality || '-'}</p>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
                                     )}
                                 </div>
                             )}
@@ -1618,7 +1636,6 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
         notes: '',
     });
     const currentScope = (scopes[level] ?? []).find((scope) => String(scope.key) === String(form.data.scope_key));
-    const priorityUdm = currentScope?.parent_scope_name ?? (level === 'udm' ? currentScope?.name : null);
     const formError = form.errors.scope_key
         || form.errors.committee_group_id
         || form.errors.committee_position_id
@@ -1732,22 +1749,26 @@ function QuickAddMemberModal({ group, position, level, scopes, currentScopeKey, 
                                 {searching ? (
                                     <div className="px-3 py-2 text-xs text-slate-400">Mencari...</div>
                                 ) : (
-                                    suggestions.map((voter) => (
-                                        <button
-                                            key={voter.id}
-                                            type="button"
-                                            onClick={() => selectVoter(voter)}
-                                            className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
-                                        >
-                                            <div className="min-w-0">
-                                                 <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
-                                            </div>
-                                            <div className="shrink-0 text-right text-xs text-slate-500">
-                                                <p className={priorityUdm && voter.dm === priorityUdm ? 'font-bold text-green-700' : ''}>{voter.dm || '-'}</p>
-                                                <p className="mt-0.5">{voter.locality || '-'}</p>
-                                            </div>
-                                        </button>
-                                    ))
+                                    suggestions.map((voter) => {
+                                        const scopeMatches = getVoterScopeMatches(voter, level, currentScope);
+
+                                        return (
+                                            <button
+                                                key={voter.id}
+                                                type="button"
+                                                onClick={() => selectVoter(voter)}
+                                                className="flex w-full items-start justify-between gap-3 border-b border-green-100 px-3 py-2 text-left transition hover:bg-green-50 last:border-b-0"
+                                            >
+                                                <div className="min-w-0">
+                                                    <p className={`text-xs font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
+                                                </div>
+                                                <div className="shrink-0 text-right text-xs text-slate-500">
+                                                    <p className={scopeMatches.sameUdm ? 'font-bold text-green-700' : ''}>{voter.dm || '-'}</p>
+                                                    <p className={'mt-0.5 ' + (scopeMatches.sameCawangan ? 'font-bold text-green-700' : '')}>{voter.locality || '-'}</p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })
                                 )}
                             </div>
                         )}

@@ -183,8 +183,13 @@ it('allows a voter from another UDM in the selected cawangan', function () {
     ]);
 });
 
-it('prioritizes the selected cawangan UDM without hiding other voters', function () {
+it('prioritizes the selected cawangan before its UDM without hiding other voters', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+    $matchingCawanganVoter = cawanganVoter([
+        'name' => 'PEMILIH CARI CAWANGAN',
+        'dm' => 'UDM GAMMA',
+        'locality' => 'Cawangan Taman Murni',
+    ]);
     $matchingVoter = cawanganVoter([
         'name' => 'PEMILIH CARI UDM ALPHA',
         'dm' => 'UDM ALPHA',
@@ -203,6 +208,33 @@ it('prioritizes the selected cawangan UDM without hiding other voters', function
             'q' => 'PEMILIH CARI',
             'level' => 'cawangan',
             'scope_key' => (string) $cawangan->id,
+        ]));
+
+    $suggestionIds = collect($response->json('suggestions'))->pluck('id');
+
+    $response->assertOk();
+    expect($suggestionIds->all())->toContain($matchingCawanganVoter->id);
+    expect($suggestionIds->all())->toContain($matchingVoter->id);
+    expect($suggestionIds->all())->toContain($otherVoter->id);
+    expect($suggestionIds->take(2)->all())->toBe([$matchingCawanganVoter->id, $matchingVoter->id]);
+});
+
+it('prioritizes voters in the selected UDM without hiding other voters', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+    $matchingVoter = cawanganVoter([
+        'name' => 'PEMILIH UDM ALPHA',
+        'dm' => 'UDM ALPHA',
+    ]);
+    $otherVoter = cawanganVoter([
+        'name' => 'PEMILIH UDM BETA',
+        'dm' => 'UDM BETA',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->getJson(route('jawatankuasa.search', [
+            'q' => 'PEMILIH UDM',
+            'level' => 'udm',
+            'scope_key' => 'UDM ALPHA',
         ]));
 
     $suggestionIds = collect($response->json('suggestions'))->pluck('id');
