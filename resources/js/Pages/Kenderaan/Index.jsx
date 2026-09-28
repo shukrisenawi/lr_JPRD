@@ -99,6 +99,7 @@ function UdmCard({ summary, onSelect, onEdit, onDelete }) {
 export default function Index({ vehicles = [], udms = [], udmSummaries = [], selectedUdm = '', defaultUdm = '', canSelectAll = true }) {
     const form = useForm(emptyVehicle(defaultUdm || selectedUdm));
     const [editing, setEditing] = useState(null);
+    const [driverSearch, setDriverSearch] = useState('');
     const { setData } = form;
 
     useEffect(() => {
@@ -180,6 +181,20 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         });
     };
 
+    const normalizedDriverSearch = driverSearch.trim().toLowerCase();
+    const visibleSummaries = normalizedDriverSearch === ''
+        ? udmSummaries
+        : udmSummaries
+            .map((summary) => {
+                const matchedVehicles = summary.vehicles.filter((vehicle) => (vehicle.nama_pemandu || '').toLowerCase().includes(normalizedDriverSearch));
+
+                return { ...summary, count: matchedVehicles.length, vehicles: matchedVehicles };
+            })
+            .filter((summary) => summary.vehicles.length > 0);
+    const visibleVehicleCount = normalizedDriverSearch === ''
+        ? vehicles.length
+        : visibleSummaries.reduce((total, summary) => total + summary.count, 0);
+
     return (
         <AuthenticatedLayout>
             <Head title="Kenderaan" />
@@ -190,15 +205,15 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                         <div className="max-w-2xl">
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-200">Operasi UDM</p>
                             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Kenderaan</h1>
-                            <p className="mt-2 max-w-xl text-sm leading-relaxed text-green-50">Urus nombor plat dan jenis kenderaan yang tersedia untuk setiap UDM.</p>
+                            <p className="mt-2 max-w-xl text-sm leading-relaxed text-green-50">Urus nombor kenderaan, jenis kenderaan dan maklumat pemandu untuk setiap UDM.</p>
                         </div>
                         <button type="button" onClick={openCreate} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-green-800 shadow-sm transition hover:bg-green-50 active:scale-[0.98] sm:w-auto">
                             <Icon name="plus" className="h-4 w-4" />Tambah kenderaan
                         </button>
                     </div>
                     <div className="mt-6 flex flex-wrap gap-2">
-                        <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-green-100">Jumlah kenderaan</p><p className="mt-0.5 text-lg font-black">{vehicles.length}</p></div>
-                        <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-green-100">UDM dipaparkan</p><p className="mt-0.5 text-lg font-black">{udmSummaries.length}</p></div>
+                        <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-green-100">Jumlah kenderaan</p><p className="mt-0.5 text-lg font-black">{visibleVehicleCount}</p></div>
+                        <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-green-100">UDM dipaparkan</p><p className="mt-0.5 text-lg font-black">{visibleSummaries.length}</p></div>
                         <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-green-100">Paparan</p><p className="mt-0.5 text-lg font-black">{selectedUdm || 'Semua UDM'}</p></div>
                     </div>
                 </section>
@@ -211,21 +226,27 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                 <h2 className="mt-1 text-xl font-black text-slate-900">Senarai kenderaan</h2>
                                 <p className="mt-1 text-xs text-slate-500">Setiap kad memaparkan jumlah dan rekod kenderaan UDM.</p>
                             </div>
-                            <div className="w-full sm:w-56">
-                                <InputLabel htmlFor="kenderaan-filter-udm" value="Tapis UDM" />
-                                <select id="kenderaan-filter-udm" value={selectedUdm} onChange={changeUdm} disabled={!canSelectAll} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100">
-                                    {canSelectAll && <option value="">Semua UDM</option>}
-                                    {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
-                                </select>
+                            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-[minmax(13rem,1fr)_14rem]">
+                                <div>
+                                    <InputLabel htmlFor="kenderaan-carian-pemandu" value="Cari nama pemandu" />
+                                    <input id="kenderaan-carian-pemandu" type="search" value={driverSearch} onChange={(event) => setDriverSearch(event.target.value)} placeholder="Contoh: Ahmad bin Ali" className="input-field mt-1.5" />
+                                </div>
+                                <div>
+                                    <InputLabel htmlFor="kenderaan-filter-udm" value="Tapis UDM" />
+                                    <select id="kenderaan-filter-udm" value={selectedUdm} onChange={changeUdm} disabled={!canSelectAll} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100">
+                                        {canSelectAll && <option value="">Semua UDM</option>}
+                                        {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
                         <div className="mt-4 grid gap-4 md:grid-cols-2">
-                            {udmSummaries.length > 0 ? udmSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
+                            {visibleSummaries.length > 0 ? visibleSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
                                 <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50/50 px-5 py-12 text-center md:col-span-2">
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div>
-                                    <h3 className="mt-3 text-sm font-black text-slate-800">Belum ada UDM</h3>
-                                    <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">UDM aktif akan muncul di sini apabila data pemilih tersedia.</p>
+                                    <h3 className="mt-3 text-sm font-black text-slate-800">{normalizedDriverSearch ? 'Tiada kenderaan ditemui' : 'Belum ada UDM'}</h3>
+                                    <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">{normalizedDriverSearch ? `Tiada nama pemandu sepadan dengan "${driverSearch.trim()}".` : 'UDM aktif akan muncul di sini apabila data pemilih tersedia.'}</p>
                                 </div>
                             )}
                         </div>

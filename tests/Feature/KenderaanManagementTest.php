@@ -24,6 +24,7 @@ it('renders the vehicle page with UDM cards and counts', function () {
         'udm' => 'UDM ALPHA',
         'no_plate' => 'KCA 1234',
         'jenis_kenderaan' => 'MPV',
+        'nama_pemandu' => 'Ahmad bin Ali',
     ]);
     Kenderaan::query()->create([
         'udm' => 'UDM ALPHA',
@@ -39,6 +40,7 @@ it('renders the vehicle page with UDM cards and counts', function () {
             ->where('udms', ['UDM ALPHA', 'UDM BETA'])
             ->where('selectedUdm', '')
             ->where('canSelectAll', true)
+            ->where('vehicles.0.nama_pemandu', 'Ahmad bin Ali')
             ->where('udmSummaries.0.udm', 'UDM ALPHA')
             ->where('udmSummaries.0.count', 2)
             ->where('udmSummaries.1.udm', 'UDM BETA')
