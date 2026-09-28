@@ -287,7 +287,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                             </div>
                         </div>
 
-                        <div className="mt-4 grid gap-4">
+                        <div className={`mt-4 grid gap-4 ${selectedUdm === '' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
                             {visibleSummaries.length > 0 ? visibleSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} showVehicles={selectedUdm !== ''} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
                                 <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50/50 px-5 py-12 text-center md:col-span-2">
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div>
