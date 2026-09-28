@@ -153,7 +153,7 @@ class KenderaanController extends Controller
         $request->merge([
             'udm' => trim((string) $request->input('udm')),
             'no_plate' => strtoupper(trim((string) $request->input('no_plate'))),
-            'jenis_kenderaan' => trim((string) $request->input('jenis_kenderaan')),
+            'jenis_kenderaan' => trim((string) $request->input('jenis_kenderaan')) ?: null,
             'nama_pemandu' => trim((string) $request->input('nama_pemandu')) ?: null,
             'no_tel' => trim((string) $request->input('no_tel')) ?: null,
             'lokaliti' => trim((string) $request->input('lokaliti')) ?: null,
@@ -167,7 +167,7 @@ class KenderaanController extends Controller
         return $request->validate([
             'udm' => ['required', 'string', 'max:255', Rule::in($this->availableUdms($user))],
             'no_plate' => ['required', 'string', 'max:30', $uniquePlate],
-            'jenis_kenderaan' => ['required', 'string', 'max:100'],
+            'jenis_kenderaan' => ['nullable', 'string', 'max:100'],
             'nama_pemandu' => ['nullable', 'string', 'max:255'],
             'no_tel' => ['nullable', 'string', 'max:30'],
             'lokaliti' => ['nullable', 'string', 'max:255'],

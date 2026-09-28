@@ -323,7 +323,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                             </div>
                             <div>
                                 <InputLabel htmlFor="kenderaan-jenis" value="Jenis Kenderaan" />
-                                <input id="kenderaan-jenis" type="text" className="input-field mt-1.5" placeholder="Contoh: MPV, Sedan, Van" value={form.data.jenis_kenderaan} onChange={(event) => form.setData('jenis_kenderaan', event.target.value)} required />
+                                <input id="kenderaan-jenis" type="text" className="input-field mt-1.5" placeholder="Contoh: MPV, Sedan, Van" value={form.data.jenis_kenderaan} onChange={(event) => form.setData('jenis_kenderaan', event.target.value)} />
                                 <InputError message={form.errors.jenis_kenderaan} className="mt-1" />
                             </div>
                             <div>

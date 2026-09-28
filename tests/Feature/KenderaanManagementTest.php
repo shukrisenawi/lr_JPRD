@@ -113,6 +113,23 @@ it('requires a vehicle number when creating a vehicle', function () {
         ->assertSessionHasErrors('no_plate');
 });
 
+it('allows a vehicle without a vehicle type', function () {
+    $user = User::factory()->withModules(['dashboard', 'kenderaan'])->create();
+    kenderaanVoter('UDM ALPHA');
+
+    $this->actingAs($user)
+        ->post(route('kenderaan.store'), [
+            'udm' => 'UDM ALPHA',
+            'no_plate' => 'KCA 9876',
+        ])
+        ->assertRedirect(route('kenderaan.index'));
+
+    $this->assertDatabaseHas('kenderaan', [
+        'no_plate' => 'KCA 9876',
+        'jenis_kenderaan' => null,
+    ]);
+});
+
 it('searches active and manual voters for drivers within the users scope', function () {
     PemilihRecord::query()->create([
         'identity_number' => '900101025555',
