@@ -20,6 +20,13 @@ it('renders the vehicle page with UDM cards and counts', function () {
     $user = User::factory()->withModules(['dashboard', 'kenderaan'])->create();
     kenderaanVoter('UDM ALPHA');
     kenderaanVoter('UDM BETA');
+    PemilihRecord::query()->create([
+        'identity_number' => 'LOCALITY-ALPHA-001',
+        'name' => 'PEMILIH LOKALITI',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'Taman Alpha',
+        'status' => 'aktif',
+    ]);
     Kenderaan::query()->create([
         'udm' => 'UDM ALPHA',
         'no_plate' => 'KCA 1234',
@@ -40,6 +47,7 @@ it('renders the vehicle page with UDM cards and counts', function () {
             ->where('udms', ['UDM ALPHA', 'UDM BETA'])
             ->where('selectedUdm', '')
             ->where('canSelectAll', true)
+            ->where('localitiesByUdm.UDM ALPHA', ['Taman Alpha'])
             ->where('vehicles.0.nama_pemandu', 'Ahmad bin Ali')
             ->where('udmSummaries.0.udm', 'UDM ALPHA')
             ->where('udmSummaries.0.count', 2)

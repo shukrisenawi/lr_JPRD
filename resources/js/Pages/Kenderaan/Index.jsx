@@ -96,7 +96,7 @@ function UdmCard({ summary, onSelect, onEdit, onDelete }) {
     );
 }
 
-export default function Index({ vehicles = [], udms = [], udmSummaries = [], selectedUdm = '', defaultUdm = '', canSelectAll = true }) {
+export default function Index({ vehicles = [], udms = [], udmSummaries = [], selectedUdm = '', defaultUdm = '', canSelectAll = true, localitiesByUdm = {} }) {
     const form = useForm(emptyVehicle(defaultUdm || selectedUdm));
     const [editing, setEditing] = useState(null);
     const [driverSearch, setDriverSearch] = useState('');
@@ -222,6 +222,11 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         });
     };
 
+    const changeFormUdm = (event) => {
+        form.setData('udm', event.target.value);
+        form.setData('lokaliti', '');
+    };
+
     const normalizedDriverSearch = driverSearch.trim().toLowerCase();
     const visibleSummaries = normalizedDriverSearch === ''
         ? udmSummaries
@@ -235,6 +240,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
     const visibleVehicleCount = normalizedDriverSearch === ''
         ? vehicles.length
         : visibleSummaries.reduce((total, summary) => total + summary.count, 0);
+    const localitiesForSelectedUdm = [...new Set([...(localitiesByUdm[form.data.udm] ?? []), form.data.lokaliti].filter(Boolean))].sort((left, right) => left.localeCompare(right));
 
     return (
         <AuthenticatedLayout>
@@ -304,7 +310,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                         <form onSubmit={submit} className="space-y-4 p-5">
                             <div>
                                 <InputLabel htmlFor="kenderaan-udm" value="UDM" />
-                                <select id="kenderaan-udm" value={form.data.udm} onChange={(event) => form.setData('udm', event.target.value)} disabled={!canSelectAll} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100" required>
+                                <select id="kenderaan-udm" value={form.data.udm} onChange={changeFormUdm} disabled={!canSelectAll} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100" required>
                                     <option value="">Pilih UDM</option>
                                     {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                                 </select>
@@ -347,7 +353,10 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                             </div>
                             <div>
                                 <InputLabel htmlFor="kenderaan-lokaliti" value="Lokaliti" />
-                                <input id="kenderaan-lokaliti" type="text" className="input-field mt-1.5" placeholder="Contoh: Taman Jeneri" value={form.data.lokaliti} onChange={(event) => form.setData('lokaliti', event.target.value)} />
+                                <select id="kenderaan-lokaliti" value={form.data.lokaliti} onChange={(event) => form.setData('lokaliti', event.target.value)} disabled={!form.data.udm || localitiesForSelectedUdm.length === 0} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100">
+                                    <option value="">{!form.data.udm ? 'Pilih UDM dahulu' : localitiesForSelectedUdm.length === 0 ? 'Tiada lokaliti tersedia' : 'Pilih lokaliti'}</option>
+                                    {localitiesForSelectedUdm.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
+                                </select>
                                 <InputError message={form.errors.lokaliti} className="mt-1" />
                             </div>
 

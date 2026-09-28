@@ -48,6 +48,7 @@ class KenderaanController extends Controller
             'selectedUdm' => $selectedUdm,
             'defaultUdm' => $scopedUdm ?? '',
             'canSelectAll' => $scopedUdm === null,
+            'localitiesByUdm' => $this->availableLocalitiesByUdm($user, $udms),
         ]);
     }
 
@@ -226,6 +227,45 @@ class KenderaanController extends Controller
             ->unique()
             ->sort()
             ->values()
+            ->all();
+    }
+
+    private function availableLocalitiesByUdm(User $user, array $udms): array
+    {
+        $localitiesByUdm = collect($udms)->mapWithKeys(fn (string $udm) => [$udm => collect()]);
+        $addLocality = function (?string $udm, ?string $locality) use ($localitiesByUdm): void {
+            $udm = trim((string) $udm);
+            $locality = trim((string) $locality);
+
+            if ($udm === '' || $locality === '' || $locality === '-') {
+                return;
+            }
+
+            $localitiesByUdm->get($udm, collect())->push($locality);
+        };
+
+        $pemilihQuery = PemilihRecord::query()
+            ->where(function (Builder $query): void {
+                $query->where('status', 'aktif')
+                    ->orWhere('is_manual', true);
+            })
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->where('dm', '!=', '-')
+            ->whereNotNull('locality')
+            ->where('locality', '!=', '');
+        $user->applyScopeToPemilihQuery($pemilihQuery);
+
+        $pemilihQuery->get(['dm', 'locality'])->each(fn (PemilihRecord $record) => $addLocality($record->dm, $record->locality));
+
+        $vehicleQuery = $this->visibleVehicles($user)
+            ->whereIn('udm', $udms)
+            ->whereNotNull('lokaliti')
+            ->where('lokaliti', '!=', '');
+        $vehicleQuery->get(['udm', 'lokaliti'])->each(fn (Kenderaan $kenderaan) => $addLocality($kenderaan->udm, $kenderaan->lokaliti));
+
+        return $localitiesByUdm
+            ->map(fn ($localities) => $localities->unique()->sort()->values()->all())
             ->all();
     }
 
