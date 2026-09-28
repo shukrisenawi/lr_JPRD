@@ -42,11 +42,11 @@ function VehicleRow({ vehicle, onEdit, onDelete }) {
                 </div>
             </div>
             <div className="pointer-events-auto flex shrink-0 gap-2 pl-12 sm:pl-0">
-                <button type="button" onClick={(event) => { event.stopPropagation(); onEdit(vehicle); }} className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-emerald-700 transition hover:bg-emerald-50">
-                    <Icon name="edit" className="h-3.5 w-3.5" />Edit
+                <button type="button" onClick={(event) => { event.stopPropagation(); onEdit(vehicle); }} aria-label="Edit kenderaan" title="Edit kenderaan" className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-white p-2 text-emerald-700 transition hover:bg-emerald-50">
+                    <Icon name="edit" className="h-3.5 w-3.5" />
                 </button>
-                <button type="button" onClick={(event) => { event.stopPropagation(); onDelete(vehicle); }} className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">
-                    <Icon name="trash" className="h-3.5 w-3.5" />Padam
+                <button type="button" onClick={(event) => { event.stopPropagation(); onDelete(vehicle); }} aria-label="Padam kenderaan" title="Padam kenderaan" className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white p-2 text-rose-600 transition hover:bg-rose-50">
+                    <Icon name="trash" className="h-3.5 w-3.5" />
                 </button>
             </div>
         </div>
