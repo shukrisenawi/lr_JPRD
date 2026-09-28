@@ -147,7 +147,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                         return (
                                             <Dropdown key={item.label}>
                                                 <Dropdown.Trigger>
-                                                    <button type="button" aria-current={hasActiveSubmenu ? 'page' : undefined} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition mx-[2px] ${hasActiveSubmenu ? 'bg-green-600/50 text-white shadow-sm shadow-green-600/20' : 'text-slate-600 hover:bg-green-100 hover:text-green-700'}`}>
+                                                    <button type="button" aria-current={hasActiveSubmenu ? 'page' : undefined} className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition mx-[2px] ${hasActiveSubmenu ? 'bg-green-600 text-white shadow-sm shadow-green-600/20' : 'text-slate-600 hover:bg-green-100 hover:text-green-700'}`}>
                                                         <NavIcon>{item.icon}</NavIcon>
                                                         <span>{item.label}</span>
                                                         {hasSubBadge && <GlowingDot />}
@@ -282,7 +282,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 const hasActiveSubmenu = g.items.some(sub => sub.active);
                                 return (
                                     <div key={g.label}>
-                                        <div className={`flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${hasActiveSubmenu ? 'bg-green-600/50 text-white shadow-sm shadow-green-600/20' : 'text-slate-400'}`} aria-current={hasActiveSubmenu ? 'page' : undefined}>
+                                        <div className={`flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider ${hasActiveSubmenu ? 'bg-green-600 text-white shadow-sm shadow-green-600/20' : 'text-slate-400'}`} aria-current={hasActiveSubmenu ? 'page' : undefined}>
                                             <span>{g.label}</span>
                                             {hasSubBadge && <GlowingDot />}
                                         </div>
