@@ -65,7 +65,7 @@ function Badge({ count }) {
 
 const DropdownLink = ({ active = false, className = '', badge, children, ...props }) => {
     const classes = active
-        ? 'bg-gray-600 text-white'
+        ? 'bg-gray-600/50 text-white'
         : 'text-slate-700 hover:bg-green-50 hover:text-green-700 focus:bg-green-50 focus:text-green-700';
 
     return (

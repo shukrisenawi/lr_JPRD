@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 
 export default function ResponsiveNavLink({ active = false, variant = 'light', className = '', children, badge, ...props }) {
     const classes = active
-        ? 'bg-gray-600 text-white'
+        ? 'bg-gray-600/50 text-white'
         : 'text-slate-600 hover:bg-green-100 hover:text-green-700';
 
     return (
