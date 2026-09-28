@@ -130,6 +130,19 @@ it('allows a vehicle without a vehicle type', function () {
     ]);
 });
 
+it('keeps the selected UDM filter after adding a vehicle', function () {
+    $user = User::factory()->withModules(['dashboard', 'kenderaan'])->create();
+    kenderaanVoter('UDM ALPHA');
+    kenderaanVoter('UDM BETA');
+
+    $this->actingAs($user)
+        ->post(route('kenderaan.store', ['udm' => 'UDM ALPHA']), [
+            'udm' => 'UDM ALPHA',
+            'no_plate' => 'KCA 2468',
+        ])
+        ->assertRedirect(route('kenderaan.index', ['udm' => 'UDM ALPHA']));
+});
+
 it('searches active and manual voters for drivers within the users scope', function () {
     PemilihRecord::query()->create([
         'identity_number' => '900101025555',

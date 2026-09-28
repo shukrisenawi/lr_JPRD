@@ -53,7 +53,7 @@ function VehicleRow({ vehicle, onEdit, onDelete }) {
     );
 }
 
-function UdmCard({ summary, onSelect, onEdit, onDelete }) {
+function UdmCard({ summary, showVehicles, onSelect, onEdit, onDelete }) {
     const selectCard = () => onSelect(summary.udm);
 
     return (
@@ -81,7 +81,7 @@ function UdmCard({ summary, onSelect, onEdit, onDelete }) {
                     </div>
                 </div>
 
-                {summary.vehicles.length > 0 ? (
+                {showVehicles && (summary.vehicles.length > 0 ? (
                     <div className="divide-y divide-slate-100">
                         {summary.vehicles.map((vehicle) => <VehicleRow key={vehicle.id} vehicle={vehicle} onEdit={onEdit} onDelete={onDelete} />)}
                     </div>
@@ -90,7 +90,7 @@ function UdmCard({ summary, onSelect, onEdit, onDelete }) {
                         <p className="text-xs font-bold text-slate-500">Belum ada kenderaan</p>
                         <p className="mt-1 text-[11px] text-slate-400">Tambah rekod pertama untuk UDM ini.</p>
                     </div>
-                )}
+                ))}
             </div>
         </section>
     );
@@ -188,6 +188,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
 
     const submit = (event) => {
         event.preventDefault();
+        const activeUdmFilter = selectedUdm || defaultUdm;
         const options = {
             preserveScroll: true,
             onSuccess: closeForm,
@@ -196,7 +197,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         if (editing) {
             form.put(route('kenderaan.update', editing.id), options);
         } else {
-            form.post(route('kenderaan.store'), options);
+            form.post(activeUdmFilter ? route('kenderaan.store', { udm: activeUdmFilter }) : route('kenderaan.store'), options);
         }
     };
 
@@ -268,7 +269,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">Ringkasan mengikut UDM</p>
                                 <h2 className="mt-1 text-xl font-black text-slate-900">Senarai kenderaan</h2>
-                                <p className="mt-1 text-xs text-slate-500">Setiap kad memaparkan jumlah dan rekod kenderaan UDM.</p>
+                                <p className="mt-1 text-xs text-slate-500">Pilih satu UDM untuk melihat rekod kenderaannya.</p>
                             </div>
                             <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-[minmax(13rem,1fr)_14rem]">
                                 <div>
@@ -286,7 +287,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                         </div>
 
                         <div className="mt-4 grid gap-4 md:grid-cols-2">
-                            {visibleSummaries.length > 0 ? visibleSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
+                            {visibleSummaries.length > 0 ? visibleSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} showVehicles={selectedUdm !== ''} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
                                 <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50/50 px-5 py-12 text-center md:col-span-2">
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div>
                                     <h3 className="mt-3 text-sm font-black text-slate-800">{normalizedDriverSearch ? 'Tiada kenderaan ditemui' : 'Belum ada UDM'}</h3>

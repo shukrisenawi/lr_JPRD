@@ -128,8 +128,9 @@ class KenderaanController extends Controller
     public function store(Request $request): RedirectResponse
     {
         Kenderaan::query()->create($this->validateKenderaan($request, $request->user()));
+        $redirectUdm = trim((string) $request->query('udm', ''));
 
-        return to_route('kenderaan.index')->with('success', 'Kenderaan baharu berjaya ditambah.');
+        return to_route('kenderaan.index', $redirectUdm !== '' ? ['udm' => $redirectUdm] : [])->with('success', 'Kenderaan baharu berjaya ditambah.');
     }
 
     public function update(Request $request, Kenderaan $kenderaan): RedirectResponse
