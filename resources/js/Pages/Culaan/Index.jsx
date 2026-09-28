@@ -188,16 +188,19 @@ function StatCard({ label, value, detail, color = 'violet' }) {
 
 function UdmSummaryCard({ summary, onSelect }) {
     const complete = summary.total > 0 && summary.sudah_dicula >= summary.total;
+    const cardTone = complete ? 'border-green-200 bg-green-50 hover:border-green-400' : 'border-slate-200 bg-white hover:border-green-300';
+    const dividerTone = complete ? 'border-green-100' : 'border-slate-100';
+    const valueTone = complete ? 'text-green-800' : 'text-slate-800';
 
     return (
-        <button type="button" onClick={() => onSelect(summary.key)} className="group flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-green-300 hover:shadow-md">
+        <button type="button" onClick={() => onSelect(summary.key)} className={`group flex w-full flex-col gap-3 rounded-xl border p-4 text-left shadow-sm transition hover:shadow-md ${cardTone}`}>
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{summary.name}</p><p className="mt-0.5 text-[10px] text-slate-400">Ringkasan culaan UDM</p></div>
                 <span className={'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ' + (complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>{complete ? 'Lengkap' : 'Belum lengkap'}</span>
             </div>
-            <div className="border-t border-slate-100 pt-3">
+            <div className={`border-t pt-3 ${dividerTone}`}>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sudah cula / jumlah pemilih</p>
-                <p className="mt-0.5 text-2xl font-black text-slate-800">{fmt(summary.sudah_dicula)}<span className="text-sm font-bold text-slate-400"> / {fmt(summary.total)}</span></p>
+                <p className={`mt-0.5 text-2xl font-black ${valueTone}`}>{fmt(summary.sudah_dicula)}<span className="text-sm font-bold text-slate-400"> / {fmt(summary.total)}</span></p>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${Math.min(100, summary.peratus_siap ?? 0)}%` }} /></div>
             <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-500"><span>{fmt(summary.belum_dicula)} belum cula · {fmtP(summary.peratus_siap)}</span><span className="text-green-700 group-hover:text-green-600">Lihat senarai -&gt;</span></div>
