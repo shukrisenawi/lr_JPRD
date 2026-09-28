@@ -79,6 +79,7 @@ it('allows an authorized user to create, update, and delete a vehicle', function
 
     $this->actingAs($user)
         ->put(route('kenderaan.update', $kenderaan), [
+            '_redirect_udm' => 'UDM ALPHA',
             'udm' => 'UDM ALPHA',
             'no_plate' => 'KCA 4321',
             'jenis_kenderaan' => 'Van',
@@ -86,7 +87,7 @@ it('allows an authorized user to create, update, and delete a vehicle', function
             'no_tel' => '013-9876543',
             'lokaliti' => 'Kampung Baru',
         ])
-        ->assertRedirect(route('kenderaan.index'));
+        ->assertRedirect(route('kenderaan.index', ['udm' => 'UDM ALPHA']));
 
     expect($kenderaan->fresh()->no_plate)->toBe('KCA 4321')
         ->and($kenderaan->fresh()->jenis_kenderaan)->toBe('Van')

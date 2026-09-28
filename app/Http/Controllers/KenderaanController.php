@@ -128,12 +128,8 @@ class KenderaanController extends Controller
     public function store(Request $request): RedirectResponse
     {
         Kenderaan::query()->create($this->validateKenderaan($request, $request->user()));
-        $redirectUdm = trim((string) $request->query('udm', ''));
-        if ($redirectUdm === '') {
-            $redirectUdm = trim((string) $request->input('_redirect_udm', ''));
-        }
 
-        return to_route('kenderaan.index', $redirectUdm !== '' ? ['udm' => $redirectUdm] : [])->with('success', 'Kenderaan baharu berjaya ditambah.');
+        return to_route('kenderaan.index', $this->udmRedirectParameters($request))->with('success', 'Kenderaan baharu berjaya ditambah.');
     }
 
     public function update(Request $request, Kenderaan $kenderaan): RedirectResponse
@@ -141,7 +137,7 @@ class KenderaanController extends Controller
         $this->ensureVisible($request->user(), $kenderaan);
         $kenderaan->update($this->validateKenderaan($request, $request->user(), $kenderaan));
 
-        return to_route('kenderaan.index')->with('success', 'Kenderaan berjaya dikemas kini.');
+        return to_route('kenderaan.index', $this->udmRedirectParameters($request))->with('success', 'Kenderaan berjaya dikemas kini.');
     }
 
     public function destroy(Request $request, Kenderaan $kenderaan): RedirectResponse
@@ -149,7 +145,18 @@ class KenderaanController extends Controller
         $this->ensureVisible($request->user(), $kenderaan);
         $kenderaan->delete();
 
-        return to_route('kenderaan.index')->with('success', 'Kenderaan berjaya dipadam.');
+        return to_route('kenderaan.index', $this->udmRedirectParameters($request))->with('success', 'Kenderaan berjaya dipadam.');
+    }
+
+    private function udmRedirectParameters(Request $request): array
+    {
+        $redirectUdm = trim((string) $request->query('udm', ''));
+
+        if ($redirectUdm === '') {
+            $redirectUdm = trim((string) $request->input('_redirect_udm', ''));
+        }
+
+        return $redirectUdm !== '' ? ['udm' => $redirectUdm] : [];
     }
 
     private function validateKenderaan(Request $request, User $user, ?Kenderaan $kenderaan = null): array

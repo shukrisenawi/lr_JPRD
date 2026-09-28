@@ -193,12 +193,12 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
             preserveScroll: true,
             onSuccess: closeForm,
         };
+        form.transform((data) => ({ ...data, _redirect_udm: activeUdmFilter }));
 
         if (editing) {
             form.put(route('kenderaan.update', editing.id), options);
         } else {
-            form.transform((data) => ({ ...data, _redirect_udm: activeUdmFilter }))
-                .post(activeUdmFilter ? route('kenderaan.store', { udm: activeUdmFilter }) : route('kenderaan.store'), options);
+            form.post(activeUdmFilter ? route('kenderaan.store', { udm: activeUdmFilter }) : route('kenderaan.store'), options);
         }
     };
 
