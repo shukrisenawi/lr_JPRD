@@ -197,7 +197,8 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         if (editing) {
             form.put(route('kenderaan.update', editing.id), options);
         } else {
-            form.post(activeUdmFilter ? route('kenderaan.store', { udm: activeUdmFilter }) : route('kenderaan.store'), options);
+            form.transform((data) => ({ ...data, _redirect_udm: activeUdmFilter }))
+                .post(activeUdmFilter ? route('kenderaan.store', { udm: activeUdmFilter }) : route('kenderaan.store'), options);
         }
     };
 

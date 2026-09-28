@@ -129,6 +129,9 @@ class KenderaanController extends Controller
     {
         Kenderaan::query()->create($this->validateKenderaan($request, $request->user()));
         $redirectUdm = trim((string) $request->query('udm', ''));
+        if ($redirectUdm === '') {
+            $redirectUdm = trim((string) $request->input('_redirect_udm', ''));
+        }
 
         return to_route('kenderaan.index', $redirectUdm !== '' ? ['udm' => $redirectUdm] : [])->with('success', 'Kenderaan baharu berjaya ditambah.');
     }

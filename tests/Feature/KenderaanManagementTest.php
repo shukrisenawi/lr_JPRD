@@ -136,7 +136,8 @@ it('keeps the selected UDM filter after adding a vehicle', function () {
     kenderaanVoter('UDM BETA');
 
     $this->actingAs($user)
-        ->post(route('kenderaan.store', ['udm' => 'UDM ALPHA']), [
+        ->post(route('kenderaan.store'), [
+            '_redirect_udm' => 'UDM ALPHA',
             'udm' => 'UDM ALPHA',
             'no_plate' => 'KCA 2468',
         ])
