@@ -55,28 +55,33 @@ function VehicleRow({ vehicle, onEdit, onDelete }) {
 
 function UdmCard({ summary, showVehicles, onSelect, onEdit, onDelete }) {
     const selectCard = () => onSelect(summary.udm);
+    const isEmpty = summary.count === 0;
+    const cardTone = isEmpty ? 'border-amber-200 bg-amber-50 hover:border-amber-300' : 'border-green-100 bg-white hover:border-green-300';
+    const headerTone = isEmpty ? 'border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100' : 'border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100';
+    const iconTone = isEmpty ? 'bg-amber-500 shadow-amber-500/20' : 'bg-green-600 shadow-green-600/20';
+    const accentTone = isEmpty ? 'text-amber-700' : 'text-green-700';
 
     return (
         <section
-            className="relative cursor-pointer overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md"
+            className={`relative cursor-pointer overflow-hidden rounded-2xl border shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${cardTone}`}
         >
             <a href={route('kenderaan.index', { udm: summary.udm })} onClick={(event) => { event.preventDefault(); selectCard(); }} aria-label={`Lihat kenderaan ${summary.udm}`} className="absolute inset-0 z-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500">
                 <span className="sr-only">Lihat kenderaan {summary.udm}</span>
             </a>
 
             <div className="relative z-10 pointer-events-none">
-                <div className="flex w-full items-start justify-between gap-3 border-b border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 px-4 py-4 text-left transition hover:from-green-100 hover:to-emerald-100">
+                <div className={`flex w-full items-start justify-between gap-3 border-b px-4 py-4 text-left transition ${headerTone}`}>
                     <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white shadow-sm shadow-green-600/20">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white shadow-sm ${iconTone}`}>
                             <Icon name="layers" className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">UDM</p>
+                            <p className={`text-[10px] font-black uppercase tracking-[0.16em] ${accentTone}`}>UDM</p>
                             <h2 className="truncate text-base font-black text-slate-900">{summary.udm}</h2>
                         </div>
                     </div>
                     <div className="shrink-0 rounded-xl bg-white px-3 py-2 text-right shadow-sm">
-                        <p className="text-lg font-black leading-none text-green-700">{summary.count}</p>
+                        <p className={`text-lg font-black leading-none ${accentTone}`}>{summary.count}</p>
                         <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Kenderaan</p>
                     </div>
                 </div>
