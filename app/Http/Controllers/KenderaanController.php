@@ -7,6 +7,7 @@ use App\Models\Kenderaan;
 use App\Models\PemilihRecord;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -48,6 +49,75 @@ class KenderaanController extends Controller
             'defaultUdm' => $scopedUdm ?? '',
             'canSelectAll' => $scopedUdm === null,
         ]);
+    }
+
+    public function searchDrivers(Request $request): JsonResponse
+    {
+        $search = trim((string) $request->query('q', ''));
+
+        if (mb_strlen($search) < 2) {
+            return response()->json(['suggestions' => []]);
+        }
+
+        $keywords = array_values(array_filter(preg_split('/\s+/', mb_strtolower($search)) ?: []));
+        $query = PemilihRecord::query()
+            ->where(function (Builder $builder): void {
+                $builder->where('status', 'aktif')
+                    ->orWhere('is_manual', true);
+            })
+            ->where(function (Builder $builder) use ($keywords): void {
+                foreach ($keywords as $keyword) {
+                    $like = '%'.$keyword.'%';
+
+                    $builder->where(function (Builder $subQuery) use ($keyword, $like): void {
+                        $subQuery->whereRaw('LOWER(name) like ?', [$like])
+                            ->orWhereRaw('LOWER(dm) like ?', [$like])
+                            ->orWhereRaw('LOWER(locality) like ?', [$like]);
+
+                        if (preg_match('/\d/', $keyword)) {
+                            $digits = preg_replace('/\D+/', '', $keyword);
+                            if ($digits !== '') {
+                                $digitLike = '%'.$digits.'%';
+                                $subQuery->orWhere('no_kp', 'like', $digitLike)
+                                    ->orWhere('old_ic', 'like', $digitLike)
+                                    ->orWhere('phone_home', 'like', $digitLike)
+                                    ->orWhere('phone_mobile', 'like', $digitLike);
+                            }
+                        }
+                    });
+                }
+            });
+        $request->user()->applyScopeToPemilihQuery($query);
+
+        $suggestions = $query
+            ->orderBy('name')
+            ->limit(8)
+            ->get([
+                'id',
+                'name',
+                'no_kp',
+                'old_ic',
+                'phone_home',
+                'phone_mobile',
+                'dm',
+                'locality',
+                'status',
+                'is_manual',
+            ])
+            ->map(fn (PemilihRecord $record) => [
+                'id' => $record->id,
+                'name' => $record->name,
+                'no_kp' => $record->no_kp ?: $record->old_ic,
+                'phone_home' => $record->phone_home,
+                'phone_mobile' => $record->phone_mobile,
+                'dm' => $record->dm,
+                'locality' => $record->locality,
+                'status' => $record->status,
+                'is_manual' => $record->is_manual,
+            ])
+            ->values();
+
+        return response()->json(['suggestions' => $suggestions]);
     }
 
     public function store(Request $request): RedirectResponse

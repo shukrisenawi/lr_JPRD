@@ -92,6 +92,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::put('/aktiviti/{aktiviti}', [AktivitiController::class, 'update'])->middleware('module:aktiviti')->name('aktiviti.update');
     Route::delete('/aktiviti/{aktiviti}', [AktivitiController::class, 'destroy'])->middleware('module:aktiviti')->name('aktiviti.destroy');
     Route::get('/kenderaan', [KenderaanController::class, 'index'])->middleware('module:kenderaan')->name('kenderaan.index');
+    Route::get('/kenderaan/pemandu-search', [KenderaanController::class, 'searchDrivers'])->middleware('module:kenderaan')->name('kenderaan.pemandu-search');
     Route::post('/kenderaan', [KenderaanController::class, 'store'])->middleware('module:kenderaan')->name('kenderaan.store');
     Route::put('/kenderaan/{kenderaan}', [KenderaanController::class, 'update'])->middleware('module:kenderaan')->name('kenderaan.update');
     Route::delete('/kenderaan/{kenderaan}', [KenderaanController::class, 'destroy'])->middleware('module:kenderaan')->name('kenderaan.destroy');

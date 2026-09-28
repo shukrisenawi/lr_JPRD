@@ -3,7 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const emptyVehicle = (udm = '') => ({
     udm,
@@ -100,6 +100,10 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
     const form = useForm(emptyVehicle(defaultUdm || selectedUdm));
     const [editing, setEditing] = useState(null);
     const [driverSearch, setDriverSearch] = useState('');
+    const [driverSuggestions, setDriverSuggestions] = useState([]);
+    const [searchingDrivers, setSearchingDrivers] = useState(false);
+    const driverSearchController = useRef(null);
+    const driverSearchRequestId = useRef(0);
     const { setData } = form;
 
     useEffect(() => {
@@ -107,6 +111,8 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
             setData('udm', selectedUdm || defaultUdm || '');
         }
     }, [selectedUdm, defaultUdm, editing, setData]);
+
+    useEffect(() => () => driverSearchController.current?.abort(), []);
 
     const openCreate = () => {
         setEditing(null);
@@ -143,6 +149,49 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
             no_tel: '',
             lokaliti: '',
         });
+    };
+
+    const searchDriverOptions = async (value) => {
+        driverSearchController.current?.abort();
+        const requestId = ++driverSearchRequestId.current;
+        const query = value.trim();
+
+        if (query.length < 2) {
+            setDriverSuggestions([]);
+            setSearchingDrivers(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        driverSearchController.current = controller;
+        setSearchingDrivers(true);
+
+        try {
+            const params = new URLSearchParams({ q: query });
+            const response = await fetch(`${route('kenderaan.pemandu-search')}?${params.toString()}`, {
+                headers: { Accept: 'application/json' },
+                signal: controller.signal,
+            });
+            const contentType = response.headers.get('content-type') ?? '';
+            if (!response.ok || !contentType.includes('application/json')) throw new Error();
+
+            const payload = await response.json();
+            if (driverSearchRequestId.current === requestId) setDriverSuggestions(payload.suggestions ?? []);
+        } catch (error) {
+            if (error.name !== 'AbortError' && driverSearchRequestId.current === requestId) setDriverSuggestions([]);
+        } finally {
+            if (driverSearchRequestId.current === requestId) setSearchingDrivers(false);
+        }
+    };
+
+    const selectDriver = (driver) => {
+        driverSearchController.current?.abort();
+        driverSearchRequestId.current += 1;
+        form.setData('nama_pemandu', driver.name ?? '');
+        form.setData('no_tel', driver.phone_mobile || driver.phone_home || '');
+        form.setData('lokaliti', driver.locality ?? '');
+        setDriverSuggestions([]);
+        setSearchingDrivers(false);
     };
 
     const submit = (event) => {
@@ -284,7 +333,21 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                             </div>
                             <div>
                                 <InputLabel htmlFor="kenderaan-pemandu" value="Nama Pemandu" />
-                                <input id="kenderaan-pemandu" type="text" className="input-field mt-1.5" placeholder="Contoh: Ahmad bin Ali" value={form.data.nama_pemandu} onChange={(event) => form.setData('nama_pemandu', event.target.value)} />
+                                <div className="relative">
+                                    <input id="kenderaan-pemandu" type="text" autoComplete="off" className="input-field mt-1.5" placeholder="Taip nama pemilih untuk mencari" value={form.data.nama_pemandu} onFocus={() => searchDriverOptions(form.data.nama_pemandu)} onBlur={() => window.setTimeout(() => setDriverSuggestions([]), 150)} onChange={(event) => { form.setData('nama_pemandu', event.target.value); searchDriverOptions(event.target.value); }} />
+                                    {searchingDrivers && <p className="absolute left-0 right-0 top-full z-20 mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-lg">Mencari pemilih...</p>}
+                                    {!searchingDrivers && driverSuggestions.length > 0 && (
+                                        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                                            {driverSuggestions.map((driver) => (
+                                                <button key={driver.id} type="button" onClick={() => selectDriver(driver)} className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition last:border-0 hover:bg-green-50">
+                                                    <span className="block truncate text-xs font-bold text-slate-800">{driver.name}</span>
+                                                    <span className="mt-0.5 block truncate text-[10px] text-slate-500">{driver.is_manual ? 'Pemilih manual' : 'Data pemilih'}{driver.no_kp ? ` · ${driver.no_kp}` : ''}</span>
+                                                    {(driver.dm || driver.locality) && <span className="mt-0.5 block truncate text-[10px] text-slate-400">{[driver.dm, driver.locality].filter(Boolean).join(' · ')}</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 <InputError message={form.errors.nama_pemandu} className="mt-1" />
                             </div>
                             <div>

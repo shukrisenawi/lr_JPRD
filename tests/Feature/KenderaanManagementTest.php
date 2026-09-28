@@ -105,6 +105,45 @@ it('requires a vehicle number when creating a vehicle', function () {
         ->assertSessionHasErrors('no_plate');
 });
 
+it('searches active and manual voters for drivers within the users scope', function () {
+    PemilihRecord::query()->create([
+        'identity_number' => '900101025555',
+        'no_kp' => '900101025555',
+        'name' => 'ALI DATA',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'Taman Alpha',
+        'phone_mobile' => '012-1111111',
+        'status' => 'aktif',
+    ]);
+    PemilihRecord::query()->create([
+        'identity_number' => 'MANUAL-ALI-001',
+        'name' => 'ALI MANUAL',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'Taman Alpha',
+        'phone_home' => '04-2222222',
+        'status' => 'tidak aktif',
+        'is_manual' => true,
+    ]);
+    PemilihRecord::query()->create([
+        'identity_number' => '901010125555',
+        'name' => 'ALI LUAR SKOP',
+        'dm' => 'UDM BETA',
+        'status' => 'aktif',
+    ]);
+    $user = User::factory()->withModules(['dashboard', 'kenderaan'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('kenderaan.pemandu-search').'?q=Ali')
+        ->assertOk()
+        ->assertJsonCount(2, 'suggestions')
+        ->assertJsonFragment(['name' => 'ALI DATA', 'is_manual' => false])
+        ->assertJsonFragment(['name' => 'ALI MANUAL', 'is_manual' => true])
+        ->assertJsonMissing(['name' => 'ALI LUAR SKOP']);
+});
+
 it('requires the vehicle module before opening the vehicle page', function () {
     $user = User::factory()->withModules(['dashboard'])->create();
 
