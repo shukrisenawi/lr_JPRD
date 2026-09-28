@@ -114,17 +114,6 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
 
     useEffect(() => () => driverSearchController.current?.abort(), []);
 
-    const openCreate = () => {
-        setEditing(null);
-        form.clearErrors();
-        form.setData('udm', selectedUdm || defaultUdm || '');
-        form.setData('no_plate', '');
-        form.setData('jenis_kenderaan', '');
-        form.setData('nama_pemandu', '');
-        form.setData('no_tel', '');
-        form.setData('lokaliti', '');
-    };
-
     const openEdit = (vehicle) => {
         setEditing(vehicle);
         form.clearErrors();
@@ -151,6 +140,8 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         });
     };
 
+    const preferredDriverUdm = selectedUdm || defaultUdm || form.data.udm;
+
     const searchDriverOptions = async (value) => {
         driverSearchController.current?.abort();
         const requestId = ++driverSearchRequestId.current;
@@ -168,6 +159,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
 
         try {
             const params = new URLSearchParams({ q: query });
+            if (preferredDriverUdm) params.set('udm', preferredDriverUdm);
             const response = await fetch(`${route('kenderaan.pemandu-search')}?${params.toString()}`, {
                 headers: { Accept: 'application/json' },
                 signal: controller.signal,
@@ -256,9 +248,6 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                             <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Kenderaan</h1>
                             <p className="mt-2 max-w-xl text-sm leading-relaxed text-green-50">Urus nombor kenderaan, jenis kenderaan dan maklumat pemandu untuk setiap UDM.</p>
                         </div>
-                        <button type="button" onClick={openCreate} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-green-800 shadow-sm transition hover:bg-green-50 active:scale-[0.98] sm:w-auto">
-                            <Icon name="plus" className="h-4 w-4" />Tambah kenderaan
-                        </button>
                     </div>
                     <div className="mt-6 flex flex-wrap gap-2">
                         <div className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-green-100">Jumlah kenderaan</p><p className="mt-0.5 text-lg font-black">{visibleVehicleCount}</p></div>
@@ -301,8 +290,8 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                         </div>
                     </section>
 
-                    <section className="order-1 overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-sm lg:order-2">
-                        <div className="bg-gradient-to-br from-emerald-50 to-green-50 px-5 py-4">
+                    <section className="relative z-30 order-1 overflow-visible rounded-2xl border border-emerald-200 bg-white shadow-sm lg:order-2">
+                        <div className="rounded-t-2xl bg-gradient-to-br from-emerald-50 to-green-50 px-5 py-4">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm"><Icon name={editing ? 'edit' : 'plus'} className="h-5 w-5" /></div>
                                 <div>
@@ -335,13 +324,14 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                 <InputLabel htmlFor="kenderaan-pemandu" value="Nama Pemandu" />
                                 <div className="relative">
                                     <input id="kenderaan-pemandu" type="text" autoComplete="off" className="input-field mt-1.5" placeholder="Taip nama pemilih untuk mencari" value={form.data.nama_pemandu} onFocus={() => searchDriverOptions(form.data.nama_pemandu)} onBlur={() => window.setTimeout(() => setDriverSuggestions([]), 150)} onChange={(event) => { form.setData('nama_pemandu', event.target.value); searchDriverOptions(event.target.value); }} />
-                                    {searchingDrivers && <p className="absolute left-0 right-0 top-full z-20 mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-lg">Mencari pemilih...</p>}
+                                    {searchingDrivers && <p className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 shadow-lg">Mencari pemilih...</p>}
                                     {!searchingDrivers && driverSuggestions.length > 0 && (
-                                        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                                        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                                             {driverSuggestions.map((driver) => (
                                                 <button key={driver.id} type="button" onClick={() => selectDriver(driver)} className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition last:border-0 hover:bg-green-50">
-                                                    <span className="block truncate text-xs font-bold text-slate-800">{driver.name}</span>
+                                                    <span className={`block truncate text-xs font-bold ${preferredDriverUdm && driver.dm?.toLowerCase() === preferredDriverUdm.toLowerCase() ? 'text-green-700' : 'text-slate-800'}`}>{driver.name}</span>
                                                     <span className="mt-0.5 block truncate text-[10px] text-slate-500">{driver.is_manual ? 'Pemilih manual' : 'Data pemilih'}{driver.no_kp ? ` · ${driver.no_kp}` : ''}</span>
+                                                    {(driver.phone_mobile || driver.phone_home) && <span className="mt-0.5 block truncate text-[10px] text-green-700">Tel: {driver.phone_mobile || driver.phone_home}</span>}
                                                     {(driver.dm || driver.locality) && <span className="mt-0.5 block truncate text-[10px] text-slate-400">{[driver.dm, driver.locality].filter(Boolean).join(' · ')}</span>}
                                                 </button>
                                             ))}

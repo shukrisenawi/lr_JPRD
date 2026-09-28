@@ -141,7 +141,30 @@ it('searches active and manual voters for drivers within the users scope', funct
         ->assertJsonCount(2, 'suggestions')
         ->assertJsonFragment(['name' => 'ALI DATA', 'is_manual' => false])
         ->assertJsonFragment(['name' => 'ALI MANUAL', 'is_manual' => true])
+        ->assertJsonPath('suggestions.0.phone_mobile', '012-1111111')
+        ->assertJsonPath('suggestions.1.phone_home', '04-2222222')
         ->assertJsonMissing(['name' => 'ALI LUAR SKOP']);
+});
+
+it('prioritizes the selected UDM in driver suggestions', function () {
+    PemilihRecord::query()->create([
+        'identity_number' => '900101025556',
+        'name' => 'AHMAD PEMANDU',
+        'dm' => 'UDM ALPHA',
+        'status' => 'aktif',
+    ]);
+    PemilihRecord::query()->create([
+        'identity_number' => '900101025557',
+        'name' => 'AHMAD PEMANDU',
+        'dm' => 'UDM BETA',
+        'status' => 'aktif',
+    ]);
+    $user = User::factory()->withModules(['dashboard', 'kenderaan'])->create();
+
+    $this->actingAs($user)
+        ->getJson(route('kenderaan.pemandu-search').'?q=Ahmad&udm=UDM BETA')
+        ->assertOk()
+        ->assertJsonPath('suggestions.0.dm', 'UDM BETA');
 });
 
 it('requires the vehicle module before opening the vehicle page', function () {

@@ -88,6 +88,10 @@ class KenderaanController extends Controller
                 }
             });
         $request->user()->applyScopeToPemilihQuery($query);
+        $preferredUdm = trim((string) $request->query('udm', ''));
+        if ($preferredUdm !== '') {
+            $query->orderByRaw('CASE WHEN LOWER(dm) = LOWER(?) THEN 0 ELSE 1 END', [$preferredUdm]);
+        }
 
         $suggestions = $query
             ->orderBy('name')
