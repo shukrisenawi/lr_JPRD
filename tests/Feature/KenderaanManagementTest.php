@@ -54,29 +54,53 @@ it('allows an authorized user to create, update, and delete a vehicle', function
             'udm' => 'UDM ALPHA',
             'no_plate' => 'kca 1234',
             'jenis_kenderaan' => 'MPV',
+            'nama_pemandu' => 'Ahmad bin Ali',
+            'no_tel' => '012-3456789',
+            'lokaliti' => 'Taman Jeneri',
         ])
         ->assertRedirect(route('kenderaan.index'));
 
     $kenderaan = Kenderaan::query()->sole();
     expect($kenderaan->no_plate)->toBe('KCA 1234')
-        ->and($kenderaan->jenis_kenderaan)->toBe('MPV');
+        ->and($kenderaan->jenis_kenderaan)->toBe('MPV')
+        ->and($kenderaan->nama_pemandu)->toBe('Ahmad bin Ali')
+        ->and($kenderaan->no_tel)->toBe('012-3456789')
+        ->and($kenderaan->lokaliti)->toBe('Taman Jeneri');
 
     $this->actingAs($user)
         ->put(route('kenderaan.update', $kenderaan), [
             'udm' => 'UDM ALPHA',
             'no_plate' => 'KCA 4321',
             'jenis_kenderaan' => 'Van',
+            'nama_pemandu' => 'Siti Aminah',
+            'no_tel' => '013-9876543',
+            'lokaliti' => 'Kampung Baru',
         ])
         ->assertRedirect(route('kenderaan.index'));
 
     expect($kenderaan->fresh()->no_plate)->toBe('KCA 4321')
-        ->and($kenderaan->fresh()->jenis_kenderaan)->toBe('Van');
+        ->and($kenderaan->fresh()->jenis_kenderaan)->toBe('Van')
+        ->and($kenderaan->fresh()->nama_pemandu)->toBe('Siti Aminah')
+        ->and($kenderaan->fresh()->no_tel)->toBe('013-9876543')
+        ->and($kenderaan->fresh()->lokaliti)->toBe('Kampung Baru');
 
     $this->actingAs($user)
         ->delete(route('kenderaan.destroy', $kenderaan))
         ->assertRedirect(route('kenderaan.index'));
 
     $this->assertDatabaseMissing('kenderaan', ['id' => $kenderaan->id]);
+});
+
+it('requires a vehicle number when creating a vehicle', function () {
+    $user = User::factory()->withModules(['dashboard', 'kenderaan'])->create();
+    kenderaanVoter('UDM ALPHA');
+
+    $this->actingAs($user)
+        ->post(route('kenderaan.store'), [
+            'udm' => 'UDM ALPHA',
+            'jenis_kenderaan' => 'MPV',
+        ])
+        ->assertSessionHasErrors('no_plate');
 });
 
 it('requires the vehicle module before opening the vehicle page', function () {

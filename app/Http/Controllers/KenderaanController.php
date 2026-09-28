@@ -79,6 +79,9 @@ class KenderaanController extends Controller
             'udm' => trim((string) $request->input('udm')),
             'no_plate' => strtoupper(trim((string) $request->input('no_plate'))),
             'jenis_kenderaan' => trim((string) $request->input('jenis_kenderaan')),
+            'nama_pemandu' => trim((string) $request->input('nama_pemandu')) ?: null,
+            'no_tel' => trim((string) $request->input('no_tel')) ?: null,
+            'lokaliti' => trim((string) $request->input('lokaliti')) ?: null,
         ]);
 
         $uniquePlate = Rule::unique('kenderaan', 'no_plate');
@@ -90,6 +93,9 @@ class KenderaanController extends Controller
             'udm' => ['required', 'string', 'max:255', Rule::in($this->availableUdms($user))],
             'no_plate' => ['required', 'string', 'max:30', $uniquePlate],
             'jenis_kenderaan' => ['required', 'string', 'max:100'],
+            'nama_pemandu' => ['nullable', 'string', 'max:255'],
+            'no_tel' => ['nullable', 'string', 'max:30'],
+            'lokaliti' => ['nullable', 'string', 'max:255'],
         ], [
             'udm.in' => 'UDM yang dipilih tidak berada dalam skop akses anda.',
             'no_plate.unique' => 'Nombor plat ini sudah didaftarkan.',
@@ -164,6 +170,9 @@ class KenderaanController extends Controller
             'udm' => $kenderaan->udm,
             'no_plate' => $kenderaan->no_plate,
             'jenis_kenderaan' => $kenderaan->jenis_kenderaan,
+            'nama_pemandu' => $kenderaan->nama_pemandu,
+            'no_tel' => $kenderaan->no_tel,
+            'lokaliti' => $kenderaan->lokaliti,
         ];
     }
 }

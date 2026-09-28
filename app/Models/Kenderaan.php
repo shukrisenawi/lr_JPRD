@@ -12,5 +12,8 @@ class Kenderaan extends Model
         'udm',
         'no_plate',
         'jenis_kenderaan',
+        'nama_pemandu',
+        'no_tel',
+        'lokaliti',
     ];
 }

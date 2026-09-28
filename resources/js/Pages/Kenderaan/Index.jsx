@@ -9,6 +9,9 @@ const emptyVehicle = (udm = '') => ({
     udm,
     no_plate: '',
     jenis_kenderaan: '',
+    nama_pemandu: '',
+    no_tel: '',
+    lokaliti: '',
 });
 
 function Icon({ name, className = 'h-5 w-5' }) {
@@ -34,9 +37,11 @@ function VehicleRow({ vehicle, onEdit, onDelete }) {
                 <div className="min-w-0">
                     <p className="font-mono text-sm font-black tracking-wide text-slate-900">{vehicle.no_plate}</p>
                     <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{vehicle.jenis_kenderaan}</p>
+                    <p className="mt-1 truncate text-[11px] font-semibold text-slate-700">{vehicle.nama_pemandu || 'Pemandu belum ditetapkan'}</p>
+                    {(vehicle.no_tel || vehicle.lokaliti) && <p className="mt-0.5 truncate text-[10px] text-slate-400">{[vehicle.no_tel, vehicle.lokaliti].filter(Boolean).join(' · ')}</p>}
                 </div>
             </div>
-            <div className="flex shrink-0 gap-2 pl-12 sm:pl-0">
+            <div className="pointer-events-auto flex shrink-0 gap-2 pl-12 sm:pl-0">
                 <button type="button" onClick={(event) => { event.stopPropagation(); onEdit(vehicle); }} className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-emerald-700 transition hover:bg-emerald-50">
                     <Icon name="edit" className="h-3.5 w-3.5" />Edit
                 </button>
@@ -53,35 +58,40 @@ function UdmCard({ summary, onSelect, onEdit, onDelete }) {
 
     return (
         <section
-            className="cursor-pointer overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md"
-            onClick={selectCard}
+            className="relative cursor-pointer overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md"
         >
-            <button type="button" onClick={(event) => { event.stopPropagation(); selectCard(); }} aria-label={`Lihat kenderaan ${summary.udm}`} className="flex w-full items-start justify-between gap-3 border-b border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 px-4 py-4 text-left transition hover:from-green-100 hover:to-emerald-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500">
-                <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white shadow-sm shadow-green-600/20">
-                        <Icon name="layers" className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">UDM</p>
-                        <h2 className="truncate text-base font-black text-slate-900">{summary.udm}</h2>
-                    </div>
-                </div>
-                <div className="shrink-0 rounded-xl bg-white px-3 py-2 text-right shadow-sm">
-                    <p className="text-lg font-black leading-none text-green-700">{summary.count}</p>
-                    <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Kenderaan</p>
-                </div>
-            </button>
+            <a href={route('kenderaan.index', { udm: summary.udm })} onClick={(event) => { event.preventDefault(); selectCard(); }} aria-label={`Lihat kenderaan ${summary.udm}`} className="absolute inset-0 z-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500">
+                <span className="sr-only">Lihat kenderaan {summary.udm}</span>
+            </a>
 
-            {summary.vehicles.length > 0 ? (
-                <div className="divide-y divide-slate-100">
-                    {summary.vehicles.map((vehicle) => <VehicleRow key={vehicle.id} vehicle={vehicle} onEdit={onEdit} onDelete={onDelete} />)}
+            <div className="relative z-10 pointer-events-none">
+                <div className="flex w-full items-start justify-between gap-3 border-b border-green-100 bg-gradient-to-br from-green-50 to-emerald-50 px-4 py-4 text-left transition hover:from-green-100 hover:to-emerald-100">
+                    <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white shadow-sm shadow-green-600/20">
+                            <Icon name="layers" className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">UDM</p>
+                            <h2 className="truncate text-base font-black text-slate-900">{summary.udm}</h2>
+                        </div>
+                    </div>
+                    <div className="shrink-0 rounded-xl bg-white px-3 py-2 text-right shadow-sm">
+                        <p className="text-lg font-black leading-none text-green-700">{summary.count}</p>
+                        <p className="mt-1 text-[9px] font-bold uppercase tracking-wide text-slate-400">Kenderaan</p>
+                    </div>
                 </div>
-            ) : (
-                <div className="px-4 py-7 text-center">
-                    <p className="text-xs font-bold text-slate-500">Belum ada kenderaan</p>
-                    <p className="mt-1 text-[11px] text-slate-400">Tambah rekod pertama untuk UDM ini.</p>
-                </div>
-            )}
+
+                {summary.vehicles.length > 0 ? (
+                    <div className="divide-y divide-slate-100">
+                        {summary.vehicles.map((vehicle) => <VehicleRow key={vehicle.id} vehicle={vehicle} onEdit={onEdit} onDelete={onDelete} />)}
+                    </div>
+                ) : (
+                    <div className="px-4 py-7 text-center">
+                        <p className="text-xs font-bold text-slate-500">Belum ada kenderaan</p>
+                        <p className="mt-1 text-[11px] text-slate-400">Tambah rekod pertama untuk UDM ini.</p>
+                    </div>
+                )}
+            </div>
         </section>
     );
 }
@@ -103,6 +113,9 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         form.setData('udm', selectedUdm || defaultUdm || '');
         form.setData('no_plate', '');
         form.setData('jenis_kenderaan', '');
+        form.setData('nama_pemandu', '');
+        form.setData('no_tel', '');
+        form.setData('lokaliti', '');
     };
 
     const openEdit = (vehicle) => {
@@ -112,6 +125,9 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
             udm: vehicle.udm,
             no_plate: vehicle.no_plate,
             jenis_kenderaan: vehicle.jenis_kenderaan,
+            nama_pemandu: vehicle.nama_pemandu ?? '',
+            no_tel: vehicle.no_tel ?? '',
+            lokaliti: vehicle.lokaliti ?? '',
         });
     };
 
@@ -122,6 +138,9 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
             udm: selectedUdm || defaultUdm || '',
             no_plate: '',
             jenis_kenderaan: '',
+            nama_pemandu: '',
+            no_tel: '',
+            lokaliti: '',
         });
     };
 
@@ -233,7 +252,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                 <InputError message={form.errors.udm} className="mt-1" />
                             </div>
                             <div>
-                                <InputLabel htmlFor="kenderaan-no-plate" value="No. Plat" />
+                                <InputLabel htmlFor="kenderaan-no-plate">No. Kenderaan <span className="text-rose-500">*</span></InputLabel>
                                 <input id="kenderaan-no-plate" type="text" className="input-field mt-1.5 font-mono uppercase" placeholder="Contoh: KCA 1234" value={form.data.no_plate} onChange={(event) => form.setData('no_plate', event.target.value.toUpperCase())} required />
                                 <InputError message={form.errors.no_plate} className="mt-1" />
                             </div>
@@ -241,6 +260,21 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                 <InputLabel htmlFor="kenderaan-jenis" value="Jenis Kenderaan" />
                                 <input id="kenderaan-jenis" type="text" className="input-field mt-1.5" placeholder="Contoh: MPV, Sedan, Van" value={form.data.jenis_kenderaan} onChange={(event) => form.setData('jenis_kenderaan', event.target.value)} required />
                                 <InputError message={form.errors.jenis_kenderaan} className="mt-1" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="kenderaan-pemandu" value="Nama Pemandu" />
+                                <input id="kenderaan-pemandu" type="text" className="input-field mt-1.5" placeholder="Contoh: Ahmad bin Ali" value={form.data.nama_pemandu} onChange={(event) => form.setData('nama_pemandu', event.target.value)} />
+                                <InputError message={form.errors.nama_pemandu} className="mt-1" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="kenderaan-no-tel" value="No. Telefon" />
+                                <input id="kenderaan-no-tel" type="tel" className="input-field mt-1.5" placeholder="Contoh: 012-3456789" value={form.data.no_tel} onChange={(event) => form.setData('no_tel', event.target.value)} />
+                                <InputError message={form.errors.no_tel} className="mt-1" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="kenderaan-lokaliti" value="Lokaliti" />
+                                <input id="kenderaan-lokaliti" type="text" className="input-field mt-1.5" placeholder="Contoh: Taman Jeneri" value={form.data.lokaliti} onChange={(event) => form.setData('lokaliti', event.target.value)} />
+                                <InputError message={form.errors.lokaliti} className="mt-1" />
                             </div>
 
                             <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
