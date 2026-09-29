@@ -29,6 +29,7 @@ class CawanganController extends Controller
                     'id' => $cawangan->id,
                     'name' => $cawangan->name,
                     'udm' => $cawangan->udm,
+                    'member_count' => (int) $cawangan->member_count,
                     'committee_members_count' => (int) $cawangan->committee_members_count,
                 ])
                 ->values(),
@@ -52,6 +53,7 @@ class CawanganController extends Controller
                 Rule::unique('cawangans', 'name')->where(fn ($query) => $query->where('udm', $request->input('udm'))),
             ],
             'udm' => ['required', 'string', 'max:255', Rule::in($this->availableUdms()->all())],
+            'member_count' => ['required', 'integer', 'min:0'],
         ]);
 
         Cawangan::query()->create($validated);
@@ -78,6 +80,7 @@ class CawanganController extends Controller
                     ->ignore($cawangan->id),
             ],
             'udm' => ['required', 'string', 'max:255', Rule::in($this->availableUdms()->all())],
+            'member_count' => ['required', 'integer', 'min:0'],
         ]);
 
         DB::transaction(function () use ($cawangan, $validated): void {

@@ -40,6 +40,7 @@ it('allows an authorized user to create, update, and delete a cawangan', functio
         ->post(route('admin.cawangan.store'), [
             'name' => 'Cawangan Taman Murni',
             'udm' => 'UDM ALPHA',
+            'member_count' => 125,
         ])
         ->assertRedirect(route('admin.cawangan.index'));
 
@@ -48,22 +49,41 @@ it('allows an authorized user to create, update, and delete a cawangan', functio
         'id' => $cawangan->id,
         'name' => 'Cawangan Taman Murni',
         'udm' => 'UDM ALPHA',
+        'member_count' => 125,
     ]);
 
     $this->actingAs($user)
         ->put(route('admin.cawangan.update', $cawangan), [
             'name' => 'Cawangan Taman Baru',
             'udm' => 'UDM ALPHA',
+            'member_count' => 150,
         ])
         ->assertRedirect(route('admin.cawangan.index'));
 
-    expect($cawangan->fresh()->name)->toBe('Cawangan Taman Baru');
+    expect($cawangan->fresh()->name)->toBe('Cawangan Taman Baru')
+        ->and($cawangan->fresh()->member_count)->toBe(150);
 
     $this->actingAs($user)
         ->delete(route('admin.cawangan.destroy', $cawangan))
         ->assertRedirect(route('admin.cawangan.index'));
 
     $this->assertDatabaseMissing('cawangans', ['id' => $cawangan->id]);
+});
+
+it('returns the stored member count for each cawangan', function () {
+    $user = User::factory()->withModules(['dashboard', 'cawangan'])->create();
+    cawanganVoter(['dm' => 'UDM ALPHA']);
+    Cawangan::query()->create([
+        'name' => 'Cawangan Taman Murni',
+        'udm' => 'UDM ALPHA',
+        'member_count' => 125,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.cawangan.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('cawangans.0.name', 'Cawangan Taman Murni')
+            ->where('cawangans.0.member_count', 125));
 });
 
 it('moves legacy locality memberships to the selected cawangan during repair', function () {

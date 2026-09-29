@@ -21,7 +21,7 @@ function Icon({ name, className = 'h-5 w-5' }) {
 }
 
 function CawanganCard({ cawangan, udms, editing = false, onEdit, onCancel, onDelete }) {
-    const editForm = useForm({ name: cawangan.name, udm: cawangan.udm });
+    const editForm = useForm({ name: cawangan.name, udm: cawangan.udm, member_count: cawangan.member_count ?? 0 });
     const hasMembers = Number(cawangan.committee_members_count) > 0;
     const committeeUrl = `${route('jawatankuasa.index')}?tab=cawangan&cawangan_id=${encodeURIComponent(cawangan.id)}&open_cawangan=1`;
 
@@ -36,7 +36,7 @@ function CawanganCard({ cawangan, udms, editing = false, onEdit, onCancel, onDel
     if (editing) {
         return (
             <form onSubmit={submit} className="rounded-lg border-2 border-emerald-400 bg-emerald-50 p-3">
-                <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
                     <div>
                         <InputLabel htmlFor={`edit-cawangan-name-${cawangan.id}`} value="Nama Cawangan" />
                         <TextInput id={`edit-cawangan-name-${cawangan.id}`} value={editForm.data.name} onChange={(event) => editForm.setData('name', event.target.value)} className="input-field mt-1 text-xs" />
@@ -49,6 +49,11 @@ function CawanganCard({ cawangan, udms, editing = false, onEdit, onCancel, onDel
                             {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                         </select>
                         <InputError className="mt-1" message={editForm.errors.udm} />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor={`edit-cawangan-members-${cawangan.id}`} value="Jumlah Ahli" />
+                        <TextInput id={`edit-cawangan-members-${cawangan.id}`} type="number" min="0" step="1" inputMode="numeric" value={editForm.data.member_count} onChange={(event) => editForm.setData('member_count', event.target.value)} className="input-field mt-1 text-xs" />
+                        <InputError className="mt-1" message={editForm.errors.member_count} />
                     </div>
                     <div className="flex gap-1.5 sm:pb-0.5">
                         <button type="submit" disabled={editForm.processing} className="rounded-md bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-500 disabled:opacity-50">Simpan</button>
@@ -69,6 +74,7 @@ function CawanganCard({ cawangan, udms, editing = false, onEdit, onCancel, onDel
                 </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700"><Icon name="users" className="h-3 w-3" />{cawangan.member_count ?? 0} ahli</span>
                 <span className={'inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ' + (hasMembers ? 'bg-slate-100 text-slate-600' : 'bg-orange-100 text-orange-800')}><Icon name="users" className="h-3 w-3" />{cawangan.committee_members_count} AJK</span>
                 {!hasMembers && <a href={committeeUrl} className="inline-flex items-center gap-1 rounded-md border border-orange-400 bg-orange-500 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:border-orange-500 hover:bg-orange-600"><Icon name="plus" className="h-3 w-3" />Tambah AJK</a>}
                 <button type="button" onClick={() => onEdit(cawangan.id)} className="rounded-md border border-emerald-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-emerald-700 hover:bg-emerald-50"><Icon name="edit" className="mr-1 inline h-3 w-3" />Edit</button>
@@ -148,7 +154,7 @@ function RepairModal({ legacyScopes, cawangans, onClose }) {
 }
 
 export default function Cawangan({ cawangans = [], udms = [], legacy_scopes = [] }) {
-    const createForm = useForm({ name: '', udm: '' });
+    const createForm = useForm({ name: '', udm: '', member_count: 0 });
     const [editingId, setEditingId] = useState(null);
     const [repairOpen, setRepairOpen] = useState(false);
 
@@ -196,7 +202,7 @@ export default function Cawangan({ cawangans = [], udms = [], legacy_scopes = []
                             <div><p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">Cawangan baharu</p><h3 className="text-sm font-bold text-slate-900">Tambah cawangan di bawah UDM</h3></div>
                         </div>
                     </div>
-                    <form onSubmit={submitCreate} className="grid gap-3 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+                    <form onSubmit={submitCreate} className="grid gap-3 p-4 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
                         <div>
                             <InputLabel htmlFor="cawangan-name" value="Nama Cawangan" />
                             <TextInput id="cawangan-name" value={createForm.data.name} onChange={(event) => createForm.setData('name', event.target.value)} className="input-field mt-1 text-xs" placeholder="Contoh: Cawangan Taman Murni" />
@@ -210,6 +216,11 @@ export default function Cawangan({ cawangans = [], udms = [], legacy_scopes = []
                             </select>
                             <InputError className="mt-1" message={createForm.errors.udm} />
                         </div>
+                        <div>
+                            <InputLabel htmlFor="cawangan-members" value="Jumlah Ahli" />
+                            <TextInput id="cawangan-members" type="number" min="0" step="1" inputMode="numeric" value={createForm.data.member_count} onChange={(event) => createForm.setData('member_count', event.target.value)} className="input-field mt-1 text-xs" />
+                            <InputError className="mt-1" message={createForm.errors.member_count} />
+                        </div>
                         <PrimaryButton disabled={createForm.processing} className="justify-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold"><Icon name="plus" className="h-4 w-4" />{createForm.processing ? '...' : 'Tambah'}</PrimaryButton>
                     </form>
                 </section>
@@ -222,14 +233,16 @@ export default function Cawangan({ cawangans = [], udms = [], legacy_scopes = []
 
                     {groupedCawangans.length === 0 ? <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-xs text-slate-400">Belum ada cawangan. Tambah cawangan di bawah UDM untuk mula.</div> : (
                         <div className="space-y-4">
-                            {groupedCawangans.map(([udm, branches]) => (
-                                <div key={udm}>
-                                    <div className="mb-2 flex items-center gap-2"><span className="rounded-md bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-sky-700">UDM</span><h3 className="text-sm font-bold text-slate-800">{udm}</h3><span className="text-[10px] text-slate-400">{branches.length} cawangan</span></div>
+                            {groupedCawangans.map(([udm, branches]) => {
+                                const totalMembers = branches.reduce((total, cawangan) => total + Number(cawangan.member_count || 0), 0);
+
+                                return <div key={udm}>
+                                    <div className="mb-2 flex flex-wrap items-center gap-2"><span className="rounded-md bg-sky-100 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-sky-700">UDM</span><h3 className="text-sm font-bold text-slate-800">{udm}</h3><span className="text-[10px] text-slate-400">{branches.length} cawangan</span><span className="text-[10px] font-semibold text-emerald-700">{totalMembers} ahli</span></div>
                                     <div className="grid gap-2 lg:grid-cols-2">
                                         {branches.map((cawangan) => <CawanganCard key={cawangan.id} cawangan={cawangan} udms={udms} editing={editingId === cawangan.id} onEdit={setEditingId} onCancel={() => setEditingId(null)} onDelete={deleteCawangan} />)}
                                     </div>
-                                </div>
-                            ))}
+                                </div>;
+                            })}
                         </div>
                     )}
                 </section>

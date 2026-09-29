@@ -10,6 +10,11 @@ class Cawangan extends Model
     protected $fillable = [
         'name',
         'udm',
+        'member_count',
+    ];
+
+    protected $casts = [
+        'member_count' => 'integer',
     ];
 
     public function committeeMemberships(): HasMany
