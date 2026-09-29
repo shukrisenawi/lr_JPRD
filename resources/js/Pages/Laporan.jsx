@@ -502,7 +502,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                             strokeWidth={2}
                                             label={{ value: `Garisan kemenangan: ${fmt(Math.round(winningLine))}`, position: 'insideTopRight', fill: '#b91c1c', fontSize: 10, fontWeight: 700 }}
                                         />
-                                        <Bar dataKey="pas" name="Cula 2 (PAS)" fill="#6366f1" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#4338ca', fontSize: 10, fontWeight: 700 }} />
+                                        <Bar dataKey="pas" name="Cula 2 (PAS)" fill="#86efac" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#166534', fontSize: 10, fontWeight: 700 }} />
                                         <Bar dataKey="pas_plk" name="Cula 2 (PAS) + PLK" fill="#059669" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#047857', fontSize: 10, fontWeight: 700 }} />
                                     </BarChart>
                                 </ResponsiveContainer>
