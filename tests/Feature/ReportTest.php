@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Cawangan;
 use App\Models\PemilihRecord;
 use App\Models\Setting;
 use App\Models\User;
@@ -227,14 +228,30 @@ it('includes scoped ahli pas statistics in laporan', function () {
         'is_manual' => false,
     ]);
 
+    Cawangan::query()->create([
+        'name' => 'Cawangan A',
+        'udm' => 'UDM A',
+        'member_count' => 7,
+    ]);
+    Cawangan::query()->create([
+        'name' => 'Cawangan A 2',
+        'udm' => 'UDM A',
+        'member_count' => 5,
+    ]);
+    Cawangan::query()->create([
+        'name' => 'Cawangan B',
+        'udm' => 'UDM B',
+        'member_count' => 99,
+    ]);
+
     $this->actingAs($user)
         ->get('/laporan')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('Laporan')
-            ->where('ahli_pas_stats.total', 1)
+            ->where('ahli_pas_stats.total', 12)
             ->where('ahli_pas_stats.by_udm.0.name', 'UDM A')
-            ->where('ahli_pas_stats.by_udm.0.total', 1));
+            ->where('ahli_pas_stats.by_udm.0.total', 12));
 });
 
 it('stores uploaded pemilih file from settings for laporan data source', function () {

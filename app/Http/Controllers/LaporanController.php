@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PemilihRecord;
+use App\Models\Cawangan;
 use App\Models\User;
 use App\Services\CulaanMessageService;
 use App\Services\N8nWebhookService;
@@ -96,23 +96,28 @@ class LaporanController extends Controller
 
     private function ahliPasStats(User $user): array
     {
-        $query = PemilihRecord::query()
-            ->where('status', 'aktif')
-            ->where('is_manual', false)
-            ->whereRaw("TRIM(COALESCE(no_ahli, '')) NOT IN ('', '-')");
+        $query = Cawangan::query();
+        $scope = $user->accessScope();
 
-        $user->applyScopeToPemilihQuery($query);
+        if ($scope !== null) {
+            if (filled($scope['cawangan_id'])) {
+                $query->whereKey($scope['cawangan_id']);
+            } elseif (filled($scope['dm'])) {
+                $query->where('udm', $scope['dm']);
+            }
+        }
 
         return [
-            'total' => (clone $query)->count(),
+            'total' => (int) (clone $query)->sum('member_count'),
             'by_udm' => (clone $query)
-                ->selectRaw('dm, COUNT(*) as total')
-                ->groupBy('dm')
+                ->select('udm')
+                ->selectRaw('SUM(member_count) as total')
+                ->groupBy('udm')
                 ->orderByDesc('total')
-                ->orderBy('dm')
+                ->orderBy('udm')
                 ->get()
-                ->map(fn (PemilihRecord $row) => [
-                    'name' => filled($row->dm) && $row->dm !== '-' ? $row->dm : 'Tidak Ditetapkan',
+                ->map(fn (Cawangan $row) => [
+                    'name' => $row->udm,
                     'total' => (int) $row->total,
                 ])
                 ->values()
