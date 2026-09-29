@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, usePage } from '@inertiajs/react';
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
@@ -274,11 +274,11 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
             };
         }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
     const udmTableRows = allUdmTableRows.slice(0, 25);
-    const victoryChartRows = useMemo(() => udmTableRows.map((row) => ({
-        name: row.name,
-        pas: row.PAS ?? 0,
-        pas_plk: row.PAS_TOTAL ?? 0,
-    })), [udmTableRows]);
+    const victoryChartRows = useMemo(() => [{
+        name: 'Jumlah keseluruhan',
+        pas: allUdmTableRows.reduce((sum, row) => sum + (row.PAS ?? 0), 0),
+        pas_plk: allUdmTableRows.reduce((sum, row) => sum + (row.PAS_TOTAL ?? 0), 0),
+    }], [allUdmTableRows]);
     const activeVoterTotal = useMemo(() => allUdmTableRows.reduce((sum, row) => sum + (row.JP ?? 0), 0), [allUdmTableRows]);
     const estimatedTurnout = activeVoterTotal * clampPercent(turnoutPercent) / 100;
     const winningLine = estimatedTurnout * clampPercent(winningPercent) / 100;
@@ -489,9 +489,9 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         >
                             <div className="h-[16rem] lg:h-[18rem]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={victoryChartRows} margin={{ top: 8, right: 12, bottom: 52, left: 0 }}>
+                                    <BarChart data={victoryChartRows} margin={{ top: 8, right: 12, bottom: 16, left: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
-                                        <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={56} tick={{ fontSize: 9, fill: '#475569' }} />
+                                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#475569' }} />
                                         <YAxis tickFormatter={fmt} width={48} tick={{ fontSize: 9, fill: '#475569' }} />
                                         <Tooltip content={<TTip />} />
                                         <Legend wrapperStyle={{ fontSize: 10 }} />
@@ -502,9 +502,9 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                             strokeWidth={2}
                                             label={{ value: `Garisan kemenangan: ${fmt(Math.round(winningLine))}`, position: 'insideTopRight', fill: '#b91c1c', fontSize: 10, fontWeight: 700 }}
                                         />
-                                        <Line type="monotone" dataKey="pas" name="Cula 2 (PAS)" stroke="#6366f1" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                                        <Line type="monotone" dataKey="pas_plk" name="Cula 2 (PAS) + PLK" stroke="#059669" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
-                                    </LineChart>
+                                        <Bar dataKey="pas" name="Cula 2 (PAS)" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="pas_plk" name="Cula 2 (PAS) + PLK" fill="#059669" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
                                 </ResponsiveContainer>
                             </div>
                             <p className="mt-2 text-[10px] font-medium text-slate-500">
