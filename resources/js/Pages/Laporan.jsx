@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, usePage } from '@inertiajs/react';
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, LabelList, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useMemo, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
@@ -274,11 +274,17 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
             };
         }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
     const udmTableRows = allUdmTableRows.slice(0, 25);
-    const victoryChartRows = useMemo(() => [{
-        name: 'Jumlah keseluruhan',
-        pas: allUdmTableRows.reduce((sum, row) => sum + (row.PAS ?? 0), 0),
-        pas_plk: allUdmTableRows.reduce((sum, row) => sum + (row.PAS_TOTAL ?? 0), 0),
-    }], [allUdmTableRows]);
+    const victoryChartRows = useMemo(() => {
+        const totals = allUdmTableRows.reduce((sum, row) => ({
+            pas: sum.pas + (row.PAS ?? 0),
+            pas_plk: sum.pas_plk + (row.PAS_TOTAL ?? 0),
+        }), { pas: 0, pas_plk: 0 });
+
+        return [
+            { name: 'Cula 2 (PAS)', total: totals.pas },
+            { name: 'Cula 2 (PAS) + PLK', total: totals.pas_plk },
+        ];
+    }, [allUdmTableRows]);
     const activeVoterTotal = useMemo(() => allUdmTableRows.reduce((sum, row) => sum + (row.JP ?? 0), 0), [allUdmTableRows]);
     const estimatedTurnout = activeVoterTotal * clampPercent(turnoutPercent) / 100;
     const winningLine = estimatedTurnout * clampPercent(winningPercent) / 100;
@@ -489,12 +495,11 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         >
                             <div className="h-[14rem] lg:h-[16rem]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={victoryChartRows} barCategoryGap="70%" barGap={10} margin={{ top: 24, right: 12, bottom: 16, left: 0 }}>
+                                    <AreaChart data={victoryChartRows} margin={{ top: 28, right: 12, bottom: 20, left: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
-                                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#475569' }} />
+                                        <XAxis dataKey="name" interval={0} tick={{ fontSize: 9, fill: '#475569' }} />
                                         <YAxis tickFormatter={fmt} width={48} tick={{ fontSize: 9, fill: '#475569' }} />
                                         <Tooltip content={<TTip />} />
-                                        <Legend wrapperStyle={{ fontSize: 10 }} />
                                         <ReferenceLine
                                             y={winningLine}
                                             stroke="#dc2626"
@@ -502,9 +507,10 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                             strokeWidth={2}
                                             label={{ value: `Garisan kemenangan: ${fmt(Math.round(winningLine))}`, position: 'insideTopRight', fill: '#b91c1c', fontSize: 10, fontWeight: 700 }}
                                         />
-                                        <Bar dataKey="pas" name="Cula 2 (PAS)" fill="#86efac" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#166534', fontSize: 10, fontWeight: 700 }} />
-                                        <Bar dataKey="pas_plk" name="Cula 2 (PAS) + PLK" fill="#059669" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#047857', fontSize: 10, fontWeight: 700 }} />
-                                    </BarChart>
+                                        <Area type="monotone" dataKey="total" name="Jumlah cula" stroke="#16a34a" strokeWidth={3} fill="#bbf7d0" fillOpacity={0.7} dot={{ r: 5, fill: '#16a34a', stroke: '#ffffff', strokeWidth: 2 }} activeDot={{ r: 7 }}>
+                                            <LabelList dataKey="total" position="top" formatter={fmt} fill="#166534" fontSize={10} fontWeight={700} />
+                                        </Area>
+                                    </AreaChart>
                                 </ResponsiveContainer>
                             </div>
                             <p className="mt-2 text-[11px] font-medium text-slate-500 sm:text-xs">
