@@ -119,9 +119,11 @@ class AccessManagementController extends Controller
     {
         abort_unless($request->user()?->isMasterAdmin(), 403);
 
+        $this->normalizeEmail($request);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
             'access_level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
@@ -155,9 +157,11 @@ class AccessManagementController extends Controller
     {
         abort_unless($request->user()?->isMasterAdmin(), 403);
 
+        $this->normalizeEmail($request);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => ['nullable', 'confirmed', 'min:3'],
             'role_id' => ['required', Rule::exists('roles', 'id')],
             'access_level' => ['nullable', Rule::in(['jprd', 'udm', 'cawangan'])],
@@ -325,5 +329,14 @@ class AccessManagementController extends Controller
         return redirect()
             ->route('admin.access.index')
             ->with('success', 'Akses modul untuk group role berjaya dikemaskini.');
+    }
+
+    private function normalizeEmail(Request $request): void
+    {
+        $email = $request->input('email');
+
+        if (is_string($email)) {
+            $request->merge(['email' => Str::lower(trim($email))]);
+        }
     }
 }

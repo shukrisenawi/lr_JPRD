@@ -26,6 +26,20 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('dashboard', absolute: false));
 });
 
+test('users can authenticate with a case-insensitive email address', function () {
+    $user = User::factory()->withModules(['dashboard'])->create([
+        'email' => 'nama.pengguna@example.com',
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => 'NAMA.PENGGUNA@EXAMPLE.COM',
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect(route('dashboard', absolute: false));
+});
+
 test('users are redirected to the first accessible menu after login', function () {
     $user = User::factory()->withModules(['laporan', 'program'])->create();
 

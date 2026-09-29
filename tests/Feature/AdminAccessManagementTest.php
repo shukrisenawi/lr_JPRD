@@ -81,7 +81,7 @@ it('allows master admin to create a user with selected role', function () {
     $this->actingAs($masterAdmin)
         ->post(route('admin.access.users.store'), [
             'name' => 'Siti Tester',
-            'email' => 'siti@example.com',
+            'email' => 'SITI@EXAMPLE.COM',
             'password' => 'rahsia123',
             'password_confirmation' => 'rahsia123',
             'role_id' => $role->id,
@@ -209,7 +209,7 @@ it('allows master admin to update existing user details', function () {
     $this->actingAs($masterAdmin)
         ->put(route('admin.access.users.update', $user), [
             'name' => 'Nama Baru',
-            'email' => 'baru@example.com',
+            'email' => 'BARU@EXAMPLE.COM',
             'role_id' => $role->id,
             'password' => '',
             'password_confirmation' => '',
