@@ -515,22 +515,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                             <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula {(()=>{const m=udm_snapshot_meta.snapshot_time.match(/^(\d{2})-(\d{2})-(\d{4})/);if(!m)return'';const dt=new Date(+m[3],+m[2]-1,+m[1]);return isNaN(dt.getTime())?'':hari[dt.getDay()]})()}, {udm_snapshot_meta.snapshot_time}</p>
                         )}
 
-                        <div className="card p-3">
-                            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Log Masuk Terkini</p>
-                            <h3 className="mt-0.5 text-sm font-bold text-slate-950">Akses pengguna terkini</h3>
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                                {recent_logins.map((r) => (
-                                    <span key={r.name} className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-200/50">
-                                        <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
-                                        {r.name}
-                                        <span className="text-blue-400">•</span>
-                                        {r.last_login_at}
-                                    </span>
-                                ))}
-                                {recent_logins.length === 0 && <p className="text-xs text-slate-500">Tiada rekod log masuk.</p>}
-                            </div>
-                        </div>
-
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Top UDM">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -589,6 +573,22 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                 </div>
                             </section>
                         )}
+
+                        <div className="card p-3">
+                            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">Log Masuk Terkini</p>
+                            <h3 className="mt-0.5 text-sm font-bold text-slate-950">Akses pengguna terkini</h3>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                                {recent_logins.map((r) => (
+                                    <span key={r.name} className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-200/50">
+                                        <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+                                        {r.name}
+                                        <span className="text-blue-400">•</span>
+                                        {r.last_login_at}
+                                    </span>
+                                ))}
+                                {recent_logins.length === 0 && <p className="text-xs text-slate-500">Tiada rekod log masuk.</p>}
+                            </div>
+                        </div>
 
                         <div className="inline-flex rounded-md border border-slate-200 bg-white p-0.5 shadow-sm">
                             <div className="flex gap-0.5">
