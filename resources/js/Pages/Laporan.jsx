@@ -487,9 +487,9 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                 </div>
                             }
                         >
-                            <div className="h-[16rem] lg:h-[18rem]">
+                            <div className="h-[14rem] lg:h-[16rem]">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={victoryChartRows} margin={{ top: 8, right: 12, bottom: 16, left: 0 }}>
+                                    <BarChart data={victoryChartRows} barCategoryGap="70%" barGap={10} margin={{ top: 24, right: 12, bottom: 16, left: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
                                         <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#475569' }} />
                                         <YAxis tickFormatter={fmt} width={48} tick={{ fontSize: 9, fill: '#475569' }} />
@@ -502,12 +502,12 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                             strokeWidth={2}
                                             label={{ value: `Garisan kemenangan: ${fmt(Math.round(winningLine))}`, position: 'insideTopRight', fill: '#b91c1c', fontSize: 10, fontWeight: 700 }}
                                         />
-                                        <Bar dataKey="pas" name="Cula 2 (PAS)" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                                        <Bar dataKey="pas_plk" name="Cula 2 (PAS) + PLK" fill="#059669" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="pas" name="Cula 2 (PAS)" fill="#6366f1" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#4338ca', fontSize: 10, fontWeight: 700 }} />
+                                        <Bar dataKey="pas_plk" name="Cula 2 (PAS) + PLK" fill="#059669" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#047857', fontSize: 10, fontWeight: 700 }} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>
-                            <p className="mt-2 text-[10px] font-medium text-slate-500">
+                            <p className="mt-2 text-[11px] font-medium text-slate-500 sm:text-xs">
                                 Anggaran keluar mengundi: {fmt(Math.round(estimatedTurnout))} daripada {fmt(activeVoterTotal)} pemilih aktif (tidak termasuk mati). Garisan kemenangan: {fmt(Math.round(winningLine))} undi.
                             </p>
                         </ChartPanel>
