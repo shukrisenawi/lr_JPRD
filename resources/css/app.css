@@ -125,6 +125,15 @@
     .table-header {
         @apply bg-green-100 text-left text-xs font-bold uppercase tracking-wider text-green-800;
     }
+    .table-header-sticky th {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        box-shadow: 0 2px 5px -3px rgba(15, 23, 42, 0.35);
+    }
+    .table-header-sticky th.sticky-th {
+        z-index: 30;
+    }
     .table-body {
         @apply divide-y divide-green-100 bg-white text-xs text-slate-600;
     }
