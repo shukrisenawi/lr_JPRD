@@ -38,6 +38,7 @@ function HeaderIcon({ name, className = 'h-5 w-5' }) {
         fileText: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></>,
         users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
         calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></>,
+        wallet: <><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H19a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5.5A2.5 2.5 0 0 1 3 16.5v-9Z" /><path d="M3 8h16" /><path d="M16 13h5" /><circle cx="16" cy="13" r=".6" fill="currentColor" stroke="none" /></>,
     };
 
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -92,6 +93,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     { key: 'dashboard', href: 'dashboard', routePattern: 'dashboard', label: 'Cula Manual' },
                     { key: 'aktiviti', href: 'aktiviti.index', routePattern: 'aktiviti.*', label: 'Aktiviti' },
                     { key: 'kenderaan', href: 'kenderaan.index', routePattern: 'kenderaan.*', label: 'Kenderaan' },
+                    { key: 'dana', href: 'dana.index', routePattern: 'dana.*', label: 'Dana' },
                     { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
                     { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan', badge: belumDicula },
                     { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
@@ -255,6 +257,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('dashboard') && { href: route('dashboard'), active: route().current('dashboard'), label: 'Cula Manual' },
                                     canAccess('aktiviti') && { href: route('aktiviti.index'), active: route().current('aktiviti.*'), label: 'Aktiviti' },
                                     canAccess('kenderaan') && { href: route('kenderaan.index'), active: route().current('kenderaan.*'), label: 'Kenderaan' },
+                                    canAccess('dana') && { href: route('dana.index'), active: route().current('dana.*'), label: 'Dana' },
                                     canAccess('program') && { href: route('program.index'), active: route().current('program.*'), label: 'Program' },
                                     canAccess('culaan') && { href: route('culaan.index'), active: route().current('culaan.*'), label: 'Culaan', badge: belumDicula },
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },

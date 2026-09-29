@@ -45,6 +45,13 @@ return [
         'label' => 'Kenderaan',
         'description' => 'Urus nombor plat dan jenis kenderaan mengikut UDM.',
     ],
+    'dana' => [
+        'label' => 'Dana',
+        'description' => 'Urus rekod dana masuk dan keluar mengikut UDM.',
+        'children' => [
+            'dana.kategori' => ['label' => 'Kategori Dana'],
+        ],
+    ],
     'jawatankuasa' => [
         'label' => 'Jawatankuasa',
         'description' => 'Urus jawatan dan ahli jawatankuasa JPRD, UDM dan Cawangan.',
