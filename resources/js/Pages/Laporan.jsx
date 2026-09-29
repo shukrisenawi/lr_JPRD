@@ -332,12 +332,18 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const selLocTable = selUdm?.localities.slice(0, 20) ?? [];
     const ahliPasByUdm = useMemo(() => new Map((ahli_pas_stats?.by_udm ?? []).map((row) => [row.name, row.total])), [ahli_pas_stats]);
     const ahliPasUdmRows = useMemo(() => allUdmTableRows
-        .map((row) => ({
-            name: row.name,
-            total: ahliPasByUdm.get(row.name) ?? 0,
-            pas_plk: row.PAS_TOTAL ?? 0,
-        }))
-        .filter((row) => row.total > 0 || row.pas_plk > 0), [allUdmTableRows, ahliPasByUdm]);
+        .map((row) => {
+            const pasPlkTotal = row.PAS_TOTAL ?? 0;
+            const ahliTotal = ahliPasByUdm.get(row.name) ?? 0;
+
+            return {
+                name: row.name,
+                ahli: Math.min(ahliTotal, pasPlkTotal),
+                belum_ahli: Math.max(pasPlkTotal - ahliTotal, 0),
+                pas_plk: pasPlkTotal,
+            };
+        })
+        .filter((row) => row.pas_plk > 0), [allUdmTableRows, ahliPasByUdm]);
     const ahliPasChartHeight = Math.max(256, ahliPasUdmRows.length * 34);
     const selGender = useMemo(() => {
         if (!selUdm) return [];
@@ -555,7 +561,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                         <div>
                                             <p className="text-xs font-black uppercase tracking-[0.1em] text-emerald-700">Keahlian PAS</p>
                                             <h3 className="mt-0.5 text-sm font-bold text-slate-900">Keahlian PAS Mengikut UDM</h3>
-                                            <p className="mt-1 text-xs text-slate-500">Perbandingan ahli PAS dengan jumlah Cula 2 + PLK mengikut UDM.</p>
+                                            <p className="mt-1 text-xs text-slate-500">Jumlah Cula 2 + PLK dibahagi kepada ahli PAS dan yang belum menjadi ahli.</p>
                                         </div>
                                         <div className="rounded-xl border border-emerald-200 bg-white/80 px-3 py-2 text-right shadow-sm backdrop-blur">
                                             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-emerald-700">Jumlah Ahli</p>
@@ -565,14 +571,14 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                     {ahliPasUdmRows.length > 0 ? (
                                         <div className="mt-3 rounded-lg border border-emerald-100 bg-white/70 p-2 shadow-inner shadow-emerald-100/60" style={{ height: ahliPasChartHeight }}>
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <BarChart data={ahliPasUdmRows} layout="vertical" barGap={4} barCategoryGap="20%" margin={{ top: 4, right: 48, bottom: 4, left: 116 }}>
+                                                <BarChart data={ahliPasUdmRows} layout="vertical" barCategoryGap="30%" margin={{ top: 4, right: 48, bottom: 4, left: 116 }}>
                                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#bbf7d0" />
                                                     <XAxis type="number" tickFormatter={fmt} tick={{ fontSize: 10, fill: '#64748b' }} />
                                                     <YAxis type="category" dataKey="name" width={116} tick={{ fontSize: 10, fill: '#166534' }} />
                                                     <Tooltip content={<TTip />} />
                                                     <Legend wrapperStyle={{ fontSize: 10 }} />
-                                                    <Bar dataKey="total" name="Ahli PAS" fill="#10b981" maxBarSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: fmt, fill: '#047857', fontSize: 10, fontWeight: 700 }} />
-                                                    <Bar dataKey="pas_plk" name="Cula 2 + PLK" fill="#86efac" maxBarSize={14} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: fmt, fill: '#166534', fontSize: 10, fontWeight: 700 }} />
+                                                    <Bar dataKey="ahli" name="Ahli PAS" stackId="pas" fill="#10b981" maxBarSize={18} label={{ position: 'insideRight', formatter: fmt, fill: '#ffffff', fontSize: 10, fontWeight: 700 }} />
+                                                    <Bar dataKey="belum_ahli" name="Belum jadi ahli" stackId="pas" fill="#86efac" maxBarSize={18} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: fmt, fill: '#166534', fontSize: 10, fontWeight: 700 }} />
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
