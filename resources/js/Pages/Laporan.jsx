@@ -577,8 +577,8 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                                     <YAxis type="category" dataKey="name" width={116} tick={{ fontSize: 10, fill: '#166534' }} />
                                                     <Tooltip content={<TTip />} />
                                                     <Legend wrapperStyle={{ fontSize: 10 }} />
-                                                    <Bar dataKey="ahli" name="Ahli PAS" stackId="pas" fill="#10b981" maxBarSize={18} label={{ position: 'insideRight', formatter: fmt, fill: '#ffffff', fontSize: 10, fontWeight: 700 }} />
-                                                    <Bar dataKey="belum_ahli" name="Belum jadi ahli" stackId="pas" fill="#86efac" maxBarSize={18} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: fmt, fill: '#166534', fontSize: 10, fontWeight: 700 }} />
+                                                    <Bar dataKey="ahli" name="Ahli PAS" stackId="pas" fill="#10b981" maxBarSize={36} label={{ position: 'insideRight', formatter: fmt, fill: '#ffffff', fontSize: 10, fontWeight: 700 }} />
+                                                    <Bar dataKey="belum_ahli" name="Belum jadi ahli" stackId="pas" fill="#86efac" maxBarSize={36} radius={[0, 4, 4, 0]} label={{ position: 'right', formatter: fmt, fill: '#166534', fontSize: 10, fontWeight: 700 }} />
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
