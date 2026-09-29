@@ -66,7 +66,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     };
 
     const navGroups = [
-        { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Laporan', icon: <HeaderIcon name="fileText" className="h-4 w-4" /> },
+        { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Dashboard', icon: <HeaderIcon name="fileText" className="h-4 w-4" /> },
         {
             label: 'Pemilih',
             icon: <HeaderIcon name="users" className="h-4 w-4" />,
@@ -238,8 +238,8 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     <div className="space-y-0.5 px-2 py-2">
                         {(() => {
                             const groups = [
-                                { label: 'Laporan', items: [
-                                    canAccess('laporan') && { href: route('laporan.index'), active: route().current('laporan.*'), label: 'Laporan' },
+                                { label: 'Dashboard', items: [
+                                    canAccess('laporan') && { href: route('laporan.index'), active: route().current('laporan.*'), label: 'Dashboard' },
                                 ].filter(Boolean) },
                                 { label: 'Pemilih', items: [
                                     canAccess('carian-pemilih') && { href: route('carian-pemilih.index'), active: route().current('carian-pemilih.*'), label: 'Carian Pemilih' },
