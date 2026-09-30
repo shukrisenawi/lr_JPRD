@@ -27,6 +27,7 @@ function Icon({ name, className = 'h-5 w-5' }) {
         idCard: <><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M7 7h3v3H7z" /><path d="M14 7h3" /><path d="M14 11h3" /><path d="M7 14h10" /></>,
         layers: <><path d="M12 2 2 7l10 5 10-5-10-5Z" /><path d="m2 17 10 5 10-5" /><path d="m2 12 10 5 10-5" /></>,
         check: <><path d="M20 6 9 17l-5-5" /></>,
+        copy: <><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></>,
         chevronDown: <><path d="m6 9 6 6 6-6" /></>,
         eye: <><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></>,
         link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></>,
@@ -76,6 +77,53 @@ function voterActionUrl(voter) {
 
     const query = voter?.no_kp || voter?.old_ic || voter?.name || '';
     return route('carian-pemilih.index') + '?q=' + encodeURIComponent(query);
+}
+
+async function copyToClipboard(text) {
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch {
+        // Use the legacy fallback below when clipboard permissions are unavailable.
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+}
+
+function CopyableIc({ voter }) {
+    const [copied, setCopied] = useState(false);
+    const ic = voter?.no_kp || voter?.old_ic || '';
+
+    if (!ic) return <span>-</span>;
+
+    const handleCopy = async () => {
+        if (!await copyToClipboard(ic)) return;
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleCopy}
+            className={'group inline-flex items-center gap-1 rounded px-1 text-left transition hover:bg-green-50 hover:text-green-700 ' + (copied ? 'text-emerald-600' : '')}
+            title={copied ? 'No. KP telah disalin' : 'Klik untuk salin No. KP'}
+            aria-label={copied ? 'No. KP telah disalin' : `Salin No. KP ${ic}`}
+        >
+            <span>{ic}</span>
+            <Icon name={copied ? 'check' : 'copy'} className={'h-2.5 w-2.5 ' + (copied ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-100')} />
+        </button>
+    );
 }
 
 // ─── GroupManager ─────────────────────────────────────────────────────────
@@ -1536,7 +1584,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                     <div className="min-w-0 flex-1">
                                                                                          <p className={`text-xs font-bold ${m.voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
                                                                                          <p className="text-xs text-slate-500">
-                                                                                             <span>{m.voter.no_kp || m.voter.old_ic || '-'}</span>
+                                                                                              <CopyableIc voter={m.voter} />
                                                                                              {phone && <span className="ml-2">Tel:{formatPhoneNumber(phone)}</span>}
                                                                                          </p>
                                                                                     </div>
@@ -2001,7 +2049,7 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
                             {results.map(({ voter, memberships: vms }) => (
                                 <div key={voter.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
                                     <p className={`text-sm font-bold ${voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{voter.name}</p>
-                                    <p className="text-xs text-slate-400">No Kp: {voter.no_kp || voter.old_ic || '-'}</p>
+                                    <p className="text-xs text-slate-400">No Kp: <CopyableIc voter={voter} /></p>
                                     <div className="mt-2 space-y-1">
                                         {vms.map((m) => {
                                             const lc = levelColors[m.level] || { bg: 'bg-slate-100', text: 'text-slate-700', label: m.level };
@@ -2128,7 +2176,7 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
-                                                    <p className="text-[10px] text-slate-400">{m.voter?.no_kp || m.voter?.old_ic || '-'}</p>
+                                                    <p className="text-[10px] text-slate-400"><CopyableIc voter={m.voter} /></p>
                                                 </div>
                                                 <div className="shrink-0 text-right">
                                                     <span className="inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
