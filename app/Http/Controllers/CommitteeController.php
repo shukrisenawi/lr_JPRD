@@ -820,42 +820,52 @@ class CommitteeController extends Controller
             return back()->withErrors(['name' => 'Sila masukkan sekurang-kurangnya satu nama jawatan.']);
         }
 
-        $existing = CommitteePosition::query()->whereIn('name', $names)->pluck('name')->all();
-
-        $existingLower = array_map('strtolower', $existing);
+        $slugs = array_map(fn (string $name) => Str::slug($name), $names);
+        $existingSlugs = CommitteePosition::query()
+            ->whereIn('slug', array_values(array_unique($slugs)))
+            ->pluck('slug')
+            ->all();
+        $seenSlugs = [];
 
         $baseSortOrder = $validated['sort_order'] ?? CommitteePosition::query()->max('sort_order') + 1;
 
         $inserted = 0;
+        $skipped = 0;
 
-        foreach ($names as $index => $name) {
-            if (in_array(strtolower($name), $existingLower)) {
+        foreach ($names as $name) {
+            $slug = Str::slug($name);
+
+            if (in_array($slug, $existingSlugs, true) || in_array($slug, $seenSlugs, true)) {
+                $skipped++;
+
                 continue;
             }
+
             CommitteePosition::query()->create([
                 'name' => $name,
-                'slug' => Str::slug($name),
-                'sort_order' => $baseSortOrder + $index,
+                'slug' => $slug,
+                'sort_order' => $baseSortOrder + $inserted,
                 'level' => $validated['level'] ?? null,
             ]);
+            $seenSlugs[] = $slug;
             $inserted++;
         }
 
-        if ($existing !== []) {
-            return back()->withErrors([
-                'name' => 'Jawatan sudah wujud: '.implode(', ', $existing).'.',
-            ]);
-        }
-
         if ($inserted > 0) {
+            $message = $inserted.' jawatan berjaya ditambah.';
+
+            if ($skipped > 0) {
+                $message .= ' '.$skipped.' jawatan pendua diabaikan.';
+            }
+
             return redirect()
                 ->route('jawatankuasa.index')
-                ->with('success', $inserted.' jawatan berjaya ditambah.');
+                ->with('success', $message);
         }
 
         return redirect()
             ->route('jawatankuasa.index')
-            ->with('warning', 'Tiada jawatan baru ditambah. Semua nama jawatan sudah wujud.');
+            ->with('warning', 'Tiada jawatan baru ditambah. Semua nama jawatan sudah wujud atau berulang.');
     }
 
     public function updatePosition(Request $request, CommitteePosition $position): RedirectResponse

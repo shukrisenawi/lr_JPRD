@@ -242,7 +242,7 @@ it('creates multiple committee positions from comma separated names and keeps th
     ]);
 });
 
-it('requires unique committee position name', function () {
+it('ignores committee position names that already exist', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
 
     CommitteePosition::query()->create([
@@ -256,10 +256,39 @@ it('requires unique committee position name', function () {
             'name' => 'Setiausaha',
             'sort_order' => 2,
         ])
-        ->assertSessionHasErrors('name');
+        ->assertRedirect(route('jawatankuasa.index'))
+        ->assertSessionHas('warning', 'Tiada jawatan baru ditambah. Semua nama jawatan sudah wujud atau berulang.')
+        ->assertSessionDoesntHaveErrors();
+
+    expect(CommitteePosition::query()->count())->toBe(1);
 });
 
-it('rejects committee position name that only differs by surrounding spaces', function () {
+it('ignores duplicate committee position slugs from existing and repeated names', function () {
+    $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
+
+    CommitteePosition::query()->create([
+        'name' => 'KETUA URUSAN PEMILIH / PENCULAAN / AWAL & POS',
+        'slug' => 'ketua-urusan-pemilih-penculaan-awal-pos',
+        'sort_order' => 1,
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('jawatankuasa.positions.store'), [
+            'name' => 'KETUA URUSAN PEMILIH/ PENCULAAN/ AWAL & POS, PENGURUS MAKLUMAT, PENGURUS MAKLUMAT',
+            'sort_order' => 2,
+        ])
+        ->assertRedirect(route('jawatankuasa.index'))
+        ->assertSessionHas('success', '1 jawatan berjaya ditambah. 2 jawatan pendua diabaikan.')
+        ->assertSessionDoesntHaveErrors();
+
+    expect(CommitteePosition::query()->count())->toBe(2);
+    $this->assertDatabaseHas('committee_positions', [
+        'name' => 'PENGURUS MAKLUMAT',
+        'slug' => 'pengurus-maklumat',
+    ]);
+});
+
+it('ignores committee position name that only differs by surrounding spaces', function () {
     $user = User::factory()->withModules(['dashboard', 'jawatankuasa'])->create();
 
     CommitteePosition::query()->create([
@@ -273,7 +302,11 @@ it('rejects committee position name that only differs by surrounding spaces', fu
             'name' => '  Pengerusi  ',
             'sort_order' => 3,
         ])
-        ->assertSessionHasErrors('name');
+        ->assertRedirect(route('jawatankuasa.index'))
+        ->assertSessionHas('warning', 'Tiada jawatan baru ditambah. Semua nama jawatan sudah wujud atau berulang.')
+        ->assertSessionDoesntHaveErrors();
+
+    expect(CommitteePosition::query()->count())->toBe(1);
 });
 
 it('prevents updating committee position to an existing name', function () {
