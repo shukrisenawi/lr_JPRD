@@ -110,6 +110,32 @@ async function copyToClipboard(text) {
     return copied;
 }
 
+function CopyableIc({ voter }) {
+    const [copied, setCopied] = useState(false);
+    const ic = voter?.no_kp || voter?.old_ic || '';
+
+    if (!ic) return <span>-</span>;
+
+    const handleCopy = async () => {
+        if (!await copyToClipboard(ic)) return;
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleCopy}
+            className={'group inline-flex items-center gap-1 rounded px-1 text-left transition hover:bg-green-50 hover:text-green-700 ' + (copied ? 'text-emerald-600' : '')}
+            title={copied ? 'No. KP telah disalin' : 'Klik untuk salin No. KP'}
+            aria-label={copied ? 'No. KP telah disalin' : `Salin No. KP ${ic}`}
+        >
+            <span>{ic}</span>
+            <Icon name={copied ? 'check' : 'copy'} className={'h-2.5 w-2.5 ' + (copied ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-100')} />
+        </button>
+    );
+}
+
 function ExportButtons({ text, onExport }) {
     const [copied, setCopied] = useState(false);
 
@@ -557,7 +583,7 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
                                                 <div className="min-w-0 flex-1">
                                                     <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
                                                     <p className="text-[10px] text-slate-400">
-                                                        <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
+                                                        <CopyableIc voter={m.voter} />
                                                         {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
                                                     </p>
                                                     <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
@@ -626,7 +652,7 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                                     <div className="min-w-0 flex-1">
                                         <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{m.voter?.name}</p>
                                         <p className="text-[10px] text-slate-400">
-                                            <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
+                                            <CopyableIc voter={m.voter} />
                                             {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
                                         </p>
                                         <span className="mt-0.5 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.scope_name || 'Tiada UDM'}</span>
@@ -1085,7 +1111,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                                             <div className="min-w-0 flex-1">
                                                                 <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{m.voter?.name}</p>
                                                                 <p className="text-[10px] text-slate-400">
-                                                                    {m.voter?.no_kp || m.voter?.old_ic || '-'}
+                                                                    <CopyableIc voter={m.voter} />
                                                                     {m.scope_name ? <span className="text-sky-500"> — {m.scope_name}</span> : ''}
                                                                 </p>
                                                                  {(m.voter?.phone_mobile || m.voter?.phone_home) && (
@@ -1306,7 +1332,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                             <div className="min-w-0 flex-1">
                                                 <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
                                                 <p className="text-[10px] text-slate-400">
-                                                    <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
+                                                    <CopyableIc voter={m.voter} />
                                                     {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
                                                 </p>
                                                 <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
