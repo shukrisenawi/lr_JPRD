@@ -851,6 +851,18 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         return (group.positions || []).filter((p) => p.pivot_level === resolvedTab);
     }, [groups, selectedGroupId, resolvedTab]);
 
+    const groupIdsWithMembers = useMemo(() => new Set(
+        (memberships ?? [])
+            .filter((membership) => membership.level === resolvedTab && membership.committee_group_id != null)
+            .map((membership) => String(membership.committee_group_id))
+    ), [memberships, resolvedTab]);
+
+    const positionKeysWithMembers = useMemo(() => new Set(
+        (memberships ?? [])
+            .filter((membership) => membership.level === resolvedTab && membership.committee_group_id != null && membership.position?.id != null)
+            .map((membership) => `${membership.committee_group_id}:${membership.position.id}`)
+    ), [memberships, resolvedTab]);
+
     const initialCawanganScope = String(initialCawanganId || '');
     const form = useForm({
         pemilih_record_id: '',
@@ -1320,11 +1332,17 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                         setSelectedGroupId(gid);
                                         form.setData('committee_group_id', gid || '');
                                     }}
-                                    className="input-field mt-1 text-xs"
+                                    className={'input-field mt-1 text-xs ' + (groupIdsWithMembers.has(String(selectedGroupId)) ? 'text-green-700' : 'text-slate-700')}
                                 >
-                                <option value="">Pilih kumpulan</option>
+                                <option value="" className="text-slate-500">Pilih kumpulan</option>
                                 {groups.filter(g => g.levels && g.levels.includes(resolvedTab)).map((group) => (
-                                    <option key={group.id} value={group.id}>{group.name}</option>
+                                    <option
+                                        key={group.id}
+                                        value={group.id}
+                                        className={groupIdsWithMembers.has(String(group.id)) ? 'font-semibold text-green-700' : 'text-slate-700'}
+                                    >
+                                        {group.name}
+                                    </option>
                                 ))}
                             </select>
                         </div>
@@ -1335,11 +1353,17 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                 id="committee-position"
                                 value={form.data.committee_position_id}
                                 onChange={(event) => form.setData('committee_position_id', event.target.value)}
-                                className="input-field mt-1 text-xs"
+                                className={'input-field mt-1 text-xs ' + (positionKeysWithMembers.has(`${selectedGroupId}:${form.data.committee_position_id}`) ? 'text-green-700' : 'text-slate-700')}
                             >
-                                <option value="">Pilih jawatan</option>
+                                <option value="" className="text-slate-500">Pilih jawatan</option>
                                 {positionsForForm.map((position) => (
-                                    <option key={position.id} value={position.id}>{position.name}</option>
+                                    <option
+                                        key={position.id}
+                                        value={position.id}
+                                        className={positionKeysWithMembers.has(`${selectedGroupId}:${position.id}`) ? 'font-semibold text-green-700' : 'text-slate-700'}
+                                    >
+                                        {position.name}
+                                    </option>
                                 ))}
                             </select>
                             <InputError className="mt-1" message={form.errors.committee_position_id} />
