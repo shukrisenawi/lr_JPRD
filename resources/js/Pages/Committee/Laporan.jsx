@@ -242,7 +242,7 @@ const normalizeLabel = (value) => String(value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
 
-function AddToJprdModal({ members, groups, onClose, onSuccess }) {
+function AddToJprdModal({ members, groups, memberships, onClose, onSuccess }) {
     const member = members[0];
     const sourceGroup = groups.find((group) => group.id === member.committee_group_id);
     const jprdGroups = useMemo(() => groups
@@ -252,6 +252,16 @@ function AddToJprdModal({ members, groups, onClose, onSuccess }) {
             positions: (group.positions || []).filter((position) => position.pivot_level === 'jprd'),
         }))
         .filter((group) => group.positions.length > 0), [groups]);
+    const jprdGroupIdsWithData = useMemo(() => new Set(
+        (memberships ?? [])
+            .filter((membership) => membership.level === 'jprd' && membership.committee_group_id != null)
+            .map((membership) => String(membership.committee_group_id))
+    ), [memberships]);
+    const jprdPositionKeysWithData = useMemo(() => new Set(
+        (memberships ?? [])
+            .filter((membership) => membership.level === 'jprd' && membership.committee_group_id != null && membership.position?.id != null)
+            .map((membership) => `${membership.committee_group_id}:${membership.position.id}`)
+    ), [memberships]);
     const sourceGroupName = normalizeLabel(sourceGroup?.name);
     const sourcePositionName = normalizeLabel(member.position?.name);
     const defaultGroup = useMemo(() => {
@@ -314,11 +324,19 @@ function AddToJprdModal({ members, groups, onClose, onSuccess }) {
                             id="jprd-target-group"
                             value={form.data.committee_group_id}
                             onChange={(event) => form.setData((current) => ({ ...current, committee_group_id: event.target.value, committee_position_id: '' }))}
-                            className="input-field mt-1 w-full text-xs"
+                            className={'input-field mt-1 w-full text-xs ' + (jprdGroupIdsWithData.has(String(form.data.committee_group_id)) ? 'text-green-700' : 'text-slate-700')}
                             required
                         >
-                            <option value="">Pilih kumpulan JPRD</option>
-                            {jprdGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+                            <option value="" className="text-slate-500">Pilih kumpulan JPRD</option>
+                            {jprdGroups.map((group) => (
+                                <option
+                                    key={group.id}
+                                    value={group.id}
+                                    className={jprdGroupIdsWithData.has(String(group.id)) ? 'font-semibold text-green-700' : 'text-slate-700'}
+                                >
+                                    {group.name}
+                                </option>
+                            ))}
                         </select>
                         {defaultGroup && String(form.data.committee_group_id) === String(defaultGroup.id) && <p className="mt-1 text-[10px] text-emerald-600">Padanan kumpulan JPRD dipilih secara automatik berdasarkan jawatan UDM.</p>}
                         {form.errors.committee_group_id && <p className="mt-1 text-[10px] text-rose-600">{form.errors.committee_group_id}</p>}
@@ -330,12 +348,20 @@ function AddToJprdModal({ members, groups, onClose, onSuccess }) {
                             id="jprd-target-position"
                             value={form.data.committee_position_id}
                             onChange={(event) => form.setData('committee_position_id', event.target.value)}
-                            className="input-field mt-1 w-full text-xs"
+                            className={'input-field mt-1 w-full text-xs ' + (jprdPositionKeysWithData.has(`${form.data.committee_group_id}:${form.data.committee_position_id}`) ? 'text-green-700' : 'text-slate-700')}
                             disabled={!selectedGroup}
                             required
                         >
-                            <option value="">Pilih jawatan JPRD</option>
-                            {positions.map((position) => <option key={position.id} value={position.id}>{position.name}</option>)}
+                            <option value="" className="text-slate-500">Pilih jawatan JPRD</option>
+                            {positions.map((position) => (
+                                <option
+                                    key={position.id}
+                                    value={position.id}
+                                    className={jprdPositionKeysWithData.has(`${form.data.committee_group_id}:${position.id}`) ? 'font-semibold text-green-700' : 'text-slate-700'}
+                                >
+                                    {position.name}
+                                </option>
+                            ))}
                         </select>
                         {!jprdGroups.length && <p className="mt-1 text-[10px] text-rose-600">Tiada kumpulan dan jawatan JPRD tersedia.</p>}
                         {selectedGroup && !positions.length && <p className="mt-1 text-[10px] text-rose-600">Kumpulan ini belum mempunyai jawatan JPRD.</p>}
@@ -1305,6 +1331,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                     key={jprdMembers.map((member) => member.id).join('-')}
                     members={jprdMembers}
                     groups={groups}
+                    memberships={memberships}
                     onClose={closeJprdModal}
                     onSuccess={completeJprdModal}
                 />
