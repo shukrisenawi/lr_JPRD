@@ -2037,6 +2037,8 @@ function CommitteeSearchModal({ memberships: allMemberships, isOpen, onClose }) 
 // ─── CommitteeDetailPopup ─────────────────────────────────────────────────
 
 function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClose }) {
+    const [excelTarget, setExcelTarget] = useState(null);
+    const [excelColumns, setExcelColumns] = useState([]);
     if (!scope) return null;
 
     const groupedByGroup = {};
@@ -2052,7 +2054,42 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
         return name?.toLowerCase().includes(highlight.toLowerCase());
     };
 
+    const openPositionExport = (group) => {
+        const distinctPositions = new Set(group.members.map((member) => member.position?.name).filter(Boolean));
+        setExcelColumns(['bil', ...(distinctPositions.size > 1 ? ['jawatan'] : []), 'ic', 'nama', 'telefon']);
+        setExcelTarget(group);
+    };
+
+    const downloadPositionExcel = () => {
+        if (!excelTarget || !excelColumns.length) return;
+        const defs = {
+            bil: { label: 'Bil', width: 38, value: (_, i) => i + 1, center: true, number: true },
+            jawatan: { label: 'Jawatan', width: 115, value: (m) => m.position?.name ?? '-', center: false },
+            ic: { label: 'No. KP', width: 95, value: (m) => m.voter?.no_kp ?? m.voter?.old_ic ?? '-', center: true },
+            nama: { label: 'Nama', width: 190, value: (m) => m.voter?.name ?? '-', center: false },
+            telefon: { label: 'No. Tel', width: 90, value: (m) => m.voter?.phone_mobile || m.voter?.phone_home || '-', center: true },
+        };
+        const cols = excelColumns.map((key) => defs[key]);
+        const cell = (value, style, numeric = false) => `<Cell ss:StyleID="${style}"><Data ss:Type="${numeric ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`;
+        const header = `<Row>${cols.map((c) => cell(c.label, 'headerCenter')).join('')}</Row>`;
+        const body = excelTarget.members.map((member, i) => `<Row>${cols.map((c) => cell(c.value(member, i), c.center ? (c.number ? 'cellNumber' : 'cellCenter') : 'cell', c.number)).join('')}</Row>`).join('');
+        const styles = `<Styles><Style ss:ID="Default"><Alignment ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="10"/></Style><Style ss:ID="title"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1"/></Style>${['headerCenter','cell','cellCenter','cellNumber'].map((id) => `<Style ss:ID="${id}"><Alignment ss:Horizontal="${id === 'cell' ? 'Left' : 'Center'}" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="10"/></Style>`).join('')}</Styles>`;
+        const scopePart = scope.parent_scope_name ? `${scope.parent_scope_name}_${scope.name}` : scope.name;
+        const xml = `<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${styles}<Worksheet ss:Name="Jawatankuasa"><Table>${cols.map((c) => `<Column ss:AutoFitWidth="0" ss:Width="${c.width}"/>`).join('')}<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="title"><Data ss:Type="String">${escapeXml(excelTarget.groupName)} — ${levelMeta[level]?.label ?? level}</Data></Cell></Row>${header}${body}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup><Layout x:Orientation="Portrait"/><PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></PageSetup><FitToPage/><Print><PaperSizeIndex>9</PaperSizeIndex><Scale>85</Scale></Print></WorksheetOptions></Worksheet></Workbook>`;
+        const url = URL.createObjectURL(new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `AJK_${excelTarget.groupName.replace(/[\/\s]+/g, '_')}_${(levelMeta[level]?.label ?? level)}_${scopePart.replace(/[\/\s]+/g, '_')}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setExcelTarget(null);
+    };
+
     return (
+        <>
+        {excelTarget && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/50 p-4" onClick={() => setExcelTarget(null)}><div role="dialog" aria-modal="true" aria-labelledby="position-excel-title" className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}><h3 id="position-excel-title" className="text-base font-bold text-slate-900">Pilih kolum untuk eksport</h3><p className="mt-1 text-sm text-slate-500">Cetakan A4, margin narrow dan teks wrap.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{ key: 'bil', label: 'Bil' }, { key: 'jawatan', label: 'Jawatan' }, { key: 'ic', label: 'No. KP' }, { key: 'nama', label: 'Nama' }, { key: 'telefon', label: 'No. Tel' }].map(({ key, label }) => <label key={key} className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm"><input type="checkbox" checked={excelColumns.includes(key)} disabled={key === 'bil'} onChange={(event) => setExcelColumns((current) => event.target.checked ? [...current, key] : current.filter((column) => column !== key))} />{label}</label>)}</div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setExcelTarget(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm">Batal</button><button type="button" disabled={!excelColumns.length} onClick={downloadPositionExcel} className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Muat turun Excel</button></div></div></div>}
         <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 pt-8 sm:pt-16" onClick={onClose}>
             <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 shrink-0">
@@ -2091,6 +2128,8 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                openPositionExport({ groupName: g.groupName, members: g.members });
+                                                return;
                                                 const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
                                                 const align = ['center', 'center', 'left', 'center'];
                                                 const widths = [30, 150, 520, 100];
@@ -2149,6 +2188,7 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
                 </div>
             </div>
         </div>
+        </>
     );
 }
 
