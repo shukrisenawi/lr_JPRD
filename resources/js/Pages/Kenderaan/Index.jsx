@@ -238,14 +238,16 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
     };
 
     const exportVehicles = () => {
+        const vehiclesToExport = visibleSummaries.flatMap((summary) => summary.vehicles);
         const columns = [
             { label: 'Bil', width: 38, value: (_, index) => index + 1, center: true, numeric: true },
             { label: 'No. Kenderaan', width: 90, value: (vehicle) => vehicle.no_plate, center: true },
-            { label: 'Jenis Kenderaan', width: 110, value: (vehicle) => vehicle.jenis_kenderaan || '-', center: false },
+            ...(vehiclesToExport.some((vehicle) => vehicle.jenis_kenderaan?.trim())
+                ? [{ label: 'Jenis Kenderaan', width: 110, value: (vehicle) => vehicle.jenis_kenderaan || '-', center: false }]
+                : []),
             { label: 'Nama Pemandu', width: 150, value: (vehicle) => vehicle.nama_pemandu || '-', center: false },
             { label: 'No. Telefon', width: 85, value: (vehicle) => vehicle.no_tel || '-', center: true },
         ];
-        const vehiclesToExport = visibleSummaries.flatMap((summary) => summary.vehicles);
         const rowXml = (cells, header = false) => `<Row>${cells.map(({ value, center, numeric }) => `<Cell ss:StyleID="${header ? 'headerCenter' : (center ? (numeric ? 'cellNumber' : 'cellCenter') : 'cell')}"><Data ss:Type="${numeric ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`).join('')}</Row>`;
         const title = `Senarai Kenderaan — ${selectedUdm || 'Semua UDM'}`;
         const titleRow = `<Row><Cell ss:MergeAcross="${columns.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>`;
