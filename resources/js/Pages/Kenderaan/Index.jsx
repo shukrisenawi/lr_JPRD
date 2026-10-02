@@ -14,6 +14,8 @@ const emptyVehicle = (udm = '') => ({
     lokaliti: '',
 });
 
+const escapeXml = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
         car: <><path d="M5 17h14" /><path d="M6 17v2" /><path d="M18 17v2" /><path d="M4 17l1.5-6h13L20 17" /><path d="M7 11l1.5-4h7L17 11" /><circle cx="7" cy="17" r="1.5" /><circle cx="17" cy="17" r="1.5" /></>,
@@ -235,39 +237,30 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         form.setData('lokaliti', '');
     };
 
-    const exportVehicles = async () => {
-        const ExcelJS = (await import('exceljs')).default;
-        const workbook = new ExcelJS.Workbook();
-        workbook.creator = 'JPRD - Kenderaan';
-        const worksheet = workbook.addWorksheet('Senarai Kenderaan');
-        worksheet.columns = [
-            { header: 'UDM', key: 'udm', width: 24 },
-            { header: 'No. Kenderaan', key: 'no_plate', width: 20 },
-            { header: 'Jenis Kenderaan', key: 'jenis_kenderaan', width: 24 },
-            { header: 'Nama Pemandu', key: 'nama_pemandu', width: 32 },
-            { header: 'No. Telefon', key: 'no_tel', width: 18 },
-            { header: 'Lokaliti', key: 'lokaliti', width: 28 },
+    const exportVehicles = () => {
+        const columns = [
+            { label: 'Bil', width: 38, value: (_, index) => index + 1, center: true, numeric: true },
+            { label: 'UDM', width: 110, value: (vehicle) => vehicle.udm, center: false },
+            { label: 'No. Kenderaan', width: 90, value: (vehicle) => vehicle.no_plate, center: true },
+            { label: 'Jenis Kenderaan', width: 110, value: (vehicle) => vehicle.jenis_kenderaan || '-', center: false },
+            { label: 'Nama Pemandu', width: 150, value: (vehicle) => vehicle.nama_pemandu || '-', center: false },
+            { label: 'No. Telefon', width: 85, value: (vehicle) => vehicle.no_tel || '-', center: true },
+            { label: 'Lokaliti', width: 115, value: (vehicle) => vehicle.lokaliti || '-', center: false },
         ];
-        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF047857' } };
-        worksheet.views = [{ state: 'frozen', ySplit: 1 }];
-        visibleSummaries.flatMap((summary) => summary.vehicles).forEach((vehicle) => {
-            worksheet.addRow({
-                udm: vehicle.udm,
-                no_plate: vehicle.no_plate,
-                jenis_kenderaan: vehicle.jenis_kenderaan,
-                nama_pemandu: vehicle.nama_pemandu,
-                no_tel: vehicle.no_tel,
-                lokaliti: vehicle.lokaliti,
-            });
-        });
-        const content = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const vehiclesToExport = visibleSummaries.flatMap((summary) => summary.vehicles);
+        const rowXml = (cells, header = false) => `<Row>${cells.map(({ value, center, numeric }) => `<Cell ss:StyleID="${header ? 'headerCenter' : (center ? (numeric ? 'cellNumber' : 'cellCenter') : 'cell')}"><Data ss:Type="${numeric ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`).join('')}</Row>`;
+        const title = `Senarai Kenderaan — ${selectedUdm || 'Semua UDM'}`;
+        const titleRow = `<Row><Cell ss:MergeAcross="${columns.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>`;
+        const headers = rowXml(columns.map((column) => ({ value: column.label, center: true })), true);
+        const body = vehiclesToExport.map((vehicle, index) => rowXml(columns.map((column) => ({ value: column.value(vehicle, index), center: column.center, numeric: column.numeric })))).join('');
+        const styles = `<Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center" ss:WrapText="1"/><Borders/><Font ss:FontName="Calibri" ss:Size="10"/></Style><Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1"/></Style>${['headerCenter', 'cell', 'cellCenter', 'cellNumber'].map((id) => `<Style ss:ID="${id}"><Alignment ss:Horizontal="${id === 'cell' ? 'Left' : 'Center'}" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="10"${id === 'headerCenter' ? ' ss:Bold="1"' : ''}/>${id === 'headerCenter' ? '<Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>' : ''}</Style>`).join('')}</Styles>`;
+        const xml = `<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><x:ExcelWorkbook><x:WorksheetOptions><x:PageSetup><x:Layout x:Orientation="Landscape"/><x:PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></x:PageSetup><x:FitToPage/><x:Print><x:ValidPrinterInfo/><x:PaperSizeIndex>9</x:PaperSizeIndex><x:Scale>85</x:Scale></x:Print><x:DoNotDisplayGridlines/></x:WorksheetOptions></x:ExcelWorkbook>${styles}<Worksheet ss:Name="Kenderaan"><Table>${columns.map((column) => `<Column ss:AutoFitWidth="0" ss:Width="${column.width}"/>`).join('')}${titleRow}${headers}${body}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup><Layout x:Orientation="Landscape"/><PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></PageSetup><FitToPage/><Print><PaperSizeIndex>9</PaperSizeIndex><Scale>85</Scale></Print></WorksheetOptions></Worksheet></Workbook>`;
+        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         const filenameUdm = selectedUdm ? `-${selectedUdm.replace(/[^a-z0-9]+/gi, '-')}` : '';
         link.href = url;
-        link.download = `senarai-kenderaan${filenameUdm}.xlsx`;
+        link.download = `senarai-kenderaan${filenameUdm}.xls`;
         document.body.appendChild(link);
         link.click();
         link.remove();
