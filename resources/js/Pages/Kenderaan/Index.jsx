@@ -22,6 +22,7 @@ function Icon({ name, className = 'h-5 w-5' }) {
         trash: <><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></>,
         layers: <><path d="m12 2 9 5-9 5-9-5 9-5Z" /><path d="m3 12 9 5 9-5" /><path d="m3 17 9 5 9-5" /></>,
         list: <><path d="M8 6h13" /><path d="M8 12h13" /><path d="M8 18h13" /><path d="M3 6h.01" /><path d="M3 12h.01" /><path d="M3 18h.01" /></>,
+        download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></>,
     };
 
     return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -234,6 +235,45 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
         form.setData('lokaliti', '');
     };
 
+    const exportVehicles = async () => {
+        const ExcelJS = (await import('exceljs')).default;
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'JPRD - Kenderaan';
+        const worksheet = workbook.addWorksheet('Senarai Kenderaan');
+        worksheet.columns = [
+            { header: 'UDM', key: 'udm', width: 24 },
+            { header: 'No. Kenderaan', key: 'no_plate', width: 20 },
+            { header: 'Jenis Kenderaan', key: 'jenis_kenderaan', width: 24 },
+            { header: 'Nama Pemandu', key: 'nama_pemandu', width: 32 },
+            { header: 'No. Telefon', key: 'no_tel', width: 18 },
+            { header: 'Lokaliti', key: 'lokaliti', width: 28 },
+        ];
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF047857' } };
+        worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+        visibleSummaries.flatMap((summary) => summary.vehicles).forEach((vehicle) => {
+            worksheet.addRow({
+                udm: vehicle.udm,
+                no_plate: vehicle.no_plate,
+                jenis_kenderaan: vehicle.jenis_kenderaan,
+                nama_pemandu: vehicle.nama_pemandu,
+                no_tel: vehicle.no_tel,
+                lokaliti: vehicle.lokaliti,
+            });
+        });
+        const content = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const filenameUdm = selectedUdm ? `-${selectedUdm.replace(/[^a-z0-9]+/gi, '-')}` : '';
+        link.href = url;
+        link.download = `senarai-kenderaan${filenameUdm}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    };
+
     const normalizedDriverSearch = driverSearch.trim().toLowerCase();
     const visibleSummaries = normalizedDriverSearch === ''
         ? udmSummaries
@@ -277,7 +317,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                 <h2 className="mt-1 text-xl font-black text-slate-900">Senarai kenderaan</h2>
                                 <p className="mt-1 text-xs text-slate-500">Pilih satu UDM untuk melihat rekod kenderaannya.</p>
                             </div>
-                            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-[minmax(13rem,1fr)_14rem]">
+                            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-[minmax(13rem,1fr)_14rem_auto] sm:items-end">
                                 <div>
                                     <InputLabel htmlFor="kenderaan-carian-pemandu" value="Cari nama pemandu" />
                                     <input id="kenderaan-carian-pemandu" type="search" value={driverSearch} onChange={(event) => setDriverSearch(event.target.value)} placeholder="Contoh: Ahmad bin Ali" className="input-field mt-1.5" />
@@ -289,6 +329,9 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                         {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                                     </select>
                                 </div>
+                                <button type="button" onClick={exportVehicles} disabled={visibleVehicleCount === 0} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300">
+                                    <Icon name="download" className="h-4 w-4" /> Eksport Excel
+                                </button>
                             </div>
                         </div>
 
