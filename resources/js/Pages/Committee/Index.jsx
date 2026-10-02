@@ -891,6 +891,8 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const [suggestions, setSuggestions] = useState([]);
     const [selectedVoter, setSelectedVoter] = useState(null);
     const [selectedGroupId, setSelectedGroupId] = useState('');
+    const [excelExportTarget, setExcelExportTarget] = useState(null);
+    const [excelColumns, setExcelColumns] = useState(['bil', 'ic', 'nama', 'telefon']);
 
     const positionsForForm = useMemo(() => {
         if (!selectedGroupId) return [];
@@ -1173,54 +1175,19 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         }
     };
 
+    const prepareExcelExport = useCallback((members, title, filename) => {
+        const distinctPositions = new Set(members.map((m) => m.position?.name).filter(Boolean));
+        setExcelColumns(['bil', ...(distinctPositions.size > 1 ? ['jawatan'] : []), 'ic', 'nama', 'telefon']);
+        setExcelExportTarget({ members, title, filename });
+    }, []);
+
     const exportToExcel = useCallback(() => {
         const tabKey = resolvedTab;
         const tabLabel = tabs.find((t) => t.key === tabKey)?.label ?? tabKey.toUpperCase();
         const scope = currentScopes.find((s) => s.key === form.data.scope_key);
         const scopePart = tabKey === 'jprd' ? '' : ((scope?.parent_scope_name ? scope.parent_scope_name + '_' + scope.name : (scope?.name ?? '')).replace(/[\/\s]+/g, '_'));
-
-        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
-        const align = ['center', 'center', 'left', 'center'];
-        const widths = [30, 150, 520, 100];
-
-        const dataRows = filteredMemberships.map((m, i) => [
-            { value: i + 1, type: 'Number', align: 'center' },
-            { value: m.position?.name ?? '-', type: 'String', align: 'center' },
-            { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
-            { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
-        ]);
-
-        const colXml = widths.map((w) => '<Column ss:AutoFitWidth="1" ss:Width="' + w + '"/>').join('');
-        const titleXml = `
-            <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">Ahli Jawatankuasa ${tabLabel}</Data></Cell></Row>
-            ${tabKey === 'jprd' ? '' : `<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleSub"><Data ss:Type="String">${scopePart.replace(/_/g, ' ')}</Data></Cell></Row>`}
-        `;
-        const headerXml = '<Row>' + cols.map((h, i) => '<Cell ss:StyleID="' + (align[i] === 'center' ? 'headerCenter' : 'header') + '"><Data ss:Type="String">' + escapeXml(h) + '</Data></Cell>').join('') + '</Row>';
-        const bodyXml = dataRows.map((cells) => '<Row>' + cells.map((c) => '<Cell ss:StyleID="' + (c.align === 'center' ? 'cellCenter' : 'cell') + '"><Data ss:Type="' + c.type + '">' + escapeXml(c.value) + '</Data></Cell>').join('') + '</Row>').join('');
-
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
-<Styles>
-<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style>
-<Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="24" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
-<Style ss:ID="titleSub"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
-<Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-<Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-</Styles>
-<Worksheet ss:Name="Jawatankuasa"><Table>${colXml}${titleXml}${headerXml}${bodyXml}</Table></Worksheet>
-</Workbook>`;
-        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'AJK_' + tabLabel + (scopePart ? '_' + scopePart : '') + '.xls';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }, [resolvedTab, currentScopes, form.data.scope_key, filteredMemberships]);
+        prepareExcelExport(filteredMemberships, `Ahli Jawatankuasa ${tabLabel}${tabKey === 'jprd' ? '' : ` — ${scopePart.replace(/_/g, ' ')}`}`, `AJK_${tabLabel}${scopePart ? `_${scopePart}` : ''}.xls`);
+    }, [resolvedTab, currentScopes, form.data.scope_key, filteredMemberships, prepareExcelExport]);
 
     const exportGroupToExcel = useCallback((group) => {
         const tabKey = resolvedTab;
@@ -1235,54 +1202,43 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             });
         });
 
-        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
-        const align = ['center', 'center', 'left', 'center'];
-        const widths = [30, 150, 520, 100];
+        const groupNameClean = group.name.replace(/[\/\s]+/g, '_');
+        prepareExcelExport(allMembers, `${group.name} — ${tabLabel}${tabKey === 'jprd' ? '' : ` — ${scopePart.replace(/_/g, ' ')}`}`, `AJK_${groupNameClean}_${tabLabel}${scopePart ? `_${scopePart}` : ''}.xls`);
+    }, [resolvedTab, currentScopes, form.data.scope_key, prepareExcelExport]);
 
-        const dataRows = allMembers.map((m, i) => [
-            { value: i + 1, type: 'Number', align: 'center' },
-            { value: m.positionName ?? '-', type: 'String', align: 'center' },
-            { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
-            { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
-        ]);
-
-        const colXml = widths.map((w) => '<Column ss:AutoFitWidth="1" ss:Width="' + w + '"/>').join('');
-        const titleXml = `
-            <Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">${group.name} — ${tabLabel}</Data></Cell></Row>
-            ${tabKey === 'jprd' ? '' : `<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="titleSub"><Data ss:Type="String">${scopePart.replace(/_/g, ' ')}</Data></Cell></Row>`}
-        `;
-        const headerXml = '<Row>' + cols.map((h, i) => '<Cell ss:StyleID="' + (align[i] === 'center' ? 'headerCenter' : 'header') + '"><Data ss:Type="String">' + escapeXml(h) + '</Data></Cell>').join('') + '</Row>';
-        const bodyXml = dataRows.map((cells) => '<Row>' + cells.map((c) => '<Cell ss:StyleID="' + (c.align === 'center' ? 'cellCenter' : 'cell') + '"><Data ss:Type="' + c.type + '">' + escapeXml(c.value) + '</Data></Cell>').join('') + '</Row>').join('');
-
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
-<Styles>
-<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style>
-<Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="24" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
-<Style ss:ID="titleSub"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
-<Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-<Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-</Styles>
-<Worksheet ss:Name="Jawatankuasa"><Table>${colXml}${titleXml}${headerXml}${bodyXml}</Table></Worksheet>
-</Workbook>`;
+    const confirmExcelExport = useCallback(() => {
+        if (!excelExportTarget || !excelColumns.length) return;
+        const definitions = {
+            bil: { label: 'Bil', width: 38, value: (_, i) => i + 1, type: 'Number', center: true },
+            jawatan: { label: 'Jawatan', width: 115, value: (m) => m.positionName ?? m.position?.name ?? '-', center: false },
+            ic: { label: 'No. KP', width: 95, value: (m) => m.voter?.no_kp ?? m.voter?.old_ic ?? '-', center: true },
+            nama: { label: 'Nama', width: 190, value: (m) => m.voter?.name ?? '-', center: false },
+            telefon: { label: 'No. Tel', width: 90, value: (m) => m.voter?.phone_mobile || m.voter?.phone_home || '-', center: true },
+        };
+        const columns = excelColumns.map((key) => definitions[key]);
+        const rowXml = (cells, header = false) => `<Row>${cells.map(({ value, center, numeric }) => `<Cell ss:StyleID="${header ? (center ? 'headerCenter' : 'header') : (center ? (numeric ? 'cellNumber' : 'cellCenter') : 'cell')}"><Data ss:Type="${numeric ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`).join('')}</Row>`;
+        const titleRows = `<Row><Cell ss:MergeAcross="${columns.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">${escapeXml(excelExportTarget.title)}</Data></Cell></Row>`;
+        const headers = rowXml(columns.map((column) => ({ value: column.label, center: true })), true);
+        const body = excelExportTarget.members.map((member, i) => rowXml(columns.map((column) => ({ value: column.value(member, i), center: column.center, numeric: column.type === 'Number' })))).join('');
+        const styles = `<Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center" ss:WrapText="1"/><Borders/><Font ss:FontName="Calibri" ss:Size="10"/></Style><Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1"/></Style>${['header','headerCenter','cell','cellCenter','cellNumber'].map((id) => `<Style ss:ID="${id}"><Alignment ss:Horizontal="${id === 'header' || id === 'cell' ? 'Left' : 'Center'}" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="10"${id.startsWith('header') ? ' ss:Bold="1"' : ''}/>${id.startsWith('header') ? '<Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>' : ''}</Style>`).join('')}</Styles>`;
+        const xml = `<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><x:ExcelWorkbook><x:WorksheetOptions><x:PageSetup><x:Layout x:Orientation="Portrait"/><x:PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></x:PageSetup><x:FitToPage/><x:Print><x:ValidPrinterInfo/><x:PaperSizeIndex>9</x:PaperSizeIndex><x:Scale>85</x:Scale><x:HorizontalResolution>600</x:HorizontalResolution><x:VerticalResolution>600</x:VerticalResolution></x:Print><x:DoNotDisplayGridlines/></x:WorksheetOptions></x:ExcelWorkbook>${styles}<Worksheet ss:Name="Jawatankuasa"><Table>${columns.map((column) => `<Column ss:AutoFitWidth="0" ss:Width="${column.width}"/>`).join('')}${titleRows}${headers}${body}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup><Layout x:Orientation="Portrait"/><PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></PageSetup><FitToPage/><Print><PaperSizeIndex>9</PaperSizeIndex><Scale>85</Scale></Print></WorksheetOptions></Worksheet></Workbook>`;
         const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        const groupNameClean = group.name.replace(/[\/\s]+/g, '_');
-        link.download = 'AJK_' + groupNameClean + '_' + tabLabel + (scopePart ? '_' + scopePart : '') + '.xls';
+        link.download = excelExportTarget.filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-    }, [resolvedTab, currentScopes, form.data.scope_key]);
+        setExcelExportTarget(null);
+    }, [excelExportTarget, excelColumns]);
 
     useImperativeHandle(ref, () => ({ exportToExcel }), [exportToExcel]);
 
     return (
         <>
+        {excelExportTarget && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4" onClick={() => setExcelExportTarget(null)}><div role="dialog" aria-modal="true" aria-labelledby="excel-export-title" className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}><h3 id="excel-export-title" className="text-base font-bold text-slate-900">Pilih kolum untuk eksport</h3><p className="mt-1 text-sm text-slate-500">Fail disediakan untuk cetakan A4 dengan margin narrow dan teks wrap.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{ key: 'bil', label: 'Bil' }, { key: 'jawatan', label: 'Jawatan' }, { key: 'ic', label: 'No. KP' }, { key: 'nama', label: 'Nama' }, { key: 'telefon', label: 'No. Tel' }].map(({ key, label }) => <label key={key} className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"><input type="checkbox" checked={excelColumns.includes(key)} disabled={key === 'bil'} onChange={(event) => setExcelColumns((current) => event.target.checked ? [...current, key] : current.filter((column) => column !== key))} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />{label}</label>)}</div><div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setExcelExportTarget(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600">Batal</button><button type="button" disabled={!excelColumns.length} onClick={confirmExcelExport} className="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Muat turun Excel</button></div></div></div>}
         <section className="rounded-xl border border-green-600 bg-white shadow-sm shadow-green-600/20">
             <div className="rounded-t-[11px] border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
