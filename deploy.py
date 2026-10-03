@@ -119,7 +119,7 @@ def connect_ssh():
     return client
 
 
-def upload_file(sftp, local_path, remote_path):
+def upload_file(sftp, client, local_path, remote_path):
     """Upload a single file"""
     remote_full = os.path.join(REMOTE_DIR, remote_path).replace("\\", "/")
     remote_dir = os.path.dirname(remote_full)
@@ -128,23 +128,23 @@ def upload_file(sftp, local_path, remote_path):
     try:
         sftp.stat(remote_dir)
     except FileNotFoundError:
-        stdin, stdout, stderr = sftp.get_channel().get_transport().open_session()
-        stdin.write(f"mkdir -p {remote_dir}\n".encode())
-        stdin.close()
+        _, stdout, stderr = client.exec_command(f"mkdir -p {remote_dir}")
+        if stdout.channel.recv_exit_status() != 0:
+            raise RuntimeError(stderr.read().decode().strip() or f"Failed to create {remote_dir}")
 
     sftp.put(local_path, remote_full)
 
 
-def upload_build_files(sftp):
+def upload_build_files(sftp, client):
     """Upload public/build directory"""
     print("\n📤 Uploading public/build/ assets...")
     build_dir = os.path.join(LOCAL_DIR, "public", "build")
     remote_build = os.path.join(REMOTE_DIR, "public", "build").replace("\\", "/")
 
     # Clear old build on server
-    stdin, stdout, stderr = sftp.get_channel().get_transport().open_session()
-    stdin.write(f"rm -rf {remote_build}/*\n".encode())
-    stdin.close()
+    _, stdout, stderr = client.exec_command(f"rm -rf {remote_build}/*")
+    if stdout.channel.recv_exit_status() != 0:
+        raise RuntimeError(stderr.read().decode().strip() or "Failed to clear remote build directory")
 
     uploaded = 0
     for root, dirs, files in os.walk(build_dir):
@@ -239,7 +239,7 @@ def main():
         if os.path.isfile(local_file):
             remote_path = filepath.replace("\\", "/")
             try:
-                upload_file(sftp, local_file, remote_path)
+                upload_file(sftp, client, local_file, remote_path)
                 print(f"  ✅ {filepath}")
                 uploaded += 1
             except Exception as e:
@@ -248,7 +248,7 @@ def main():
     print(f"\n📊 Uploaded: {uploaded}, Skipped: {skipped}")
 
     # Step 5: Upload build files
-    upload_build_files(sftp)
+    upload_build_files(sftp, client)
 
     # Step 6: Clear caches
     clear_server_caches(client)
