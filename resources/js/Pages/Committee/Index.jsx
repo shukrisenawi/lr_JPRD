@@ -347,7 +347,7 @@ function GroupManager({ groups, positions: allPositions }) {
                             }
 
                             return (
-                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm transition hover:border-green-300 hover:shadow-md">
+                                <div key={group.id} className={'rounded-lg border bg-white shadow-sm transition hover:shadow-md ' + (isExpanded ? 'border-green-400 shadow-md ring-1 ring-green-100' : 'border-green-100 hover:border-green-300')}>
                                     <div className="flex items-start justify-between gap-2 p-2.5">
                                         <div className="min-w-0 flex-1">
                                             <p className="text-xs font-bold text-slate-800">{group.name}</p>
@@ -359,7 +359,7 @@ function GroupManager({ groups, positions: allPositions }) {
                                             </div>
                                         </div>
                                         <div className="flex shrink-0 items-center gap-1">
-                                            <button type="button" onClick={() => toggleExpand(group.id)} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50">Jawatan</button>
+                                            <button type="button" onClick={() => toggleExpand(group.id)} className={'rounded-md border px-2 py-1 text-[10px] font-bold transition ' + (isExpanded ? 'border-green-600 bg-green-600 text-white hover:bg-green-700' : 'border-green-200 bg-white text-green-700 hover:bg-green-50')}>Jawatan</button>
                                             <button type="button" onClick={() => startEdit(group)} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50">Edit</button>
                                             <button type="button" onClick={() => remove(group)} className="rounded-md border border-rose-200 bg-white px-2 py-1 text-[10px] font-bold text-rose-600 transition hover:bg-rose-50">Padam</button>
                                         </div>
@@ -1446,17 +1446,17 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                             const isExpanded = expandedGroupId === group.id;
                             const hasVacantPositions = group.positionsWithMembers.some((pos) => pos.members.length === 0);
                             return (
-                                <div key={group.id} className="rounded-lg border border-green-100 bg-white shadow-sm overflow-hidden">
+                                <div key={group.id} className={'overflow-hidden rounded-lg border shadow-sm transition ' + (isExpanded ? 'border-emerald-300 bg-emerald-50/40 shadow-md ring-1 ring-emerald-100' : 'border-green-100 bg-white')}>
                                     <button
                                         type="button"
                                         onClick={() => setExpandedGroupId(isExpanded ? null : group.id)}
-                                        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-green-50"
+                                        className={'flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition ' + (isExpanded ? 'bg-emerald-100/80 hover:bg-emerald-100' : 'hover:bg-green-50')}
                                     >
                                         <div className="flex items-center gap-2 min-w-0">
                                             <span className={'shrink-0 transition-transform duration-200 ' + (isExpanded ? 'rotate-90' : '')}>
-                                                <Icon name="chevronDown" className="h-4 w-4 text-slate-400" />
+                                                <Icon name="chevronDown" className={'h-4 w-4 ' + (isExpanded ? 'text-emerald-700' : 'text-slate-400')} />
                                             </span>
-                                            <span className="text-xs font-bold text-slate-800">{group.name}</span>
+                                            <span className={'text-xs font-bold ' + (isExpanded ? 'text-emerald-950' : 'text-slate-800')}>{group.name}</span>
                                             {group.description && <span className="text-[10px] text-slate-400 truncate">— {group.description}</span>}
                                         </div>
                                         <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
