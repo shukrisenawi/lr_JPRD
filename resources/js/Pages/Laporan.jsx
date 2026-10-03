@@ -498,7 +498,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                         <span>%</span>
                                     </label>
                                     <label className="flex items-center gap-1.5">
-                                        <span>Peratus kehadiran</span>
+                                        <span>Peratus kehadiran pengundi PAS</span>
                                         <input
                                             type="number"
                                             min="0"
@@ -506,7 +506,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                             step="1"
                                             value={culaAttendancePercent}
                                             onChange={(event) => setCulaAttendancePercent(event.target.value)}
-                                            aria-label="Peratus kehadiran Cula 2 dan PLK"
+                                            aria-label="Peratus kehadiran pengundi PAS bagi Cula 2 dan PLK"
                                             className="input-field w-14 px-2 py-1 text-center"
                                         />
                                         <span>%</span>
@@ -538,7 +538,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                 Anggaran keluar mengundi: {fmt(Math.round(estimatedTurnout))} daripada {fmt(activeVoterTotal)} pemilih aktif (tidak termasuk mati). Garisan kemenangan: {fmt(Math.round(winningLine))} undi.
                             </p>
                             <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">
-                                Anggaran kehadiran Cula 2 dan Cula 2 + PLK dikira sebanyak {clampPercent(culaAttendancePercent)}% daripada jumlah cula masing-masing.
+                                Anggaran kehadiran pengundi PAS bagi Cula 2 dan Cula 2 + PLK dikira sebanyak {clampPercent(culaAttendancePercent)}% daripada jumlah cula masing-masing.
                             </p>
                         </ChartPanel>
                         {udm_snapshot_meta && (
