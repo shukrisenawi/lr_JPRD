@@ -9,6 +9,31 @@ const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 const chartColors = ['#8b5cf6', '#a78bfa', '#38bdf8', '#bbf7d0', '#f59e0b', '#ef4444'];
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
+const udmDisplayOrder = [
+    'PADANG CHICHAK',
+    'KAMPUNG BETONG',
+    'KOTA BUKIT',
+    'KUALA JENERI',
+    'KAMPUNG KALAI',
+    'KAMPUNG KUALA BIGIA',
+    'KAMPUNG CHEMARA',
+    'KAMPUNG BIGIA',
+    'KAMPUNG TELUI',
+    'BATU LIMA',
+    'CHAROK PADANG',
+    'HUJONG BANDAR',
+    'KAMPUNG BANDAR',
+    'TUPAI',
+    'FELDA TELUI TIMOR',
+    'BERIS JAYA',
+];
+const udmDisplayOrderMap = new Map(udmDisplayOrder.map((name, index) => [name, index]));
+function compareUdm(a, b) {
+    const aOrder = udmDisplayOrderMap.get(a.name) ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = udmDisplayOrderMap.get(b.name) ?? Number.MAX_SAFE_INTEGER;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.name.localeCompare(b.name, 'ms');
+}
 
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
@@ -200,12 +225,14 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
     const filteredLocs = useMemo(() => {
         const kw = search.trim().toLowerCase();
-        if (!kw) return report.by_locality;
-        return report.by_locality.filter((r) => r.name.toLowerCase().includes(kw) || r.dm.toLowerCase().includes(kw) || r.code.toLowerCase().includes(kw));
+        const rows = kw
+            ? report.by_locality.filter((r) => r.name.toLowerCase().includes(kw) || r.dm.toLowerCase().includes(kw) || r.code.toLowerCase().includes(kw))
+            : report.by_locality;
+        return [...rows].sort((a, b) => compareUdm({ name: a.dm }, { name: b.dm }) || a.name.localeCompare(b.name, 'ms'));
     }, [report.by_locality, search]);
 
-    const dmChartRows = useMemo(() => [...report.by_dm].sort((a, b) => (b.total ?? 0) - (a.total ?? 0)).slice(0, 12), [report.by_dm]);
-    const dmDetails = report.dm_details ?? [];
+    const dmChartRows = useMemo(() => [...report.by_dm].sort(compareUdm), [report.by_dm]);
+    const dmDetails = useMemo(() => [...(report.dm_details ?? [])].sort(compareUdm), [report.dm_details]);
     const dmCulaRows = report.cula_by_dm ?? [];
     const dmDetailsMap = useMemo(() => {
         const map = {};
@@ -234,7 +261,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         return map;
     }, [report.completed_cula_by_dm]);
     const allUdmTableRows = useMemo(() => [...report.by_dm]
-        .sort((a, b) => (b.coverage_percent ?? 0) - (a.coverage_percent ?? 0))
+        .sort(compareUdm)
         .map(row => {
             const dtl = dmDetailsMap[row.key];
             const cula = culaByDmMap[row.key];
@@ -343,7 +370,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                 belum_ahli: Math.max(pasPlkTotal - ahliTotal, 0),
                 pas_plk: pasPlkTotal,
             };
-        }), [ahli_pas_stats, pasPlkByUdm]);
+        }).sort(compareUdm), [ahli_pas_stats, pasPlkByUdm]);
     const ahliPasChartHeight = Math.max(256, ahliPasUdmRows.length * 34);
     const selGender = useMemo(() => {
         if (!selUdm) return [];
@@ -546,7 +573,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         )}
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
-                            <ChartPanel title="Top UDM">
+                            <ChartPanel title="Pemilih Mengikut UDM">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={dmChartRows} margin={{ top: 4, right: 8, bottom: 56, left: 0 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
