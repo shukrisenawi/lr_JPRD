@@ -571,7 +571,7 @@ export default function AhliPasIndex({
                                         className="input-field mt-1.5"
                                     >
                                         <option value="">Semua UDM</option>
-                                        {available_dms.map((udm) => (
+                                        {orderUdms(available_dms).map((udm) => (
                                             <option key={udm} value={udm}>
                                                 {udm}
                                             </option>
@@ -778,7 +778,7 @@ export default function AhliPasIndex({
                                         className="input-field mt-1.5"
                                     >
                                         <option value="">Semua UDM</option>
-                                        {available_dms.map((udm) => (
+                                        {orderUdms(available_dms).map((udm) => (
                                             <option key={udm} value={udm}>
                                                 {udm}
                                             </option>

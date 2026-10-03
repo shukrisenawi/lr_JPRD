@@ -4,6 +4,7 @@ import CropModal from '@/Components/CropModal';
 import HashtagEditor from '@/Components/HashtagEditor';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 
 const bot = 'SSDP_Kedah_Bot';
 function cmd(v, p) { const n = v?.no_kp || v?.old_ic || ''; return n ? `/${p} ${n}` : ''; }
@@ -297,7 +298,7 @@ function SearchPanel() {
                                 <select value={selectedDm} onChange={(e) => { setSelectedDm(e.target.value); setSelectedLocality(''); }}
                                     className="input-field py-2 pl-3 pr-8 text-xs">
                                     <option value="">Semua UDM</option>
-                                    {available_dms.map((dm) => <option key={dm} value={dm}>{dm}</option>)}
+                                    {orderUdms(available_dms).map((dm) => <option key={dm} value={dm}>{dm}</option>)}
                                 </select>
                             </div>
                         )}

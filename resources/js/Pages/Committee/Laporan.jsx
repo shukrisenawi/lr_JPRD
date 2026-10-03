@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import { compareUdms } from '@/Utils/udmOrder';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -924,6 +925,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
             });
         }
         return [...list].sort((a, b) => {
+            if (activeTab === 'udm') return compareUdms(a, b);
             const aLatest = Math.max(...a.members.map((m) => new Date(m.updated_at).getTime()), 0);
             const bLatest = Math.max(...b.members.map((m) => new Date(m.updated_at).getTime()), 0);
             return bLatest - aLatest;

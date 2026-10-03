@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useMemo, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 
 const nf = new Intl.NumberFormat('ms-MY');
 const chartColors = ['#8b5cf6', '#a78bfa', '#38bdf8', '#bbf7d0', '#f59e0b', '#ef4444'];
@@ -224,7 +225,7 @@ export default function ProgramLaporan({ program, report }) {
                                 <ChartPanel title={`Ringkasan ${selUdm?.name ?? '-'}`} compact
                                     action={
                                         <select value={selUdm?.key ?? ''} onChange={(e) => setUdmKey(e.target.value)} className="input-field w-auto py-1.5 text-xs">
-                                            {report.dm_details.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
+                                            {orderUdms(report.dm_details).map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
                                         </select>
                                     }>
                                     <div className="grid gap-2 sm:grid-cols-4">

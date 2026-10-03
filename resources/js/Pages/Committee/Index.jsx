@@ -758,7 +758,7 @@ function SearchableScopeSelect({ id, value, scopes, memberships, onChange }) {
             groups.get(parentName).push(scope);
         });
 
-        return [...groups.entries()];
+        return orderUdms([...groups.keys()]).map((udm) => [udm, groups.get(udm)]);
     }, [scopes, query]);
 
     useEffect(() => {
@@ -933,7 +933,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             level: resolvedTab,
             scope_key: resolvedTab === 'cawangan' && initialCawanganScope && scopes.cawangan?.some((scope) => String(scope.key) === initialCawanganScope)
                 ? initialCawanganScope
-                : (scopes[resolvedTab]?.[0]?.key ?? ''),
+                : (resolvedTab === 'udm' ? orderUdms(scopes.udm ?? [])[0]?.key : scopes[resolvedTab]?.[0]?.key) ?? '',
         }));
         setSelectedGroupId('');
         setSelectedVoter(null);
@@ -1029,7 +1029,9 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         return map;
     }, [memberships]);
 
-    const currentScopes = scopes[resolvedTab] ?? [];
+    const currentScopes = resolvedTab === 'udm'
+        ? orderUdms(scopes.udm ?? [])
+        : scopes[resolvedTab] ?? [];
     const currentScope = currentScopes.find((scope) => String(scope.key) === String(form.data.scope_key));
 
     const canSendN8nMessage = auth?.user?.role?.is_master_admin || auth?.user?.allowed_modules?.includes('laporan-hantar-status');

@@ -96,7 +96,7 @@ function RepairModal({ legacyScopes, cawangans, onClose }) {
             if (!groups.has(cawangan.udm)) groups.set(cawangan.udm, []);
             groups.get(cawangan.udm).push(cawangan);
         });
-        return [...groups.entries()];
+        return orderUdms([...groups.keys()]).map((udm) => [udm, groups.get(udm)]);
     }, [cawangans]);
 
     const updateSelection = (index, value) => {
@@ -165,7 +165,7 @@ export default function Cawangan({ cawangans = [], udms = [], legacy_scopes = []
             if (!groups.has(cawangan.udm)) groups.set(cawangan.udm, []);
             groups.get(cawangan.udm).push(cawangan);
         });
-        return [...groups.entries()];
+        return orderUdms([...groups.keys()]).map((udm) => [udm, groups.get(udm)]);
     }, [cawangans]);
 
     const submitCreate = (event) => {

@@ -4,6 +4,7 @@ import HashtagInput from '@/Components/HashtagInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 import Swal from 'sweetalert2';
 
 function UserPlusIcon({ className = 'h-5 w-5' }) {
@@ -148,7 +149,7 @@ function FormTab({ dms, localitiesByDm, culaCodes, createdVoter }) {
                     <select id="dm" value={data.dm} onChange={e => handleDmChange(e.target.value)}
                         className="input-field w-full mt-0.5">
                         <option value="">-- Pilih UDM --</option>
-                        {dms.map(dm => <option key={dm} value={dm}>{dm}</option>)}
+                        {orderUdms(dms).map(dm => <option key={dm} value={dm}>{dm}</option>)}
                     </select>
                     {errors.dm && <p className="mt-0.5 text-xs font-bold text-rose-500">{errors.dm}</p>}
                 </div>
@@ -409,7 +410,7 @@ function EditModal({ voter, dms, localitiesByDm, culaCodes, onClose }) {
                             <label className="label-field">UDM</label>
                             <select value={data.dm} onChange={e => handleDmChange(e.target.value)} className="input-field w-full py-[5px] text-xs">
                                 <option value="">-- Pilih UDM --</option>
-                                {dms.map(dm => <option key={dm} value={dm}>{dm}</option>)}
+                                {orderUdms(dms).map(dm => <option key={dm} value={dm}>{dm}</option>)}
                             </select>
                         </div>
                         <div>
