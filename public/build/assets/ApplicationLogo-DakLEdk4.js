@@ -1,0 +1,1 @@
+import{j as i}from"./app-CiNiMOQm.js";const n="/sistem/public/build/assets/logo-BVbxA-Un.png";function p({className:o="",alt:s="Logo",...t}){return i.jsx("img",{...t,src:n,alt:s,className:o})}export{p as A};
