@@ -90,7 +90,7 @@ def run_npm_build():
     """Run npm run build locally"""
     print("\n📦 Building assets with npm run build...")
     result = subprocess.run(
-        ["npm", "run", "build"],
+        ["npm.cmd" if os.name == "nt" else "npm", "run", "build"],
         cwd=LOCAL_DIR,
         capture_output=True,
         text=True,
