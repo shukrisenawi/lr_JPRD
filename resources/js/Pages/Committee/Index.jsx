@@ -951,6 +951,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     }, [positionsForForm, form.data.committee_position_id]);
 
     const [expandedGroupId, setExpandedGroupId] = useState(null);
+    const [committeeSearchQuery, setCommitteeSearchQuery] = useState('');
     const expandedGroupHeaderRef = useRef(null);
 
     useEffect(() => {
@@ -1104,6 +1105,42 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             })
             .filter(g => g.totalMembers > 0 || (resolvedTab === 'cawangan' && g.positionsWithMembers.length > 0));
     }, [groups, resolvedTab, filteredMemberships]);
+
+    const { visibleGroupsWithMembers, visibleUnassignedMemberships } = useMemo(() => {
+        const query = committeeSearchQuery.trim().toLocaleLowerCase();
+        const normalizedQuery = query.replace(/\D/g, '');
+
+        const matchesMember = (member) => {
+            if (!query) return true;
+            const voter = member.voter ?? {};
+            const textValues = [voter.name, voter.no_kp, voter.old_ic, voter.phone_mobile, voter.phone_home];
+            if (textValues.some((value) => String(value ?? '').toLocaleLowerCase().includes(query))) return true;
+            return normalizedQuery.length > 0 && [voter.no_kp, voter.old_ic, voter.phone_mobile, voter.phone_home]
+                .some((value) => String(value ?? '').replace(/\D/g, '').includes(normalizedQuery));
+        };
+
+        const visibleGroups = groupsWithMembers.flatMap((group) => {
+            if (!query || group.name?.toLocaleLowerCase().includes(query)) return [group];
+
+            const positionsWithMatches = group.positionsWithMembers
+                .map((position) => ({ ...position, members: position.members.filter(matchesMember) }))
+                .filter((position) => position.members.length > 0);
+
+            return positionsWithMatches.length > 0
+                ? [{ ...group, positionsWithMembers: positionsWithMatches, matchedByMember: true }]
+                : [];
+        });
+
+        return {
+            visibleGroupsWithMembers: visibleGroups,
+            visibleUnassignedMemberships: unassignedMemberships.filter(matchesMember),
+        };
+    }, [committeeSearchQuery, groupsWithMembers, unassignedMemberships]);
+
+    useEffect(() => {
+        if (visibleGroupsWithMembers.length !== 1 || !visibleGroupsWithMembers[0].matchedByMember) return;
+        setExpandedGroupId(visibleGroupsWithMembers[0].id);
+    }, [visibleGroupsWithMembers]);
 
     useEffect(() => {
         if (!openCawanganAccordion || resolvedTab !== 'cawangan' || expandedGroupId !== null) return;
@@ -1440,7 +1477,18 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                         <InputError className="mt-1" message={form.errors.notes} />
                     </div>
 
-                    <div className="flex justify-end">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                        <div className="relative w-full sm:max-w-sm">
+                            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="search"
+                                value={committeeSearchQuery}
+                                onChange={(event) => setCommitteeSearchQuery(event.target.value)}
+                                aria-label="Cari kumpulan atau ahli jawatankuasa"
+                                placeholder="Cari kumpulan, nama, No. KP atau telefon..."
+                                className="input-field w-full pl-9 text-xs"
+                            />
+                        </div>
                         <PrimaryButton disabled={form.processing || !positionsForForm.length} className="rounded-lg px-4 py-2 text-xs font-bold">
                             {form.processing ? '...' : 'Tambah Ahli'}
                         </PrimaryButton>
@@ -1449,11 +1497,13 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
             </div>
 
             <div className="border-t border-green-100 p-3">
-                {groupsWithMembers.length === 0 && unassignedMemberships.length === 0 ? (
-                    <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">Belum ada kumpulan atau ahli untuk peringkat ini.</div>
+                {visibleGroupsWithMembers.length === 0 && visibleUnassignedMemberships.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-green-200 bg-green-50/50 py-4 text-center text-xs text-slate-400">
+                        {committeeSearchQuery.trim() ? 'Tiada kumpulan atau AJK sepadan dengan carian.' : 'Belum ada kumpulan atau ahli untuk peringkat ini.'}
+                    </div>
                 ) : (
                     <div className="space-y-2">
-                        {groupsWithMembers.map((group) => {
+                        {visibleGroupsWithMembers.map((group) => {
                             const isExpanded = expandedGroupId === group.id;
                             const hasVacantPositions = group.positionsWithMembers.some((pos) => pos.members.length === 0);
                             return (
@@ -1594,11 +1644,11 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                     </div>
                 )}
 
-                {unassignedMemberships.length > 0 && (
+                {visibleUnassignedMemberships.length > 0 && (
                     <div className="mt-3 rounded-lg border border-dashed border-amber-300 bg-amber-50 p-3">
                         <p className="mb-2 text-xs font-bold text-amber-700">Ahli tanpa kumpulan</p>
                         <div className="flex flex-wrap gap-1">
-                            {unassignedMemberships.map((m) => (
+                            {visibleUnassignedMemberships.map((m) => (
                                 <span key={m.id} className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">
                                     {m.voter?.name} — {m.position?.name}
                                 </span>
