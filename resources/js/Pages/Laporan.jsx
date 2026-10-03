@@ -155,6 +155,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const [n8nNotice, setN8nNotice] = useState('');
     const [winningPercent, setWinningPercent] = useState('50');
     const [turnoutPercent, setTurnoutPercent] = useState('85');
+    const [culaAttendancePercent, setCulaAttendancePercent] = useState('100');
 
     const openN8nModal = () => {
         setN8nMessage(culaan_message);
@@ -276,9 +277,9 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const udmTableRows = allUdmTableRows.slice(0, 25);
     const victoryChartRows = useMemo(() => [{
         name: 'Jumlah keseluruhan',
-        pas: allUdmTableRows.reduce((sum, row) => sum + (row.PAS ?? 0), 0),
-        pas_plk: allUdmTableRows.reduce((sum, row) => sum + (row.PAS_TOTAL ?? 0), 0),
-    }], [allUdmTableRows]);
+        pas: Math.round(allUdmTableRows.reduce((sum, row) => sum + (row.PAS ?? 0), 0) * clampPercent(culaAttendancePercent) / 100),
+        pas_plk: Math.round(allUdmTableRows.reduce((sum, row) => sum + (row.PAS_TOTAL ?? 0), 0) * clampPercent(culaAttendancePercent) / 100),
+    }], [allUdmTableRows, culaAttendancePercent]);
     const activeVoterTotal = useMemo(() => allUdmTableRows.reduce((sum, row) => sum + (row.JP ?? 0), 0), [allUdmTableRows]);
     const estimatedTurnout = activeVoterTotal * clampPercent(turnoutPercent) / 100;
     const winningLine = estimatedTurnout * clampPercent(winningPercent) / 100;
@@ -496,6 +497,20 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                                         />
                                         <span>%</span>
                                     </label>
+                                    <label className="flex items-center gap-1.5">
+                                        <span>Peratus kehadiran</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="1"
+                                            value={culaAttendancePercent}
+                                            onChange={(event) => setCulaAttendancePercent(event.target.value)}
+                                            aria-label="Peratus kehadiran Cula 2 dan PLK"
+                                            className="input-field w-14 px-2 py-1 text-center"
+                                        />
+                                        <span>%</span>
+                                    </label>
                                 </div>
                             }
                         >
@@ -521,6 +536,9 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                             </div>
                             <p className="mt-2 text-[11px] font-medium text-slate-500 sm:text-xs">
                                 Anggaran keluar mengundi: {fmt(Math.round(estimatedTurnout))} daripada {fmt(activeVoterTotal)} pemilih aktif (tidak termasuk mati). Garisan kemenangan: {fmt(Math.round(winningLine))} undi.
+                            </p>
+                            <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">
+                                Anggaran kehadiran Cula 2 dan Cula 2 + PLK dikira sebanyak {clampPercent(culaAttendancePercent)}% daripada jumlah cula masing-masing.
                             </p>
                         </ChartPanel>
                         {udm_snapshot_meta && (
