@@ -951,6 +951,17 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     }, [positionsForForm, form.data.committee_position_id]);
 
     const [expandedGroupId, setExpandedGroupId] = useState(null);
+    const expandedGroupHeaderRef = useRef(null);
+
+    useEffect(() => {
+        if (expandedGroupId === null) return;
+
+        const frame = window.requestAnimationFrame(() => {
+            expandedGroupHeaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        return () => window.cancelAnimationFrame(frame);
+    }, [expandedGroupId]);
 
     const [multiPosExpand, setMultiPosExpand] = useState({});
     const [quickAddModal, setQuickAddModal] = useState(null);
@@ -1448,9 +1459,10 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                             return (
                                 <div key={group.id} className={'overflow-hidden rounded-lg border shadow-sm transition ' + (isExpanded ? 'border-emerald-300 bg-emerald-50/40 shadow-md ring-1 ring-emerald-100' : 'border-green-100 bg-white')}>
                                     <button
+                                        ref={isExpanded ? expandedGroupHeaderRef : null}
                                         type="button"
                                         onClick={() => setExpandedGroupId(isExpanded ? null : group.id)}
-                                        className={'flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition ' + (isExpanded ? 'bg-emerald-100/80 hover:bg-emerald-100' : 'hover:bg-green-50')}
+                                        className={'scroll-mt-20 flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition ' + (isExpanded ? 'bg-emerald-100/80 hover:bg-emerald-100' : 'hover:bg-green-50')}
                                     >
                                         <div className="flex items-center gap-2 min-w-0">
                                             <span className={'shrink-0 transition-transform duration-200 ' + (isExpanded ? 'rotate-90' : '')}>
