@@ -6,6 +6,7 @@ import HashtagEditor from '@/Components/HashtagEditor';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { orderUdms } from '@/Utils/udmOrder';
 
 const nf = new Intl.NumberFormat('ms-MY');
 const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
@@ -1363,7 +1364,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                                     className="input-field mt-1.5"
                                 >
                                     <option value="">Semua UDM</option>
-                                    {udms.map((udm) => (
+                                    {orderUdms(udms).map((udm) => (
                                         <option key={udm} value={udm}>{udm}</option>
                                     ))}
                                 </select>
@@ -1634,7 +1635,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                 {tab === 'senarai' && (
                     showUdmSummary ? (
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                            {udmSummaries.map((summaryItem) => <UdmSummaryCard key={summaryItem.key} summary={summaryItem} onSelect={(udm) => updateFilter('udm', udm)} />)}
+                            {orderUdms(udmSummaries).map((summaryItem) => <UdmSummaryCard key={summaryItem.key} summary={summaryItem} onSelect={(udm) => updateFilter('udm', udm)} />)}
                         </div>
                     ) : <section>
                         {rows.length === 0 ? (

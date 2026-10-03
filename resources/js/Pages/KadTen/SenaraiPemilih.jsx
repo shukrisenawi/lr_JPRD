@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
+import { orderUdms } from '@/Utils/udmOrder';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -196,7 +197,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                             <select value={form.udm} onChange={e => updateFilter('udm', e.target.value)}
                                 className="input-field mt-1.5">
                                 <option value="">Semua UDM</option>
-                                {udms.map(u => <option key={u} value={u}>{u}</option>)}
+                                {orderUdms(udms).map(u => <option key={u} value={u}>{u}</option>)}
                             </select>
                         </div>
                         <div>

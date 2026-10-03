@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 
 const emptyVehicle = (udm = '') => ({
     udm,
@@ -319,7 +320,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                     <InputLabel htmlFor="kenderaan-filter-udm" value="Tapis UDM" />
                                     <select id="kenderaan-filter-udm" value={selectedUdm} onChange={changeUdm} disabled={!canSelectAll} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100">
                                         {canSelectAll && <option value="">Semua UDM</option>}
-                                        {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                        {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                                     </select>
                                 </div>
                                 <button type="button" onClick={exportVehicles} disabled={visibleVehicleCount === 0} className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300">
@@ -329,7 +330,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                         </div>
 
                         <div className={`mt-4 grid gap-4 ${selectedUdm === '' ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
-                            {visibleSummaries.length > 0 ? visibleSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} showVehicles={selectedUdm !== ''} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
+                            {visibleSummaries.length > 0 ? orderUdms(visibleSummaries).map((summary) => <UdmCard key={summary.udm} summary={summary} showVehicles={selectedUdm !== ''} onSelect={selectUdm} onEdit={openEdit} onDelete={deleteVehicle} />) : (
                                 <div className="rounded-2xl border-2 border-dashed border-green-200 bg-green-50/50 px-5 py-12 text-center md:col-span-2">
                                     <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div>
                                     <h3 className="mt-3 text-sm font-black text-slate-800">{normalizedDriverSearch ? 'Tiada kenderaan ditemui' : 'Belum ada UDM'}</h3>
@@ -355,7 +356,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                 <InputLabel htmlFor="kenderaan-udm" value="UDM" />
                                 <select id="kenderaan-udm" value={form.data.udm} onChange={changeFormUdm} disabled={!canSelectAll} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100" required>
                                     <option value="">Pilih UDM</option>
-                                    {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                    {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                                 </select>
                                 <InputError message={form.errors.udm} className="mt-1" />
                             </div>

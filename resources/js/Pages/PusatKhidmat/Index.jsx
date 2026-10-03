@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 
 const nf = new Intl.NumberFormat('ms-MY');
 
@@ -757,7 +758,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                                     >
                                         <option value="">Semua UDM</option>
-                                        {udms.map((dm) => (
+                                        {orderUdms(udms).map((dm) => (
                                             <option key={dm} value={dm}>{dm}</option>
                                         ))}
                                     </select>

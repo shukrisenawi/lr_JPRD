@@ -2,6 +2,7 @@ import InputError from '@/Components/InputError';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import { Head, router, usePage } from '@inertiajs/react';
+import { orderUdms } from '@/Utils/udmOrder';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
@@ -986,7 +987,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                         className="input-field mt-1"
                                     >
                                         <option value="">Semua UDM</option>
-                                        {udms.map((udm) => (
+                                        {orderUdms(udms).map((udm) => (
                                             <option key={udm} value={udm}>{udm}</option>
                                         ))}
                                     </select>

@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import InputError from '@/Components/InputError';
 import CropModal from '@/Components/CropModal';
 import { Head, router, usePage } from '@inertiajs/react';
+import { orderUdms } from '@/Utils/udmOrder';
 import { useEffect, useRef, useState } from 'react';
 
 const nf = new Intl.NumberFormat('ms-MY');
@@ -624,7 +625,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                             onChange={(e) => updateFilter('udm', e.target.value)}
                                             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20">
                                             <option value="">Semua UDM</option>
-                                            {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                            {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                                         </select>
                                     </div>
                                     <div>

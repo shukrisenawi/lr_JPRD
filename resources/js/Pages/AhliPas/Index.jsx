@@ -2,6 +2,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import N8nMessageModal from "@/Components/N8nMessageModal";
 import { Head, router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
+import { orderUdms } from '@/Utils/udmOrder';
 
 function Icon({ name, className = "h-5 w-5" }) {
     const paths = {
@@ -1066,7 +1067,7 @@ export default function AhliPasIndex({
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {(statistics?.by_udm ?? []).map(
+                                            {orderUdms(statistics?.by_udm ?? []).map(
                                                 (row) => (
                                                     <tr key={row.udm}>
                                                         <td className="px-4 py-2 font-semibold text-slate-700">

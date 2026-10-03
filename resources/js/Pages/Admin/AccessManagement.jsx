@@ -6,6 +6,7 @@ import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 
 function Icon({ name, className = 'h-4 w-4' }) {
     const paths = {
@@ -145,7 +146,7 @@ function ScopeSelect({ data, setData, errors, udms, cawangans, prefix = '' }) {
                         <FieldIcon name="mapPin" />
                         <select id={`${prefix}sk`} value={scopeKey} onChange={(e) => setData('scope_key', e.target.value)} className="input-field pl-10">
                             <option value="">-- Pilih UDM --</option>
-                            {udms.map((dm) => <option key={dm} value={dm}>{dm}</option>)}
+                            {orderUdms(udms).map((dm) => <option key={dm} value={dm}>{dm}</option>)}
                         </select>
                     </div>
                     <InputError className="mt-1" message={errors.scope_key} />

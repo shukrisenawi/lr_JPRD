@@ -4,6 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -127,7 +128,7 @@ function DanaForm({ form, editing, categories, udms, canSelectAll, onClose, onSu
                     <InputLabel htmlFor="dana-udm" value="UDM" />
                     <select id="dana-udm" value={form.data.udm} onChange={(event) => form.setData('udm', event.target.value)} disabled={!canSelectAll} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-100" required>
                         <option value="">Pilih UDM</option>
-                        {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                        {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                     </select>
                     <InputError message={form.errors.udm} className="mt-1" />
                 </div>
@@ -329,7 +330,7 @@ export default function Index({ dana = [], udms = [], udmSummaries = [], selecte
                         {selectedUdm ? <>
                             {selectedSummary && <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 sm:grid-cols-4"><div><p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Baki</p><p className={`mt-1 text-sm font-black ${Number(selectedSummary.baki) < 0 ? 'text-rose-700' : 'text-emerald-700'}`}>{formatCurrency(selectedSummary.baki)}</p></div><div><p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Masuk</p><p className="mt-1 text-sm font-black text-emerald-700">{formatCurrency(selectedSummary.total_masuk)}</p></div><div><p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Keluar</p><p className="mt-1 text-sm font-black text-rose-700">{formatCurrency(selectedSummary.total_keluar)}</p></div><div><p className="text-[9px] font-bold uppercase tracking-wide text-slate-400">Rekod</p><p className="mt-1 text-sm font-black text-slate-700">{selectedSummary.count}</p></div></div>}
                             <div className="mt-4 divide-y divide-emerald-100 overflow-hidden rounded-xl border border-emerald-100 bg-white">{dana.length > 0 ? dana.map((fund) => <DanaRow key={fund.id} dana={fund} onEdit={openEdit} onDelete={deleteFund} />) : <div className="px-5 py-12 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600"><Icon name="wallet" className="h-6 w-6" /></div><h3 className="mt-3 text-sm font-black text-slate-800">Belum ada rekod dana</h3><p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">Tambah transaksi pertama untuk {selectedUdm} menggunakan borang di sebelah.</p></div>}</div>
-                        </> : <div className="mt-4 grid gap-4 md:grid-cols-2">{udmSummaries.length > 0 ? udmSummaries.map((summary) => <UdmCard key={summary.udm} summary={summary} selected={false} onSelect={selectUdm} />) : <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 px-5 py-12 text-center md:col-span-2"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div><h3 className="mt-3 text-sm font-black text-slate-800">Belum ada UDM</h3><p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">UDM aktif akan muncul di sini apabila data pemilih tersedia.</p></div>}</div>}
+                        </> : <div className="mt-4 grid gap-4 md:grid-cols-2">{udmSummaries.length > 0 ? orderUdms(udmSummaries).map((summary) => <UdmCard key={summary.udm} summary={summary} selected={false} onSelect={selectUdm} />) : <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50/50 px-5 py-12 text-center md:col-span-2"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm"><Icon name="list" className="h-6 w-6" /></div><h3 className="mt-3 text-sm font-black text-slate-800">Belum ada UDM</h3><p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">UDM aktif akan muncul di sini apabila data pemilih tersedia.</p></div>}</div>}
                     </section>
 
                     <div className="order-1 lg:order-2"><DanaForm form={form} editing={editing} categories={categories} udms={udms} canSelectAll={canSelectAll} onClose={closeForm} onSubmit={submit} /></div>

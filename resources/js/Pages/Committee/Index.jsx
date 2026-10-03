@@ -7,6 +7,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { orderUdms } from '@/Utils/udmOrder';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -839,7 +840,7 @@ function SearchableScopeSelect({ id, value, scopes, memberships, onChange }) {
                                         {udm}
                                     </p>
                                     <div className="py-0.5">
-                                        {udmScopes.map((scope) => {
+                                        {orderUdms(udmScopes).map((scope) => {
                                             const hasMembers = scopesWithMembers.has(scope.key);
                                             const isSelected = scope.key === value;
 

@@ -5,6 +5,7 @@ import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
+import { orderUdms } from '@/Utils/udmOrder';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -46,7 +47,7 @@ function CawanganCard({ cawangan, udms, editing = false, onEdit, onCancel, onDel
                         <InputLabel htmlFor={`edit-cawangan-udm-${cawangan.id}`} value="UDM" />
                         <select id={`edit-cawangan-udm-${cawangan.id}`} value={editForm.data.udm} onChange={(event) => editForm.setData('udm', event.target.value)} className="input-field mt-1 text-xs">
                             <option value="">Pilih UDM</option>
-                            {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                            {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                         </select>
                         <InputError className="mt-1" message={editForm.errors.udm} />
                     </div>
@@ -212,7 +213,7 @@ export default function Cawangan({ cawangans = [], udms = [], legacy_scopes = []
                             <InputLabel htmlFor="cawangan-udm" value="Di bawah UDM" />
                             <select id="cawangan-udm" value={createForm.data.udm} onChange={(event) => createForm.setData('udm', event.target.value)} className="input-field mt-1 text-xs">
                                 <option value="">Pilih UDM</option>
-                                {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                             </select>
                             <InputError className="mt-1" message={createForm.errors.udm} />
                         </div>
