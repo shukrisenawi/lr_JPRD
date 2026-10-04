@@ -207,6 +207,25 @@ it('prioritizes the selected UDM in driver suggestions', function () {
         ->assertJsonPath('suggestions.0.dm', 'UDM BETA');
 });
 
+it('finds a driver by their complete name for vehicle autofill', function () {
+    PemilihRecord::query()->create([
+        'identity_number' => 'JASMEE-DRIVER-001',
+        'name' => 'JASMEE BIN ZALI',
+        'dm' => 'HUJONG BANDAR',
+        'locality' => 'KG HUJONG BANDAR',
+        'phone_mobile' => '0103427305',
+        'status' => 'aktif',
+    ]);
+    $user = User::factory()->withModules(['dashboard', 'kenderaan'])->create();
+
+    $this->actingAs($user)
+        ->getJson(route('kenderaan.pemandu-search').'?q=Jasmee%20bin%20Zali&udm=HUJONG%20BANDAR')
+        ->assertOk()
+        ->assertJsonPath('suggestions.0.name', 'JASMEE BIN ZALI')
+        ->assertJsonPath('suggestions.0.phone_mobile', '0103427305')
+        ->assertJsonPath('suggestions.0.locality', 'KG HUJONG BANDAR');
+});
+
 it('requires the vehicle module before opening the vehicle page', function () {
     $user = User::factory()->withModules(['dashboard'])->create();
 

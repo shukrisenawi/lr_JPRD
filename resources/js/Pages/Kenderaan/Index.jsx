@@ -378,7 +378,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                     {!searchingDrivers && driverSuggestions.length > 0 && (
                                         <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
                                             {driverSuggestions.map((driver) => (
-                                                <button key={driver.id} type="button" onClick={() => selectDriver(driver)} className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition last:border-0 hover:bg-green-50">
+                                                <button key={driver.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectDriver(driver)} className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition last:border-0 hover:bg-green-50">
                                                     <span className={`block truncate text-xs font-bold ${preferredDriverUdm && driver.dm?.toLowerCase() === preferredDriverUdm.toLowerCase() ? 'text-green-700' : 'text-slate-800'}`}>{driver.name}</span>
                                                     <span className="mt-0.5 block truncate text-[10px] text-slate-500">{driver.is_manual ? 'Pemilih manual' : 'Data pemilih'}{driver.no_kp ? ` · ${driver.no_kp}` : ''}</span>
                                                     {(driver.phone_mobile || driver.phone_home) && <span className="mt-0.5 block truncate text-[10px] text-green-700">Tel: {driver.phone_mobile || driver.phone_home}</span>}
