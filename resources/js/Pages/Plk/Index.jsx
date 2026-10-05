@@ -439,7 +439,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             const date = new Date();
             const dateLabel = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
             addMergedRow('SENARAI PEMILIH PLK DUN JENERI', { size: 16, color: 'FFFFFFFF', fill: 'FF047857' });
-            addMergedRow(`Dijana pada ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
+            addMergedRow(`Tarikh : ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
 
             const sortedUdms = orderUdms([...udmGroups.keys()]);
             if (sortedUdms.length === 0) {
@@ -471,7 +471,10 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Senarai_PLK_${dateLabel}.xlsx`;
+            const filenameUdm = selectedUdm
+                ? selectedUdm.trim().replace(/[<>:"\/\\|?*]+/g, '_').replace(/\s+/g, '_')
+                : 'SEMUA_UDM';
+            link.download = `SENARAI_PEMILIH_PLK_DUN_JENERI_${filenameUdm}_${dateLabel}.xlsx`;
             document.body.appendChild(link);
             link.click();
             link.remove();
