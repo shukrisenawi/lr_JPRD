@@ -141,6 +141,8 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::get('/keluarga-pemilih', [KeluargaPemilihController::class, 'index'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.index');
     Route::get('/keluarga-pemilih/search', [KeluargaPemilihController::class, 'search'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.search');
     Route::post('/keluarga-pemilih', [KeluargaPemilihController::class, 'store'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.store');
+    Route::put('/keluarga-pemilih/{pemilihFamily}', [KeluargaPemilihController::class, 'updateName'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.update');
+    Route::put('/keluarga-pemilih/{pemilihFamily}/father', [KeluargaPemilihController::class, 'updateFather'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.father.update');
     Route::post('/keluarga-pemilih/auto', [KeluargaPemilihController::class, 'auto'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.auto');
     Route::post('/keluarga-pemilih/{pemilihFamily}/members', [KeluargaPemilihController::class, 'addMembers'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.members.store');
     Route::delete('/keluarga-pemilih/{pemilihFamily}/members/{pemilihRecord}', [KeluargaPemilihController::class, 'removeMember'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.members.destroy');

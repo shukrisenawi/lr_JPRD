@@ -11,11 +11,17 @@ class PemilihFamily extends Model
     protected $fillable = [
         'name',
         'created_by',
+        'father_pemilih_record_id',
     ];
 
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function father(): BelongsTo
+    {
+        return $this->belongsTo(PemilihRecord::class, 'father_pemilih_record_id');
     }
 
     public function members(): BelongsToMany

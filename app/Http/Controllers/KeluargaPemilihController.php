@@ -61,19 +61,29 @@ class KeluargaPemilihController extends Controller
         ])->values();
 
         $families = (clone $familiesQuery)
-            ->with(['members' => function ($query) use ($user, $udmFilter): void {
-                $user->applyScopeToPemilihQuery($query);
-                if ($udmFilter !== '') {
-                    $query->where('pemilih_records.dm', $udmFilter);
-                }
-                $query->orderBy('pemilih_records.name');
-            }])
+            ->with([
+                'father' => function ($query) use ($user, $udmFilter): void {
+                    $user->applyScopeToPemilihQuery($query);
+                    if ($udmFilter !== '') {
+                        $query->where('pemilih_records.dm', $udmFilter);
+                    }
+                },
+                'members' => function ($query) use ($user, $udmFilter): void {
+                    $user->applyScopeToPemilihQuery($query);
+                    if ($udmFilter !== '') {
+                        $query->where('pemilih_records.dm', $udmFilter);
+                    }
+                    $query->orderBy('pemilih_records.name');
+                },
+            ])
             ->orderByDesc('id')
             ->paginate(12)
             ->withQueryString()
             ->through(fn (PemilihFamily $family): array => [
                 'id' => $family->id,
                 'name' => $family->name,
+                'father_id' => $family->father?->id,
+                'father_name' => $family->father?->name,
                 'created_at' => $family->created_at,
                 'members' => $family->members->map(fn (PemilihRecord $voter): array => $this->voterPayload($voter)),
                 'member_count' => $family->members->count(),
@@ -103,9 +113,11 @@ class KeluargaPemilihController extends Controller
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'anchor_id' => ['nullable', 'integer'],
+            'anchor_as_father' => ['nullable', 'boolean'],
         ]);
         $user = $request->user();
         $term = trim((string) ($validated['q'] ?? ''));
+        $anchorIsFather = (bool) ($validated['anchor_as_father'] ?? false);
         $anchor = null;
 
         if (! empty($validated['anchor_id'])) {
@@ -126,7 +138,7 @@ class KeluargaPemilihController extends Controller
                 ->limit(100)
                 ->get();
         } elseif ($anchor) {
-            $records = $this->suggestionCandidates($query, $anchor);
+            $records = $this->suggestionCandidates($query, $anchor, $anchorIsFather);
         } else {
             $records = collect();
         }
@@ -134,7 +146,7 @@ class KeluargaPemilihController extends Controller
         $results = $records
             ->map(fn (PemilihRecord $voter): array => $this->voterPayload(
                 $voter,
-                $anchor ? $this->matchDetails($anchor, $voter) : null,
+                $anchor ? $this->matchDetails($anchor, $voter, $anchorIsFather) : null,
             ))
             ->sort(function (array $left, array $right): int {
                 return ($right['match_score'] <=> $left['match_score'])
@@ -176,6 +188,45 @@ class KeluargaPemilihController extends Controller
             ->with('success', "{$family->name} berjaya dicipta dengan ".count($validated['pemilih_ids']).' pemilih.');
     }
 
+    public function updateName(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+        $family = $this->visibleFamilyQuery($request->user())->findOrFail($pemilihFamily->id);
+        $family->update(['name' => trim($validated['name'])]);
+
+        return redirect()
+            ->route('keluarga-pemilih.index')
+            ->with('success', 'Nama keluarga berjaya dikemaskini.');
+    }
+
+    public function updateFather(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
+    {
+        $validated = $request->validate([
+            'father_id' => ['nullable', 'integer', Rule::exists('pemilih_records', 'id')],
+        ]);
+        $user = $request->user();
+        $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
+        $fatherId = $validated['father_id'] ?? null;
+
+        if ($fatherId !== null) {
+            $father = PemilihRecord::query()->findOrFail($fatherId);
+            if (! $user->canAccessPemilihRecord($father)
+                || ! $family->members()->where('pemilih_records.id', $father->id)->exists()) {
+                throw ValidationException::withMessages([
+                    'father_id' => 'Ayah mesti salah seorang ahli keluarga dalam skop akses anda.',
+                ]);
+            }
+        }
+
+        $family->update(['father_pemilih_record_id' => $fatherId]);
+
+        return redirect()
+            ->route('keluarga-pemilih.index')
+            ->with('success', $fatherId === null ? 'Tanda ayah dibuang.' : 'Pemilih ditandakan sebagai ayah keluarga.');
+    }
+
     public function addMembers(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
     {
         $validated = $request->validate([
@@ -206,10 +257,16 @@ class KeluargaPemilihController extends Controller
             404,
         );
 
-        $family->members()->detach($pemilihRecord->id);
-        if (! $family->members()->exists()) {
-            $family->delete();
-        }
+        DB::transaction(function () use ($family, $pemilihRecord): void {
+            if ((int) $family->father_pemilih_record_id === (int) $pemilihRecord->id) {
+                $family->update(['father_pemilih_record_id' => null]);
+            }
+
+            $family->members()->detach($pemilihRecord->id);
+            if (! $family->members()->exists()) {
+                $family->delete();
+            }
+        });
 
         return redirect()
             ->route('keluarga-pemilih.index')
@@ -338,13 +395,13 @@ class KeluargaPemilihController extends Controller
         });
     }
 
-    private function suggestionCandidates(Builder $query, PemilihRecord $anchor): Collection
+    private function suggestionCandidates(Builder $query, PemilihRecord $anchor, bool $anchorIsFather = false): Collection
     {
         $dm = $this->normalize($anchor->dm);
         $locality = $this->normalize($anchor->locality);
         $house = $this->normalize($anchor->no_rumah);
         $address = $this->normalize($this->effectiveAddress($anchor));
-        $parentName = $this->parentName($anchor->name);
+        $parentName = $anchorIsFather ? $this->personName($anchor->name) : $this->parentName($anchor->name);
         $hasStrongSignal = $this->isUsefulMatchValue($house)
             || $this->isUsefulMatchValue($address)
             || $this->isUsefulMatchValue($parentName);
@@ -395,7 +452,7 @@ class KeluargaPemilihController extends Controller
         return $records;
     }
 
-    private function matchDetails(PemilihRecord $anchor, PemilihRecord $voter): array
+    private function matchDetails(PemilihRecord $anchor, PemilihRecord $voter, bool $anchorIsFather = false): array
     {
         $sameDm = $this->normalize($anchor->dm) !== ''
             && $this->normalize($anchor->dm) === $this->normalize($voter->dm);
@@ -408,7 +465,7 @@ class KeluargaPemilihController extends Controller
         $sameAddress = $sameLocality
             && $this->isUsefulMatchValue($this->normalize($this->effectiveAddress($anchor)))
             && $this->normalize($this->effectiveAddress($anchor)) === $this->normalize($this->effectiveAddress($voter));
-        $anchorParent = $this->parentName($anchor->name);
+        $anchorParent = $anchorIsFather ? $this->personName($anchor->name) : $this->parentName($anchor->name);
         $sameParent = $sameLocality
             && $this->isUsefulMatchValue($anchorParent)
             && $anchorParent === $this->parentName($voter->name);
@@ -481,6 +538,16 @@ class KeluargaPemilihController extends Controller
         }
 
         return trim($matches[1]);
+    }
+
+    private function personName(?string $name): string
+    {
+        $normalized = $this->normalize($name);
+        if ($normalized === '' || ! preg_match('/\bBIN(?:TI)?\b/u', $normalized, $matches, PREG_OFFSET_CAPTURE)) {
+            return $normalized;
+        }
+
+        return trim(substr($normalized, 0, $matches[0][1]));
     }
 
     private function normalize(?string $value): string

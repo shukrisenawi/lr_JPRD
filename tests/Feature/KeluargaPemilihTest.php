@@ -209,3 +209,68 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('families.data.0.name', 'Keluarga UDM 2')
             ->where('families.total', 1));
 });
+
+it('allows a family label to be renamed', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $voter = createKeluargaPemilihRecord(['name' => 'NURULSHAHIDA BINTI ABDUL HALIM']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Baharu',
+            'pemilih_ids' => [$voter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $newName = 'Keluarga NURULSHAHIDA BINTI ABDUL HALIM';
+
+    $this->actingAs($user)
+        ->put(route('keluarga-pemilih.update', $familyId), ['name' => $newName])
+        ->assertRedirect(route('keluarga-pemilih.index'))
+        ->assertSessionHas('success', 'Nama keluarga berjaya dikemaskini.');
+
+    $this->assertDatabaseHas('pemilih_families', ['id' => $familyId, 'name' => $newName]);
+});
+
+it('marks a family father and flags only children with that fathers bin or binti name', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $father = createKeluargaPemilihRecord(['name' => 'ABDUL HALIM BIN MOHAMAD']);
+    $child = createKeluargaPemilihRecord(['name' => 'NURULSHAHIDA BINTI ABDUL HALIM']);
+    $otherChild = createKeluargaPemilihRecord(['name' => 'FARAH BINTI MOHAMAD']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abdul Halim',
+            'pemilih_ids' => [$father->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+
+    $this->actingAs($user)
+        ->put(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $father->id])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $familyId,
+        'father_pemilih_record_id' => $father->id,
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('keluarga-pemilih.search', [
+            'anchor_id' => $father->id,
+            'anchor_as_father' => 1,
+        ]))
+        ->assertOk()
+        ->assertJsonPath('voters.0.id', $child->id)
+        ->assertJsonPath('voters.0.match_reasons.0', 'Bin/Binti sama')
+        ->assertJsonPath('voters.1.id', $otherChild->id)
+        ->assertJsonPath('voters.1.match_reasons.0', 'Lokaliti sama');
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('families.data.0.father_id', $father->id)
+            ->where('families.data.0.father_name', 'ABDUL HALIM BIN MOHAMAD'));
+});

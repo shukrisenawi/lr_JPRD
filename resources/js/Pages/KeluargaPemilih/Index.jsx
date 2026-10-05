@@ -9,6 +9,8 @@ function Icon({ name, className = 'h-4 w-4' }) {
         plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
         home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" /></>,
         pin: <><path d="M20 10c0 4.5-8 11-8 11S4 14.5 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
+        edit: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" /></>,
+        check: <path d="M20 6 9 17l-5-5" />,
         trash: <><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="m19 6-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></>,
         sparkles: <><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" /><path d="m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z" /></>,
         close: <><path d="m18 6-12 12" /><path d="m6 6 12 12" /></>,
@@ -44,13 +46,18 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
     const [loading, setLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [autoProcessing, setAutoProcessing] = useState(false);
+    const [renamingFamilyId, setRenamingFamilyId] = useState(null);
+    const [renameValue, setRenameValue] = useState('');
+    const [renameProcessing, setRenameProcessing] = useState(false);
+    const [fatherProcessingId, setFatherProcessingId] = useState(null);
 
     const targetFamily = useMemo(
         () => mode?.type === 'add' ? families.data.find((family) => family.id === mode.familyId) : null,
         [families.data, mode],
     );
+    const anchorIsFather = mode?.type === 'add' && Boolean(targetFamily?.father_id);
     const anchorId = mode?.type === 'add'
-        ? targetFamily?.members?.[0]?.id
+        ? targetFamily?.father_id || targetFamily?.members?.[0]?.id
         : selectedVoters[0]?.id;
 
     useEffect(() => {
@@ -70,6 +77,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
             const params = new URLSearchParams();
             if (query) params.set('q', query);
             if (anchorId) params.set('anchor_id', anchorId);
+            if (anchorIsFather) params.set('anchor_as_father', '1');
             setLoading(true);
 
             fetch(`${route('keluarga-pemilih.search')}?${params.toString()}`, {
@@ -93,7 +101,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
             window.clearTimeout(timer);
             controller.abort();
         };
-    }, [anchorId, mode, searchText]);
+    }, [anchorId, anchorIsFather, mode, searchText]);
 
     const closeManual = () => {
         setMode(null);
@@ -104,6 +112,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
 
     const selectUdm = (udm) => {
         closeManual();
+        setRenamingFamilyId(null);
         router.get(route('keluarga-pemilih.index'), udm ? { udm } : {}, {
             preserveState: true,
             preserveScroll: true,
@@ -173,6 +182,40 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         router.delete(route('keluarga-pemilih.members.destroy', { pemilihFamily: family.id, pemilihRecord: voter.id }), { preserveScroll: true });
     };
 
+    const startRename = (family) => {
+        setRenamingFamilyId(family.id);
+        setRenameValue(family.name);
+    };
+
+    const cancelRename = () => {
+        setRenamingFamilyId(null);
+        setRenameValue('');
+    };
+
+    const saveRename = (event, familyId) => {
+        event.preventDefault();
+        if (!renameValue.trim() || renameProcessing) return;
+
+        router.put(route('keluarga-pemilih.update', familyId), { name: renameValue }, {
+            preserveScroll: true,
+            onStart: () => setRenameProcessing(true),
+            onFinish: () => setRenameProcessing(false),
+            onSuccess: cancelRename,
+        });
+    };
+
+    const toggleFather = (family, voter) => {
+        if (fatherProcessingId === family.id) return;
+        const isCurrentFather = Number(family.father_id) === Number(voter.id);
+        router.put(route('keluarga-pemilih.father.update', family.id), {
+            father_id: isCurrentFather ? null : voter.id,
+        }, {
+            preserveScroll: true,
+            onStart: () => setFatherProcessingId(family.id),
+            onFinish: () => setFatherProcessingId(null),
+        });
+    };
+
     const selectedIds = new Set(selectedVoters.map((voter) => voter.id));
 
     return (
@@ -200,14 +243,16 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                         {filters.udm && <p className="text-xs font-semibold text-green-800">Paparan ditapis: {filters.udm}</p>}
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                        <button type="button" onClick={() => selectUdm('')} aria-pressed={!filters.udm} className={`card w-full cursor-pointer p-3 text-left transition hover:border-green-300 ${!filters.udm ? 'border-green-500 bg-green-50 ring-1 ring-green-200' : ''}`}>
-                            <span className="flex items-center justify-between gap-2"><span className="text-xs font-black text-slate-900">Semua UDM</span><span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-bold text-slate-500">{udmSummaries.length} UDM</span></span>
-                            <span className="mt-2 grid grid-cols-2 gap-2">
-                                <span><span className="block text-lg font-black text-green-800">{allStats.families.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Jumlah keluarga</span></span>
-                                <span><span className="block text-lg font-black text-amber-700">{allStats.unassigned.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Belum berkeluarga</span></span>
-                            </span>
-                            <span className="mt-2 block border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{allStats.voters.toLocaleString('ms-MY')} pemilih aktif</span>
-                        </button>
+                        {!filters.udm && (
+                            <button type="button" onClick={() => selectUdm('')} aria-pressed="true" className="card w-full cursor-pointer border-green-500 bg-green-50 p-3 text-left ring-1 ring-green-200 transition hover:border-green-300">
+                                <span className="flex items-center justify-between gap-2"><span className="text-xs font-black text-slate-900">Semua UDM</span><span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-bold text-slate-500">{udmSummaries.length} UDM</span></span>
+                                <span className="mt-2 grid grid-cols-2 gap-2">
+                                    <span><span className="block text-lg font-black text-green-800">{allStats.families.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Jumlah keluarga</span></span>
+                                    <span><span className="block text-lg font-black text-amber-700">{allStats.unassigned.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Belum berkeluarga</span></span>
+                                </span>
+                                <span className="mt-2 block border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{allStats.voters.toLocaleString('ms-MY')} pemilih aktif</span>
+                            </button>
+                        )}
                         {udmSummaries.map((summary) => (
                             <button key={summary.udm} type="button" onClick={() => selectUdm(summary.udm)} aria-pressed={filters.udm === summary.udm} className={`card w-full cursor-pointer p-3 text-left transition hover:border-green-300 ${filters.udm === summary.udm ? 'border-green-500 bg-green-50 ring-1 ring-green-200' : ''}`}>
                                 <span className="block truncate text-xs font-black text-slate-900">{summary.udm}</span>
@@ -251,7 +296,13 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                     <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                     <input id="voter-family-search" value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Nama, no. KP, no. rumah, alamat atau lokaliti…" className="input-field w-full pl-9" />
                                 </div>
-                                {anchorId && !searchText && <p className="mt-1.5 text-[11px] text-slate-500">Cadangan di bawah dibandingkan dengan pemilih pertama yang dipilih{mode.type === 'add' ? ' dalam keluarga ini' : ''}.</p>}
+                                {anchorId && !searchText && (
+                                    <p className="mt-1.5 text-[11px] text-slate-500">
+                                        {anchorIsFather
+                                            ? `Cadangan bin/binti ditanda hanya jika sepadan dengan ayah keluarga: ${targetFamily.father_name}.`
+                                            : `Cadangan di bawah dibandingkan dengan pemilih pertama yang dipilih${mode.type === 'add' ? ' dalam keluarga ini' : ''}.`}
+                                    </p>
+                                )}
                             </div>
 
                             {selectedVoters.length > 0 && (
@@ -312,7 +363,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                     </section>
                 )}
 
-                <section className="space-y-2.5">
+                {filters.udm && <section className="space-y-2.5">
                     <div className="flex items-end justify-between gap-2">
                         <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{families.total.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${filters.udm}` : ' · Semua UDM'}</h3></div>
                         {stats.unassigned > 0 && <p className="text-right text-[11px] text-slate-500">{stats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
@@ -333,7 +384,22 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                     <article key={family.id} className="card overflow-hidden">
                                         <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                                             <div className="min-w-0">
-                                                <div className="flex flex-wrap items-center gap-2"><h4 className="truncate text-sm font-black text-slate-900">{family.name}</h4><span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800">{family.member_count} ahli</span></div>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    {renamingFamilyId === family.id ? (
+                                                        <form onSubmit={(event) => saveRename(event, family.id)} className="flex min-w-0 flex-1 items-center gap-1.5" aria-label={`Tukar nama ${family.name}`}>
+                                                            <input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} maxLength={255} aria-label="Nama keluarga" className="input-field min-w-0 flex-1 py-1 text-xs" />
+                                                            <button type="submit" disabled={!renameValue.trim() || renameProcessing} aria-label="Simpan nama keluarga" title="Simpan nama" className="rounded-md p-1.5 text-green-700 transition hover:bg-green-50 disabled:opacity-50"><Icon name="check" /></button>
+                                                            <button type="button" onClick={cancelRename} aria-label="Batal menukar nama" title="Batal" className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"><Icon name="close" /></button>
+                                                        </form>
+                                                    ) : (
+                                                        <>
+                                                            <h4 className="truncate text-sm font-black text-slate-900">{family.name}</h4>
+                                                            <button type="button" onClick={() => startRename(family)} aria-label={`Tukar nama ${family.name}`} title="Tukar nama keluarga" className="rounded-md p-1 text-slate-400 transition hover:bg-green-50 hover:text-green-700"><Icon name="edit" className="h-3.5 w-3.5" /></button>
+                                                        </>
+                                                    )}
+                                                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800">{family.member_count} ahli</span>
+                                                </div>
+                                                {renamingFamilyId === family.id && errors.name && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{errors.name}</p>}
                                                 <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-500"><Icon name="pin" className="h-3 w-3 shrink-0" />{locations.join(' · ') || 'Lokaliti tidak dinyatakan'}</p>
                                             </div>
                                             <button type="button" onClick={() => startAddingToFamily(family)} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
@@ -343,10 +409,13 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                                 <div key={voter.id} className="flex items-start gap-3 px-3 py-2.5">
                                                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="truncate text-xs font-bold text-slate-800">{voter.name || 'Nama tiada'}</p>
+                                                        <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{Number(family.father_id) === Number(voter.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
                                                         <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                                         {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
                                                     </div>
+                                                    <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={Number(family.father_id) === Number(voter.id)} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${Number(family.father_id) === Number(voter.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
+                                                        {fatherProcessingId === family.id ? '...' : Number(family.father_id) === Number(voter.id) ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
+                                                    </button>
                                                     <button type="button" onClick={() => removeMember(family, voter)} aria-label={`Keluarkan ${voter.name || 'pemilih'} daripada keluarga`} title="Keluarkan daripada keluarga" className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"><Icon name="trash" /></button>
                                                 </div>
                                             ))}
@@ -366,7 +435,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                             ))}
                         </nav>
                     )}
-                </section>
+                </section>}
             </div>
         </AuthenticatedLayout>
     );
