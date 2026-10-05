@@ -301,6 +301,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     const [verificationToCancel, setVerificationToCancel] = useState(null);
     const [cancelingVerification, setCancelingVerification] = useState(false);
     const [exporting, setExporting] = useState(false);
+    const [exportingCosts, setExportingCosts] = useState(false);
     const [exportError, setExportError] = useState('');
 
     useEffect(() => setSearch(filters.q || ''), [filters.q]);
@@ -506,6 +507,120 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
         }
     };
 
+    const exportCostsToExcel = async () => {
+        if (exportingCosts) return;
+
+        setExportingCosts(true);
+        setExportError('');
+
+        try {
+            const ExcelJS = (await import('exceljs')).default;
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'JPrD Jeneri';
+            workbook.created = new Date();
+            const worksheet = workbook.addWorksheet('Kiraan Kos PLK', {
+                pageSetup: {
+                    paperSize: 9,
+                    orientation: 'landscape',
+                    fitToPage: true,
+                    fitToWidth: 1,
+                    fitToHeight: 0,
+                    margins: { left: 0.3, right: 0.3, top: 0.55, bottom: 0.55, header: 0.25, footer: 0.25 },
+                },
+            });
+            worksheet.views = [{ showGridLines: false }];
+            worksheet.pageSetup.printTitlesRow = '3:3';
+            [32, 14, 20, 24, 24].forEach((width, index) => {
+                worksheet.getColumn(index + 1).width = width;
+            });
+
+            const headers = ['UDM', 'Kod Cula', 'Bil. Pemilih', 'Kadar Seorang (RM)', 'Jumlah Bayaran (RM)'];
+            const border = {
+                top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+                left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+                bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+                right: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            };
+            const addMergedTitle = (text, { size, color, fill }) => {
+                const row = worksheet.addRow([text]);
+                worksheet.mergeCells(row.number, 1, row.number, headers.length);
+                row.height = size >= 18 ? 30 : 20;
+                const cell = row.getCell(1);
+                cell.font = { name: 'Calibri', size, bold: true, color: { argb: color } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
+            };
+
+            const now = new Date();
+            const dateLabel = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+            addMergedTitle('KIRAAN KOS PEMILIH PLK DUN JENERI', { size: 18, color: 'FFFFFFFF', fill: 'FF047857' });
+            addMergedTitle(`Tarikh : ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
+
+            const headerRow = worksheet.addRow(headers);
+            headerRow.height = 23;
+            headerRow.eachCell({ includeEmpty: true }, (cell) => {
+                cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1F2937' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                cell.border = border;
+            });
+
+            let totalAllUdms = 0;
+            orderUdms(costRows || []).forEach((row) => {
+                let totalUdm = 0;
+                codes.forEach((code) => {
+                    const quantity = Number(row.counts?.[code.code] || 0);
+                    const rate = Number(rates[code.code] || 0);
+                    const amount = quantity * rate;
+                    totalUdm += amount;
+
+                    const dataRow = worksheet.addRow([row.udm, code.code, quantity, rate, amount]);
+                    dataRow.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+                        cell.font = { name: 'Calibri', size: 10 };
+                        cell.alignment = { vertical: 'middle', horizontal: columnNumber === 1 ? 'left' : 'center', wrapText: true };
+                        cell.border = border;
+                        if (columnNumber === 3) cell.numFmt = '#,##0';
+                        if (columnNumber >= 4) cell.numFmt = '"RM" #,##0.00';
+                    });
+                });
+
+                totalAllUdms += totalUdm;
+                const subtotalRow = worksheet.addRow([row.udm, '', '', 'Jumlah UDM', totalUdm]);
+                subtotalRow.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+                    cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF14532D' } };
+                    cell.alignment = { vertical: 'middle', horizontal: columnNumber === 1 ? 'left' : 'right', wrapText: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } };
+                    cell.border = border;
+                    if (columnNumber === 5) cell.numFmt = '"RM" #,##0.00';
+                });
+            });
+
+            const totalRow = worksheet.addRow(['', '', '', 'JUMLAH KESELURUHAN', totalAllUdms]);
+            totalRow.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+                cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF047857' } };
+                cell.border = border;
+                if (columnNumber === 5) cell.numFmt = '"RM" #,##0.00';
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `KIRAAN_KOS_PLK_DUN_JENERI_${dateLabel}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+            setExportError(error.message || 'Eksport kiraan kos Excel tidak berjaya. Sila cuba lagi.');
+        } finally {
+            setExportingCosts(false);
+        }
+    };
+
     return (
         <AuthenticatedLayout header={
             <div>
@@ -583,7 +698,12 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                         <p className="text-sm font-bold text-emerald-950">Kadar bayaran bagi setiap kod Cula</p>
                                         <p className="mt-0.5 text-[11px] text-emerald-800">Tetapkan kadar seorang. Kadar ini digunakan untuk mengira jumlah bayaran setiap UDM.</p>
                                     </div>
-                                    <button type="submit" disabled={savingRates} className="btn-primary shrink-0 px-4 py-2 text-xs disabled:opacity-50">{savingRates ? 'Menyimpan…' : 'Simpan kadar'}</button>
+                                    <div className="flex shrink-0 flex-wrap gap-2">
+                                        <button type="submit" disabled={savingRates} className="btn-primary px-4 py-2 text-xs disabled:opacity-50">{savingRates ? 'Menyimpan…' : 'Simpan kadar'}</button>
+                                        <button type="button" onClick={exportCostsToExcel} disabled={exportingCosts} className="inline-flex items-center rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50">
+                                            {exportingCosts ? 'Menyediakan Excel…' : 'Eksport Excel'}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
                                     {codes.map((code) => (
@@ -609,6 +729,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                     ))}
                                 </div>
                             </form>
+                            {exportError && <p role="alert" className="mb-3 border-b border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{exportError}</p>}
                             <CostTable rows={costRows || []} codes={codes || []} rates={rates} />
                         </div>
                     )}
