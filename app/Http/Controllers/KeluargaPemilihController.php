@@ -201,7 +201,7 @@ class KeluargaPemilihController extends Controller
             ->with('success', 'Nama keluarga berjaya dikemaskini.');
     }
 
-    public function updateFather(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
+    public function updateFather(Request $request, PemilihFamily $pemilihFamily): JsonResponse
     {
         $validated = $request->validate([
             'father_id' => ['nullable', 'integer', Rule::exists('pemilih_records', 'id')],
@@ -209,6 +209,7 @@ class KeluargaPemilihController extends Controller
         $user = $request->user();
         $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
         $fatherId = $validated['father_id'] ?? null;
+        $fatherName = null;
 
         if ($fatherId !== null) {
             $father = PemilihRecord::query()->findOrFail($fatherId);
@@ -218,13 +219,16 @@ class KeluargaPemilihController extends Controller
                     'father_id' => 'Ayah mesti salah seorang ahli keluarga dalam skop akses anda.',
                 ]);
             }
+            $fatherName = $father->name;
         }
 
         $family->update(['father_pemilih_record_id' => $fatherId]);
 
-        return redirect()
-            ->route('keluarga-pemilih.index')
-            ->with('success', $fatherId === null ? 'Tanda ayah dibuang.' : 'Pemilih ditandakan sebagai ayah keluarga.');
+        return response()->json([
+            'father_id' => $fatherId,
+            'father_name' => $fatherName,
+            'message' => $fatherId === null ? 'Tanda ayah dibuang.' : 'Pemilih ditandakan sebagai ayah keluarga.',
+        ]);
     }
 
     public function addMembers(Request $request, PemilihFamily $pemilihFamily): RedirectResponse

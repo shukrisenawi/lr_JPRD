@@ -248,8 +248,10 @@ it('marks a family father and flags only children with that fathers bin or binti
     $familyId = DB::table('pemilih_families')->value('id');
 
     $this->actingAs($user)
-        ->put(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $father->id])
-        ->assertRedirect(route('keluarga-pemilih.index'));
+        ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $father->id])
+        ->assertOk()
+        ->assertJsonPath('father_id', $father->id)
+        ->assertJsonPath('father_name', 'ABDUL HALIM BIN MOHAMAD');
 
     $this->assertDatabaseHas('pemilih_families', [
         'id' => $familyId,

@@ -36,6 +36,14 @@ function paginationText(label) {
     return String(label).replace(/&laquo;/g, '‹').replace(/&raquo;/g, '›');
 }
 
+function fatherDetails(family, overrides) {
+    if (Object.prototype.hasOwnProperty.call(overrides, family.id)) {
+        return overrides[family.id];
+    }
+
+    return { father_id: family.father_id, father_name: family.father_name };
+}
+
 export default function KeluargaPemilihIndex({ families, stats, allStats, filters, udmSummaries }) {
     const { errors = {} } = usePage().props;
     const [mode, setMode] = useState(null);
@@ -50,14 +58,25 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
     const [renameValue, setRenameValue] = useState('');
     const [renameProcessing, setRenameProcessing] = useState(false);
     const [fatherProcessingId, setFatherProcessingId] = useState(null);
+    const [fatherOverrides, setFatherOverrides] = useState({});
+    const [fatherErrors, setFatherErrors] = useState({});
+
+    useEffect(() => {
+        setFatherOverrides(Object.fromEntries(families.data.map((family) => [family.id, {
+            father_id: family.father_id,
+            father_name: family.father_name,
+        }])));
+        setFatherErrors({});
+    }, [families.data]);
 
     const targetFamily = useMemo(
         () => mode?.type === 'add' ? families.data.find((family) => family.id === mode.familyId) : null,
         [families.data, mode],
     );
-    const anchorIsFather = mode?.type === 'add' && Boolean(targetFamily?.father_id);
+    const targetFather = targetFamily ? fatherDetails(targetFamily, fatherOverrides) : null;
+    const anchorIsFather = mode?.type === 'add' && Boolean(targetFather?.father_id);
     const anchorId = mode?.type === 'add'
-        ? targetFamily?.father_id || targetFamily?.members?.[0]?.id
+        ? targetFather?.father_id || targetFamily?.members?.[0]?.id
         : selectedVoters[0]?.id;
 
     useEffect(() => {
@@ -113,6 +132,8 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
     const selectUdm = (udm) => {
         closeManual();
         setRenamingFamilyId(null);
+        setFatherOverrides({});
+        setFatherErrors({});
         router.get(route('keluarga-pemilih.index'), udm ? { udm } : {}, {
             preserveState: true,
             preserveScroll: true,
@@ -204,16 +225,39 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         });
     };
 
-    const toggleFather = (family, voter) => {
+    const toggleFather = async (family, voter) => {
         if (fatherProcessingId === family.id) return;
-        const isCurrentFather = Number(family.father_id) === Number(voter.id);
-        router.put(route('keluarga-pemilih.father.update', family.id), {
-            father_id: isCurrentFather ? null : voter.id,
-        }, {
-            preserveScroll: true,
-            onStart: () => setFatherProcessingId(family.id),
-            onFinish: () => setFatherProcessingId(null),
-        });
+        const currentFather = fatherDetails(family, fatherOverrides);
+        const isCurrentFather = Number(currentFather.father_id) === Number(voter.id);
+        setFatherProcessingId(family.id);
+        setFatherErrors((current) => ({ ...current, [family.id]: null }));
+
+        try {
+            const response = await fetch(route('keluarga-pemilih.father.update', family.id), {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ father_id: isCurrentFather ? null : voter.id }),
+            });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || 'Tanda ayah tidak berjaya dikemaskini.');
+
+            setFatherOverrides((current) => ({
+                ...current,
+                [family.id]: {
+                    father_id: payload.father_id,
+                    father_name: payload.father_name,
+                },
+            }));
+        } catch (error) {
+            setFatherErrors((current) => ({ ...current, [family.id]: error.message }));
+        } finally {
+            setFatherProcessingId(null);
+        }
     };
 
     const selectedIds = new Set(selectedVoters.map((voter) => voter.id));
@@ -239,20 +283,25 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
 
                 <section className="space-y-2">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                        <div><p className="label-section">Ringkasan UDM</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">Klik kad untuk tapis keluarga</h3></div>
-                        {filters.udm && <p className="text-xs font-semibold text-green-800">Paparan ditapis: {filters.udm}</p>}
+                        <div><p className="label-section">Ringkasan UDM</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{filters.udm ? 'UDM dipilih' : 'Klik kad untuk tapis keluarga'}</h3></div>
+                        <div className="flex flex-col gap-1 sm:items-end">
+                            {filters.udm && <p className="text-xs font-semibold text-green-800">{filters.udm}</p>}
+                            <label htmlFor="keluarga-udm-filter" className="sr-only">Tapis keluarga mengikut UDM</label>
+                            <select id="keluarga-udm-filter" value={filters.udm} onChange={(event) => selectUdm(event.target.value)} className="input-field w-full text-xs sm:w-56">
+                                <option value="">Semua UDM</option>
+                                {udmSummaries.map((summary) => <option key={summary.udm} value={summary.udm}>{summary.udm}</option>)}
+                            </select>
+                        </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                        {!filters.udm && (
-                            <button type="button" onClick={() => selectUdm('')} aria-pressed="true" className="card w-full cursor-pointer border-green-500 bg-green-50 p-3 text-left ring-1 ring-green-200 transition hover:border-green-300">
-                                <span className="flex items-center justify-between gap-2"><span className="text-xs font-black text-slate-900">Semua UDM</span><span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-bold text-slate-500">{udmSummaries.length} UDM</span></span>
-                                <span className="mt-2 grid grid-cols-2 gap-2">
-                                    <span><span className="block text-lg font-black text-green-800">{allStats.families.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Jumlah keluarga</span></span>
-                                    <span><span className="block text-lg font-black text-amber-700">{allStats.unassigned.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Belum berkeluarga</span></span>
-                                </span>
-                                <span className="mt-2 block border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{allStats.voters.toLocaleString('ms-MY')} pemilih aktif</span>
-                            </button>
-                        )}
+                    {!filters.udm && <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                        <button type="button" onClick={() => selectUdm('')} aria-pressed="true" className="card w-full cursor-pointer border-green-500 bg-green-50 p-3 text-left ring-1 ring-green-200 transition hover:border-green-300">
+                            <span className="flex items-center justify-between gap-2"><span className="text-xs font-black text-slate-900">Semua UDM</span><span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-bold text-slate-500">{udmSummaries.length} UDM</span></span>
+                            <span className="mt-2 grid grid-cols-2 gap-2">
+                                <span><span className="block text-lg font-black text-green-800">{allStats.families.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Jumlah keluarga</span></span>
+                                <span><span className="block text-lg font-black text-amber-700">{allStats.unassigned.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Belum berkeluarga</span></span>
+                            </span>
+                            <span className="mt-2 block border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{allStats.voters.toLocaleString('ms-MY')} pemilih aktif</span>
+                        </button>
                         {udmSummaries.map((summary) => (
                             <button key={summary.udm} type="button" onClick={() => selectUdm(summary.udm)} aria-pressed={filters.udm === summary.udm} className={`card w-full cursor-pointer p-3 text-left transition hover:border-green-300 ${filters.udm === summary.udm ? 'border-green-500 bg-green-50 ring-1 ring-green-200' : ''}`}>
                                 <span className="block truncate text-xs font-black text-slate-900">{summary.udm}</span>
@@ -263,7 +312,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                 <span className="mt-2 block border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{summary.voters.toLocaleString('ms-MY')} pemilih aktif</span>
                             </button>
                         ))}
-                    </div>
+                    </div>}
                 </section>
 
                 <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
@@ -380,6 +429,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                         <div className="grid gap-2.5 xl:grid-cols-2">
                             {families.data.map((family) => {
                                 const locations = [...new Set(family.members.map(locationLabel).filter(Boolean))];
+                                const father = fatherDetails(family, fatherOverrides);
                                 return (
                                     <article key={family.id} className="card overflow-hidden">
                                         <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -404,17 +454,18 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                             </div>
                                             <button type="button" onClick={() => startAddingToFamily(family)} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
                                         </div>
+                                        {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
                                         <div className="divide-y divide-slate-100">
                                             {family.members.map((voter) => (
                                                 <div key={voter.id} className="flex items-start gap-3 px-3 py-2.5">
                                                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{Number(family.father_id) === Number(voter.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
+                                                        <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{Number(father.father_id) === Number(voter.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
                                                         <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                                         {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
                                                     </div>
-                                                    <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={Number(family.father_id) === Number(voter.id)} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${Number(family.father_id) === Number(voter.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
-                                                        {fatherProcessingId === family.id ? '...' : Number(family.father_id) === Number(voter.id) ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
+                                                    <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={Number(father.father_id) === Number(voter.id)} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${Number(father.father_id) === Number(voter.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
+                                                        {fatherProcessingId === family.id ? '...' : Number(father.father_id) === Number(voter.id) ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
                                                     </button>
                                                     <button type="button" onClick={() => removeMember(family, voter)} aria-label={`Keluarkan ${voter.name || 'pemilih'} daripada keluarga`} title="Keluarkan daripada keluarga" className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"><Icon name="trash" /></button>
                                                 </div>
