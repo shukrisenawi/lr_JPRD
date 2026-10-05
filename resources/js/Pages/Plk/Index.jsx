@@ -408,13 +408,13 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
                 right: { style: 'thin', color: { argb: 'FFD1D5DB' } },
             };
-            const addMergedRow = (text, { size = 12, color = 'FF14532D', fill = 'FFECFDF5' } = {}) => {
+            const addMergedRow = (text, { size = 12, color = 'FF14532D', fill = 'FFECFDF5', horizontal = 'left' } = {}) => {
                 const row = worksheet.addRow([text]);
                 worksheet.mergeCells(row.number, 1, row.number, headers.length);
-                row.height = size > 12 ? 26 : 22;
+                row.height = size >= 22 ? 34 : (size > 12 ? 26 : 22);
                 const cell = row.getCell(1);
                 cell.font = { name: 'Calibri', size, bold: true, color: { argb: color } };
-                cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                cell.alignment = { vertical: 'middle', horizontal, wrapText: true };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
                 return row;
             };
@@ -449,17 +449,26 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
 
             const date = new Date();
             const dateLabel = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-            addMergedRow('SENARAI PEMILIH PLK DUN JENERI', { size: 16, color: 'FFFFFFFF', fill: 'FF047857' });
-            addMergedRow(`Tarikh : ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
+            const addReportTitle = () => {
+                addMergedRow('SENARAI PEMILIH PLK DUN JENERI', {
+                    size: 22,
+                    color: 'FFFFFFFF',
+                    fill: 'FF047857',
+                    horizontal: 'center',
+                });
+                addMergedRow(`Tarikh : ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
+            };
 
             const sortedUdms = orderUdms([...udmGroups.keys()]);
             if (sortedUdms.length === 0) {
+                addReportTitle();
                 addMergedRow('Tiada pemilih untuk tapisan ini.', { size: 11, color: 'FF64748B', fill: 'FFFFFFFF' });
             }
 
             sortedUdms.forEach((udm, udmIndex) => {
                 const localities = udmGroups.get(udm);
                 const localityNames = [...localities.keys()].sort((a, b) => a.localeCompare(b, 'ms', { numeric: true }));
+                addReportTitle();
                 addMergedRow(`UDM: ${udm}`, { size: 14, color: 'FFFFFFFF', fill: 'FF047857' });
 
                 let number = 1;
