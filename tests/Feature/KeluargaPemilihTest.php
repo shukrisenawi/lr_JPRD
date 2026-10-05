@@ -162,8 +162,8 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
     $udmTwoMembers = [
         createKeluargaPemilihRecord(['name' => 'RAHIM BIN ABU', 'dm' => 'UDM 2']),
     ];
-    createKeluargaPemilihRecord(['name' => 'UNASSIGNED UDM 2 A', 'dm' => 'UDM 2']);
-    createKeluargaPemilihRecord(['name' => 'UNASSIGNED UDM 2 B', 'dm' => 'UDM 2']);
+    $udmTwoUnassigned = createKeluargaPemilihRecord(['name' => 'UNASSIGNED UDM 2 A', 'dm' => 'UDM 2']);
+    createKeluargaPemilihRecord(['name' => 'UNASSIGNED UDM 2 B', 'dm' => 'UDM 2', 'locality' => 'LOKALITI B']);
 
     $this->actingAs($user)
         ->post(route('keluarga-pemilih.store'), [
@@ -179,6 +179,15 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
         ])
         ->assertRedirect(route('keluarga-pemilih.index'));
 
+    $udmTwoFamilyId = DB::table('pemilih_families')->where('name', 'Keluarga UDM 2')->value('id');
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.members.store', $udmTwoFamilyId), [
+            'pemilih_ids' => [$udmTwoUnassigned->id],
+            'udm' => 'UDM 2',
+            'locality' => 'LOKALITI A',
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index', ['udm' => 'UDM 2', 'locality' => 'LOKALITI A']));
+
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index'))
         ->assertOk()
@@ -186,13 +195,13 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('filters.udm', '')
             ->where('stats.families', 2)
             ->where('stats.voters', 6)
-            ->where('stats.unassigned', 3)
+            ->where('stats.unassigned', 2)
             ->where('udmSummaries.0.udm', 'UDM 1')
             ->where('udmSummaries.0.families', 1)
             ->where('udmSummaries.0.unassigned', 1)
             ->where('udmSummaries.1.udm', 'UDM 2')
             ->where('udmSummaries.1.families', 1)
-            ->where('udmSummaries.1.unassigned', 2));
+            ->where('udmSummaries.1.unassigned', 1));
 
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 2']))
@@ -201,13 +210,24 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('filters.udm', 'UDM 2')
             ->where('stats.families', 1)
             ->where('stats.voters', 3)
-            ->where('stats.assigned', 1)
-            ->where('stats.unassigned', 2)
+            ->where('stats.assigned', 2)
+            ->where('stats.unassigned', 1)
             ->where('allStats.families', 2)
             ->where('allStats.voters', 6)
-            ->where('allStats.unassigned', 3)
+            ->where('allStats.unassigned', 2)
             ->where('families.data.0.name', 'Keluarga UDM 2')
             ->where('families.total', 1));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 2', 'locality' => 'LOKALITI B']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', 'UDM 2')
+            ->where('filters.locality', 'LOKALITI B')
+            ->where('stats.families', 0)
+            ->where('stats.voters', 1)
+            ->where('stats.unassigned', 1)
+            ->where('families.total', 0));
 });
 
 it('allows a family label to be renamed', function () {
@@ -235,13 +255,14 @@ it('allows a family label to be renamed', function () {
 it('marks a family father and flags only children with that fathers bin or binti name', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $father = createKeluargaPemilihRecord(['name' => 'ABDUL HALIM BIN MOHAMAD']);
+    $mother = createKeluargaPemilihRecord(['name' => 'NORAINI BINTI RAHMAN']);
     $child = createKeluargaPemilihRecord(['name' => 'NURULSHAHIDA BINTI ABDUL HALIM']);
     $otherChild = createKeluargaPemilihRecord(['name' => 'FARAH BINTI MOHAMAD']);
 
     $this->actingAs($user)
         ->post(route('keluarga-pemilih.store'), [
-            'name' => 'Keluarga Abdul Halim',
-            'pemilih_ids' => [$father->id],
+            'name' => 'Keluarga NORAINI BINTI RAHMAN',
+            'pemilih_ids' => [$mother->id, $father->id],
         ])
         ->assertRedirect(route('keluarga-pemilih.index'));
 
@@ -251,11 +272,13 @@ it('marks a family father and flags only children with that fathers bin or binti
         ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $father->id])
         ->assertOk()
         ->assertJsonPath('father_id', $father->id)
-        ->assertJsonPath('father_name', 'ABDUL HALIM BIN MOHAMAD');
+        ->assertJsonPath('father_name', 'ABDUL HALIM BIN MOHAMAD')
+        ->assertJsonPath('family_name', 'Keluarga ABDUL HALIM BIN MOHAMAD');
 
     $this->assertDatabaseHas('pemilih_families', [
         'id' => $familyId,
         'father_pemilih_record_id' => $father->id,
+        'name' => 'Keluarga ABDUL HALIM BIN MOHAMAD',
     ]);
 
     $this->actingAs($user)

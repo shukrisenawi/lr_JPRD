@@ -34,12 +34,24 @@ class KeluargaPemilihController extends Controller
             ->keyBy('dm');
         $requestedUdm = trim((string) $request->query('udm', ''));
         $udmFilter = $votersByUdm->has($requestedUdm) ? $requestedUdm : '';
-
-        $voters = $this->activeVoterQuery($user);
+        $localities = collect();
+        $localityFilter = '';
         if ($udmFilter !== '') {
-            $voters->where('dm', $udmFilter);
+            $localities = $this->activeVoterQuery($user, $udmFilter)
+                ->whereNotNull('locality')
+                ->where('locality', '!=', '')
+                ->select('locality')
+                ->distinct()
+                ->orderBy('locality')
+                ->pluck('locality');
+            $requestedLocality = trim((string) $request->query('locality', ''));
+            if ($localities->contains($requestedLocality)) {
+                $localityFilter = $requestedLocality;
+            }
         }
-        $familiesQuery = $this->visibleFamilyQuery($user, $udmFilter);
+
+        $voters = $this->activeVoterQuery($user, $udmFilter, $localityFilter);
+        $familiesQuery = $this->visibleFamilyQuery($user, $udmFilter, $localityFilter);
         $allVoters = $this->activeVoterQuery($user);
         $allFamiliesQuery = $this->visibleFamilyQuery($user);
 
@@ -62,16 +74,22 @@ class KeluargaPemilihController extends Controller
 
         $families = (clone $familiesQuery)
             ->with([
-                'father' => function ($query) use ($user, $udmFilter): void {
+                'father' => function ($query) use ($user, $udmFilter, $localityFilter): void {
                     $user->applyScopeToPemilihQuery($query);
                     if ($udmFilter !== '') {
                         $query->where('pemilih_records.dm', $udmFilter);
                     }
+                    if ($localityFilter !== '') {
+                        $query->where('pemilih_records.locality', $localityFilter);
+                    }
                 },
-                'members' => function ($query) use ($user, $udmFilter): void {
+                'members' => function ($query) use ($user, $udmFilter, $localityFilter): void {
                     $user->applyScopeToPemilihQuery($query);
                     if ($udmFilter !== '') {
                         $query->where('pemilih_records.dm', $udmFilter);
+                    }
+                    if ($localityFilter !== '') {
+                        $query->where('pemilih_records.locality', $localityFilter);
                     }
                     $query->orderBy('pemilih_records.name');
                 },
@@ -91,7 +109,8 @@ class KeluargaPemilihController extends Controller
 
         return Inertia::render('KeluargaPemilih/Index', [
             'families' => $families,
-            'filters' => ['udm' => $udmFilter],
+            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter],
+            'localities' => $localities->values(),
             'udmSummaries' => $udmSummaries,
             'allStats' => [
                 'families' => (clone $allFamiliesQuery)->count(),
@@ -114,17 +133,24 @@ class KeluargaPemilihController extends Controller
             'q' => ['nullable', 'string', 'max:100'],
             'anchor_id' => ['nullable', 'integer'],
             'anchor_as_father' => ['nullable', 'boolean'],
+            'udm' => ['nullable', 'string', 'max:255'],
+            'locality' => ['nullable', 'string', 'max:255'],
         ]);
         $user = $request->user();
         $term = trim((string) ($validated['q'] ?? ''));
         $anchorIsFather = (bool) ($validated['anchor_as_father'] ?? false);
+        $udm = trim((string) ($validated['udm'] ?? ''));
+        $locality = trim((string) ($validated['locality'] ?? ''));
+        if ($locality !== '' && $udm === '') {
+            throw ValidationException::withMessages(['locality' => 'Pilih UDM sebelum memilih lokaliti.']);
+        }
         $anchor = null;
 
         if (! empty($validated['anchor_id'])) {
-            $anchor = $this->activeVoterQuery($user)->findOrFail($validated['anchor_id']);
+            $anchor = $this->activeVoterQuery($user, $udm, $locality)->findOrFail($validated['anchor_id']);
         }
 
-        $query = $this->activeVoterQuery($user)->whereDoesntHave('families');
+        $query = $this->activeVoterQuery($user, $udm, $locality)->whereDoesntHave('families');
         if ($anchor) {
             $query->where('pemilih_records.id', '!=', $anchor->id);
         }
@@ -164,11 +190,18 @@ class KeluargaPemilihController extends Controller
             'name' => ['nullable', 'string', 'max:255'],
             'pemilih_ids' => ['required', 'array', 'min:1', 'max:30'],
             'pemilih_ids.*' => ['required', 'integer', 'distinct', Rule::exists('pemilih_records', 'id')],
+            'udm' => ['nullable', 'string', 'max:255'],
+            'locality' => ['nullable', 'string', 'max:255'],
         ]);
         $user = $request->user();
+        $udm = trim((string) ($validated['udm'] ?? ''));
+        $locality = trim((string) ($validated['locality'] ?? ''));
+        if ($locality !== '' && $udm === '') {
+            throw ValidationException::withMessages(['locality' => 'Pilih UDM sebelum memilih lokaliti.']);
+        }
 
-        $family = DB::transaction(function () use ($validated, $user): PemilihFamily {
-            $voters = $this->lockUnassignedVoters($user, $validated['pemilih_ids']);
+        $family = DB::transaction(function () use ($validated, $user, $udm, $locality): PemilihFamily {
+            $voters = $this->lockUnassignedVoters($user, $validated['pemilih_ids'], $udm, $locality);
             $name = trim((string) ($validated['name'] ?? ''));
             if ($name === '') {
                 $name = 'Keluarga '.($voters->first()->name ?: 'Pemilih');
@@ -184,7 +217,7 @@ class KeluargaPemilihController extends Controller
         });
 
         return redirect()
-            ->route('keluarga-pemilih.index')
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($udm, $locality))
             ->with('success', "{$family->name} berjaya dicipta dengan ".count($validated['pemilih_ids']).' pemilih.');
     }
 
@@ -222,11 +255,25 @@ class KeluargaPemilihController extends Controller
             $fatherName = $father->name;
         }
 
-        $family->update(['father_pemilih_record_id' => $fatherId]);
+        $familyName = $family->name;
+        if ($fatherId !== null) {
+            $hasDefaultName = $family->members()
+                ->pluck('pemilih_records.name')
+                ->contains(fn ($memberName): bool => $familyName === 'Keluarga '.($memberName ?: 'Pemilih'));
+            if ($hasDefaultName) {
+                $familyName = 'Keluarga '.($fatherName ?: 'Pemilih');
+            }
+        }
+
+        $family->update([
+            'father_pemilih_record_id' => $fatherId,
+            'name' => $familyName,
+        ]);
 
         return response()->json([
             'father_id' => $fatherId,
             'father_name' => $fatherName,
+            'family_name' => $familyName,
             'message' => $fatherId === null ? 'Tanda ayah dibuang.' : 'Pemilih ditandakan sebagai ayah keluarga.',
         ]);
     }
@@ -236,17 +283,24 @@ class KeluargaPemilihController extends Controller
         $validated = $request->validate([
             'pemilih_ids' => ['required', 'array', 'min:1', 'max:30'],
             'pemilih_ids.*' => ['required', 'integer', 'distinct', Rule::exists('pemilih_records', 'id')],
+            'udm' => ['nullable', 'string', 'max:255'],
+            'locality' => ['nullable', 'string', 'max:255'],
         ]);
         $user = $request->user();
-        $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
+        $udm = trim((string) ($validated['udm'] ?? ''));
+        $locality = trim((string) ($validated['locality'] ?? ''));
+        if ($locality !== '' && $udm === '') {
+            throw ValidationException::withMessages(['locality' => 'Pilih UDM sebelum memilih lokaliti.']);
+        }
+        $family = $this->visibleFamilyQuery($user, $udm, $locality)->findOrFail($pemilihFamily->id);
 
-        DB::transaction(function () use ($family, $user, $validated): void {
-            $voters = $this->lockUnassignedVoters($user, $validated['pemilih_ids']);
+        DB::transaction(function () use ($family, $user, $validated, $udm, $locality): void {
+            $voters = $this->lockUnassignedVoters($user, $validated['pemilih_ids'], $udm, $locality);
             $family->members()->attach($voters->modelKeys(), ['created_by' => $user->id]);
         });
 
         return redirect()
-            ->route('keluarga-pemilih.index')
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($udm, $locality))
             ->with('success', count($validated['pemilih_ids'])." pemilih berjaya ditambah ke {$family->name}.");
     }
 
@@ -279,11 +333,20 @@ class KeluargaPemilihController extends Controller
 
     public function auto(Request $request): RedirectResponse
     {
+        $validated = $request->validate([
+            'udm' => ['nullable', 'string', 'max:255'],
+            'locality' => ['nullable', 'string', 'max:255'],
+        ]);
         $user = $request->user();
+        $udm = trim((string) ($validated['udm'] ?? ''));
+        $locality = trim((string) ($validated['locality'] ?? ''));
+        if ($locality !== '' && $udm === '') {
+            throw ValidationException::withMessages(['locality' => 'Pilih UDM sebelum memilih lokaliti.']);
+        }
 
-        $summary = DB::transaction(function () use ($user): array {
+        $summary = DB::transaction(function () use ($user, $udm, $locality): array {
             $groups = [];
-            $query = $this->activeVoterQuery($user)
+            $query = $this->activeVoterQuery($user, $udm, $locality)
                 ->whereDoesntHave('families')
                 ->whereNotNull('no_rumah')
                 ->where('no_rumah', '!=', '')
@@ -325,7 +388,7 @@ class KeluargaPemilihController extends Controller
             $membersAdded = 0;
 
             foreach ($matchedGroups as $group) {
-                $voters = $this->lockUnassignedVoters($user, $group['ids']);
+                $voters = $this->lockUnassignedVoters($user, $group['ids'], $udm, $locality);
                 if ($voters->count() < 2) {
                     continue;
                 }
@@ -349,32 +412,43 @@ class KeluargaPemilihController extends Controller
             ? "Auto selesai: {$summary['families']} keluarga berpadanan kuat dibentuk, melibatkan {$summary['members']} pemilih."
             : 'Tiada kumpulan yang cukup padanan kuat untuk dijadikan keluarga secara automatik.';
 
-        return redirect()->route('keluarga-pemilih.index')->with('success', $message);
+        return redirect()
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($udm, $locality))
+            ->with('success', $message);
     }
 
-    private function activeVoterQuery(User $user): Builder
+    private function activeVoterQuery(User $user, ?string $udm = null, ?string $locality = null): Builder
     {
         $query = PemilihRecord::query()->where('status', 'aktif');
         $user->applyScopeToPemilihQuery($query);
+        if (filled($udm)) {
+            $query->where('dm', $udm);
+        }
+        if (filled($locality)) {
+            $query->where('locality', $locality);
+        }
 
         return $query;
     }
 
-    private function visibleFamilyQuery(User $user, ?string $udm = null): Builder
+    private function visibleFamilyQuery(User $user, ?string $udm = null, ?string $locality = null): Builder
     {
-        return PemilihFamily::query()->whereHas('members', function (Builder $query) use ($user, $udm): void {
+        return PemilihFamily::query()->whereHas('members', function (Builder $query) use ($user, $udm, $locality): void {
             $user->applyScopeToPemilihQuery($query);
             if (filled($udm)) {
                 $query->where('pemilih_records.dm', $udm);
+            }
+            if (filled($locality)) {
+                $query->where('pemilih_records.locality', $locality);
             }
         });
     }
 
     /** @param array<int, int|string> $ids */
-    private function lockUnassignedVoters(User $user, array $ids): EloquentCollection
+    private function lockUnassignedVoters(User $user, array $ids, ?string $udm = null, ?string $locality = null): EloquentCollection
     {
         $ids = collect($ids)->map(fn ($id): int => (int) $id)->unique()->values();
-        $voters = $this->activeVoterQuery($user)
+        $voters = $this->activeVoterQuery($user, $udm, $locality)
             ->whereKey($ids)
             ->whereDoesntHave('families')
             ->lockForUpdate()
@@ -387,6 +461,14 @@ class KeluargaPemilihController extends Controller
         }
 
         return $voters;
+    }
+
+    private function filterRouteParams(?string $udm, ?string $locality): array
+    {
+        return array_filter([
+            'udm' => filled($udm) ? $udm : null,
+            'locality' => filled($locality) ? $locality : null,
+        ]);
     }
 
     private function applySearchTerm(Builder $query, string $term): void
