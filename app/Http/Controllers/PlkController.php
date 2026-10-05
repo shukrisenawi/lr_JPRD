@@ -47,6 +47,39 @@ class PlkController extends Controller
             ->values()
             ->all();
 
+        $udmCulaCounts = [];
+        if ($tab === 'senarai' && $filters['udm'] === '') {
+            foreach ($udms as $udm) {
+                $udmCulaCounts[$udm] = [
+                    'udm' => $udm,
+                    'total' => 0,
+                    'counts' => array_fill_keys(self::CULA_CODES, 0),
+                ];
+            }
+
+            (clone $base)
+                ->select(['dm', 'cula_code'])
+                ->selectRaw('COUNT(*) as quantity')
+                ->groupBy('dm', 'cula_code')
+                ->get()
+                ->each(function ($record) use (&$udmCulaCounts): void {
+                    $udm = trim((string) $record->dm);
+                    $udm = $udm !== '' && $udm !== '-' ? $udm : 'UDM TIDAK DINYATAKAN';
+
+                    if (! isset($udmCulaCounts[$udm])) {
+                        $udmCulaCounts[$udm] = [
+                            'udm' => $udm,
+                            'total' => 0,
+                            'counts' => array_fill_keys(self::CULA_CODES, 0),
+                        ];
+                    }
+
+                    $quantity = (int) $record->quantity;
+                    $udmCulaCounts[$udm]['counts'][$record->cula_code] = $quantity;
+                    $udmCulaCounts[$udm]['total'] += $quantity;
+                });
+        }
+
         $rates = $this->rates();
         $countBase = (clone $base)
             ->when(
@@ -109,6 +142,7 @@ class PlkController extends Controller
             'active_tab' => $tab,
             'filters' => $filters,
             'udms' => $udms,
+            'udm_cula_counts' => array_values($udmCulaCounts),
             'code_counts' => $codeCounts,
             'summary' => $summary,
             'voters' => $voters,

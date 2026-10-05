@@ -99,6 +99,30 @@ it('updates PLK tab badge counts to match the selected UDM', function () {
             ->where('voters.total', 3));
 });
 
+it('builds all-UDM cards with counts for every PLK code', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    createPlkRecord(['identity_number' => 'PLK-CARD-A-1', 'dm' => 'UDM A', 'cula_code' => '3B']);
+    createPlkRecord(['identity_number' => 'PLK-CARD-A-2', 'dm' => 'UDM A', 'cula_code' => '3B']);
+    createPlkRecord(['identity_number' => 'PLK-CARD-A-3', 'dm' => 'UDM A', 'cula_code' => '3D']);
+    createPlkRecord(['identity_number' => 'PLK-CARD-B-1', 'dm' => 'UDM B', 'cula_code' => '3P']);
+    createPlkRecord(['identity_number' => 'PEMILIH-UDM-C', 'dm' => 'UDM C', 'cula_code' => '2']);
+
+    $this->actingAs($user)
+        ->get(route('plk.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('udm_cula_counts', function ($rows) {
+                $byUdm = collect($rows)->keyBy('udm');
+
+                return $byUdm->get('UDM A')['total'] === 3
+                    && $byUdm->get('UDM A')['counts']['3B'] === 2
+                    && $byUdm->get('UDM A')['counts']['3D'] === 1
+                    && $byUdm->get('UDM B')['total'] === 1
+                    && $byUdm->get('UDM B')['counts']['3P'] === 1
+                    && $byUdm->get('UDM C')['total'] === 0;
+            }));
+});
+
 it('limits PLK lists and verification actions to the users pemilih scope', function () {
     $user = User::factory()->withModules(['plk'])->create([
         'access_level' => 'cawangan',

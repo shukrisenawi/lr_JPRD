@@ -65,6 +65,43 @@ function CulaCodeTab({ active, code, count, onClick }) {
     );
 }
 
+function UdmCulaCards({ rows, codes, onSelectUdm }) {
+    if (!rows?.length) return null;
+
+    return (
+        <section className="space-y-2 border-b border-slate-100 p-3">
+            <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-700">Ringkasan pemilih mengikut UDM</h3>
+                <p className="mt-0.5 text-[10px] text-slate-500">Pilih kad UDM untuk menapis senarai pemilih.</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {orderUdms(rows).map((row) => (
+                    <button
+                        key={row.udm}
+                        type="button"
+                        onClick={() => onSelectUdm(row.udm)}
+                        aria-label={`Papar senarai pemilih UDM ${row.udm}`}
+                        className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                    >
+                        <span className="flex items-center justify-between gap-2">
+                            <span className="truncate text-xs font-black text-slate-800">{row.udm}</span>
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-800">{formatNumber(row.total)} pemilih</span>
+                        </span>
+                        <span className="mt-2 grid grid-cols-3 gap-1.5">
+                            {codes.map((code) => (
+                                <span key={code.code} className="rounded-lg bg-slate-50 px-2 py-1.5 text-center">
+                                    <span className="block text-[9px] font-black text-slate-500">{code.code}</span>
+                                    <span className="mt-0.5 block text-xs font-bold text-slate-800">{formatNumber(row.counts?.[code.code])}</span>
+                                </span>
+                            ))}
+                        </span>
+                    </button>
+                ))}
+            </div>
+        </section>
+    );
+}
+
 function Pagination({ voters, onPage }) {
     if (!voters || voters.last_page <= 1) return null;
 
@@ -232,7 +269,7 @@ function CostTable({ rows, codes, rates }) {
     );
 }
 
-export default function PlkIndex({ active_tab: activeTab, filters, udms, summary, voters, codes, code_counts: codeCounts = {}, rates: initialRates, cost_rows: costRows }) {
+export default function PlkIndex({ active_tab: activeTab, filters, udms, summary, voters, codes, code_counts: codeCounts = {}, udm_cula_counts: udmCulaCounts = [], rates: initialRates, cost_rows: costRows }) {
     const { errors = {} } = usePage().props;
     const [search, setSearch] = useState(filters.q || '');
     const [selectedUdm, setSelectedUdm] = useState(filters.udm || '');
@@ -332,6 +369,13 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                 </select>
                                 <button type="submit" className="btn-primary justify-center px-4 py-2 text-xs">Cari</button>
                             </form>
+                            {activeTab === 'senarai' && selectedUdm === '' && (
+                                <UdmCulaCards
+                                    rows={udmCulaCounts}
+                                    codes={codes || []}
+                                    onSelectUdm={(udm) => navigate({ udm, page: 1 })}
+                                />
+                            )}
                             <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={verifyVoter} onPage={onPage} />
                         </>
                     ) : (
