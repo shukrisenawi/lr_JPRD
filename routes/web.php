@@ -21,6 +21,7 @@ use App\Http\Controllers\KadTenController;
 use App\Http\Controllers\KenderaanController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PemilihHashtagController;
+use App\Http\Controllers\PlkController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\PusatKhidmatController;
@@ -164,6 +165,10 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/vcc/{pemilihRecord}/update-cula', [VccController::class, 'updateCula'])->middleware('module:vcc')->name('vcc.update-cula');
     Route::post('/vcc/communication/log', [VccController::class, 'logCommunication'])->middleware('module:vcc')->name('vcc.communication.log');
     Route::post('/vcc/communication/call', [VccController::class, 'updateCallStatus'])->middleware('module:vcc')->name('vcc.communication.call');
+
+    Route::get('/plk', [PlkController::class, 'index'])->middleware('module:plk')->name('plk.index');
+    Route::post('/plk/{pemilihRecord}/verify', [PlkController::class, 'verify'])->middleware('module:plk')->name('plk.verify');
+    Route::put('/plk/rates', [PlkController::class, 'updateRates'])->middleware('module:plk')->name('plk.rates.update');
 
     Route::get('/kad-ten', [KadTenController::class, 'index'])->middleware('module:kad-ten')->name('kad-ten.index');
     Route::post('/kad-ten', [KadTenController::class, 'store'])->middleware('module:kad-ten')->name('kad-ten.store');

@@ -108,6 +108,10 @@ return [
         'label' => 'VCC',
         'description' => 'Senarai semua pemilih VCC.',
     ],
+    'plk' => [
+        'label' => 'PLK',
+        'description' => 'Semak pemilih PAS luar kawasan dan urus kiraan kos mengikut kod culaan.',
+    ],
     'pusat-khidmat' => [
         'label' => 'Pusat Khidmat',
         'description' => 'Data Pusat Khidmat dari Google Sheet.',

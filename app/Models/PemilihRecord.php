@@ -27,6 +27,8 @@ class PemilihRecord extends Model
         'date_of_birth',
         'cula_code',
         'cula_display_label',
+        'plk_verified_at',
+        'plk_verified_by',
         'address',
         'phone_home',
         'phone_mobile',
@@ -55,6 +57,7 @@ class PemilihRecord extends Model
         return [
             'is_manual' => 'boolean',
             'date_of_birth' => 'date',
+            'plk_verified_at' => 'datetime',
         ];
     }
 
@@ -106,6 +109,11 @@ class PemilihRecord extends Model
     public function culaWorkItem(): HasOne
     {
         return $this->hasOne(CulaWorkItem::class, 'pemilih_record_id');
+    }
+
+    public function plkVerifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'plk_verified_by');
     }
 
     public function latestCallCommunication(): HasOne
