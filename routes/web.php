@@ -167,7 +167,9 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/vcc/communication/call', [VccController::class, 'updateCallStatus'])->middleware('module:vcc')->name('vcc.communication.call');
 
     Route::get('/plk', [PlkController::class, 'index'])->middleware('module:plk')->name('plk.index');
+    Route::get('/plk/export', [PlkController::class, 'export'])->middleware('module:plk')->name('plk.export');
     Route::post('/plk/{pemilihRecord}/verify', [PlkController::class, 'verify'])->middleware('module:plk')->name('plk.verify');
+    Route::delete('/plk/{pemilihRecord}/verify', [PlkController::class, 'unverify'])->middleware('module:plk')->name('plk.unverify');
     Route::put('/plk/rates', [PlkController::class, 'updateRates'])->middleware('module:plk')->name('plk.rates.update');
 
     Route::get('/kad-ten', [KadTenController::class, 'index'])->middleware('module:kad-ten')->name('kad-ten.index');

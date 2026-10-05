@@ -6,6 +6,7 @@ use App\Models\PemilihRecord;
 use App\Models\Setting;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -167,6 +168,52 @@ class PlkController extends Controller
         }
 
         return back()->with('success', 'Maklumat pemilih ditanda sebagai betul.');
+    }
+
+    public function export(Request $request): JsonResponse
+    {
+        $tab = $request->string('tab')->toString() === 'disemak' ? 'disemak' : 'senarai';
+        $requestedCulaCode = $request->string('cula_code')->toString();
+        $filters = [
+            'udm' => $request->string('udm')->trim()->toString(),
+            'q' => $request->string('q')->trim()->toString(),
+            'cula_code' => $tab === 'senarai' && in_array($requestedCulaCode, self::CULA_CODES, true)
+                ? $requestedCulaCode
+                : '',
+        ];
+
+        $voters = $this->applyFilters($this->baseQuery($request->user()), $filters)
+            ->when($tab === 'disemak', fn (Builder $query) => $query->whereNotNull('plk_verified_at'))
+            ->select([
+                'name', 'no_kp', 'old_ic', 'phone_mobile', 'phone_home',
+                'cula_code', 'dm', 'locality',
+            ])
+            ->orderBy('dm')
+            ->orderBy('locality')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (PemilihRecord $voter) => [
+                'name' => $voter->name,
+                'no_kp' => $voter->no_kp ?: $voter->old_ic,
+                'phone' => $voter->phone_mobile ?: $voter->phone_home,
+                'cula_code' => $voter->cula_code,
+                'dm' => $voter->dm,
+                'locality' => $voter->locality,
+            ])
+            ->values();
+
+        return response()->json(['voters' => $voters]);
+    }
+
+    public function unverify(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
+    {
+        $record = $this->baseQuery($request->user())->findOrFail($pemilihRecord->id);
+        $record->forceFill([
+            'plk_verified_at' => null,
+            'plk_verified_by' => null,
+        ])->save();
+
+        return back()->with('success', 'Semakan maklumat pemilih berjaya dibatalkan.');
     }
 
     public function updateRates(Request $request): RedirectResponse

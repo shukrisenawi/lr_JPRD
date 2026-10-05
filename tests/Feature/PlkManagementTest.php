@@ -79,6 +79,50 @@ it('marks a PLK voter as verified by the current user', function () {
     expect($voter->fresh()->plk_verified_at)->not->toBeNull();
 });
 
+it('cancels a PLK verification and returns the voter to the full list', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    $voter = createPlkRecord([
+        'plk_verified_at' => now(),
+        'plk_verified_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->delete(route('plk.unverify', $voter))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'id' => $voter->id,
+        'plk_verified_at' => null,
+        'plk_verified_by' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('plk.index', ['tab' => 'disemak']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('voters.total', 0));
+});
+
+it('exports all matching PLK voters without pagination', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    createPlkRecord(['identity_number' => 'PLK-EXPORT-A-1', 'name' => 'PEMILIH EXPORT A', 'dm' => 'UDM A', 'locality' => 'LOKALITI 1', 'cula_code' => '3B']);
+    createPlkRecord(['identity_number' => 'PLK-EXPORT-A-2', 'name' => 'PEMILIH EXPORT B', 'dm' => 'UDM A', 'locality' => 'LOKALITI 2', 'cula_code' => '3D']);
+    createPlkRecord(['identity_number' => 'PLK-EXPORT-B-1', 'name' => 'PEMILIH EXPORT C', 'dm' => 'UDM B', 'locality' => 'LOKALITI 1', 'cula_code' => '3P']);
+    createPlkRecord(['identity_number' => 'PLK-EXPORT-NON-PLK', 'cula_code' => '2']);
+
+    $this->actingAs($user)
+        ->getJson(route('plk.export'))
+        ->assertOk()
+        ->assertJsonCount(3, 'voters')
+        ->assertJsonPath('voters.0.dm', 'UDM A')
+        ->assertJsonPath('voters.0.locality', 'LOKALITI 1');
+
+    $this->actingAs($user)
+        ->getJson(route('plk.export', ['udm' => 'UDM B', 'cula_code' => '3P']))
+        ->assertOk()
+        ->assertJsonCount(1, 'voters')
+        ->assertJsonPath('voters.0.name', 'PEMILIH EXPORT C');
+});
+
 it('updates PLK tab badge counts to match the selected UDM', function () {
     $user = User::factory()->withModules(['plk'])->create();
     createPlkRecord(['identity_number' => 'PLK-UDM-A-1', 'dm' => 'UDM A', 'cula_code' => '3B']);

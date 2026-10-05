@@ -119,7 +119,7 @@ function Pagination({ voters, onPage }) {
     );
 }
 
-function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, onPage }) {
+function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, onRequestUnverify, onPage }) {
     if (!voters?.data?.length) {
         return (
             <div className="px-5 py-12 text-center">
@@ -183,10 +183,21 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
                                                 {verifyingIds.includes(voter.id) ? 'Menyimpan…' : 'Maklumat betul'}
                                             </button>
                                         ) : (
-                                            <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-                                                {checkedTab ? 'Sudah disemak' : 'Maklumat betul'}
-                                            </span>
+                                            <>
+                                                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+                                                    {checkedTab ? 'Sudah disemak' : 'Maklumat betul'}
+                                                </span>
+                                                {checkedTab && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onRequestUnverify(voter)}
+                                                        className="inline-flex items-center rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-700 transition hover:bg-rose-50"
+                                                    >
+                                                        Batalkan semakan
+                                                    </button>
+                                                )}
+                                            </>
                                         )}
                                         <button type="button" onClick={() => openTelegram('kemascula', voter)} disabled={!voter.telegram_identity} className="inline-flex items-center rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-sky-700 transition hover:bg-sky-50 disabled:opacity-40">Cula</button>
                                         <button type="button" onClick={() => openTelegram('kemastel', voter)} disabled={!voter.telegram_identity} className="inline-flex items-center rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-40">Tukar tel</button>
@@ -276,6 +287,10 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     const [rates, setRates] = useState(initialRates || {});
     const [verifyingIds, setVerifyingIds] = useState([]);
     const [savingRates, setSavingRates] = useState(false);
+    const [verificationToCancel, setVerificationToCancel] = useState(null);
+    const [cancelingVerification, setCancelingVerification] = useState(false);
+    const [exporting, setExporting] = useState(false);
+    const [exportError, setExportError] = useState('');
 
     useEffect(() => setSearch(filters.q || ''), [filters.q]);
     useEffect(() => setSelectedUdm(filters.udm || ''), [filters.udm]);
@@ -302,6 +317,17 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
         });
     };
 
+    const cancelVerification = () => {
+        if (!verificationToCancel) return;
+
+        setCancelingVerification(true);
+        router.delete(route('plk.unverify', verificationToCancel.id), {
+            preserveScroll: true,
+            onSuccess: () => setVerificationToCancel(null),
+            onFinish: () => setCancelingVerification(false),
+        });
+    };
+
     const saveRates = (event) => {
         event.preventDefault();
         setSavingRates(true);
@@ -312,6 +338,152 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     };
 
     const onPage = (page) => navigate({ page });
+
+    const exportToExcel = async () => {
+        if (exporting) return;
+
+        setExporting(true);
+        setExportError('');
+
+        try {
+            const params = new URLSearchParams({
+                tab: activeTab,
+                udm: selectedUdm,
+                q: filters.q || '',
+                cula_code: activeTab === 'senarai' ? (filters.cula_code || '') : '',
+            });
+            const response = await fetch(`${route('plk.export')}?${params.toString()}`, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            if (!response.ok) throw new Error('Export data gagal dimuat turun.');
+
+            const payload = await response.json();
+            const exportVoters = payload.voters || [];
+            const udmGroups = new Map();
+
+            exportVoters.forEach((voter) => {
+                const udm = String(voter.dm || '').trim() || 'UDM TIDAK DINYATAKAN';
+                const locality = String(voter.locality || '').trim() || 'TANPA LOKALITI';
+                if (!udmGroups.has(udm)) udmGroups.set(udm, new Map());
+                const localities = udmGroups.get(udm);
+                if (!localities.has(locality)) localities.set(locality, []);
+                localities.get(locality).push(voter);
+            });
+
+            const headers = ['Bil.', 'Nama', 'No. KP', 'Telefon', 'Kod Cula', 'UDM', 'Lokaliti'];
+            const ExcelJS = (await import('exceljs')).default;
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'JPrD Jeneri';
+            workbook.created = new Date();
+
+            const worksheet = workbook.addWorksheet('Senarai PLK', {
+                pageSetup: {
+                    paperSize: 9,
+                    orientation: 'landscape',
+                    fitToPage: true,
+                    fitToWidth: 1,
+                    fitToHeight: 0,
+                    margins: { left: 0.3, right: 0.3, top: 0.55, bottom: 0.55, header: 0.25, footer: 0.25 },
+                },
+            });
+            worksheet.views = [{ showGridLines: false }];
+            [8, 32, 18, 18, 12, 26, 26].forEach((width, index) => {
+                worksheet.getColumn(index + 1).width = width;
+            });
+
+            const border = {
+                top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+                left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+                bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+                right: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            };
+            const addMergedRow = (text, { size = 12, color = 'FF14532D', fill = 'FFECFDF5' } = {}) => {
+                const row = worksheet.addRow([text]);
+                worksheet.mergeCells(row.number, 1, row.number, headers.length);
+                row.height = size > 12 ? 26 : 22;
+                const cell = row.getCell(1);
+                cell.font = { name: 'Calibri', size, bold: true, color: { argb: color } };
+                cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
+                return row;
+            };
+            const addHeaderRow = () => {
+                const row = worksheet.addRow(headers);
+                row.height = 21;
+                row.eachCell({ includeEmpty: true }, (cell) => {
+                    cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1F2937' } };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+                    cell.border = border;
+                });
+            };
+            const addVoterRow = (voter, number, udm, locality) => {
+                const row = worksheet.addRow([
+                    number,
+                    voter.name || '-',
+                    voter.no_kp || '-',
+                    voter.phone || '-',
+                    voter.cula_code || '-',
+                    udm,
+                    locality,
+                ]);
+                row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+                    cell.font = { name: 'Calibri', size: 10 };
+                    cell.alignment = {
+                        vertical: 'middle',
+                        horizontal: [1, 3, 4, 5].includes(columnNumber) ? 'center' : 'left',
+                        wrapText: [2, 6, 7].includes(columnNumber),
+                    };
+                    cell.border = border;
+                });
+            };
+
+            const date = new Date();
+            const dateLabel = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+            addMergedRow('SENARAI PEMILIH PLK', { size: 16, color: 'FFFFFFFF', fill: 'FF047857' });
+            addMergedRow(`Dijana pada ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
+
+            const sortedUdms = orderUdms([...udmGroups.keys()]);
+            if (sortedUdms.length === 0) {
+                addMergedRow('Tiada pemilih untuk tapisan ini.', { size: 11, color: 'FF64748B', fill: 'FFFFFFFF' });
+            }
+
+            sortedUdms.forEach((udm, udmIndex) => {
+                const localities = udmGroups.get(udm);
+                const localityNames = [...localities.keys()].sort((a, b) => a.localeCompare(b, 'ms', { numeric: true }));
+                addMergedRow(`UDM: ${udm}`, { size: 14, color: 'FFFFFFFF', fill: 'FF047857' });
+
+                let number = 1;
+                localityNames.forEach((locality) => {
+                    addMergedRow(`Lokaliti: ${locality}`, { size: 11, color: 'FF14532D', fill: 'FFD1FAE5' });
+                    addHeaderRow();
+                    localities.get(locality)
+                        .slice()
+                        .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ms', { numeric: true }))
+                        .forEach((voter) => {
+                            addVoterRow(voter, number++, udm, locality);
+                        });
+                });
+
+                if (udmIndex < sortedUdms.length - 1) worksheet.lastRow?.addPageBreak();
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Senarai_PLK_${dateLabel}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+            setExportError(error.message || 'Eksport Excel tidak berjaya. Sila cuba lagi.');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     return (
         <AuthenticatedLayout header={
@@ -347,6 +519,18 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
 
                     {activeTab !== 'kos' ? (
                         <>
+                            <form onSubmit={(event) => { event.preventDefault(); navigate({ q: search, udm: selectedUdm, page: 1 }); }} className="flex flex-col gap-2 border-b border-slate-100 p-3 sm:flex-row sm:items-center">
+                                <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama, No. KP, telefon atau lokaliti" className="input-field min-w-0 flex-1 text-xs" />
+                                <select value={selectedUdm} onChange={(event) => { setSelectedUdm(event.target.value); navigate({ udm: event.target.value, page: 1 }); }} className="input-field text-xs sm:w-56">
+                                    <option value="">Semua UDM</option>
+                                    {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                </select>
+                                <button type="submit" className="btn-primary justify-center px-4 py-2 text-xs">Cari</button>
+                                <button type="button" onClick={exportToExcel} disabled={exporting} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50">
+                                    {exporting ? 'Menyediakan Excel…' : 'Eksport Excel'}
+                                </button>
+                            </form>
+                            {exportError && <p role="alert" className="border-b border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{exportError}</p>}
                             {activeTab === 'senarai' && (
                                 <div role="tablist" aria-label="Tapisan kod Cula" className="flex gap-1.5 overflow-x-auto border-b border-slate-100 px-3 py-2">
                                     <CulaCodeTab active={!filters.cula_code} code="Semua" count={summary.total} onClick={() => visitCulaCode('')} />
@@ -361,14 +545,6 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                     ))}
                                 </div>
                             )}
-                            <form onSubmit={(event) => { event.preventDefault(); navigate({ q: search, udm: selectedUdm, page: 1 }); }} className="flex flex-col gap-2 border-b border-slate-100 p-3 sm:flex-row sm:items-center">
-                                <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama, No. KP, telefon atau lokaliti" className="input-field min-w-0 flex-1 text-xs" />
-                                <select value={selectedUdm} onChange={(event) => { setSelectedUdm(event.target.value); navigate({ udm: event.target.value, page: 1 }); }} className="input-field text-xs sm:w-56">
-                                    <option value="">Semua UDM</option>
-                                    {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
-                                </select>
-                                <button type="submit" className="btn-primary justify-center px-4 py-2 text-xs">Cari</button>
-                            </form>
                             {activeTab === 'senarai' && selectedUdm === '' && (
                                 <UdmCulaCards
                                     rows={udmCulaCounts}
@@ -376,7 +552,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                     onSelectUdm={(udm) => navigate({ udm, page: 1 })}
                                 />
                             )}
-                            <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={verifyVoter} onPage={onPage} />
+                            <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={verifyVoter} onRequestUnverify={setVerificationToCancel} onPage={onPage} />
                         </>
                     ) : (
                         <div className="p-3 sm:p-4">
@@ -417,6 +593,30 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                     )}
                 </section>
             </div>
+            {verificationToCancel && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="plk-unverify-title"
+                        className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+                    >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true"><path d="M12 9v4m0 4h.01" /><path d="M10.3 3.9 2.6 17.2a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
+                        </div>
+                        <h3 id="plk-unverify-title" className="mt-3 text-base font-black text-slate-900">Batalkan semakan?</h3>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                            Tanda semakan untuk <strong>{verificationToCancel.name || 'pemilih ini'}</strong> akan dibatalkan dan rekod akan kembali ke senarai pemilih.
+                        </p>
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button type="button" onClick={() => setVerificationToCancel(null)} disabled={cancelingVerification} className="btn-outline px-3 py-2 text-xs disabled:opacity-50">Kekalkan</button>
+                            <button type="button" onClick={cancelVerification} disabled={cancelingVerification} className="inline-flex items-center rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-rose-700 disabled:cursor-wait disabled:opacity-60">
+                                {cancelingVerification ? 'Membatalkan…' : 'Ya, batalkan semakan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }
