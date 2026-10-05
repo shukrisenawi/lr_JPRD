@@ -63,7 +63,7 @@ it('stores uploaded pemilih file from settings and syncs latest voter data', fun
     file_put_contents($firstPath, <<<'HTML'
 <html><body><table>
 <tr><th>Bil.</th><th>Kod DM</th><th>Nama DM</th><th>Kod Lokaliti</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th><th>Alamat Kediaman</th><th>Tel. Rumah</th><th>Tel. Bimbit</th></tr>
-<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI LAMA</td><td>L</td><td>M</td><td>2</td><td>ALAMAT LAMA</td><td>="049999999"</td><td>="0123456789"</td></tr>
+<tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>="900101025555"</td><td>ALI LAMA</td><td>L</td><td>M</td><td>2</td><td>ALAMAT LAMA</td><td>="049999999"</td><td>="0173866485/0199186949"</td></tr>
 <tr><td>2</td><td>="02"</td><td>KAMPUNG BETONG</td><td>="002"</td><td>KG BETONG</td><td>="880808025333"</td><td>SITI AKTIF</td><td>P</td><td>M</td><td>3P</td><td>KG BETONG</td><td>="047777777"</td><td>="0198888777"</td></tr>
 </table></body></html>
 HTML);
@@ -82,6 +82,11 @@ HTML);
             'pemilih_file' => new UploadedFile($firstPath, 'pemilih-first.xls', 'application/vnd.ms-excel', null, true),
         ])
         ->assertRedirect(route('settings.edit'));
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'identity_number' => '900101025555',
+        'phone_mobile' => '0173866485 / 0199186949',
+    ]);
 
     $this->actingAs($user)
         ->post(route('settings.pemilih-upload'), [

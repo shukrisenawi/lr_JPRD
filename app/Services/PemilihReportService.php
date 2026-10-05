@@ -1079,8 +1079,8 @@ class PemilihReportService
             $name = $this->fallbackLabel($row['Nama Pemilih'] ?? '', '');
             $noKp = $this->cleanDigits($row['No. K/P (Baru)'] ?? '');
             $oldIc = $this->cleanDigits($row['No. K/P (Lama)'] ?? '');
-            $phoneHome = $this->cleanDigits($row['Tel. Rumah'] ?? '');
-            $phoneMobile = $this->cleanDigits($row['Tel. Bimbit'] ?? '');
+            $phoneHome = $this->cleanPhone($row['Tel. Rumah'] ?? '');
+            $phoneMobile = $this->cleanPhone($row['Tel. Bimbit'] ?? '');
 
             if ($name === '' && $noKp === '' && $phoneHome === '' && $phoneMobile === '') {
                 return null;
@@ -1121,6 +1121,8 @@ class PemilihReportService
                     $oldIc,
                     $phoneHome,
                     $phoneMobile,
+                    $this->cleanDigits($phoneHome),
+                    $this->cleanDigits($phoneMobile),
                     $row['Nama DM'] ?? '',
                     $row['Nama Lokaliti'] ?? '',
                 ])),
@@ -1155,8 +1157,8 @@ class PemilihReportService
                 'cula_code' => $culaCode,
                 'cula_display_label' => $this->displayCulaLabel($culaCode),
                 'address' => $this->nullableLabel($row['Alamat Kediaman'] ?? ($row['Alamat K/P'] ?? '')),
-                'phone_home' => $this->nullableLabel($this->cleanDigits($row['Tel. Rumah'] ?? '')),
-                'phone_mobile' => $this->nullableLabel($this->cleanDigits($row['Tel. Bimbit'] ?? '')),
+                'phone_home' => $this->nullableLabel($this->cleanPhone($row['Tel. Rumah'] ?? '')),
+                'phone_mobile' => $this->nullableLabel($this->cleanPhone($row['Tel. Bimbit'] ?? '')),
                 'status' => 'aktif',
                 'source_file' => $sourceFile,
                 'is_manual' => false,
@@ -1288,6 +1290,19 @@ class PemilihReportService
     private function cleanDigits(string $value): string
     {
         return preg_replace('/\D+/', '', $value) ?? '';
+    }
+
+    private function cleanPhone(string $value): string
+    {
+        $numbers = preg_split('/\s*\/\s*/', trim($value), -1, PREG_SPLIT_NO_EMPTY);
+
+        if ($numbers === false) {
+            return $this->cleanDigits($value);
+        }
+
+        $numbers = array_map(fn (string $number): string => $this->cleanDigits($number), $numbers);
+
+        return implode(' / ', array_filter($numbers, fn (string $number): bool => $number !== ''));
     }
 
     private function normalizeSearch(string $value): string
