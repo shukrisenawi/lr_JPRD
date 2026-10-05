@@ -18,6 +18,7 @@ use App\Http\Controllers\DanaKategoriController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GroupPemilihController;
 use App\Http\Controllers\KadTenController;
+use App\Http\Controllers\KeluargaPemilihController;
 use App\Http\Controllers\KenderaanController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PemilihHashtagController;
@@ -136,6 +137,13 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/group-pemilih', [GroupPemilihController::class, 'store'])->middleware('module:group-pemilih')->name('group-pemilih.store');
     Route::put('/group-pemilih/{group}', [GroupPemilihController::class, 'update'])->middleware('module:group-pemilih')->name('group-pemilih.update');
     Route::delete('/group-pemilih/{group}', [GroupPemilihController::class, 'destroy'])->middleware('module:group-pemilih')->name('group-pemilih.destroy');
+
+    Route::get('/keluarga-pemilih', [KeluargaPemilihController::class, 'index'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.index');
+    Route::get('/keluarga-pemilih/search', [KeluargaPemilihController::class, 'search'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.search');
+    Route::post('/keluarga-pemilih', [KeluargaPemilihController::class, 'store'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.store');
+    Route::post('/keluarga-pemilih/auto', [KeluargaPemilihController::class, 'auto'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.auto');
+    Route::post('/keluarga-pemilih/{pemilihFamily}/members', [KeluargaPemilihController::class, 'addMembers'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.members.store');
+    Route::delete('/keluarga-pemilih/{pemilihFamily}/members/{pemilihRecord}', [KeluargaPemilihController::class, 'removeMember'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.members.destroy');
 
     Route::get('/culaan', [CulaanController::class, 'index'])->middleware('module:culaan')->name('culaan.index');
     Route::get('/culaan/export', [CulaanController::class, 'export'])->middleware('module:culaan.senarai')->name('culaan.export');

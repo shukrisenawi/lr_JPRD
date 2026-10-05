@@ -112,6 +112,10 @@ return [
         'label' => 'PLK',
         'description' => 'Semak pemilih PAS luar kawasan dan urus kiraan kos mengikut kod culaan.',
     ],
+    'keluarga-pemilih' => [
+        'label' => 'Keluarga Pemilih',
+        'description' => 'Susun pemilih ke dalam keluarga secara manual atau melalui padanan kediaman yang kuat.',
+    ],
     'pusat-khidmat' => [
         'label' => 'Pusat Khidmat',
         'description' => 'Data Pusat Khidmat dari Google Sheet.',

@@ -128,6 +128,16 @@ class PemilihRecord extends Model
         return $this->hasMany(KadTenMember::class, 'pemilih_record_id');
     }
 
+    public function families(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            PemilihFamily::class,
+            'pemilih_family_members',
+            'pemilih_record_id',
+            'pemilih_family_id',
+        )->withPivot('created_by')->withTimestamps();
+    }
+
     public function hashtags(): BelongsToMany
     {
         return $this->belongsToMany(
