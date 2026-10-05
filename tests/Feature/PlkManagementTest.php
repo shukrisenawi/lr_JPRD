@@ -40,9 +40,19 @@ it('lists only active PLK voters and separates voters already verified', functio
             ->where('summary.total', 2)
             ->where('summary.pending', 1)
             ->where('summary.checked', 1)
+            ->where('code_counts.3B', 1)
+            ->where('code_counts.3U', 1)
             ->where('voters.total', 2)
             ->where('voters.data.0.id', $pending->id)
             ->where('voters.data.0.cula_code', '3B'));
+
+    $this->actingAs($user)
+        ->get(route('plk.index', ['cula_code' => '3U']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.cula_code', '3U')
+            ->where('voters.total', 1)
+            ->where('voters.data.0.id', $checked->id));
 
     $this->actingAs($user)
         ->get(route('plk.index', ['tab' => 'disemak']))
@@ -67,6 +77,26 @@ it('marks a PLK voter as verified by the current user', function () {
         'plk_verified_by' => $user->id,
     ]);
     expect($voter->fresh()->plk_verified_at)->not->toBeNull();
+});
+
+it('updates PLK tab badge counts to match the selected UDM', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    createPlkRecord(['identity_number' => 'PLK-UDM-A-1', 'dm' => 'UDM A', 'cula_code' => '3B']);
+    createPlkRecord(['identity_number' => 'PLK-UDM-A-2', 'dm' => 'UDM A', 'cula_code' => '3B']);
+    createPlkRecord(['identity_number' => 'PLK-UDM-A-3', 'dm' => 'UDM A', 'cula_code' => '3D']);
+    createPlkRecord(['identity_number' => 'PLK-UDM-B-1', 'dm' => 'UDM B', 'cula_code' => '3D']);
+
+    $this->actingAs($user)
+        ->get(route('plk.index', ['udm' => 'UDM A']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', 'UDM A')
+            ->where('summary.total', 3)
+            ->where('summary.pending', 3)
+            ->where('code_counts.3B', 2)
+            ->where('code_counts.3D', 1)
+            ->where('code_counts.3U', 0)
+            ->where('voters.total', 3));
 });
 
 it('limits PLK lists and verification actions to the users pemilih scope', function () {

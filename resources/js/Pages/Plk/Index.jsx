@@ -48,6 +48,23 @@ function TabButton({ active, label, count, onClick }) {
     );
 }
 
+function CulaCodeTab({ active, code, count, onClick }) {
+    return (
+        <button
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={onClick}
+            className={`inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition ${active ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-800'}`}
+        >
+            {code}
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${active ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                {formatNumber(count)}
+            </span>
+        </button>
+    );
+}
+
 function Pagination({ voters, onPage }) {
     if (!voters || voters.last_page <= 1) return null;
 
@@ -65,7 +82,7 @@ function Pagination({ voters, onPage }) {
     );
 }
 
-function VoterTable({ voters, checkedTab, verifyingIds, onVerify, onPage }) {
+function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, onPage }) {
     if (!voters?.data?.length) {
         return (
             <div className="px-5 py-12 text-center">
@@ -81,11 +98,11 @@ function VoterTable({ voters, checkedTab, verifyingIds, onVerify, onPage }) {
     return (
         <>
             <div className="overflow-x-auto">
-                <table className="w-full min-w-[940px] border-collapse text-left">
+                <table className={`w-full border-collapse text-left ${hideCulaCode ? 'min-w-[800px]' : 'min-w-[940px]'}`}>
                     <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500">
                         <tr>
                             <th className="px-4 py-3">Maklumat pemilih</th>
-                            <th className="px-4 py-3">Kod Cula</th>
+                            {!hideCulaCode && <th className="px-4 py-3">Kod Cula</th>}
                             <th className="px-4 py-3">UDM / Lokaliti</th>
                             <th className="px-4 py-3">Telefon</th>
                             {checkedTab && <th className="px-4 py-3">Disemak</th>}
@@ -99,10 +116,12 @@ function VoterTable({ voters, checkedTab, verifyingIds, onVerify, onPage }) {
                                     <p className="max-w-[280px] text-xs font-bold uppercase leading-relaxed text-slate-800">{voter.name || 'Nama tidak direkodkan'}</p>
                                     <p className="mt-0.5 text-[11px] font-medium text-slate-500">No. KP: {voter.no_kp || '-'}</p>
                                 </td>
-                                <td className="px-4 py-3">
-                                    <span className="inline-flex rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-800">{voter.cula_code}</span>
-                                    <p className="mt-1 max-w-[160px] text-[10px] leading-relaxed text-slate-500">{voter.cula_label}</p>
-                                </td>
+                                {!hideCulaCode && (
+                                    <td className="px-4 py-3">
+                                        <span className="inline-flex rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-800">{voter.cula_code}</span>
+                                        <p className="mt-1 max-w-[160px] text-[10px] leading-relaxed text-slate-500">{voter.cula_label}</p>
+                                    </td>
+                                )}
                                 <td className="px-4 py-3">
                                     <p className="text-xs font-semibold text-slate-700">{voter.dm || 'UDM tidak dinyatakan'}</p>
                                     <p className="mt-0.5 text-[11px] text-slate-500">{voter.locality || '-'}</p>
@@ -213,7 +232,7 @@ function CostTable({ rows, codes, rates }) {
     );
 }
 
-export default function PlkIndex({ active_tab: activeTab, filters, udms, summary, voters, codes, rates: initialRates, cost_rows: costRows }) {
+export default function PlkIndex({ active_tab: activeTab, filters, udms, summary, voters, codes, code_counts: codeCounts = {}, rates: initialRates, cost_rows: costRows }) {
     const { errors = {} } = usePage().props;
     const [search, setSearch] = useState(filters.q || '');
     const [selectedUdm, setSelectedUdm] = useState(filters.udm || '');
@@ -230,11 +249,13 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             tab: activeTab,
             udm: selectedUdm,
             q: search,
+            cula_code: filters.cula_code || '',
             ...next,
         }, { preserveState: true, preserveScroll: true, replace: true });
     };
 
-    const visitTab = (tab) => navigate({ tab, page: 1 });
+    const visitTab = (tab) => navigate({ tab, cula_code: tab === 'senarai' ? (filters.cula_code || '') : '', page: 1 });
+    const visitCulaCode = (code) => navigate({ tab: 'senarai', cula_code: code, page: 1 });
 
     const verifyVoter = (voter) => {
         setVerifyingIds((current) => [...current, voter.id]);
@@ -289,6 +310,20 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
 
                     {activeTab !== 'kos' ? (
                         <>
+                            {activeTab === 'senarai' && (
+                                <div role="tablist" aria-label="Tapisan kod Cula" className="flex gap-1.5 overflow-x-auto border-b border-slate-100 px-3 py-2">
+                                    <CulaCodeTab active={!filters.cula_code} code="Semua" count={summary.total} onClick={() => visitCulaCode('')} />
+                                    {codes.map((code) => (
+                                        <CulaCodeTab
+                                            key={code.code}
+                                            active={filters.cula_code === code.code}
+                                            code={code.code}
+                                            count={codeCounts[code.code] || 0}
+                                            onClick={() => visitCulaCode(code.code)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                             <form onSubmit={(event) => { event.preventDefault(); navigate({ q: search, udm: selectedUdm, page: 1 }); }} className="flex flex-col gap-2 border-b border-slate-100 p-3 sm:flex-row sm:items-center">
                                 <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama, No. KP, telefon atau lokaliti" className="input-field min-w-0 flex-1 text-xs" />
                                 <select value={selectedUdm} onChange={(event) => { setSelectedUdm(event.target.value); navigate({ udm: event.target.value, page: 1 }); }} className="input-field text-xs sm:w-56">
@@ -297,7 +332,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                 </select>
                                 <button type="submit" className="btn-primary justify-center px-4 py-2 text-xs">Cari</button>
                             </form>
-                            <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} verifyingIds={verifyingIds} onVerify={verifyVoter} onPage={onPage} />
+                            <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={verifyVoter} onPage={onPage} />
                         </>
                     ) : (
                         <div className="p-3 sm:p-4">

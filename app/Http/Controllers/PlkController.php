@@ -22,9 +22,13 @@ class PlkController extends Controller
         $user = $request->user();
         $tab = $request->string('tab')->toString();
         $tab = in_array($tab, ['senarai', 'disemak', 'kos'], true) ? $tab : 'senarai';
+        $requestedCulaCode = $request->string('cula_code')->toString();
         $filters = [
             'udm' => $request->string('udm')->trim()->toString(),
             'q' => $request->string('q')->trim()->toString(),
+            'cula_code' => $tab === 'senarai' && in_array($requestedCulaCode, self::CULA_CODES, true)
+                ? $requestedCulaCode
+                : '',
         ];
         $base = $this->baseQuery($user);
 
@@ -44,10 +48,25 @@ class PlkController extends Controller
             ->all();
 
         $rates = $this->rates();
+        $countBase = (clone $base)
+            ->when(
+                $tab !== 'kos' && $filters['udm'] !== '',
+                fn (Builder $query) => $query->where('dm', $filters['udm']),
+            );
+        $codeCounts = array_fill_keys(self::CULA_CODES, 0);
+        (clone $countBase)
+            ->select('cula_code')
+            ->selectRaw('COUNT(*) as quantity')
+            ->groupBy('cula_code')
+            ->get()
+            ->each(function ($record) use (&$codeCounts): void {
+                $codeCounts[$record->cula_code] = (int) $record->quantity;
+            });
+
         $summary = [
-            'total' => (clone $base)->count(),
-            'checked' => (clone $base)->whereNotNull('plk_verified_at')->count(),
-            'pending' => (clone $base)->whereNull('plk_verified_at')->count(),
+            'total' => (clone $countBase)->count(),
+            'checked' => (clone $countBase)->whereNotNull('plk_verified_at')->count(),
+            'pending' => (clone $countBase)->whereNull('plk_verified_at')->count(),
         ];
         $voters = null;
         $costRows = [];
@@ -90,6 +109,7 @@ class PlkController extends Controller
             'active_tab' => $tab,
             'filters' => $filters,
             'udms' => $udms,
+            'code_counts' => $codeCounts,
             'summary' => $summary,
             'voters' => $voters,
             'codes' => collect(self::CULA_CODES)->map(fn (string $code) => [
@@ -147,6 +167,7 @@ class PlkController extends Controller
     {
         return $query
             ->when($filters['udm'], fn (Builder $builder, string $udm) => $builder->where('dm', $udm))
+            ->when($filters['cula_code'], fn (Builder $builder, string $code) => $builder->where('cula_code', $code))
             ->when($filters['q'], function (Builder $builder, string $search): void {
                 $like = '%'.$search.'%';
                 $builder->where(function (Builder $nested) use ($like): void {
