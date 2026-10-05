@@ -370,7 +370,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 localities.get(locality).push(voter);
             });
 
-            const headers = ['Bil.', 'Nama', 'No. KP', 'Telefon', 'Kod Cula', 'UDM', 'Lokaliti'];
+            const headers = ['Bil.', 'Nama', 'No. KP', 'Telefon', 'Kod Cula'];
             const ExcelJS = (await import('exceljs')).default;
             const workbook = new ExcelJS.Workbook();
             workbook.creator = 'JPrD Jeneri';
@@ -379,7 +379,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             const worksheet = workbook.addWorksheet('Senarai PLK', {
                 pageSetup: {
                     paperSize: 9,
-                    orientation: 'landscape',
+                    orientation: 'portrait',
                     fitToPage: true,
                     fitToWidth: 1,
                     fitToHeight: 0,
@@ -387,7 +387,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 },
             });
             worksheet.views = [{ showGridLines: false }];
-            [8, 32, 18, 18, 12, 26, 26].forEach((width, index) => {
+            [8, 36, 20, 20, 14].forEach((width, index) => {
                 worksheet.getColumn(index + 1).width = width;
             });
 
@@ -403,7 +403,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 row.height = size > 12 ? 26 : 22;
                 const cell = row.getCell(1);
                 cell.font = { name: 'Calibri', size, bold: true, color: { argb: color } };
-                cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } };
                 return row;
             };
@@ -417,22 +417,20 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                     cell.border = border;
                 });
             };
-            const addVoterRow = (voter, number, udm, locality) => {
+            const addVoterRow = (voter, number) => {
                 const row = worksheet.addRow([
                     number,
                     voter.name || '-',
                     voter.no_kp || '-',
                     voter.phone || '-',
                     voter.cula_code || '-',
-                    udm,
-                    locality,
                 ]);
                 row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
                     cell.font = { name: 'Calibri', size: 10 };
                     cell.alignment = {
                         vertical: 'middle',
                         horizontal: [1, 3, 4, 5].includes(columnNumber) ? 'center' : 'left',
-                        wrapText: [2, 6, 7].includes(columnNumber),
+                        wrapText: true,
                     };
                     cell.border = border;
                 });
@@ -440,7 +438,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
 
             const date = new Date();
             const dateLabel = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-            addMergedRow('SENARAI PEMILIH PLK', { size: 16, color: 'FFFFFFFF', fill: 'FF047857' });
+            addMergedRow('SENARAI PEMILIH PLK DUN JENERI', { size: 16, color: 'FFFFFFFF', fill: 'FF047857' });
             addMergedRow(`Dijana pada ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
 
             const sortedUdms = orderUdms([...udmGroups.keys()]);
@@ -461,7 +459,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                         .slice()
                         .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ms', { numeric: true }))
                         .forEach((voter) => {
-                            addVoterRow(voter, number++, udm, locality);
+                            addVoterRow(voter, number++);
                         });
                 });
 
