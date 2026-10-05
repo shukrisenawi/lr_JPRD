@@ -149,3 +149,63 @@ it('does not allow users to create a family outside their voter scope', function
 
     $this->assertDatabaseCount('pemilih_families', 0);
 });
+
+it('shows UDM family and unassigned voter counts and filters the family list', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+
+    $udmOneMembers = [
+        createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI', 'dm' => 'UDM 1']),
+        createKeluargaPemilihRecord(['name' => 'SITI BINTI ALI', 'dm' => 'UDM 1']),
+    ];
+    createKeluargaPemilihRecord(['name' => 'UNASSIGNED UDM 1', 'dm' => 'UDM 1']);
+
+    $udmTwoMembers = [
+        createKeluargaPemilihRecord(['name' => 'RAHIM BIN ABU', 'dm' => 'UDM 2']),
+    ];
+    createKeluargaPemilihRecord(['name' => 'UNASSIGNED UDM 2 A', 'dm' => 'UDM 2']);
+    createKeluargaPemilihRecord(['name' => 'UNASSIGNED UDM 2 B', 'dm' => 'UDM 2']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga UDM 1',
+            'pemilih_ids' => collect($udmOneMembers)->pluck('id')->all(),
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga UDM 2',
+            'pemilih_ids' => collect($udmTwoMembers)->pluck('id')->all(),
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', '')
+            ->where('stats.families', 2)
+            ->where('stats.voters', 6)
+            ->where('stats.unassigned', 3)
+            ->where('udmSummaries.0.udm', 'UDM 1')
+            ->where('udmSummaries.0.families', 1)
+            ->where('udmSummaries.0.unassigned', 1)
+            ->where('udmSummaries.1.udm', 'UDM 2')
+            ->where('udmSummaries.1.families', 1)
+            ->where('udmSummaries.1.unassigned', 2));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 2']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', 'UDM 2')
+            ->where('stats.families', 1)
+            ->where('stats.voters', 3)
+            ->where('stats.assigned', 1)
+            ->where('stats.unassigned', 2)
+            ->where('allStats.families', 2)
+            ->where('allStats.voters', 6)
+            ->where('allStats.unassigned', 3)
+            ->where('families.data.0.name', 'Keluarga UDM 2')
+            ->where('families.total', 1));
+});

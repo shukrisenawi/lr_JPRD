@@ -34,7 +34,7 @@ function paginationText(label) {
     return String(label).replace(/&laquo;/g, '‹').replace(/&raquo;/g, '›');
 }
 
-export default function KeluargaPemilihIndex({ families, stats }) {
+export default function KeluargaPemilihIndex({ families, stats, allStats, filters, udmSummaries }) {
     const { errors = {} } = usePage().props;
     const [mode, setMode] = useState(null);
     const [searchText, setSearchText] = useState('');
@@ -100,6 +100,15 @@ export default function KeluargaPemilihIndex({ families, stats }) {
         setSearchText('');
         setSelectedVoters([]);
         setFamilyName('');
+    };
+
+    const selectUdm = (udm) => {
+        closeManual();
+        router.get(route('keluarga-pemilih.index'), udm ? { udm } : {}, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     const startNewFamily = () => {
@@ -183,6 +192,33 @@ export default function KeluargaPemilihIndex({ families, stats }) {
                     <StatCard label="Pemilih Aktif" value={stats.voters} icon="users" />
                     <StatCard label="Sudah Berkeluarga" value={stats.assigned} icon="users" />
                     <StatCard label="Belum Berkeluarga" value={stats.unassigned} icon="plus" />
+                </section>
+
+                <section className="space-y-2">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                        <div><p className="label-section">Ringkasan UDM</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">Klik kad untuk tapis keluarga</h3></div>
+                        {filters.udm && <p className="text-xs font-semibold text-green-800">Paparan ditapis: {filters.udm}</p>}
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                        <button type="button" onClick={() => selectUdm('')} aria-pressed={!filters.udm} className={`card w-full cursor-pointer p-3 text-left transition hover:border-green-300 ${!filters.udm ? 'border-green-500 bg-green-50 ring-1 ring-green-200' : ''}`}>
+                            <span className="flex items-center justify-between gap-2"><span className="text-xs font-black text-slate-900">Semua UDM</span><span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-bold text-slate-500">{udmSummaries.length} UDM</span></span>
+                            <span className="mt-2 grid grid-cols-2 gap-2">
+                                <span><span className="block text-lg font-black text-green-800">{allStats.families.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Jumlah keluarga</span></span>
+                                <span><span className="block text-lg font-black text-amber-700">{allStats.unassigned.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Belum berkeluarga</span></span>
+                            </span>
+                            <span className="mt-2 block border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{allStats.voters.toLocaleString('ms-MY')} pemilih aktif</span>
+                        </button>
+                        {udmSummaries.map((summary) => (
+                            <button key={summary.udm} type="button" onClick={() => selectUdm(summary.udm)} aria-pressed={filters.udm === summary.udm} className={`card w-full cursor-pointer p-3 text-left transition hover:border-green-300 ${filters.udm === summary.udm ? 'border-green-500 bg-green-50 ring-1 ring-green-200' : ''}`}>
+                                <span className="block truncate text-xs font-black text-slate-900">{summary.udm}</span>
+                                <span className="mt-2 grid grid-cols-2 gap-2">
+                                    <span><span className="block text-lg font-black text-green-800">{summary.families.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Jumlah keluarga</span></span>
+                                    <span><span className="block text-lg font-black text-amber-700">{summary.unassigned.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Belum berkeluarga</span></span>
+                                </span>
+                                <span className="mt-2 block border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{summary.voters.toLocaleString('ms-MY')} pemilih aktif</span>
+                            </button>
+                        ))}
+                    </div>
                 </section>
 
                 <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
@@ -278,7 +314,7 @@ export default function KeluargaPemilihIndex({ families, stats }) {
 
                 <section className="space-y-2.5">
                     <div className="flex items-end justify-between gap-2">
-                        <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{families.total.toLocaleString('ms-MY')} keluarga</h3></div>
+                        <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{families.total.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${filters.udm}` : ' · Semua UDM'}</h3></div>
                         {stats.unassigned > 0 && <p className="text-right text-[11px] text-slate-500">{stats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
                     </div>
 

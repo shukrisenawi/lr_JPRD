@@ -22,12 +22,50 @@ class KeluargaPemilihController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $votersByUdm = $this->activeVoterQuery($user)
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->select('dm')
+            ->selectRaw('COUNT(*) as voter_count')
+            ->selectRaw('SUM(CASE WHEN EXISTS (SELECT 1 FROM pemilih_family_members WHERE pemilih_family_members.pemilih_record_id = pemilih_records.id) THEN 1 ELSE 0 END) as assigned_count')
+            ->groupBy('dm')
+            ->orderBy('dm')
+            ->get()
+            ->keyBy('dm');
+        $requestedUdm = trim((string) $request->query('udm', ''));
+        $udmFilter = $votersByUdm->has($requestedUdm) ? $requestedUdm : '';
+
         $voters = $this->activeVoterQuery($user);
-        $familiesQuery = $this->visibleFamilyQuery($user);
+        if ($udmFilter !== '') {
+            $voters->where('dm', $udmFilter);
+        }
+        $familiesQuery = $this->visibleFamilyQuery($user, $udmFilter);
+        $allVoters = $this->activeVoterQuery($user);
+        $allFamiliesQuery = $this->visibleFamilyQuery($user);
+
+        $familyCountsByUdmQuery = DB::table('pemilih_family_members')
+            ->join('pemilih_records', 'pemilih_records.id', '=', 'pemilih_family_members.pemilih_record_id')
+            ->whereNotNull('pemilih_records.dm')
+            ->where('pemilih_records.dm', '!=', '')
+            ->select('pemilih_records.dm')
+            ->selectRaw('COUNT(DISTINCT pemilih_family_members.pemilih_family_id) as family_count')
+            ->groupBy('pemilih_records.dm');
+        $user->applyScopeToPemilihQuery($familyCountsByUdmQuery);
+        $familyCountsByUdm = $familyCountsByUdmQuery->pluck('family_count', 'dm');
+        $udmSummaries = $votersByUdm->map(fn ($summary, string $udm): array => [
+            'udm' => $udm,
+            'families' => (int) ($familyCountsByUdm[$udm] ?? 0),
+            'voters' => (int) $summary->voter_count,
+            'assigned' => (int) $summary->assigned_count,
+            'unassigned' => (int) $summary->voter_count - (int) $summary->assigned_count,
+        ])->values();
 
         $families = (clone $familiesQuery)
-            ->with(['members' => function ($query) use ($user): void {
+            ->with(['members' => function ($query) use ($user, $udmFilter): void {
                 $user->applyScopeToPemilihQuery($query);
+                if ($udmFilter !== '') {
+                    $query->where('pemilih_records.dm', $udmFilter);
+                }
                 $query->orderBy('pemilih_records.name');
             }])
             ->orderByDesc('id')
@@ -43,6 +81,14 @@ class KeluargaPemilihController extends Controller
 
         return Inertia::render('KeluargaPemilih/Index', [
             'families' => $families,
+            'filters' => ['udm' => $udmFilter],
+            'udmSummaries' => $udmSummaries,
+            'allStats' => [
+                'families' => (clone $allFamiliesQuery)->count(),
+                'voters' => (clone $allVoters)->count(),
+                'assigned' => (clone $allVoters)->whereHas('families')->count(),
+                'unassigned' => (clone $allVoters)->whereDoesntHave('families')->count(),
+            ],
             'stats' => [
                 'families' => (clone $familiesQuery)->count(),
                 'voters' => (clone $voters)->count(),
@@ -253,10 +299,13 @@ class KeluargaPemilihController extends Controller
         return $query;
     }
 
-    private function visibleFamilyQuery(User $user): Builder
+    private function visibleFamilyQuery(User $user, ?string $udm = null): Builder
     {
-        return PemilihFamily::query()->whereHas('members', function (Builder $query) use ($user): void {
+        return PemilihFamily::query()->whereHas('members', function (Builder $query) use ($user, $udm): void {
             $user->applyScopeToPemilihQuery($query);
+            if (filled($udm)) {
+                $query->where('pemilih_records.dm', $udm);
+            }
         });
     }
 
