@@ -18,6 +18,17 @@ function calculateAmount(row, code, rates) {
     return Number(row.counts?.[code] || 0) * Number(rates[code] || 0);
 }
 
+function compareVoterIdentityNumbers(a, b) {
+    const noKpA = String(a.no_kp || '').replace(/\D/g, '');
+    const noKpB = String(b.no_kp || '').replace(/\D/g, '');
+
+    if (!noKpA && noKpB) return 1;
+    if (noKpA && !noKpB) return -1;
+
+    return noKpA.localeCompare(noKpB, 'ms', { numeric: true })
+        || String(a.name || '').localeCompare(String(b.name || ''), 'ms', { numeric: true });
+}
+
 function telegramLink(command, identity) {
     return `tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/${command} ${identity}`)}`;
 }
@@ -457,7 +468,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                     addHeaderRow();
                     localities.get(locality)
                         .slice()
-                        .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ms', { numeric: true }))
+                        .sort(compareVoterIdentityNumbers)
                         .forEach((voter) => {
                             addVoterRow(voter, number++);
                         });
