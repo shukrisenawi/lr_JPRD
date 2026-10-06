@@ -12,7 +12,16 @@ class PemilihFamily extends Model
         'name',
         'created_by',
         'father_pemilih_record_id',
+        'reviewed_at',
+        'reviewed_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'reviewed_at' => 'datetime',
+        ];
+    }
 
     public function creator(): BelongsTo
     {

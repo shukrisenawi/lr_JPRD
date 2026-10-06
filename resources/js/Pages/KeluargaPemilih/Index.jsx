@@ -126,7 +126,8 @@ function sharedBinBintiAnchor(members = []) {
 }
 
 export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, udmSummaries, localities }) {
-    const { errors = {}, available_cula_codes: availableCulaCodes = [] } = usePage().props;
+    const { errors = {}, available_cula_codes: availableCulaCodes = [], auth } = usePage().props;
+    const isMasterAdmin = Boolean(auth?.user?.role?.is_master_admin);
     const [mode, setMode] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [familySearch, setFamilySearch] = useState(filters.q || '');
@@ -136,6 +137,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [loading, setLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [autoProcessing, setAutoProcessing] = useState(false);
+    const [autoFatherProcessing, setAutoFatherProcessing] = useState(false);
     const [renamingFamilyId, setRenamingFamilyId] = useState(null);
     const [renameValue, setRenameValue] = useState('');
     const [renameProcessing, setRenameProcessing] = useState(false);
@@ -143,6 +145,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [fatherOverrides, setFatherOverrides] = useState({});
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
+    const [reviewFamilyProcessingId, setReviewFamilyProcessingId] = useState(null);
     const [removedFamilyIds, setRemovedFamilyIds] = useState(new Set());
     const [removingVoterIds, setRemovingVoterIds] = useState(new Set());
     const [removingFamilyIds, setRemovingFamilyIds] = useState(new Set());
@@ -397,6 +400,29 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             preserveScroll: true,
             onStart: () => setAutoProcessing(true),
             onFinish: () => setAutoProcessing(false),
+        });
+    };
+
+    const runAutoFather = () => {
+        if (!window.confirm('Auto Add Ayah akan memilih calon ayah berdasarkan jantina dan padanan Bin/Binti, kemudian menjalankan auto-tambah ahli. Teruskan?')) return;
+
+        router.post(route('keluarga-pemilih.auto-father'), currentRouteFilters(), {
+            preserveScroll: true,
+            onStart: () => setAutoFatherProcessing(true),
+            onFinish: () => setAutoFatherProcessing(false),
+        });
+    };
+
+    const updateFamilyReview = (family, reviewed) => {
+        router.put(route('keluarga-pemilih.review', family.id), {
+            ...currentRouteFilters(),
+            reviewed,
+            tab: reviewed ? 'reviewed' : 'families',
+            page: 1,
+        }, {
+            preserveScroll: true,
+            onStart: () => setReviewFamilyProcessingId(family.id),
+            onFinish: () => setReviewFamilyProcessingId(null),
         });
     };
 
@@ -734,7 +760,12 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 <div><p className="label-section">Operasi · Pengurusan Pemilih</p><h2 className="mt-0.5 heading-lg">Keluarga Pemilih</h2><p className="mt-1 max-w-2xl text-xs text-slate-500">Satukan pemilih yang tinggal serumah. Semak padanan cadangan dahulu atau biarkan sistem mengumpulkan rekod yang mempunyai bukti kediaman sepadan tepat.</p></div>
                 <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={startNewFamily} className="btn-primary inline-flex items-center gap-1.5"><Icon name="plus" />Tambah Manual</button>
-                    <button type="button" onClick={runAuto} disabled={autoProcessing || visibleStats.unassigned === 0} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="sparkles" />{autoProcessing ? 'Memproses…' : 'Auto Keluarga'}</button>
+                    {isMasterAdmin && (
+                        <>
+                            <button type="button" onClick={runAuto} disabled={autoProcessing || visibleStats.unassigned === 0} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="sparkles" />{autoProcessing ? 'Memproses…' : 'Auto Keluarga'}</button>
+                            <button type="button" onClick={runAutoFather} disabled={autoFatherProcessing} className="btn-ghost inline-flex items-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="users" />{autoFatherProcessing ? 'Memproses…' : 'Auto Add Ayah'}</button>
+                        </>
+                    )}
                 </div>
             </div>
         }>
@@ -800,9 +831,12 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 )}
 
                 {filters.udm && (
-                    <nav aria-label="Senarai keluarga dan pemilih" className="grid grid-cols-2 gap-1 rounded-xl border border-green-200 bg-white p-1.5 shadow-sm">
-                        <button type="button" onClick={() => selectTab('families')} aria-current={filters.tab !== 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab !== 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
+                    <nav aria-label="Senarai keluarga dan pemilih" className="grid grid-cols-1 gap-1 rounded-xl border border-green-200 bg-white p-1.5 shadow-sm sm:grid-cols-3">
+                        <button type="button" onClick={() => selectTab('families')} aria-current={filters.tab === 'families' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'families' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
                             Senarai Keluarga
+                        </button>
+                        <button type="button" onClick={() => selectTab('reviewed')} aria-current={filters.tab === 'reviewed' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'reviewed' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
+                            Keluarga Telah disemak
                         </button>
                         <button type="button" onClick={() => selectTab('unassigned')} aria-current={filters.tab === 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
                             Pemilih Belum Berkeluarga <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{visibleStats.unassigned}</span>
@@ -812,7 +846,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
 
                 {filters.udm && filters.tab !== 'unassigned' && <section className="space-y-2.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                        <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{visibleFamilyTotal.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ' · Semua UDM'}</h3></div>
+                        <div><p className="label-section">{filters.tab === 'reviewed' ? 'Keluarga Telah disemak' : 'Senarai Keluarga'}</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{visibleFamilyTotal.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ' · Semua UDM'}</h3></div>
                         <div className="relative w-full sm:max-w-sm">
                             <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
@@ -824,9 +858,9 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                     {visibleFamilies.length === 0 ? (
                         <div className="card-dashed px-4 py-10 text-center">
                             <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-green-50 text-green-700"><Icon name="home" className="h-5 w-5" /></span>
-                            <h4 className="mt-3 text-sm font-bold text-slate-800">{filters.q ? 'Tiada keluarga sepadan dengan carian' : 'Belum ada keluarga pemilih'}</h4>
-                            <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">{filters.q ? 'Cuba nama, nombor KP, no. rumah atau alamat yang lain.' : 'Tambah keluarga secara manual atau jalankan auto untuk mengumpulkan rekod dengan maklumat kediaman yang sama tepat.'}</p>
-                            {!filters.q && <button type="button" onClick={startNewFamily} className="btn-primary mt-4">Mula Tambah Manual</button>}
+                            <h4 className="mt-3 text-sm font-bold text-slate-800">{filters.q ? 'Tiada keluarga sepadan dengan carian' : filters.tab === 'reviewed' ? 'Belum ada keluarga disemak' : 'Belum ada keluarga pemilih'}</h4>
+                            <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">{filters.q ? 'Cuba nama, nombor KP, no. rumah atau alamat yang lain.' : filters.tab === 'reviewed' ? 'Keluarga yang disahkan akan dipaparkan di sini.' : 'Tambah keluarga secara manual atau jalankan auto untuk mengumpulkan rekod dengan maklumat kediaman yang sama tepat.'}</p>
+                            {!filters.q && filters.tab === 'families' && <button type="button" onClick={startNewFamily} className="btn-primary mt-4">Mula Tambah Manual</button>}
                         </div>
                     ) : (
                         <div className="grid gap-2.5 xl:grid-cols-2">
@@ -861,6 +895,9 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                 <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-500"><Icon name="pin" className="h-3 w-3 shrink-0" />{locations.join(' · ') || 'Lokaliti tidak dinyatakan'}</p>
                                             </div>
                                             <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
+                                            <button type="button" onClick={() => updateFamilyReview(family, filters.tab !== 'reviewed')} disabled={reviewFamilyProcessingId === family.id} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-wait disabled:opacity-50">
+                                                {reviewFamilyProcessingId === family.id ? 'Memproses…' : filters.tab === 'reviewed' ? 'Batalkan semakan' : 'Sahkan keluarga'}
+                                            </button>
                                         </div>
                                         {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
                                         {removeErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{removeErrors[family.id]}</p>}

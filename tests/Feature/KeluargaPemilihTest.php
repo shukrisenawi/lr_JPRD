@@ -68,7 +68,7 @@ it('creates a voter family manually, adds members, and removes a member', functi
 });
 
 it('auto-groups only voters with exact house, address, locality, and UDM matches', function () {
-    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $user = User::factory()->masterAdmin()->create();
 
     foreach (['AHMAD BIN ALI', 'SITI BINTI ALI', 'AMIR BIN ALI'] as $name) {
         createKeluargaPemilihRecord([
@@ -106,7 +106,7 @@ it('auto-groups only voters with exact house, address, locality, and UDM matches
 });
 
 it('auto-groups only unassigned voters and leaves existing family data untouched', function () {
-    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $user = User::factory()->masterAdmin()->create();
 
     $existingMembers = [
         createKeluargaPemilihRecord([
@@ -163,6 +163,131 @@ it('auto-groups only unassigned voters and leaves existing family data untouched
         $this->assertDatabaseHas('pemilih_family_members', ['pemilih_record_id' => $member->id]);
     }
     $this->assertDatabaseCount('pemilih_families', 2);
+});
+
+it('restricts auto family and auto father actions to master administrators', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+
+    $this->actingAs($user)
+        ->postJson(route('keluarga-pemilih.auto'))
+        ->assertForbidden();
+
+    $this->actingAs($user)
+        ->postJson(route('keluarga-pemilih.auto-father'))
+        ->assertForbidden();
+});
+
+it('auto-marks the only man in a couple and runs the father auto-add flow', function () {
+    $user = User::factory()->masterAdmin()->create();
+    $father = createKeluargaPemilihRecord(['name' => 'ISMAIL BIN AHMAD', 'gender' => 'L']);
+    $mother = createKeluargaPemilihRecord(['name' => 'NURAINI BINTI RAHMAN', 'gender' => 'P']);
+    $child = createKeluargaPemilihRecord(['name' => 'NURUL BINTI ISMAIL', 'gender' => 'P']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Ismail',
+            'pemilih_ids' => [$father->id, $mother->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.auto-father'))
+        ->assertRedirect(route('keluarga-pemilih.index'))
+        ->assertSessionHas('success', 'Auto Add Ayah selesai: ayah ditandakan dalam 1 keluarga, 1 pemilih ditambah secara automatik.');
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $familyId,
+        'father_pemilih_record_id' => $father->id,
+    ]);
+    $this->assertDatabaseHas('pemilih_family_members', [
+        'pemilih_family_id' => $familyId,
+        'pemilih_record_id' => $child->id,
+        'auto_added_by_father_id' => $father->id,
+    ]);
+});
+
+it('auto-marks the unique man whose name matches the repeated bin or binti anchor', function () {
+    $user = User::factory()->masterAdmin()->create();
+    $father = createKeluargaPemilihRecord(['name' => 'AHMAD BIN SALLEH', 'gender' => 'L']);
+    $mother = createKeluargaPemilihRecord(['name' => 'NURAINI BINTI RAHMAN', 'gender' => 'P']);
+    $son = createKeluargaPemilihRecord(['name' => 'ALI BIN AHMAD', 'gender' => 'L']);
+    $daughter = createKeluargaPemilihRecord(['name' => 'SITI BINTI AHMAD', 'gender' => 'P']);
+    $unassignedChild = createKeluargaPemilihRecord(['name' => 'RANI BINTI AHMAD', 'gender' => 'P']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Ahmad',
+            'pemilih_ids' => [$father->id, $mother->id, $son->id, $daughter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.auto-father'))
+        ->assertRedirect(route('keluarga-pemilih.index'))
+        ->assertSessionHas('success', 'Auto Add Ayah selesai: ayah ditandakan dalam 1 keluarga, 1 pemilih ditambah secara automatik.');
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $familyId,
+        'father_pemilih_record_id' => $father->id,
+    ]);
+    $this->assertDatabaseHas('pemilih_family_members', [
+        'pemilih_family_id' => $familyId,
+        'pemilih_record_id' => $unassignedChild->id,
+        'auto_added_by_father_id' => $father->id,
+    ]);
+});
+
+it('moves a confirmed family to the reviewed tab and supports cancelling review', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Ali',
+            'pemilih_ids' => [$voter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $this->actingAs($user)
+        ->put(route('keluarga-pemilih.review', $familyId), [
+            'reviewed' => true,
+            'udm' => 'UDM 1',
+            'tab' => 'families',
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => 'reviewed']));
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $familyId,
+        'reviewed_by' => $user->id,
+    ]);
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('families.total', 0));
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => 'reviewed']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.tab', 'reviewed')
+            ->where('families.total', 1)
+            ->where('families.data.0.reviewed_by', $user->id));
+
+    $this->actingAs($user)
+        ->put(route('keluarga-pemilih.review', $familyId), [
+            'reviewed' => false,
+            'udm' => 'UDM 1',
+            'tab' => 'reviewed',
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => 'families']));
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $familyId,
+        'reviewed_at' => null,
+        'reviewed_by' => null,
+    ]);
 });
 
 it('sorts manual suggestions by strong address and bin or binti matches', function () {

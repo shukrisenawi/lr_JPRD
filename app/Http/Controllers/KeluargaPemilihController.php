@@ -28,7 +28,11 @@ class KeluargaPemilihController extends Controller
         ]);
         $user = $request->user();
         $searchFilter = trim((string) ($validated['q'] ?? ''));
-        $tabFilter = $request->query('tab') === 'unassigned' ? 'unassigned' : 'families';
+        $tabFilter = match ($request->query('tab')) {
+            'unassigned' => 'unassigned',
+            'reviewed' => 'reviewed',
+            default => 'families',
+        };
         $votersByUdm = $this->activeVoterQuery($user)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
@@ -59,6 +63,11 @@ class KeluargaPemilihController extends Controller
 
         $voters = $this->activeVoterQuery($user, $udmFilter, $localityFilter);
         $familiesQuery = $this->visibleFamilyQuery($user, $udmFilter, $localityFilter);
+        if ($tabFilter === 'reviewed') {
+            $familiesQuery->whereNotNull('reviewed_at');
+        } else {
+            $familiesQuery->whereNull('reviewed_at');
+        }
         if ($searchFilter !== '') {
             $familiesQuery->whereHas('members', function (Builder $query) use ($user, $udmFilter, $localityFilter, $searchFilter): void {
                 $user->applyScopeToPemilihQuery($query);
@@ -143,6 +152,8 @@ class KeluargaPemilihController extends Controller
                 'name' => $family->name,
                 'father_id' => $family->father?->id,
                 'father_name' => $family->father?->name,
+                'reviewed_at' => $family->reviewed_at,
+                'reviewed_by' => $family->reviewed_by,
                 'created_at' => $family->created_at,
                 'members' => $family->members->map(fn (PemilihRecord $voter): array => $this->voterPayload($voter)),
                 'member_count' => $family->members->count(),
@@ -282,6 +293,29 @@ class KeluargaPemilihController extends Controller
             ->with('success', 'Nama keluarga berjaya dikemaskini.');
     }
 
+    public function updateReview(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
+    {
+        $validated = $request->validate([
+            'reviewed' => ['required', 'boolean'],
+            ...$this->routeFilterRules(),
+        ]);
+        $user = $request->user();
+        $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
+        $reviewed = filter_var($validated['reviewed'], FILTER_VALIDATE_BOOLEAN);
+
+        $family->update([
+            'reviewed_at' => $reviewed ? now() : null,
+            'reviewed_by' => $reviewed ? $user->id : null,
+        ]);
+
+        $validated['tab'] = $reviewed ? 'reviewed' : 'families';
+        $validated['page'] = 1;
+
+        return redirect()
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
+            ->with('success', $reviewed ? 'Keluarga disahkan sebagai telah disemak.' : 'Semakan keluarga dibatalkan.');
+    }
+
     public function updateFather(Request $request, PemilihFamily $pemilihFamily): JsonResponse
     {
         $validated = $request->validate([
@@ -289,7 +323,13 @@ class KeluargaPemilihController extends Controller
         ]);
         $user = $request->user();
         $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
-        $fatherId = $validated['father_id'] ?? null;
+        $fatherId = isset($validated['father_id']) ? (int) $validated['father_id'] : null;
+
+        return response()->json($this->setFamilyFather($family, $user, $fatherId));
+    }
+
+    private function setFamilyFather(PemilihFamily $family, User $user, ?int $fatherId): array
+    {
         $father = null;
 
         if ($fatherId !== null) {
@@ -415,7 +455,7 @@ class KeluargaPemilihController extends Controller
         });
         $family->refresh();
 
-        return response()->json([
+        return [
             'father_id' => $fatherId,
             'father_name' => $father?->name,
             'family_name' => $familyName,
@@ -427,7 +467,7 @@ class KeluargaPemilihController extends Controller
             'removed_count' => count($result['removed_member_ids']),
             'removed_member_ids' => $result['removed_member_ids'],
             'message' => $fatherId === null ? 'Tanda ayah dibuang.' : 'Pemilih ditandakan sebagai ayah keluarga.',
-        ]);
+        ];
     }
 
     public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
@@ -542,10 +582,12 @@ class KeluargaPemilihController extends Controller
 
     public function auto(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        abort_unless($user->isMasterAdmin(), 403);
+
         $validated = $request->validate([
             ...$this->routeFilterRules(),
         ]);
-        $user = $request->user();
         $udm = trim((string) ($validated['udm'] ?? ''));
         $locality = trim((string) ($validated['locality'] ?? ''));
         if ($locality !== '' && $udm === '') {
@@ -625,6 +667,95 @@ class KeluargaPemilihController extends Controller
             ->with('success', $message);
     }
 
+    public function autoFather(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user->isMasterAdmin(), 403);
+
+        $validated = $request->validate([
+            ...$this->routeFilterRules(),
+        ]);
+        $udm = trim((string) ($validated['udm'] ?? ''));
+        $locality = trim((string) ($validated['locality'] ?? ''));
+        if ($locality !== '' && $udm === '') {
+            throw ValidationException::withMessages(['locality' => 'Pilih UDM sebelum memilih lokaliti.']);
+        }
+
+        $summary = ['marked' => 0, 'members' => 0, 'skipped' => 0];
+        $families = $this->visibleFamilyQuery($user, $udm, $locality)
+            ->whereNull('father_pemilih_record_id')
+            ->with(['members' => function ($query) use ($user, $udm, $locality): void {
+                $user->applyScopeToPemilihQuery($query);
+                if ($udm !== '') {
+                    $query->where('pemilih_records.dm', $udm);
+                }
+                if ($locality !== '') {
+                    $query->where('pemilih_records.locality', $locality);
+                }
+                $query->orderBy('pemilih_records.name');
+            }])
+            ->orderBy('id');
+
+        $families->chunkById(100, function (EloquentCollection $familyBatch) use ($user, &$summary): void {
+            foreach ($familyBatch as $family) {
+                $father = $this->autoFatherCandidate($family->members);
+                if (! $father) {
+                    continue;
+                }
+
+                try {
+                    $result = $this->setFamilyFather($family, $user, (int) $father->id);
+                    $summary['marked']++;
+                    $summary['members'] += $result['added_count'];
+                } catch (ValidationException) {
+                    $summary['skipped']++;
+                }
+            }
+        });
+
+        $message = $summary['marked'] > 0
+            ? "Auto Add Ayah selesai: ayah ditandakan dalam {$summary['marked']} keluarga, {$summary['members']} pemilih ditambah secara automatik.".($summary['skipped'] > 0 ? " {$summary['skipped']} calon tidak lepas validasi ayah." : '')
+            : 'Tiada keluarga yang memenuhi corak Auto Add Ayah.';
+
+        return redirect()
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
+            ->with('success', $message);
+    }
+
+    private function autoFatherCandidate(EloquentCollection $members): ?PemilihRecord
+    {
+        $members = $members->values();
+        $men = $members->filter(fn (PemilihRecord $member): bool => $this->genderCode($member->gender) === 'L')->values();
+        $women = $members->filter(fn (PemilihRecord $member): bool => $this->genderCode($member->gender) === 'P')->values();
+
+        if ($members->count() === 2 && $men->count() === 1 && $women->count() === 1) {
+            return $men->first();
+        }
+
+        $parentNameCounts = $members
+            ->map(fn (PemilihRecord $member): string => $this->parentName($member->name))
+            ->filter(fn (string $parentName): bool => $this->isUsefulMatchValue($parentName))
+            ->countBy();
+        if ($parentNameCounts->isEmpty()) {
+            return null;
+        }
+
+        $mostCommonCount = $parentNameCounts->max();
+        if ($mostCommonCount < 2) {
+            return null;
+        }
+        $mostCommonNames = $parentNameCounts->filter(fn (int $count): bool => $count === $mostCommonCount);
+        if ($mostCommonNames->count() !== 1) {
+            return null;
+        }
+        $commonParentName = (string) $mostCommonNames->keys()->first();
+
+        $candidates = $men->filter(fn (PemilihRecord $member): bool => $this->personName($member->name) === $commonParentName
+            && $this->parentName($member->name) !== $commonParentName)->values();
+
+        return $candidates->count() === 1 ? $candidates->first() : null;
+    }
+
     private function activeVoterQuery(User $user, ?string $udm = null, ?string $locality = null): Builder
     {
         $query = PemilihRecord::query()->where('status', 'aktif');
@@ -677,7 +808,7 @@ class KeluargaPemilihController extends Controller
             'udm' => ['nullable', 'string', 'max:255'],
             'locality' => ['nullable', 'string', 'max:255'],
             'q' => ['nullable', 'string', 'max:100'],
-            'tab' => ['nullable', Rule::in(['families', 'unassigned'])],
+            'tab' => ['nullable', Rule::in(['families', 'unassigned', 'reviewed'])],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
     }
@@ -865,6 +996,15 @@ class KeluargaPemilihController extends Controller
     private function normalize(?string $value): string
     {
         return mb_strtoupper(preg_replace('/\s+/u', ' ', trim((string) $value)) ?? '', 'UTF-8');
+    }
+
+    private function genderCode(?string $gender): string
+    {
+        return match ($this->normalize($gender)) {
+            'L', 'LELAKI', 'MALE' => 'L',
+            'P', 'PEREMPUAN', 'FEMALE' => 'P',
+            default => '',
+        };
     }
 
     private function isUsefulMatchValue(string $value): bool
