@@ -363,13 +363,33 @@ class KeluargaPemilihController extends Controller
                 && $this->isUsefulMatchValue($parentName)
                 && $this->isUsefulMatchValue($this->normalize($father->dm))
                 && $this->isUsefulMatchValue($this->normalize($father->locality))) {
-                $newMemberIds = $this->activeVoterQuery($user, $father->dm, $father->locality)
+                $matchingVoters = $this->activeVoterQuery($user, $father->dm, $father->locality)
                     ->whereDoesntHave('families')
                     ->whereRaw("UPPER(TRIM(COALESCE(name, ''))) LIKE ?", ['%'.$parentName.'%'])
                     ->orderBy('name')
                     ->get()
                     ->filter(fn (PemilihRecord $voter): bool => $this->parentName($voter->name) === $parentName)
-                    ->modelKeys();
+                    ->values();
+
+                if ($matchingVoters->count() > 5) {
+                    $fatherHouse = $this->normalize($father->no_rumah);
+                    $fatherAddress = $this->normalize($this->effectiveAddress($father));
+
+                    $matchingVoters = $matchingVoters->filter(function (PemilihRecord $voter) use ($fatherHouse, $fatherAddress): bool {
+                        $voterHouse = $this->normalize($voter->no_rumah);
+                        $voterAddress = $this->normalize($this->effectiveAddress($voter));
+                        $sameHouse = $this->isUsefulMatchValue($fatherHouse)
+                            && $this->isUsefulMatchValue($voterHouse)
+                            && $voterHouse === $fatherHouse;
+                        $sameAddress = $this->isUsefulMatchValue($fatherAddress)
+                            && $this->isUsefulMatchValue($voterAddress)
+                            && $voterAddress === $fatherAddress;
+
+                        return $sameHouse || $sameAddress;
+                    });
+                }
+
+                $newMemberIds = $matchingVoters->modelKeys();
             }
 
             $voters = $newMemberIds === []

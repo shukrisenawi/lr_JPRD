@@ -483,6 +483,86 @@ it('marks a family father and flags only children with that fathers bin or binti
     ]);
 });
 
+it('narrows father auto-add matches to the same house or address when more than five are found', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $father = createKeluargaPemilihRecord([
+        'name' => 'ABDUL HALIM BIN MOHAMAD',
+        'no_rumah' => '11',
+        'alamat_kediaman' => 'NO 11 JALAN MAWAR',
+    ]);
+    $mother = createKeluargaPemilihRecord(['name' => 'NORAINI BINTI RAHMAN']);
+    $sameHouse = createKeluargaPemilihRecord([
+        'name' => 'ANAK RUMAH BINTI ABDUL HALIM',
+        'no_rumah' => '11',
+        'alamat_kediaman' => 'ALAMAT BERBEZA',
+    ]);
+    $sameAddress = createKeluargaPemilihRecord([
+        'name' => 'ANAK ALAMAT BINTI ABDUL HALIM',
+        'no_rumah' => '20',
+        'alamat_kediaman' => 'NO 11 JALAN MAWAR',
+    ]);
+    $unmatched = collect(range(1, 6))->map(fn (int $number): PemilihRecord => createKeluargaPemilihRecord([
+        'name' => "ANAK LUAR {$number} BINTI ABDUL HALIM",
+        'no_rumah' => (string) (30 + $number),
+        'alamat_kediaman' => "ALAMAT LUAR {$number}",
+    ]));
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abdul Halim',
+            'pemilih_ids' => [$father->id, $mother->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $response = $this->actingAs($user)
+        ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $father->id])
+        ->assertOk()
+        ->assertJsonPath('added_count', 2)
+        ->assertJsonPath('member_count', 4);
+
+    $addedIds = collect($response->json('added_members'))->pluck('id')->map(fn ($id): int => (int) $id)->sort()->values()->all();
+    expect($addedIds)->toBe(collect([$sameHouse->id, $sameAddress->id])->sort()->values()->all());
+
+    foreach ($unmatched as $voter) {
+        $this->assertDatabaseMissing('pemilih_family_members', [
+            'pemilih_family_id' => $familyId,
+            'pemilih_record_id' => $voter->id,
+        ]);
+    }
+});
+
+it('keeps all name matches when five or fewer voters qualify for father auto-add', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $father = createKeluargaPemilihRecord(['name' => 'AHMAD BIN SALLEH']);
+    $mother = createKeluargaPemilihRecord(['name' => 'NORAINI BINTI RAHMAN']);
+    $children = collect(range(1, 5))->map(fn (int $number): PemilihRecord => createKeluargaPemilihRecord([
+        'name' => "ANAK {$number} BINTI AHMAD",
+    ]));
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Ahmad',
+            'pemilih_ids' => [$father->id, $mother->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $this->actingAs($user)
+        ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $father->id])
+        ->assertOk()
+        ->assertJsonPath('added_count', 5)
+        ->assertJsonPath('member_count', 7);
+
+    foreach ($children as $child) {
+        $this->assertDatabaseHas('pemilih_family_members', [
+            'pemilih_family_id' => $familyId,
+            'pemilih_record_id' => $child->id,
+            'auto_added_by_father_id' => $father->id,
+        ]);
+    }
+});
+
 it('updates a family members cula code and marks the voter for follow-up', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
