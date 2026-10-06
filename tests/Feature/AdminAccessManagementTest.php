@@ -18,6 +18,7 @@ it('allows master admin to open access management page', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Admin/AccessManagement')
             ->where('auth.user.role.slug', 'master-admin')
+            ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'plk-kos' && $module['label'] === 'Kiraan Kos PLK'))
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'ahli-pas' && $module['label'] === 'Ahli PAS'))
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'lihat-no-ahli' && $module['label'] === 'Lihat No. Ahli'))
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'laporan-hantar-status' && $module['label'] === 'Hantar Mesej n8n'))

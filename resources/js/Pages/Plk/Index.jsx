@@ -292,7 +292,8 @@ function CostTable({ rows, codes, rates }) {
 }
 
 export default function PlkIndex({ active_tab: activeTab, filters, udms, summary, voters, codes, code_counts: codeCounts = {}, udm_cula_counts: udmCulaCounts = [], rates: initialRates, cost_rows: costRows }) {
-    const { errors = {} } = usePage().props;
+    const { errors = {}, auth, can_view_costs: canViewCosts = false } = usePage().props;
+    const isUdmUser = auth?.user?.access_level === 'udm';
     const [search, setSearch] = useState(filters.q || '');
     const [selectedUdm, setSelectedUdm] = useState(filters.udm || '');
     const [rates, setRates] = useState(initialRates || {});
@@ -647,20 +648,22 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 </section>
 
                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <div className="grid grid-cols-3 gap-1 border-b border-slate-200 bg-slate-50/70 p-1.5">
+                    <div className={`grid ${canViewCosts ? 'grid-cols-3' : 'grid-cols-2'} gap-1 border-b border-slate-200 bg-slate-50/70 p-1.5`}>
                         <TabButton active={activeTab === 'senarai'} label="Senarai pemilih PLK" count={summary.total} onClick={() => visitTab('senarai')} />
                         <TabButton active={activeTab === 'disemak'} label="Pemilih sudah semak" count={summary.checked} onClick={() => visitTab('disemak')} />
-                        <TabButton active={activeTab === 'kos'} label="Kiraan kos" onClick={() => visitTab('kos')} />
+                        {canViewCosts && <TabButton active={activeTab === 'kos'} label="Kiraan kos" onClick={() => visitTab('kos')} />}
                     </div>
 
                     {activeTab !== 'kos' ? (
                         <>
                             <form onSubmit={(event) => { event.preventDefault(); navigate({ q: search, udm: selectedUdm, page: 1 }); }} className="flex flex-col gap-2 border-b border-slate-100 p-3 sm:flex-row sm:items-center">
                                 <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Cari nama, No. KP, telefon atau lokaliti" className="input-field min-w-0 flex-1 text-xs" />
-                                <select value={selectedUdm} onChange={(event) => { setSelectedUdm(event.target.value); navigate({ udm: event.target.value, page: 1 }); }} className="input-field text-xs sm:w-56">
-                                    <option value="">Semua UDM</option>
-                                    {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
-                                </select>
+                                {!isUdmUser && (
+                                    <select value={selectedUdm} onChange={(event) => { setSelectedUdm(event.target.value); navigate({ udm: event.target.value, page: 1 }); }} className="input-field text-xs sm:w-56">
+                                        <option value="">Semua UDM</option>
+                                        {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                    </select>
+                                )}
                                 <button type="submit" className="btn-primary justify-center px-4 py-2 text-xs">Cari</button>
                                 <button type="button" onClick={exportToExcel} disabled={exporting} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50">
                                     {exporting ? 'Menyediakan Excel…' : 'Eksport Excel'}

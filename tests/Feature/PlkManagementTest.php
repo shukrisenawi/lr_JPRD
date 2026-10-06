@@ -188,8 +188,57 @@ it('limits PLK lists and verification actions to the users pemilih scope', funct
         ->assertForbidden();
 });
 
-it('saves per-code rates and calculates totals by UDM', function () {
+it('automatically selects the assigned UDM for UDM-level PLK users', function () {
+    $user = User::factory()->withModules(['plk'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM A',
+    ]);
+    $inScope = createPlkRecord(['name' => 'DALAM UDM', 'dm' => 'UDM A']);
+    createPlkRecord(['name' => 'LUAR UDM', 'dm' => 'UDM B']);
+
+    $this->actingAs($user)
+        ->get(route('plk.index', ['udm' => 'UDM B']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', 'UDM A')
+            ->where('udms', ['UDM A'])
+            ->where('summary.total', 1)
+            ->where('voters.total', 1)
+            ->where('voters.data.0.id', $inScope->id));
+});
+
+it('restricts the PLK cost tab and rate updates to separately authorized users', function () {
     $user = User::factory()->withModules(['plk'])->create();
+    $rates = ['3B' => 10, '3D' => 5.5, '3K' => 0, '3M' => 0, '3P' => 0, '3U' => 20];
+    Setting::setValue('plk_rates', json_encode($rates, JSON_THROW_ON_ERROR));
+    createPlkRecord();
+
+    $this->actingAs($user)
+        ->get(route('plk.index', ['tab' => 'kos']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('active_tab', 'senarai')
+            ->where('can_view_costs', false)
+            ->where('rates', [])
+            ->where('cost_rows', []));
+
+    $this->actingAs($user)
+        ->putJson(route('plk.rates.update'), ['rates' => $rates])
+        ->assertForbidden();
+
+    $authorizedUser = User::factory()->withModules(['plk', 'plk-kos'])->create();
+    $this->actingAs($authorizedUser)
+        ->get(route('plk.index', ['tab' => 'kos']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('active_tab', 'kos')
+            ->where('can_view_costs', true)
+            ->where('rates.3B', 10)
+            ->where('cost_rows.0.udm', 'UDM A'));
+});
+
+it('saves per-code rates and calculates totals by UDM', function () {
+    $user = User::factory()->withModules(['plk', 'plk-kos'])->create();
     createPlkRecord(['identity_number' => 'PLK-A-1', 'dm' => 'UDM A', 'cula_code' => '3B']);
     createPlkRecord(['identity_number' => 'PLK-A-2', 'dm' => 'UDM A', 'cula_code' => '3B']);
     createPlkRecord(['identity_number' => 'PLK-A-3', 'dm' => 'UDM A', 'cula_code' => '3D']);

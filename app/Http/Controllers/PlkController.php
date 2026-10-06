@@ -23,6 +23,10 @@ class PlkController extends Controller
         $user = $request->user();
         $tab = $request->string('tab')->toString();
         $tab = in_array($tab, ['senarai', 'disemak', 'kos'], true) ? $tab : 'senarai';
+        $canViewCosts = $user?->canAccessModule('plk-kos') ?? false;
+        if ($tab === 'kos' && ! $canViewCosts) {
+            $tab = 'senarai';
+        }
         $requestedCulaCode = $request->string('cula_code')->toString();
         $filters = [
             'udm' => $request->string('udm')->trim()->toString(),
@@ -47,6 +51,10 @@ class PlkController extends Controller
             ->pluck('dm')
             ->values()
             ->all();
+
+        if ($user?->access_level === 'udm' && filled($user->scope_key)) {
+            $filters['udm'] = $user->scope_key;
+        }
 
         $udmCulaCounts = [];
         if ($tab === 'senarai' && $filters['udm'] === '') {
@@ -81,7 +89,7 @@ class PlkController extends Controller
                 });
         }
 
-        $rates = $this->rates();
+        $rates = $canViewCosts ? $this->rates() : [];
         $countBase = (clone $base)
             ->when(
                 $tab !== 'kos' && $filters['udm'] !== '',
@@ -141,6 +149,7 @@ class PlkController extends Controller
 
         return Inertia::render('Plk/Index', [
             'active_tab' => $tab,
+            'can_view_costs' => $canViewCosts,
             'filters' => $filters,
             'udms' => $udms,
             'udm_cula_counts' => array_values($udmCulaCounts),
@@ -218,6 +227,8 @@ class PlkController extends Controller
 
     public function updateRates(Request $request): RedirectResponse
     {
+        abort_unless($request->user()?->canAccessModule('plk-kos'), 403);
+
         $rules = ['rates' => ['required', 'array']];
         foreach (self::CULA_CODES as $code) {
             $rules['rates.'.$code] = ['required', 'numeric', 'min:0', 'max:1000000'];

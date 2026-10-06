@@ -110,7 +110,11 @@ return [
     ],
     'plk' => [
         'label' => 'PLK',
-        'description' => 'Semak pemilih PAS luar kawasan dan urus kiraan kos mengikut kod culaan.',
+        'description' => 'Semak maklumat pemilih PAS luar kawasan.',
+    ],
+    'plk-kos' => [
+        'label' => 'Kiraan Kos PLK',
+        'description' => 'Lihat kiraan kos PLK dan kemas kini kadar bayaran.',
     ],
     'keluarga-pemilih' => [
         'label' => 'Keluarga Pemilih',
