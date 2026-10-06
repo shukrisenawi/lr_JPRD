@@ -62,14 +62,9 @@ class KeluargaPemilihController extends Controller
         }
 
         $voters = $this->activeVoterQuery($user, $udmFilter, $localityFilter);
-        $familiesQuery = $this->visibleFamilyQuery($user, $udmFilter, $localityFilter);
-        if ($tabFilter === 'reviewed') {
-            $familiesQuery->whereNotNull('reviewed_at');
-        } else {
-            $familiesQuery->whereNull('reviewed_at');
-        }
+        $familyQueryBase = $this->visibleFamilyQuery($user, $udmFilter, $localityFilter);
         if ($searchFilter !== '') {
-            $familiesQuery->whereHas('members', function (Builder $query) use ($user, $udmFilter, $localityFilter, $searchFilter): void {
+            $familyQueryBase->whereHas('members', function (Builder $query) use ($user, $udmFilter, $localityFilter, $searchFilter): void {
                 $user->applyScopeToPemilihQuery($query);
                 if ($udmFilter !== '') {
                     $query->where('pemilih_records.dm', $udmFilter);
@@ -79,6 +74,16 @@ class KeluargaPemilihController extends Controller
                 }
                 $this->applySearchTerm($query, $searchFilter);
             });
+        }
+        $familyTabCounts = [
+            'families' => (clone $familyQueryBase)->whereNull('reviewed_at')->count(),
+            'reviewed' => (clone $familyQueryBase)->whereNotNull('reviewed_at')->count(),
+        ];
+        $familiesQuery = (clone $familyQueryBase);
+        if ($tabFilter === 'reviewed') {
+            $familiesQuery->whereNotNull('reviewed_at');
+        } else {
+            $familiesQuery->whereNull('reviewed_at');
         }
         $allVoters = $this->activeVoterQuery($user);
         $allFamiliesQuery = $this->visibleFamilyQuery($user);
@@ -106,7 +111,7 @@ class KeluargaPemilihController extends Controller
             $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
         }
 
-        $familyCount = (clone $familiesQuery)->count();
+        $familyCount = $familyTabCounts[$tabFilter === 'reviewed' ? 'reviewed' : 'families'];
         $unassignedCount = (clone $unassignedVotersQuery)->count();
         $requestedPage = max(1, (int) $request->query('page', 1));
         $activePageSize = $tabFilter === 'unassigned' ? 20 : 12;
@@ -169,6 +174,7 @@ class KeluargaPemilihController extends Controller
             'unassignedVoters' => $unassignedVoters,
             'available_cula_codes' => CulaCodes::options(),
             'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter, 'q' => $searchFilter, 'tab' => $tabFilter],
+            'familyTabCounts' => $familyTabCounts,
             'localities' => $localities->values(),
             'udmSummaries' => $udmSummaries,
             'allStats' => [

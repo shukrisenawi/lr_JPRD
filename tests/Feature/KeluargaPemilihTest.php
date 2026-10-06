@@ -266,13 +266,18 @@ it('moves a confirmed family to the reviewed tab and supports cancelling review'
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1']))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->where('families.total', 0));
+        ->assertInertia(fn ($page) => $page
+            ->where('families.total', 0)
+            ->where('familyTabCounts.families', 0)
+            ->where('familyTabCounts.reviewed', 1));
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => 'reviewed']))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.tab', 'reviewed')
             ->where('families.total', 1)
+            ->where('familyTabCounts.families', 0)
+            ->where('familyTabCounts.reviewed', 1)
             ->where('families.data.0.reviewed_by', $user->id));
 
     $this->actingAs($user)
@@ -398,6 +403,8 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
         ->assertInertia(fn ($page) => $page
             ->where('filters.udm', '')
             ->where('stats.families', 2)
+            ->where('familyTabCounts.families', 2)
+            ->where('familyTabCounts.reviewed', 0)
             ->where('stats.voters', 6)
             ->where('stats.unassigned', 2)
             ->where('udmSummaries.0.udm', 'UDM 1')
