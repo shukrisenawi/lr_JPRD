@@ -44,7 +44,10 @@ class KeluargaPemilihController extends Controller
             ->get()
             ->keyBy('dm');
         $requestedUdm = trim((string) $request->query('udm', ''));
-        $udmFilter = $votersByUdm->has($requestedUdm) ? $requestedUdm : '';
+        $scopedUdm = ($user->access_level ?? 'jprd') === 'udm' ? trim((string) $user->scope_key) : '';
+        $udmFilter = $scopedUdm !== ''
+            ? $scopedUdm
+            : ($votersByUdm->has($requestedUdm) ? $requestedUdm : '');
         $localities = collect();
         $localityFilter = '';
         if ($udmFilter !== '') {

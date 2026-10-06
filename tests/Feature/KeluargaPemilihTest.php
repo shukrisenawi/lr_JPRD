@@ -350,6 +350,39 @@ it('does not allow users to create a family outside their voter scope', function
     $this->assertDatabaseCount('pemilih_families', 0);
 });
 
+it('automatically selects the users UDM and ignores requests to switch outside that UDM', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM 2',
+    ]);
+    $inScopeVoter = createKeluargaPemilihRecord(['name' => 'RAHIM BIN ABU', 'dm' => 'UDM 2']);
+    createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI', 'dm' => 'UDM 1']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga UDM 2',
+            'pemilih_ids' => [$inScopeVoter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', 'UDM 2')
+            ->where('families.total', 1)
+            ->where('families.data.0.name', 'Keluarga UDM 2')
+            ->where('udmSummaries.0.udm', 'UDM 2'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', 'UDM 2')
+            ->where('families.total', 1)
+            ->where('families.data.0.name', 'Keluarga UDM 2'));
+});
+
 it('shows UDM family and unassigned voter counts and filters the family list', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
 

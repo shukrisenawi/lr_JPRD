@@ -138,6 +138,8 @@ function sharedBinBintiAnchor(members = []) {
 export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, familyTabCounts = { families: 0, reviewed: 0 }, udmSummaries, localities }) {
     const { errors = {}, available_cula_codes: availableCulaCodes = [], auth } = usePage().props;
     const isMasterAdmin = Boolean(auth?.user?.role?.is_master_admin);
+    const isUdmUser = auth?.user?.access_level === 'udm';
+    const allUdmLabel = isUdmUser ? 'Semua Lokaliti' : 'Semua UDM';
     const [mode, setMode] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [familySearch, setFamilySearch] = useState(filters.q || '');
@@ -798,11 +800,15 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <div className="flex w-full flex-col gap-1 sm:w-auto sm:items-end">
                             {filters.udm && <p className="text-xs font-semibold text-green-800">{[filters.udm, filters.locality].filter(Boolean).join(' · ')}</p>}
                             <div className="flex w-full gap-2 sm:w-auto">
-                                <label htmlFor="keluarga-udm-filter" className="sr-only">Tapis keluarga mengikut UDM</label>
-                                <select id="keluarga-udm-filter" value={filters.udm} onChange={(event) => selectUdm(event.target.value)} className="input-field min-w-0 flex-1 text-xs sm:w-56 sm:flex-none">
-                                    <option value="">Semua UDM</option>
-                                    {udmSummaries.map((summary) => <option key={summary.udm} value={summary.udm}>{summary.udm}</option>)}
-                                </select>
+                                {!isUdmUser && (
+                                    <>
+                                        <label htmlFor="keluarga-udm-filter" className="sr-only">Tapis keluarga mengikut UDM</label>
+                                        <select id="keluarga-udm-filter" value={filters.udm} onChange={(event) => selectUdm(event.target.value)} className="input-field min-w-0 flex-1 text-xs sm:w-56 sm:flex-none">
+                                            <option value="">{allUdmLabel}</option>
+                                            {udmSummaries.map((summary) => <option key={summary.udm} value={summary.udm}>{summary.udm}</option>)}
+                                        </select>
+                                    </>
+                                )}
                                 {filters.udm && (
                                     <>
                                         <label htmlFor="keluarga-locality-filter" className="sr-only">Tapis keluarga mengikut lokaliti</label>
@@ -817,7 +823,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                     </div>
                     {!filters.udm && <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                         <button type="button" onClick={() => selectUdm('')} aria-pressed="true" className="card w-full cursor-pointer border-green-500 bg-green-50 p-3 text-left ring-1 ring-green-200 transition hover:border-green-300">
-                            <span className="flex items-center justify-between gap-2"><span className="text-xs font-black text-slate-900">Semua UDM</span><span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-bold text-slate-500">{udmSummaries.length} UDM</span></span>
+                            <span className="flex items-center justify-between gap-2"><span className="text-xs font-black text-slate-900">{allUdmLabel}</span><span className="rounded-full bg-white/80 px-2 py-0.5 text-[9px] font-bold text-slate-500">{udmSummaries.length} UDM</span></span>
                             <span className="mt-2 grid grid-cols-2 gap-2">
                                 <span><span className="block text-lg font-black text-green-800">{allStats.families.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Jumlah keluarga</span></span>
                                 <span><span className="block text-lg font-black text-amber-700">{allStats.unassigned.toLocaleString('ms-MY')}</span><span className="block text-[10px] font-semibold text-slate-500">Belum berkeluarga</span></span>
@@ -865,7 +871,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
 
                 {filters.udm && filters.tab !== 'unassigned' && <section className="space-y-2.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                        <div><p className="label-section">{filters.tab === 'reviewed' ? 'Keluarga Telah disemak' : 'Senarai Keluarga'}</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{visibleFamilyTotal.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ' · Semua UDM'}</h3></div>
+                        <div><p className="label-section">{filters.tab === 'reviewed' ? 'Keluarga Telah disemak' : 'Senarai Keluarga'}</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{visibleFamilyTotal.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ` · ${allUdmLabel}`}</h3></div>
                         <div className="relative w-full sm:max-w-sm">
                             <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
