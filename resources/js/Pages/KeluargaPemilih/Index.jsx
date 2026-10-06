@@ -143,6 +143,11 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [fatherOverrides, setFatherOverrides] = useState({});
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
+    const [removedFamilyIds, setRemovedFamilyIds] = useState(new Set());
+    const [removingVoterIds, setRemovingVoterIds] = useState(new Set());
+    const [removingFamilyIds, setRemovingFamilyIds] = useState(new Set());
+    const [removeErrors, setRemoveErrors] = useState({});
+    const [removeStatsDelta, setRemoveStatsDelta] = useState({ families: 0, activeVoters: 0 });
     const [lightbox, setLightbox] = useState(null);
     const [avatarOverrides, setAvatarOverrides] = useState({});
     const [avatarUploadTarget, setAvatarUploadTarget] = useState(null);
@@ -167,6 +172,11 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             member_count: family.member_count,
         }])));
         setFatherErrors({});
+        setRemovedFamilyIds(new Set());
+        setRemovingVoterIds(new Set());
+        setRemovingFamilyIds(new Set());
+        setRemoveErrors({});
+        setRemoveStatsDelta({ families: 0, activeVoters: 0 });
         setCulaOverrides({});
         setCulaPendingIds(new Set());
         setCulaErrors({});
@@ -390,9 +400,77 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         });
     };
 
-    const removeMember = (family, voter) => {
+    const removeMember = async (family, voter) => {
         if (!window.confirm(`Keluarkan ${voter.name || 'pemilih ini'} daripada ${family.name}?`)) return;
-        router.delete(route('keluarga-pemilih.members.destroy', { pemilihFamily: family.id, pemilihRecord: voter.id }), currentRouteFilters(), { preserveScroll: true });
+        const voterId = Number(voter.id);
+        const familyId = Number(family.id);
+        if (removingFamilyIds.has(familyId)) return;
+
+        setRemovingVoterIds((current) => new Set([...current, voterId]));
+        setRemovingFamilyIds((current) => new Set([...current, familyId]));
+        setRemoveErrors((current) => ({ ...current, [family.id]: null }));
+
+        try {
+            const response = await fetch(route('keluarga-pemilih.members.destroy', { pemilihFamily: family.id, pemilihRecord: voter.id }), {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const validationError = Object.values(payload.errors || {}).flat()[0];
+                throw new Error(validationError || payload.message || 'Pemilih gagal dikeluarkan daripada keluarga.');
+            }
+
+            const removedIds = new Set((payload.removed_member_ids || [voter.id]).map(Number));
+            const removedActiveCount = Number(payload.removed_active_count ?? removedIds.size);
+            const existing = fatherDetails(family, fatherOverrides);
+            const members = (existing.members || family.members || [])
+                .filter((member) => !removedIds.has(Number(member.id)));
+            const familyIsRemoved = payload.family_deleted || members.length === 0;
+            setRemoveStatsDelta((current) => ({
+                families: current.families + (familyIsRemoved ? 1 : 0),
+                activeVoters: current.activeVoters + removedActiveCount,
+            }));
+
+            if (familyIsRemoved) {
+                setRemovedFamilyIds((current) => new Set([...current, familyId]));
+            } else {
+                setFatherOverrides((current) => {
+                    const father = members.find((member) => Number(member.id) === Number(payload.father_id));
+
+                    return {
+                        ...current,
+                        [familyId]: {
+                            ...existing,
+                            father_id: payload.father_id,
+                            father_name: father?.name || (payload.father_id ? existing.father_name : null),
+                            members,
+                            member_count: members.length,
+                        },
+                    };
+                });
+            }
+        } catch (error) {
+            setRemoveErrors((current) => ({
+                ...current,
+                [family.id]: error.message || 'Pemilih gagal dikeluarkan daripada keluarga.',
+            }));
+        } finally {
+            setRemovingVoterIds((current) => {
+                const next = new Set(current);
+                next.delete(voterId);
+                return next;
+            });
+            setRemovingFamilyIds((current) => {
+                const next = new Set(current);
+                next.delete(familyId);
+                return next;
+            });
+        }
     };
 
     const openAvatar = (voter) => {
@@ -542,6 +620,14 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     };
 
     const selectedIds = new Set(selectedVoters.map((voter) => voter.id));
+    const visibleFamilies = families.data.filter((family) => !removedFamilyIds.has(Number(family.id)));
+    const visibleFamilyTotal = Math.max(0, families.total - removeStatsDelta.families);
+    const visibleStats = {
+        ...stats,
+        families: Math.max(0, stats.families - removeStatsDelta.families),
+        assigned: Math.max(0, stats.assigned - removeStatsDelta.activeVoters),
+        unassigned: stats.unassigned + removeStatsDelta.activeVoters,
+    };
     const manualPanel = mode && (
         <section className={`card border-green-200 ${mode.type === 'add' ? 'max-h-[88vh] overflow-y-auto' : 'overflow-hidden'}`}>
             <div className="flex items-start justify-between gap-3 border-b border-green-100 bg-green-50/70 px-3 py-3 sm:px-4">
@@ -648,17 +734,17 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 <div><p className="label-section">Operasi · Pengurusan Pemilih</p><h2 className="mt-0.5 heading-lg">Keluarga Pemilih</h2><p className="mt-1 max-w-2xl text-xs text-slate-500">Satukan pemilih yang tinggal serumah. Semak padanan cadangan dahulu atau biarkan sistem mengumpulkan rekod yang mempunyai bukti kediaman sepadan tepat.</p></div>
                 <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={startNewFamily} className="btn-primary inline-flex items-center gap-1.5"><Icon name="plus" />Tambah Manual</button>
-                    <button type="button" onClick={runAuto} disabled={autoProcessing || stats.unassigned === 0} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="sparkles" />{autoProcessing ? 'Memproses…' : 'Auto Keluarga'}</button>
+                    <button type="button" onClick={runAuto} disabled={autoProcessing || visibleStats.unassigned === 0} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="sparkles" />{autoProcessing ? 'Memproses…' : 'Auto Keluarga'}</button>
                 </div>
             </div>
         }>
             <Head title="Keluarga Pemilih" />
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
                 <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                    <StatCard label="Jumlah Keluarga" value={stats.families} icon="home" />
+                    <StatCard label="Jumlah Keluarga" value={visibleStats.families} icon="home" />
                     <StatCard label="Pemilih Aktif" value={stats.voters} icon="users" />
-                    <StatCard label="Sudah Berkeluarga" value={stats.assigned} icon="users" />
-                    <StatCard label="Belum Berkeluarga" value={stats.unassigned} icon="plus" />
+                    <StatCard label="Sudah Berkeluarga" value={visibleStats.assigned} icon="users" />
+                    <StatCard label="Belum Berkeluarga" value={visibleStats.unassigned} icon="plus" />
                 </section>
 
                 <section className="space-y-2">
@@ -719,23 +805,23 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             Senarai Keluarga
                         </button>
                         <button type="button" onClick={() => selectTab('unassigned')} aria-current={filters.tab === 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
-                            Pemilih Belum Berkeluarga <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{stats.unassigned}</span>
+                            Pemilih Belum Berkeluarga <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{visibleStats.unassigned}</span>
                         </button>
                     </nav>
                 )}
 
                 {filters.udm && filters.tab !== 'unassigned' && <section className="space-y-2.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                        <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{families.total.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ' · Semua UDM'}</h3></div>
+                        <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{visibleFamilyTotal.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ' · Semua UDM'}</h3></div>
                         <div className="relative w-full sm:max-w-sm">
                             <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
                             <input id="family-member-search" type="search" value={familySearch} onChange={(event) => setFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat pemilih…" className="input-field w-full pl-9 text-xs" />
                         </div>
-                        {stats.unassigned > 0 && <p className="text-left text-[11px] text-slate-500 sm:text-right">{stats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
+                        {visibleStats.unassigned > 0 && <p className="text-left text-[11px] text-slate-500 sm:text-right">{visibleStats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
                     </div>
 
-                    {families.data.length === 0 ? (
+                    {visibleFamilies.length === 0 ? (
                         <div className="card-dashed px-4 py-10 text-center">
                             <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-green-50 text-green-700"><Icon name="home" className="h-5 w-5" /></span>
                             <h4 className="mt-3 text-sm font-bold text-slate-800">{filters.q ? 'Tiada keluarga sepadan dengan carian' : 'Belum ada keluarga pemilih'}</h4>
@@ -744,7 +830,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         </div>
                     ) : (
                         <div className="grid gap-2.5 xl:grid-cols-2">
-                            {families.data.map((family) => {
+                            {visibleFamilies.map((family) => {
                                 const father = fatherDetails(family, fatherOverrides);
                                 const members = father.members || family.members;
                                 const memberCount = father.member_count ?? family.member_count;
@@ -777,6 +863,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                             <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
                                         </div>
                                         {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
+                                        {removeErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{removeErrors[family.id]}</p>}
                                         <div className="divide-y divide-slate-100">
                                             {members.map((voter) => {
                                                 const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
@@ -804,7 +891,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                                 {fatherProcessingId === family.id ? '...' : isFather ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
                                                             </button>
                                                         )}
-                                                        <button type="button" onClick={() => removeMember({ ...family, name: familyName }, voter)} aria-label={`Keluarkan ${voter.name || 'pemilih'} daripada keluarga`} title="Keluarkan daripada keluarga" className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"><Icon name="trash" /></button>
+                                                        <button type="button" onClick={() => removeMember({ ...family, name: familyName }, voter)} disabled={removingFamilyIds.has(Number(family.id))} aria-label={`Keluarkan ${voter.name || 'pemilih'} daripada keluarga`} title="Keluarkan daripada keluarga" className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700 disabled:cursor-wait disabled:opacity-50">{removingVoterIds.has(Number(voter.id)) ? '…' : <Icon name="trash" />}</button>
                                                     </div>
                                                 </div>
                                                 );

@@ -43,8 +43,13 @@ it('creates a voter family manually, adds members, and removes a member', functi
     $this->assertDatabaseCount('pemilih_family_members', 3);
 
     $this->actingAs($user)
-        ->delete(route('keluarga-pemilih.members.destroy', [$familyId, $third->id]))
-        ->assertRedirect(route('keluarga-pemilih.index'));
+        ->deleteJson(route('keluarga-pemilih.members.destroy', [$familyId, $third->id]))
+        ->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('removed_member_ids.0', $third->id)
+        ->assertJsonPath('removed_active_count', 1)
+        ->assertJsonPath('member_count', 2)
+        ->assertJsonPath('family_deleted', false);
 
     $this->assertDatabaseMissing('pemilih_family_members', [
         'pemilih_family_id' => $familyId,
@@ -375,7 +380,7 @@ it('allows a family label to be renamed', function () {
     $this->assertDatabaseHas('pemilih_families', ['id' => $familyId, 'name' => $newName]);
 });
 
-it('preserves family filters on removal and moves back to the last available page', function () {
+it('deletes the last family member without redirecting and clamps an out-of-range page on next visit', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
 
@@ -396,8 +401,12 @@ it('preserves family filters on removal and moves back to the last available pag
     ];
 
     $this->actingAs($user)
-        ->delete(route('keluarga-pemilih.members.destroy', [$familyId, $voter->id]), $context)
-        ->assertRedirect(route('keluarga-pemilih.index', $context));
+        ->deleteJson(route('keluarga-pemilih.members.destroy', [$familyId, $voter->id]))
+        ->assertOk()
+        ->assertJsonPath('removed_member_ids.0', $voter->id)
+        ->assertJsonPath('removed_active_count', 1)
+        ->assertJsonPath('member_count', 0)
+        ->assertJsonPath('family_deleted', true);
 
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index', $context))
@@ -561,6 +570,42 @@ it('keeps all name matches when five or fewer voters qualify for father auto-add
             'auto_added_by_father_id' => $father->id,
         ]);
     }
+});
+
+it('returns auto-added children when removing the marked father', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $father = createKeluargaPemilihRecord(['name' => 'ABDUL HALIM BIN MOHAMAD']);
+    $mother = createKeluargaPemilihRecord(['name' => 'NORAINI BINTI RAHMAN']);
+    $child = createKeluargaPemilihRecord(['name' => 'NURUL BINTI ABDUL HALIM']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abdul Halim',
+            'pemilih_ids' => [$father->id, $mother->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $this->actingAs($user)
+        ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $father->id])
+        ->assertOk()
+        ->assertJsonPath('added_count', 1);
+
+    $response = $this->actingAs($user)
+        ->deleteJson(route('keluarga-pemilih.members.destroy', [$familyId, $father->id]))
+        ->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('removed_active_count', 2)
+        ->assertJsonPath('father_id', null)
+        ->assertJsonPath('member_count', 1)
+        ->assertJsonPath('family_deleted', false);
+
+    expect(collect($response->json('removed_member_ids'))->sort()->values()->all())
+        ->toBe(collect([$father->id, $child->id])->sort()->values()->all());
+
+    $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_family_id' => $familyId, 'pemilih_record_id' => $father->id]);
+    $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_family_id' => $familyId, 'pemilih_record_id' => $child->id]);
+    $this->assertDatabaseHas('pemilih_family_members', ['pemilih_family_id' => $familyId, 'pemilih_record_id' => $mother->id]);
 });
 
 it('updates a family members cula code and marks the voter for follow-up', function () {

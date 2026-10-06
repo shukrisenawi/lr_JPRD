@@ -486,9 +486,8 @@ class KeluargaPemilihController extends Controller
             ->with('success', count($validated['pemilih_ids'])." pemilih berjaya ditambah ke {$family->name}.");
     }
 
-    public function removeMember(Request $request, PemilihFamily $pemilihFamily, PemilihRecord $pemilihRecord): RedirectResponse
+    public function removeMember(Request $request, PemilihFamily $pemilihFamily, PemilihRecord $pemilihRecord): JsonResponse
     {
-        $routeFilters = $request->validate($this->routeFilterRules());
         $user = $request->user();
         abort_unless($user->canAccessPemilihRecord($pemilihRecord), 403);
 
@@ -498,13 +497,15 @@ class KeluargaPemilihController extends Controller
             404,
         );
 
-        DB::transaction(function () use ($family, $pemilihRecord): void {
+        $result = DB::transaction(function () use ($family, $pemilihRecord): array {
+            $removedMemberIds = collect([(int) $pemilihRecord->id]);
             if ((int) $family->father_pemilih_record_id === (int) $pemilihRecord->id) {
                 $autoMemberIds = DB::table('pemilih_family_members')
                     ->where('pemilih_family_id', $family->id)
                     ->where('auto_added_by_father_id', $pemilihRecord->id)
                     ->pluck('pemilih_record_id');
                 if ($autoMemberIds->isNotEmpty()) {
+                    $removedMemberIds = $removedMemberIds->merge($autoMemberIds);
                     DB::table('pemilih_family_members')
                         ->where('pemilih_family_id', $family->id)
                         ->whereIn('pemilih_record_id', $autoMemberIds)
@@ -514,14 +515,29 @@ class KeluargaPemilihController extends Controller
             }
 
             $family->members()->detach($pemilihRecord->id);
-            if (! $family->members()->exists()) {
+            $memberCount = $family->members()->count();
+            $familyDeleted = $memberCount === 0;
+            if ($familyDeleted) {
                 $family->delete();
             }
+
+            return [
+                'removed_member_ids' => $removedMemberIds->map(fn ($id): int => (int) $id)->unique()->values()->all(),
+                'removed_active_count' => PemilihRecord::query()
+                    ->whereIn('id', $removedMemberIds)
+                    ->where('status', 'aktif')
+                    ->count(),
+                'father_id' => $familyDeleted ? null : $family->father_pemilih_record_id,
+                'member_count' => $memberCount,
+                'family_deleted' => $familyDeleted,
+            ];
         });
 
-        return redirect()
-            ->route('keluarga-pemilih.index', $this->filterRouteParams($routeFilters))
-            ->with('success', 'Pemilih berjaya dikeluarkan daripada keluarga.');
+        return response()->json([
+            'success' => true,
+            ...$result,
+            'message' => 'Pemilih berjaya dikeluarkan daripada keluarga.',
+        ]);
     }
 
     public function auto(Request $request): RedirectResponse
