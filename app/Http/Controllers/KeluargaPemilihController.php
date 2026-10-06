@@ -21,7 +21,11 @@ class KeluargaPemilihController extends Controller
 {
     public function index(Request $request): Response
     {
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
         $user = $request->user();
+        $searchFilter = trim((string) ($validated['q'] ?? ''));
         $votersByUdm = $this->activeVoterQuery($user)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
@@ -52,6 +56,18 @@ class KeluargaPemilihController extends Controller
 
         $voters = $this->activeVoterQuery($user, $udmFilter, $localityFilter);
         $familiesQuery = $this->visibleFamilyQuery($user, $udmFilter, $localityFilter);
+        if ($searchFilter !== '') {
+            $familiesQuery->whereHas('members', function (Builder $query) use ($user, $udmFilter, $localityFilter, $searchFilter): void {
+                $user->applyScopeToPemilihQuery($query);
+                if ($udmFilter !== '') {
+                    $query->where('pemilih_records.dm', $udmFilter);
+                }
+                if ($localityFilter !== '') {
+                    $query->where('pemilih_records.locality', $localityFilter);
+                }
+                $this->applySearchTerm($query, $searchFilter);
+            });
+        }
         $allVoters = $this->activeVoterQuery($user);
         $allFamiliesQuery = $this->visibleFamilyQuery($user);
 
@@ -109,7 +125,7 @@ class KeluargaPemilihController extends Controller
 
         return Inertia::render('KeluargaPemilih/Index', [
             'families' => $families,
-            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter],
+            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter, 'q' => $searchFilter],
             'localities' => $localities->values(),
             'udmSummaries' => $udmSummaries,
             'allStats' => [
@@ -243,6 +259,9 @@ class KeluargaPemilihController extends Controller
         $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
         $fatherId = $validated['father_id'] ?? null;
         $fatherName = null;
+        $fatherDm = null;
+        $fatherLocality = null;
+        $newMemberIds = [];
 
         if ($fatherId !== null) {
             $father = PemilihRecord::query()->findOrFail($fatherId);
@@ -253,6 +272,21 @@ class KeluargaPemilihController extends Controller
                 ]);
             }
             $fatherName = $father->name;
+            $fatherDm = $father->dm;
+            $fatherLocality = $father->locality;
+
+            $parentName = $this->personName($father->name);
+            if ($this->isUsefulMatchValue($parentName)
+                && $this->isUsefulMatchValue($this->normalize($father->dm))
+                && $this->isUsefulMatchValue($this->normalize($father->locality))) {
+                $newMemberIds = $this->activeVoterQuery($user, $father->dm, $father->locality)
+                    ->whereDoesntHave('families')
+                    ->whereRaw("UPPER(TRIM(COALESCE(name, ''))) LIKE ?", ['%'.$parentName.'%'])
+                    ->orderBy('name')
+                    ->get()
+                    ->filter(fn (PemilihRecord $voter): bool => $this->parentName($voter->name) === $parentName)
+                    ->modelKeys();
+            }
         }
 
         $familyName = $family->name;
@@ -265,15 +299,33 @@ class KeluargaPemilihController extends Controller
             }
         }
 
-        $family->update([
-            'father_pemilih_record_id' => $fatherId,
-            'name' => $familyName,
-        ]);
+        $addedMembers = DB::transaction(function () use ($family, $user, $fatherId, $fatherDm, $fatherLocality, $familyName, $newMemberIds) {
+            $lockedFamily = PemilihFamily::query()->lockForUpdate()->findOrFail($family->id);
+            $voters = $newMemberIds === []
+                ? new EloquentCollection
+                : $this->lockUnassignedVoters($user, $newMemberIds, $fatherDm, $fatherLocality);
+
+            $lockedFamily->update([
+                'father_pemilih_record_id' => $fatherId,
+                'name' => $familyName,
+            ]);
+            if ($voters->isNotEmpty()) {
+                $lockedFamily->members()->attach($voters->modelKeys(), ['created_by' => $user->id]);
+            }
+
+            return $voters;
+        });
+        $family->refresh();
 
         return response()->json([
             'father_id' => $fatherId,
             'father_name' => $fatherName,
             'family_name' => $familyName,
+            'member_count' => $family->members()->count(),
+            'added_count' => $addedMembers->count(),
+            'added_members' => $addedMembers
+                ->map(fn (PemilihRecord $voter): array => $this->voterPayload($voter))
+                ->values(),
             'message' => $fatherId === null ? 'Tanda ayah dibuang.' : 'Pemilih ditandakan sebagai ayah keluarga.',
         ]);
     }

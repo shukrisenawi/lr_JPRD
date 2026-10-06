@@ -47,6 +47,8 @@ function fatherDetails(family, overrides) {
         father_id: family.father_id,
         father_name: family.father_name,
         family_name: family.name,
+        members: family.members,
+        member_count: family.member_count,
     };
 }
 
@@ -54,6 +56,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
     const { errors = {} } = usePage().props;
     const [mode, setMode] = useState(null);
     const [searchText, setSearchText] = useState('');
+    const [familySearch, setFamilySearch] = useState(filters.q || '');
     const [results, setResults] = useState([]);
     const [selectedVoters, setSelectedVoters] = useState([]);
     const [familyName, setFamilyName] = useState('');
@@ -74,9 +77,34 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
             father_id: family.father_id,
             father_name: family.father_name,
             family_name: family.name,
+            members: family.members,
+            member_count: family.member_count,
         }])));
         setFatherErrors({});
     }, [families.data]);
+
+    useEffect(() => {
+        setFamilySearch(filters.q || '');
+    }, [filters.q]);
+
+    useEffect(() => {
+        const query = familySearch.trim();
+        if (query === (filters.q || '')) return undefined;
+
+        const timer = window.setTimeout(() => {
+            router.get(route('keluarga-pemilih.index'), {
+                ...(filters.udm ? { udm: filters.udm } : {}),
+                ...(filters.locality ? { locality: filters.locality } : {}),
+                ...(query ? { q: query } : {}),
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 300);
+
+        return () => window.clearTimeout(timer);
+    }, [familySearch, filters.locality, filters.q, filters.udm]);
 
     const targetFamily = useMemo(
         () => mode?.type === 'add' ? families.data.find((family) => family.id === mode.familyId) : null,
@@ -85,7 +113,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
     const targetFather = targetFamily ? fatherDetails(targetFamily, fatherOverrides) : null;
     const anchorIsFather = mode?.type === 'add' && Boolean(targetFather?.father_id);
     const anchorId = mode?.type === 'add'
-        ? targetFather?.father_id || targetFamily?.members?.[0]?.id
+        ? targetFather?.father_id || targetFather?.members?.[0]?.id
         : selectedVoters[0]?.id;
 
     useEffect(() => {
@@ -146,7 +174,10 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         setFatherOverrides({});
         setFatherErrors({});
         setUpdatedFamilyId(null);
-        router.get(route('keluarga-pemilih.index'), udm ? { udm } : {}, {
+        router.get(route('keluarga-pemilih.index'), {
+            ...(udm ? { udm } : {}),
+            ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
+        }, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -162,6 +193,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         router.get(route('keluarga-pemilih.index'), {
             udm: filters.udm,
             ...(locality ? { locality } : {}),
+            ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -284,14 +316,25 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
             const payload = await response.json();
             if (!response.ok) throw new Error(payload.message || 'Tanda ayah tidak berjaya dikemaskini.');
 
-            setFatherOverrides((current) => ({
-                ...current,
-                [family.id]: {
-                    father_id: payload.father_id,
-                    father_name: payload.father_name,
-                    family_name: payload.family_name,
-                },
-            }));
+            setFatherOverrides((current) => {
+                const existing = fatherDetails(family, current);
+                const membersById = new Map((existing.members || family.members).map((member) => [member.id, member]));
+                (payload.added_members || []).forEach((member) => {
+                    membersById.set(member.id, member);
+                });
+
+                return {
+                    ...current,
+                    [family.id]: {
+                        father_id: payload.father_id,
+                        father_name: payload.father_name,
+                        family_name: payload.family_name,
+                        members: [...membersById.values()].sort((left, right) => String(left.name || '').localeCompare(String(right.name || ''))),
+                        member_count: payload.member_count ?? existing.member_count ?? family.member_count,
+                    },
+                };
+            });
+            if (payload.added_count > 0) setUpdatedFamilyId(family.id);
         } catch (error) {
             setFatherErrors((current) => ({ ...current, [family.id]: error.message }));
         } finally {
@@ -462,11 +505,6 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                     </div>}
                 </section>
 
-                <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
-                    <Icon name="sparkles" className="mt-0.5 h-4 w-4 shrink-0" />
-                    <p><strong>Padanan automatik sangat ketat:</strong> rekod hanya dikumpulkan jika no. rumah, alamat kediaman, lokaliti dan UDM semuanya sama. Nama bin/binti, no. rumah atau lokaliti turut digunakan untuk menyusun cadangan manual, tetapi tidak mencukupi untuk auto-gabung.</p>
-                </div>
-
                 {mode?.type === 'new' && manualPanel}
                 {mode?.type === 'add' && (
                     <Modal show onClose={closeManual} maxWidth="3xl" title={`Tambah ahli keluarga ${targetFather?.family_name || ''}`}>
@@ -475,23 +513,30 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                 )}
 
                 {filters.udm && <section className="space-y-2.5">
-                    <div className="flex items-end justify-between gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{families.total.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ' · Semua UDM'}</h3></div>
-                        {stats.unassigned > 0 && <p className="text-right text-[11px] text-slate-500">{stats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
+                        <div className="relative w-full sm:max-w-sm">
+                            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
+                            <input id="family-member-search" type="search" value={familySearch} onChange={(event) => setFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat pemilih…" className="input-field w-full pl-9 text-xs" />
+                        </div>
+                        {stats.unassigned > 0 && <p className="text-left text-[11px] text-slate-500 sm:text-right">{stats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
                     </div>
 
                     {families.data.length === 0 ? (
                         <div className="card-dashed px-4 py-10 text-center">
                             <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-green-50 text-green-700"><Icon name="home" className="h-5 w-5" /></span>
-                            <h4 className="mt-3 text-sm font-bold text-slate-800">Belum ada keluarga pemilih</h4>
-                            <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">Tambah keluarga secara manual atau jalankan auto untuk mengumpulkan rekod dengan maklumat kediaman yang sama tepat.</p>
-                            <button type="button" onClick={startNewFamily} className="btn-primary mt-4">Mula Tambah Manual</button>
+                            <h4 className="mt-3 text-sm font-bold text-slate-800">{filters.q ? 'Tiada keluarga sepadan dengan carian' : 'Belum ada keluarga pemilih'}</h4>
+                            <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">{filters.q ? 'Cuba nama, nombor KP, no. rumah atau alamat yang lain.' : 'Tambah keluarga secara manual atau jalankan auto untuk mengumpulkan rekod dengan maklumat kediaman yang sama tepat.'}</p>
+                            {!filters.q && <button type="button" onClick={startNewFamily} className="btn-primary mt-4">Mula Tambah Manual</button>}
                         </div>
                     ) : (
                         <div className="grid gap-2.5 xl:grid-cols-2">
                             {families.data.map((family) => {
-                                const locations = [...new Set(family.members.map(locationLabel).filter(Boolean))];
                                 const father = fatherDetails(family, fatherOverrides);
+                                const members = father.members || family.members;
+                                const memberCount = father.member_count ?? family.member_count;
+                                const locations = [...new Set(members.map(locationLabel).filter(Boolean))];
                                 const familyName = father.family_name || family.name;
                                 const isUpdated = updatedFamilyId === family.id;
                                 return (
@@ -511,17 +556,17 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                                             <button type="button" onClick={() => startRename({ ...family, name: familyName })} aria-label={`Tukar nama ${familyName}`} title="Tukar nama keluarga" className="rounded-md p-1 text-slate-400 transition hover:bg-green-50 hover:text-green-700"><Icon name="edit" className="h-3.5 w-3.5" /></button>
                                                         </>
                                                     )}
-                                                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800">{family.member_count} ahli</span>
+                                                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800">{memberCount} ahli</span>
                                                     {isUpdated && <span className="rounded-full bg-green-600 px-2 py-0.5 text-[9px] font-black text-white">Dikemas kini</span>}
                                                 </div>
                                                 {renamingFamilyId === family.id && errors.name && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{errors.name}</p>}
                                                 <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-500"><Icon name="pin" className="h-3 w-3 shrink-0" />{locations.join(' · ') || 'Lokaliti tidak dinyatakan'}</p>
                                             </div>
-                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName })} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
+                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
                                         </div>
                                         {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
                                         <div className="divide-y divide-slate-100">
-                                            {family.members.map((voter) => (
+                                            {members.map((voter) => (
                                                 <div key={voter.id} className="flex items-start gap-3 px-3 py-2.5">
                                                     {voter.avatar_url ? (
                                                         <button type="button" onClick={() => openAvatar(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} className="h-8 w-8 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">

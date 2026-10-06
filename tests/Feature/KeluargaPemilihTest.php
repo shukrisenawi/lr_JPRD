@@ -235,6 +235,39 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('families.total', 0));
 });
 
+it('searches for a voter and returns the family that contains the match', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $matchedVoter = createKeluargaPemilihRecord([
+        'name' => 'HASSAN BIN SALLEH',
+        'no_kp' => '990101025555',
+    ]);
+    $familyMember = createKeluargaPemilihRecord(['name' => 'SITI BINTI SALLEH']);
+    $otherVoter = createKeluargaPemilihRecord(['name' => 'RANI BINTI ABU']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Salleh',
+            'pemilih_ids' => [$matchedVoter->id, $familyMember->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abu',
+            'pemilih_ids' => [$otherVoter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'q' => '990101025555']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.q', '990101025555')
+            ->where('families.total', 1)
+            ->where('families.data.0.name', 'Keluarga Salleh')
+            ->where('families.data.0.member_count', 2));
+});
+
 it('allows a family label to be renamed', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $voter = createKeluargaPemilihRecord(['name' => 'NURULSHAHIDA BINTI ABDUL HALIM']);
@@ -263,6 +296,10 @@ it('marks a family father and flags only children with that fathers bin or binti
     $mother = createKeluargaPemilihRecord(['name' => 'NORAINI BINTI RAHMAN']);
     $child = createKeluargaPemilihRecord(['name' => 'NURULSHAHIDA BINTI ABDUL HALIM']);
     $otherChild = createKeluargaPemilihRecord(['name' => 'FARAH BINTI MOHAMAD']);
+    $differentLocalityChild = createKeluargaPemilihRecord([
+        'name' => 'AISYAH BINTI ABDUL HALIM',
+        'locality' => 'LOKALITI B',
+    ]);
 
     $this->actingAs($user)
         ->post(route('keluarga-pemilih.store'), [
@@ -278,13 +315,22 @@ it('marks a family father and flags only children with that fathers bin or binti
         ->assertOk()
         ->assertJsonPath('father_id', $father->id)
         ->assertJsonPath('father_name', 'ABDUL HALIM BIN MOHAMAD')
-        ->assertJsonPath('family_name', 'Keluarga ABDUL HALIM BIN MOHAMAD');
+        ->assertJsonPath('family_name', 'Keluarga ABDUL HALIM BIN MOHAMAD')
+        ->assertJsonPath('added_count', 1)
+        ->assertJsonPath('added_members.0.id', $child->id)
+        ->assertJsonPath('member_count', 3);
 
     $this->assertDatabaseHas('pemilih_families', [
         'id' => $familyId,
         'father_pemilih_record_id' => $father->id,
         'name' => 'Keluarga ABDUL HALIM BIN MOHAMAD',
     ]);
+    $this->assertDatabaseHas('pemilih_family_members', [
+        'pemilih_family_id' => $familyId,
+        'pemilih_record_id' => $child->id,
+    ]);
+    $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_record_id' => $otherChild->id]);
+    $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_record_id' => $differentLocalityChild->id]);
 
     $this->actingAs($user)
         ->getJson(route('keluarga-pemilih.search', [
@@ -292,15 +338,14 @@ it('marks a family father and flags only children with that fathers bin or binti
             'anchor_as_father' => 1,
         ]))
         ->assertOk()
-        ->assertJsonPath('voters.0.id', $child->id)
-        ->assertJsonPath('voters.0.match_reasons.0', 'Bin/Binti sama')
-        ->assertJsonPath('voters.1.id', $otherChild->id)
-        ->assertJsonPath('voters.1.match_reasons.0', 'Lokaliti sama');
+        ->assertJsonPath('voters.0.id', $otherChild->id)
+        ->assertJsonPath('voters.0.match_reasons.0', 'Lokaliti sama');
 
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('families.data.0.father_id', $father->id)
-            ->where('families.data.0.father_name', 'ABDUL HALIM BIN MOHAMAD'));
+            ->where('families.data.0.father_name', 'ABDUL HALIM BIN MOHAMAD')
+            ->where('families.data.0.member_count', 3));
 });
