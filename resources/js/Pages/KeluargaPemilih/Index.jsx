@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 function Icon({ name, className = 'h-4 w-4' }) {
     const paths = {
         users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+        user: <><circle cx="12" cy="8" r="4" /><path d="M5 21a7 7 0 0 1 14 0" /></>,
         search: <><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></>,
         plus: <><path d="M12 5v14" /><path d="M5 12h14" /></>,
         home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" /></>,
@@ -54,8 +55,8 @@ function VoterAvatar({ voter, src, sizeClass = 'h-8 w-8', busy, onOpen, onUpload
     }
 
     return (
-        <button type="button" onClick={() => onUpload(voter)} disabled={busy} aria-label={`Muat naik avatar untuk ${voter.name || 'pemilih'}`} title="Klik untuk muat naik dan potong avatar" className={`${sizeClass} flex shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-[11px] font-black text-slate-600 transition hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:opacity-60`}>
-            {busy ? '…' : voter.name?.charAt(0)?.toUpperCase() || '?'}
+        <button type="button" onClick={() => onUpload(voter)} disabled={busy} aria-label={`Muat naik avatar untuk ${voter.name || 'pemilih'}`} title="Klik untuk muat naik dan potong avatar" className={`${sizeClass} flex shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-500 transition hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:opacity-60`}>
+            {busy ? '…' : <Icon name="user" className="h-4 w-4" />}
         </button>
     );
 }
@@ -512,7 +513,64 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     };
 
     const openAvatar = (voter) => {
-        if (voter.avatar_url) setLightbox({ src: voter.avatar_url, alt: voter.name || 'Avatar pemilih' });
+        const src = avatarOverrides[voter.id] || voter.avatar_url;
+        if (src) setLightbox({ src, alt: voter.name || 'Avatar pemilih' });
+    };
+
+    const openAvatarUpload = (voter) => {
+        avatarUploadTargetRef.current = voter;
+        setAvatarUploadTarget(voter);
+        setAvatarErrors((current) => ({ ...current, [voter.id]: null }));
+        avatarInputRef.current?.click();
+    };
+
+    const handleAvatarFileSelected = (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file || !avatarUploadTargetRef.current) return;
+        setCropTarget(file);
+    };
+
+    const closeAvatarCrop = () => {
+        setCropTarget(null);
+        setAvatarUploadTarget(null);
+        avatarUploadTargetRef.current = null;
+    };
+
+    const uploadCroppedAvatar = async (file) => {
+        const voter = avatarUploadTargetRef.current || avatarUploadTarget;
+        if (!file || !voter || avatarUploadingId === voter.id) return;
+
+        setAvatarUploadingId(voter.id);
+        setAvatarErrors((current) => ({ ...current, [voter.id]: null }));
+
+        try {
+            const form = new FormData();
+            form.append('avatar', file);
+            const response = await fetch(route('pemilih.avatar.upload', voter.id), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: form,
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.success) {
+                const validationError = Object.values(payload.errors || {}).flat()[0];
+                throw new Error(validationError || payload.message || 'Gambar gagal dimuat naik.');
+            }
+
+            const cacheBustedUrl = `${payload.avatar_url}${payload.avatar_url.includes('?') ? '&' : '?'}v=${Date.now()}`;
+            setAvatarOverrides((current) => ({ ...current, [voter.id]: cacheBustedUrl }));
+            closeAvatarCrop();
+        } catch (error) {
+            setAvatarErrors((current) => ({ ...current, [voter.id]: error.message || 'Gambar gagal dimuat naik.' }));
+            closeAvatarCrop();
+        } finally {
+            setAvatarUploadingId(null);
+        }
     };
 
     const openTelegramCommand = (voter, command, onOpened = null) => {
@@ -787,6 +845,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         }>
             <Head title="Keluarga Pemilih" />
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
+                <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarFileSelected} className="hidden" />
                 <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard label="Jumlah Keluarga" value={visibleStats.families} icon="home" />
                     <StatCard label="Pemilih Aktif" value={stats.voters} icon="users" />
@@ -932,18 +991,20 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                 const isFather = Number(father.father_id) === Number(voter.id);
                                                 return (
                                                 <div key={voter.id} className="flex flex-wrap items-start gap-3 px-3 py-2.5">
-                                                    {voter.avatar_url ? (
-                                                        <button type="button" onClick={() => openAvatar(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} className="h-8 w-8 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">
-                                                            <img src={voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
-                                                        </button>
-                                                    ) : (
-                                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
-                                                    )}
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{isFather && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
-                                                        <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
-                                                        {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
-                                                        <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                                     <VoterAvatar
+                                                         voter={voter}
+                                                         src={avatarOverrides[voter.id] || voter.avatar_url}
+                                                         sizeClass="h-8 w-8"
+                                                         busy={avatarUploadingId === voter.id}
+                                                         onOpen={openAvatar}
+                                                         onUpload={openAvatarUpload}
+                                                     />
+                                                     <div className="min-w-0 flex-1">
+                                                         <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{isFather && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
+                                                         <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
+                                                         {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
+                                                         {avatarErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{avatarErrors[voter.id]}</p>}
+                                                         <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
                                                         {culaErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
                                                     </div>
                                                     <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
@@ -998,18 +1059,20 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 return (
                                 <div key={voter.id} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex min-w-0 items-center gap-3">
-                                        {voter.avatar_url ? (
-                                            <button type="button" onClick={() => openAvatar(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} className="h-9 w-9 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">
-                                                <img src={voter.avatar_url} alt="" className="h-9 w-9 rounded-full border border-slate-200 object-cover" />
-                                            </button>
-                                        ) : (
-                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
-                                        )}
-                                        <div className="min-w-0">
-                                            <p className="truncate text-xs font-bold text-slate-900">{voter.name || 'Nama tiada'}</p>
-                                            <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
-                                            {voter.address && <p className="truncate text-[10px] text-slate-500">{voter.address}</p>}
-                                            <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                         <VoterAvatar
+                                             voter={voter}
+                                             src={avatarOverrides[voter.id] || voter.avatar_url}
+                                             sizeClass="h-9 w-9"
+                                             busy={avatarUploadingId === voter.id}
+                                             onOpen={openAvatar}
+                                             onUpload={openAvatarUpload}
+                                         />
+                                         <div className="min-w-0">
+                                             <p className="truncate text-xs font-bold text-slate-900">{voter.name || 'Nama tiada'}</p>
+                                             <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
+                                             {voter.address && <p className="truncate text-[10px] text-slate-500">{voter.address}</p>}
+                                             {avatarErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{avatarErrors[voter.id]}</p>}
+                                             <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
@@ -1056,6 +1119,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         </div>
                     </Modal>
                 )}
+                {cropTarget && <CropModal file={cropTarget} onCrop={uploadCroppedAvatar} onClose={closeAvatarCrop} />}
                 {lightbox && <AvatarLightbox src={lightbox.src} alt={lightbox.alt} onClose={() => setLightbox(null)} />}
             </div>
         </AuthenticatedLayout>
