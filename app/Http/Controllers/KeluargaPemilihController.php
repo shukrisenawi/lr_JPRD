@@ -588,6 +588,7 @@ class KeluargaPemilihController extends Controller
         return [
             'id' => $voter->id,
             'name' => $voter->name,
+            'avatar_url' => $voter->avatarUrl(),
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,
             'dm' => $voter->dm,

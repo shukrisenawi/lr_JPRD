@@ -116,6 +116,7 @@ it('sorts manual suggestions by strong address and bin or binti matches', functi
         'name' => 'AMIR BIN ABU',
         'no_rumah' => '12A',
         'alamat_kediaman' => 'NO 12A, JALAN MAWAR',
+        'avatar' => 'avatars/amir.jpg',
     ]);
     createKeluargaPemilihRecord([
         'name' => 'RANI BINTI ABU',
@@ -127,6 +128,10 @@ it('sorts manual suggestions by strong address and bin or binti matches', functi
         ->getJson(route('keluarga-pemilih.search', ['anchor_id' => $anchor->id]))
         ->assertOk()
         ->assertJsonPath('voters.0.id', $sameHouseAndAddress->id)
+        ->assertJsonPath('voters.0.avatar_url', route('pemilih.avatar', [
+            'pemilihRecord' => $sameHouseAndAddress->id,
+            't' => $sameHouseAndAddress->updated_at->timestamp,
+        ]))
         ->assertJsonPath('voters.0.match_score', 100)
         ->assertJsonPath('voters.1.id', $sameParent->id)
         ->assertJsonPath('voters.1.match_reasons.0', 'Bin/Binti sama');

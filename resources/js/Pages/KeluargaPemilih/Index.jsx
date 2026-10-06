@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AvatarLightbox from '@/Components/AvatarLightbox';
 import Modal from '@/Components/Modal';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
@@ -66,6 +67,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
     const [fatherOverrides, setFatherOverrides] = useState({});
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
+    const [lightbox, setLightbox] = useState(null);
 
     useEffect(() => {
         setFatherOverrides(Object.fromEntries(families.data.map((family) => [family.id, {
@@ -235,6 +237,10 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         router.delete(route('keluarga-pemilih.members.destroy', { pemilihFamily: family.id, pemilihRecord: voter.id }), { preserveScroll: true });
     };
 
+    const openAvatar = (voter) => {
+        if (voter.avatar_url) setLightbox({ src: voter.avatar_url, alt: voter.name || 'Avatar pemilih' });
+    };
+
     const startRename = (family) => {
         setRenamingFamilyId(family.id);
         setRenameValue(family.name);
@@ -353,10 +359,16 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                             <div className="max-h-[22rem] divide-y divide-slate-100 overflow-y-auto">
                                 {results.map((voter) => {
                                     const checked = selectedIds.has(voter.id);
+                                    const checkboxId = `family-voter-${voter.id}`;
                                     return (
-                                        <label key={voter.id} className={`flex cursor-pointer items-start gap-2.5 px-3 py-2.5 transition hover:bg-green-50/70 ${checked ? 'bg-green-50' : 'bg-white'}`}>
-                                            <input type="checkbox" checked={checked} onChange={() => toggleVoter(voter)} className="mt-1 rounded border-slate-300 text-green-600 focus:ring-green-500" />
-                                            <span className="min-w-0 flex-1">
+                                        <div key={voter.id} className={`flex items-start gap-2.5 px-3 py-2.5 transition hover:bg-green-50/70 ${checked ? 'bg-green-50' : 'bg-white'}`}>
+                                            <input id={checkboxId} type="checkbox" checked={checked} onChange={() => toggleVoter(voter)} className="mt-1 rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                            {voter.avatar_url && (
+                                                <button type="button" onClick={() => openAvatar(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} className="shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <img src={voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
+                                                </button>
+                                            )}
+                                            <label htmlFor={checkboxId} className="min-w-0 flex-1 cursor-pointer">
                                                 <span className="flex flex-wrap items-center gap-1.5">
                                                     <span className="text-xs font-bold text-slate-900">{voter.name || 'Nama tiada'}</span>
                                                     {voter.no_kp && <span className="text-[10px] text-slate-500">{voter.no_kp}</span>}
@@ -366,9 +378,9 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                                     {voter.match_reasons.map((reason) => <span key={reason} className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[9px] font-bold text-green-800">{reason}</span>)}
                                                 </span>
                                                 <span className="mt-1 block truncate text-[10px] text-slate-500">{[locationLabel(voter), voter.address].filter(Boolean).join(' · ') || 'Alamat tiada'}</span>
-                                            </span>
+                                            </label>
                                             {voter.match_score >= 80 && <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[9px] font-black text-green-800">Padanan kuat</span>}
-                                        </label>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -408,22 +420,24 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                 <section className="space-y-2">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                         <div><p className="label-section">Ringkasan UDM</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{filters.udm ? 'UDM dipilih' : 'Klik kad untuk tapis keluarga'}</h3></div>
-                        <div className="flex flex-col gap-1 sm:items-end">
+                        <div className="flex w-full flex-col gap-1 sm:w-auto sm:items-end">
                             {filters.udm && <p className="text-xs font-semibold text-green-800">{[filters.udm, filters.locality].filter(Boolean).join(' · ')}</p>}
-                            <label htmlFor="keluarga-udm-filter" className="sr-only">Tapis keluarga mengikut UDM</label>
-                            <select id="keluarga-udm-filter" value={filters.udm} onChange={(event) => selectUdm(event.target.value)} className="input-field w-full text-xs sm:w-56">
-                                <option value="">Semua UDM</option>
-                                {udmSummaries.map((summary) => <option key={summary.udm} value={summary.udm}>{summary.udm}</option>)}
-                            </select>
-                            {filters.udm && (
-                                <>
-                                    <label htmlFor="keluarga-locality-filter" className="sr-only">Tapis keluarga mengikut lokaliti</label>
-                                    <select id="keluarga-locality-filter" value={filters.locality || ''} onChange={(event) => selectLocality(event.target.value)} className="input-field w-full text-xs sm:w-56">
-                                        <option value="">Semua Lokaliti</option>
-                                        {localities.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
-                                    </select>
-                                </>
-                            )}
+                            <div className="flex w-full gap-2 sm:w-auto">
+                                <label htmlFor="keluarga-udm-filter" className="sr-only">Tapis keluarga mengikut UDM</label>
+                                <select id="keluarga-udm-filter" value={filters.udm} onChange={(event) => selectUdm(event.target.value)} className="input-field min-w-0 flex-1 text-xs sm:w-56 sm:flex-none">
+                                    <option value="">Semua UDM</option>
+                                    {udmSummaries.map((summary) => <option key={summary.udm} value={summary.udm}>{summary.udm}</option>)}
+                                </select>
+                                {filters.udm && (
+                                    <>
+                                        <label htmlFor="keluarga-locality-filter" className="sr-only">Tapis keluarga mengikut lokaliti</label>
+                                        <select id="keluarga-locality-filter" value={filters.locality || ''} onChange={(event) => selectLocality(event.target.value)} className="input-field min-w-0 flex-1 text-xs sm:w-56 sm:flex-none">
+                                            <option value="">Semua Lokaliti</option>
+                                            {localities.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
+                                        </select>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
                     {!filters.udm && <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -509,7 +523,13 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                         <div className="divide-y divide-slate-100">
                                             {family.members.map((voter) => (
                                                 <div key={voter.id} className="flex items-start gap-3 px-3 py-2.5">
-                                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                                                    {voter.avatar_url ? (
+                                                        <button type="button" onClick={() => openAvatar(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} className="h-8 w-8 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                            <img src={voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
+                                                        </button>
+                                                    ) : (
+                                                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                                                    )}
                                                     <div className="min-w-0 flex-1">
                                                         <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{Number(father.father_id) === Number(voter.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
                                                         <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
@@ -538,6 +558,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                         </nav>
                     )}
                 </section>}
+                {lightbox && <AvatarLightbox src={lightbox.src} alt={lightbox.alt} onClose={() => setLightbox(null)} />}
             </div>
         </AuthenticatedLayout>
     );
