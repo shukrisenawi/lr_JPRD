@@ -64,6 +64,16 @@ function locationLabel(voter) {
     return [voter.dm, voter.locality].filter(Boolean).join(' / ');
 }
 
+const GREEN_CULA_CODES = new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']);
+
+function culaCodeClass(code) {
+    const colorClass = GREEN_CULA_CODES.has(String(code || '').trim().toUpperCase())
+        ? 'bg-green-100 text-green-800'
+        : 'bg-slate-100 text-slate-700';
+
+    return `rounded px-1.5 py-0.5 font-bold ${colorClass}`;
+}
+
 function isBintiName(name) {
     return /\bBINTI\b/i.test(String(name || ''));
 }
@@ -927,7 +937,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                         <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{isFather && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
                                                         <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                                         {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
-                                                        <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className="rounded bg-slate-100 px-1.5 py-0.5 font-bold">{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                                        <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
                                                         {culaErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
                                                     </div>
                                                     <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
@@ -993,7 +1003,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                             <p className="truncate text-xs font-bold text-slate-900">{voter.name || 'Nama tiada'}</p>
                                             <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                             {voter.address && <p className="truncate text-[10px] text-slate-500">{voter.address}</p>}
-                                            <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className="rounded bg-slate-100 px-1.5 py-0.5 font-bold">{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                            <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
