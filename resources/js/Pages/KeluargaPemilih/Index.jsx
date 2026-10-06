@@ -73,6 +73,12 @@ function binBintiParentName(name) {
     return normalized.match(/\bBIN(?:TI)?\s+(.+)$/)?.[1]?.trim() || '';
 }
 
+function personNameBeforeBinBinti(name) {
+    const normalized = String(name || '').trim().replace(/\s+/g, ' ');
+    const markerIndex = normalized.search(/\bBIN(?:TI)?\b/i);
+    return markerIndex < 0 ? '' : normalized.slice(0, markerIndex).trim();
+}
+
 function canMarkAsFather(voter, members) {
     const name = String(voter.name || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase();
     const parentName = binBintiParentName(name);
@@ -323,8 +329,15 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     };
 
     const startAddingToFamily = (family) => {
+        const details = fatherDetails(family, fatherOverrides);
+        const members = details.members || family.members || [];
+        const father = members.find((member) => Number(member.id) === Number(details.father_id));
+        const defaultSearch = details.father_id
+            ? personNameBeforeBinBinti(father?.name || details.father_name)
+            : sharedBinBintiAnchor(members)?.parentName || '';
+
         setMode({ type: 'add', familyId: family.id });
-        setSearchText('');
+        setSearchText(defaultSearch);
         setSelectedVoters([]);
     };
 
