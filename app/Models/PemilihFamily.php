@@ -31,6 +31,6 @@ class PemilihFamily extends Model
             'pemilih_family_members',
             'pemilih_family_id',
             'pemilih_record_id',
-        )->withPivot('created_by')->withTimestamps()->orderBy('pemilih_records.name');
+        )->withPivot(['created_by', 'auto_added_by_father_id'])->withTimestamps()->orderBy('pemilih_records.name');
     }
 }

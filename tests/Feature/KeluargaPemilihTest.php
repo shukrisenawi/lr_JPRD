@@ -233,6 +233,14 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('stats.voters', 1)
             ->where('stats.unassigned', 1)
             ->where('families.total', 0));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 2', 'tab' => 'unassigned']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.tab', 'unassigned')
+            ->where('unassignedVoters.total', 1)
+            ->where('unassignedVoters.data.0.name', 'UNASSIGNED UDM 2 B'));
 });
 
 it('searches for a voter and returns the family that contains the match', function () {
@@ -328,6 +336,7 @@ it('marks a family father and flags only children with that fathers bin or binti
     $this->assertDatabaseHas('pemilih_family_members', [
         'pemilih_family_id' => $familyId,
         'pemilih_record_id' => $child->id,
+        'auto_added_by_father_id' => $father->id,
     ]);
     $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_record_id' => $otherChild->id]);
     $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_record_id' => $differentLocalityChild->id]);
@@ -348,4 +357,48 @@ it('marks a family father and flags only children with that fathers bin or binti
             ->where('families.data.0.father_id', $father->id)
             ->where('families.data.0.father_name', 'ABDUL HALIM BIN MOHAMAD')
             ->where('families.data.0.member_count', 3));
+
+    $this->actingAs($user)
+        ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => null])
+        ->assertOk()
+        ->assertJsonPath('father_id', null)
+        ->assertJsonPath('removed_count', 1)
+        ->assertJsonPath('removed_member_ids.0', $child->id)
+        ->assertJsonPath('member_count', 2);
+
+    $this->assertDatabaseMissing('pemilih_family_members', [
+        'pemilih_family_id' => $familyId,
+        'pemilih_record_id' => $child->id,
+    ]);
+});
+
+it('updates a family members cula code and marks the voter for follow-up', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
+    $unassignedVoter = createKeluargaPemilihRecord(['name' => 'SITI BINTI ALI']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Ali',
+            'pemilih_ids' => [$voter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->postJson(route('keluarga-pemilih.cula.update', $unassignedVoter->id), ['cula_code' => '3B'])
+        ->assertOk()
+        ->assertJsonPath('success', true)
+        ->assertJsonPath('cula_code', '3B')
+        ->assertJsonPath('cula_display_label', '3B - PAS LUAR KEDAH (BORNEO)');
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'id' => $unassignedVoter->id,
+        'cula_code' => '3B',
+        'cula_display_label' => '3B - PAS LUAR KEDAH (BORNEO)',
+    ]);
+    $this->assertDatabaseHas('cula_work_items', [
+        'pemilih_record_id' => $unassignedVoter->id,
+        'marked_by' => $user->id,
+    ]);
+    $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_record_id' => $unassignedVoter->id]);
 });

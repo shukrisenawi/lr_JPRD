@@ -30,6 +30,19 @@ function StatCard({ label, value, icon }) {
     );
 }
 
+function CulaActions({ voter, pending, saving, onStart, onComplete, onEdit }) {
+    return (
+        <div className="flex shrink-0 flex-wrap items-center gap-1">
+            {pending ? (
+                <button type="button" onClick={() => onComplete(voter)} disabled={saving} className="rounded-md bg-blue-600 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-blue-500 disabled:opacity-50">Siap</button>
+            ) : (
+                <button type="button" onClick={() => onStart(voter)} disabled={saving || !(voter.no_kp || voter.old_ic)} title={voter.no_kp || voter.old_ic ? 'Buka culaan di Telegram' : 'No. KP tiada'} className="rounded-md bg-green-700 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50">Cula</button>
+            )}
+            <button type="button" onClick={() => onEdit(voter)} disabled={saving} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[9px] font-bold text-green-800 transition hover:bg-green-50 disabled:opacity-50">Kemas Cula</button>
+        </div>
+    );
+}
+
 function locationLabel(voter) {
     return [voter.dm, voter.locality].filter(Boolean).join(' / ');
 }
@@ -52,8 +65,8 @@ function fatherDetails(family, overrides) {
     };
 }
 
-export default function KeluargaPemilihIndex({ families, stats, allStats, filters, udmSummaries, localities }) {
-    const { errors = {} } = usePage().props;
+export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, udmSummaries, localities }) {
+    const { errors = {}, available_cula_codes: availableCulaCodes = [] } = usePage().props;
     const [mode, setMode] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [familySearch, setFamilySearch] = useState(filters.q || '');
@@ -71,6 +84,12 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
     const [lightbox, setLightbox] = useState(null);
+    const [culaOverrides, setCulaOverrides] = useState({});
+    const [culaPendingIds, setCulaPendingIds] = useState(new Set());
+    const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
+    const [savingCula, setSavingCula] = useState(false);
+    const [culaError, setCulaError] = useState('');
+    const [culaErrors, setCulaErrors] = useState({});
 
     useEffect(() => {
         setFatherOverrides(Object.fromEntries(families.data.map((family) => [family.id, {
@@ -81,6 +100,10 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
             member_count: family.member_count,
         }])));
         setFatherErrors({});
+        setCulaOverrides({});
+        setCulaPendingIds(new Set());
+        setCulaErrors({});
+        setCulaError('');
     }, [families.data]);
 
     useEffect(() => {
@@ -96,6 +119,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                 ...(filters.udm ? { udm: filters.udm } : {}),
                 ...(filters.locality ? { locality: filters.locality } : {}),
                 ...(query ? { q: query } : {}),
+                ...(filters.udm && filters.tab ? { tab: filters.tab } : {}),
             }, {
                 preserveState: true,
                 preserveScroll: true,
@@ -104,7 +128,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         }, 300);
 
         return () => window.clearTimeout(timer);
-    }, [familySearch, filters.locality, filters.q, filters.udm]);
+    }, [familySearch, filters.locality, filters.q, filters.tab, filters.udm]);
 
     const targetFamily = useMemo(
         () => mode?.type === 'add' ? families.data.find((family) => family.id === mode.familyId) : null,
@@ -175,9 +199,10 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         setFatherErrors({});
         setUpdatedFamilyId(null);
         router.get(route('keluarga-pemilih.index'), {
-            ...(udm ? { udm } : {}),
-            ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
-        }, {
+                ...(udm ? { udm } : {}),
+                ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
+                ...(udm ? { tab: filters.udm ? filters.tab : 'families' } : {}),
+            }, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
@@ -194,6 +219,7 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
             udm: filters.udm,
             ...(locality ? { locality } : {}),
             ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
+            tab: filters.tab,
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -201,11 +227,25 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
         });
     };
 
-    const startNewFamily = () => {
+    const selectTab = (tab) => {
+        closeManual();
+        router.get(route('keluarga-pemilih.index'), {
+            udm: filters.udm,
+            ...(filters.locality ? { locality: filters.locality } : {}),
+            ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
+            tab,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    };
+
+    const startNewFamily = (voter = null) => {
         setMode({ type: 'new' });
         setSearchText('');
-        setSelectedVoters([]);
-        setFamilyName('');
+        setSelectedVoters(voter ? [voter] : []);
+        setFamilyName(voter ? `Keluarga ${voter.name || 'Pemilih'}` : '');
     };
 
     const startAddingToFamily = (family) => {
@@ -271,6 +311,73 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
 
     const openAvatar = (voter) => {
         if (voter.avatar_url) setLightbox({ src: voter.avatar_url, alt: voter.name || 'Avatar pemilih' });
+    };
+
+    const startCula = (voter) => {
+        const identity = voter.no_kp || voter.old_ic;
+        if (!identity) {
+            setCulaErrors((current) => ({ ...current, [voter.id]: 'No. KP tiada untuk membuka Telegram.' }));
+            return;
+        }
+
+        const telegramWindow = window.open('about:blank', '_blank');
+        if (!telegramWindow) {
+            setCulaErrors((current) => ({ ...current, [voter.id]: 'Pelayar menyekat popup Telegram.' }));
+            return;
+        }
+
+        try {
+            telegramWindow.location.replace(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/kemascula ${identity}`)}`);
+            setCulaPendingIds((current) => new Set([...current, voter.id]));
+            setCulaErrors((current) => ({ ...current, [voter.id]: null }));
+        } catch {
+            telegramWindow.close();
+            setCulaErrors((current) => ({ ...current, [voter.id]: 'Telegram gagal dibuka.' }));
+        }
+    };
+
+    const openCulaEditor = (voter) => {
+        setSelectedVoterForCula({ ...voter, ...(culaOverrides[voter.id] || {}) });
+        setCulaError('');
+    };
+
+    const saveCula = async (option) => {
+        if (!selectedVoterForCula || savingCula) return;
+        setSavingCula(true);
+        setCulaError('');
+
+        try {
+            const response = await fetch(route('keluarga-pemilih.cula.update', selectedVoterForCula.id), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ cula_code: option.code }),
+            });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || 'Kod cula tidak berjaya disimpan.');
+
+            setCulaOverrides((current) => ({
+                ...current,
+                [selectedVoterForCula.id]: {
+                    cula_code: payload.cula_code,
+                    cula_display_label: payload.cula_display_label,
+                },
+            }));
+            setCulaPendingIds((current) => {
+                const next = new Set(current);
+                next.delete(selectedVoterForCula.id);
+                return next;
+            });
+            setSelectedVoterForCula(null);
+        } catch (error) {
+            setCulaError(error.message || 'Kod cula tidak berjaya disimpan.');
+        } finally {
+            setSavingCula(false);
+        }
     };
 
     const startRename = (family) => {
@@ -512,7 +619,18 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                     </Modal>
                 )}
 
-                {filters.udm && <section className="space-y-2.5">
+                {filters.udm && (
+                    <nav aria-label="Senarai keluarga dan pemilih" className="grid grid-cols-2 gap-1 rounded-xl border border-green-200 bg-white p-1.5 shadow-sm">
+                        <button type="button" onClick={() => selectTab('families')} aria-current={filters.tab !== 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab !== 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
+                            1) Senarai Keluarga
+                        </button>
+                        <button type="button" onClick={() => selectTab('unassigned')} aria-current={filters.tab === 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
+                            2) Pemilih Belum Berkeluarga <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{stats.unassigned}</span>
+                        </button>
+                    </nav>
+                )}
+
+                {filters.udm && filters.tab !== 'unassigned' && <section className="space-y-2.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div><p className="label-section">Senarai Keluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{families.total.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ' · Semua UDM'}</h3></div>
                         <div className="relative w-full sm:max-w-sm">
@@ -566,8 +684,10 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                         </div>
                                         {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
                                         <div className="divide-y divide-slate-100">
-                                            {members.map((voter) => (
-                                                <div key={voter.id} className="flex items-start gap-3 px-3 py-2.5">
+                                            {members.map((voter) => {
+                                                const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
+                                                return (
+                                                <div key={voter.id} className="flex flex-wrap items-start gap-3 px-3 py-2.5">
                                                     {voter.avatar_url ? (
                                                         <button type="button" onClick={() => openAvatar(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} className="h-8 w-8 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">
                                                             <img src={voter.avatar_url} alt="" className="h-8 w-8 rounded-full border border-slate-200 object-cover" />
@@ -579,13 +699,19 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                                                         <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{Number(father.father_id) === Number(voter.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
                                                         <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                                         {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
+                                                        <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className="rounded bg-slate-100 px-1.5 py-0.5 font-bold">{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                                        {culaErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
                                                     </div>
-                                                    <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={Number(father.father_id) === Number(voter.id)} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${Number(father.father_id) === Number(voter.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
-                                                        {fatherProcessingId === family.id ? '...' : Number(father.father_id) === Number(voter.id) ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
-                                                    </button>
-                                                    <button type="button" onClick={() => removeMember({ ...family, name: familyName }, voter)} aria-label={`Keluarkan ${voter.name || 'pemilih'} daripada keluarga`} title="Keluarkan daripada keluarga" className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"><Icon name="trash" /></button>
+                                                    <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
+                                                        <CulaActions voter={culaVoter} pending={culaPendingIds.has(voter.id)} saving={savingCula} onStart={startCula} onComplete={openCulaEditor} onEdit={openCulaEditor} />
+                                                        <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={Number(father.father_id) === Number(voter.id)} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${Number(father.father_id) === Number(voter.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
+                                                            {fatherProcessingId === family.id ? '...' : Number(father.father_id) === Number(voter.id) ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
+                                                        </button>
+                                                        <button type="button" onClick={() => removeMember({ ...family, name: familyName }, voter)} aria-label={`Keluarkan ${voter.name || 'pemilih'} daripada keluarga`} title="Keluarkan daripada keluarga" className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"><Icon name="trash" /></button>
+                                                    </div>
                                                 </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </article>
                                 );
@@ -603,6 +729,87 @@ export default function KeluargaPemilihIndex({ families, stats, allStats, filter
                         </nav>
                     )}
                 </section>}
+
+                {filters.udm && filters.tab === 'unassigned' && <section className="space-y-2.5">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div><p className="label-section">Pemilih Belum Berkeluarga</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{unassignedVoters.total.toLocaleString('ms-MY')} pemilih · {[filters.udm, filters.locality].filter(Boolean).join(' · ')}</h3></div>
+                        <div className="relative w-full sm:max-w-sm">
+                            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <label htmlFor="unassigned-voter-search" className="sr-only">Cari pemilih belum berkeluarga</label>
+                            <input id="unassigned-voter-search" type="search" value={familySearch} onChange={(event) => setFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat…" className="input-field w-full pl-9 text-xs" />
+                        </div>
+                    </div>
+
+                    {unassignedVoters.data.length === 0 ? (
+                        <div className="card-dashed px-4 py-8 text-center">
+                            <p className="text-sm font-bold text-slate-800">{filters.q ? 'Tiada pemilih sepadan dengan carian' : 'Semua pemilih dalam tapisan ini sudah berkeluarga'}</p>
+                            {filters.q && <p className="mt-1 text-xs text-slate-500">Cuba nama, nombor KP, no. rumah atau alamat yang lain.</p>}
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                            {unassignedVoters.data.map((voter) => {
+                                const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
+                                return (
+                                <div key={voter.id} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex min-w-0 items-center gap-3">
+                                        {voter.avatar_url ? (
+                                            <button type="button" onClick={() => openAvatar(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} className="h-9 w-9 shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                <img src={voter.avatar_url} alt="" className="h-9 w-9 rounded-full border border-slate-200 object-cover" />
+                                            </button>
+                                        ) : (
+                                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className="truncate text-xs font-bold text-slate-900">{voter.name || 'Nama tiada'}</p>
+                                            <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
+                                            {voter.address && <p className="truncate text-[10px] text-slate-500">{voter.address}</p>}
+                                            <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className="rounded bg-slate-100 px-1.5 py-0.5 font-bold">{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
+                                        <CulaActions voter={culaVoter} pending={culaPendingIds.has(voter.id)} saving={savingCula} onStart={startCula} onComplete={openCulaEditor} onEdit={openCulaEditor} />
+                                        <button type="button" onClick={() => startNewFamily(voter)} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Jadikan Keluarga</button>
+                                    </div>
+                                    {culaErrors[voter.id] && <p role="alert" className="text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
+                                </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {unassignedVoters.last_page > 1 && (
+                        <nav aria-label="Halaman pemilih belum berkeluarga" className="flex flex-wrap justify-center gap-1.5 pt-2">
+                            {unassignedVoters.links.map((link) => (
+                                link.url
+                                    ? <Link key={link.url} href={link.url} preserveScroll className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
+                                    : <span key={`unassigned-${link.label}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
+                            ))}
+                        </nav>
+                    )}
+                </section>}
+                {selectedVoterForCula && (
+                    <Modal show onClose={() => !savingCula && setSelectedVoterForCula(null)} maxWidth="md" title={`Kemas Cula — ${selectedVoterForCula.name || 'Pemilih'}`}>
+                        <div className="space-y-3 rounded-xl bg-white p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="label-section">Kemas Cula</p>
+                                    <h3 className="mt-0.5 text-sm font-bold text-slate-900">{selectedVoterForCula.name || 'Pemilih'}</h3>
+                                    <p className="mt-1 text-[10px] text-slate-500">Pilih kod culaan yang betul.</p>
+                                </div>
+                                <button type="button" onClick={() => setSelectedVoterForCula(null)} disabled={savingCula} className="btn-ghost px-2 py-1 text-xs">Tutup</button>
+                            </div>
+                            {culaError && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{culaError}</p>}
+                            <div className="flex max-h-[50vh] flex-wrap gap-1.5 overflow-y-auto">
+                                {availableCulaCodes.map((option) => (
+                                    <button key={option.code} type="button" onClick={() => saveCula(option)} disabled={savingCula} className={`rounded-md border px-2.5 py-1.5 text-xs font-bold transition disabled:opacity-50 ${option.code === selectedVoterForCula.cula_code ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-green-300 hover:text-green-700'}`}>
+                                        {option.label}
+                                    </button>
+                                ))}
+                                {availableCulaCodes.length === 0 && <p className="text-xs text-slate-500">Tiada kod culaan tersedia.</p>}
+                            </div>
+                        </div>
+                    </Modal>
+                )}
                 {lightbox && <AvatarLightbox src={lightbox.src} alt={lightbox.alt} onClose={() => setLightbox(null)} />}
             </div>
         </AuthenticatedLayout>

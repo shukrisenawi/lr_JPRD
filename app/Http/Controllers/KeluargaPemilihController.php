@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CulaWorkItem;
 use App\Models\PemilihFamily;
 use App\Models\PemilihRecord;
 use App\Models\User;
+use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +28,7 @@ class KeluargaPemilihController extends Controller
         ]);
         $user = $request->user();
         $searchFilter = trim((string) ($validated['q'] ?? ''));
+        $tabFilter = $request->query('tab') === 'unassigned' ? 'unassigned' : 'families';
         $votersByUdm = $this->activeVoterQuery($user)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
@@ -122,10 +125,22 @@ class KeluargaPemilihController extends Controller
                 'members' => $family->members->map(fn (PemilihRecord $voter): array => $this->voterPayload($voter)),
                 'member_count' => $family->members->count(),
             ]);
+        $unassignedVotersQuery = $this->activeVoterQuery($user, $udmFilter, $localityFilter)
+            ->whereDoesntHave('families');
+        if ($searchFilter !== '') {
+            $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
+        }
+        $unassignedVoters = $unassignedVotersQuery
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (PemilihRecord $voter): array => $this->voterPayload($voter));
 
         return Inertia::render('KeluargaPemilih/Index', [
             'families' => $families,
-            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter, 'q' => $searchFilter],
+            'unassignedVoters' => $unassignedVoters,
+            'available_cula_codes' => CulaCodes::options(),
+            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter, 'q' => $searchFilter, 'tab' => $tabFilter],
             'localities' => $localities->values(),
             'udmSummaries' => $udmSummaries,
             'allStats' => [
@@ -258,10 +273,7 @@ class KeluargaPemilihController extends Controller
         $user = $request->user();
         $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
         $fatherId = $validated['father_id'] ?? null;
-        $fatherName = null;
-        $fatherDm = null;
-        $fatherLocality = null;
-        $newMemberIds = [];
+        $father = null;
 
         if ($fatherId !== null) {
             $father = PemilihRecord::query()->findOrFail($fatherId);
@@ -271,12 +283,52 @@ class KeluargaPemilihController extends Controller
                     'father_id' => 'Ayah mesti salah seorang ahli keluarga dalam skop akses anda.',
                 ]);
             }
-            $fatherName = $father->name;
-            $fatherDm = $father->dm;
-            $fatherLocality = $father->locality;
+        }
 
-            $parentName = $this->personName($father->name);
-            if ($this->isUsefulMatchValue($parentName)
+        $familyName = $family->name;
+        if ($fatherId !== null) {
+            $hasDefaultName = $family->members()
+                ->pluck('pemilih_records.name')
+                ->contains(fn ($memberName): bool => $familyName === 'Keluarga '.($memberName ?: 'Pemilih'));
+            if ($hasDefaultName) {
+                $familyName = 'Keluarga '.($father->name ?: 'Pemilih');
+            }
+        }
+
+        $result = DB::transaction(function () use ($family, $user, $fatherId, $father, $familyName): array {
+            $lockedFamily = PemilihFamily::query()->lockForUpdate()->findOrFail($family->id);
+            $oldFatherId = $lockedFamily->father_pemilih_record_id
+                ? (int) $lockedFamily->father_pemilih_record_id
+                : null;
+            $removedMemberIds = [];
+
+            if ($oldFatherId !== null && $oldFatherId !== (int) $fatherId) {
+                $autoMembers = DB::table('pemilih_family_members')
+                    ->where('pemilih_family_id', $lockedFamily->id)
+                    ->where('auto_added_by_father_id', $oldFatherId);
+                if ($fatherId !== null) {
+                    $autoMembers->where('pemilih_record_id', '!=', $fatherId);
+                }
+                $removedMemberIds = $autoMembers->pluck('pemilih_record_id')->map(fn ($id): int => (int) $id)->all();
+
+                if ($removedMemberIds !== []) {
+                    DB::table('pemilih_family_members')->where('pemilih_family_id', $lockedFamily->id)
+                        ->whereIn('pemilih_record_id', $removedMemberIds)
+                        ->delete();
+                }
+
+                if ($fatherId !== null) {
+                    DB::table('pemilih_family_members')
+                        ->where('pemilih_family_id', $lockedFamily->id)
+                        ->where('pemilih_record_id', $fatherId)
+                        ->update(['auto_added_by_father_id' => null]);
+                }
+            }
+
+            $parentName = $father ? $this->personName($father->name) : '';
+            $newMemberIds = [];
+            if ($fatherId !== null
+                && $this->isUsefulMatchValue($parentName)
                 && $this->isUsefulMatchValue($this->normalize($father->dm))
                 && $this->isUsefulMatchValue($this->normalize($father->locality))) {
                 $newMemberIds = $this->activeVoterQuery($user, $father->dm, $father->locality)
@@ -287,46 +339,73 @@ class KeluargaPemilihController extends Controller
                     ->filter(fn (PemilihRecord $voter): bool => $this->parentName($voter->name) === $parentName)
                     ->modelKeys();
             }
-        }
 
-        $familyName = $family->name;
-        if ($fatherId !== null) {
-            $hasDefaultName = $family->members()
-                ->pluck('pemilih_records.name')
-                ->contains(fn ($memberName): bool => $familyName === 'Keluarga '.($memberName ?: 'Pemilih'));
-            if ($hasDefaultName) {
-                $familyName = 'Keluarga '.($fatherName ?: 'Pemilih');
-            }
-        }
-
-        $addedMembers = DB::transaction(function () use ($family, $user, $fatherId, $fatherDm, $fatherLocality, $familyName, $newMemberIds) {
-            $lockedFamily = PemilihFamily::query()->lockForUpdate()->findOrFail($family->id);
             $voters = $newMemberIds === []
                 ? new EloquentCollection
-                : $this->lockUnassignedVoters($user, $newMemberIds, $fatherDm, $fatherLocality);
+                : $this->lockUnassignedVoters($user, $newMemberIds, $father?->dm, $father?->locality);
 
             $lockedFamily->update([
                 'father_pemilih_record_id' => $fatherId,
                 'name' => $familyName,
             ]);
             if ($voters->isNotEmpty()) {
-                $lockedFamily->members()->attach($voters->modelKeys(), ['created_by' => $user->id]);
+                $lockedFamily->members()->attach($voters->modelKeys(), [
+                    'created_by' => $user->id,
+                    'auto_added_by_father_id' => $fatherId,
+                ]);
             }
 
-            return $voters;
+            return [
+                'added_members' => $voters,
+                'removed_member_ids' => $removedMemberIds,
+                'member_count' => $lockedFamily->members()->count(),
+            ];
         });
         $family->refresh();
 
         return response()->json([
             'father_id' => $fatherId,
-            'father_name' => $fatherName,
+            'father_name' => $father?->name,
             'family_name' => $familyName,
-            'member_count' => $family->members()->count(),
-            'added_count' => $addedMembers->count(),
-            'added_members' => $addedMembers
+            'member_count' => $result['member_count'],
+            'added_count' => $result['added_members']->count(),
+            'added_members' => $result['added_members']
                 ->map(fn (PemilihRecord $voter): array => $this->voterPayload($voter))
                 ->values(),
+            'removed_count' => count($result['removed_member_ids']),
+            'removed_member_ids' => $result['removed_member_ids'],
             'message' => $fatherId === null ? 'Tanda ayah dibuang.' : 'Pemilih ditandakan sebagai ayah keluarga.',
+        ]);
+    }
+
+    public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $validated = $request->validate([
+            'cula_code' => ['required', 'string', Rule::in(collect(CulaCodes::options())->pluck('code')->all())],
+        ]);
+        $user = $request->user();
+        abort_unless($user->canAccessPemilihRecord($pemilihRecord), 404);
+
+        $code = $validated['cula_code'];
+        $label = collect(CulaCodes::options())->firstWhere('code', $code)['label'];
+        $pemilihRecord->update([
+            'cula_code' => $code,
+            'cula_display_label' => $label,
+        ]);
+
+        CulaWorkItem::query()->firstOrCreate(
+            ['pemilih_record_id' => $pemilihRecord->id],
+            [
+                'marked_by' => $user->id,
+                'marked_at' => now(),
+                'notes' => null,
+            ],
+        );
+
+        return response()->json([
+            'success' => true,
+            'cula_code' => $code,
+            'cula_display_label' => $label,
         ]);
     }
 
@@ -369,6 +448,16 @@ class KeluargaPemilihController extends Controller
 
         DB::transaction(function () use ($family, $pemilihRecord): void {
             if ((int) $family->father_pemilih_record_id === (int) $pemilihRecord->id) {
+                $autoMemberIds = DB::table('pemilih_family_members')
+                    ->where('pemilih_family_id', $family->id)
+                    ->where('auto_added_by_father_id', $pemilihRecord->id)
+                    ->pluck('pemilih_record_id');
+                if ($autoMemberIds->isNotEmpty()) {
+                    DB::table('pemilih_family_members')
+                        ->where('pemilih_family_id', $family->id)
+                        ->whereIn('pemilih_record_id', $autoMemberIds)
+                        ->delete();
+                }
                 $family->update(['father_pemilih_record_id' => null]);
             }
 
@@ -643,6 +732,9 @@ class KeluargaPemilihController extends Controller
             'avatar_url' => $voter->avatarUrl(),
             'no_kp' => $voter->no_kp,
             'old_ic' => $voter->old_ic,
+            'status' => $voter->status,
+            'cula_code' => $voter->cula_code,
+            'cula_display_label' => $voter->cula_display_label,
             'dm' => $voter->dm,
             'locality' => $voter->locality,
             'no_rumah' => $voter->no_rumah,
