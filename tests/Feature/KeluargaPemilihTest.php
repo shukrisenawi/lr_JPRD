@@ -100,6 +100,66 @@ it('auto-groups only voters with exact house, address, locality, and UDM matches
     $this->assertDatabaseCount('pemilih_families', 1);
 });
 
+it('auto-groups only unassigned voters and leaves existing family data untouched', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+
+    $existingMembers = [
+        createKeluargaPemilihRecord([
+            'name' => 'AHMAD BIN ALI',
+            'no_rumah' => '8',
+            'alamat_kediaman' => 'NO 8, JALAN MAWAR',
+        ]),
+        createKeluargaPemilihRecord([
+            'name' => 'SITI BINTI ALI',
+            'no_rumah' => '8',
+            'alamat_kediaman' => 'NO 8, JALAN MAWAR',
+        ]),
+    ];
+    $alreadyGroupedButUnassignedMatch = createKeluargaPemilihRecord([
+        'name' => 'RANI BINTI ALI',
+        'no_rumah' => '8',
+        'alamat_kediaman' => 'NO 8, JALAN MAWAR',
+    ]);
+    $newAutoMembers = [
+        createKeluargaPemilihRecord([
+            'name' => 'HASSAN BIN SALLEH',
+            'no_rumah' => '22',
+            'alamat_kediaman' => 'NO 22, JALAN MELUR',
+        ]),
+        createKeluargaPemilihRecord([
+            'name' => 'FARAH BINTI SALLEH',
+            'no_rumah' => '22',
+            'alamat_kediaman' => 'NO 22, JALAN MELUR',
+        ]),
+    ];
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Sedia Ada',
+            'pemilih_ids' => collect($existingMembers)->pluck('id')->all(),
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $existingFamilyId = DB::table('pemilih_families')->where('name', 'Keluarga Sedia Ada')->value('id');
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.auto'))
+        ->assertRedirect(route('keluarga-pemilih.index'))
+        ->assertSessionHas('success', 'Auto selesai: 1 keluarga berpadanan kuat dibentuk, melibatkan 2 pemilih.');
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $existingFamilyId,
+        'name' => 'Keluarga Sedia Ada',
+    ]);
+    expect(DB::table('pemilih_family_members')->where('pemilih_family_id', $existingFamilyId)->pluck('pemilih_record_id')->sort()->values()->all())
+        ->toBe(collect($existingMembers)->pluck('id')->sort()->values()->all());
+    $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_record_id' => $alreadyGroupedButUnassignedMatch->id]);
+    foreach ($newAutoMembers as $member) {
+        $this->assertDatabaseHas('pemilih_family_members', ['pemilih_record_id' => $member->id]);
+    }
+    $this->assertDatabaseCount('pemilih_families', 2);
+});
+
 it('sorts manual suggestions by strong address and bin or binti matches', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $anchor = createKeluargaPemilihRecord([

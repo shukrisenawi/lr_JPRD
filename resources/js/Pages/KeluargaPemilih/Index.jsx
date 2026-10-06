@@ -1,8 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import CropModal from '@/Components/CropModal';
 import Modal from '@/Components/Modal';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 function Icon({ name, className = 'h-4 w-4' }) {
     const paths = {
@@ -30,7 +31,7 @@ function StatCard({ label, value, icon }) {
     );
 }
 
-function CulaActions({ voter, pending, saving, onStart, onComplete, onEdit }) {
+function CulaActions({ voter, pending, saving, onStart, onComplete, onKemasTel }) {
     return (
         <div className="flex shrink-0 flex-wrap items-center gap-1">
             {pending ? (
@@ -38,8 +39,24 @@ function CulaActions({ voter, pending, saving, onStart, onComplete, onEdit }) {
             ) : (
                 <button type="button" onClick={() => onStart(voter)} disabled={saving || !(voter.no_kp || voter.old_ic)} title={voter.no_kp || voter.old_ic ? 'Buka culaan di Telegram' : 'No. KP tiada'} className="rounded-md bg-green-700 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50">Cula</button>
             )}
-            <button type="button" onClick={() => onEdit(voter)} disabled={saving} className="rounded-md border border-green-200 bg-white px-2 py-1 text-[9px] font-bold text-green-800 transition hover:bg-green-50 disabled:opacity-50">Kemas Cula</button>
+            <button type="button" onClick={() => onKemasTel(voter)} disabled={saving || !(voter.no_kp || voter.old_ic)} title={voter.no_kp || voter.old_ic ? 'Kemas kini telefon melalui Telegram' : 'No. KP tiada'} className="rounded-md border border-sky-200 bg-white px-2 py-1 text-[9px] font-bold text-sky-800 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50">Kemas Tel</button>
         </div>
+    );
+}
+
+function VoterAvatar({ voter, src, sizeClass = 'h-8 w-8', busy, onOpen, onUpload }) {
+    if (src) {
+        return (
+            <button type="button" onClick={() => onOpen(voter)} aria-label={`Lihat avatar ${voter.name || 'pemilih'}`} title="Lihat avatar" className={`${sizeClass} shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-green-500`}>
+                <img src={src} alt="" className={`${sizeClass} rounded-full border border-slate-200 object-cover`} />
+            </button>
+        );
+    }
+
+    return (
+        <button type="button" onClick={() => onUpload(voter)} disabled={busy} aria-label={`Muat naik avatar untuk ${voter.name || 'pemilih'}`} title="Klik untuk muat naik dan potong avatar" className={`${sizeClass} flex shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-[11px] font-black text-slate-600 transition hover:border-green-300 hover:bg-green-50 hover:text-green-700 disabled:opacity-60`}>
+            {busy ? '…' : voter.name?.charAt(0)?.toUpperCase() || '?'}
+        </button>
     );
 }
 
@@ -65,6 +82,30 @@ function fatherDetails(family, overrides) {
     };
 }
 
+function sharedBinBintiAnchor(members = []) {
+    const parentNameOf = (name) => {
+        const normalized = String(name || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase();
+        const match = normalized.match(/\bBIN(?:TI)?\s+(.+)$/);
+        return match?.[1]?.trim() || '';
+    };
+    const counts = new Map();
+
+    members.forEach((member) => {
+        const parentName = parentNameOf(member.name);
+        if (parentName) counts.set(parentName, (counts.get(parentName) || 0) + 1);
+    });
+
+    const sharedParent = [...counts.entries()]
+        .filter(([, count]) => count > 1)
+        .sort((left, right) => right[1] - left[1])[0]?.[0];
+    if (!sharedParent) return null;
+
+    return {
+        parentName: sharedParent,
+        voter: members.find((member) => parentNameOf(member.name) === sharedParent),
+    };
+}
+
 export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, udmSummaries, localities }) {
     const { errors = {}, available_cula_codes: availableCulaCodes = [] } = usePage().props;
     const [mode, setMode] = useState(null);
@@ -84,6 +125,13 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
     const [lightbox, setLightbox] = useState(null);
+    const [avatarOverrides, setAvatarOverrides] = useState({});
+    const [avatarUploadTarget, setAvatarUploadTarget] = useState(null);
+    const [cropTarget, setCropTarget] = useState(null);
+    const [avatarUploadingId, setAvatarUploadingId] = useState(null);
+    const [avatarErrors, setAvatarErrors] = useState({});
+    const avatarInputRef = useRef(null);
+    const avatarUploadTargetRef = useRef(null);
     const [culaOverrides, setCulaOverrides] = useState({});
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
@@ -104,6 +152,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         setCulaPendingIds(new Set());
         setCulaErrors({});
         setCulaError('');
+        setAvatarOverrides({});
+        setAvatarErrors({});
     }, [families.data]);
 
     useEffect(() => {
@@ -135,9 +185,12 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         [families.data, mode],
     );
     const targetFather = targetFamily ? fatherDetails(targetFamily, fatherOverrides) : null;
+    const sharedParentAnchor = mode?.type === 'add' && !targetFather?.father_id
+        ? sharedBinBintiAnchor(targetFather?.members || targetFamily?.members || [])
+        : null;
     const anchorIsFather = mode?.type === 'add' && Boolean(targetFather?.father_id);
     const anchorId = mode?.type === 'add'
-        ? targetFather?.father_id || targetFather?.members?.[0]?.id
+        ? targetFather?.father_id || sharedParentAnchor?.voter?.id || targetFather?.members?.[0]?.id
         : selectedVoters[0]?.id;
 
     useEffect(() => {
@@ -313,7 +366,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         if (voter.avatar_url) setLightbox({ src: voter.avatar_url, alt: voter.name || 'Avatar pemilih' });
     };
 
-    const startCula = (voter) => {
+    const openTelegramCommand = (voter, command, onOpened = null) => {
         const identity = voter.no_kp || voter.old_ic;
         if (!identity) {
             setCulaErrors((current) => ({ ...current, [voter.id]: 'No. KP tiada untuk membuka Telegram.' }));
@@ -327,14 +380,20 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         }
 
         try {
-            telegramWindow.location.replace(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/kemascula ${identity}`)}`);
-            setCulaPendingIds((current) => new Set([...current, voter.id]));
+            telegramWindow.location.replace(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/${command} ${identity}`)}`);
+            onOpened?.();
             setCulaErrors((current) => ({ ...current, [voter.id]: null }));
         } catch {
             telegramWindow.close();
             setCulaErrors((current) => ({ ...current, [voter.id]: 'Telegram gagal dibuka.' }));
         }
     };
+
+    const startCula = (voter) => openTelegramCommand(voter, 'kemascula', () => {
+        setCulaPendingIds((current) => new Set([...current, voter.id]));
+    });
+
+    const startKemasTel = (voter) => openTelegramCommand(voter, 'kemastel');
 
     const openCulaEditor = (voter) => {
         setSelectedVoterForCula({ ...voter, ...(culaOverrides[voter.id] || {}) });
@@ -477,8 +536,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                     </div>
                     {anchorId && !searchText && (
                         <p className="mt-1.5 text-[11px] text-slate-500">
-                            {anchorIsFather
-                                ? `Cadangan bin/binti ditanda hanya jika sepadan dengan ayah keluarga: ${targetFather.father_name}.`
+                        {anchorIsFather
+                            ? `Cadangan bin/binti ditanda hanya jika sepadan dengan ayah keluarga: ${targetFather.father_name}.`
+                            : sharedParentAnchor
+                                ? `Cadangan bin/binti diutamakan dengan nama yang sama: ${sharedParentAnchor.parentName}.`
                                 : `Cadangan di bawah dibandingkan dengan pemilih pertama yang dipilih${mode.type === 'add' ? ' dalam keluarga ini' : ''}.`}
                         </p>
                     )}
@@ -622,10 +683,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 {filters.udm && (
                     <nav aria-label="Senarai keluarga dan pemilih" className="grid grid-cols-2 gap-1 rounded-xl border border-green-200 bg-white p-1.5 shadow-sm">
                         <button type="button" onClick={() => selectTab('families')} aria-current={filters.tab !== 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab !== 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
-                            1) Senarai Keluarga
+                            Senarai Keluarga
                         </button>
                         <button type="button" onClick={() => selectTab('unassigned')} aria-current={filters.tab === 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
-                            2) Pemilih Belum Berkeluarga <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{stats.unassigned}</span>
+                            Pemilih Belum Berkeluarga <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{stats.unassigned}</span>
                         </button>
                     </nav>
                 )}
