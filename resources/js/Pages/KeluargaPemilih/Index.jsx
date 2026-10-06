@@ -335,7 +335,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     };
 
     const startNewFamily = (voter = null) => {
-        setMode({ type: 'new' });
+        setMode({ type: 'new', modal: Boolean(voter) });
         setSearchText('');
         setSelectedVoters(voter ? [voter] : []);
         setFamilyName(voter ? `Keluarga ${voter.name || 'Pemilih'}` : '');
@@ -659,7 +659,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         reviewed: Math.max(0, familyTabCounts.reviewed - (filters.tab === 'reviewed' ? removeStatsDelta.families : 0)),
     };
     const manualPanel = mode && (
-        <section className={`card border-green-200 ${mode.type === 'add' ? 'max-h-[88vh] overflow-y-auto' : 'overflow-hidden'}`}>
+        <section className={`card border-green-200 ${mode.type === 'add' || mode.modal ? 'max-h-[88vh] overflow-y-auto' : 'overflow-hidden'}`}>
             <div className="flex items-start justify-between gap-3 border-b border-green-100 bg-green-50/70 px-3 py-3 sm:px-4">
                 <div>
                     <p className="text-[10px] font-black uppercase tracking-wider text-green-700">{mode.type === 'new' ? 'Keluarga baharu' : 'Tambah ahli keluarga'}</p>
@@ -827,7 +827,12 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                     </div>}
                 </section>
 
-                {mode?.type === 'new' && manualPanel}
+                {mode?.type === 'new' && !mode.modal && manualPanel}
+                {mode?.type === 'new' && mode.modal && (
+                    <Modal show onClose={closeManual} maxWidth="3xl" title="Jadikan keluarga">
+                        {manualPanel}
+                    </Modal>
+                )}
                 {mode?.type === 'add' && (
                     <Modal show onClose={closeManual} maxWidth="3xl" title={`Tambah ahli keluarga ${targetFather?.family_name || ''}`}>
                         {manualPanel}
