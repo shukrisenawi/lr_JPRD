@@ -283,6 +283,11 @@ class KeluargaPemilihController extends Controller
                     'father_id' => 'Ayah mesti salah seorang ahli keluarga dalam skop akses anda.',
                 ]);
             }
+            if (preg_match('/\bBINTI\b/u', $this->normalize($father->name))) {
+                throw ValidationException::withMessages([
+                    'father_id' => 'Pemilih bernama Binti tidak boleh ditandakan sebagai ayah.',
+                ]);
+            }
         }
 
         $familyName = $family->name;

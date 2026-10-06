@@ -39,7 +39,7 @@ function CulaActions({ voter, pending, saving, onStart, onComplete, onKemasTel }
             ) : (
                 <button type="button" onClick={() => onStart(voter)} disabled={saving || !(voter.no_kp || voter.old_ic)} title={voter.no_kp || voter.old_ic ? 'Buka culaan di Telegram' : 'No. KP tiada'} className="rounded-md bg-green-700 px-2 py-1 text-[9px] font-bold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50">Cula</button>
             )}
-            <button type="button" onClick={() => onKemasTel(voter)} disabled={saving || !(voter.no_kp || voter.old_ic)} title={voter.no_kp || voter.old_ic ? 'Kemas kini telefon melalui Telegram' : 'No. KP tiada'} className="rounded-md border border-sky-200 bg-white px-2 py-1 text-[9px] font-bold text-sky-800 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50">Kemas Tel</button>
+            <button type="button" onClick={() => onKemasTel(voter)} disabled={saving || !(voter.no_kp || voter.old_ic)} title={voter.no_kp || voter.old_ic ? 'Tukar nombor telefon melalui Telegram' : 'No. KP tiada'} className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 disabled:cursor-not-allowed disabled:opacity-50">Tukar Tel</button>
         </div>
     );
 }
@@ -62,6 +62,10 @@ function VoterAvatar({ voter, src, sizeClass = 'h-8 w-8', busy, onOpen, onUpload
 
 function locationLabel(voter) {
     return [voter.dm, voter.locality].filter(Boolean).join(' / ');
+}
+
+function isBintiName(name) {
+    return /\bBINTI\b/i.test(String(name || ''));
 }
 
 function paginationText(label) {
@@ -747,6 +751,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                         <div className="divide-y divide-slate-100">
                                             {members.map((voter) => {
                                                 const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
+                                                const isFather = Number(father.father_id) === Number(voter.id);
                                                 return (
                                                 <div key={voter.id} className="flex flex-wrap items-start gap-3 px-3 py-2.5">
                                                     {voter.avatar_url ? (
@@ -757,7 +762,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[11px] font-black text-slate-600">{voter.name?.charAt(0)?.toUpperCase() || '?'}</span>
                                                     )}
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{Number(father.father_id) === Number(voter.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
+                                                        <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{isFather && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
                                                         <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                                         {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
                                                         <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className="rounded bg-slate-100 px-1.5 py-0.5 font-bold">{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
@@ -765,9 +770,11 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                     </div>
                                                     <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
                                                         <CulaActions voter={culaVoter} pending={culaPendingIds.has(voter.id)} saving={savingCula} onStart={startCula} onComplete={openCulaEditor} onEdit={openCulaEditor} />
-                                                        <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={Number(father.father_id) === Number(voter.id)} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${Number(father.father_id) === Number(voter.id) ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
-                                                            {fatherProcessingId === family.id ? '...' : Number(father.father_id) === Number(voter.id) ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
-                                                        </button>
+                                                        {(isFather || !isBintiName(voter.name)) && (
+                                                            <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={isFather} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${isFather ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
+                                                                {fatherProcessingId === family.id ? '...' : isFather ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
+                                                            </button>
+                                                        )}
                                                         <button type="button" onClick={() => removeMember({ ...family, name: familyName }, voter)} aria-label={`Keluarkan ${voter.name || 'pemilih'} daripada keluarga`} title="Keluarkan daripada keluarga" className="rounded-md p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-700"><Icon name="trash" /></button>
                                                     </div>
                                                 </div>

@@ -462,3 +462,26 @@ it('updates a family members cula code and marks the voter for follow-up', funct
     ]);
     $this->assertDatabaseMissing('pemilih_family_members', ['pemilih_record_id' => $unassignedVoter->id]);
 });
+
+it('rejects marking a binti voter as the family father', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $voter = createKeluargaPemilihRecord(['name' => 'SITI BINTI ABDULLAH']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abdullah',
+            'pemilih_ids' => [$voter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $this->actingAs($user)
+        ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $voter->id])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('father_id');
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $familyId,
+        'father_pemilih_record_id' => null,
+    ]);
+});
