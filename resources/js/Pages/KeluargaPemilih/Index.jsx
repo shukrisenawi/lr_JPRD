@@ -835,14 +835,14 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 )}
 
                 {filters.udm && (
-                    <nav aria-label="Senarai keluarga dan pemilih" className="grid grid-cols-1 gap-1 rounded-xl border border-green-200 bg-white p-1.5 shadow-sm sm:grid-cols-3">
+                    <nav aria-label="Senarai keluarga dan pemilih" className="grid grid-cols-2 gap-1 rounded-xl border border-green-200 bg-white p-1.5 shadow-sm">
                         <button type="button" onClick={() => selectTab('families')} aria-current={filters.tab === 'families' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'families' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
                             Senarai Keluarga <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] ${filters.tab === 'families' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{visibleFamilyTabCounts.families.toLocaleString('ms-MY')}</span>
                         </button>
                         <button type="button" onClick={() => selectTab('reviewed')} aria-current={filters.tab === 'reviewed' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'reviewed' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
                             Keluarga Telah disemak <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] ${filters.tab === 'reviewed' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{visibleFamilyTabCounts.reviewed.toLocaleString('ms-MY')}</span>
                         </button>
-                        <button type="button" onClick={() => selectTab('unassigned')} aria-current={filters.tab === 'unassigned' ? 'page' : undefined} className={`rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
+                        <button type="button" onClick={() => selectTab('unassigned')} aria-current={filters.tab === 'unassigned' ? 'page' : undefined} className={`col-span-2 rounded-lg px-3 py-2 text-xs font-bold transition ${filters.tab === 'unassigned' ? 'bg-green-600 text-white shadow-sm' : 'text-slate-600 hover:bg-green-50 hover:text-green-800'}`}>
                             Pemilih Belum Berkeluarga <span className="ml-1 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{visibleStats.unassigned}</span>
                         </button>
                     </nav>
