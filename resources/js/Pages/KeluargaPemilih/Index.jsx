@@ -68,6 +68,20 @@ function isBintiName(name) {
     return /\bBINTI\b/i.test(String(name || ''));
 }
 
+function binBintiParentName(name) {
+    const normalized = String(name || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase();
+    return normalized.match(/\bBIN(?:TI)?\s+(.+)$/)?.[1]?.trim() || '';
+}
+
+function canMarkAsFather(voter, members) {
+    const name = String(voter.name || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase();
+    const parentName = binBintiParentName(name);
+    return /\bBIN\s+/i.test(name)
+        && !isBintiName(name)
+        && Boolean(parentName)
+        && !members.some((member) => member.id !== voter.id && binBintiParentName(member.name) === parentName);
+}
+
 function paginationText(label) {
     return String(label).replace(/&laquo;/g, '‹').replace(/&raquo;/g, '›');
 }
@@ -87,15 +101,10 @@ function fatherDetails(family, overrides) {
 }
 
 function sharedBinBintiAnchor(members = []) {
-    const parentNameOf = (name) => {
-        const normalized = String(name || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase();
-        const match = normalized.match(/\bBIN(?:TI)?\s+(.+)$/);
-        return match?.[1]?.trim() || '';
-    };
     const counts = new Map();
 
     members.forEach((member) => {
-        const parentName = parentNameOf(member.name);
+        const parentName = binBintiParentName(member.name);
         if (parentName) counts.set(parentName, (counts.get(parentName) || 0) + 1);
     });
 
@@ -106,7 +115,7 @@ function sharedBinBintiAnchor(members = []) {
 
     return {
         parentName: sharedParent,
-        voter: members.find((member) => parentNameOf(member.name) === sharedParent),
+        voter: members.find((member) => binBintiParentName(member.name) === sharedParent),
     };
 }
 
@@ -249,6 +258,14 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         setFamilyName('');
     };
 
+    const currentRouteFilters = () => ({
+        udm: filters.udm || null,
+        locality: filters.locality || null,
+        q: filters.q || null,
+        tab: filters.tab || 'families',
+        page: filters.tab === 'unassigned' ? unassignedVoters.current_page : families.current_page,
+    });
+
     const selectUdm = (udm) => {
         closeManual();
         setRenamingFamilyId(null);
@@ -334,8 +351,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             : route('keluarga-pemilih.store');
         const payload = {
             pemilih_ids: selectedVoters.map((voter) => voter.id),
-            udm: filters.udm,
-            locality: filters.locality,
+            ...currentRouteFilters(),
             ...(mode.type === 'new' ? { name: familyName } : {}),
         };
 
@@ -354,7 +370,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const runAuto = () => {
         if (!window.confirm('Auto hanya membentuk keluarga apabila no. rumah, alamat kediaman, lokaliti dan UDM sepadan tepat. Teruskan?')) return;
 
-        router.post(route('keluarga-pemilih.auto'), { udm: filters.udm, locality: filters.locality }, {
+        router.post(route('keluarga-pemilih.auto'), currentRouteFilters(), {
             preserveScroll: true,
             onStart: () => setAutoProcessing(true),
             onFinish: () => setAutoProcessing(false),
@@ -363,7 +379,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
 
     const removeMember = (family, voter) => {
         if (!window.confirm(`Keluarkan ${voter.name || 'pemilih ini'} daripada ${family.name}?`)) return;
-        router.delete(route('keluarga-pemilih.members.destroy', { pemilihFamily: family.id, pemilihRecord: voter.id }), { preserveScroll: true });
+        router.delete(route('keluarga-pemilih.members.destroy', { pemilihFamily: family.id, pemilihRecord: voter.id }), currentRouteFilters(), { preserveScroll: true });
     };
 
     const openAvatar = (voter) => {
@@ -457,7 +473,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         event.preventDefault();
         if (!renameValue.trim() || renameProcessing) return;
 
-        router.put(route('keluarga-pemilih.update', familyId), { name: renameValue }, {
+        router.put(route('keluarga-pemilih.update', familyId), { name: renameValue, ...currentRouteFilters() }, {
             preserveScroll: true,
             onStart: () => setRenameProcessing(true),
             onFinish: () => setRenameProcessing(false),
@@ -769,8 +785,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                         {culaErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
                                                     </div>
                                                     <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
-                                                        <CulaActions voter={culaVoter} pending={culaPendingIds.has(voter.id)} saving={savingCula} onStart={startCula} onComplete={openCulaEditor} onEdit={openCulaEditor} />
-                                                        {(isFather || !isBintiName(voter.name)) && (
+                                                        <CulaActions voter={culaVoter} pending={culaPendingIds.has(voter.id)} saving={savingCula} onStart={startCula} onComplete={openCulaEditor} onKemasTel={startKemasTel} />
+                                                        {(isFather || canMarkAsFather(voter, members)) && (
                                                             <button type="button" onClick={() => toggleFather(family, voter)} disabled={fatherProcessingId === family.id} aria-pressed={isFather} className={`shrink-0 rounded-md border px-2 py-1 text-[9px] font-bold transition disabled:opacity-50 ${isFather ? 'border-green-300 bg-green-50 text-green-800' : 'border-slate-200 text-slate-500 hover:border-green-300 hover:text-green-700'}`}>
                                                                 {fatherProcessingId === family.id ? '...' : isFather ? 'Ayah · Nyah tanda' : 'Tandakan ayah'}
                                                             </button>
@@ -791,7 +807,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <nav aria-label="Halaman keluarga pemilih" className="flex flex-wrap justify-center gap-1.5 pt-2">
                             {families.links.map((link) => (
                                 link.url
-                                    ? <Link key={link.url} href={link.url} preserveScroll className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
+                                    ? <Link key={link.url} href={link.url} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
                                     : <span key={`disabled-${link.label}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
                             ))}
                         </nav>
@@ -835,7 +851,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
-                                        <CulaActions voter={culaVoter} pending={culaPendingIds.has(voter.id)} saving={savingCula} onStart={startCula} onComplete={openCulaEditor} onEdit={openCulaEditor} />
+                                        <CulaActions voter={culaVoter} pending={culaPendingIds.has(voter.id)} saving={savingCula} onStart={startCula} onComplete={openCulaEditor} onKemasTel={startKemasTel} />
                                         <button type="button" onClick={() => startNewFamily(voter)} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Jadikan Keluarga</button>
                                     </div>
                                     {culaErrors[voter.id] && <p role="alert" className="text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
@@ -849,7 +865,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <nav aria-label="Halaman pemilih belum berkeluarga" className="flex flex-wrap justify-center gap-1.5 pt-2">
                             {unassignedVoters.links.map((link) => (
                                 link.url
-                                    ? <Link key={link.url} href={link.url} preserveScroll className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
+                                    ? <Link key={link.url} href={link.url} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
                                     : <span key={`unassigned-${link.label}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
                             ))}
                         </nav>

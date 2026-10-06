@@ -250,8 +250,17 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             'pemilih_ids' => [$udmTwoUnassigned->id],
             'udm' => 'UDM 2',
             'locality' => 'LOKALITI A',
+            'q' => 'UNASSIGNED UDM 2 A',
+            'tab' => 'families',
+            'page' => 2,
         ])
-        ->assertRedirect(route('keluarga-pemilih.index', ['udm' => 'UDM 2', 'locality' => 'LOKALITI A']));
+        ->assertRedirect(route('keluarga-pemilih.index', [
+            'udm' => 'UDM 2',
+            'locality' => 'LOKALITI A',
+            'q' => 'UNASSIGNED UDM 2 A',
+            'tab' => 'families',
+            'page' => 2,
+        ]));
 
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index'))
@@ -350,12 +359,54 @@ it('allows a family label to be renamed', function () {
     $familyId = DB::table('pemilih_families')->value('id');
     $newName = 'Keluarga NURULSHAHIDA BINTI ABDUL HALIM';
 
+    $context = [
+        'udm' => 'UDM 1',
+        'locality' => 'LOKALITI A',
+        'q' => 'NURULSHAHIDA',
+        'tab' => 'families',
+        'page' => 2,
+    ];
+
     $this->actingAs($user)
-        ->put(route('keluarga-pemilih.update', $familyId), ['name' => $newName])
-        ->assertRedirect(route('keluarga-pemilih.index'))
+        ->put(route('keluarga-pemilih.update', $familyId), ['name' => $newName, ...$context])
+        ->assertRedirect(route('keluarga-pemilih.index', $context))
         ->assertSessionHas('success', 'Nama keluarga berjaya dikemaskini.');
 
     $this->assertDatabaseHas('pemilih_families', ['id' => $familyId, 'name' => $newName]);
+});
+
+it('preserves family filters on removal and moves back to the last available page', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Ali',
+            'pemilih_ids' => [$voter->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $context = [
+        'udm' => 'UDM 1',
+        'locality' => 'LOKALITI A',
+        'q' => 'AHMAD',
+        'tab' => 'families',
+        'page' => 2,
+    ];
+
+    $this->actingAs($user)
+        ->delete(route('keluarga-pemilih.members.destroy', [$familyId, $voter->id]), $context)
+        ->assertRedirect(route('keluarga-pemilih.index', $context));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', $context))
+        ->assertRedirect(route('keluarga-pemilih.index', [
+            'udm' => 'UDM 1',
+            'locality' => 'LOKALITI A',
+            'q' => 'AHMAD',
+            'tab' => 'families',
+        ]));
 });
 
 it('marks a family father and flags only children with that fathers bin or binti name', function () {
@@ -477,6 +528,30 @@ it('rejects marking a binti voter as the family father', function () {
     $familyId = DB::table('pemilih_families')->value('id');
     $this->actingAs($user)
         ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $voter->id])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('father_id');
+
+    $this->assertDatabaseHas('pemilih_families', [
+        'id' => $familyId,
+        'father_pemilih_record_id' => null,
+    ]);
+});
+
+it('rejects a bin voter when another family member has the same bin or binti parent name', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $brother = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ABDULLAH']);
+    $sister = createKeluargaPemilihRecord(['name' => 'SITI BINTI ABDULLAH']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abdullah',
+            'pemilih_ids' => [$brother->id, $sister->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $familyId = DB::table('pemilih_families')->value('id');
+    $this->actingAs($user)
+        ->putJson(route('keluarga-pemilih.father.update', $familyId), ['father_id' => $brother->id])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('father_id');
 

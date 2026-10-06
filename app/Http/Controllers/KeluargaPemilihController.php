@@ -21,7 +21,7 @@ use Inertia\Response;
 
 class KeluargaPemilihController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
@@ -91,6 +91,28 @@ class KeluargaPemilihController extends Controller
             'unassigned' => (int) $summary->voter_count - (int) $summary->assigned_count,
         ])->values();
 
+        $unassignedVotersQuery = $this->activeVoterQuery($user, $udmFilter, $localityFilter)
+            ->whereDoesntHave('families');
+        if ($searchFilter !== '') {
+            $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
+        }
+
+        $familyCount = (clone $familiesQuery)->count();
+        $unassignedCount = (clone $unassignedVotersQuery)->count();
+        $requestedPage = max(1, (int) $request->query('page', 1));
+        $activePageSize = $tabFilter === 'unassigned' ? 20 : 12;
+        $activeCount = $tabFilter === 'unassigned' ? $unassignedCount : $familyCount;
+        $lastPage = max(1, (int) ceil($activeCount / $activePageSize));
+        if ($requestedPage > $lastPage) {
+            return redirect()->route('keluarga-pemilih.index', $this->filterRouteParams([
+                'udm' => $udmFilter,
+                'locality' => $localityFilter,
+                'q' => $searchFilter,
+                'tab' => $tabFilter,
+                'page' => $lastPage,
+            ]));
+        }
+
         $families = (clone $familiesQuery)
             ->with([
                 'father' => function ($query) use ($user, $udmFilter, $localityFilter): void {
@@ -125,11 +147,6 @@ class KeluargaPemilihController extends Controller
                 'members' => $family->members->map(fn (PemilihRecord $voter): array => $this->voterPayload($voter)),
                 'member_count' => $family->members->count(),
             ]);
-        $unassignedVotersQuery = $this->activeVoterQuery($user, $udmFilter, $localityFilter)
-            ->whereDoesntHave('families');
-        if ($searchFilter !== '') {
-            $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
-        }
         $unassignedVoters = $unassignedVotersQuery
             ->orderBy('name')
             ->paginate(20)
@@ -150,7 +167,7 @@ class KeluargaPemilihController extends Controller
                 'unassigned' => (clone $allVoters)->whereDoesntHave('families')->count(),
             ],
             'stats' => [
-                'families' => (clone $familiesQuery)->count(),
+                'families' => $familyCount,
                 'voters' => (clone $voters)->count(),
                 'assigned' => (clone $voters)->whereHas('families')->count(),
                 'unassigned' => (clone $voters)->whereDoesntHave('families')->count(),
@@ -221,8 +238,7 @@ class KeluargaPemilihController extends Controller
             'name' => ['nullable', 'string', 'max:255'],
             'pemilih_ids' => ['required', 'array', 'min:1', 'max:30'],
             'pemilih_ids.*' => ['required', 'integer', 'distinct', Rule::exists('pemilih_records', 'id')],
-            'udm' => ['nullable', 'string', 'max:255'],
-            'locality' => ['nullable', 'string', 'max:255'],
+            ...$this->routeFilterRules(),
         ]);
         $user = $request->user();
         $udm = trim((string) ($validated['udm'] ?? ''));
@@ -248,7 +264,7 @@ class KeluargaPemilihController extends Controller
         });
 
         return redirect()
-            ->route('keluarga-pemilih.index', $this->filterRouteParams($udm, $locality))
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
             ->with('success', "{$family->name} berjaya dicipta dengan ".count($validated['pemilih_ids']).' pemilih.');
     }
 
@@ -256,12 +272,13 @@ class KeluargaPemilihController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            ...$this->routeFilterRules(),
         ]);
         $family = $this->visibleFamilyQuery($request->user())->findOrFail($pemilihFamily->id);
         $family->update(['name' => trim($validated['name'])]);
 
         return redirect()
-            ->route('keluarga-pemilih.index')
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
             ->with('success', 'Nama keluarga berjaya dikemaskini.');
     }
 
@@ -283,9 +300,19 @@ class KeluargaPemilihController extends Controller
                     'father_id' => 'Ayah mesti salah seorang ahli keluarga dalam skop akses anda.',
                 ]);
             }
-            if (preg_match('/\bBINTI\b/u', $this->normalize($father->name))) {
+            $fatherNameNormalized = $this->normalize($father->name);
+            $fatherParentName = $this->parentName($father->name);
+            $hasSameParentName = $family->members()
+                ->where('pemilih_records.id', '!=', $father->id)
+                ->get(['pemilih_records.id', 'pemilih_records.name'])
+                ->contains(fn (PemilihRecord $member): bool => $this->parentName($member->name) === $fatherParentName);
+
+            if (! preg_match('/\bBIN\s+/u', $fatherNameNormalized)
+                || preg_match('/\bBINTI\b/u', $fatherNameNormalized)
+                || ! $this->isUsefulMatchValue($fatherParentName)
+                || $hasSameParentName) {
                 throw ValidationException::withMessages([
-                    'father_id' => 'Pemilih bernama Binti tidak boleh ditandakan sebagai ayah.',
+                    'father_id' => 'Ayah mesti mempunyai Bin dan nama Bin/Binti yang berbeza daripada ahli keluarga lain.',
                 ]);
             }
         }
@@ -419,8 +446,7 @@ class KeluargaPemilihController extends Controller
         $validated = $request->validate([
             'pemilih_ids' => ['required', 'array', 'min:1', 'max:30'],
             'pemilih_ids.*' => ['required', 'integer', 'distinct', Rule::exists('pemilih_records', 'id')],
-            'udm' => ['nullable', 'string', 'max:255'],
-            'locality' => ['nullable', 'string', 'max:255'],
+            ...$this->routeFilterRules(),
         ]);
         $user = $request->user();
         $udm = trim((string) ($validated['udm'] ?? ''));
@@ -436,12 +462,13 @@ class KeluargaPemilihController extends Controller
         });
 
         return redirect()
-            ->route('keluarga-pemilih.index', $this->filterRouteParams($udm, $locality))
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
             ->with('success', count($validated['pemilih_ids'])." pemilih berjaya ditambah ke {$family->name}.");
     }
 
     public function removeMember(Request $request, PemilihFamily $pemilihFamily, PemilihRecord $pemilihRecord): RedirectResponse
     {
+        $routeFilters = $request->validate($this->routeFilterRules());
         $user = $request->user();
         abort_unless($user->canAccessPemilihRecord($pemilihRecord), 403);
 
@@ -473,15 +500,14 @@ class KeluargaPemilihController extends Controller
         });
 
         return redirect()
-            ->route('keluarga-pemilih.index')
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($routeFilters))
             ->with('success', 'Pemilih berjaya dikeluarkan daripada keluarga.');
     }
 
     public function auto(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'udm' => ['nullable', 'string', 'max:255'],
-            'locality' => ['nullable', 'string', 'max:255'],
+            ...$this->routeFilterRules(),
         ]);
         $user = $request->user();
         $udm = trim((string) ($validated['udm'] ?? ''));
@@ -559,7 +585,7 @@ class KeluargaPemilihController extends Controller
             : 'Tiada kumpulan yang cukup padanan kuat untuk dijadikan keluarga secara automatik.';
 
         return redirect()
-            ->route('keluarga-pemilih.index', $this->filterRouteParams($udm, $locality))
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
             ->with('success', $message);
     }
 
@@ -609,11 +635,25 @@ class KeluargaPemilihController extends Controller
         return $voters;
     }
 
-    private function filterRouteParams(?string $udm, ?string $locality): array
+    private function routeFilterRules(): array
+    {
+        return [
+            'udm' => ['nullable', 'string', 'max:255'],
+            'locality' => ['nullable', 'string', 'max:255'],
+            'q' => ['nullable', 'string', 'max:100'],
+            'tab' => ['nullable', Rule::in(['families', 'unassigned'])],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ];
+    }
+
+    private function filterRouteParams(array $validated): array
     {
         return array_filter([
-            'udm' => filled($udm) ? $udm : null,
-            'locality' => filled($locality) ? $locality : null,
+            'udm' => filled($validated['udm'] ?? null) ? trim($validated['udm']) : null,
+            'locality' => filled($validated['locality'] ?? null) ? trim($validated['locality']) : null,
+            'q' => filled($validated['q'] ?? null) ? trim($validated['q']) : null,
+            'tab' => filled($validated['tab'] ?? null) ? $validated['tab'] : null,
+            'page' => (int) ($validated['page'] ?? 0) > 1 ? (int) $validated['page'] : null,
         ]);
     }
 
