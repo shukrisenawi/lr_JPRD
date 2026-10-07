@@ -976,7 +976,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 const familyName = father.family_name || family.name;
                                 const isUpdated = updatedFamilyId === family.id;
                                 return (
-                                    <article key={family.id} className={`card overflow-hidden transition-all duration-300 ${isUpdated ? 'border-green-500 bg-green-50/70 ring-2 ring-green-300 shadow-md' : ''}`}>
+                                    <article key={family.id} className={`card overflow-hidden transition-all duration-300 ${isUpdated ? 'border-yellow-400 bg-yellow-50/70 ring-2 ring-yellow-300 shadow-md' : ''}`}>
                                         <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                                             <div className="min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
@@ -993,7 +993,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                         </>
                                                     )}
                                                     <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800">{memberCount} ahli</span>
-                                                    {isUpdated && <span className="rounded-full bg-green-600 px-2 py-0.5 text-[9px] font-black text-white">Dikemas kini</span>}
+                                                     {isUpdated && <span className="rounded-full bg-yellow-500 px-2 py-0.5 text-[9px] font-black text-yellow-950">Dikemas kini</span>}
                                                 </div>
                                                 {renamingFamilyId === family.id && errors.name && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{errors.name}</p>}
                                                 <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-500"><Icon name="pin" className="h-3 w-3 shrink-0" />{locations.join(' · ') || 'Lokaliti tidak dinyatakan'}</p>
