@@ -36,6 +36,17 @@ export function calculateAgeFromNoKp(noKp) {
     return age;
 }
 
+export function familyMemberTone(voter) {
+    const culaCode = String(voter.cula_code || '').trim().toUpperCase();
+    if (culaCode !== '2' && !culaCode.startsWith('3')) return 'neutral';
+
+    const gender = String(voter.gender || '').trim().toUpperCase();
+    if (['P', 'PEREMPUAN', 'FEMALE'].includes(gender)) return 'pink';
+    if (['L', 'LELAKI', 'MALE'].includes(gender)) return 'green';
+
+    return 'neutral';
+}
+
 function icBirthDateKey(voter) {
     const birthDate = noKpBirthDate(voter.no_kp);
     if (!birthDate) return null;
