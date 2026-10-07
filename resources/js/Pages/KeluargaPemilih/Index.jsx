@@ -172,6 +172,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [avatarErrors, setAvatarErrors] = useState({});
     const avatarInputRef = useRef(null);
     const avatarUploadTargetRef = useRef(null);
+    const skipFamilySearchDebounce = useRef(false);
     const [culaOverrides, setCulaOverrides] = useState({});
     const [culaPendingIds, setCulaPendingIds] = useState(new Set());
     const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
@@ -206,6 +207,11 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     }, [filters.q]);
 
     useEffect(() => {
+        if (skipFamilySearchDebounce.current) {
+            skipFamilySearchDebounce.current = false;
+            return undefined;
+        }
+
         const query = familySearch.trim();
         if (query === (filters.q || '')) return undefined;
 
@@ -334,11 +340,16 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     };
 
     const selectTab = (tab) => {
+        const resetUnassignedSearch = filters.tab === 'unassigned' && tab !== 'unassigned';
         closeManual();
+        if (resetUnassignedSearch) {
+            skipFamilySearchDebounce.current = Boolean(filters.q);
+            setFamilySearch('');
+        }
         router.get(route('keluarga-pemilih.index'), {
             udm: filters.udm,
             ...(filters.locality ? { locality: filters.locality } : {}),
-            ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
+            ...(!resetUnassignedSearch && familySearch.trim() ? { q: familySearch.trim() } : {}),
             tab,
         }, {
             preserveState: true,
