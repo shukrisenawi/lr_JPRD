@@ -25,6 +25,7 @@ class KeluargaPemilihController extends Controller
     {
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
+            'cula_code' => $this->culaCodeFilterRule(),
         ]);
         $user = $request->user();
         $searchFilter = trim((string) ($validated['q'] ?? ''));
@@ -33,6 +34,7 @@ class KeluargaPemilihController extends Controller
             'reviewed' => 'reviewed',
             default => 'families',
         };
+        $culaCodeFilter = $tabFilter === 'unassigned' ? trim((string) ($validated['cula_code'] ?? '')) : '';
         $votersByUdm = $this->activeVoterQuery($user)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
@@ -131,6 +133,15 @@ class KeluargaPemilihController extends Controller
             $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
             $this->orderSearchResults($unassignedVotersQuery, $searchFilter);
         }
+        if ($culaCodeFilter === 'belum_dicula') {
+            $unassignedVotersQuery->where(function (Builder $query): void {
+                $query->whereNull('cula_code')
+                    ->orWhereIn('cula_code', ['', '?', '0', 'TIADA'])
+                    ->orWhereRaw("UPPER(COALESCE(cula_display_label, '')) LIKE ?", ['%BELUM DICULA%']);
+            });
+        } elseif ($culaCodeFilter !== '') {
+            $unassignedVotersQuery->where('cula_code', $culaCodeFilter);
+        }
 
         $familyCount = $familyTabCounts[$tabFilter === 'reviewed' ? 'reviewed' : 'families'];
         $unassignedCount = (clone $unassignedVotersQuery)->count();
@@ -143,6 +154,7 @@ class KeluargaPemilihController extends Controller
                 'udm' => $udmFilter,
                 'locality' => $localityFilter,
                 'q' => $searchFilter,
+                'cula_code' => $culaCodeFilter,
                 'tab' => $tabFilter,
                 'page' => $lastPage,
             ]));
@@ -194,7 +206,7 @@ class KeluargaPemilihController extends Controller
             'families' => $families,
             'unassignedVoters' => $unassignedVoters,
             'available_cula_codes' => CulaCodes::options(),
-            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter, 'q' => $searchFilter, 'tab' => $tabFilter],
+            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter, 'q' => $searchFilter, 'cula_code' => $culaCodeFilter, 'tab' => $tabFilter],
             'familyTabCounts' => $familyTabCounts,
             'localities' => $localities->values(),
             'udmSummaries' => $udmSummaries,
@@ -843,9 +855,15 @@ class KeluargaPemilihController extends Controller
             'udm' => ['nullable', 'string', 'max:255'],
             'locality' => ['nullable', 'string', 'max:255'],
             'q' => ['nullable', 'string', 'max:100'],
+            'cula_code' => $this->culaCodeFilterRule(),
             'tab' => ['nullable', Rule::in(['families', 'unassigned', 'reviewed'])],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
+    }
+
+    private function culaCodeFilterRule(): array
+    {
+        return ['nullable', 'string', Rule::in([...array_column(CulaCodes::options(), 'code'), 'belum_dicula'])];
     }
 
     private function filterRouteParams(array $validated): array
@@ -854,6 +872,7 @@ class KeluargaPemilihController extends Controller
             'udm' => filled($validated['udm'] ?? null) ? trim($validated['udm']) : null,
             'locality' => filled($validated['locality'] ?? null) ? trim($validated['locality']) : null,
             'q' => filled($validated['q'] ?? null) ? trim($validated['q']) : null,
+            'cula_code' => filled($validated['cula_code'] ?? null) ? trim($validated['cula_code']) : null,
             'tab' => filled($validated['tab'] ?? null) ? $validated['tab'] : null,
             'page' => (int) ($validated['page'] ?? 0) > 1 ? (int) $validated['page'] : null,
         ]);

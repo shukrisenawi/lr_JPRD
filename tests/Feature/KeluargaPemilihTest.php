@@ -528,6 +528,49 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('unassignedVoters.data.0.name', 'UNASSIGNED UDM 2 B'));
 });
 
+it('filters unassigned voters by cula code, including voters not yet assigned a code', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    createKeluargaPemilihRecord([
+        'name' => 'PEMILIH PAS BELUM BERKELUARGA',
+        'cula_code' => '2',
+        'cula_display_label' => 'PAS',
+    ]);
+    createKeluargaPemilihRecord([
+        'name' => 'PEMILIH UMNO BELUM BERKELUARGA',
+        'cula_code' => '1',
+        'cula_display_label' => 'UMNO',
+    ]);
+    createKeluargaPemilihRecord([
+        'name' => 'PEMILIH BELUM DICULA',
+        'cula_code' => '0',
+        'cula_display_label' => 'BELUM DICULA',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', [
+            'udm' => 'UDM 1',
+            'tab' => 'unassigned',
+            'cula_code' => '2',
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.cula_code', '2')
+            ->where('unassignedVoters.total', 1)
+            ->where('unassignedVoters.data.0.name', 'PEMILIH PAS BELUM BERKELUARGA'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', [
+            'udm' => 'UDM 1',
+            'tab' => 'unassigned',
+            'cula_code' => 'belum_dicula',
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.cula_code', 'belum_dicula')
+            ->where('unassignedVoters.total', 1)
+            ->where('unassignedVoters.data.0.name', 'PEMILIH BELUM DICULA'));
+});
+
 it('searches for a voter and returns the family that contains the match', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $matchedVoter = createKeluargaPemilihRecord([
