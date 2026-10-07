@@ -192,9 +192,9 @@ function CulaPartyTable({ rows }) {
                     <tbody>
                         {rows.map((row, index) => {
                             return (
-                                <tr key={row.key} className={`${index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} transition-colors hover:bg-lime-100/70 hover:font-bold`}>
+                                <tr key={row.key} className={`${index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold`}>
                                     <td className="border border-slate-300 px-1.5 py-1 text-center">{index + 1}</td>
-                                    <td className="border border-slate-300 px-2 py-1 font-medium whitespace-nowrap">{row.name}</td>
+                                    <td className="border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold">{row.name}</td>
                                     {culaPartyGroups.map(({ key }) => {
                                         const count = row.party_counts[key];
                                         const percentage = row.total > 0 ? `${((count / row.total) * 100).toFixed(2)}%` : '0.00%';
