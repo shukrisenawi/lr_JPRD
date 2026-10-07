@@ -157,6 +157,7 @@ it('builds all-UDM cards with counts for every PLK code', function () {
         ->get(route('plk.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
+            ->where('filters.show_voters', false)
             ->where('udm_cula_counts', function ($rows) {
                 $byUdm = collect($rows)->keyBy('udm');
 

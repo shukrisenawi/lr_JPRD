@@ -76,16 +76,33 @@ function CulaCodeTab({ active, code, count, onClick }) {
     );
 }
 
-function UdmCulaCards({ rows, codes, onSelectUdm }) {
-    if (!rows?.length) return null;
-
+function UdmCulaCards({ rows, codes, total, codeCounts, onSelectUdm }) {
     return (
         <section className="space-y-2 border-b border-slate-100 p-3">
             <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-700">Ringkasan pemilih mengikut UDM</h3>
-                <p className="mt-0.5 text-[10px] text-slate-500">Pilih kad UDM untuk menapis senarai pemilih.</p>
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-700">Pilih UDM</h3>
+                <p className="mt-0.5 text-[10px] text-slate-500">Pilih kad untuk membuka senarai pemilih PLK.</p>
             </div>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                <button
+                    type="button"
+                    onClick={() => onSelectUdm('')}
+                    aria-label="Papar senarai pemilih semua UDM"
+                    className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-left shadow-sm transition hover:border-emerald-400 hover:bg-emerald-100/70 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                >
+                    <span className="flex items-center justify-between gap-2">
+                        <span className="truncate text-xs font-black text-emerald-900">Semua UDM</span>
+                        <span className="shrink-0 rounded-full bg-emerald-700 px-2 py-1 text-[10px] font-black text-white">{formatNumber(total)} pemilih</span>
+                    </span>
+                    <span className="mt-2 grid grid-cols-3 gap-1.5">
+                        {codes.map((code) => (
+                            <span key={code.code} className="rounded-lg bg-white/80 px-2 py-1.5 text-center">
+                                <span className="block text-[9px] font-black text-slate-500">{code.code}</span>
+                                <span className="mt-0.5 block text-xs font-bold text-slate-800">{formatNumber(codeCounts?.[code.code])}</span>
+                            </span>
+                        ))}
+                    </span>
+                </button>
                 {orderUdms(rows).map((row) => (
                     <button
                         key={row.udm}
@@ -317,11 +334,12 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             udm: selectedUdm,
             q: search,
             cula_code: filters.cula_code || '',
+            show_voters: filters.show_voters ? 1 : 0,
             ...next,
         }, { preserveState: true, preserveScroll: true, replace: true });
     };
 
-    const visitTab = (tab) => navigate({ tab, cula_code: tab === 'senarai' ? (filters.cula_code || '') : '', page: 1 });
+    const visitTab = (tab) => navigate({ tab, cula_code: tab === 'senarai' ? (filters.cula_code || '') : '', show_voters: 0, page: 1 });
     const visitCulaCode = (code) => navigate({ tab: 'senarai', cula_code: code, page: 1 });
 
     const verifyVoter = (voter) => {
@@ -687,14 +705,38 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                     ))}
                                 </div>
                             )}
-                            {activeTab === 'senarai' && selectedUdm === '' && (
+                            {activeTab === 'senarai' && selectedUdm === '' && !filters.show_voters && !isUdmUser && (
                                 <UdmCulaCards
                                     rows={udmCulaCounts}
                                     codes={codes || []}
-                                    onSelectUdm={(udm) => navigate({ udm, page: 1 })}
+                                    total={summary.total}
+                                    codeCounts={codeCounts}
+                                    onSelectUdm={(udm) => {
+                                        setSelectedUdm(udm);
+                                        navigate({ udm, show_voters: 1, page: 1 });
+                                    }}
                                 />
                             )}
-                            <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={verifyVoter} onRequestUnverify={setVerificationToCancel} onPage={onPage} />
+                            {activeTab !== 'senarai' || filters.show_voters || isUdmUser ? (
+                                <>
+                                    {activeTab === 'senarai' && filters.show_voters && !isUdmUser && (
+                                        <div className="flex flex-col gap-2 border-b border-slate-100 bg-slate-50/60 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                            <p className="text-xs font-bold text-slate-700">Senarai pemilih: {selectedUdm || 'Semua UDM'}</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedUdm('');
+                                                    navigate({ udm: '', show_voters: 0, page: 1 });
+                                                }}
+                                                className="self-start rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold text-slate-600 transition hover:border-emerald-300 hover:text-emerald-800 sm:self-auto"
+                                            >
+                                                Kembali ke kad UDM
+                                            </button>
+                                        </div>
+                                    )}
+                                    <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={verifyVoter} onRequestUnverify={setVerificationToCancel} onPage={onPage} />
+                                </>
+                            ) : null}
                         </>
                     ) : (
                         <div className="p-3 sm:p-4">

@@ -56,6 +56,8 @@ class PlkController extends Controller
             $filters['udm'] = $user->scope_key;
         }
 
+        $filters['show_voters'] = $request->boolean('show_voters') || $filters['udm'] !== '';
+
         $udmCulaCounts = [];
         if ($tab === 'senarai' && $filters['udm'] === '') {
             foreach ($udms as $udm) {
