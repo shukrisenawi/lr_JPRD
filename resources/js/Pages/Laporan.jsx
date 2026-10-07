@@ -146,6 +146,7 @@ function DataTable({ rows, columns, stickyHeader = false }) {
 }
 
 function CulaPartyTable({ rows }) {
+    const [activeRowKey, setActiveRowKey] = useState(null);
     const totals = rows.reduce((result, row) => {
         result.total += row.total;
         result.turnout_85 += row.turnout_85;
@@ -191,10 +192,23 @@ function CulaPartyTable({ rows }) {
                     </thead>
                     <tbody>
                         {rows.map((row, index) => {
+                            const isActive = activeRowKey === row.key;
                             return (
-                                <tr key={row.key} className={`${index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold`}>
+                                <tr
+                                    key={row.key}
+                                    aria-selected={isActive}
+                                    tabIndex={0}
+                                    onClick={() => setActiveRowKey(row.key)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            setActiveRowKey(row.key);
+                                        }
+                                    }}
+                                    className={`${isActive ? 'bg-lime-200 font-bold text-slate-950' : index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold`}
+                                >
                                     <td className="border border-slate-300 px-1.5 py-1 text-center">{index + 1}</td>
-                                    <td className="border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold">{row.name}</td>
+                                    <td className={`border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold ${isActive ? '!font-bold' : ''}`}>{row.name}</td>
                                     {culaPartyGroups.map(({ key }) => {
                                         const count = row.party_counts[key];
                                         const percentage = row.total > 0 ? `${((count / row.total) * 100).toFixed(2)}%` : '0.00%';
@@ -208,7 +222,7 @@ function CulaPartyTable({ rows }) {
                                     <td className="border border-slate-300 px-2 py-1 text-right tabular-nums">{fmt(row.turnout_85)}</td>
                                     <td className="border border-slate-300 px-2 py-1 text-right tabular-nums">{fmt(row.attendance_51)}</td>
                                     <td className={`border border-slate-300 px-2 py-1 text-right tabular-nums ${row.skc < 0 ? 'bg-rose-100 font-bold text-rose-700' : ''}`}>{fmt(row.skc)}</td>
-                                    <td className="border border-slate-300 px-2 py-1 text-right font-semibold tabular-nums">{fmt(row.total)}</td>
+                                    <td className={`border border-slate-300 px-2 py-1 text-right font-semibold tabular-nums group-hover:font-bold ${isActive ? '!font-bold' : ''}`}>{fmt(row.total)}</td>
                                 </tr>
                             );
                         })}
