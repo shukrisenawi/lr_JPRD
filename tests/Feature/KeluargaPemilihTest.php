@@ -550,6 +550,30 @@ it('filters unassigned voters by cula code, including voters not yet assigned a 
         ->get(route('keluarga-pemilih.index', [
             'udm' => 'UDM 1',
             'tab' => 'unassigned',
+            'cula_codes' => ['2', '1'],
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.cula_codes', ['2', '1'])
+            ->where('unassignedVoters.total', 2)
+            ->where('unassignedVoters.data.0.name', 'PEMILIH PAS BELUM BERKELUARGA')
+            ->where('unassignedVoters.data.1.name', 'PEMILIH UMNO BELUM BERKELUARGA'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', [
+            'udm' => 'UDM 1',
+            'tab' => 'unassigned',
+            'cula_codes' => ['2', 'belum_dicula'],
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.cula_codes', ['2', 'belum_dicula'])
+            ->where('unassignedVoters.total', 2));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', [
+            'udm' => 'UDM 1',
+            'tab' => 'unassigned',
             'cula_code' => '2',
         ]))
         ->assertOk()

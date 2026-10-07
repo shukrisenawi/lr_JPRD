@@ -25,6 +25,8 @@ class KeluargaPemilihController extends Controller
     {
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
+            'cula_codes' => ['nullable', 'array', 'max:40'],
+            'cula_codes.*' => ['required', 'string', Rule::in([...array_column(CulaCodes::options(), 'code'), 'belum_dicula'])],
             'cula_code' => $this->culaCodeFilterRule(),
         ]);
         $user = $request->user();
@@ -34,7 +36,7 @@ class KeluargaPemilihController extends Controller
             'reviewed' => 'reviewed',
             default => 'families',
         };
-        $culaCodeFilter = $tabFilter === 'unassigned' ? trim((string) ($validated['cula_code'] ?? '')) : '';
+        $culaCodes = $tabFilter === 'unassigned' ? $this->normalizeCulaCodeFilters($validated) : [];
         $votersByUdm = $this->activeVoterQuery($user)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
@@ -133,14 +135,24 @@ class KeluargaPemilihController extends Controller
             $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
             $this->orderSearchResults($unassignedVotersQuery, $searchFilter);
         }
-        if ($culaCodeFilter === 'belum_dicula') {
-            $unassignedVotersQuery->where(function (Builder $query): void {
-                $query->whereNull('cula_code')
-                    ->orWhereIn('cula_code', ['', '?', '0', 'TIADA'])
-                    ->orWhereRaw("UPPER(COALESCE(cula_display_label, '')) LIKE ?", ['%BELUM DICULA%']);
+        $includeUncodedVoters = in_array('belum_dicula', $culaCodes, true);
+        $selectedCulaCodes = array_values(array_diff($culaCodes, ['belum_dicula']));
+        if ($includeUncodedVoters || $selectedCulaCodes !== []) {
+            $unassignedVotersQuery->where(function (Builder $query) use ($includeUncodedVoters, $selectedCulaCodes): void {
+                if ($includeUncodedVoters) {
+                    $query->where(function (Builder $uncodedQuery): void {
+                        $uncodedQuery->whereNull('cula_code')
+                            ->orWhereIn('cula_code', ['', '?', '0', 'TIADA'])
+                            ->orWhereRaw("UPPER(COALESCE(cula_display_label, '')) LIKE ?", ['%BELUM DICULA%']);
+                    });
+                }
+
+                if ($selectedCulaCodes !== []) {
+                    $includeUncodedVoters
+                        ? $query->orWhereIn('cula_code', $selectedCulaCodes)
+                        : $query->whereIn('cula_code', $selectedCulaCodes);
+                }
             });
-        } elseif ($culaCodeFilter !== '') {
-            $unassignedVotersQuery->where('cula_code', $culaCodeFilter);
         }
 
         $familyCount = $familyTabCounts[$tabFilter === 'reviewed' ? 'reviewed' : 'families'];
@@ -154,7 +166,7 @@ class KeluargaPemilihController extends Controller
                 'udm' => $udmFilter,
                 'locality' => $localityFilter,
                 'q' => $searchFilter,
-                'cula_code' => $culaCodeFilter,
+                'cula_codes' => $culaCodes,
                 'tab' => $tabFilter,
                 'page' => $lastPage,
             ]));
@@ -206,7 +218,14 @@ class KeluargaPemilihController extends Controller
             'families' => $families,
             'unassignedVoters' => $unassignedVoters,
             'available_cula_codes' => CulaCodes::options(),
-            'filters' => ['udm' => $udmFilter, 'locality' => $localityFilter, 'q' => $searchFilter, 'cula_code' => $culaCodeFilter, 'tab' => $tabFilter],
+            'filters' => [
+                'udm' => $udmFilter,
+                'locality' => $localityFilter,
+                'q' => $searchFilter,
+                'cula_codes' => $culaCodes,
+                'cula_code' => count($culaCodes) === 1 ? $culaCodes[0] : '',
+                'tab' => $tabFilter,
+            ],
             'familyTabCounts' => $familyTabCounts,
             'localities' => $localities->values(),
             'udmSummaries' => $udmSummaries,
@@ -855,6 +874,8 @@ class KeluargaPemilihController extends Controller
             'udm' => ['nullable', 'string', 'max:255'],
             'locality' => ['nullable', 'string', 'max:255'],
             'q' => ['nullable', 'string', 'max:100'],
+            'cula_codes' => ['nullable', 'array', 'max:40'],
+            'cula_codes.*' => ['required', 'string', Rule::in([...array_column(CulaCodes::options(), 'code'), 'belum_dicula'])],
             'cula_code' => $this->culaCodeFilterRule(),
             'tab' => ['nullable', Rule::in(['families', 'unassigned', 'reviewed'])],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -868,14 +889,32 @@ class KeluargaPemilihController extends Controller
 
     private function filterRouteParams(array $validated): array
     {
+        $culaCodes = $this->normalizeCulaCodeFilters($validated);
+
         return array_filter([
             'udm' => filled($validated['udm'] ?? null) ? trim($validated['udm']) : null,
             'locality' => filled($validated['locality'] ?? null) ? trim($validated['locality']) : null,
             'q' => filled($validated['q'] ?? null) ? trim($validated['q']) : null,
-            'cula_code' => filled($validated['cula_code'] ?? null) ? trim($validated['cula_code']) : null,
+            'cula_codes' => $culaCodes !== [] ? $culaCodes : null,
             'tab' => filled($validated['tab'] ?? null) ? $validated['tab'] : null,
             'page' => (int) ($validated['page'] ?? 0) > 1 ? (int) $validated['page'] : null,
         ]);
+    }
+
+    /** @return array<int, string> */
+    private function normalizeCulaCodeFilters(array $validated): array
+    {
+        $codes = is_array($validated['cula_codes'] ?? null) ? $validated['cula_codes'] : [];
+        if (filled($validated['cula_code'] ?? null)) {
+            $codes[] = $validated['cula_code'];
+        }
+
+        return collect($codes)
+            ->map(fn ($code): string => trim((string) $code))
+            ->filter(fn (string $code): bool => $code !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function applySearchTerm(Builder $query, string $term): void

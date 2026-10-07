@@ -148,6 +148,12 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const isMasterAdmin = Boolean(auth?.user?.role?.is_master_admin);
     const isUdmUser = auth?.user?.access_level === 'udm';
     const allUdmLabel = isUdmUser ? 'Semua Lokaliti' : 'Semua UDM';
+    const selectedCulaCodes = useMemo(() => (
+        Array.isArray(filters.cula_codes)
+            ? filters.cula_codes
+            : (filters.cula_code ? [filters.cula_code] : [])
+    ), [filters.cula_codes, filters.cula_code]);
+    const [culaCodeDraft, setCulaCodeDraft] = useState(selectedCulaCodes);
     const [mode, setMode] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [familySearch, setFamilySearch] = useState(filters.q || '');
@@ -190,6 +196,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [savingCula, setSavingCula] = useState(false);
     const [culaError, setCulaError] = useState('');
     const [culaErrors, setCulaErrors] = useState({});
+
+    useEffect(() => {
+        setCulaCodeDraft(selectedCulaCodes);
+    }, [selectedCulaCodes]);
 
     useEffect(() => {
         setFatherOverrides(Object.fromEntries(families.data.map((family) => [family.id, {
@@ -241,7 +251,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 ...(filters.udm ? { udm: filters.udm } : {}),
                 ...(filters.locality ? { locality: filters.locality } : {}),
                 ...(query ? { q: query } : {}),
-                ...(filters.tab === 'unassigned' && filters.cula_code ? { cula_code: filters.cula_code } : {}),
+                ...(filters.tab === 'unassigned' && selectedCulaCodes.length ? { cula_codes: selectedCulaCodes } : {}),
                 ...(filters.udm && filters.tab ? { tab: filters.tab } : {}),
             }, {
                 preserveState: true,
@@ -254,7 +264,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         }, 300);
 
         return () => window.clearTimeout(timer);
-    }, [familySearch, filters.cula_code, filters.locality, filters.q, filters.tab, filters.udm]);
+    }, [familySearch, filters.locality, filters.q, filters.tab, filters.udm, selectedCulaCodes]);
 
     const updateFamilySearch = (value) => {
         familySearchRef.current = value;
@@ -331,7 +341,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         udm: filters.udm || null,
         locality: filters.locality || null,
         q: filters.q || null,
-        cula_code: filters.tab === 'unassigned' ? filters.cula_code || null : null,
+        cula_codes: filters.tab === 'unassigned' ? selectedCulaCodes : [],
         tab: filters.tab || 'families',
         page: filters.tab === 'unassigned' ? unassignedVoters.current_page : families.current_page,
     });
@@ -347,7 +357,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 ...(udm ? { udm } : {}),
                 ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
                 ...(nextTab ? { tab: nextTab } : {}),
-                ...(nextTab === 'unassigned' && filters.cula_code ? { cula_code: filters.cula_code } : {}),
+                ...(nextTab === 'unassigned' && selectedCulaCodes.length ? { cula_codes: selectedCulaCodes } : {}),
             }, {
             preserveState: true,
             preserveScroll: true,
@@ -366,7 +376,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             ...(locality ? { locality } : {}),
             ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
             tab: filters.tab,
-            ...(filters.tab === 'unassigned' && filters.cula_code ? { cula_code: filters.cula_code } : {}),
+            ...(filters.tab === 'unassigned' && selectedCulaCodes.length ? { cula_codes: selectedCulaCodes } : {}),
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -390,7 +400,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             ...(filters.locality ? { locality: filters.locality } : {}),
             ...(!resetUnassignedSearch && familySearch.trim() ? { q: familySearch.trim() } : {}),
             tab,
-            ...(tab === 'unassigned' && filters.cula_code ? { cula_code: filters.cula_code } : {}),
+            ...(tab === 'unassigned' && selectedCulaCodes.length ? { cula_codes: selectedCulaCodes } : {}),
         }, {
             preserveState: true,
             preserveScroll: true,
@@ -398,19 +408,25 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         });
     };
 
-    const selectCulaCode = (culaCode) => {
+    const selectCulaCodes = (culaCodes) => {
         closeManual();
         router.get(route('keluarga-pemilih.index'), {
             udm: filters.udm,
             ...(filters.locality ? { locality: filters.locality } : {}),
             ...(familySearch.trim() ? { q: familySearch.trim() } : {}),
             tab: 'unassigned',
-            ...(culaCode ? { cula_code: culaCode } : {}),
+            ...(culaCodes.length ? { cula_codes: culaCodes } : {}),
         }, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
         });
+    };
+
+    const toggleCulaCodeDraft = (code) => {
+        setCulaCodeDraft((current) => current.includes(code)
+            ? current.filter((selected) => selected !== code)
+            : [...current, code]);
     };
 
     const startNewFamily = (voter = null) => {
@@ -1118,21 +1134,42 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 <label htmlFor="unassigned-voter-search" className="sr-only">Cari pemilih belum berkeluarga</label>
                                 <input id="unassigned-voter-search" type="search" value={familySearch} onChange={(event) => updateFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat…" className="input-field w-full pl-9 text-xs" />
                             </div>
-                            <div className="w-full sm:w-60">
-                                <label htmlFor="unassigned-voter-cula-filter" className="sr-only">Tapis pemilih mengikut Kod Cula</label>
-                                <select id="unassigned-voter-cula-filter" value={filters.cula_code || ''} onChange={(event) => selectCulaCode(event.target.value)} className="input-field w-full text-xs">
-                                    <option value="">Semua Kod Cula</option>
-                                    <option value="belum_dicula">Belum Dicula</option>
-                                    {availableCulaCodes.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}
-                                </select>
-                            </div>
+                            <details className="group relative w-full sm:w-60">
+                                <summary aria-label="Tapis pemilih mengikut Kod Cula" className="input-field flex cursor-pointer list-none items-center justify-between gap-2 text-xs">
+                                    <span className="truncate">{culaCodeDraft.length ? `${culaCodeDraft.length} Kod Cula dipilih` : 'Semua Kod Cula'}</span>
+                                    <span aria-hidden="true" className="text-slate-400 transition group-open:rotate-180">⌄</span>
+                                </summary>
+                                <div className="absolute right-0 z-20 mt-1 w-full min-w-[17rem] rounded-xl border border-slate-200 bg-white p-2 shadow-xl sm:w-72">
+                                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-1 pb-2">
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Pilih satu atau lebih</span>
+                                        <button type="button" onClick={() => setCulaCodeDraft([])} className="text-[10px] font-bold text-green-700 hover:text-green-900">Kosongkan</button>
+                                    </div>
+                                    <div className="mt-1 max-h-64 space-y-0.5 overflow-y-auto">
+                                        <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-700 hover:bg-green-50">
+                                            <input type="checkbox" checked={culaCodeDraft.includes('belum_dicula')} onChange={() => toggleCulaCodeDraft('belum_dicula')} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                            Belum Dicula
+                                        </label>
+                                        {availableCulaCodes.map((option) => (
+                                            <label key={option.code} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-slate-700 hover:bg-green-50">
+                                                <input type="checkbox" checked={culaCodeDraft.includes(option.code)} onChange={() => toggleCulaCodeDraft(option.code)} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />
+                                                {option.label}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <button type="button" onClick={(event) => {
+                                        selectCulaCodes(culaCodeDraft);
+                                        const filterDetails = event.currentTarget.closest('details');
+                                        if (filterDetails) filterDetails.open = false;
+                                    }} className="btn-primary mt-2 w-full justify-center py-2 text-xs">Tapis pemilih</button>
+                                </div>
+                            </details>
                         </div>
                     </div>
 
                     {unassignedVoters.data.length === 0 ? (
                         <div className="card-dashed px-4 py-8 text-center">
-                            <p className="text-sm font-bold text-slate-800">{filters.q ? 'Tiada pemilih sepadan dengan carian' : filters.cula_code ? 'Tiada pemilih dengan Kod Cula ini' : 'Semua pemilih dalam tapisan ini sudah berkeluarga'}</p>
-                            {(filters.q || filters.cula_code) && <p className="mt-1 text-xs text-slate-500">{filters.q ? 'Cuba nama, nombor KP, no. rumah atau alamat yang lain.' : 'Pilih Kod Cula yang lain atau paparkan semua kod.'}</p>}
+                            <p className="text-sm font-bold text-slate-800">{filters.q ? 'Tiada pemilih sepadan dengan carian' : selectedCulaCodes.length ? 'Tiada pemilih dengan Kod Cula dipilih' : 'Semua pemilih dalam tapisan ini sudah berkeluarga'}</p>
+                            {(filters.q || selectedCulaCodes.length > 0) && <p className="mt-1 text-xs text-slate-500">{filters.q ? 'Cuba nama, nombor KP, no. rumah atau alamat yang lain.' : 'Pilih Kod Cula yang lain atau paparkan semua kod.'}</p>}
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
