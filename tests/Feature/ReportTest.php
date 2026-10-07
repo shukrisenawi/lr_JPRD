@@ -75,6 +75,9 @@ it('maps full cula labels from configured codes', function () {
 <tr><td>1</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>P</td><td>M</td><td>7</td></tr>
 <tr><td>2</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>L</td><td>C</td><td>8</td></tr>
 <tr><td>3</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>L</td><td>I</td><td>97</td></tr>
+<tr><td>4</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>L</td><td>M</td><td>17</td></tr>
+<tr><td>5</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>P</td><td>M</td><td>18</td></tr>
+<tr><td>6</td><td>="01"</td><td>PADANG CHICHAK</td><td>="001"</td><td>KG BARU KURA</td><td>P</td><td>M</td><td>19</td></tr>
 </table></body></html>
 HTML);
 
@@ -82,7 +85,10 @@ HTML);
 
     expect(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '7' && $row['display_label'] === '7 - TIDAK DIKENALI'))->toBeTrue()
         ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '8' && $row['display_label'] === '8 - MATI'))->toBeTrue()
-        ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '97' && $row['display_label'] === '97 - LAIN-LAIN BANGSA'))->toBeTrue();
+        ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '97' && $row['display_label'] === '97 - LAIN-LAIN BANGSA'))->toBeTrue()
+        ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '17' && $row['display_label'] === '17 - WAWASAN'))->toBeTrue()
+        ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '18' && $row['display_label'] === '18 - MIPP'))->toBeTrue()
+        ->and(collect($report['by_cula'])->contains(fn (array $row) => $row['code'] === '19' && $row['display_label'] === '19 - BERSAMA'))->toBeTrue();
 });
 
 it('renders laporan page with pemilih report data', function () {

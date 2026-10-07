@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, usePage } from '@inertiajs/react';
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { compareUdms } from '@/Utils/udmOrder';
 
 const nf = new Intl.NumberFormat('ms-MY');
@@ -10,6 +10,14 @@ const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
 const chartColors = ['#8b5cf6', '#a78bfa', '#38bdf8', '#bbf7d0', '#f59e0b', '#ef4444'];
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
+const culaPartyGroups = [
+    { key: 'PN', codes: ['2', '3B', '3D', '3K', '3M', '3P', '3U', '1B', '1P', '4P', '6', '11', '12', '17', '18'] },
+    { key: 'BN', codes: ['1', '1A', '13', '14'] },
+    { key: 'PH', codes: ['5', '9', '97', '98', '99'] },
+    { key: 'GTA', codes: ['10', '15', '16', '19'] },
+    { key: 'AP', codes: ['4'] },
+    { key: 'LAIN2', codes: [] },
+];
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
 function clampPercent(value) {
@@ -139,6 +147,82 @@ function DataTable({ rows, columns, stickyHeader = false }) {
         <div className={`card ${stickyHeader ? 'overflow-visible' : 'overflow-hidden'}`}>
             {stickyHeader ? <div className="overflow-x-auto xl:overflow-visible">{table}</div> : <div className="overflow-x-auto">{table}</div>}
         </div>
+    );
+}
+
+function CulaPartyTable({ rows }) {
+    const totals = rows.reduce((result, row) => {
+        result.total += row.total;
+        for (const group of culaPartyGroups) result[group.key] += row.party_counts[group.key];
+        return result;
+    }, { total: 0, ...Object.fromEntries(culaPartyGroups.map(({ key }) => [key, 0])) });
+
+    return (
+        <section className="card overflow-hidden">
+            <div className="border-b border-slate-200 px-3 py-2.5 sm:px-4">
+                <h3 className="text-sm font-bold text-slate-900">Pecahan Cula Mengikut Daerah Mengundi</h3>
+                <p className="mt-0.5 text-xs text-slate-500">Jumlah dan peratus pemilih mengikut kumpulan kod cula.</p>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-[980px] w-full border-collapse text-[10px] sm:text-xs">
+                    <thead className="text-center font-bold text-slate-900">
+                        <tr>
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 text-left">Daerah Mengundi</th>
+                            {culaPartyGroups.map(({ key }) => (
+                                <th key={key} colSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">{key}</th>
+                            ))}
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1">Jumlah</th>
+                        </tr>
+                        <tr>
+                            {culaPartyGroups.map(({ key }) => (
+                                <Fragment key={key}>
+                                    <th className="border border-lime-700 bg-lime-300 px-1.5 py-1">Jumlah</th>
+                                    <th className="border border-lime-700 bg-lime-300 px-1.5 py-1">%</th>
+                                </Fragment>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map((row, index) => {
+                            const code = String(row.code ?? '').trim();
+                            const districtNumber = /^\d+$/.test(code) && code !== String(row.name)
+                                ? code.padStart(2, '0')
+                                : String(index + 1).padStart(2, '0');
+                            return (
+                                <tr key={row.key} className={index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'}>
+                                    <td className="border border-slate-300 px-1.5 py-1 text-center">{index + 1}</td>
+                                    <td className="border border-slate-300 px-2 py-1 font-medium whitespace-nowrap">{districtNumber} - {row.name}</td>
+                                    {culaPartyGroups.map(({ key }) => {
+                                        const count = row.party_counts[key];
+                                        const percentage = row.total > 0 ? `${((count / row.total) * 100).toFixed(2)}%` : '0.00%';
+                                        return (
+                                            <Fragment key={key}>
+                                                <td className="border border-slate-300 px-1.5 py-1 text-right tabular-nums">{fmt(count)}</td>
+                                                <td className="border border-slate-300 px-1.5 py-1 text-right tabular-nums">{percentage}</td>
+                                            </Fragment>
+                                        );
+                                    })}
+                                    <td className="border border-slate-300 px-2 py-1 text-right font-semibold tabular-nums">{fmt(row.total)}</td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                    <tfoot>
+                        <tr className="bg-lime-50 font-bold text-slate-900">
+                            <td colSpan={2} className="border border-slate-300 px-2 py-1.5">Jumlah</td>
+                            {culaPartyGroups.map(({ key }) => (
+                                <Fragment key={key}>
+                                    <td className="border border-slate-300 px-1.5 py-1.5 text-right tabular-nums">{fmt(totals[key])}</td>
+                                    <td className="border border-slate-300 px-1.5 py-1.5" />
+                                </Fragment>
+                            ))}
+                            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(totals.total)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
     );
 }
 
@@ -276,6 +360,17 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                 completed_Mati: completedSum(['8']),
             };
         }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
+    const culaPartyRows = useMemo(() => allUdmTableRows.map((row) => {
+        const breakdown = culaByDmMap[row.key]?.cula_breakdown ?? [];
+        const partyCounts = Object.fromEntries(culaPartyGroups
+            .filter(({ key }) => key !== 'LAIN2')
+            .map(({ key, codes }) => [key, getCulaSum(breakdown, codes)]));
+        const assignedCount = Object.values(partyCounts).reduce((sum, count) => sum + count, 0);
+
+        partyCounts.LAIN2 = Math.max((row.total ?? 0) - assignedCount, 0);
+
+        return { ...row, party_counts: partyCounts };
+    }), [allUdmTableRows, culaByDmMap]);
     const udmTableRows = allUdmTableRows.slice(0, 25);
     const victoryChartRows = useMemo(() => [{
         name: 'Jumlah keseluruhan',
@@ -466,6 +561,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
 
                         <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader />
+                        <CulaPartyTable rows={culaPartyRows} />
                         <ChartPanel
                             title="Garisan Kemenangan"
                             compact

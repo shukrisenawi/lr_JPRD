@@ -30,7 +30,7 @@ class PemilihReportService
 
     public const DEFAULT_SAMPLE_PATH = 'F:\\OneDrive\\PAS\\pemilih.xls';
 
-    private const REPORT_SCHEMA_VERSION = 4;
+    private const REPORT_SCHEMA_VERSION = 5;
 
     public function buildFromPath(?string $path = null): array
     {
