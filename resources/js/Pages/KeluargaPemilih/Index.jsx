@@ -82,6 +82,13 @@ function culaCodeClass(code) {
     return `rounded px-1.5 py-0.5 font-bold ${colorClass}`;
 }
 
+function shouldShowCulaStatus(voter) {
+    const code = String(voter.cula_code || '').trim().toUpperCase();
+    const label = String(voter.cula_display_label || '').trim().toUpperCase();
+
+    return code !== '8' && label !== 'MATI' && !/^8\s*[-–]\s*MATI$/.test(label);
+}
+
 function isBintiName(name) {
     return /\b(?:BINTI|BT)\b/i.test(String(name || ''));
 }
@@ -1076,6 +1083,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                 const isFather = Number(father.father_id) === Number(voter.id);
                                                 const tone = FAMILY_MEMBER_TONES[familyMemberTone(culaVoter)];
                                                 const age = calculateAgeFromNoKp(voter.no_kp);
+                                                const showCulaStatus = shouldShowCulaStatus(culaVoter);
                                                 return (
                                                 <div key={voter.id} className={`flex flex-wrap items-start gap-3 px-3 py-2.5 ${tone.row}`}>
                                                      <VoterAvatar
@@ -1092,7 +1100,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                           {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
                                                           {voter.catatan && <p className="mt-1 break-words rounded-md bg-amber-50 px-2 py-1 text-[10px] text-amber-800"><span className="font-bold">Catatan:</span> {voter.catatan}</p>}
                                                           {avatarErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{avatarErrors[voter.id]}</p>}
-                                                         <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                                         {showCulaStatus && <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>}
                                                         {culaErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
                                                     </div>
                                                     <div className="flex w-full flex-wrap items-center justify-end gap-1.5 sm:w-auto">
@@ -1175,6 +1183,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
                             {unassignedVoters.data.map((voter) => {
                                 const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
+                                const showCulaStatus = shouldShowCulaStatus(culaVoter);
                                 return (
                                 <div key={voter.id} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex min-w-0 items-center gap-3">
@@ -1192,7 +1201,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                               {voter.address && <p className="truncate text-[10px] text-slate-500">{voter.address}</p>}
                                               {voter.catatan && <p className="mt-1 break-words rounded-md bg-amber-50 px-2 py-1 text-[10px] text-amber-800"><span className="font-bold">Catatan:</span> {voter.catatan}</p>}
                                               {avatarErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{avatarErrors[voter.id]}</p>}
-                                             <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>
+                                             {showCulaStatus && <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-600"><span className="font-bold">Kod Cula:</span><span className={culaCodeClass(culaVoter.cula_code)}>{culaVoter.cula_code || '-'}</span>{culaVoter.cula_display_label && <span>{culaVoter.cula_display_label}</span>}</p>}
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
