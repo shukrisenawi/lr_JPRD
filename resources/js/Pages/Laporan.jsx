@@ -153,9 +153,17 @@ function DataTable({ rows, columns, stickyHeader = false }) {
 function CulaPartyTable({ rows }) {
     const totals = rows.reduce((result, row) => {
         result.total += row.total;
+        result.turnout_85 += row.turnout_85;
+        result.attendance_51 += row.attendance_51;
         for (const group of culaPartyGroups) result[group.key] += row.party_counts[group.key];
         return result;
-    }, { total: 0, ...Object.fromEntries(culaPartyGroups.map(({ key }) => [key, 0])) });
+    }, {
+        total: 0,
+        turnout_85: 0,
+        attendance_51: 0,
+        ...Object.fromEntries(culaPartyGroups.map(({ key }) => [key, 0])),
+    });
+    totals.SKC = totals.PN - totals.attendance_51;
 
     return (
         <section className="card overflow-hidden">
@@ -164,7 +172,7 @@ function CulaPartyTable({ rows }) {
                 <p className="mt-0.5 text-xs text-slate-500">Jumlah dan peratus pemilih mengikut kumpulan kod cula.</p>
             </div>
             <div className="overflow-x-auto">
-                <table className="min-w-[980px] w-full border-collapse text-[10px] sm:text-xs">
+                <table className="min-w-[1120px] w-full border-collapse text-[10px] sm:text-xs">
                     <thead className="text-center font-bold text-slate-900">
                         <tr>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
@@ -172,6 +180,9 @@ function CulaPartyTable({ rows }) {
                             {culaPartyGroups.map(({ key }) => (
                                 <th key={key} colSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">{key}</th>
                             ))}
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 whitespace-nowrap">Jumlah Mengundi 85%</th>
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 whitespace-nowrap">Jumlah 51% Kehadiran</th>
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1">SKC</th>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1">Jumlah</th>
                         </tr>
                         <tr>
@@ -203,6 +214,9 @@ function CulaPartyTable({ rows }) {
                                             </Fragment>
                                         );
                                     })}
+                                    <td className="border border-slate-300 px-2 py-1 text-right tabular-nums">{fmt(row.turnout_85)}</td>
+                                    <td className="border border-slate-300 px-2 py-1 text-right tabular-nums">{fmt(row.attendance_51)}</td>
+                                    <td className={`border border-slate-300 px-2 py-1 text-right tabular-nums ${row.skc < 0 ? 'bg-rose-100 font-bold text-rose-700' : ''}`}>{fmt(row.skc)}</td>
                                     <td className="border border-slate-300 px-2 py-1 text-right font-semibold tabular-nums">{fmt(row.total)}</td>
                                 </tr>
                             );
@@ -217,6 +231,9 @@ function CulaPartyTable({ rows }) {
                                     <td className="border border-slate-300 px-1.5 py-1.5" />
                                 </Fragment>
                             ))}
+                            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(totals.turnout_85)}</td>
+                            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(totals.attendance_51)}</td>
+                            <td className={`border border-slate-300 px-2 py-1.5 text-right tabular-nums ${totals.SKC < 0 ? 'bg-rose-100 text-rose-700' : ''}`}>{fmt(totals.SKC)}</td>
                             <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(totals.total)}</td>
                         </tr>
                     </tfoot>
@@ -368,8 +385,16 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         const assignedCount = Object.values(partyCounts).reduce((sum, count) => sum + count, 0);
 
         partyCounts.LAIN2 = Math.max((row.total ?? 0) - assignedCount, 0);
+        const turnout85 = Math.round((row.total ?? 0) * 0.85);
+        const attendance51 = Math.round(turnout85 * 0.51);
 
-        return { ...row, party_counts: partyCounts };
+        return {
+            ...row,
+            party_counts: partyCounts,
+            turnout_85: turnout85,
+            attendance_51: attendance51,
+            skc: partyCounts.PN - attendance51,
+        };
     }), [allUdmTableRows, culaByDmMap]);
     const udmTableRows = allUdmTableRows.slice(0, 25);
     const victoryChartRows = useMemo(() => [{
