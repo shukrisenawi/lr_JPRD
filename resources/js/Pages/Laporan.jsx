@@ -180,8 +180,8 @@ function CulaPartyTable({ rows }) {
                             {culaPartyGroups.map(({ key }) => (
                                 <th key={key} colSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">{key}</th>
                             ))}
-                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 whitespace-nowrap">Jumlah Mengundi 85%</th>
-                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 whitespace-nowrap">Jumlah 51% Kehadiran</th>
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 leading-tight">Jumlah Mengundi<br />85%</th>
+                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 leading-tight">Jumlah 51%<br />Kehadiran</th>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1">SKC</th>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1">Jumlah</th>
                         </tr>
