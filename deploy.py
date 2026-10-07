@@ -16,14 +16,15 @@ What it does:
 import os
 import subprocess
 import sys
-import paramiko
+import ftplib
 import fnmatch
+import posixpath
 
 # Configuration
 LOCAL_DIR = r"D:\xampp\htdocs\lr_JPRD"
-REMOTE_DIR = "/home3/paskawas/public_html/sistem"
-SERVER_HOST = "103.191.76.66"
-SERVER_PORT = 222
+REMOTE_DIR = "/httpdocs"
+SERVER_HOST = "paskawasansik.com"
+SERVER_PORT = 21
 SERVER_USER = "paskawas"
 SERVER_PASS = "eG59Q%wA34?a"
 
@@ -103,84 +104,105 @@ def run_npm_build():
     return True
 
 
-def connect_ssh():
-    """Connect to server via SSH"""
+def connect_ftp():
+    """Connect to the live server over explicit FTPS."""
     print(f"\n🔌 Connecting to {SERVER_HOST}:{SERVER_PORT}...")
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(
-        SERVER_HOST,
-        port=SERVER_PORT,
-        username=SERVER_USER,
-        password=SERVER_PASS,
-        timeout=30,
-    )
+    client = ftplib.FTP_TLS()
+    client.connect(SERVER_HOST, port=SERVER_PORT, timeout=30)
+    client.login(user=SERVER_USER, passwd=SERVER_PASS)
+    # The host rejects private data channels; credentials still use explicit TLS.
+    client.prot_c()
+    client.cwd(REMOTE_DIR)
     print("✅ Connected")
     return client
 
 
-def upload_file(sftp, client, local_path, remote_path):
-    """Upload a single file"""
-    remote_full = os.path.join(REMOTE_DIR, remote_path).replace("\\", "/")
-    remote_dir = os.path.dirname(remote_full)
+def ensure_remote_directory(client, remote_directory):
+    """Create missing folders below the configured application root."""
+    current_directory = client.pwd()
+    client.cwd(REMOTE_DIR)
 
-    # Create remote directory if needed
-    try:
-        sftp.stat(remote_dir)
-    except FileNotFoundError:
-        _, stdout, stderr = client.exec_command(f"mkdir -p {remote_dir}")
-        if stdout.channel.recv_exit_status() != 0:
-            raise RuntimeError(stderr.read().decode().strip() or f"Failed to create {remote_dir}")
+    for directory in remote_directory.replace("\\", "/").split("/"):
+        if not directory:
+            continue
+        try:
+            client.cwd(directory)
+        except ftplib.error_perm:
+            client.mkd(directory)
+            client.cwd(directory)
 
-    sftp.put(local_path, remote_full)
+    client.cwd(current_directory)
 
 
-def upload_build_files(sftp, client):
-    """Upload public/build directory"""
+def upload_file(client, local_path, remote_path):
+    """Upload one file under the configured application root."""
+    remote_path = remote_path.replace("\\", "/")
+    remote_directory = posixpath.dirname(remote_path)
+    if remote_directory:
+        ensure_remote_directory(client, remote_directory)
+
+    with open(local_path, "rb") as file_handle:
+        client.storbinary(f"STOR {remote_path}", file_handle)
+
+
+def upload_build_files(client):
+    """Upload assets first and publish the manifest last."""
     print("\n📤 Uploading public/build/ assets...")
     build_dir = os.path.join(LOCAL_DIR, "public", "build")
-    remote_build = os.path.join(REMOTE_DIR, "public", "build").replace("\\", "/")
-
-    # Clear old build on server
-    _, stdout, stderr = client.exec_command(f"rm -rf {remote_build}/*")
-    if stdout.channel.recv_exit_status() != 0:
-        raise RuntimeError(stderr.read().decode().strip() or "Failed to clear remote build directory")
-
-    uploaded = 0
+    build_files = []
     for root, dirs, files in os.walk(build_dir):
         for file in files:
             local_file = os.path.join(root, file)
-            rel_path = os.path.relpath(local_file, build_dir)
-            remote_file = os.path.join(remote_build, rel_path).replace("\\", "/")
-            remote_dir = os.path.dirname(remote_file)
+            rel_path = os.path.relpath(local_file, LOCAL_DIR).replace("\\", "/")
+            build_files.append((rel_path, local_file))
 
-            try:
-                sftp.mkdir(remote_dir)
-            except:
-                pass
+    manifest_path = "public/build/manifest.json"
+    asset_files = [(path, local) for path, local in build_files if path != manifest_path]
+    manifest_file = next((local for path, local in build_files if path == manifest_path), None)
 
-            sftp.put(local_file, remote_file)
-            uploaded += 1
+    for remote_path, local_file in asset_files:
+        upload_file(client, local_file, remote_path)
 
-    print(f"✅ Uploaded {uploaded} build files")
+    if manifest_file:
+        upload_file(client, manifest_file, manifest_path)
+
+    print(f"✅ Uploaded {len(build_files)} build files")
 
 
 def clear_server_caches(client):
-    """Clear Laravel caches on server"""
+    """Remove Laravel's file-based route, config, and view caches via FTP."""
     print("\n🧹 Clearing server caches...")
-    commands = [
-        "cd {} && php artisan route:clear 2>&1".format(REMOTE_DIR),
-        "cd {} && php artisan view:clear 2>&1".format(REMOTE_DIR),
-        "cd {} && php artisan config:clear 2>&1".format(REMOTE_DIR),
-    ]
 
-    for cmd in commands:
-        stdin, stdout, stderr = client.exec_command(cmd)
-        output = stdout.read().decode().strip()
-        if "ERROR" in output.upper() or "FAIL" in output.upper():
-            print(f"  ⚠️  {output}")
-        else:
-            print(f"  ✅ {cmd.split('&&')[1].strip()}")
+    try:
+        cached_files = client.nlst("bootstrap/cache")
+    except ftplib.error_perm:
+        cached_files = []
+
+    for cached_file in cached_files:
+        name = posixpath.basename(cached_file)
+        if name == "config.php" or (name.startswith("routes") and name.endswith(".php")):
+            try:
+                client.delete(posixpath.join("bootstrap/cache", name))
+                print(f"  ✅ Removed bootstrap/cache/{name}")
+            except ftplib.error_perm as error:
+                print(f"  ⚠️  Could not remove bootstrap/cache/{name}: {error}")
+
+    try:
+        compiled_views = client.nlst("storage/framework/views")
+    except ftplib.error_perm:
+        compiled_views = []
+
+    cleared_views = 0
+    for compiled_view in compiled_views:
+        name = posixpath.basename(compiled_view)
+        if name.endswith(".php"):
+            try:
+                client.delete(posixpath.join("storage/framework/views", name))
+                cleared_views += 1
+            except ftplib.error_perm:
+                pass
+
+    print(f"  ✅ Removed {cleared_views} compiled view(s)")
 
 
 def main():
@@ -214,12 +236,10 @@ def main():
 
     # Step 3: Connect to server
     try:
-        client = connect_ssh()
+        client = connect_ftp()
     except Exception as e:
         print(f"❌ Failed to connect: {e}")
         return
-
-    sftp = client.open_sftp()
 
     # Step 4: Upload changed files
     print("\n📤 Uploading changed files...")
@@ -239,7 +259,7 @@ def main():
         if os.path.isfile(local_file):
             remote_path = filepath.replace("\\", "/")
             try:
-                upload_file(sftp, client, local_file, remote_path)
+                upload_file(client, local_file, remote_path)
                 print(f"  ✅ {filepath}")
                 uploaded += 1
             except Exception as e:
@@ -248,18 +268,17 @@ def main():
     print(f"\n📊 Uploaded: {uploaded}, Skipped: {skipped}")
 
     # Step 5: Upload build files
-    upload_build_files(sftp, client)
+    upload_build_files(client)
 
     # Step 6: Clear caches
     clear_server_caches(client)
 
     # Cleanup
-    sftp.close()
-    client.close()
+    client.quit()
 
     print("\n" + "=" * 60)
     print("✅ Deployment complete!")
-    print(f"🌐 https://{SERVER_HOST}/sistem")
+    print(f"🌐 https://{SERVER_HOST}")
     print("=" * 60)
 
 
