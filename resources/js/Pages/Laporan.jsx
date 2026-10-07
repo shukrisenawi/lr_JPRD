@@ -122,18 +122,47 @@ function TTip({ active, payload, label }) {
     );
 }
 
-function DataTable({ rows, columns, stickyHeader = false }) {
+function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false }) {
+    const [activeRowKey, setActiveRowKey] = useState(null);
     const table = (
         <table className="min-w-full divide-y divide-slate-200 text-xs">
             <thead className={stickyHeader ? 'table-header table-header-sticky' : 'table-header'}>
                 <tr>{columns.map((c) => <th key={c.key} title={c.title} aria-label={c.ariaLabel} className={`px-2.5 py-1.5 ${c.headerClass ?? ''}`}>{c.label}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-slate-200 bg-white text-slate-700">
-                {rows.map((row, i) => (
-                    <tr key={row.key ?? `${row.name}-${i}`} className={`${row.isTotal ? 'bg-violet-100 font-bold text-slate-900' : `${i % 2 === 1 ? 'bg-slate-50/70' : ''} hover:bg-green-50/50`}`}>
-                        {columns.map((c) => <td key={c.key} className={`px-2.5 py-2 align-top leading-4 ${c.cellClass ?? ''} ${row.isTotal ? '!bg-violet-100 font-bold text-slate-900' : ''}`}>{c.format ? c.format(row[c.key], row) : row[c.key]}</td>)}
-                    </tr>
-                ))}
+                {rows.map((row, i) => {
+                    const rowKey = row.key ?? `${row.name}-${i}`;
+                    const isInteractiveRow = interactiveRows && !row.isTotal;
+                    const isActive = isInteractiveRow && activeRowKey === rowKey;
+                    const activeCellClass = isActive ? '!bg-lime-200 group-hover:!bg-lime-200' : '';
+
+                    return (
+                        <tr
+                            key={rowKey}
+                            aria-selected={isInteractiveRow ? isActive : undefined}
+                            tabIndex={isInteractiveRow ? 0 : undefined}
+                            onClick={isInteractiveRow ? () => setActiveRowKey(rowKey) : undefined}
+                            onKeyDown={isInteractiveRow ? (event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault();
+                                    setActiveRowKey(rowKey);
+                                }
+                            } : undefined}
+                            className={row.isTotal
+                                ? 'bg-violet-100 font-bold text-slate-900'
+                                : `${i % 2 === 1 ? 'bg-slate-50/70' : ''} ${isInteractiveRow ? 'group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold' : 'hover:bg-green-50/50'} ${isActive ? 'bg-lime-200 font-bold text-slate-950' : ''}`}
+                        >
+                            {columns.map((c) => (
+                                <td
+                                    key={c.key}
+                                    className={`px-2.5 py-2 align-top leading-4 ${c.cellClass ?? ''} ${isInteractiveRow ? `group-hover:!bg-lime-100/70 group-hover:font-bold ${activeCellClass}` : ''} ${row.isTotal ? '!bg-violet-100 font-bold text-slate-900' : ''}`}
+                                >
+                                    {c.format ? c.format(row[c.key], row) : row[c.key]}
+                                </td>
+                            ))}
+                        </tr>
+                    );
+                })}
             </tbody>
         </table>
     );
@@ -578,7 +607,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         </div>
 
 
-                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader />
+                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows />
                         <CulaPartyTable rows={culaPartyRows} />
                         {udm_snapshot_meta && (
                             <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula {(()=>{const m=udm_snapshot_meta.snapshot_time.match(/^(\d{2})-(\d{2})-(\d{4})/);if(!m)return'';const dt=new Date(+m[3],+m[2]-1,+m[1]);return isNaN(dt.getTime())?'':hari[dt.getDay()]})()}, {udm_snapshot_meta.snapshot_time}</p>
