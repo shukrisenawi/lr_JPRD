@@ -357,11 +357,11 @@ class KeluargaPemilihController extends Controller
                 ->contains(fn (PemilihRecord $member): bool => $this->parentName($member->name) === $fatherParentName);
 
             if (! preg_match('/\bBIN\s+/u', $fatherNameNormalized)
-                || preg_match('/\bBINTI\b/u', $fatherNameNormalized)
+                || preg_match('/\b(?:BINTI|BT)\b/u', $fatherNameNormalized)
                 || ! $this->isUsefulMatchValue($fatherParentName)
                 || $hasSameParentName) {
                 throw ValidationException::withMessages([
-                    'father_id' => 'Ayah mesti mempunyai Bin dan nama Bin/Binti yang berbeza daripada ahli keluarga lain.',
+                    'father_id' => 'Ayah mesti mempunyai Bin dan nama Bin/Binti/BT yang berbeza daripada ahli keluarga lain.',
                 ]);
             }
         }
@@ -926,7 +926,7 @@ class KeluargaPemilihController extends Controller
             $reasons[] = 'Alamat sama';
         }
         if ($sameParent) {
-            $reasons[] = 'Bin/Binti sama';
+            $reasons[] = 'Bin/Binti/BT sama';
         }
         if ($sameLocality) {
             $reasons[] = 'Lokaliti sama';
@@ -985,7 +985,7 @@ class KeluargaPemilihController extends Controller
     private function parentName(?string $name): string
     {
         $normalized = $this->normalize($name);
-        if ($normalized === '' || ! preg_match('/\bBIN(?:TI)?\s+(.+)$/u', $normalized, $matches)) {
+        if ($normalized === '' || ! preg_match('/\b(?:BIN(?:TI)?|BT)\s+(.+)$/u', $normalized, $matches)) {
             return '';
         }
 
@@ -995,7 +995,7 @@ class KeluargaPemilihController extends Controller
     private function personName(?string $name): string
     {
         $normalized = $this->normalize($name);
-        if ($normalized === '' || ! preg_match('/\bBIN(?:TI)?\b/u', $normalized, $matches, PREG_OFFSET_CAPTURE)) {
+        if ($normalized === '' || ! preg_match('/\b(?:BIN(?:TI)?|BT)\b/u', $normalized, $matches, PREG_OFFSET_CAPTURE)) {
             return $normalized;
         }
 

@@ -181,7 +181,7 @@ it('auto-marks the only man in a couple and runs the father auto-add flow', func
     $user = User::factory()->masterAdmin()->create();
     $father = createKeluargaPemilihRecord(['name' => 'ISMAIL BIN AHMAD', 'gender' => 'L']);
     $mother = createKeluargaPemilihRecord(['name' => 'NURAINI BINTI RAHMAN', 'gender' => 'P']);
-    $child = createKeluargaPemilihRecord(['name' => 'NURUL BINTI ISMAIL', 'gender' => 'P']);
+    $child = createKeluargaPemilihRecord(['name' => 'NURUL BT ISMAIL', 'gender' => 'P']);
 
     $this->actingAs($user)
         ->post(route('keluarga-pemilih.store'), [
@@ -295,7 +295,7 @@ it('moves a confirmed family to the reviewed tab and supports cancelling review'
     ]);
 });
 
-it('sorts manual suggestions by strong address and bin or binti matches', function () {
+it('sorts manual suggestions by strong address and bin, binti, or bt matches', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $anchor = createKeluargaPemilihRecord([
         'name' => 'AHMAD BIN HASHIM',
@@ -306,6 +306,11 @@ it('sorts manual suggestions by strong address and bin or binti matches', functi
         'name' => 'SITI BINTI HASHIM',
         'no_rumah' => '20',
         'alamat_kediaman' => 'NO 20, JALAN MAWAR',
+    ]);
+    $sameParentBt = createKeluargaPemilihRecord([
+        'name' => 'RANI BT HASHIM',
+        'no_rumah' => '21',
+        'alamat_kediaman' => 'NO 21, JALAN MAWAR',
     ]);
     $sameHouseAndAddress = createKeluargaPemilihRecord([
         'name' => 'AMIR BIN ABU',
@@ -328,8 +333,10 @@ it('sorts manual suggestions by strong address and bin or binti matches', functi
             't' => $sameHouseAndAddress->updated_at->timestamp,
         ]))
         ->assertJsonPath('voters.0.match_score', 100)
-        ->assertJsonPath('voters.1.id', $sameParent->id)
-        ->assertJsonPath('voters.1.match_reasons.0', 'Bin/Binti sama');
+        ->assertJsonPath('voters.1.id', $sameParentBt->id)
+        ->assertJsonPath('voters.1.match_reasons.0', 'Bin/Binti/BT sama')
+        ->assertJsonPath('voters.2.id', $sameParent->id)
+        ->assertJsonPath('voters.2.match_reasons.0', 'Bin/Binti/BT sama');
 });
 
 it('does not allow users to create a family outside their voter scope', function () {

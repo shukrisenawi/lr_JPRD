@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import Modal from '@/Components/Modal';
+import { sortFamilyMembers } from '@/Utils/familyMemberOrder';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -76,17 +77,17 @@ function culaCodeClass(code) {
 }
 
 function isBintiName(name) {
-    return /\bBINTI\b/i.test(String(name || ''));
+    return /\b(?:BINTI|BT)\b/i.test(String(name || ''));
 }
 
 function binBintiParentName(name) {
     const normalized = String(name || '').trim().replace(/\s+/g, ' ').toLocaleUpperCase();
-    return normalized.match(/\bBIN(?:TI)?\s+(.+)$/)?.[1]?.trim() || '';
+    return normalized.match(/\b(?:BIN(?:TI)?|BT)\s+(.+)$/)?.[1]?.trim() || '';
 }
 
 function personNameBeforeBinBinti(name) {
     const normalized = String(name || '').trim().replace(/\s+/g, ' ');
-    const markerIndex = normalized.search(/\bBIN(?:TI)?\b/i);
+    const markerIndex = normalized.search(/\b(?:BIN(?:TI)?|BT)\b/i);
     return markerIndex < 0 ? '' : normalized.slice(0, markerIndex).trim();
 }
 
@@ -962,6 +963,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             {visibleFamilies.map((family) => {
                                 const father = fatherDetails(family, fatherOverrides);
                                 const members = father.members || family.members;
+                                const displayMembers = sortFamilyMembers(members, father.father_id);
                                 const memberCount = father.member_count ?? family.member_count;
                                 const locations = [...new Set(members.map(locationLabel).filter(Boolean))];
                                 const familyName = father.family_name || family.name;
@@ -997,7 +999,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                         {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
                                         {removeErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{removeErrors[family.id]}</p>}
                                         <div className="divide-y divide-slate-100">
-                                            {members.map((voter) => {
+                                            {displayMembers.map((voter) => {
                                                 const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
                                                 const isFather = Number(father.father_id) === Number(voter.id);
                                                 return (
