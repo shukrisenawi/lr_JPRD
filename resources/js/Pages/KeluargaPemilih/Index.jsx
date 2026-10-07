@@ -151,6 +151,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [mode, setMode] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [familySearch, setFamilySearch] = useState(filters.q || '');
+    const familySearchRef = useRef(filters.q || '');
+    const familySearchDirty = useRef(false);
+    const familySearchRequest = useRef(null);
+    const familySearchRequestId = useRef(0);
     const [results, setResults] = useState([]);
     const [selectedVoters, setSelectedVoters] = useState([]);
     const [familyName, setFamilyName] = useState('');
@@ -210,7 +214,12 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     }, [families.data]);
 
     useEffect(() => {
-        setFamilySearch(filters.q || '');
+        const serverQuery = filters.q || '';
+        if (familySearchDirty.current && serverQuery !== familySearchRef.current.trim()) return;
+
+        familySearchDirty.current = false;
+        familySearchRef.current = serverQuery;
+        setFamilySearch(serverQuery);
     }, [filters.q]);
 
     useEffect(() => {
@@ -220,9 +229,14 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         }
 
         const query = familySearch.trim();
-        if (query === (filters.q || '')) return undefined;
+        const activeRequest = familySearchRequest.current;
+        if (query === (filters.q || '') && (!activeRequest || activeRequest.query === query)) return undefined;
 
         const timer = window.setTimeout(() => {
+            if (familySearchRef.current.trim() !== query) return;
+
+            const requestId = ++familySearchRequestId.current;
+            familySearchRequest.current = { id: requestId, query };
             router.get(route('keluarga-pemilih.index'), {
                 ...(filters.udm ? { udm: filters.udm } : {}),
                 ...(filters.locality ? { locality: filters.locality } : {}),
@@ -232,11 +246,20 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
+                onFinish: () => {
+                    if (familySearchRequest.current?.id === requestId) familySearchRequest.current = null;
+                },
             });
         }, 300);
 
         return () => window.clearTimeout(timer);
     }, [familySearch, filters.locality, filters.q, filters.tab, filters.udm]);
+
+    const updateFamilySearch = (value) => {
+        familySearchRef.current = value;
+        familySearchDirty.current = value.trim() !== (filters.q || '') || Boolean(familySearchRequest.current);
+        setFamilySearch(value);
+    };
 
     const targetFamily = useMemo(
         () => mode?.type === 'add' ? families.data.find((family) => family.id === mode.familyId) : null,
@@ -351,6 +374,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         closeManual();
         if (resetUnassignedSearch) {
             skipFamilySearchDebounce.current = Boolean(filters.q);
+            familySearchRequestId.current += 1;
+            familySearchRequest.current = null;
+            familySearchRef.current = '';
+            familySearchDirty.current = Boolean(filters.q);
             setFamilySearch('');
         }
         router.get(route('keluarga-pemilih.index'), {
@@ -952,7 +979,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <div className="relative w-full sm:max-w-sm">
                             <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
-                            <input id="family-member-search" type="search" value={familySearch} onChange={(event) => setFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat pemilih…" className="input-field w-full pl-9 text-xs" />
+                            <input id="family-member-search" type="search" value={familySearch} onChange={(event) => updateFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat pemilih…" className="input-field w-full pl-9 text-xs" />
                         </div>
                         {visibleStats.unassigned > 0 && <p className="text-left text-[11px] text-slate-500 sm:text-right">{visibleStats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
                     </div>
@@ -1066,7 +1093,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <div className="relative w-full sm:max-w-sm">
                             <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <label htmlFor="unassigned-voter-search" className="sr-only">Cari pemilih belum berkeluarga</label>
-                            <input id="unassigned-voter-search" type="search" value={familySearch} onChange={(event) => setFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat…" className="input-field w-full pl-9 text-xs" />
+                            <input id="unassigned-voter-search" type="search" value={familySearch} onChange={(event) => updateFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat…" className="input-field w-full pl-9 text-xs" />
                         </div>
                     </div>
 

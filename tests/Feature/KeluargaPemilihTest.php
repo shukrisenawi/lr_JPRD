@@ -297,6 +297,43 @@ it('moves a confirmed family to the reviewed tab and supports cancelling review'
     ]);
 });
 
+it('supports non-adjacent name tokens and ranks family results by the closest match', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $closest = createKeluargaPemilihRecord(['name' => 'ABDUL AHMAD']);
+    $nearMatch = createKeluargaPemilihRecord(['name' => 'ABDUL KHALID BIN AHMAD']);
+    $searchExact = createKeluargaPemilihRecord(['name' => 'ABDUL AHMAD']);
+    $searchNearMatch = createKeluargaPemilihRecord(['name' => 'ABDUL KHALID BIN AHMAD']);
+    $unmatched = createKeluargaPemilihRecord(['name' => 'ABDUL KHALID BIN SALLEH']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abdul Khalid',
+            'pemilih_ids' => [$nearMatch->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Abdul Ahmad',
+            'pemilih_ids' => [$closest->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'q' => 'abdul ahmad']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('families.data.0.name', 'Keluarga Abdul Ahmad')
+            ->where('families.data.1.name', 'Keluarga Abdul Khalid'));
+
+    $this->actingAs($user)
+        ->getJson(route('keluarga-pemilih.search', ['q' => 'abdul ahmad']))
+        ->assertOk()
+        ->assertJsonCount(2, 'voters')
+        ->assertJsonPath('voters.0.id', $searchExact->id)
+        ->assertJsonPath('voters.1.id', $searchNearMatch->id);
+});
+
 it('sorts manual suggestions by strong address and bin, binti, or bt matches', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $anchor = createKeluargaPemilihRecord([

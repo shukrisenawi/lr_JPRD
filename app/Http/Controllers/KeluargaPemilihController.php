@@ -88,6 +88,23 @@ class KeluargaPemilihController extends Controller
         } else {
             $familiesQuery->whereNull('reviewed_at');
         }
+        if ($searchFilter !== '') {
+            $familyRanking = PemilihRecord::query()
+                ->join('pemilih_family_members', 'pemilih_family_members.pemilih_record_id', '=', 'pemilih_records.id')
+                ->whereColumn('pemilih_family_members.pemilih_family_id', 'pemilih_families.id');
+            $user->applyScopeToPemilihQuery($familyRanking);
+            if ($udmFilter !== '') {
+                $familyRanking->where('pemilih_records.dm', $udmFilter);
+            }
+            if ($localityFilter !== '') {
+                $familyRanking->where('pemilih_records.locality', $localityFilter);
+            }
+            $this->applySearchTerm($familyRanking, $searchFilter);
+            [$scoreSql, $scoreBindings] = $this->searchRelevanceSql($searchFilter, false);
+            $familyRanking->selectRaw('MAX('.$scoreSql.')', $scoreBindings);
+            $familiesQuery->orderByDesc($familyRanking);
+        }
+        $familiesQuery->orderByDesc('id');
         $allVoters = $this->activeVoterQuery($user);
         $allFamiliesQuery = $this->visibleFamilyQuery($user);
 
@@ -112,6 +129,7 @@ class KeluargaPemilihController extends Controller
             ->whereDoesntHave('families');
         if ($searchFilter !== '') {
             $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
+            $this->orderSearchResults($unassignedVotersQuery, $searchFilter);
         }
 
         $familyCount = $familyTabCounts[$tabFilter === 'reviewed' ? 'reviewed' : 'families'];
@@ -167,7 +185,7 @@ class KeluargaPemilihController extends Controller
                 'member_count' => $family->members->count(),
             ]);
         $unassignedVoters = $unassignedVotersQuery
-            ->orderBy('name')
+            ->orderBy('pemilih_records.name')
             ->paginate(20)
             ->withQueryString()
             ->through(fn (PemilihRecord $voter): array => $this->voterPayload($voter));
@@ -225,12 +243,8 @@ class KeluargaPemilihController extends Controller
 
         if ($term !== '') {
             $this->applySearchTerm($query, $term);
-            $records = $query
-                ->orderBy('no_rumah')
-                ->orderBy('locality')
-                ->orderBy('name')
-                ->limit(100)
-                ->get();
+            $this->orderSearchResults($query, $term);
+            $records = $query->limit(200)->get();
         } elseif ($anchor) {
             $records = $this->suggestionCandidates($query, $anchor, $anchorIsFather);
         } else {
@@ -238,15 +252,26 @@ class KeluargaPemilihController extends Controller
         }
 
         $results = $records
-            ->map(fn (PemilihRecord $voter): array => $this->voterPayload(
-                $voter,
-                $anchor ? $this->matchDetails($anchor, $voter, $anchorIsFather) : null,
-            ))
+            ->map(function (PemilihRecord $voter) use ($anchor, $anchorIsFather, $term): array {
+                return [
+                    ...$this->voterPayload(
+                        $voter,
+                        $anchor ? $this->matchDetails($anchor, $voter, $anchorIsFather) : null,
+                    ),
+                    'search_score' => $term !== '' ? $this->searchRelevanceScore($voter, $term) : 0,
+                ];
+            })
             ->sort(function (array $left, array $right): int {
-                return ($right['match_score'] <=> $left['match_score'])
+                return ($right['search_score'] <=> $left['search_score'])
+                    ?: ($right['match_score'] <=> $left['match_score'])
                     ?: strcasecmp((string) $left['name'], (string) $right['name']);
             })
             ->take(80)
+            ->map(function (array $voter): array {
+                unset($voter['search_score']);
+
+                return $voter;
+            })
             ->values();
 
         return response()->json(['voters' => $results]);
@@ -836,12 +861,129 @@ class KeluargaPemilihController extends Controller
 
     private function applySearchTerm(Builder $query, string $term): void
     {
-        $like = '%'.mb_strtolower($term).'%';
-        $query->where(function (Builder $builder) use ($like): void {
-            foreach (['name', 'no_kp', 'old_ic', 'no_rumah', 'dm', 'locality', 'address', 'alamat_kp', 'alamat_kediaman'] as $column) {
-                $builder->orWhereRaw("LOWER(COALESCE({$column}, '')) LIKE ?", [$like]);
+        $columns = ['name', 'no_kp', 'old_ic', 'no_rumah', 'dm', 'locality', 'address', 'alamat_kp', 'alamat_kediaman'];
+
+        foreach ($this->searchTokens($term) as $token) {
+            $like = '%'.mb_strtolower($token, 'UTF-8').'%';
+            $query->where(function (Builder $builder) use ($columns, $like): void {
+                foreach ($columns as $column) {
+                    $builder->orWhereRaw("LOWER(COALESCE(pemilih_records.{$column}, '')) LIKE ?", [$like]);
+                }
+            });
+        }
+    }
+
+    /** @return array<int, string> */
+    private function searchTokens(string $term): array
+    {
+        $tokens = preg_split('/\s+/u', $this->normalize($term), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return array_slice(array_values(array_unique($tokens)), 0, 8);
+    }
+
+    /** @return array{0: string, 1: array<int, string>} */
+    private function searchRelevanceSql(string $term, bool $includeOtherFields = true): array
+    {
+        $normalizedTerm = mb_strtolower($this->normalize($term), 'UTF-8');
+        $nameExpression = "LOWER(TRIM(COALESCE(pemilih_records.name, '')))";
+        $parts = [
+            "CASE WHEN {$nameExpression} = ? THEN 1000000 ELSE 0 END",
+            "CASE WHEN {$nameExpression} LIKE ? THEN 500000 ELSE 0 END",
+        ];
+        $bindings = [$normalizedTerm, '%'.$normalizedTerm.'%'];
+        $otherFields = ['no_kp', 'old_ic', 'no_rumah', 'dm', 'locality', 'address', 'alamat_kp', 'alamat_kediaman'];
+
+        foreach ($this->searchTokens($term) as $token) {
+            $like = '%'.mb_strtolower($token, 'UTF-8').'%';
+            if (! $includeOtherFields) {
+                $parts[] = "CASE WHEN {$nameExpression} LIKE ? THEN 10000 ELSE 0 END";
+                $bindings[] = $like;
+
+                continue;
             }
-        });
+
+            $otherMatches = collect($otherFields)
+                ->map(fn (string $column): string => "LOWER(COALESCE(pemilih_records.{$column}, '')) LIKE ?")
+                ->implode(' OR ');
+            $parts[] = "CASE WHEN {$nameExpression} LIKE ? THEN 10000 WHEN ({$otherMatches}) THEN 1000 ELSE 0 END";
+            array_push($bindings, $like, ...array_fill(0, count($otherFields), $like));
+        }
+
+        return ['('.implode(' + ', $parts).')', $bindings];
+    }
+
+    private function orderSearchResults(Builder $query, string $term): void
+    {
+        [$scoreSql, $bindings] = $this->searchRelevanceSql($term);
+        $query->orderByRaw($scoreSql.' DESC', $bindings)
+            ->orderBy('pemilih_records.name');
+    }
+
+    private function searchRelevanceScore(PemilihRecord $voter, string $term): int
+    {
+        $tokens = $this->searchTokens($term);
+        if ($tokens === []) {
+            return 0;
+        }
+
+        $name = $this->normalize($voter->name);
+        $normalizedTerm = $this->normalize($term);
+        if ($name === $normalizedTerm) {
+            return 1_000_000;
+        }
+
+        $phrasePosition = mb_strpos($name, $normalizedTerm, 0, 'UTF-8');
+        if ($phrasePosition !== false) {
+            return 900_000 - min($phrasePosition, 1_000);
+        }
+
+        $namePositions = [];
+        foreach ($tokens as $token) {
+            $position = mb_strpos($name, $token, 0, 'UTF-8');
+            if ($position === false) {
+                $namePositions = [];
+                break;
+            }
+            $namePositions[] = $position;
+        }
+
+        if (count($namePositions) === count($tokens)) {
+            $ordered = true;
+            for ($index = 1; $index < count($namePositions); $index++) {
+                if ($namePositions[$index] <= $namePositions[$index - 1]) {
+                    $ordered = false;
+                    break;
+                }
+            }
+
+            return 800_000 - ((max($namePositions) - min($namePositions)) * 10) - ($ordered ? 0 : 10_000);
+        }
+
+        $fields = [
+            $name,
+            $this->normalize($voter->no_kp),
+            $this->normalize($voter->old_ic),
+            $this->normalize($voter->no_rumah),
+            $this->normalize($voter->dm),
+            $this->normalize($voter->locality),
+            $this->normalize($voter->address),
+            $this->normalize($voter->alamat_kp),
+            $this->normalize($voter->alamat_kediaman),
+        ];
+        $bestFieldMatches = 0;
+        foreach ($fields as $field) {
+            $fieldMatches = count(array_filter(
+                $tokens,
+                fn (string $token): bool => mb_strpos($field, $token, 0, 'UTF-8') !== false,
+            ));
+            $bestFieldMatches = max($bestFieldMatches, $fieldMatches);
+        }
+        $nameMatches = count(array_filter(
+            $tokens,
+            fn (string $token): bool => mb_strpos($name, $token, 0, 'UTF-8') !== false,
+        ));
+
+        return ($bestFieldMatches * 1_000) + ($nameMatches * 100);
     }
 
     private function suggestionCandidates(Builder $query, PemilihRecord $anchor, bool $anchorIsFather = false): Collection
