@@ -21,7 +21,7 @@ function createKeluargaPemilihRecord(array $attributes = []): PemilihRecord
 it('creates a voter family manually, adds members, and removes a member', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $first = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
-    $second = createKeluargaPemilihRecord(['name' => 'SITI BINTI ALI']);
+    $second = createKeluargaPemilihRecord(['name' => 'SITI BINTI ALI', 'gender' => 'P', 'catatan' => 'Catatan ujian']);
     $third = createKeluargaPemilihRecord(['name' => 'AMIR BIN ALI']);
 
     $this->actingAs($user)
@@ -63,6 +63,8 @@ it('creates a voter family manually, adds members, and removes a member', functi
             ->component('KeluargaPemilih/Index')
             ->where('families.data.0.name', 'Keluarga Ali')
             ->where('families.data.0.member_count', 2)
+            ->where('families.data.0.members.1.gender', 'P')
+            ->where('families.data.0.members.1.catatan', 'Catatan ujian')
             ->where('stats.assigned', 2)
             ->where('stats.unassigned', 1));
 });
