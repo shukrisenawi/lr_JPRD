@@ -822,6 +822,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
 
     const selectedIds = new Set(selectedVoters.map((voter) => voter.id));
     const visibleFamilies = families.data.filter((family) => !removedFamilyIds.has(Number(family.id)));
+    const allReviewedFamiliesExpanded = visibleFamilies.length > 0
+        && visibleFamilies.every((family) => expandedReviewedFamilyIds.has(Number(family.id)));
     const visibleFamilyTotal = Math.max(0, families.total - removeStatsDelta.families);
     const visibleStats = {
         ...stats,
@@ -1037,10 +1039,25 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 {filters.udm && filters.tab !== 'unassigned' && <section className="space-y-2.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div><p className="label-section">{filters.tab === 'reviewed' ? 'Keluarga Telah disemak' : 'Senarai Keluarga'}</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{visibleFamilyTotal.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ` · ${allUdmLabel}`}</h3></div>
-                        <div className="relative w-full sm:max-w-sm">
-                            <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                            <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
-                            <input id="family-member-search" type="search" value={familySearch} onChange={(event) => updateFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat pemilih…" className="input-field w-full pl-9 text-xs" />
+                        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                            <div className="relative w-full sm:max-w-sm">
+                                <Icon name="search" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
+                                <input id="family-member-search" type="search" value={familySearch} onChange={(event) => updateFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat pemilih…" className="input-field w-full pl-9 text-xs" />
+                            </div>
+                            {filters.tab === 'reviewed' && visibleFamilies.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setExpandedReviewedFamilyIds(allReviewedFamiliesExpanded
+                                        ? new Set()
+                                        : new Set(visibleFamilies.map((family) => Number(family.id))))}
+                                    aria-expanded={allReviewedFamiliesExpanded}
+                                    className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-slate-200 text-slate-700"
+                                >
+                                    {allReviewedFamiliesExpanded ? 'Tutup semua kad' : 'Buka semua kad'}
+                                    <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${allReviewedFamiliesExpanded ? 'rotate-180' : ''}`} />
+                                </button>
+                            )}
                         </div>
                         {visibleStats.unassigned > 0 && <p className="text-left text-[11px] text-slate-500 sm:text-right">{visibleStats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
                     </div>
