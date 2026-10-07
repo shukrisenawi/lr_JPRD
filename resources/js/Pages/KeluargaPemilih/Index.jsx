@@ -197,7 +197,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
     const [reviewFamilyProcessingId, setReviewFamilyProcessingId] = useState(null);
-    const [expandedReviewedFamilyIds, setExpandedReviewedFamilyIds] = useState(new Set());
+    const [familyCardExpansionModes, setFamilyCardExpansionModes] = useState({ families: true, reviewed: false });
+    const [familyCardExpansionOverrides, setFamilyCardExpansionOverrides] = useState({});
     const [removedFamilyIds, setRemovedFamilyIds] = useState(new Set());
     const [removingVoterIds, setRemovingVoterIds] = useState(new Set());
     const [removingFamilyIds, setRemovingFamilyIds] = useState(new Set());
@@ -231,7 +232,6 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             members: family.members,
             member_count: family.member_count,
         }])));
-        setExpandedReviewedFamilyIds(new Set());
         setFatherErrors({});
         setRemovedFamilyIds(new Set());
         setRemovingVoterIds(new Set());
@@ -822,8 +822,14 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
 
     const selectedIds = new Set(selectedVoters.map((voter) => voter.id));
     const visibleFamilies = families.data.filter((family) => !removedFamilyIds.has(Number(family.id)));
-    const allReviewedFamiliesExpanded = visibleFamilies.length > 0
-        && visibleFamilies.every((family) => expandedReviewedFamilyIds.has(Number(family.id)));
+    const activeFamilyTab = filters.tab === 'reviewed' ? 'reviewed' : 'families';
+    const allVisibleFamiliesExpanded = visibleFamilies.length > 0
+        && visibleFamilies.every((family) => {
+            const familyExpansionKey = `${activeFamilyTab}:${Number(family.id)}`;
+            return Object.prototype.hasOwnProperty.call(familyCardExpansionOverrides, familyExpansionKey)
+                ? familyCardExpansionOverrides[familyExpansionKey]
+                : familyCardExpansionModes[activeFamilyTab];
+        });
     const visibleFamilyTotal = Math.max(0, families.total - removeStatsDelta.families);
     const visibleStats = {
         ...stats,
@@ -1045,17 +1051,21 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 <label htmlFor="family-member-search" className="sr-only">Cari pemilih dalam keluarga</label>
                                 <input id="family-member-search" type="search" value={familySearch} onChange={(event) => updateFamilySearch(event.target.value)} placeholder="Cari nama, No. KP, no. rumah atau alamat pemilih…" className="input-field w-full pl-9 text-xs" />
                             </div>
-                            {filters.tab === 'reviewed' && visibleFamilies.length > 0 && (
+                            {(filters.tab === 'reviewed' || filters.tab === 'families') && visibleFamilies.length > 0 && (
                                 <button
                                     type="button"
-                                    onClick={() => setExpandedReviewedFamilyIds(allReviewedFamiliesExpanded
-                                        ? new Set()
-                                        : new Set(visibleFamilies.map((family) => Number(family.id))))}
-                                    aria-expanded={allReviewedFamiliesExpanded}
+                                    onClick={() => {
+                                        const shouldExpandAll = !allVisibleFamiliesExpanded;
+                                        setFamilyCardExpansionModes((current) => ({ ...current, [activeFamilyTab]: shouldExpandAll }));
+                                        setFamilyCardExpansionOverrides((current) => Object.fromEntries(
+                                            Object.entries(current).filter(([key]) => !key.startsWith(`${activeFamilyTab}:`)),
+                                        ));
+                                    }}
+                                    aria-expanded={allVisibleFamiliesExpanded}
                                     className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-slate-200 text-slate-700"
                                 >
-                                    {allReviewedFamiliesExpanded ? 'Tutup semua kad' : 'Buka semua kad'}
-                                    <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${allReviewedFamiliesExpanded ? 'rotate-180' : ''}`} />
+                                    {allVisibleFamiliesExpanded ? 'Tutup semua kad' : 'Buka semua kad'}
+                                    <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${allVisibleFamiliesExpanded ? 'rotate-180' : ''}`} />
                                 </button>
                             )}
                         </div>
@@ -1083,7 +1093,11 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 const familyName = father.family_name || family.name;
                                 const isUpdated = updatedFamilyId === family.id;
                                 const isReviewedTab = filters.tab === 'reviewed';
-                                const isFamilyExpanded = !isReviewedTab || expandedReviewedFamilyIds.has(Number(family.id));
+                                const familyId = Number(family.id);
+                                const familyExpansionKey = `${activeFamilyTab}:${familyId}`;
+                                const isFamilyExpanded = Object.prototype.hasOwnProperty.call(familyCardExpansionOverrides, familyExpansionKey)
+                                    ? familyCardExpansionOverrides[familyExpansionKey]
+                                    : familyCardExpansionModes[activeFamilyTab];
                                 return (
                                     <article key={family.id} className={`card overflow-hidden transition-all duration-300 ${isUpdated ? 'border-yellow-400 bg-yellow-50/70 ring-2 ring-yellow-300 shadow-md' : ''}`}>
                                         <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1121,13 +1135,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                             {isReviewedTab && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setExpandedReviewedFamilyIds((current) => {
-                                                        const next = new Set(current);
-                                                        const familyId = Number(family.id);
-                                                        if (next.has(familyId)) next.delete(familyId);
-                                                        else next.add(familyId);
-                                                        return next;
-                                                    })}
+                                                    onClick={() => setFamilyCardExpansionOverrides((current) => ({
+                                                        ...current,
+                                                        [familyExpansionKey]: !isFamilyExpanded,
+                                                    }))}
                                                     aria-expanded={isFamilyExpanded}
                                                     aria-controls={`family-members-${family.id}`}
                                                     className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-slate-200 text-slate-700"
@@ -1193,7 +1204,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <nav aria-label="Halaman keluarga pemilih" className="flex flex-wrap justify-center gap-1.5 pt-2">
                             {families.links.map((link) => (
                                 link.url
-                                    ? <Link key={link.url} href={link.url} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
+                                    ? <Link key={link.url} href={link.url} preserveState className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
                                     : <span key={`disabled-${link.label}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
                             ))}
                         </nav>
