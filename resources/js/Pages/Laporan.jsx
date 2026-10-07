@@ -137,7 +137,7 @@ function DataTable({ rows, columns, stickyHeader = false }) {
 
     return (
         <div className={`card ${stickyHeader ? 'overflow-visible' : 'overflow-hidden'}`}>
-            {stickyHeader ? table : <div className="overflow-x-auto">{table}</div>}
+            {stickyHeader ? <div className="overflow-x-auto xl:overflow-visible">{table}</div> : <div className="overflow-x-auto">{table}</div>}
         </div>
     );
 }
@@ -369,7 +369,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     };
 
     const dmCols = [
-        { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span>, headerClass: 'sticky-th', cellClass: 'sticky-td' },
+        { key: 'name', label: 'UDM', format: (v) => <span className="font-bold text-slate-800">{v}</span>, headerClass: 'sticky-th whitespace-nowrap', cellClass: 'sticky-td whitespace-nowrap' },
 
         { key: 'siap_cula', label: <svg aria-hidden="true" className="mx-auto h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg>, ariaLabel: 'Siap', title: 'Siap', format: (v, r) => r.isTotal ? fmt(v) : fmtSiapDiff(v, diffMap[r.key]?.siap_increase), headerClass: 'bg-green-50 text-green-900', cellClass: 'bg-green-50/40' },
         { key: 'JP', label: 'JP', format: (v, r) => fmtDiff(v, diffMap[r.key]?.JP), headerClass: groupH.jp, cellClass: groupC.jp },
