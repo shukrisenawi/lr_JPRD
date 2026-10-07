@@ -356,6 +356,7 @@ class KeluargaPemilihController extends Controller
                 ->get(['pemilih_records.id', 'pemilih_records.name'])
                 ->contains(fn (PemilihRecord $member): bool => $this->parentName($member->name) === $fatherParentName);
 
+            // BT and BINTI have the same family-name role and cannot identify the father.
             if (! preg_match('/\bBIN\s+/u', $fatherNameNormalized)
                 || preg_match('/\b(?:BINTI|BT)\b/u', $fatherNameNormalized)
                 || ! $this->isUsefulMatchValue($fatherParentName)

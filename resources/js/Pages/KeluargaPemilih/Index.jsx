@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import Modal from '@/Components/Modal';
-import { sortFamilyMembers } from '@/Utils/familyMemberOrder';
+import { calculateAgeFromNoKp, sortFamilyMembers } from '@/Utils/familyMemberOrder';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -963,6 +963,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             {visibleFamilies.map((family) => {
                                 const father = fatherDetails(family, fatherOverrides);
                                 const members = father.members || family.members;
+                                // Ayah diutamakan, kemudian ahli lain disusun berdasarkan YYMMDD dalam no_kp.
                                 const displayMembers = sortFamilyMembers(members, father.father_id);
                                 const memberCount = father.member_count ?? family.member_count;
                                 const locations = [...new Set(members.map(locationLabel).filter(Boolean))];
@@ -1002,6 +1003,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                             {displayMembers.map((voter) => {
                                                 const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
                                                 const isFather = Number(father.father_id) === Number(voter.id);
+                                                const age = calculateAgeFromNoKp(voter.no_kp);
                                                 return (
                                                 <div key={voter.id} className="flex flex-wrap items-start gap-3 px-3 py-2.5">
                                                      <VoterAvatar
@@ -1013,7 +1015,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                          onUpload={openAvatarUpload}
                                                      />
                                                      <div className="min-w-0 flex-1">
-                                                         <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{isFather && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}</p>
+                                                         <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800"><span className="truncate">{voter.name || 'Nama tiada'}</span>{isFather && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-green-800">Ayah</span>}{age !== null && <span title="Umur berdasarkan No. KP" className="rounded-full bg-sky-50 px-1.5 py-0.5 text-[8px] font-bold text-sky-700">{age} tahun</span>}</p>
                                                          <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                                          {voter.address && <p className="mt-0.5 truncate text-[10px] text-slate-500">{voter.address}</p>}
                                                          {avatarErrors[voter.id] && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{avatarErrors[voter.id]}</p>}

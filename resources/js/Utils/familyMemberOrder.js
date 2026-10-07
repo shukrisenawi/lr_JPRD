@@ -1,29 +1,46 @@
-function icBirthDateKey(voter) {
+function noKpBirthDate(noKp) {
     const currentYearShort = new Date().getFullYear() % 100;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (const identity of [voter.no_kp, voter.old_ic]) {
-        const digits = String(identity || '').replace(/\D/g, '');
-        if (digits.length !== 12) continue;
+    const digits = String(noKp || '').replace(/\D/g, '');
+    if (digits.length !== 12) return null;
 
-        const yearShort = Number(digits.slice(0, 2));
-        const month = Number(digits.slice(2, 4));
-        const day = Number(digits.slice(4, 6));
-        const year = yearShort > currentYearShort ? 1900 + yearShort : 2000 + yearShort;
-        const birthDate = new Date(year, month - 1, day);
+    const yearShort = Number(digits.slice(0, 2));
+    const month = Number(digits.slice(2, 4));
+    const day = Number(digits.slice(4, 6));
+    const year = yearShort > currentYearShort ? 1900 + yearShort : 2000 + yearShort;
+    const birthDate = new Date(year, month - 1, day);
 
-        if (
-            birthDate.getFullYear() !== year
-            || birthDate.getMonth() !== month - 1
-            || birthDate.getDate() !== day
-            || birthDate > today
-        ) continue;
+    if (
+        birthDate.getFullYear() !== year
+        || birthDate.getMonth() !== month - 1
+        || birthDate.getDate() !== day
+        || birthDate > today
+    ) return null;
 
-        return year * 10000 + month * 100 + day;
-    }
+    return birthDate;
+}
 
-    return null;
+export function calculateAgeFromNoKp(noKp) {
+    const birthDate = noKpBirthDate(noKp);
+    if (!birthDate) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    if (
+        today.getMonth() < birthDate.getMonth()
+        || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())
+    ) age -= 1;
+
+    return age;
+}
+
+function icBirthDateKey(voter) {
+    const birthDate = noKpBirthDate(voter.no_kp);
+    if (!birthDate) return null;
+
+    return birthDate.getFullYear() * 10000 + (birthDate.getMonth() + 1) * 100 + birthDate.getDate();
 }
 
 export function sortFamilyMembers(members = [], fatherId = null) {
