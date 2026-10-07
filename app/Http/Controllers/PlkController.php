@@ -121,7 +121,7 @@ class PlkController extends Controller
                 ->with('plkVerifier:id,name')
                 ->select([
                     'id', 'no_kp', 'old_ic', 'name', 'dm', 'locality',
-                    'cula_code', 'cula_display_label', 'phone_mobile', 'phone_home',
+                    'cula_code', 'cula_display_label', 'phone_mobile', 'phone_home', 'catatan',
                     'plk_verified_at', 'plk_verified_by',
                 ])
                 ->orderBy('dm')
@@ -140,6 +140,7 @@ class PlkController extends Controller
                 'cula_code' => $voter->cula_code,
                 'cula_label' => CulaCodes::label((string) $voter->cula_code),
                 'phone' => $voter->phone_mobile ?: $voter->phone_home,
+                'catatan' => $voter->catatan,
                 'verified_at' => $voter->plk_verified_at?->format('d-m-Y H:i'),
                 'verified_by' => $voter->plkVerifier?->name,
             ]);
@@ -194,7 +195,7 @@ class PlkController extends Controller
         $voters = $this->applyFilters($this->baseQuery($request->user()), $filters)
             ->when($tab === 'disemak', fn (Builder $query) => $query->whereNotNull('plk_verified_at'))
             ->select([
-                'name', 'no_kp', 'old_ic', 'phone_mobile', 'phone_home',
+                'name', 'no_kp', 'old_ic', 'phone_mobile', 'phone_home', 'catatan',
                 'cula_code', 'dm', 'locality',
             ])
             ->orderBy('dm')
@@ -206,6 +207,7 @@ class PlkController extends Controller
                 'no_kp' => $voter->no_kp ?: $voter->old_ic,
                 'phone' => $voter->phone_mobile ?: $voter->phone_home,
                 'cula_code' => $voter->cula_code,
+                'catatan' => $voter->catatan,
                 'dm' => $voter->dm,
                 'locality' => $voter->locality,
             ])

@@ -21,7 +21,7 @@ function createPlkRecord(array $attributes = []): PemilihRecord
 
 it('lists only active PLK voters and separates voters already verified', function () {
     $user = User::factory()->withModules(['plk'])->create();
-    $pending = createPlkRecord(['name' => 'BELUM SEMAK']);
+    $pending = createPlkRecord(['name' => 'BELUM SEMAK', 'catatan' => 'Perlu dihubungi semula']);
     $checked = createPlkRecord([
         'name' => 'SUDAH SEMAK',
         'cula_code' => '3U',
@@ -44,7 +44,8 @@ it('lists only active PLK voters and separates voters already verified', functio
             ->where('code_counts.3U', 1)
             ->where('voters.total', 2)
             ->where('voters.data.0.id', $pending->id)
-            ->where('voters.data.0.cula_code', '3B'));
+            ->where('voters.data.0.cula_code', '3B')
+            ->where('voters.data.0.catatan', 'Perlu dihubungi semula'));
 
     $this->actingAs($user)
         ->get(route('plk.index', ['cula_code' => '3U']))
@@ -104,7 +105,7 @@ it('cancels a PLK verification and returns the voter to the full list', function
 
 it('exports all matching PLK voters without pagination', function () {
     $user = User::factory()->withModules(['plk'])->create();
-    createPlkRecord(['identity_number' => 'PLK-EXPORT-A-1', 'name' => 'PEMILIH EXPORT A', 'dm' => 'UDM A', 'locality' => 'LOKALITI 1', 'cula_code' => '3B']);
+    createPlkRecord(['identity_number' => 'PLK-EXPORT-A-1', 'name' => 'PEMILIH EXPORT A', 'dm' => 'UDM A', 'locality' => 'LOKALITI 1', 'cula_code' => '3B', 'catatan' => 'Bawa dokumen']);
     createPlkRecord(['identity_number' => 'PLK-EXPORT-A-2', 'name' => 'PEMILIH EXPORT B', 'dm' => 'UDM A', 'locality' => 'LOKALITI 2', 'cula_code' => '3D']);
     createPlkRecord(['identity_number' => 'PLK-EXPORT-B-1', 'name' => 'PEMILIH EXPORT C', 'dm' => 'UDM B', 'locality' => 'LOKALITI 1', 'cula_code' => '3P']);
     createPlkRecord(['identity_number' => 'PLK-EXPORT-NON-PLK', 'cula_code' => '2']);
@@ -114,7 +115,8 @@ it('exports all matching PLK voters without pagination', function () {
         ->assertOk()
         ->assertJsonCount(3, 'voters')
         ->assertJsonPath('voters.0.dm', 'UDM A')
-        ->assertJsonPath('voters.0.locality', 'LOKALITI 1');
+        ->assertJsonPath('voters.0.locality', 'LOKALITI 1')
+        ->assertJsonPath('voters.0.catatan', 'Bawa dokumen');
 
     $this->actingAs($user)
         ->getJson(route('plk.export', ['udm' => 'UDM B', 'cula_code' => '3P']))

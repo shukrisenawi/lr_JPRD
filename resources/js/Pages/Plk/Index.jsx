@@ -146,13 +146,14 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
     return (
         <>
             <div className="overflow-x-auto">
-                <table className={`w-full border-collapse text-left ${hideCulaCode ? 'min-w-[800px]' : 'min-w-[940px]'}`}>
+                <table className={`w-full border-collapse text-left ${hideCulaCode ? 'min-w-[1040px]' : 'min-w-[1180px]'}`}>
                     <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500">
                         <tr>
                             <th className="px-4 py-3">Maklumat pemilih</th>
                             {!hideCulaCode && <th className="px-4 py-3">Kod Cula</th>}
                             <th className="px-4 py-3">UDM / Lokaliti</th>
                             <th className="px-4 py-3">Telefon</th>
+                            <th className="px-4 py-3">Catatan</th>
                             {checkedTab && <th className="px-4 py-3">Disemak</th>}
                             <th className="px-4 py-3 text-right">Tindakan</th>
                         </tr>
@@ -175,6 +176,7 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
                                     <p className="mt-0.5 text-[11px] text-slate-500">{voter.locality || '-'}</p>
                                 </td>
                                 <td className="px-4 py-3 text-xs font-medium text-slate-700">{voter.phone || '-'}</td>
+                                <td className="max-w-[260px] whitespace-pre-line break-words px-4 py-3 text-[11px] leading-relaxed text-slate-600">{voter.catatan || '-'}</td>
                                 {checkedTab && (
                                     <td className="px-4 py-3">
                                         <p className="text-[11px] font-semibold text-emerald-700">{voter.verified_at || '-'}</p>
@@ -383,7 +385,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 localities.get(locality).push(voter);
             });
 
-            const headers = ['Bil.', 'Nama', 'No. KP', 'Telefon', 'Kod Cula'];
+            const headers = ['Bil.', 'Nama', 'No. KP', 'Telefon', 'Kod Cula', 'Catatan'];
             const ExcelJS = (await import('exceljs')).default;
             const workbook = new ExcelJS.Workbook();
             workbook.creator = 'JPrD Jeneri';
@@ -400,7 +402,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 },
             });
             worksheet.views = [{ showGridLines: false }];
-            [8, 36, 20, 20, 14].forEach((width, index) => {
+            [8, 36, 20, 20, 14, 42].forEach((width, index) => {
                 worksheet.getColumn(index + 1).width = width;
             });
 
@@ -437,6 +439,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                     voter.no_kp || '-',
                     voter.phone || '-',
                     voter.cula_code || '-',
+                    voter.catatan || '-',
                 ]);
                 row.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
                     cell.font = { name: 'Calibri', size: 10 };
