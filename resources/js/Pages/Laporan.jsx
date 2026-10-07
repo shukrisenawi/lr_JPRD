@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, usePage } from '@inertiajs/react';
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Fragment, useMemo, useState } from 'react';
 import { compareUdms } from '@/Utils/udmOrder';
 
@@ -20,11 +20,6 @@ const culaPartyGroups = [
 ];
 function fmt(v) { return nf.format(v ?? 0); }
 function fmtP(v) { return `${fmt(v ?? 0)}%`; }
-function clampPercent(value) {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return 0;
-    return Math.min(100, Math.max(0, parsed));
-}
 function fmtDiff(v, diff) {
     if (diff === undefined || diff === 0 || diff < 0) return fmt(v);
     return (
@@ -196,14 +191,10 @@ function CulaPartyTable({ rows }) {
                     </thead>
                     <tbody>
                         {rows.map((row, index) => {
-                            const code = String(row.code ?? '').trim();
-                            const districtNumber = /^\d+$/.test(code) && code !== String(row.name)
-                                ? code.padStart(2, '0')
-                                : String(index + 1).padStart(2, '0');
                             return (
-                                <tr key={row.key} className={index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'}>
+                                <tr key={row.key} className={`${index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} transition-colors hover:bg-lime-100/70`}>
                                     <td className="border border-slate-300 px-1.5 py-1 text-center">{index + 1}</td>
-                                    <td className="border border-slate-300 px-2 py-1 font-medium whitespace-nowrap">{districtNumber} - {row.name}</td>
+                                    <td className="border border-slate-300 px-2 py-1 font-medium whitespace-nowrap">{row.name}</td>
                                     {culaPartyGroups.map(({ key }) => {
                                         const count = row.party_counts[key];
                                         const percentage = row.total > 0 ? `${((count / row.total) * 100).toFixed(2)}%` : '0.00%';
@@ -254,10 +245,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const [n8nSending, setN8nSending] = useState(false);
     const [n8nError, setN8nError] = useState('');
     const [n8nNotice, setN8nNotice] = useState('');
-    const [winningPercent, setWinningPercent] = useState('50');
-    const [turnoutPercent, setTurnoutPercent] = useState('85');
-    const [culaAttendancePercent, setCulaAttendancePercent] = useState('100');
-
     const openN8nModal = () => {
         setN8nMessage(culaan_message);
         setN8nError('');
@@ -397,14 +384,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         };
     }), [allUdmTableRows, culaByDmMap]);
     const udmTableRows = allUdmTableRows.slice(0, 25);
-    const victoryChartRows = useMemo(() => [{
-        name: 'Jumlah keseluruhan',
-        pas: Math.round(allUdmTableRows.reduce((sum, row) => sum + (row.PAS ?? 0), 0) * clampPercent(culaAttendancePercent) / 100),
-        pas_plk: Math.round(allUdmTableRows.reduce((sum, row) => sum + (row.PAS_TOTAL ?? 0), 0) * clampPercent(culaAttendancePercent) / 100),
-    }], [allUdmTableRows, culaAttendancePercent]);
-    const activeVoterTotal = useMemo(() => allUdmTableRows.reduce((sum, row) => sum + (row.JP ?? 0), 0), [allUdmTableRows]);
-    const estimatedTurnout = activeVoterTotal * clampPercent(turnoutPercent) / 100;
-    const winningLine = estimatedTurnout * clampPercent(winningPercent) / 100;
     const diffMap = useMemo(() => {
         if (!udm_snapshot || !allUdmTableRows.length) return {};
         const snapshotRows = udm_snapshot;
@@ -587,83 +566,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
                         <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader />
                         <CulaPartyTable rows={culaPartyRows} />
-                        <ChartPanel
-                            title="Garisan Kemenangan"
-                            compact
-                            action={
-                                <div className="flex flex-wrap items-center justify-end gap-2 text-[10px] font-semibold text-slate-500">
-                                    <label className="flex items-center gap-1.5">
-                                        <span>Garisan kemenangan</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            step="1"
-                                            value={winningPercent}
-                                            onChange={(event) => setWinningPercent(event.target.value)}
-                                            aria-label="Peratus garisan kemenangan"
-                                            className="input-field w-14 px-2 py-1 text-center"
-                                        />
-                                        <span>%</span>
-                                    </label>
-                                    <label className="flex items-center gap-1.5">
-                                        <span>Keluar mengundi</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            step="1"
-                                            value={turnoutPercent}
-                                            onChange={(event) => setTurnoutPercent(event.target.value)}
-                                            aria-label="Anggaran keluar mengundi"
-                                            className="input-field w-14 px-2 py-1 text-center"
-                                        />
-                                        <span>%</span>
-                                    </label>
-                                    <label className="flex items-center gap-1.5">
-                                        <span>Peratus kehadiran pengundi PAS</span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            step="1"
-                                            value={culaAttendancePercent}
-                                            onChange={(event) => setCulaAttendancePercent(event.target.value)}
-                                            aria-label="Peratus kehadiran pengundi PAS bagi Cula 2 dan PLK"
-                                            className="input-field w-14 px-2 py-1 text-center"
-                                        />
-                                        <span>%</span>
-                                    </label>
-                                </div>
-                            }
-                        >
-                            <div className="h-[14rem] lg:h-[16rem]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={victoryChartRows} barCategoryGap="70%" barGap={10} margin={{ top: 24, right: 12, bottom: 16, left: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d1d5db" />
-                                        <XAxis dataKey="name" tick={{ fontSize: 9, fill: '#475569' }} />
-                                        <YAxis tickFormatter={fmt} width={48} tick={{ fontSize: 9, fill: '#475569' }} />
-                                        <Tooltip content={<TTip />} />
-                                        <Legend wrapperStyle={{ fontSize: 10 }} />
-                                        <ReferenceLine
-                                            y={winningLine}
-                                            stroke="#dc2626"
-                                            strokeDasharray="6 4"
-                                            strokeWidth={2}
-                                            label={{ value: `Garisan kemenangan: ${fmt(Math.round(winningLine))}`, position: 'insideTopRight', fill: '#b91c1c', fontSize: 10, fontWeight: 700 }}
-                                        />
-                                        <Bar dataKey="pas_plk" name="Cula 2 (PAS) + PLK" fill="#059669" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#047857', fontSize: 10, fontWeight: 700 }} />
-                                        <Bar dataKey="pas" name="Cula 2 (PAS)" fill="#86efac" maxBarSize={72} radius={[4, 4, 0, 0]} label={{ position: 'top', formatter: fmt, fill: '#166534', fontSize: 10, fontWeight: 700 }} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <p className="mt-2 text-[11px] font-medium text-slate-500 sm:text-xs">
-                                Anggaran keluar mengundi: {fmt(Math.round(estimatedTurnout))} daripada {fmt(activeVoterTotal)} pemilih aktif (tidak termasuk mati). Garisan kemenangan: {fmt(Math.round(winningLine))} undi.
-                            </p>
-                            <p className="mt-1 text-[11px] font-medium text-slate-500 sm:text-xs">
-                                Anggaran kehadiran pengundi PAS bagi Cula 2 dan Cula 2 + PLK dikira sebanyak {clampPercent(culaAttendancePercent)}% daripada jumlah cula masing-masing.
-                            </p>
-                        </ChartPanel>
                         {udm_snapshot_meta && (
                             <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula {(()=>{const m=udm_snapshot_meta.snapshot_time.match(/^(\d{2})-(\d{2})-(\d{4})/);if(!m)return'';const dt=new Date(+m[3],+m[2]-1,+m[1]);return isNaN(dt.getTime())?'':hari[dt.getDay()]})()}, {udm_snapshot_meta.snapshot_time}</p>
                         )}
