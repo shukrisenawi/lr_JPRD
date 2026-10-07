@@ -1205,6 +1205,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                     <div className="divide-y divide-slate-100">
                                         {group.voters.map((voter) => {
                                             const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
+                                            const age = calculateAgeFromNoKp(voter.no_kp);
                                             const showCulaStatus = shouldShowCulaStatus(culaVoter);
                                 return (
                                 <div key={voter.id} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
@@ -1218,7 +1219,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                              onUpload={openAvatarUpload}
                                          />
                                          <div className="min-w-0">
-                                             <p className="truncate text-xs font-bold text-slate-900">{voter.name || 'Nama tiada'}</p>
+                                             <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-900"><span className="truncate">{voter.name || 'Nama tiada'}</span>{age !== null && <span title="Umur berdasarkan No. KP" className="rounded-full bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold text-sky-700">{age} tahun</span>}</p>
                                               <p className="mt-0.5 text-[10px] text-slate-500">{[voter.no_kp, voter.no_rumah ? `Rumah ${voter.no_rumah}` : null, locationLabel(voter)].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                               {voter.address && <p className="truncate text-[10px] text-slate-500">{voter.address}</p>}
                                               {voter.catatan && <p className="mt-1 break-words rounded-md bg-amber-50 px-2 py-1 text-[10px] text-amber-800"><span className="font-bold">Catatan:</span> {voter.catatan}</p>}
