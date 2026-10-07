@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +39,7 @@ class KeluargaPemilihController extends Controller
             default => 'families',
         };
         $culaCodes = $tabFilter === 'unassigned' ? $this->normalizeCulaCodeFilters($validated) : [];
-        $votersByUdm = $this->activeVoterQuery($user)
+        $votersByUdm = $this->activeMalayVoterQuery($user)
             ->whereNotNull('dm')
             ->where('dm', '!=', '')
             ->select('dm')
@@ -55,7 +57,7 @@ class KeluargaPemilihController extends Controller
         $localities = collect();
         $localityFilter = '';
         if ($udmFilter !== '') {
-            $localities = $this->activeVoterQuery($user, $udmFilter)
+            $localities = $this->activeMalayVoterQuery($user, $udmFilter)
                 ->whereNotNull('locality')
                 ->where('locality', '!=', '')
                 ->select('locality')
@@ -68,11 +70,12 @@ class KeluargaPemilihController extends Controller
             }
         }
 
-        $voters = $this->activeVoterQuery($user, $udmFilter, $localityFilter);
+        $voters = $this->activeMalayVoterQuery($user, $udmFilter, $localityFilter);
         $familyQueryBase = $this->visibleFamilyQuery($user, $udmFilter, $localityFilter);
         if ($searchFilter !== '') {
             $familyQueryBase->whereHas('members', function (Builder $query) use ($user, $udmFilter, $localityFilter, $searchFilter): void {
                 $user->applyScopeToPemilihQuery($query);
+                $this->whereMalayRace($query);
                 if ($udmFilter !== '') {
                     $query->where('pemilih_records.dm', $udmFilter);
                 }
@@ -97,6 +100,7 @@ class KeluargaPemilihController extends Controller
                 ->join('pemilih_family_members', 'pemilih_family_members.pemilih_record_id', '=', 'pemilih_records.id')
                 ->whereColumn('pemilih_family_members.pemilih_family_id', 'pemilih_families.id');
             $user->applyScopeToPemilihQuery($familyRanking);
+            $this->whereMalayRace($familyRanking);
             if ($udmFilter !== '') {
                 $familyRanking->where('pemilih_records.dm', $udmFilter);
             }
@@ -109,7 +113,7 @@ class KeluargaPemilihController extends Controller
             $familiesQuery->orderByDesc($familyRanking);
         }
         $familiesQuery->orderByDesc('id');
-        $allVoters = $this->activeVoterQuery($user);
+        $allVoters = $this->activeMalayVoterQuery($user);
         $allFamiliesQuery = $this->visibleFamilyQuery($user);
 
         $familyCountsByUdmQuery = DB::table('pemilih_family_members')
@@ -120,6 +124,7 @@ class KeluargaPemilihController extends Controller
             ->selectRaw('COUNT(DISTINCT pemilih_family_members.pemilih_family_id) as family_count')
             ->groupBy('pemilih_records.dm');
         $user->applyScopeToPemilihQuery($familyCountsByUdmQuery);
+        $this->whereMalayRace($familyCountsByUdmQuery);
         $familyCountsByUdm = $familyCountsByUdmQuery->pluck('family_count', 'dm');
         $udmSummaries = $votersByUdm->map(fn ($summary, string $udm): array => [
             'udm' => $udm,
@@ -129,7 +134,7 @@ class KeluargaPemilihController extends Controller
             'unassigned' => (int) $summary->voter_count - (int) $summary->assigned_count,
         ])->values();
 
-        $unassignedVotersQuery = $this->activeVoterQuery($user, $udmFilter, $localityFilter)
+        $unassignedVotersQuery = $this->activeMalayVoterQuery($user, $udmFilter, $localityFilter)
             ->whereDoesntHave('families');
         if ($searchFilter !== '') {
             $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
@@ -175,6 +180,7 @@ class KeluargaPemilihController extends Controller
             ->with([
                 'father' => function ($query) use ($user, $udmFilter, $localityFilter): void {
                     $user->applyScopeToPemilihQuery($query);
+                    $this->whereMalayRace($query);
                     if ($udmFilter !== '') {
                         $query->where('pemilih_records.dm', $udmFilter);
                     }
@@ -184,6 +190,7 @@ class KeluargaPemilihController extends Controller
                 },
                 'members' => function ($query) use ($user, $udmFilter, $localityFilter): void {
                     $user->applyScopeToPemilihQuery($query);
+                    $this->whereMalayRace($query);
                     if ($udmFilter !== '') {
                         $query->where('pemilih_records.dm', $udmFilter);
                     }
@@ -269,10 +276,10 @@ class KeluargaPemilihController extends Controller
         $anchor = null;
 
         if (! empty($validated['anchor_id'])) {
-            $anchor = $this->activeVoterQuery($user, $udm, $locality)->findOrFail($validated['anchor_id']);
+            $anchor = $this->activeMalayVoterQuery($user, $udm, $locality)->findOrFail($validated['anchor_id']);
         }
 
-        $query = $this->activeVoterQuery($user, $udm, $locality)->whereDoesntHave('families');
+        $query = $this->activeMalayVoterQuery($user, $udm, $locality)->whereDoesntHave('families');
         if ($anchor) {
             $query->where('pemilih_records.id', '!=', $anchor->id);
         }
@@ -841,10 +848,21 @@ class KeluargaPemilihController extends Controller
         return $query;
     }
 
+    private function activeMalayVoterQuery(User $user, ?string $udm = null, ?string $locality = null): Builder
+    {
+        return $this->whereMalayRace($this->activeVoterQuery($user, $udm, $locality));
+    }
+
+    private function whereMalayRace(Builder|QueryBuilder|Relation $query): Builder|QueryBuilder|Relation
+    {
+        return $query->whereRaw("UPPER(TRIM(COALESCE(pemilih_records.race, ''))) IN (?, ?)", ['MELAYU', 'M']);
+    }
+
     private function visibleFamilyQuery(User $user, ?string $udm = null, ?string $locality = null): Builder
     {
         return PemilihFamily::query()->whereHas('members', function (Builder $query) use ($user, $udm, $locality): void {
             $user->applyScopeToPemilihQuery($query);
+            $this->whereMalayRace($query);
             if (filled($udm)) {
                 $query->where('pemilih_records.dm', $udm);
             }

@@ -13,6 +13,7 @@ function createKeluargaPemilihRecord(array $attributes = []): PemilihRecord
         'no_kp' => (string) random_int(100000000000, 999999999999),
         'dm' => 'UDM 1',
         'locality' => 'LOKALITI A',
+        'race' => 'MELAYU',
         'status' => 'aktif',
         'is_manual' => false,
     ], $attributes));
@@ -67,6 +68,53 @@ it('creates a voter family manually, adds members, and removes a member', functi
             ->where('families.data.0.members.1.catatan', 'Catatan ujian')
             ->where('stats.assigned', 2)
             ->where('stats.unassigned', 1));
+});
+
+it('shows only Malay voters in family lists, unassigned lists, and voter search', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $malayFamilyMember = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI', 'race' => 'MELAYU']);
+    $nonMalayFamilyMember = createKeluargaPemilihRecord(['name' => 'CHEN WEI', 'race' => 'CINA']);
+    $nonMalayOnlyFamilyMember = createKeluargaPemilihRecord(['name' => 'RAJ KUMAR', 'race' => 'INDIA']);
+    $malayUnassigned = createKeluargaPemilihRecord(['name' => 'SITI BINTI ALI', 'race' => 'M']);
+    $nonMalayUnassigned = createKeluargaPemilihRecord(['name' => 'LEE MEI', 'race' => 'CINA']);
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Ali',
+            'pemilih_ids' => [$malayFamilyMember->id, $nonMalayFamilyMember->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->post(route('keluarga-pemilih.store'), [
+            'name' => 'Keluarga Kumar',
+            'pemilih_ids' => [$nonMalayOnlyFamilyMember->id],
+        ])
+        ->assertRedirect(route('keluarga-pemilih.index'));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('families.total', 1)
+            ->where('families.data.0.name', 'Keluarga Ali')
+            ->where('families.data.0.member_count', 1)
+            ->where('families.data.0.members.0.id', $malayFamilyMember->id)
+            ->where('stats.voters', 2)
+            ->where('stats.assigned', 1)
+            ->where('stats.unassigned', 1));
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => 'unassigned']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('unassignedVoters.total', 1)
+            ->where('unassignedVoters.data.0.id', $malayUnassigned->id));
+
+    $this->actingAs($user)
+        ->getJson(route('keluarga-pemilih.search', ['q' => 'LEE MEI']))
+        ->assertOk()
+        ->assertJsonCount(0, 'voters');
 });
 
 it('auto-groups only voters with exact house, address, locality, and UDM matches', function () {
