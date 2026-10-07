@@ -150,6 +150,19 @@ function sharedBinBintiAnchor(members = []) {
     };
 }
 
+function groupUnassignedVoters(voters = []) {
+    const groups = new Map();
+
+    voters.forEach((voter) => {
+        const parentName = String(voter.parent_name || binBintiParentName(voter.name)).trim();
+        const key = parentName ? `parent:${parentName}` : `voter:${voter.id}`;
+        if (!groups.has(key)) groups.set(key, { key, parentName, voters: [] });
+        groups.get(key).voters.push(voter);
+    });
+
+    return [...groups.values()];
+}
+
 export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, familyTabCounts = { families: 0, reviewed: 0 }, udmSummaries, localities }) {
     const { errors = {}, available_cula_codes: availableCulaCodes = [], auth } = usePage().props;
     const isMasterAdmin = Boolean(auth?.user?.role?.is_master_admin);
@@ -1180,10 +1193,19 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             {(filters.q || selectedCulaCodes.length > 0) && <p className="mt-1 text-xs text-slate-500">{filters.q ? 'Cuba nama, nombor KP, no. rumah atau alamat yang lain.' : 'Pilih Kod Cula yang lain atau paparkan semua kod.'}</p>}
                         </div>
                     ) : (
-                        <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                            {unassignedVoters.data.map((voter) => {
-                                const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
-                                const showCulaStatus = shouldShowCulaStatus(culaVoter);
+                        <div className="space-y-2">
+                            {groupUnassignedVoters(unassignedVoters.data).map((group) => (
+                                <div key={group.key} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                                    {group.parentName && (
+                                        <div className="flex flex-wrap items-center justify-between gap-1 border-b border-green-100 bg-green-50 px-3 py-2">
+                                            <p className="text-[10px] font-black uppercase tracking-wide text-green-900">Bin / Binti / BT · {group.parentName}</p>
+                                            <span className="text-[10px] font-semibold text-green-800">{group.voters.length} pemilih</span>
+                                        </div>
+                                    )}
+                                    <div className="divide-y divide-slate-100">
+                                        {group.voters.map((voter) => {
+                                            const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
+                                            const showCulaStatus = shouldShowCulaStatus(culaVoter);
                                 return (
                                 <div key={voter.id} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex min-w-0 items-center gap-3">
@@ -1211,7 +1233,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                     {culaErrors[voter.id] && <p role="alert" className="text-[10px] font-semibold text-rose-700">{culaErrors[voter.id]}</p>}
                                 </div>
                                 );
-                            })}
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
 

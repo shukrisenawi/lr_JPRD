@@ -528,20 +528,57 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('unassignedVoters.data.0.name', 'UNASSIGNED UDM 2 B'));
 });
 
+it('groups unassigned voters by shared bin or binti name and orders them by IC number', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    createKeluargaPemilihRecord([
+        'name' => 'ZULKIFLI BIN SALLEH',
+        'no_kp' => '100000000001',
+    ]);
+    createKeluargaPemilihRecord([
+        'name' => 'NUR AINI BINTI SALLEH',
+        'no_kp' => '100000000004',
+    ]);
+    createKeluargaPemilihRecord([
+        'name' => 'AMIR BT SALLEH',
+        'no_kp' => '100000000003',
+    ]);
+    createKeluargaPemilihRecord([
+        'name' => 'SITI BINTI ABU',
+        'no_kp' => '100000000002',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => 'unassigned']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('unassignedVoters.total', 4)
+            ->where('unassignedVoters.data.0.no_kp', '100000000001')
+            ->where('unassignedVoters.data.0.parent_name', 'SALLEH')
+            ->where('unassignedVoters.data.1.no_kp', '100000000002')
+            ->where('unassignedVoters.data.1.parent_name', 'ABU')
+            ->where('unassignedVoters.data.2.no_kp', '100000000003')
+            ->where('unassignedVoters.data.2.parent_name', 'SALLEH')
+            ->where('unassignedVoters.data.3.no_kp', '100000000004')
+            ->where('unassignedVoters.data.3.parent_name', 'SALLEH'));
+});
+
 it('filters unassigned voters by cula code, including voters not yet assigned a code', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     createKeluargaPemilihRecord([
         'name' => 'PEMILIH PAS BELUM BERKELUARGA',
+        'no_kp' => '100000000001',
         'cula_code' => '2',
         'cula_display_label' => 'PAS',
     ]);
     createKeluargaPemilihRecord([
         'name' => 'PEMILIH UMNO BELUM BERKELUARGA',
+        'no_kp' => '100000000002',
         'cula_code' => '1',
         'cula_display_label' => 'UMNO',
     ]);
     createKeluargaPemilihRecord([
         'name' => 'PEMILIH BELUM DICULA',
+        'no_kp' => '100000000003',
         'cula_code' => '0',
         'cula_display_label' => 'BELUM DICULA',
     ]);

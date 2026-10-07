@@ -133,7 +133,6 @@ class KeluargaPemilihController extends Controller
             ->whereDoesntHave('families');
         if ($searchFilter !== '') {
             $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
-            $this->orderSearchResults($unassignedVotersQuery, $searchFilter);
         }
         $includeUncodedVoters = in_array('belum_dicula', $culaCodes, true);
         $selectedCulaCodes = array_values(array_diff($culaCodes, ['belum_dicula']));
@@ -209,10 +208,15 @@ class KeluargaPemilihController extends Controller
                 'member_count' => $family->members->count(),
             ]);
         $unassignedVoters = $unassignedVotersQuery
-            ->orderBy('pemilih_records.name')
+            ->orderByRaw("CASE WHEN NULLIF(TRIM(COALESCE(pemilih_records.no_kp, '')), '') IS NULL THEN 1 ELSE 0 END")
+            ->orderBy('pemilih_records.no_kp')
+            ->orderBy('pemilih_records.id')
             ->paginate(20)
             ->withQueryString()
-            ->through(fn (PemilihRecord $voter): array => $this->voterPayload($voter));
+            ->through(fn (PemilihRecord $voter): array => [
+                ...$this->voterPayload($voter),
+                'parent_name' => $this->parentName($voter->name),
+            ]);
 
         return Inertia::render('KeluargaPemilih/Index', [
             'families' => $families,
