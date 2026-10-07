@@ -409,17 +409,19 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
     const culaPartyRows = useMemo(() => allUdmTableRows.map((row) => {
         const breakdown = culaByDmMap[row.key]?.cula_breakdown ?? [];
+        const activeVoterTotal = row.active_total ?? Math.max((row.total ?? 0) - (row.Mati ?? 0), 0);
         const partyCounts = Object.fromEntries(culaPartyGroups
             .filter(({ key }) => key !== 'LAIN2')
             .map(({ key, codes }) => [key, getCulaSum(breakdown, codes)]));
         const assignedCount = Object.values(partyCounts).reduce((sum, count) => sum + count, 0);
 
-        partyCounts.LAIN2 = Math.max((row.total ?? 0) - assignedCount, 0);
-        const turnout85 = Math.round((row.total ?? 0) * 0.85);
+        partyCounts.LAIN2 = Math.max(activeVoterTotal - assignedCount, 0);
+        const turnout85 = Math.round(activeVoterTotal * 0.85);
         const attendance51 = Math.round(turnout85 * 0.51);
 
         return {
             ...row,
+            total: activeVoterTotal,
             party_counts: partyCounts,
             turnout_85: turnout85,
             attendance_51: attendance51,
