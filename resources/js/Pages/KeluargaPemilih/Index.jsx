@@ -19,6 +19,7 @@ function Icon({ name, className = 'h-4 w-4' }) {
         trash: <><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="m19 6-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></>,
         sparkles: <><path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3Z" /><path d="m19 16 .9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z" /></>,
         close: <><path d="m18 6-12 12" /><path d="m6 6 12 12" /></>,
+        chevronDown: <path d="m6 9 6 6 6-6" />,
     };
 
     return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
@@ -196,6 +197,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
     const [reviewFamilyProcessingId, setReviewFamilyProcessingId] = useState(null);
+    const [expandedReviewedFamilyIds, setExpandedReviewedFamilyIds] = useState(new Set());
     const [removedFamilyIds, setRemovedFamilyIds] = useState(new Set());
     const [removingVoterIds, setRemovingVoterIds] = useState(new Set());
     const [removingFamilyIds, setRemovingFamilyIds] = useState(new Set());
@@ -229,6 +231,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             members: family.members,
             member_count: family.member_count,
         }])));
+        setExpandedReviewedFamilyIds(new Set());
         setFatherErrors({});
         setRemovedFamilyIds(new Set());
         setRemovingVoterIds(new Set());
@@ -1054,17 +1057,31 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             {visibleFamilies.map((family) => {
                                 const father = fatherDetails(family, fatherOverrides);
                                 const members = father.members || family.members;
+                                const fatherMember = members.find((member) => Number(member.id) === Number(father.father_id));
+                                const fatherAvatar = fatherMember && (avatarOverrides[fatherMember.id] || fatherMember.avatar_url);
                                 // Ayah diutamakan, kemudian ahli lain disusun berdasarkan YYMMDD dalam no_kp.
                                 const displayMembers = sortFamilyMembers(members, father.father_id);
                                 const memberCount = father.member_count ?? family.member_count;
                                 const locations = [...new Set(members.map(locationLabel).filter(Boolean))];
                                 const familyName = father.family_name || family.name;
                                 const isUpdated = updatedFamilyId === family.id;
+                                const isReviewedTab = filters.tab === 'reviewed';
+                                const isFamilyExpanded = !isReviewedTab || expandedReviewedFamilyIds.has(Number(family.id));
                                 return (
                                     <article key={family.id} className={`card overflow-hidden transition-all duration-300 ${isUpdated ? 'border-yellow-400 bg-yellow-50/70 ring-2 ring-yellow-300 shadow-md' : ''}`}>
                                         <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                                             <div className="min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
+                                                    {father.father_id && fatherAvatar && (
+                                                        <VoterAvatar
+                                                            voter={fatherMember}
+                                                            src={fatherAvatar}
+                                                            sizeClass="h-8 w-8"
+                                                            busy={avatarUploadingId === fatherMember.id}
+                                                            onOpen={openAvatar}
+                                                            onUpload={openAvatarUpload}
+                                                        />
+                                                    )}
                                                     {renamingFamilyId === family.id ? (
                                                         <form onSubmit={(event) => saveRename(event, family.id)} className="flex min-w-0 flex-1 items-center gap-1.5" aria-label={`Tukar nama ${familyName}`}>
                                                             <input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} maxLength={255} aria-label="Nama keluarga" className="input-field min-w-0 flex-1 py-1 text-xs" />
@@ -1084,13 +1101,32 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                 <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-500"><Icon name="pin" className="h-3 w-3 shrink-0" />{locations.join(' · ') || 'Lokaliti tidak dinyatakan'}</p>
                                             </div>
                                             <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
+                                            {isReviewedTab && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExpandedReviewedFamilyIds((current) => {
+                                                        const next = new Set(current);
+                                                        const familyId = Number(family.id);
+                                                        if (next.has(familyId)) next.delete(familyId);
+                                                        else next.add(familyId);
+                                                        return next;
+                                                    })}
+                                                    aria-expanded={isFamilyExpanded}
+                                                    aria-controls={`family-members-${family.id}`}
+                                                    className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-slate-200 text-slate-700"
+                                                >
+                                                    {isFamilyExpanded ? 'Tutup ahli' : 'Lihat ahli'}
+                                                    <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${isFamilyExpanded ? 'rotate-180' : ''}`} />
+                                                </button>
+                                            )}
                                             <button type="button" onClick={() => updateFamilyReview(family, filters.tab !== 'reviewed')} disabled={reviewFamilyProcessingId === family.id} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-wait disabled:opacity-50">
                                                 {reviewFamilyProcessingId === family.id ? 'Memproses…' : filters.tab === 'reviewed' ? 'Batalkan semakan' : 'Sahkan keluarga'}
                                             </button>
                                         </div>
-                                        {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
-                                        {removeErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{removeErrors[family.id]}</p>}
-                                        <div className="divide-y divide-slate-100">
+                                        <div id={`family-members-${family.id}`} className={isFamilyExpanded ? '' : 'hidden'}>
+                                            {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
+                                            {removeErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{removeErrors[family.id]}</p>}
+                                            <div className="divide-y divide-slate-100">
                                             {displayMembers.map((voter) => {
                                                 const culaVoter = { ...voter, ...(culaOverrides[voter.id] || {}) };
                                                 const isFather = Number(father.father_id) === Number(voter.id);
@@ -1128,6 +1164,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                 </div>
                                                 );
                                             })}
+                                            </div>
                                         </div>
                                     </article>
                                 );
