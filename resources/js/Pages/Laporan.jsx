@@ -409,7 +409,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
         }), [report.by_dm, dmDetailsMap, culaByDmMap, completedByDmMap, culaCompletedByDmMap]);
     const culaPartyRows = useMemo(() => allUdmTableRows.map((row) => {
         const breakdown = culaByDmMap[row.key]?.cula_breakdown ?? [];
-        const activeVoterTotal = row.active_total ?? Math.max((row.total ?? 0) - (row.Mati ?? 0), 0);
+        const activeVoterTotal = Math.max((row.total ?? 0) - getCulaSum(breakdown, ['8']), 0);
         const partyCounts = Object.fromEntries(culaPartyGroups
             .filter(({ key }) => key !== 'LAIN2')
             .map(({ key, codes }) => [key, getCulaSum(breakdown, codes)]));
