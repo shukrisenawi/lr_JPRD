@@ -528,7 +528,7 @@ it('shows UDM family and unassigned voter counts and filters the family list', f
             ->where('unassignedVoters.data.0.name', 'UNASSIGNED UDM 2 B'));
 });
 
-it('groups unassigned voters by shared bin or binti name and orders them by IC number', function () {
+it('groups unassigned voters by shared bin, binti or bt parent name before ordering by IC number', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     createKeluargaPemilihRecord([
         'name' => 'ZULKIFLI BIN SALLEH',
@@ -552,10 +552,10 @@ it('groups unassigned voters by shared bin or binti name and orders them by IC n
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('unassignedVoters.total', 4)
-            ->where('unassignedVoters.data.0.no_kp', '100000000001')
-            ->where('unassignedVoters.data.0.parent_name', 'SALLEH')
-            ->where('unassignedVoters.data.1.no_kp', '100000000002')
-            ->where('unassignedVoters.data.1.parent_name', 'ABU')
+            ->where('unassignedVoters.data.0.no_kp', '100000000002')
+            ->where('unassignedVoters.data.0.parent_name', 'ABU')
+            ->where('unassignedVoters.data.1.no_kp', '100000000001')
+            ->where('unassignedVoters.data.1.parent_name', 'SALLEH')
             ->where('unassignedVoters.data.2.no_kp', '100000000003')
             ->where('unassignedVoters.data.2.parent_name', 'SALLEH')
             ->where('unassignedVoters.data.3.no_kp', '100000000004')

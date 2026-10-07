@@ -208,6 +208,7 @@ class KeluargaPemilihController extends Controller
                 'member_count' => $family->members->count(),
             ]);
         $unassignedVoters = $unassignedVotersQuery
+            ->orderByRaw($this->parentNameSql().' ASC')
             ->orderByRaw("CASE WHEN NULLIF(TRIM(COALESCE(pemilih_records.no_kp, '')), '') IS NULL THEN 1 ELSE 0 END")
             ->orderBy('pemilih_records.no_kp')
             ->orderBy('pemilih_records.id')
@@ -1197,6 +1198,21 @@ class KeluargaPemilihController extends Controller
         }
 
         return trim($matches[1]);
+    }
+
+    private function parentNameSql(): string
+    {
+        $name = "UPPER(TRIM(COALESCE(pemilih_records.name, '')))";
+        $cases = [];
+
+        foreach (['BINTI', 'BT', 'BIN'] as $marker) {
+            $markerPosition = "INSTR({$name}, ' {$marker} ')";
+            $parentStart = strlen($marker) + 2;
+            $cases[] = "WHEN {$markerPosition} > 0 THEN TRIM(SUBSTR({$name}, {$markerPosition} + {$parentStart}))";
+            $cases[] = "WHEN {$name} LIKE '{$marker} %' THEN TRIM(SUBSTR({$name}, {$parentStart}))";
+        }
+
+        return 'CASE '.implode(' ', $cases)." ELSE '' END";
     }
 
     private function personName(?string $name): string
