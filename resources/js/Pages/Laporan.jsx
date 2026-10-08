@@ -303,11 +303,11 @@ function PemilihBaruMovementTable({ movement }) {
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">{movement?.year}</span>
             </div>
             <div className="overflow-x-auto">
-                <table className="min-w-[1600px] w-full border-collapse text-[10px] sm:text-xs">
+                <table className="min-w-[1600px] w-full border-separate border-spacing-0 text-[10px] sm:text-xs">
                     <caption className="sr-only">Jadual pergerakan pemilih baharu mengikut bulan, pengundi baru dan pemilih berpindah</caption>
                     <thead className="text-center font-bold text-slate-900">
                         <tr>
-                            <th rowSpan={3} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Bulan</th>
+                            <th rowSpan={3} className="sticky left-0 z-30 border border-emerald-800 bg-emerald-700 px-2 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]">Bulan</th>
                             <th rowSpan={3} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Jumlah Pemilih</th>
                             <th colSpan={6} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Pengundi Baru (18 Tahun)</th>
                             <th colSpan={6} className="border border-emerald-800 bg-sky-700 px-2 py-2 text-white">Pengundi Pindah Masuk</th>
@@ -341,15 +341,19 @@ function PemilihBaruMovementTable({ movement }) {
                         </tr>
                     </thead>
                     <tbody className="text-slate-700">
-                        {rows.map((row, index) => (
-                            <tr key={row.key} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
-                                <td className="whitespace-nowrap border border-slate-300 px-2 py-1.5 font-semibold">{row.month}</td>
-                                <td className="border border-slate-300 px-2 py-1.5 text-right font-semibold tabular-nums">{fmt(row.jumlah_pemilih)}</td>
-                                <MovementCells row={row} prefix="pengundi_baru" />
-                                <MovementCells row={row} prefix="pindah_masuk" />
-                                <MovementCells row={row} prefix="pindah_keluar" />
-                            </tr>
-                        ))}
+                        {rows.map((row, index) => {
+                            const rowTone = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+                            return (
+                                <tr key={row.key} className={rowTone}>
+                                    <td className={`sticky left-0 z-10 whitespace-nowrap border border-slate-300 px-2 py-1.5 font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${rowTone}`}>{row.month}</td>
+                                    <td className="border border-slate-300 px-2 py-1.5 text-right font-semibold tabular-nums">{fmt(row.jumlah_pemilih)}</td>
+                                    <MovementCells row={row} prefix="pengundi_baru" />
+                                    <MovementCells row={row} prefix="pindah_masuk" />
+                                    <MovementCells row={row} prefix="pindah_keluar" />
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
