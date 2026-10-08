@@ -175,7 +175,7 @@ class PemilihBaruService
 
     public function importFile(string $path, string $filename, string $month, string $importedBy): array
     {
-        $rows = $this->readRows($path);
+        $rows = $this->readRows($path, $filename);
 
         if ($rows === []) {
             throw new RuntimeException('Fail tidak mempunyai rekod untuk diimport.');
@@ -437,7 +437,7 @@ class PemilihBaruService
         ];
     }
 
-    private function readRows(string $path): array
+    private function readRows(string $path, string $originalFilename): array
     {
         $contents = file_get_contents($path);
 
@@ -449,39 +449,66 @@ class PemilihBaruService
             return $this->readHtmlRows($contents);
         }
 
-        require_once base_path('vendor/nuovo/spreadsheet-reader/SpreadsheetReader.php');
+        return $this->readSpreadsheetRows($path, $originalFilename);
+    }
 
-        $reader = new \SpreadsheetReader($path);
-        $headers = [];
-        $rows = [];
+    private function readSpreadsheetRows(string $path, string $originalFilename): array
+    {
+        $previousErrorHandler = null;
+        $previousErrorHandler = set_error_handler(function (int $severity, string $message, string $file, int $line) use (&$previousErrorHandler) {
+            $normalizedFile = str_replace('\\', '/', $file);
+            $isLegacySpreadsheetNotice = str_contains($normalizedFile, '/vendor/nuovo/spreadsheet-reader/')
+                && (in_array($severity, [E_DEPRECATED, E_USER_DEPRECATED], true)
+                    || ($severity === E_WARNING && str_contains($message, 'continue" targeting switch is equivalent')));
 
-        foreach ($reader as $sheetRow) {
-            $cells = array_map(fn ($cell) => $this->cleanCell($cell), $sheetRow);
-
-            if ($cells === [] || count(array_filter($cells, fn (string $cell) => $cell !== '')) === 0) {
-                continue;
+            if ($isLegacySpreadsheetNotice) {
+                return true;
             }
 
-            if ($headers === []) {
-                $candidateHeaders = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
+            if (is_callable($previousErrorHandler)) {
+                return $previousErrorHandler($severity, $message, $file, $line);
+            }
 
-                if (! $this->hasRequiredHeaders($candidateHeaders)) {
+            return false;
+        });
+
+        try {
+            require_once base_path('vendor/nuovo/spreadsheet-reader/SpreadsheetReader.php');
+
+            $reader = new \SpreadsheetReader($path, $originalFilename);
+            $headers = [];
+            $rows = [];
+
+            foreach ($reader as $sheetRow) {
+                $cells = array_map(fn ($cell) => $this->cleanCell($cell), $sheetRow);
+
+                if ($cells === [] || count(array_filter($cells, fn (string $cell) => $cell !== '')) === 0) {
                     continue;
                 }
 
-                $headers = $candidateHeaders;
+                if ($headers === []) {
+                    $candidateHeaders = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
 
-                continue;
+                    if (! $this->hasRequiredHeaders($candidateHeaders)) {
+                        continue;
+                    }
+
+                    $headers = $candidateHeaders;
+
+                    continue;
+                }
+
+                $rows[] = $this->combineRow($headers, $cells);
             }
 
-            $rows[] = $this->combineRow($headers, $cells);
-        }
+            if ($headers === []) {
+                throw new RuntimeException('Tajuk lajur Kod DUN, Nama dan No KP/ID Lain tidak dijumpai dalam fail pemilih baharu.');
+            }
 
-        if ($headers === []) {
-            throw new RuntimeException('Tajuk lajur Kod DUN, Nama dan No KP/ID Lain tidak dijumpai dalam fail pemilih baharu.');
+            return $rows;
+        } finally {
+            restore_error_handler();
         }
-
-        return $rows;
     }
 
     private function readHtmlRows(string $html): array

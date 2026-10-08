@@ -81,6 +81,57 @@ HTML;
     File::delete(storage_path('app/reports/pemilih-latest.xls'));
 });
 
+it('reads an uploaded xlsx using its original extension and filters to DUN 24', function () {
+    $user = User::factory()->withModules(['settings'])->create();
+    $path = tempnam(sys_get_temp_dir(), 'pemilih-baru-upload-');
+    $archive = new ZipArchive;
+    expect($archive->open($path, ZipArchive::CREATE | ZipArchive::OVERWRITE))->toBeTrue();
+
+    $rows = [
+        ['Kod DUN', 'No KP', 'Nama', 'Nama DM', 'Nama Lokaliti', 'Jantina', 'Transaksi', 'Kod Cula'],
+        ['24', '90010102****', 'PEMILIH DUN 24', 'UDM JENERI', 'LOKALITI 24', 'L', 'PENDAFTARAN BARU', ''],
+        ['23', '88080802****', 'PEMILIH DUN 23', 'UDM LAIN', 'LOKALITI 23', 'P', 'PENDAFTARAN BARU', ''],
+    ];
+    $sheetRows = '';
+    foreach ($rows as $rowIndex => $cells) {
+        $rowNumber = $rowIndex + 1;
+        $sheetRows .= '<row r="'.$rowNumber.'">';
+        foreach ($cells as $columnIndex => $value) {
+            $column = chr(ord('A') + $columnIndex);
+            $cellValue = htmlspecialchars($value, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+            $sheetRows .= '<c r="'.$column.$rowNumber.'" t="inlineStr"><is><t>'.$cellValue.'</t></is></c>';
+        }
+        $sheetRows .= '</row>';
+    }
+
+    $archive->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+    $archive->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+    $archive->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>');
+    $archive->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+    $archive->addFromString('xl/worksheets/sheet1.xml', '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'.$sheetRows.'</sheetData></worksheet>');
+    $archive->close();
+
+    try {
+        $response = $this->actingAs($user)
+            ->post(route('settings.pemilih-baru-upload'), [
+                'pemilih_baru_file' => new UploadedFile($path, 'KEDAH (DPT BLN1-2026).xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+                'bulan' => '1',
+                'tahun' => '2026',
+            ]);
+        $response->assertRedirect(route('settings.edit'))
+            ->assertSessionHas('success', fn ($message): bool => is_string($message) && str_contains($message, '1 rekod bukan Kod DUN 24 diabaikan'));
+
+        $this->assertDatabaseHas('pemilih_baru_records', [
+            'name' => 'PEMILIH DUN 24',
+            'kod_dun' => '24',
+            'import_month' => '2026-01',
+        ]);
+        $this->assertDatabaseMissing('pemilih_baru_records', ['name' => 'PEMILIH DUN 23']);
+    } finally {
+        File::delete($path);
+    }
+});
+
 it('shows the pemilih baharu cula menu with all months selected by default', function () {
     $user = User::factory()->withModules(['culaan.senarai'])->create();
     Carbon\Carbon::setTestNow('2026-10-08 12:00:00');
