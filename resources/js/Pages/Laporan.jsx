@@ -366,9 +366,9 @@ function PemilihBaruMovementTable({ movement }) {
                                             setActiveRowKey(row.key);
                                         }
                                     }}
-                                    className={`group cursor-pointer transition-colors ${isActive ? 'bg-amber-200 font-bold text-slate-950' : `${rowTone} hover:bg-amber-100 hover:font-bold`}`}
+                                    className={`group cursor-pointer transition-colors ${isActive ? 'bg-emerald-200 font-bold text-slate-950' : `${rowTone} hover:bg-emerald-100 hover:font-bold`}`}
                                 >
-                                    <td className={`sticky left-0 z-10 w-16 whitespace-nowrap border border-slate-300 px-2 py-1.5 text-center font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${isActive ? '!bg-amber-200' : `${rowTone} group-hover:!bg-amber-100`} ${activeTextClass}`}>{row.month}</td>
+                                    <td className={`sticky left-0 z-10 w-16 whitespace-nowrap border border-slate-300 px-2 py-1.5 text-center font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${isActive ? '!bg-emerald-200' : `${rowTone} group-hover:!bg-emerald-100`} ${activeTextClass}`}>{row.month}</td>
                                     <td className={`w-14 border border-slate-300 px-0.5 py-1.5 text-center font-semibold tabular-nums ${activeTextClass}`}>{fmt(row.jumlah_pemilih)}</td>
                                     <MovementCells row={row} prefix="pengundi_baru" />
                                     <MovementCells row={row} prefix="pindah_masuk" />
