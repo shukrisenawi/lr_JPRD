@@ -187,7 +187,7 @@ class PemilihBaruService
 
         DB::transaction(function () use ($rows, $filename, $month, $importedBy, &$created, &$updated, &$skipped): void {
             foreach ($rows as $row) {
-                if (! $this->isDaerahMengundi24($this->value($row, ['Kod DUN']))) {
+                if (! $this->isDaerahMengundi24($this->value($row, ['Kod DUN', 'Kod D.U.N.', 'Kod DUN (24)', 'Kod Daerah Mengundi', 'DUN']))) {
                     $skipped++;
 
                     continue;
@@ -411,7 +411,7 @@ class PemilihBaruService
             'import_month' => $month,
             'kod_par' => $this->nullable($this->value($row, ['Kod Par'])),
             'nama_par' => $this->nullable($this->value($row, ['Nama Par'])),
-            'kod_dun' => $this->nullable($this->value($row, ['Kod DUN'])),
+            'kod_dun' => $this->nullable($this->value($row, ['Kod DUN', 'Kod D.U.N.', 'Kod DUN (24)', 'Kod Daerah Mengundi', 'DUN'])),
             'nama_dun' => $this->nullable($this->value($row, ['Nama DUN'])),
             'kod_dm' => $this->nullable($this->value($row, ['Kod DM'])),
             'dm' => $dm,
@@ -463,13 +463,22 @@ class PemilihBaruService
             }
 
             if ($headers === []) {
-                $headers = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
-                $this->assertHeaders($headers);
+                $candidateHeaders = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
+
+                if (! $this->hasRequiredHeaders($candidateHeaders)) {
+                    continue;
+                }
+
+                $headers = $candidateHeaders;
 
                 continue;
             }
 
             $rows[] = $this->combineRow($headers, $cells);
+        }
+
+        if ($headers === []) {
+            throw new RuntimeException('Tajuk lajur Kod DUN, Nama dan No KP/ID Lain tidak dijumpai dalam fail pemilih baharu.');
         }
 
         return $rows;
@@ -497,13 +506,22 @@ class PemilihBaruService
             }
 
             if ($headers === []) {
-                $headers = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
-                $this->assertHeaders($headers);
+                $candidateHeaders = array_map(fn (string $header) => $this->normalizeHeader($header), $cells);
+
+                if (! $this->hasRequiredHeaders($candidateHeaders)) {
+                    continue;
+                }
+
+                $headers = $candidateHeaders;
 
                 continue;
             }
 
             $rows[] = $this->combineRow($headers, $cells);
+        }
+
+        if ($headers === []) {
+            throw new RuntimeException('Tajuk lajur Kod DUN, Nama dan No KP/ID Lain tidak dijumpai dalam fail pemilih baharu.');
         }
 
         return $rows;
@@ -516,30 +534,50 @@ class PemilihBaruService
         return array_combine($headers, $cells) ?: [];
     }
 
-    private function assertHeaders(array $headers): void
+    private function hasRequiredHeaders(array $headers): bool
     {
-        if (! in_array('kod dun', $headers, true)) {
-            throw new RuntimeException('Lajur Kod DUN tidak dijumpai dalam fail pemilih baharu.');
+        return $this->hasHeader($headers, ['Kod DUN', 'Kod D.U.N.', 'Kod DUN (24)', 'Kod Daerah Mengundi', 'DUN'])
+            && $this->hasHeader($headers, ['Nama', 'Nama Pemilih'])
+            && $this->hasHeader($headers, [
+                'No KP',
+                'No. KP',
+                'No K/P',
+                'No. K/P (Baru)',
+                'No K/P (Baru)',
+                'ID Lain',
+                'No ID',
+                'ID',
+            ]);
+    }
+
+    private function hasHeader(array $headers, array $candidates): bool
+    {
+        foreach ($headers as $header) {
+            foreach ($candidates as $candidate) {
+                if ($this->headersMatch($header, $candidate)) {
+                    return true;
+                }
+            }
         }
 
-        if (! in_array('nama', $headers, true) && ! in_array('nama pemilih', $headers, true)) {
-            throw new RuntimeException('Lajur Nama tidak dijumpai dalam fail pemilih baharu.');
+        return false;
+    }
+
+    private function headersMatch(string $header, string $candidate): bool
+    {
+        $headerKey = $this->compactHeader($header);
+        $candidateKey = $this->compactHeader($candidate);
+
+        if ($headerKey === $candidateKey) {
+            return true;
         }
 
-        $hasIdentity = count(array_intersect($headers, [
-            'no kp',
-            'no. kp',
-            'no k/p',
-            'no. k/p (baru)',
-            'no k/p (baru)',
-            'id lain',
-            'no id',
-            'id',
-        ])) > 0;
+        return $candidateKey === 'koddun' && str_starts_with($headerKey, 'koddun');
+    }
 
-        if (! $hasIdentity) {
-            throw new RuntimeException('Lajur No KP atau ID Lain tidak dijumpai dalam fail pemilih baharu.');
-        }
+    private function compactHeader(string $header): string
+    {
+        return preg_replace('/[^a-z0-9]+/u', '', mb_strtolower(trim($header))) ?? '';
     }
 
     private function normalizeHeader(string $header): string
@@ -554,6 +592,14 @@ class PemilihBaruService
 
             if (array_key_exists($key, $row)) {
                 return $this->cleanCell($row[$key]);
+            }
+        }
+
+        foreach ($headers as $header) {
+            foreach ($row as $actualHeader => $value) {
+                if ($this->headersMatch((string) $actualHeader, $header)) {
+                    return $this->cleanCell($value);
+                }
             }
         }
 
