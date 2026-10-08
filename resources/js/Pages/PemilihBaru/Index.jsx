@@ -190,9 +190,9 @@ export default function Index({ filters, month_options, year_options, summary, r
                             <p className="mt-0.5 text-[10px] text-slate-500">{can_select_udm ? 'Pilih UDM dahulu untuk membuka senarai culaan.' : 'Skop UDM ditentukan mengikut peringkat akses pengguna.'}</p>
                         </div>
                     </div>
-                    <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-6">
+                    <div className="flex flex-wrap items-end gap-3 p-4">
                         {can_select_udm ? (
-                            <div>
+                            <div className="min-w-[11rem] flex-1">
                                 <label htmlFor="filter-udm" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">UDM</label>
                                 <select id="filter-udm" value={filters.udm} onChange={(event) => changeUdm(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
                                     <option value="">Pilih UDM</option>
@@ -200,27 +200,27 @@ export default function Index({ filters, month_options, year_options, summary, r
                                 </select>
                             </div>
                         ) : (
-                            <div>
+                            <div className="min-w-[11rem] flex-1">
                                 <p className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">UDM</p>
-                                <div className="mt-1 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800">
+                                <div className="mt-1 flex h-9 items-center justify-between gap-2 rounded-lg border border-sky-100 bg-sky-50 px-3 text-xs font-bold text-sky-800">
                                     {filters.udm || 'UDM belum ditetapkan'}
-                                    <p className="mt-0.5 text-[10px] font-medium text-sky-700">Ditentukan mengikut peringkat akses pengguna</p>
+                                    <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-sky-600">Tetap</span>
                                 </div>
                             </div>
                         )}
-                        <label htmlFor="filter-all-months" className="flex min-h-10 cursor-pointer items-center gap-2 px-1 py-2 text-xs font-medium text-slate-700">
+                        <label htmlFor="filter-all-months" className="flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-1 text-xs font-medium text-slate-700">
                             <input id="filter-all-months" type="checkbox" checked={showAllMonths} onChange={(event) => changeAllMonths(event.target.checked)} className="h-4 w-4 rounded border-slate-300" />
                             Semua bulan &amp; tahun
                         </label>
                         {!showAllMonths && (
                             <>
-                                <div>
+                                <div className="min-w-[8.5rem] flex-1">
                                     <label htmlFor="filter-month" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Bulan</label>
                                     <select id="filter-month" value={filters.bulan} onChange={(event) => changeMonth(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
                                         {month_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                                     </select>
                                 </div>
-                                <div>
+                                <div className="min-w-[6.5rem] flex-1">
                                     <label htmlFor="filter-year" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Tahun</label>
                                     <select id="filter-year" value={filters.tahun} onChange={(event) => changeYear(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
                                         {year_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
@@ -231,7 +231,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                         {filters.udm && (
                             <>
                                 {can_select_locality ? (
-                                    <div>
+                                    <div className="min-w-[11rem] flex-1">
                                         <label htmlFor="filter-locality" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Lokaliti</label>
                                         <select id="filter-locality" value={filters.locality} onChange={(event) => changeLocality(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
                                             <option value="">Semua Lokaliti</option>
@@ -239,15 +239,15 @@ export default function Index({ filters, month_options, year_options, summary, r
                                         </select>
                                     </div>
                                 ) : (
-                                    <div>
+                                    <div className="min-w-[11rem] flex-1">
                                         <p className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Lokaliti</p>
-                                        <div className="mt-1 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                                        <div className="mt-1 flex h-9 items-center justify-between gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 text-xs font-bold text-emerald-800">
                                             {filters.locality || 'Lokaliti belum ditetapkan'}
-                                            <p className="mt-0.5 text-[10px] font-medium text-emerald-700">Ditentukan mengikut peringkat akses pengguna</p>
+                                            <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-emerald-600">Tetap</span>
                                         </div>
                                     </div>
                                 )}
-                                <form onSubmit={submitSearch} className="flex items-end gap-2">
+                                <form onSubmit={submitSearch} className="flex min-w-[15rem] flex-[1.5] items-end gap-2">
                                     <div className="min-w-0 flex-1">
                                         <label htmlFor="search-new-voter" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Cari Pemilih</label>
                                         <input id="search-new-voter" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nama atau No. KP" className="input-field mt-1 w-full py-2 text-xs" />
