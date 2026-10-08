@@ -43,8 +43,8 @@ function UdmFilterCard({ summary, onSelect, allMonths }) {
 }
 
 function CulaModal({ record, codes, onClose, onSave, processing, error }) {
-    const [code, setCode] = useState(record?.cula_code ?? '');
-    const [race, setRace] = useState(record?.race ?? '');
+    const [code, setCode] = useState('');
+    const [race, setRace] = useState(() => (/\b(?:bin|binti|bt)\b/i.test(record?.name ?? '') ? 'Melayu' : ''));
 
     if (!record) return null;
 
@@ -370,6 +370,7 @@ export default function Index({ filters, month_options, year_options, summary, r
             </div>
 
             <CulaModal
+                key={selectedRecord?.id ?? 'closed'}
                 record={selectedRecord}
                 codes={available_cula_codes}
                 onClose={() => setSelectedRecord(null)}
