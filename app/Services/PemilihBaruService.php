@@ -439,6 +439,12 @@ class PemilihBaruService
 
     private function readRows(string $path, string $originalFilename): array
     {
+        $extension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
+
+        if (in_array($extension, ['xlsx', 'xlsm', 'xltx', 'xltm'], true)) {
+            return $this->readXlsxRows($path);
+        }
+
         $contents = file_get_contents($path);
 
         if ($contents === false) {
@@ -450,6 +456,139 @@ class PemilihBaruService
         }
 
         return $this->readSpreadsheetRows($path, $originalFilename);
+    }
+
+    private function readXlsxRows(string $path): array
+    {
+        $archive = new \ZipArchive;
+
+        if ($archive->open($path, \ZipArchive::RDONLY) !== true) {
+            throw new RuntimeException('Fail XLSX tidak dapat dibuka.');
+        }
+
+        try {
+            $sheetContents = $archive->getFromName('xl/worksheets/sheet1.xml');
+
+            if ($sheetContents === false) {
+                throw new RuntimeException('Lembaran pertama fail XLSX tidak dijumpai.');
+            }
+
+            $sharedStrings = [];
+            $sharedStringContents = $archive->getFromName('xl/sharedStrings.xml');
+
+            if ($sharedStringContents !== false) {
+                $sharedStringDocument = $this->loadXlsxXml($sharedStringContents);
+                $sharedStringXPath = new \DOMXPath($sharedStringDocument);
+                $sharedStringXPath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+
+                foreach ($sharedStringXPath->query('//x:si') as $sharedString) {
+                    $text = '';
+
+                    foreach ($sharedStringXPath->query('.//x:t', $sharedString) as $textNode) {
+                        $text .= $textNode->textContent;
+                    }
+
+                    $sharedStrings[] = $text;
+                }
+            }
+
+            $sheetDocument = $this->loadXlsxXml($sheetContents);
+            $sheetXPath = new \DOMXPath($sheetDocument);
+            $sheetXPath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
+            $headers = [];
+            $rows = [];
+
+            foreach ($sheetXPath->query('//x:sheetData/x:row') as $sheetRow) {
+                $cells = [];
+
+                foreach ($sheetXPath->query('./x:c', $sheetRow) as $cell) {
+                    if (! $cell instanceof \DOMElement) {
+                        continue;
+                    }
+
+                    $columnIndex = $this->spreadsheetColumnIndex($cell->getAttribute('r'));
+
+                    if ($columnIndex === null) {
+                        continue;
+                    }
+
+                    $type = $cell->getAttribute('t');
+                    $valueNode = $sheetXPath->query('./x:v', $cell)->item(0);
+                    $value = $valueNode?->textContent ?? '';
+
+                    if ($type === 's') {
+                        $value = $sharedStrings[(int) $value] ?? '';
+                    } elseif ($type === 'inlineStr') {
+                        $value = '';
+                        foreach ($sheetXPath->query('.//x:t', $cell) as $textNode) {
+                            $value .= $textNode->textContent;
+                        }
+                    }
+
+                    $cells[$columnIndex] = $this->cleanCell($value);
+                }
+
+                if ($cells === [] || count(array_filter($cells, fn (string $cell): bool => $cell !== '')) === 0) {
+                    continue;
+                }
+
+                ksort($cells);
+
+                if ($headers === []) {
+                    $candidateHeaders = [];
+                    foreach ($cells as $columnIndex => $cell) {
+                        $candidateHeaders[$columnIndex] = $this->normalizeHeader($cell);
+                    }
+
+                    if (! $this->hasRequiredHeaders(array_values($candidateHeaders))) {
+                        continue;
+                    }
+
+                    $headers = $candidateHeaders;
+
+                    continue;
+                }
+
+                $row = [];
+                foreach ($headers as $columnIndex => $header) {
+                    $row[$header] = $cells[$columnIndex] ?? '';
+                }
+                $rows[] = $row;
+            }
+
+            if ($headers === []) {
+                throw new RuntimeException('Tajuk lajur Kod DUN, Nama dan No KP/ID Lain tidak dijumpai dalam fail pemilih baharu.');
+            }
+
+            return $rows;
+        } finally {
+            $archive->close();
+        }
+    }
+
+    private function loadXlsxXml(string $contents): \DOMDocument
+    {
+        $document = new \DOMDocument;
+
+        if (! @$document->loadXML($contents, LIBXML_NONET | LIBXML_COMPACT | LIBXML_NOERROR | LIBXML_NOWARNING)) {
+            throw new RuntimeException('Struktur XML dalam fail XLSX tidak sah.');
+        }
+
+        return $document;
+    }
+
+    private function spreadsheetColumnIndex(string $cellReference): ?int
+    {
+        if (preg_match('/^([A-Z]+)/i', $cellReference, $matches) !== 1) {
+            return null;
+        }
+
+        $column = 0;
+        foreach (str_split(strtoupper($matches[1])) as $letter) {
+            $column = ($column * 26) + ord($letter) - 64;
+        }
+
+        return $column - 1;
     }
 
     private function readSpreadsheetRows(string $path, string $originalFilename): array
