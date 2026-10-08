@@ -360,15 +360,19 @@ function PemilihBaruUploadPanel({ data }) {
                             <input
                                 id="confirm-delete-text"
                                 type="text"
+                                autoCapitalize="none"
                                 autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck={false}
                                 value={deleteConfirmation}
-                                onChange={(event) => setDeleteConfirmation(event.target.value)}
-                                className="input-field mt-1 w-full py-2 text-sm"
+                                onChange={(event) => setDeleteConfirmation(event.target.value.trim().toLowerCase())}
+                                className="input-field normal-case mt-1 w-full py-2 text-sm"
+                                style={{ textTransform: 'none' }}
                             />
                             {deleteError && <p className="mt-2 text-xs font-semibold text-rose-600">{deleteError}</p>}
                             <div className="mt-5 flex justify-end gap-2">
                                 <button type="button" onClick={closeDeleteModal} disabled={deleting} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Batal</button>
-                                <button type="submit" disabled={deleteConfirmation !== 'delete' || deleting} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40">
+                                <button type="submit" disabled={deleteConfirmation.trim().toLowerCase() !== 'delete' || deleting} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40">
                                     {deleting ? 'Memadam...' : 'Padam import'}
                                 </button>
                             </div>

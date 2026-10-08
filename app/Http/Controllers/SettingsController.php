@@ -208,6 +208,11 @@ class SettingsController extends Controller
     {
         abort_unless($request->user()->canAccessModule('settings.upload-pemilih'), 403);
 
+        $confirmation = $request->input('confirmation');
+        if (is_string($confirmation)) {
+            $request->merge(['confirmation' => mb_strtolower(trim($confirmation))]);
+        }
+
         $validated = $request->validate([
             'source_file' => ['required', 'string', 'max:255'],
             'import_month' => ['required', 'date_format:Y-m'],

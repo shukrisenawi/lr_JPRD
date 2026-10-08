@@ -260,7 +260,7 @@ it('lists pemilih baharu imports and only deletes a batch after typing delete', 
         ->post(route('settings.pemilih-baru-imports.destroy'), [
             'source_file' => 'pemilih-tersilap.xlsx',
             'import_month' => '2026-09',
-            'confirmation' => 'DELETE',
+            'confirmation' => 'padam',
         ])
         ->assertRedirect(route('settings.edit'))
         ->assertSessionHasErrors('confirmation');
@@ -270,7 +270,7 @@ it('lists pemilih baharu imports and only deletes a batch after typing delete', 
         ->post(route('settings.pemilih-baru-imports.destroy'), [
             'source_file' => 'pemilih-tersilap.xlsx',
             'import_month' => '2026-09',
-            'confirmation' => 'delete',
+            'confirmation' => 'DELETE',
         ])
         ->assertRedirect(route('settings.edit'))
         ->assertSessionHas('success');
