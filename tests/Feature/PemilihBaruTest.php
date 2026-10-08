@@ -82,6 +82,50 @@ HTML;
     File::delete(storage_path('app/reports/pemilih-latest.xls'));
 });
 
+it('copies a current pemilih cula code back to its linked new voter when the codes differ', function () {
+    $user = User::factory()->withModules(['settings', 'culaan.pemilih-baharu'])->create();
+
+    $record = PemilihBaruRecord::query()->create([
+        'record_key' => sha1('linked-voter-different-cula'),
+        'import_month' => '2026-09',
+        'name' => 'ALI PEMILIH BAHARU',
+        'no_kp' => '900101021234',
+        'dm' => 'PADANG CHICHAK',
+        'locality' => 'KG BARU',
+        'gender' => 'L',
+        'cula_code' => '2',
+        'cula_display_label' => 'PAS',
+    ]);
+
+    $currentVoterSheet = <<<'HTML'
+<html><body><table>
+<tr><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Nama DM</th><th>Nama Lokaliti</th><th>Jantina</th><th>Bangsa</th><th>Kod Cula</th></tr>
+<tr><td>="900101021234"</td><td>ALI PEMILIH BAHARU</td><td>PADANG CHICHAK</td><td>KG BARU</td><td>L</td><td>M</td><td>1</td></tr>
+</table></body></html>
+HTML;
+
+    $this->actingAs($user)
+        ->post(route('settings.pemilih-upload'), [
+            'pemilih_file' => UploadedFile::fake()->createWithContent('pemilih-semasa.xls', $currentVoterSheet),
+        ])
+        ->assertRedirect(route('settings.edit'))
+        ->assertSessionHas('success', fn (string $message): bool => str_contains($message, '1 rekod pemilih baharu berjaya di-link'));
+
+    $currentVoter = PemilihRecord::query()->where('identity_number', '900101021234')->firstOrFail();
+    expect($record->fresh()->cula_code)->toBe('1')
+        ->and($record->fresh()->cula_display_label)->toBe('1 - UMNO')
+        ->and($currentVoter->cula_code)->toBe('1');
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'PADANG CHICHAK']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('records.data.0.is_linked', true)
+            ->where('records.data.0.cula_code', '1'));
+
+    File::delete(storage_path('app/reports/pemilih-latest.xls'));
+});
+
 it('reads an uploaded xlsx using its original extension and filters to DUN 24', function () {
     $user = User::factory()->withModules(['settings'])->create();
     $path = tempnam(sys_get_temp_dir(), 'pemilih-baru-upload-');

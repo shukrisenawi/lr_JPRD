@@ -136,6 +136,7 @@ class PemilihBaruController extends Controller
                 'remark' => $record->remark,
                 'import_month' => $record->import_month,
                 'linked_at' => $record->linked_at?->format('d-m-Y H:i'),
+                'is_linked' => $record->linked_pemilih_record_id !== null,
             ]);
 
         return Inertia::render('PemilihBaru/Index', [

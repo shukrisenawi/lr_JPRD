@@ -242,8 +242,8 @@ class PemilihBaruService
         $culaAppliedCount = 0;
 
         PemilihBaruRecord::query()
-            ->orderBy('import_month')
-            ->orderBy('id')
+            ->orderByDesc('import_month')
+            ->orderByDesc('id')
             ->chunk(250, function ($records) use (&$linkedCount, &$culaAppliedCount): void {
                 foreach ($records as $record) {
                     $pemilih = $this->findCurrentVoter($record);
@@ -259,16 +259,9 @@ class PemilihBaruService
                     ])->save();
                     $linkedCount++;
 
-                    if (! $this->hasCula($record->cula_code)) {
-                        continue;
+                    if ($this->syncLinkedCula($record, $pemilih)) {
+                        $culaAppliedCount++;
                     }
-
-                    $pemilih->forceFill([
-                        'cula_code' => $record->cula_code,
-                        'cula_display_label' => $record->cula_display_label ?: CulaCodes::label($record->cula_code),
-                        'cula_remark' => null,
-                    ])->save();
-                    $culaAppliedCount++;
                 }
             });
 
@@ -276,6 +269,52 @@ class PemilihBaruService
             'linked_count' => $linkedCount,
             'cula_applied_count' => $culaAppliedCount,
         ];
+    }
+
+    private function syncLinkedCula(PemilihBaruRecord $record, PemilihRecord $pemilih): bool
+    {
+        $currentCode = $this->normalizedCulaCode($pemilih->cula_code);
+        $newVoterCode = $this->normalizedCulaCode($record->cula_code);
+
+        if ($currentCode !== null) {
+            $label = $pemilih->cula_display_label ?: CulaCodes::label($currentCode);
+
+            if ($newVoterCode === $currentCode && $record->cula_display_label === $label) {
+                return false;
+            }
+
+            $record->forceFill([
+                'cula_code' => $currentCode,
+                'cula_display_label' => $label,
+            ])->save();
+
+            return true;
+        }
+
+        if ($newVoterCode === null) {
+            return false;
+        }
+
+        $label = $record->cula_display_label ?: CulaCodes::label($newVoterCode);
+
+        if ($pemilih->cula_code === $newVoterCode && $pemilih->cula_display_label === $label) {
+            return false;
+        }
+
+        $pemilih->forceFill([
+            'cula_code' => $newVoterCode,
+            'cula_display_label' => $label,
+            'cula_remark' => null,
+        ])->save();
+
+        return true;
+    }
+
+    private function normalizedCulaCode(?string $code): ?string
+    {
+        $code = strtoupper(trim((string) $code));
+
+        return $this->hasCula($code) ? $code : null;
     }
 
     public function updateCula(PemilihBaruRecord $record, string $code, string $race): void

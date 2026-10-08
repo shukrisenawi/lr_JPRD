@@ -342,9 +342,11 @@ export default function Index({ filters, month_options, year_options, summary, r
                                                 {record.linked_at && <p className="mt-1 text-[9px] text-slate-400">{record.linked_at}</p>}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-right">
-                                                <button type="button" onClick={() => { setSelectedRecord(record); setSaveError(''); }} className="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-amber-500">
-                                                    {record.cula_code ? 'Ubah Cula' : 'Cula'}
-                                                </button>
+                                                {!record.is_linked && (
+                                                    <button type="button" onClick={() => { setSelectedRecord(record); setSaveError(''); }} className="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-amber-500">
+                                                        {record.cula_code ? 'Ubah Cula' : 'Cula'}
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
