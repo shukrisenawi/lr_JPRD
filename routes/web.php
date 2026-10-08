@@ -21,6 +21,7 @@ use App\Http\Controllers\KadTenController;
 use App\Http\Controllers\KeluargaPemilihController;
 use App\Http\Controllers\KenderaanController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\PemilihBaruController;
 use App\Http\Controllers\PemilihHashtagController;
 use App\Http\Controllers\PlkController;
 use App\Http\Controllers\ProfileController;
@@ -151,6 +152,8 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::delete('/keluarga-pemilih/{pemilihFamily}/members/{pemilihRecord}', [KeluargaPemilihController::class, 'removeMember'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.members.destroy');
 
     Route::get('/culaan', [CulaanController::class, 'index'])->middleware('module:culaan')->name('culaan.index');
+    Route::get('/pemilih-baru/culaan', [PemilihBaruController::class, 'index'])->middleware('module:culaan.senarai')->name('pemilih-baru.index');
+    Route::post('/pemilih-baru/{pemilihBaruRecord}/cula', [PemilihBaruController::class, 'updateCula'])->middleware('module:culaan.senarai')->name('pemilih-baru.cula.update');
     Route::get('/culaan/export', [CulaanController::class, 'export'])->middleware('module:culaan.senarai')->name('culaan.export');
     Route::get('/culaan/search', [CulaanController::class, 'search'])->middleware('module:culaan.senarai')->name('culaan.search');
     Route::get('/culaan/alamat/{pemilihRecord}', [CulaanController::class, 'searchByAddress'])->middleware('module:culaan.senarai')->name('culaan.alamat');
@@ -204,6 +207,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
     Route::post('/settings/pemilih-upload', [SettingsController::class, 'uploadPemilih'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-upload');
+    Route::post('/settings/pemilih-baru-upload', [SettingsController::class, 'uploadPemilihBaru'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-baru-upload');
     Route::get('/settings/database/export', [SettingsController::class, 'exportDatabase'])->middleware('module:settings.backup-database')->name('settings.database.export');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->middleware('module:dashboard')->name('copied-records.store');
     Route::post('/sheet-pages', [SheetPageController::class, 'store'])->middleware('module:dashboard')->name('sheet-pages.store');

@@ -153,6 +153,117 @@ function PemilihUploadPanel({ report }) {
     );
 }
 
+function PemilihBaruUploadPanel({ data }) {
+    const [file, setFile] = useState(null);
+    const [month, setMonth] = useState(data?.default_month ?? '');
+    const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [error, setError] = useState('');
+
+    const submit = (e) => {
+        e.preventDefault();
+        if (!file || !month) return;
+
+        setError('');
+        setProgress(0);
+        setProcessing(true);
+
+        const formData = new FormData();
+        formData.append('pemilih_baru_file', file);
+        formData.append('bulan', month);
+
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));
+        });
+
+        xhr.addEventListener('load', () => {
+            setProcessing(false);
+            if (xhr.status >= 200 && xhr.status < 300) {
+                window.location.reload();
+                return;
+            }
+
+            let message = 'Import gagal. Sila cuba lagi.';
+            try {
+                const response = JSON.parse(xhr.responseText);
+                message = response.message ?? message;
+            } catch (_) {}
+            setError(message);
+            setProgress(0);
+        });
+
+        xhr.addEventListener('error', () => {
+            setProcessing(false);
+            setProgress(0);
+            setError('Sambungan gagal. Sila cuba lagi.');
+        });
+        xhr.addEventListener('abort', () => {
+            setProcessing(false);
+            setProgress(0);
+        });
+
+        xhr.open('POST', route('settings.pemilih-baru-upload'));
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        xhr.setRequestHeader('Accept', 'application/json');
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (token) xhr.setRequestHeader('X-CSRF-TOKEN', token);
+        xhr.send(formData);
+    };
+
+    return (
+        <section className="card p-4">
+            <div>
+                <p className="label-section">Pangkalan Data Berasingan</p>
+                <h3 className="mt-1 text-sm font-bold text-slate-800">Import Pemilih Baharu (Belum Disahkan)</h3>
+                <p className="mt-1 text-xs text-slate-500">Data disimpan berasingan daripada Fail Pemilih Semasa dan boleh dicula melalui menu Cula Pemilih Baharu.</p>
+            </div>
+
+            <form onSubmit={submit} className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end">
+                <div className="min-w-0">
+                    <InputLabel htmlFor="pemilih-baru-file" value="Fail Excel" />
+                    <label className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 shadow-sm transition hover:border-amber-300 hover:bg-amber-50">
+                        <input
+                            id="pemilih-baru-file"
+                            type="file"
+                            accept=".xls,.xlsx,.csv,.ods,.html"
+                            onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(''); setProgress(0); }}
+                            className="sr-only"
+                        />
+                        <span className="shrink-0 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-3 py-1.5 text-xs font-bold text-white shadow-sm">Pilih Fail</span>
+                        <span className="min-w-0 truncate text-xs font-medium text-slate-500">{file?.name ?? 'Tiada fail dipilih'}</span>
+                    </label>
+                </div>
+                <div>
+                    <InputLabel htmlFor="pemilih-baru-month" value="Bulan data" />
+                    <select id="pemilih-baru-month" value={month} onChange={(e) => setMonth(e.target.value)} className="input-field mt-1 py-2 text-xs">
+                        {(data?.month_options ?? []).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                </div>
+                <button type="submit" disabled={!file || !month || processing} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:from-amber-500 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-50">
+                    <Icon name="upload" />
+                    {processing ? `${progress}%` : 'Import Data'}
+                </button>
+            </form>
+
+            {processing && (
+                <div className="mt-3">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-600"><span>Mengimport pemilih baharu...</span><span>{progress}%</span></div>
+                    <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-200" style={{ width: `${progress}%` }} /></div>
+                </div>
+            )}
+
+            {error && <p className="mt-2 text-xs font-medium text-rose-600">{error}</p>}
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-slate-600">
+                <span><strong className="text-slate-800">{Number(data?.total ?? 0).toLocaleString('ms-MY')}</strong> rekod pemilih baharu tersimpan</span>
+                {data?.last_import_file && <span>Import terakhir: <strong className="text-slate-700">{data.last_import_file}</strong></span>}
+                {data?.last_imported_by && <span>Oleh: <strong className="text-slate-700">{data.last_imported_by}</strong></span>}
+                {data?.last_imported_at && <span>Pada: <strong className="text-slate-700">{data.last_imported_at}</strong></span>}
+            </div>
+        </section>
+    );
+}
+
 function DatabaseBackupPanel({ logs }) {
     const filenameHint = 'DB_PAS_' + new Date().toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-') + '_' + new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-').replace(' ', '') + '.sql';
 
@@ -298,6 +409,7 @@ export default function Edit({ settings, backup_logs }) {
             <Head title="Settings" />
             <div className="mx-auto max-w-4xl space-y-3 px-3 sm:px-4 lg:px-6">
                 {(allowedModules.includes('settings.upload-pemilih') || isMasterAdmin) && <PemilihUploadPanel report={settings.pemilih_report} />}
+                {(allowedModules.includes('settings.upload-pemilih') || isMasterAdmin) && <PemilihBaruUploadPanel data={settings.pemilih_baru} />}
                 {(allowedModules.includes('settings.backup-database') || isMasterAdmin) && <DatabaseBackupPanel logs={backup_logs} />}
                 {canSettings && <UdmCutoffPanel value={data.udm_cutoff_day} onChange={(v) => setData('udm_cutoff_day', v)} />}
                 {canSettings && (

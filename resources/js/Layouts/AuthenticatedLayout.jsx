@@ -96,6 +96,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     { key: 'dana', href: 'dana.index', routePattern: 'dana.*', label: 'Dana' },
                     { key: 'program', href: 'program.index', routePattern: 'program.*', label: 'Program' },
                     { key: 'culaan', href: 'culaan.index', routePattern: 'culaan.*', label: 'Culaan', badge: belumDicula },
+                    { key: 'cula-pemilih-baharu', module: 'culaan.senarai', href: 'pemilih-baru.index', routePattern: 'pemilih-baru.*', label: 'Cula Pemilih Baharu' },
                     { key: 'culaan-bot', href: 'culaan-bot.index', routePattern: 'culaan-bot.*', label: 'Culaan Bot' },
                     { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                     { key: 'plk', href: 'plk.index', routePattern: 'plk.*', label: 'PLK' },
@@ -134,7 +135,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
-                                        const accessibleItems = item.items.filter(i => canAccess(i.key) || ['akses', 'api-keys'].includes(i.key));
+                                        const accessibleItems = item.items.filter(i => canAccess(i.module ?? i.key) || ['akses', 'api-keys'].includes(i.key));
                                         if (accessibleItems.length === 0) return null;
                                         const hasSubBadge = accessibleItems.some(sub => sub.badge > 0);
                                         const hasActiveSubmenu = accessibleItems.some(sub => route().current(sub.routePattern));
@@ -262,6 +263,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('dana') && { href: route('dana.index'), active: route().current('dana.*'), label: 'Dana' },
                                     canAccess('program') && { href: route('program.index'), active: route().current('program.*'), label: 'Program' },
                                     canAccess('culaan') && { href: route('culaan.index'), active: route().current('culaan.*'), label: 'Culaan', badge: belumDicula },
+                                    canAccess('culaan.senarai') && { href: route('pemilih-baru.index'), active: route().current('pemilih-baru.*'), label: 'Cula Pemilih Baharu' },
                                     canAccess('culaan-bot') && { href: route('culaan-bot.index'), active: route().current('culaan-bot.*'), label: 'Culaan Bot' },
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('plk') && { href: route('plk.index'), active: route().current('plk.*'), label: 'PLK' },

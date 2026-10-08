@@ -6,6 +6,7 @@ use App\Models\BackupLog;
 use App\Models\Setting;
 use App\Services\GoogleSheetService;
 use App\Services\N8nWebhookService;
+use App\Services\PemilihBaruService;
 use App\Services\PemilihReportService;
 use App\Services\SpokasMigrationService;
 use Carbon\Carbon;
@@ -19,12 +20,13 @@ use Inertia\Response;
 
 class SettingsController extends Controller
 {
-    public function edit(GoogleSheetService $googleSheetService, N8nWebhookService $n8nWebhook): Response
+    public function edit(GoogleSheetService $googleSheetService, N8nWebhookService $n8nWebhook, PemilihBaruService $pemilihBaru): Response
     {
         return Inertia::render('Settings/Edit', [
             'settings' => [
                 'google_sheet_url' => $googleSheetService->getSheetUrl(),
                 'pemilih_report' => $this->pemilihReportMetadata(),
+                'pemilih_baru' => $pemilihBaru->metadata(),
                 'udm_cutoff_day' => Setting::valueOf('udm_cutoff_day', 1),
                 'n8n_webhook' => $n8nWebhook->settings(),
             ],
@@ -76,7 +78,7 @@ class SettingsController extends Controller
         return back()->with('success', 'Tetapan berjaya dikemaskini.');
     }
 
-    public function uploadPemilih(Request $request, PemilihReportService $reportService, SpokasMigrationService $spokasMigration): RedirectResponse|JsonResponse
+    public function uploadPemilih(Request $request, PemilihReportService $reportService, SpokasMigrationService $spokasMigration, PemilihBaruService $pemilihBaru): RedirectResponse|JsonResponse
     {
         abort_unless($request->user()->canAccessModule('settings.upload-pemilih'), 403);
 
@@ -99,12 +101,14 @@ class SettingsController extends Controller
         $file->move($directory, $filename);
 
         $storedPath = $directory.DIRECTORY_SEPARATOR.$filename;
+        $pemilihBaruLinks = ['linked_count' => 0, 'cula_applied_count' => 0];
 
         try {
             Setting::setValue('pemilih_report_file_path', $storedPath);
             Setting::setValue('pemilih_report_uploaded_by', $request->user()->name);
             Setting::setValue('pemilih_report_uploaded_at', now('Asia/Kuala_Lumpur')->format('d-m-Y h:i A'));
             $reportService->syncUploadedVoters($storedPath);
+            $pemilihBaruLinks = $pemilihBaru->linkCurrentVoters();
             $spokasRetry = $spokasMigration->retryNotFound();
             $reportService->buildFromPath($storedPath);
             $reportService->saveUdmSnapshotOnImport($request->user()->name);
@@ -125,6 +129,12 @@ class SettingsController extends Controller
         if (($spokasRetry['matched_count'] ?? 0) > 0) {
             $message .= ' '.($spokasRetry['matched_count']).' rekod SPOKAS yang tidak dijumpai berjaya dipadankan semula.';
         }
+        if ($pemilihBaruLinks['linked_count'] > 0) {
+            $message .= ' '.$pemilihBaruLinks['linked_count'].' rekod pemilih baharu berjaya di-link.';
+        }
+        if ($pemilihBaruLinks['cula_applied_count'] > 0) {
+            $message .= ' Kod cula daripada '.$pemilihBaruLinks['cula_applied_count'].' rekod turut dikemaskini.';
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -136,6 +146,56 @@ class SettingsController extends Controller
         return redirect()
             ->route('settings.edit')
             ->with('success', $message);
+    }
+
+    public function uploadPemilihBaru(Request $request, PemilihBaruService $pemilihBaru): RedirectResponse|JsonResponse
+    {
+        abort_unless($request->user()->canAccessModule('settings.upload-pemilih'), 403);
+
+        ini_set('max_execution_time', '300');
+        ini_set('memory_limit', '512M');
+
+        $validated = $request->validate([
+            'pemilih_baru_file' => ['required', 'file', 'max:51200', 'extensions:xls,xlsx,csv,ods,html'],
+            'bulan' => ['required', 'date_format:Y-m'],
+        ]);
+
+        try {
+            $result = $pemilihBaru->importFile(
+                $validated['pemilih_baru_file']->getRealPath(),
+                $validated['pemilih_baru_file']->getClientOriginalName(),
+                $validated['bulan'],
+                $request->user()->name,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            $message = 'Ralat memproses fail pemilih baharu: '.$e->getMessage();
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 500);
+            }
+
+            return redirect()->route('settings.edit')->with('error', $message);
+        }
+
+        $message = sprintf(
+            'Import pemilih baharu bulan %s berjaya. %s rekod baharu ditambah, %s rekod dikemas kini.',
+            $result['month'],
+            number_format($result['created']),
+            number_format($result['updated']),
+        );
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
+
+        return redirect()->route('settings.edit')->with('success', $message);
     }
 
     public function exportDatabase(Request $request): HttpResponse|RedirectResponse
