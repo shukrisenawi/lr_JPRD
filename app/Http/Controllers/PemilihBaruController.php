@@ -28,7 +28,9 @@ class PemilihBaruController extends Controller
 
         $month = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
         $importMonth = $year.'-'.$month;
-        $showAllMonths = $request->boolean('semua_bulan');
+        $showAllMonths = $request->has('semua_bulan')
+            ? $request->boolean('semua_bulan')
+            : true;
         $scope = $request->user()?->accessScope();
         $defaultUdm = filled($scope['dm'] ?? null) ? $scope['dm'] : '';
         $udm = trim((string) $request->query('udm', $defaultUdm));
@@ -120,6 +122,8 @@ class PemilihBaruController extends Controller
                 'locality' => $record->locality,
                 'gender' => $record->gender,
                 'birth_year' => $record->birth_year,
+                'umur' => $this->calculateAgeFromIdentity($record->no_kp)
+                    ?? ($record->birth_year ? max(0, now()->year - $record->birth_year) : null),
                 'transaction' => $record->transaction,
                 'no_rumah' => $record->no_rumah,
                 'cula_code' => $record->cula_code,
@@ -179,11 +183,10 @@ class PemilihBaruController extends Controller
             'udm' => $request->input('udm'),
             'locality' => $request->input('locality'),
             'q' => $request->input('q'),
+            'semua_bulan' => $request->has('semua_bulan')
+                ? (int) $request->boolean('semua_bulan')
+                : 1,
         ];
-
-        if ($request->boolean('semua_bulan')) {
-            $redirectFilters['semua_bulan'] = 1;
-        }
 
         return redirect()
             ->route('pemilih-baru.index', array_filter($redirectFilters, fn ($value) => $value !== null && $value !== ''))
@@ -238,6 +241,34 @@ class PemilihBaruController extends Controller
         if (filled($scope['locality'] ?? null)) {
             $query->where('locality', $scope['locality']);
         }
+    }
+
+    private function calculateAgeFromIdentity(?string $identity): ?int
+    {
+        $digits = preg_replace('/\D+/', '', (string) $identity) ?? '';
+
+        if (strlen($digits) < 6) {
+            return null;
+        }
+
+        $yearPart = (int) substr($digits, 0, 2);
+        $month = (int) substr($digits, 2, 2);
+        $day = (int) substr($digits, 4, 2);
+
+        if (! checkdate($month, $day, 2000 + $yearPart)) {
+            return null;
+        }
+
+        $now = now();
+        $currentYearPart = (int) $now->format('y');
+        $birthYear = $yearPart > $currentYearPart ? 1900 + $yearPart : 2000 + $yearPart;
+        $age = $now->year - $birthYear;
+
+        if ((int) $now->format('md') < (int) sprintf('%02d%02d', $month, $day)) {
+            $age--;
+        }
+
+        return $age >= 0 ? $age : null;
     }
 
     private function isWithinScope(PemilihBaruRecord $record, Request $request): bool

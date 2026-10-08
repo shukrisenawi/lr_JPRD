@@ -60,11 +60,29 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
                     <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-lg px-2 py-1 text-lg leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
                 </div>
 
-                <label htmlFor="pemilih-baru-cula-code" className="mt-5 block text-xs font-bold text-slate-700">Kod cula</label>
-                <select id="pemilih-baru-cula-code" value={code} onChange={(event) => setCode(event.target.value)} className="input-field mt-1 w-full py-2 text-sm">
-                    <option value="" disabled>Pilih kod cula</option>
-                    {codes.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}
-                </select>
+                <p className="mt-5 text-xs font-bold text-slate-700">Pilih kod cula</p>
+                <div className="mt-2 flex max-h-[55vh] flex-wrap gap-2 overflow-y-auto pr-1">
+                    {codes.map((option) => {
+                        const selected = code === option.code;
+                        const description = option.label.startsWith(`${option.code} - `)
+                            ? option.label.slice(option.code.length + 3)
+                            : option.label;
+
+                        return (
+                            <button
+                                key={option.code}
+                                type="button"
+                                aria-pressed={selected}
+                                aria-label={`${option.code}: ${description}`}
+                                title={`${option.code}: ${description}`}
+                                onClick={() => setCode(option.code)}
+                                className={`inline-flex min-w-14 items-center justify-center rounded-full border px-3 py-2 text-center transition ${selected ? 'border-amber-500 bg-amber-50 shadow-sm ring-1 ring-amber-300' : 'border-slate-200 bg-white hover:border-amber-300 hover:bg-amber-50/50'}`}
+                            >
+                                <span className={`text-xs font-black ${selected ? 'text-amber-800' : 'text-slate-700'}`}>{option.code}</span>
+                            </button>
+                        );
+                    })}
+                </div>
                 {error && <p className="mt-2 text-xs font-semibold text-rose-600">{error}</p>}
 
                 <div className="mt-5 flex justify-end gap-2">
@@ -103,10 +121,10 @@ export default function Index({ filters, month_options, year_options, summary, r
         setSearch('');
         visit({ ...filters, udm, locality: '', q: '' });
     };
-    const changeMonth = (bulan) => visit({ ...filters, bulan, semua_bulan: false });
-    const changeYear = (tahun) => visit({ ...filters, tahun, semua_bulan: false });
+    const changeMonth = (bulan) => visit({ ...filters, bulan, semua_bulan: '0' });
+    const changeYear = (tahun) => visit({ ...filters, tahun, semua_bulan: '0' });
     const changeLocality = (locality) => visit({ ...filters, locality });
-    const changeAllMonths = (semua_bulan) => visit({ ...filters, semua_bulan });
+    const changeAllMonths = (semua_bulan) => visit({ ...filters, semua_bulan: semua_bulan ? '1' : '0' });
 
     const clearSearch = () => {
         setSearch('');
@@ -159,8 +177,8 @@ export default function Index({ filters, month_options, year_options, summary, r
                                 {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                             </select>
                         </div>
-                        <label htmlFor="filter-all-months" className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
-                            <input id="filter-all-months" type="checkbox" checked={showAllMonths} onChange={(event) => changeAllMonths(event.target.checked)} className="rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
+                        <label htmlFor="filter-all-months" className="flex min-h-10 cursor-pointer items-center gap-2 px-1 py-2 text-xs font-medium text-slate-700">
+                            <input id="filter-all-months" type="checkbox" checked={showAllMonths} onChange={(event) => changeAllMonths(event.target.checked)} className="h-4 w-4 rounded border-slate-300" />
                             Semua bulan &amp; tahun
                         </label>
                         {!showAllMonths && (
@@ -248,8 +266,8 @@ export default function Index({ filters, month_options, year_options, summary, r
                                 <thead className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                                     <tr>
                                         <th className="px-4 py-2.5">Pemilih</th>
+                                        <th className="px-4 py-2.5">Umur</th>
                                         <th className="px-4 py-2.5">Kawasan</th>
-                                        {showAllMonths && <th className="px-4 py-2.5">Bulan / Tahun</th>}
                                         <th className="px-4 py-2.5">Transaksi</th>
                                         <th className="px-4 py-2.5">Cula</th>
                                         <th className="px-4 py-2.5">Remark</th>
@@ -264,15 +282,11 @@ export default function Index({ filters, month_options, year_options, summary, r
                                                 <p className="mt-1 text-[10px] text-slate-500">KP: {record.no_kp || '-'}{record.id_lain ? ` · ID lain: ${record.id_lain}` : ''}</p>
                                                 <p className="mt-0.5 text-[10px] text-slate-400">{record.gender || '-'}{record.birth_year ? ` · Lahir ${record.birth_year}` : ''}{record.no_rumah ? ` · Rumah ${record.no_rumah}` : ''}</p>
                                             </td>
+                                            <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-700">{record.umur ?? '—'}</td>
                                             <td className="min-w-40 px-4 py-3 text-[11px] text-slate-600">
                                                 <p className="font-semibold">{record.dm || 'Tanpa UDM'}</p>
                                                 <p className="mt-0.5 text-slate-400">{record.locality || 'Tanpa lokaliti'}</p>
                                             </td>
-                                            {showAllMonths && (
-                                                <td className="whitespace-nowrap px-4 py-3 text-[10px] font-semibold text-slate-500">
-                                                    {month_options.find((option) => option.value === record.import_month.slice(5, 7))?.label ?? record.import_month.slice(5, 7)} {record.import_month.slice(0, 4)}
-                                                </td>
-                                            )}
                                             <td className="max-w-64 px-4 py-3 text-[10px] leading-relaxed text-slate-500">{record.transaction || '-'}</td>
                                             <td className="min-w-36 px-4 py-3">
                                                 {record.cula_code && !['0', '?', 'TIADA'].includes(String(record.cula_code).toUpperCase()) ? (

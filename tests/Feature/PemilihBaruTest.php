@@ -45,7 +45,7 @@ HTML;
 
     $this->actingAs($user)
         ->post(route('pemilih-baru.cula.update', $record), ['cula_code' => '2'])
-        ->assertRedirect(route('pemilih-baru.index', ['bulan' => '09', 'tahun' => '2026']));
+        ->assertRedirect(route('pemilih-baru.index', ['bulan' => '09', 'tahun' => '2026', 'semua_bulan' => 1]));
 
     expect($record->fresh()->cula_code)->toBe('2');
     expect(PemilihRecord::query()->count())->toBe(1);
@@ -76,7 +76,7 @@ HTML;
     File::delete(storage_path('app/reports/pemilih-latest.xls'));
 });
 
-it('shows pemilih baharu cula menu using the previous month by default', function () {
+it('shows the pemilih baharu cula menu with all months selected by default', function () {
     $user = User::factory()->withModules(['culaan.senarai'])->create();
     Carbon\Carbon::setTestNow('2026-10-08 12:00:00');
 
@@ -87,6 +87,7 @@ it('shows pemilih baharu cula menu using the previous month by default', functio
             ->component('PemilihBaru/Index')
             ->where('filters.bulan', '09')
             ->where('filters.tahun', '2026')
+            ->where('filters.semua_bulan', true)
             ->where('summary.total', 0)
             ->where('filters.udm', '')
             ->where('records.data', []));
@@ -102,8 +103,10 @@ it('requires UDM selection before showing new voter records and shows the pendin
         'record_key' => sha1('alpha-pending'),
         'import_month' => '2026-09',
         'name' => 'ALI BELUM CULA',
+        'no_kp' => '900101******',
         'dm' => 'UDM ALPHA',
         'locality' => 'LOKALITI A',
+        'birth_year' => 1980,
     ]);
     PemilihBaruRecord::query()->create([
         'record_key' => sha1('alpha-done'),
@@ -134,10 +137,11 @@ it('requires UDM selection before showing new voter records and shows the pendin
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('filters.udm', '')
+            ->where('filters.semua_bulan', true)
             ->where('records.data', [])
             ->where('udm_summaries.0.name', 'UDM ALPHA')
-            ->where('udm_summaries.0.total', 2)
-            ->where('udm_summaries.0.completed', 1)
+            ->where('udm_summaries.0.total', 3)
+            ->where('udm_summaries.0.completed', 2)
             ->where('badgeCounts.culaPemilihBaruBelumCula', 2));
 
     $this->actingAs($user)
@@ -145,8 +149,17 @@ it('requires UDM selection before showing new voter records and shows the pendin
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('filters.udm', 'UDM ALPHA')
-            ->where('summary.total', 2)
-            ->where('records.data.0.name', 'ALI BELUM CULA'));
+            ->where('filters.semua_bulan', true)
+            ->where('summary.total', 3)
+            ->where('records.data.0.name', 'ALI BELUM CULA')
+            ->where('records.data.0.umur', 36));
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'UDM ALPHA', 'semua_bulan' => 0]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.semua_bulan', false)
+            ->where('summary.total', 2));
 
     $this->actingAs($user)
         ->get(route('pemilih-baru.index', ['udm' => 'UDM ALPHA', 'semua_bulan' => 1]))
