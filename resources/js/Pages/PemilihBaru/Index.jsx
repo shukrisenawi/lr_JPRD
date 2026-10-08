@@ -20,6 +20,28 @@ function SummaryCard({ label, value, tone }) {
     );
 }
 
+function UdmFilterCard({ summary, onSelect }) {
+    return (
+        <button type="button" onClick={() => onSelect(summary.name)} className="group flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-400 hover:shadow-md">
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-slate-800">{summary.name}</p>
+                    <p className="mt-0.5 text-[10px] text-slate-400">Tapisan UDM untuk culaan pemilih baharu</p>
+                </div>
+                <span className="shrink-0 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-800">Pilih</span>
+            </div>
+            <div className="border-t border-slate-100 pt-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rekod bulan dipilih</p>
+                <p className="mt-0.5 text-2xl font-black text-slate-800">{numberFormat.format(summary.total ?? 0)}</p>
+            </div>
+            <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+                <span>{numberFormat.format(summary.completed ?? 0)} sudah cula</span>
+                <span className="text-amber-700 group-hover:text-amber-600">Lihat senarai →</span>
+            </div>
+        </button>
+    );
+}
+
 function CulaModal({ record, codes, onClose, onSave, processing, error }) {
     const [code, setCode] = useState(record?.cula_code ?? '');
 
@@ -56,11 +78,12 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
     );
 }
 
-export default function Index({ filters, month_options, summary, records, available_cula_codes }) {
+export default function Index({ filters, month_options, year_options, summary, records, available_cula_codes, udms, udm_summaries, localities }) {
     const [search, setSearch] = useState(filters.q ?? '');
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
+    const selectedMonthLabel = month_options.find((option) => option.value === filters.bulan)?.label ?? filters.bulan;
 
     const visit = (values) => router.get(route('pemilih-baru.index'), values, {
         preserveState: true,
@@ -70,7 +93,20 @@ export default function Index({ filters, month_options, summary, records, availa
 
     const submitSearch = (event) => {
         event.preventDefault();
-        visit({ bulan: filters.bulan, q: search });
+        visit({ ...filters, q: search });
+    };
+
+    const changeUdm = (udm) => {
+        setSearch('');
+        visit({ ...filters, udm, locality: '', q: '' });
+    };
+    const changeMonth = (bulan) => visit({ ...filters, bulan });
+    const changeYear = (tahun) => visit({ ...filters, tahun });
+    const changeLocality = (locality) => visit({ ...filters, locality });
+
+    const clearSearch = () => {
+        setSearch('');
+        visit({ ...filters, q: '' });
     };
 
     const saveCula = (code) => {
@@ -95,42 +131,90 @@ export default function Index({ filters, month_options, summary, records, availa
         }>
             <Head title="Cula Pemilih Baharu" />
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
-                <section className="rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 shadow-sm">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <section className="overflow-hidden rounded-xl border border-amber-300 bg-white shadow-sm">
+                    <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50 px-4 py-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-black text-amber-800">⌕</span>
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">Semakan pemilih belum disahkan</p>
-                            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600">Kod cula yang disimpan akan dipindahkan ke rekod Pemilih Semasa apabila nombor ID sepadan semasa fail semasa diimport.</p>
+                            <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700">Tapisan Pemilih Baharu</h3>
+                            <p className="mt-0.5 text-[10px] text-slate-500">Pilih UDM dahulu untuk membuka senarai culaan.</p>
                         </div>
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                            <div>
-                                <label htmlFor="filter-month" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Bulan import</label>
-                                <select id="filter-month" value={filters.bulan} onChange={(event) => visit({ bulan: event.target.value, q: search })} className="input-field mt-1 min-w-44 py-2 text-xs">
-                                    {month_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                                </select>
-                            </div>
-                            <form onSubmit={submitSearch} className="flex gap-2">
-                                <label htmlFor="search-new-voter" className="sr-only">Cari pemilih baharu</label>
-                                <input id="search-new-voter" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nama, No. KP atau lokaliti" className="input-field min-w-52 py-2 text-xs" />
-                                <button type="submit" className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700">Cari</button>
-                            </form>
+                    </div>
+                    <div className={`grid gap-3 p-4 sm:grid-cols-2 ${filters.udm ? 'xl:grid-cols-[minmax(12rem,1fr)_minmax(9rem,0.7fr)_minmax(7rem,0.5fr)_minmax(12rem,1fr)_minmax(15rem,1.5fr)]' : 'xl:grid-cols-[minmax(14rem,1.5fr)_minmax(10rem,1fr)_minmax(8rem,0.7fr)]'}`}>
+                        <div>
+                            <label htmlFor="filter-udm" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">UDM</label>
+                            <select id="filter-udm" value={filters.udm} onChange={(event) => changeUdm(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                <option value="">Pilih UDM</option>
+                                {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                            </select>
                         </div>
+                        <div>
+                            <label htmlFor="filter-month" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Bulan</label>
+                            <select id="filter-month" value={filters.bulan} onChange={(event) => changeMonth(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                {month_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label htmlFor="filter-year" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Tahun</label>
+                            <select id="filter-year" value={filters.tahun} onChange={(event) => changeYear(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                {year_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                            </select>
+                        </div>
+                        {filters.udm && (
+                            <>
+                                <div>
+                                    <label htmlFor="filter-locality" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Lokaliti</label>
+                                    <select id="filter-locality" value={filters.locality} onChange={(event) => changeLocality(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                        <option value="">Semua Lokaliti</option>
+                                        {localities.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
+                                    </select>
+                                </div>
+                                <form onSubmit={submitSearch} className="flex items-end gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <label htmlFor="search-new-voter" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Cari Pemilih</label>
+                                        <input id="search-new-voter" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nama atau No. KP" className="input-field mt-1 w-full py-2 text-xs" />
+                                    </div>
+                                    <button type="submit" className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-white hover:bg-slate-700">Cari</button>
+                                </form>
+                            </>
+                        )}
                     </div>
                 </section>
 
-                <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard label="Jumlah bulan ini" value={summary.total} tone="slate" />
-                    <SummaryCard label="Belum cula" value={summary.pending} tone="amber" />
-                    <SummaryCard label="Sudah cula" value={summary.completed} tone="emerald" />
-                    <SummaryCard label="Dah link" value={summary.linked} tone="blue" />
-                </section>
+                {!filters.udm ? (
+                    <section className="space-y-3">
+                        <div className="flex flex-wrap items-end justify-between gap-2">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-800">Pilih UDM</h3>
+                                <p className="mt-0.5 text-[10px] text-slate-500">{selectedMonthLabel} {filters.tahun} · klik kad UDM untuk memaparkan senarai pemilih.</p>
+                            </div>
+                        </div>
+                        {udm_summaries.length > 0 ? (
+                            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                                {udm_summaries.map((item) => <UdmFilterCard key={item.key} summary={item} onSelect={changeUdm} />)}
+                            </div>
+                        ) : (
+                            <div className="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center shadow-sm">
+                                <p className="text-sm font-bold text-slate-700">Tiada rekod pemilih baharu</p>
+                                <p className="mt-1 text-xs text-slate-400">Import data dari Settings atau pilih bulan dan tahun yang mempunyai rekod.</p>
+                            </div>
+                        )}
+                    </section>
+                ) : (
+                    <>
+                        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <SummaryCard label="Jumlah dipilih" value={summary.total} tone="slate" />
+                            <SummaryCard label="Belum cula" value={summary.pending} tone="amber" />
+                            <SummaryCard label="Sudah cula" value={summary.completed} tone="emerald" />
+                            <SummaryCard label="Dah link" value={summary.linked} tone="blue" />
+                        </section>
 
-                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                        <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
                         <div>
-                            <h3 className="text-sm font-bold text-slate-800">Senarai Pemilih Baharu</h3>
-                            <p className="mt-0.5 text-[10px] text-slate-400">{numberFormat.format(records.total ?? 0)} rekod · {filters.bulan}</p>
+                            <h3 className="text-sm font-bold text-slate-800">Senarai Pemilih Baharu · {filters.udm}</h3>
+                            <p className="mt-0.5 text-[10px] text-slate-400">{numberFormat.format(records.total ?? 0)} rekod · {selectedMonthLabel} {filters.tahun}</p>
                         </div>
-                        {filters.q && <button type="button" onClick={() => { setSearch(''); visit({ bulan: filters.bulan, q: '' }); }} className="rounded-md border border-slate-200 px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-50">Kosongkan carian</button>}
+                        {filters.q && <button type="button" onClick={clearSearch} className="rounded-md border border-slate-200 px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-50">Kosongkan carian</button>}
                     </div>
 
                     {records.data.length === 0 ? (
@@ -197,7 +281,9 @@ export default function Index({ filters, month_options, summary, records, availa
                             ))}
                         </div>
                     )}
-                </section>
+                        </section>
+                    </>
+                )}
             </div>
 
             <CulaModal

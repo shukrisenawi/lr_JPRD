@@ -17,15 +17,63 @@ class PemilihBaruController extends Controller
 {
     public function index(Request $request, PemilihBaruService $pemilihBaru): Response
     {
-        $month = (string) $request->query('bulan', $pemilihBaru->defaultMonth());
+        [$defaultYear, $defaultMonth] = explode('-', $pemilihBaru->defaultMonth());
+        $month = (int) $request->query('bulan', $defaultMonth);
+        $year = (int) $request->query('tahun', $defaultYear);
 
-        if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) !== 1) {
-            $month = $pemilihBaru->defaultMonth();
+        if ($month < 1 || $month > 12 || $year < 1900 || $year > 2200) {
+            $month = (int) $defaultMonth;
+            $year = (int) $defaultYear;
+        }
+
+        $month = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+        $importMonth = $year.'-'.$month;
+        $scope = $request->user()?->accessScope();
+        $defaultUdm = filled($scope['dm'] ?? null) ? $scope['dm'] : '';
+        $udm = trim((string) $request->query('udm', $defaultUdm));
+
+        if ($defaultUdm !== '' && $udm !== $defaultUdm) {
+            $udm = $defaultUdm;
         }
 
         $search = trim((string) $request->query('q', ''));
-        $query = PemilihBaruRecord::query()->where('import_month', $month);
-        $this->applyScope($query, $request);
+        $requestedLocality = trim((string) $request->query('locality', ''));
+        $udms = $this->availableUdms($request);
+        $monthQuery = PemilihBaruRecord::query()->where('import_month', $importMonth);
+        $this->applyScope($monthQuery, $request);
+
+        $summaryRows = (clone $monthQuery)
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '')
+            ->select('dm')
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw("SUM(CASE WHEN cula_code IS NOT NULL AND cula_code != '' AND cula_code NOT IN ('0', '?', 'TIADA') THEN 1 ELSE 0 END) as completed")
+            ->selectRaw("SUM(CASE WHEN remark = 'Dah link' THEN 1 ELSE 0 END) as linked")
+            ->groupBy('dm')
+            ->get()
+            ->keyBy('dm');
+
+        $udmSummaries = collect($udms)
+            ->map(fn (string $name) => [
+                'key' => $name,
+                'name' => $name,
+                'total' => (int) ($summaryRows[$name]->total ?? 0),
+                'completed' => (int) ($summaryRows[$name]->completed ?? 0),
+                'linked' => (int) ($summaryRows[$name]->linked ?? 0),
+            ])
+            ->values()
+            ->all();
+
+        $localities = $udm !== '' ? $this->availableLocalities($request, $udm) : [];
+        $locality = in_array($requestedLocality, $localities, true) ? $requestedLocality : '';
+        $query = clone $monthQuery;
+
+        if ($udm === '') {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->where('dm', $udm)
+                ->when($locality !== '', fn (Builder $builder) => $builder->where('locality', $locality));
+        }
 
         if ($search !== '') {
             $like = '%'.mb_strtolower($search).'%';
@@ -80,10 +128,18 @@ class PemilihBaruController extends Controller
 
         return Inertia::render('PemilihBaru/Index', [
             'filters' => [
+                'udm' => $udm,
+                'locality' => $locality,
                 'bulan' => $month,
+                'tahun' => (string) $year,
                 'q' => $search,
             ],
+            'udms' => $udms,
+            'udm_summaries' => $udmSummaries,
+            'localities' => $localities,
+            'requires_udm' => true,
             'month_options' => $pemilihBaru->monthOptions(),
+            'year_options' => $pemilihBaru->yearOptions(),
             'summary' => [
                 'total' => $total,
                 'linked' => $linked,
@@ -114,8 +170,48 @@ class PemilihBaruController extends Controller
         }
 
         return redirect()
-            ->route('pemilih-baru.index', ['bulan' => $pemilihBaruRecord->import_month])
+            ->route('pemilih-baru.index', [
+                'bulan' => substr($pemilihBaruRecord->import_month, 5, 2),
+                'tahun' => substr($pemilihBaruRecord->import_month, 0, 4),
+            ])
             ->with('success', 'Kod cula pemilih baharu berjaya dikemaskini.');
+    }
+
+    private function availableUdms(Request $request): array
+    {
+        $query = PemilihBaruRecord::query()
+            ->whereNotNull('dm')
+            ->where('dm', '!=', '');
+        $this->applyScope($query, $request);
+
+        return $query
+            ->select('dm')
+            ->distinct()
+            ->orderBy('dm')
+            ->pluck('dm')
+            ->map(fn ($udm) => trim($udm))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function availableLocalities(Request $request, string $udm): array
+    {
+        $query = PemilihBaruRecord::query()
+            ->where('dm', $udm)
+            ->whereNotNull('locality')
+            ->where('locality', '!=', '');
+        $this->applyScope($query, $request);
+
+        return $query
+            ->select('locality')
+            ->distinct()
+            ->orderBy('locality')
+            ->pluck('locality')
+            ->map(fn ($locality) => trim($locality))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function applyScope(Builder $query, Request $request): void

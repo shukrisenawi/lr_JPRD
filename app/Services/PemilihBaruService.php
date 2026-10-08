@@ -19,27 +19,30 @@ class PemilihBaruService
 
     public function monthOptions(): array
     {
-        $start = now()->startOfMonth()->subMonths(23);
-        $end = now()->startOfMonth()->addMonths(2);
-        $months = [];
+        return array_map(fn (int $month) => [
+            'value' => str_pad((string) $month, 2, '0', STR_PAD_LEFT),
+            'label' => Carbon::create(now()->year, $month, 1)->locale('ms')->isoFormat('MMMM'),
+        ], range(1, 12));
+    }
 
-        for ($month = $start->copy(); $month <= $end; $month->addMonth()) {
-            $months[] = $month->format('Y-m');
-        }
+    public function yearOptions(): array
+    {
+        $years = range(now()->year - 5, now()->year + 1);
+        $years[] = (int) substr($this->defaultMonth(), 0, 4);
 
-        $existingMonths = PemilihBaruRecord::query()
-            ->select('import_month')
-            ->distinct()
-            ->pluck('import_month')
+        $existingYears = PemilihBaruRecord::query()
+            ->selectRaw('DISTINCT SUBSTR(import_month, 1, 4) as import_year')
+            ->pluck('import_year')
+            ->map(fn ($year) => (int) $year)
             ->all();
 
-        $months = array_values(array_unique([...$months, ...$existingMonths]));
-        rsort($months, SORT_STRING);
+        $years = array_values(array_unique([...$years, ...$existingYears]));
+        rsort($years, SORT_NUMERIC);
 
-        return array_map(fn (string $month) => [
-            'value' => $month,
-            'label' => Carbon::createFromFormat('Y-m', $month)->locale('ms')->isoFormat('MMMM YYYY'),
-        ], $months);
+        return array_map(fn (int $year) => [
+            'value' => (string) $year,
+            'label' => (string) $year,
+        ], $years);
     }
 
     public function metadata(): array
@@ -54,6 +57,7 @@ class PemilihBaruService
             'last_imported_at' => $latest?->created_at?->locale('ms')->isoFormat('DD-MM-YYYY h:mm A'),
             'default_month' => $this->defaultMonth(),
             'month_options' => $this->monthOptions(),
+            'year_options' => $this->yearOptions(),
         ];
     }
 

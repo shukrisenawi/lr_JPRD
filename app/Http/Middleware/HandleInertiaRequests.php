@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\CommitteeMembership;
+use App\Models\PemilihBaruRecord;
 use App\Models\PemilihRecord;
 use App\Models\PusatKhidmatData;
 use App\Models\User;
@@ -80,6 +81,7 @@ class HandleInertiaRequests extends Middleware
             'badgeCounts' => [
                 'pusatKhidmatBelumSemak' => $this->getPusatKhidmatBelumSemakCount($request->user()),
                 'belumDicula' => $this->getBelumDiculaCount($request->user()),
+                'culaPemilihBaruBelumCula' => $this->getPemilihBaruBelumCulaCount($request->user()),
                 'ahliPasSalahCula' => $this->getAhliPasSalahCulaCount($request->user()),
                 'ajkBukanPas' => $this->getAjkBukanPasCount($request->user()),
             ],
@@ -127,6 +129,29 @@ class HandleInertiaRequests extends Middleware
                         ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
                 })
                 ->whereDoesntHave('culaWorkItem');
+
+            $user->applyScopeToPemilihQuery($query);
+
+            return $query->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getPemilihBaruBelumCulaCount($user): int
+    {
+        if (! $user) {
+            return 0;
+        }
+
+        try {
+            $query = PemilihBaruRecord::query()
+                ->where(function ($builder) {
+                    $builder->whereNull('cula_code')
+                        ->orWhere('cula_code', '')
+                        ->orWhereIn('cula_code', ['0', '?', 'TIADA'])
+                        ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
+                });
 
             $user->applyScopeToPemilihQuery($query);
 

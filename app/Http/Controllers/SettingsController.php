@@ -157,14 +157,17 @@ class SettingsController extends Controller
 
         $validated = $request->validate([
             'pemilih_baru_file' => ['required', 'file', 'max:51200', 'extensions:xls,xlsx,csv,ods,html'],
-            'bulan' => ['required', 'date_format:Y-m'],
+            'bulan' => ['required', 'regex:/^(0?[1-9]|1[0-2])$/'],
+            'tahun' => ['required', 'integer', 'between:1900,2200'],
         ]);
+
+        $month = sprintf('%04d-%02d', $validated['tahun'], $validated['bulan']);
 
         try {
             $result = $pemilihBaru->importFile(
                 $validated['pemilih_baru_file']->getRealPath(),
                 $validated['pemilih_baru_file']->getClientOriginalName(),
-                $validated['bulan'],
+                $month,
                 $request->user()->name,
             );
         } catch (\Throwable $e) {
@@ -183,7 +186,7 @@ class SettingsController extends Controller
 
         $message = sprintf(
             'Import pemilih baharu bulan %s berjaya. %s rekod baharu ditambah, %s rekod dikemas kini.',
-            $result['month'],
+            Carbon::createFromFormat('Y-m', $result['month'])->locale('ms')->isoFormat('MMMM YYYY'),
             number_format($result['created']),
             number_format($result['updated']),
         );

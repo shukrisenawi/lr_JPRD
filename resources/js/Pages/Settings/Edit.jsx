@@ -155,14 +155,15 @@ function PemilihUploadPanel({ report }) {
 
 function PemilihBaruUploadPanel({ data }) {
     const [file, setFile] = useState(null);
-    const [month, setMonth] = useState(data?.default_month ?? '');
+    const [month, setMonth] = useState(data?.default_month?.split('-')[1] ?? '');
+    const [year, setYear] = useState(data?.default_month?.split('-')[0] ?? '');
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
 
     const submit = (e) => {
         e.preventDefault();
-        if (!file || !month) return;
+        if (!file || !month || !year) return;
 
         setError('');
         setProgress(0);
@@ -171,6 +172,7 @@ function PemilihBaruUploadPanel({ data }) {
         const formData = new FormData();
         formData.append('pemilih_baru_file', file);
         formData.append('bulan', month);
+        formData.append('tahun', year);
 
         const xhr = new XMLHttpRequest();
         xhr.upload.addEventListener('progress', (event) => {
@@ -219,7 +221,7 @@ function PemilihBaruUploadPanel({ data }) {
                 <p className="mt-1 text-xs text-slate-500">Data disimpan berasingan daripada Fail Pemilih Semasa dan boleh dicula melalui menu Cula Pemilih Baharu.</p>
             </div>
 
-            <form onSubmit={submit} className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end">
+            <form onSubmit={submit} className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_8rem_auto] sm:items-end">
                 <div className="min-w-0">
                     <InputLabel htmlFor="pemilih-baru-file" value="Fail Excel" />
                     <label className="mt-1 flex min-h-10 w-full cursor-pointer items-center gap-3 rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 shadow-sm transition hover:border-amber-300 hover:bg-amber-50">
@@ -235,12 +237,18 @@ function PemilihBaruUploadPanel({ data }) {
                     </label>
                 </div>
                 <div>
-                    <InputLabel htmlFor="pemilih-baru-month" value="Bulan data" />
+                    <InputLabel htmlFor="pemilih-baru-month" value="Bulan" />
                     <select id="pemilih-baru-month" value={month} onChange={(e) => setMonth(e.target.value)} className="input-field mt-1 py-2 text-xs">
                         {(data?.month_options ?? []).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
                 </div>
-                <button type="submit" disabled={!file || !month || processing} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:from-amber-500 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-50">
+                <div>
+                    <InputLabel htmlFor="pemilih-baru-year" value="Tahun" />
+                    <select id="pemilih-baru-year" value={year} onChange={(e) => setYear(e.target.value)} className="input-field mt-1 py-2 text-xs">
+                        {(data?.year_options ?? []).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                </div>
+                <button type="submit" disabled={!file || !month || !year || processing} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-gradient-to-r from-amber-600 to-orange-500 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition hover:from-amber-500 hover:to-orange-400 disabled:cursor-not-allowed disabled:opacity-50">
                     <Icon name="upload" />
                     {processing ? `${progress}%` : 'Import Data'}
                 </button>

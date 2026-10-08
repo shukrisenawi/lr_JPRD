@@ -31,7 +31,8 @@ HTML;
     $this->actingAs($user)
         ->post(route('settings.pemilih-baru-upload'), [
             'pemilih_baru_file' => UploadedFile::fake()->createWithContent('pemilih-baru.xls', $newVoterSheet),
-            'bulan' => '2026-09',
+            'bulan' => '9',
+            'tahun' => '2026',
         ])
         ->assertRedirect(route('settings.edit'))
         ->assertSessionHas('success');
@@ -44,7 +45,7 @@ HTML;
 
     $this->actingAs($user)
         ->post(route('pemilih-baru.cula.update', $record), ['cula_code' => '2'])
-        ->assertRedirect(route('pemilih-baru.index', ['bulan' => '2026-09']));
+        ->assertRedirect(route('pemilih-baru.index', ['bulan' => '09', 'tahun' => '2026']));
 
     expect($record->fresh()->cula_code)->toBe('2');
     expect(PemilihRecord::query()->count())->toBe(1);
@@ -84,8 +85,60 @@ it('shows pemilih baharu cula menu using the previous month by default', functio
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('PemilihBaru/Index')
-            ->where('filters.bulan', '2026-09')
-            ->where('summary.total', 0));
+            ->where('filters.bulan', '09')
+            ->where('filters.tahun', '2026')
+            ->where('summary.total', 0)
+            ->where('filters.udm', '')
+            ->where('records.data', []));
+
+    Carbon\Carbon::setTestNow();
+});
+
+it('requires UDM selection before showing new voter records and shows the pending menu badge', function () {
+    $user = User::factory()->withModules(['culaan.senarai'])->create();
+    Carbon\Carbon::setTestNow('2026-10-08 12:00:00');
+
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('alpha-pending'),
+        'import_month' => '2026-09',
+        'name' => 'ALI BELUM CULA',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI A',
+    ]);
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('alpha-done'),
+        'import_month' => '2026-09',
+        'name' => 'SITI SUDAH CULA',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI A',
+        'cula_code' => '2',
+    ]);
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('beta-pending'),
+        'import_month' => '2026-09',
+        'name' => 'ABU BELUM CULA',
+        'dm' => 'UDM BETA',
+        'locality' => 'LOKALITI B',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.udm', '')
+            ->where('records.data', [])
+            ->where('udm_summaries.0.name', 'UDM ALPHA')
+            ->where('udm_summaries.0.total', 2)
+            ->where('udm_summaries.0.completed', 1)
+            ->where('badgeCounts.culaPemilihBaruBelumCula', 2));
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'UDM ALPHA']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.udm', 'UDM ALPHA')
+            ->where('summary.total', 2)
+            ->where('records.data.0.name', 'ALI BELUM CULA'));
 
     Carbon\Carbon::setTestNow();
 });
