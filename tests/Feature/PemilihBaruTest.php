@@ -24,8 +24,9 @@ it('imports pemilih baharu into its own monthly table and transfers cula when th
 
     $newVoterSheet = <<<'HTML'
 <html><body><table>
-<tr><th>No KP</th><th>ID Lain</th><th>Nama</th><th>Nama DM</th><th>Nama Lokaliti</th><th>Jantina</th><th>Transaksi</th><th>Kod Cula</th></tr>
-<tr><td>90010102****</td><td></td><td>ALI PEMILIH BAHARU</td><td>PADANG CHICHAK</td><td>KG BARU</td><td>L</td><td>PENDAFTARAN BARU</td><td></td></tr>
+<tr><th>Kod DUN</th><th>No KP</th><th>ID Lain</th><th>Nama</th><th>Nama DM</th><th>Nama Lokaliti</th><th>Jantina</th><th>Transaksi</th><th>Kod Cula</th></tr>
+<tr><td>24</td><td>90010102****</td><td></td><td>ALI PEMILIH BAHARU</td><td>PADANG CHICHAK</td><td>KG BARU</td><td>L</td><td>PENDAFTARAN BARU</td><td></td></tr>
+<tr><td>23</td><td>88080802****</td><td></td><td>PEMILIH DUN LAIN</td><td>PADANG CHICHAK</td><td>KG BARU</td><td>L</td><td>PENDAFTARAN BARU</td><td></td></tr>
 </table></body></html>
 HTML;
 
@@ -36,7 +37,7 @@ HTML;
             'tahun' => '2026',
         ])
         ->assertRedirect(route('settings.edit'))
-        ->assertSessionHas('success');
+        ->assertSessionHas('success', fn (string $message): bool => str_contains($message, '1 rekod bukan Kod DUN 24 diabaikan'));
 
     $record = PemilihBaruRecord::query()->sole();
     expect($record->import_month)->toBe('2026-09')

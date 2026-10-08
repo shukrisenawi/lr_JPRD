@@ -183,9 +183,16 @@ class PemilihBaruService
 
         $created = 0;
         $updated = 0;
+        $skipped = 0;
 
-        DB::transaction(function () use ($rows, $filename, $month, $importedBy, &$created, &$updated): void {
+        DB::transaction(function () use ($rows, $filename, $month, $importedBy, &$created, &$updated, &$skipped): void {
             foreach ($rows as $row) {
+                if (! $this->isDaerahMengundi24($this->value($row, ['Kod DUN']))) {
+                    $skipped++;
+
+                    continue;
+                }
+
                 $data = $this->normalizeRow($row, $month, $filename, $importedBy);
 
                 if ($data === null) {
@@ -214,9 +221,14 @@ class PemilihBaruService
             }
         });
 
+        if ($created + $updated === 0) {
+            throw new RuntimeException('Tiada rekod dengan Kod DUN 24 untuk diimport.');
+        }
+
         return [
             'created' => $created,
             'updated' => $updated,
+            'skipped' => $skipped,
             'month' => $month,
         ];
     }
@@ -506,6 +518,10 @@ class PemilihBaruService
 
     private function assertHeaders(array $headers): void
     {
+        if (! in_array('kod dun', $headers, true)) {
+            throw new RuntimeException('Lajur Kod DUN tidak dijumpai dalam fail pemilih baharu.');
+        }
+
         if (! in_array('nama', $headers, true) && ! in_array('nama pemilih', $headers, true)) {
             throw new RuntimeException('Lajur Nama tidak dijumpai dalam fail pemilih baharu.');
         }
@@ -583,6 +599,11 @@ class PemilihBaruService
     private function hasCula(?string $code): bool
     {
         return filled($code) && ! in_array(strtoupper((string) $code), ['0', '?', 'TIADA'], true);
+    }
+
+    private function isDaerahMengundi24(string $code): bool
+    {
+        return is_numeric(trim($code)) && (float) trim($code) === 24.0;
     }
 
     private function voterAge(PemilihBaruRecord $record): ?int

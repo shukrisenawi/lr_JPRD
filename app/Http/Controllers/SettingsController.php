@@ -190,6 +190,9 @@ class SettingsController extends Controller
             number_format($result['created']),
             number_format($result['updated']),
         );
+        if ($result['skipped'] > 0) {
+            $message .= ' '.number_format($result['skipped']).' rekod bukan Kod DUN 24 diabaikan.';
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
