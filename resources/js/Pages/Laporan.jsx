@@ -8,6 +8,13 @@ import { compareUdms } from '@/Utils/udmOrder';
 const nf = new Intl.NumberFormat('ms-MY');
 const hari = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
 function fmtDate(d) { if (!d) return ''; const m = d.match(/^(\d{2})-(\d{2})-(\d{4})/); if (!m) return d; const dt = new Date(+m[3], +m[2]-1, +m[1]); return isNaN(dt.getTime()) ? d : `${hari[dt.getDay()]}, ${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth()+1).toString().padStart(2, '0')}/${dt.getFullYear()}`; }
+function formatSnapshotStart(snapshotTime) {
+    if (!snapshotTime) return '';
+    const match = snapshotTime.match(/^(\d{2})-(\d{2})-(\d{4})/);
+    if (!match) return snapshotTime;
+    const date = new Date(+match[3], +match[2] - 1, +match[1]);
+    return Number.isNaN(date.getTime()) ? snapshotTime : `${hari[date.getDay()]}, ${snapshotTime}`;
+}
 const chartColors = ['#8b5cf6', '#a78bfa', '#38bdf8', '#bbf7d0', '#f59e0b', '#ef4444'];
 const udmCulaGroups = { umno: new Set(['1', '1A', '1B', '1P']), pas: new Set(['2', '3B', '3D', '3K', '3M', '3P', '3U']) };
 const culaPartyGroups = [
@@ -280,11 +287,11 @@ function CulaPartyTable({ rows }) {
 function MovementCells({ row, prefix }) {
     return (
         <>
-            <td className="border border-slate-300 px-0.5 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_total`])}</td>
-            <td className="border border-slate-300 px-0.5 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_dikenali_melayu`])}</td>
-            <td className="border border-slate-300 px-0.5 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_dikenali_bukan_melayu`])}</td>
-            <td className="border border-slate-300 px-0.5 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_melayu`])}</td>
-            <td className="border border-slate-300 px-0.5 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_bukan_melayu`])}</td>
+            <td className="border border-slate-300 px-0.5 py-1.5 text-center tabular-nums">{fmt(row[`${prefix}_total`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_dikenali_melayu`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_dikenali_bukan_melayu`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_melayu`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_bukan_melayu`])}</td>
             <td className="border border-slate-300 px-0.5 py-1.5 text-center">{row[`${prefix}_cula_b`] ?? ''}</td>
         </>
     );
@@ -307,7 +314,7 @@ function PemilihBaruMovementTable({ movement }) {
                     <caption className="sr-only">Jadual pergerakan pemilih baharu mengikut bulan, pengundi baru dan pemilih berpindah</caption>
                     <thead className="text-center font-bold text-slate-900">
                         <tr>
-                            <th rowSpan={3} className="sticky left-0 z-30 w-12 border border-emerald-800 bg-emerald-700 px-0.5 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]">Bulan</th>
+                            <th rowSpan={3} className="sticky left-0 z-30 w-16 border border-emerald-800 bg-emerald-700 px-2 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]">Bulan</th>
                             <th rowSpan={3} className="w-14 border border-emerald-800 bg-emerald-700 px-0.5 py-2 text-white"><span className="block whitespace-normal leading-tight">Jumlah<br />Pemilih</span></th>
                             <th colSpan={6} className="border border-emerald-800 bg-emerald-700 px-0.5 py-2 text-white leading-tight">Pengundi Baru (18 Tahun)</th>
                             <th colSpan={6} className="border border-emerald-800 bg-sky-700 px-0.5 py-2 text-white leading-tight">Pengundi Pindah Masuk</th>
@@ -332,22 +339,22 @@ function PemilihBaruMovementTable({ movement }) {
                         <tr>
                             {['bg-emerald-50', 'bg-sky-50', 'bg-indigo-50'].map((tone) => (
                                 <Fragment key={tone}>
-                                    <th className={`border border-slate-300 ${tone} px-0.5 py-1.5`}>M</th>
-                                    <th className={`border border-slate-300 ${tone} px-0.5 py-1.5`}>xM</th>
-                                    <th className={`border border-slate-300 ${tone} px-0.5 py-1.5`}>M</th>
-                                    <th className={`border border-slate-300 ${tone} px-0.5 py-1.5`}>xM</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>M</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>xM</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>M</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>xM</th>
                                 </Fragment>
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="text-slate-700">
+                    <tbody className="text-center text-slate-700">
                         {rows.map((row, index) => {
                             const rowTone = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
 
                             return (
                                 <tr key={row.key} className={rowTone}>
-                                    <td className={`sticky left-0 z-10 w-12 whitespace-nowrap border border-slate-300 px-0.5 py-1.5 font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${rowTone}`}>{row.month}</td>
-                                    <td className="w-14 border border-slate-300 px-0.5 py-1.5 text-right font-semibold tabular-nums">{fmt(row.jumlah_pemilih)}</td>
+                                    <td className={`sticky left-0 z-10 w-16 whitespace-nowrap border border-slate-300 px-2 py-1.5 text-center font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${rowTone}`}>{row.month}</td>
+                                    <td className="w-14 border border-slate-300 px-0.5 py-1.5 text-center font-semibold tabular-nums">{fmt(row.jumlah_pemilih)}</td>
                                     <MovementCells row={row} prefix="pengundi_baru" />
                                     <MovementCells row={row} prefix="pindah_masuk" />
                                     <MovementCells row={row} prefix="pindah_keluar" />
@@ -695,10 +702,12 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
                         <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows />
                         <CulaPartyTable rows={culaPartyRows} />
-                        <PemilihBaruMovementTable movement={pemilih_baru_movement} />
-                        {udm_snapshot_meta && (
-                            <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula {(()=>{const m=udm_snapshot_meta.snapshot_time.match(/^(\d{2})-(\d{2})-(\d{4})/);if(!m)return'';const dt=new Date(+m[3],+m[2]-1,+m[1]);return isNaN(dt.getTime())?'':hari[dt.getDay()]})()}, {udm_snapshot_meta.snapshot_time}</p>
+                        {udm_snapshot_meta?.snapshot_time && (
+                            <p className="text-center text-[10px] text-slate-400">
+                                Data pergerakan cula dikira bermula {formatSnapshotStart(udm_snapshot_meta.snapshot_time)}
+                            </p>
                         )}
+                        <PemilihBaruMovementTable movement={pemilih_baru_movement} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Pemilih Mengikut UDM">
