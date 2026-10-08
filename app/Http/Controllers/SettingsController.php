@@ -201,6 +201,25 @@ class SettingsController extends Controller
         return redirect()->route('settings.edit')->with('success', $message);
     }
 
+    public function deletePemilihBaruImport(Request $request, PemilihBaruService $pemilihBaru): RedirectResponse
+    {
+        abort_unless($request->user()->canAccessModule('settings.upload-pemilih'), 403);
+
+        $validated = $request->validate([
+            'source_file' => ['required', 'string', 'max:255'],
+            'import_month' => ['required', 'date_format:Y-m'],
+            'confirmation' => ['required', 'string', Rule::in(['delete'])],
+        ]);
+
+        $deletedCount = $pemilihBaru->deleteImport($validated['source_file'], $validated['import_month']);
+        abort_if($deletedCount === 0, 404, 'Rekod import tidak dijumpai.');
+
+        return back()->with(
+            'success',
+            sprintf('%s rekod daripada %s berjaya dipadam.', number_format($deletedCount), $validated['source_file']),
+        );
+    }
+
     public function exportDatabase(Request $request): HttpResponse|RedirectResponse
     {
         abort_unless($request->user()->canAccessModule('settings.backup-database'), 403);

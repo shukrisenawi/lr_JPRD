@@ -48,6 +48,29 @@ class PemilihBaruService
     public function metadata(): array
     {
         $latest = PemilihBaruRecord::query()->latest('id')->first();
+        $imports = PemilihBaruRecord::query()
+            ->whereNotNull('source_file')
+            ->where('source_file', '!=', '')
+            ->select('source_file', 'import_month')
+            ->selectRaw('COUNT(*) as record_count')
+            ->selectRaw('MAX(imported_by) as imported_by')
+            ->selectRaw('MAX(updated_at) as imported_at')
+            ->selectRaw("SUM(CASE WHEN remark = 'Dah link' THEN 1 ELSE 0 END) as linked_count")
+            ->groupBy('source_file', 'import_month')
+            ->orderByDesc('import_month')
+            ->orderByDesc('imported_at')
+            ->get()
+            ->map(fn ($import) => [
+                'source_file' => $import->source_file,
+                'import_month' => $import->import_month,
+                'record_count' => (int) $import->record_count,
+                'linked_count' => (int) $import->linked_count,
+                'imported_by' => $import->imported_by,
+                'imported_at' => $import->imported_at
+                    ? Carbon::parse($import->imported_at)->locale('ms')->isoFormat('DD-MM-YYYY h:mm A')
+                    : null,
+            ])
+            ->values();
 
         return [
             'total' => PemilihBaruRecord::query()->count(),
@@ -58,7 +81,16 @@ class PemilihBaruService
             'default_month' => $this->defaultMonth(),
             'month_options' => $this->monthOptions(),
             'year_options' => $this->yearOptions(),
+            'imports' => $imports,
         ];
+    }
+
+    public function deleteImport(string $filename, string $month): int
+    {
+        return DB::transaction(fn () => PemilihBaruRecord::query()
+            ->where('source_file', $filename)
+            ->where('import_month', $month)
+            ->delete());
     }
 
     public function importFile(string $path, string $filename, string $month, string $importedBy): array

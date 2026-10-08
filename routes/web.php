@@ -208,6 +208,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');
     Route::post('/settings/pemilih-upload', [SettingsController::class, 'uploadPemilih'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-upload');
     Route::post('/settings/pemilih-baru-upload', [SettingsController::class, 'uploadPemilihBaru'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-baru-upload');
+    Route::post('/settings/pemilih-baru-imports/delete', [SettingsController::class, 'deletePemilihBaruImport'])->middleware('module:settings.upload-pemilih')->name('settings.pemilih-baru-imports.destroy');
     Route::get('/settings/database/export', [SettingsController::class, 'exportDatabase'])->middleware('module:settings.backup-database')->name('settings.database.export');
     Route::post('/copied-records', [CopiedRecordController::class, 'store'])->middleware('module:dashboard')->name('copied-records.store');
     Route::post('/sheet-pages', [SheetPageController::class, 'store'])->middleware('module:dashboard')->name('sheet-pages.store');

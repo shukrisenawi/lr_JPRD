@@ -173,3 +173,52 @@ it('requires UDM selection before showing new voter records and shows the pendin
 
     Carbon\Carbon::setTestNow();
 });
+
+it('lists pemilih baharu imports and only deletes a batch after typing delete', function () {
+    $user = User::factory()->withModules(['settings'])->create();
+
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('mistaken-upload'),
+        'import_month' => '2026-09',
+        'name' => 'REKOD IMPORT TERSILAP',
+        'source_file' => 'pemilih-tersilap.xlsx',
+        'imported_by' => 'Penyelia',
+    ]);
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('valid-upload'),
+        'import_month' => '2026-08',
+        'name' => 'REKOD IMPORT BETUL',
+        'source_file' => 'pemilih-betul.xlsx',
+        'imported_by' => 'Penyelia',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('settings.edit'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('settings.pemilih_baru.imports.0.source_file', 'pemilih-tersilap.xlsx')
+            ->where('settings.pemilih_baru.imports.0.record_count', 1));
+
+    $this->actingAs($user)
+        ->from(route('settings.edit'))
+        ->post(route('settings.pemilih-baru-imports.destroy'), [
+            'source_file' => 'pemilih-tersilap.xlsx',
+            'import_month' => '2026-09',
+            'confirmation' => 'DELETE',
+        ])
+        ->assertRedirect(route('settings.edit'))
+        ->assertSessionHasErrors('confirmation');
+
+    $this->actingAs($user)
+        ->from(route('settings.edit'))
+        ->post(route('settings.pemilih-baru-imports.destroy'), [
+            'source_file' => 'pemilih-tersilap.xlsx',
+            'import_month' => '2026-09',
+            'confirmation' => 'delete',
+        ])
+        ->assertRedirect(route('settings.edit'))
+        ->assertSessionHas('success');
+
+    $this->assertDatabaseMissing('pemilih_baru_records', ['record_key' => sha1('mistaken-upload')]);
+    $this->assertDatabaseHas('pemilih_baru_records', ['record_key' => sha1('valid-upload')]);
+});

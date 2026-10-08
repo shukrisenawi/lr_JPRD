@@ -160,6 +160,10 @@ function PemilihBaruUploadPanel({ data }) {
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
+    const [importToDelete, setImportToDelete] = useState(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
 
     const submit = (e) => {
         e.preventDefault();
@@ -211,6 +215,34 @@ function PemilihBaruUploadPanel({ data }) {
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         if (token) xhr.setRequestHeader('X-CSRF-TOKEN', token);
         xhr.send(formData);
+    };
+
+    const confirmDeleteImport = (e) => {
+        e.preventDefault();
+        if (!importToDelete || deleteConfirmation !== 'delete') return;
+
+        setDeleting(true);
+        setDeleteError('');
+        router.post(route('settings.pemilih-baru-imports.destroy'), {
+            source_file: importToDelete.source_file,
+            import_month: importToDelete.import_month,
+            confirmation: deleteConfirmation,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setImportToDelete(null);
+                setDeleteConfirmation('');
+            },
+            onError: () => setDeleteError('Fail import gagal dipadam. Sila cuba lagi.'),
+            onFinish: () => setDeleting(false),
+        });
+    };
+
+    const closeDeleteModal = () => {
+        if (deleting) return;
+        setImportToDelete(null);
+        setDeleteConfirmation('');
+        setDeleteError('');
     };
 
     return (
@@ -268,6 +300,82 @@ function PemilihBaruUploadPanel({ data }) {
                 {data?.last_imported_by && <span>Oleh: <strong className="text-slate-700">{data.last_imported_by}</strong></span>}
                 {data?.last_imported_at && <span>Pada: <strong className="text-slate-700">{data.last_imported_at}</strong></span>}
             </div>
+
+            <div className="mt-4 border-t border-slate-100 pt-4">
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                    <div>
+                        <h4 className="text-xs font-bold text-slate-800">Fail yang telah diimport</h4>
+                        <p className="mt-0.5 text-[10px] text-slate-500">Pilih import yang tersilap untuk dipadam.</p>
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-400">{data?.imports?.length ?? 0} kumpulan import</span>
+                </div>
+                {data?.imports?.length ? (
+                    <div className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+                        {data.imports.map((item) => {
+                            const month = item.import_month.slice(5, 7);
+                            const monthLabel = data.month_options?.find((option) => option.value === month)?.label ?? month;
+
+                            return (
+                                <div key={`${item.import_month}-${item.source_file}`} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-xs font-bold text-slate-700">{item.source_file}</p>
+                                        <p className="mt-0.5 text-[10px] text-slate-500">
+                                            {monthLabel} {item.import_month.slice(0, 4)} · {Number(item.record_count).toLocaleString('ms-MY')} rekod
+                                            {item.linked_count > 0 ? ` · ${Number(item.linked_count).toLocaleString('ms-MY')} dah link` : ''}
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] text-slate-400">
+                                            {item.imported_by ? `Oleh ${item.imported_by} · ` : ''}{item.imported_at}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setImportToDelete(item); setDeleteConfirmation(''); setDeleteError(''); }}
+                                        className="inline-flex shrink-0 items-center justify-center rounded-md border border-rose-200 px-3 py-1.5 text-[10px] font-bold text-rose-700 transition hover:bg-rose-50"
+                                    >
+                                        Padam
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p className="mt-2 rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-[10px] text-slate-400">Belum ada fail import.</p>
+                )}
+            </div>
+
+            {importToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <button type="button" onClick={closeDeleteModal} aria-label="Tutup dialog" className="absolute inset-0 h-full w-full cursor-default bg-slate-950/40" />
+                    <section className="relative w-full max-w-md rounded-2xl border border-rose-200 bg-white p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="delete-pemilih-baru-title">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-rose-700">Pengesahan padam</p>
+                        <h2 id="delete-pemilih-baru-title" className="mt-1 text-base font-bold text-slate-900">Padam fail import ini?</h2>
+                        <p className="mt-2 break-all text-xs font-semibold text-slate-700">{importToDelete.source_file}</p>
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                            {data.month_options?.find((option) => option.value === importToDelete.import_month.slice(5, 7))?.label ?? importToDelete.import_month.slice(5, 7)} {importToDelete.import_month.slice(0, 4)} · {Number(importToDelete.record_count).toLocaleString('ms-MY')} rekod
+                        </p>
+                        <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-[10px] leading-relaxed text-rose-800">Rekod import pemilih baharu akan dipadam. Kod cula yang telah dipindahkan ke Pemilih Semasa tidak akan diubah.</p>
+
+                        <form onSubmit={confirmDeleteImport} className="mt-4">
+                            <label htmlFor="confirm-delete-text" className="block text-xs font-bold text-slate-700">Taip <span className="font-mono text-rose-700">delete</span> untuk mengesahkan</label>
+                            <input
+                                id="confirm-delete-text"
+                                type="text"
+                                autoComplete="off"
+                                value={deleteConfirmation}
+                                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                                className="input-field mt-1 w-full py-2 text-sm"
+                            />
+                            {deleteError && <p className="mt-2 text-xs font-semibold text-rose-600">{deleteError}</p>}
+                            <div className="mt-5 flex justify-end gap-2">
+                                <button type="button" onClick={closeDeleteModal} disabled={deleting} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">Batal</button>
+                                <button type="submit" disabled={deleteConfirmation !== 'delete' || deleting} className="rounded-lg bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-40">
+                                    {deleting ? 'Memadam...' : 'Padam import'}
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            )}
         </section>
     );
 }
