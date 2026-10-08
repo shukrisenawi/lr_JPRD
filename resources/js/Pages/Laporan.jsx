@@ -303,39 +303,39 @@ function PemilihBaruMovementTable({ movement }) {
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">{movement?.year}</span>
             </div>
             <div className="overflow-x-auto">
-                <table className="min-w-[1600px] w-full border-separate border-spacing-0 text-[10px] sm:text-xs">
+                <table className="w-full min-w-[1120px] table-fixed border-separate border-spacing-0 text-[9px] sm:text-[10px]">
                     <caption className="sr-only">Jadual pergerakan pemilih baharu mengikut bulan, pengundi baru dan pemilih berpindah</caption>
                     <thead className="text-center font-bold text-slate-900">
                         <tr>
-                            <th rowSpan={3} className="sticky left-0 z-30 border border-emerald-800 bg-emerald-700 px-2 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]">Bulan</th>
-                            <th rowSpan={3} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Jumlah Pemilih</th>
-                            <th colSpan={6} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Pengundi Baru (18 Tahun)</th>
-                            <th colSpan={6} className="border border-emerald-800 bg-sky-700 px-2 py-2 text-white">Pengundi Pindah Masuk</th>
-                            <th colSpan={6} className="border border-emerald-800 bg-indigo-700 px-2 py-2 text-white">Pengundi Pindah Keluar</th>
+                            <th rowSpan={3} className="sticky left-0 z-30 w-14 border border-emerald-800 bg-emerald-700 px-1 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]">Bulan</th>
+                            <th rowSpan={3} className="w-16 border border-emerald-800 bg-emerald-700 px-1 py-2 text-white"><span className="block whitespace-normal leading-tight">Jumlah<br />Pemilih</span></th>
+                            <th colSpan={6} className="border border-emerald-800 bg-emerald-700 px-1 py-2 text-white leading-tight">Pengundi Baru (18 Tahun)</th>
+                            <th colSpan={6} className="border border-emerald-800 bg-sky-700 px-1 py-2 text-white leading-tight">Pengundi Pindah Masuk</th>
+                            <th colSpan={6} className="border border-emerald-800 bg-indigo-700 px-1 py-2 text-white leading-tight">Pengundi Pindah Keluar</th>
                         </tr>
                         <tr>
-                            <th rowSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Jumlah</th>
-                            <th colSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Dikenali</th>
-                            <th colSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Tidak Dikenali</th>
-                            <th rowSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Cula (B)</th>
+                            <th rowSpan={2} className="border border-slate-300 bg-emerald-100 px-1 py-2">Jumlah</th>
+                            <th colSpan={2} className="border border-slate-300 bg-emerald-100 px-1 py-2">Dikenali</th>
+                            <th colSpan={2} className="border border-slate-300 bg-emerald-100 px-1 py-2">Tidak Dikenali</th>
+                            <th rowSpan={2} className="w-12 min-w-12 border border-slate-300 bg-emerald-100 px-1 py-2 leading-tight"><span className="block whitespace-normal">Cula<br />(B)</span></th>
 
-                            <th rowSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Jumlah</th>
-                            <th colSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Dikenali</th>
-                            <th colSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Tidak Dikenali</th>
-                            <th rowSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Cula (B)</th>
+                            <th rowSpan={2} className="border border-slate-300 bg-sky-100 px-1 py-2">Jumlah</th>
+                            <th colSpan={2} className="border border-slate-300 bg-sky-100 px-1 py-2">Dikenali</th>
+                            <th colSpan={2} className="border border-slate-300 bg-sky-100 px-1 py-2">Tidak Dikenali</th>
+                            <th rowSpan={2} className="w-12 min-w-12 border border-slate-300 bg-sky-100 px-1 py-2 leading-tight"><span className="block whitespace-normal">Cula<br />(B)</span></th>
 
-                            <th rowSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Jumlah</th>
-                            <th colSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Dikenali</th>
-                            <th colSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Tidak Dikenali</th>
-                            <th rowSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Cula (B)</th>
+                            <th rowSpan={2} className="border border-slate-300 bg-indigo-100 px-1 py-2">Jumlah</th>
+                            <th colSpan={2} className="border border-slate-300 bg-indigo-100 px-1 py-2">Dikenali</th>
+                            <th colSpan={2} className="border border-slate-300 bg-indigo-100 px-1 py-2">Tidak Dikenali</th>
+                            <th rowSpan={2} className="w-12 min-w-12 border border-slate-300 bg-indigo-100 px-1 py-2 leading-tight"><span className="block whitespace-normal">Cula<br />(B)</span></th>
                         </tr>
                         <tr>
                             {['bg-emerald-50', 'bg-sky-50', 'bg-indigo-50'].map((tone) => (
                                 <Fragment key={tone}>
-                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Melayu</th>
-                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Bukan Melayu</th>
-                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Melayu</th>
-                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Bukan Melayu</th>
+                                    <th className={`border border-slate-300 ${tone} px-1 py-1.5`}>M</th>
+                                    <th className={`border border-slate-300 ${tone} px-1 py-1.5`}>xM</th>
+                                    <th className={`border border-slate-300 ${tone} px-1 py-1.5`}>M</th>
+                                    <th className={`border border-slate-300 ${tone} px-1 py-1.5`}>xM</th>
                                 </Fragment>
                             ))}
                         </tr>
@@ -346,8 +346,8 @@ function PemilihBaruMovementTable({ movement }) {
 
                             return (
                                 <tr key={row.key} className={rowTone}>
-                                    <td className={`sticky left-0 z-10 whitespace-nowrap border border-slate-300 px-2 py-1.5 font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${rowTone}`}>{row.month}</td>
-                                    <td className="border border-slate-300 px-2 py-1.5 text-right font-semibold tabular-nums">{fmt(row.jumlah_pemilih)}</td>
+                                    <td className={`sticky left-0 z-10 w-14 whitespace-nowrap border border-slate-300 px-1 py-1.5 font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${rowTone}`}>{row.month}</td>
+                                    <td className="w-16 border border-slate-300 px-1 py-1.5 text-right font-semibold tabular-nums">{fmt(row.jumlah_pemilih)}</td>
                                     <MovementCells row={row} prefix="pengundi_baru" />
                                     <MovementCells row={row} prefix="pindah_masuk" />
                                     <MovementCells row={row} prefix="pindah_keluar" />
