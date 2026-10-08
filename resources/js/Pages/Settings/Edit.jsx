@@ -164,6 +164,7 @@ function PemilihBaruUploadPanel({ data }) {
     const [deleteConfirmation, setDeleteConfirmation] = useState('');
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState('');
+    const [showImports, setShowImports] = useState(false);
 
     const submit = (e) => {
         e.preventDefault();
@@ -302,45 +303,56 @@ function PemilihBaruUploadPanel({ data }) {
             </div>
 
             <div className="mt-4 border-t border-slate-100 pt-4">
-                <div className="flex flex-wrap items-end justify-between gap-2">
-                    <div>
-                        <h4 className="text-xs font-bold text-slate-800">Fail yang telah diimport</h4>
-                        <p className="mt-0.5 text-[10px] text-slate-500">Pilih import yang tersilap untuk dipadam.</p>
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-400">{data?.imports?.length ?? 0} kumpulan import</span>
-                </div>
-                {data?.imports?.length ? (
-                    <div className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
-                        {data.imports.map((item) => {
-                            const month = item.import_month.slice(5, 7);
-                            const monthLabel = data.month_options?.find((option) => option.value === month)?.label ?? month;
+                <button
+                    type="button"
+                    aria-expanded={showImports}
+                    aria-controls="pemilih-baru-import-list"
+                    onClick={() => setShowImports((visible) => !visible)}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                >
+                    <span>
+                        <span className="block text-xs font-bold text-slate-800">Fail yang telah diimport</span>
+                        <span className="mt-0.5 block text-[10px] text-slate-500">{showImports ? 'Klik untuk tutup senarai.' : 'Klik untuk buka senarai fail import.'}</span>
+                    </span>
+                    <span className="inline-flex shrink-0 items-center gap-2">
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500">{data?.imports?.length ?? 0} kumpulan</span>
+                        <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">{showImports ? '−' : '+'}</span>
+                    </span>
+                </button>
+                <div id="pemilih-baru-import-list" hidden={!showImports} className="mt-2 max-h-80 overflow-y-auto">
+                    {data?.imports?.length ? (
+                        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
+                            {data.imports.map((item) => {
+                                const month = item.import_month.slice(5, 7);
+                                const monthLabel = data.month_options?.find((option) => option.value === month)?.label ?? month;
 
-                            return (
-                                <div key={`${item.import_month}-${item.source_file}`} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="min-w-0">
-                                        <p className="truncate text-xs font-bold text-slate-700">{item.source_file}</p>
-                                        <p className="mt-0.5 text-[10px] text-slate-500">
-                                            {monthLabel} {item.import_month.slice(0, 4)} · {Number(item.record_count).toLocaleString('ms-MY')} rekod
-                                            {item.linked_count > 0 ? ` · ${Number(item.linked_count).toLocaleString('ms-MY')} dah link` : ''}
-                                        </p>
-                                        <p className="mt-0.5 text-[10px] text-slate-400">
-                                            {item.imported_by ? `Oleh ${item.imported_by} · ` : ''}{item.imported_at}
-                                        </p>
+                                return (
+                                    <div key={`${item.import_month}-${item.source_file}`} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="min-w-0">
+                                            <p className="truncate text-xs font-bold text-slate-700">{item.source_file}</p>
+                                            <p className="mt-0.5 text-[10px] text-slate-500">
+                                                {monthLabel} {item.import_month.slice(0, 4)} · {Number(item.record_count).toLocaleString('ms-MY')} rekod
+                                                {item.linked_count > 0 ? ` · ${Number(item.linked_count).toLocaleString('ms-MY')} dah link` : ''}
+                                            </p>
+                                            <p className="mt-0.5 text-[10px] text-slate-400">
+                                                {item.imported_by ? `Oleh ${item.imported_by} · ` : ''}{item.imported_at}
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setImportToDelete(item); setDeleteConfirmation(''); setDeleteError(''); }}
+                                            className="inline-flex shrink-0 items-center justify-center rounded-md border border-rose-200 px-3 py-1.5 text-[10px] font-bold text-rose-700 transition hover:bg-rose-50"
+                                        >
+                                            Padam
+                                        </button>
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => { setImportToDelete(item); setDeleteConfirmation(''); setDeleteError(''); }}
-                                        className="inline-flex shrink-0 items-center justify-center rounded-md border border-rose-200 px-3 py-1.5 text-[10px] font-bold text-rose-700 transition hover:bg-rose-50"
-                                    >
-                                        Padam
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <p className="mt-2 rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-[10px] text-slate-400">Belum ada fail import.</p>
-                )}
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-[10px] text-slate-400">Belum ada fail import.</p>
+                    )}
+                </div>
             </div>
 
             {importToDelete && (
