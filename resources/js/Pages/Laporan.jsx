@@ -288,10 +288,10 @@ function MovementCells({ row, prefix }) {
     return (
         <>
             <td className="border border-slate-300 px-0.5 py-1.5 text-center tabular-nums">{fmt(row[`${prefix}_total`])}</td>
-            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_dikenali_melayu`])}</td>
-            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_dikenali_bukan_melayu`])}</td>
-            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_melayu`])}</td>
-            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center text-[9px] tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_bukan_melayu`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center tabular-nums">{fmt(row[`${prefix}_dikenali_melayu`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center tabular-nums">{fmt(row[`${prefix}_dikenali_bukan_melayu`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_melayu`])}</td>
+            <td className="w-8 min-w-8 border border-slate-300 px-0 py-1.5 text-center tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_bukan_melayu`])}</td>
             <td className="border border-slate-300 px-0.5 py-1.5 text-center">{row[`${prefix}_cula_b`] ?? ''}</td>
         </>
     );
@@ -339,10 +339,10 @@ function PemilihBaruMovementTable({ movement }) {
                         <tr>
                             {['bg-emerald-50', 'bg-sky-50', 'bg-indigo-50'].map((tone) => (
                                 <Fragment key={tone}>
-                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>M</th>
-                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>xM</th>
-                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>M</th>
-                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5 text-[9px]`}>xM</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5`}>M</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5`}>xM</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5`}>M</th>
+                                    <th className={`w-8 min-w-8 border border-slate-300 ${tone} px-0 py-1.5`}>xM</th>
                                 </Fragment>
                             ))}
                         </tr>
