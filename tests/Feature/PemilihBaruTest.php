@@ -120,6 +120,14 @@ it('requires UDM selection before showing new voter records and shows the pendin
         'dm' => 'UDM BETA',
         'locality' => 'LOKALITI B',
     ]);
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('alpha-previous-month'),
+        'import_month' => '2026-08',
+        'name' => 'ZUL CULA BULAN LEPAS',
+        'dm' => 'UDM ALPHA',
+        'locality' => 'LOKALITI A',
+        'cula_code' => '3B',
+    ]);
 
     $this->actingAs($user)
         ->get(route('pemilih-baru.index'))
@@ -139,6 +147,16 @@ it('requires UDM selection before showing new voter records and shows the pendin
             ->where('filters.udm', 'UDM ALPHA')
             ->where('summary.total', 2)
             ->where('records.data.0.name', 'ALI BELUM CULA'));
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'UDM ALPHA', 'semua_bulan' => 1]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.semua_bulan', true)
+            ->where('summary.total', 3)
+            ->where('summary.completed', 2)
+            ->where('records.total', 3)
+            ->where('records.data.2.import_month', '2026-08'));
 
     Carbon\Carbon::setTestNow();
 });

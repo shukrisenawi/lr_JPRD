@@ -28,6 +28,7 @@ class PemilihBaruController extends Controller
 
         $month = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
         $importMonth = $year.'-'.$month;
+        $showAllMonths = $request->boolean('semua_bulan');
         $scope = $request->user()?->accessScope();
         $defaultUdm = filled($scope['dm'] ?? null) ? $scope['dm'] : '';
         $udm = trim((string) $request->query('udm', $defaultUdm));
@@ -39,7 +40,8 @@ class PemilihBaruController extends Controller
         $search = trim((string) $request->query('q', ''));
         $requestedLocality = trim((string) $request->query('locality', ''));
         $udms = $this->availableUdms($request);
-        $monthQuery = PemilihBaruRecord::query()->where('import_month', $importMonth);
+        $monthQuery = PemilihBaruRecord::query()
+            ->when(! $showAllMonths, fn (Builder $builder) => $builder->where('import_month', $importMonth));
         $this->applyScope($monthQuery, $request);
 
         $summaryRows = (clone $monthQuery)
@@ -123,6 +125,7 @@ class PemilihBaruController extends Controller
                 'cula_code' => $record->cula_code,
                 'cula_display_label' => $record->cula_display_label,
                 'remark' => $record->remark,
+                'import_month' => $record->import_month,
                 'linked_at' => $record->linked_at?->format('d-m-Y H:i'),
             ]);
 
@@ -132,6 +135,7 @@ class PemilihBaruController extends Controller
                 'locality' => $locality,
                 'bulan' => $month,
                 'tahun' => (string) $year,
+                'semua_bulan' => $showAllMonths,
                 'q' => $search,
             ],
             'udms' => $udms,
@@ -169,11 +173,20 @@ class PemilihBaruController extends Controller
             ]);
         }
 
+        $redirectFilters = [
+            'bulan' => substr($pemilihBaruRecord->import_month, 5, 2),
+            'tahun' => substr($pemilihBaruRecord->import_month, 0, 4),
+            'udm' => $request->input('udm'),
+            'locality' => $request->input('locality'),
+            'q' => $request->input('q'),
+        ];
+
+        if ($request->boolean('semua_bulan')) {
+            $redirectFilters['semua_bulan'] = 1;
+        }
+
         return redirect()
-            ->route('pemilih-baru.index', [
-                'bulan' => substr($pemilihBaruRecord->import_month, 5, 2),
-                'tahun' => substr($pemilihBaruRecord->import_month, 0, 4),
-            ])
+            ->route('pemilih-baru.index', array_filter($redirectFilters, fn ($value) => $value !== null && $value !== ''))
             ->with('success', 'Kod cula pemilih baharu berjaya dikemaskini.');
     }
 

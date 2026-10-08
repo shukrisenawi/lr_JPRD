@@ -20,7 +20,7 @@ function SummaryCard({ label, value, tone }) {
     );
 }
 
-function UdmFilterCard({ summary, onSelect }) {
+function UdmFilterCard({ summary, onSelect, allMonths }) {
     return (
         <button type="button" onClick={() => onSelect(summary.name)} className="group flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-amber-400 hover:shadow-md">
             <div className="flex items-start justify-between gap-3">
@@ -31,7 +31,7 @@ function UdmFilterCard({ summary, onSelect }) {
                 <span className="shrink-0 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-800">Pilih</span>
             </div>
             <div className="border-t border-slate-100 pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rekod bulan dipilih</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{allMonths ? 'Semua rekod' : 'Rekod bulan dipilih'}</p>
                 <p className="mt-0.5 text-2xl font-black text-slate-800">{numberFormat.format(summary.total ?? 0)}</p>
             </div>
             <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
@@ -83,7 +83,10 @@ export default function Index({ filters, month_options, year_options, summary, r
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
-    const selectedMonthLabel = month_options.find((option) => option.value === filters.bulan)?.label ?? filters.bulan;
+    const showAllMonths = Boolean(filters.semua_bulan);
+    const selectedMonthLabel = showAllMonths
+        ? 'Semua bulan & tahun'
+        : (month_options.find((option) => option.value === filters.bulan)?.label ?? filters.bulan);
 
     const visit = (values) => router.get(route('pemilih-baru.index'), values, {
         preserveState: true,
@@ -100,9 +103,10 @@ export default function Index({ filters, month_options, year_options, summary, r
         setSearch('');
         visit({ ...filters, udm, locality: '', q: '' });
     };
-    const changeMonth = (bulan) => visit({ ...filters, bulan });
-    const changeYear = (tahun) => visit({ ...filters, tahun });
+    const changeMonth = (bulan) => visit({ ...filters, bulan, semua_bulan: false });
+    const changeYear = (tahun) => visit({ ...filters, tahun, semua_bulan: false });
     const changeLocality = (locality) => visit({ ...filters, locality });
+    const changeAllMonths = (semua_bulan) => visit({ ...filters, semua_bulan });
 
     const clearSearch = () => {
         setSearch('');
@@ -113,7 +117,15 @@ export default function Index({ filters, month_options, year_options, summary, r
         if (!selectedRecord || !code) return;
         setSaving(true);
         setSaveError('');
-        router.post(route('pemilih-baru.cula.update', selectedRecord.id), { cula_code: code }, {
+        router.post(route('pemilih-baru.cula.update', selectedRecord.id), {
+            cula_code: code,
+            bulan: filters.bulan,
+            tahun: filters.tahun,
+            semua_bulan: showAllMonths,
+            udm: filters.udm,
+            locality: filters.locality,
+            q: filters.q,
+        }, {
             preserveScroll: true,
             onSuccess: () => setSelectedRecord(null),
             onError: () => setSaveError('Kod cula gagal disimpan. Sila cuba lagi.'),
@@ -139,7 +151,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                             <p className="mt-0.5 text-[10px] text-slate-500">Pilih UDM dahulu untuk membuka senarai culaan.</p>
                         </div>
                     </div>
-                    <div className={`grid gap-3 p-4 sm:grid-cols-2 ${filters.udm ? 'xl:grid-cols-[minmax(12rem,1fr)_minmax(9rem,0.7fr)_minmax(7rem,0.5fr)_minmax(12rem,1fr)_minmax(15rem,1.5fr)]' : 'xl:grid-cols-[minmax(14rem,1.5fr)_minmax(10rem,1fr)_minmax(8rem,0.7fr)]'}`}>
+                    <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-6">
                         <div>
                             <label htmlFor="filter-udm" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">UDM</label>
                             <select id="filter-udm" value={filters.udm} onChange={(event) => changeUdm(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
@@ -147,18 +159,26 @@ export default function Index({ filters, month_options, year_options, summary, r
                                 {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                             </select>
                         </div>
-                        <div>
-                            <label htmlFor="filter-month" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Bulan</label>
-                            <select id="filter-month" value={filters.bulan} onChange={(event) => changeMonth(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
-                                {month_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="filter-year" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Tahun</label>
-                            <select id="filter-year" value={filters.tahun} onChange={(event) => changeYear(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
-                                {year_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                            </select>
-                        </div>
+                        <label htmlFor="filter-all-months" className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                            <input id="filter-all-months" type="checkbox" checked={showAllMonths} onChange={(event) => changeAllMonths(event.target.checked)} className="rounded border-slate-300 text-amber-600 focus:ring-amber-500" />
+                            Semua bulan &amp; tahun
+                        </label>
+                        {!showAllMonths && (
+                            <>
+                                <div>
+                                    <label htmlFor="filter-month" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Bulan</label>
+                                    <select id="filter-month" value={filters.bulan} onChange={(event) => changeMonth(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                        {month_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="filter-year" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Tahun</label>
+                                    <select id="filter-year" value={filters.tahun} onChange={(event) => changeYear(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                        {year_options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                                    </select>
+                                </div>
+                            </>
+                        )}
                         {filters.udm && (
                             <>
                                 <div>
@@ -190,7 +210,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                         </div>
                         {udm_summaries.length > 0 ? (
                             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                                {udm_summaries.map((item) => <UdmFilterCard key={item.key} summary={item} onSelect={changeUdm} />)}
+                                {udm_summaries.map((item) => <UdmFilterCard key={item.key} summary={item} onSelect={changeUdm} allMonths={showAllMonths} />)}
                             </div>
                         ) : (
                             <div className="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center shadow-sm">
@@ -229,6 +249,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                                     <tr>
                                         <th className="px-4 py-2.5">Pemilih</th>
                                         <th className="px-4 py-2.5">Kawasan</th>
+                                        {showAllMonths && <th className="px-4 py-2.5">Bulan / Tahun</th>}
                                         <th className="px-4 py-2.5">Transaksi</th>
                                         <th className="px-4 py-2.5">Cula</th>
                                         <th className="px-4 py-2.5">Remark</th>
@@ -247,6 +268,11 @@ export default function Index({ filters, month_options, year_options, summary, r
                                                 <p className="font-semibold">{record.dm || 'Tanpa UDM'}</p>
                                                 <p className="mt-0.5 text-slate-400">{record.locality || 'Tanpa lokaliti'}</p>
                                             </td>
+                                            {showAllMonths && (
+                                                <td className="whitespace-nowrap px-4 py-3 text-[10px] font-semibold text-slate-500">
+                                                    {month_options.find((option) => option.value === record.import_month.slice(5, 7))?.label ?? record.import_month.slice(5, 7)} {record.import_month.slice(0, 4)}
+                                                </td>
+                                            )}
                                             <td className="max-w-64 px-4 py-3 text-[10px] leading-relaxed text-slate-500">{record.transaction || '-'}</td>
                                             <td className="min-w-36 px-4 py-3">
                                                 {record.cula_code && !['0', '?', 'TIADA'].includes(String(record.cula_code).toUpperCase()) ? (
