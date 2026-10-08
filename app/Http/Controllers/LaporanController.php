@@ -6,6 +6,7 @@ use App\Models\Cawangan;
 use App\Models\User;
 use App\Services\CulaanMessageService;
 use App\Services\N8nWebhookService;
+use App\Services\PemilihBaruService;
 use App\Services\PemilihReportService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -15,13 +16,14 @@ use Inertia\Response;
 
 class LaporanController extends Controller
 {
-    public function index(Request $request, PemilihReportService $reportService, CulaanMessageService $messageService): Response
+    public function index(Request $request, PemilihReportService $reportService, CulaanMessageService $messageService, PemilihBaruService $pemilihBaru): Response
     {
         $snapshot = $reportService->getLatestUdmSnapshot();
         $report = $reportService->buildFromDatabase();
 
         return Inertia::render('Laporan', [
             'report' => $report,
+            'pemilih_baru_movement' => $pemilihBaru->monthlyMovementReport(),
             'culaan_message' => $messageService->build($report),
             'pemilih_report' => $reportService->getMetadata(),
             'udm_snapshot' => $snapshot ? $snapshot->rows : null,

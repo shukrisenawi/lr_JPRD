@@ -93,6 +93,86 @@ class PemilihBaruService
             ->delete());
     }
 
+    public function monthlyMovementReport(?int $year = null): array
+    {
+        $year ??= (int) now()->year;
+        $records = PemilihBaruRecord::query()
+            ->where('import_month', 'like', $year.'-%')
+            ->get(['import_month', 'transaction', 'no_kp', 'birth_year', 'cula_code', 'race']);
+        $latestImportedMonth = (int) $records
+            ->map(fn (PemilihBaruRecord $record) => (int) substr($record->import_month, 5, 2))
+            ->max();
+        $lastClosedMonth = $year === (int) now()->year ? max(1, (int) now()->format('n') - 1) : 1;
+        $lastMonth = min(12, max($lastClosedMonth, $latestImportedMonth));
+        $recordsByMonth = $records->groupBy('import_month');
+        $rows = [];
+
+        for ($month = 1; $month <= $lastMonth; $month++) {
+            $monthKey = sprintf('%04d-%02d', $year, $month);
+            $monthRecords = $recordsByMonth->get($monthKey, collect());
+            $row = [
+                'key' => $monthKey,
+                'month' => Carbon::create($year, $month, 1)->locale('ms')->isoFormat('MMM-YY'),
+                'jumlah_pemilih' => $monthRecords->count(),
+                'pengundi_baru_total' => 0,
+                'pengundi_baru_dikenali_melayu' => 0,
+                'pengundi_baru_dikenali_bukan_melayu' => 0,
+                'pengundi_baru_tidak_dikenali_melayu' => 0,
+                'pengundi_baru_tidak_dikenali_bukan_melayu' => 0,
+                'pengundi_baru_cula_b' => '',
+                'pindah_masuk_total' => 0,
+                'pindah_masuk_dikenali_melayu' => 0,
+                'pindah_masuk_dikenali_bukan_melayu' => 0,
+                'pindah_masuk_tidak_dikenali_melayu' => 0,
+                'pindah_masuk_tidak_dikenali_bukan_melayu' => 0,
+                'pindah_masuk_cula_b' => '',
+                'pindah_keluar_total' => 0,
+                'pindah_keluar_dikenali_melayu' => 0,
+                'pindah_keluar_dikenali_bukan_melayu' => 0,
+                'pindah_keluar_tidak_dikenali_melayu' => 0,
+                'pindah_keluar_tidak_dikenali_bukan_melayu' => 0,
+                'pindah_keluar_cula_b' => '',
+            ];
+
+            foreach ($monthRecords as $record) {
+                $transaction = mb_strtoupper(trim((string) $record->transaction));
+                $category = null;
+
+                if (str_contains($transaction, 'PENDAFTARAN BARU')) {
+                    if (($this->voterAge($record) ?? 0) >= 18) {
+                        $category = 'pengundi_baru';
+                    }
+                } elseif (
+                    str_contains($transaction, 'PERTUKARAN BAHAGIAN PILIHAN RAYA')
+                    || str_contains($transaction, 'PINDAH MASUK')
+                ) {
+                    $category = 'pindah_masuk';
+                } elseif (str_contains($transaction, 'KELUAR')) {
+                    $category = 'pindah_keluar';
+                }
+
+                if ($category === null) {
+                    continue;
+                }
+
+                $row[$category.'_total']++;
+                $recognition = $this->reportRecognition($record->cula_code);
+                $race = $this->reportRaceGroup($record->race);
+
+                if ($recognition !== null && $race !== null) {
+                    $row[$category.'_'.$recognition.'_'.$race]++;
+                }
+            }
+
+            $rows[] = $row;
+        }
+
+        return [
+            'year' => $year,
+            'rows' => $rows,
+        ];
+    }
+
     public function importFile(string $path, string $filename, string $month, string $importedBy): array
     {
         $rows = $this->readRows($path);
@@ -183,14 +263,15 @@ class PemilihBaruService
         ];
     }
 
-    public function updateCula(PemilihBaruRecord $record, string $code): void
+    public function updateCula(PemilihBaruRecord $record, string $code, string $race): void
     {
         $label = CulaCodes::label($code);
 
-        DB::transaction(function () use ($record, $code, $label): void {
+        DB::transaction(function () use ($record, $code, $label, $race): void {
             $record->forceFill([
                 'cula_code' => $code,
                 'cula_display_label' => $label,
+                'race' => $race,
             ])->save();
 
             $pemilih = PemilihRecord::query()
@@ -328,6 +409,7 @@ class PemilihBaruService
             'no_kp' => $noKp ?: null,
             'id_lain' => $idLain ?: null,
             'gender' => $this->nullable($this->value($row, ['Jantina'])),
+            'race' => $this->nullable($this->value($row, ['Bangsa', 'Race', 'Keturunan'])),
             'birth_year' => $birthYear,
             'name' => $name,
             'no_rumah' => $this->nullable($this->value($row, ['No Rumah', 'No. Rumah'])),
@@ -501,5 +583,56 @@ class PemilihBaruService
     private function hasCula(?string $code): bool
     {
         return filled($code) && ! in_array(strtoupper((string) $code), ['0', '?', 'TIADA'], true);
+    }
+
+    private function voterAge(PemilihBaruRecord $record): ?int
+    {
+        $digits = $this->digits((string) $record->no_kp);
+
+        if (strlen($digits) >= 6) {
+            $yearPart = (int) substr($digits, 0, 2);
+            $month = (int) substr($digits, 2, 2);
+            $day = (int) substr($digits, 4, 2);
+
+            if (checkdate($month, $day, 2000 + $yearPart)) {
+                $now = now();
+                $birthYear = $yearPart > (int) $now->format('y') ? 1900 + $yearPart : 2000 + $yearPart;
+                $age = $now->year - $birthYear;
+
+                if ((int) $now->format('md') < (int) sprintf('%02d%02d', $month, $day)) {
+                    $age--;
+                }
+
+                return $age >= 0 ? $age : null;
+            }
+        }
+
+        return $record->birth_year ? max(0, now()->year - $record->birth_year) : null;
+    }
+
+    private function reportRecognition(?string $code): ?string
+    {
+        $code = strtoupper(trim((string) $code));
+
+        if (in_array($code, ['7', '7P'], true)) {
+            return 'tidak_dikenali';
+        }
+
+        if (in_array($code, ['', '0', '?', 'TIADA'], true)) {
+            return null;
+        }
+
+        return 'dikenali';
+    }
+
+    private function reportRaceGroup(?string $race): ?string
+    {
+        $race = mb_strtoupper(trim((string) $race));
+
+        if (in_array($race, ['MELAYU', 'M'], true)) {
+            return 'melayu';
+        }
+
+        return $race !== '' ? 'bukan_melayu' : null;
     }
 }

@@ -44,6 +44,7 @@ function UdmFilterCard({ summary, onSelect, allMonths }) {
 
 function CulaModal({ record, codes, onClose, onSave, processing, error }) {
     const [code, setCode] = useState(record?.cula_code ?? '');
+    const [race, setRace] = useState(record?.race ?? '');
 
     if (!record) return null;
 
@@ -60,7 +61,26 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
                     <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-lg px-2 py-1 text-lg leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
                 </div>
 
-                <p className="mt-5 text-xs font-bold text-slate-700">Pilih kod cula</p>
+                <p className="mt-5 text-xs font-bold text-slate-700">Pilih bangsa</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                    {['Melayu', 'Bukan Melayu'].map((option) => {
+                        const selected = race === option;
+
+                        return (
+                            <button
+                                key={option}
+                                type="button"
+                                aria-pressed={selected}
+                                onClick={() => setRace(option)}
+                                className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${selected ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50'}`}
+                            >
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <p className="mt-4 text-xs font-bold text-slate-700">Pilih kod cula</p>
                 <div className="mt-2 flex max-h-[55vh] flex-wrap gap-2 overflow-y-auto pr-1">
                     {codes.map((option) => {
                         const selected = code === option.code;
@@ -87,7 +107,7 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
 
                 <div className="mt-5 flex justify-end gap-2">
                     <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button>
-                    <button type="button" onClick={() => onSave(code)} disabled={!code || processing} className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50">
+                    <button type="button" onClick={() => onSave(code, race)} disabled={!code || !race || processing} className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50">
                         {processing ? 'Menyimpan...' : 'Simpan Cula'}
                     </button>
                 </div>
@@ -131,12 +151,13 @@ export default function Index({ filters, month_options, year_options, summary, r
         visit({ ...filters, q: '' });
     };
 
-    const saveCula = (code) => {
-        if (!selectedRecord || !code) return;
+    const saveCula = (code, race) => {
+        if (!selectedRecord || !code || !race) return;
         setSaving(true);
         setSaveError('');
         router.post(route('pemilih-baru.cula.update', selectedRecord.id), {
             cula_code: code,
+            race,
             bulan: filters.bulan,
             tahun: filters.tahun,
             semua_bulan: showAllMonths,
@@ -280,7 +301,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                                             <td className="max-w-72 px-4 py-3">
                                                 <p className="text-xs font-bold text-slate-800">{record.name || 'Nama tiada'}</p>
                                                 <p className="mt-1 text-[10px] text-slate-500">KP: {record.no_kp || '-'}{record.id_lain ? ` · ID lain: ${record.id_lain}` : ''}</p>
-                                                <p className="mt-0.5 text-[10px] text-slate-400">{record.gender || '-'}{record.birth_year ? ` · Lahir ${record.birth_year}` : ''}{record.no_rumah ? ` · Rumah ${record.no_rumah}` : ''}</p>
+                                                <p className="mt-0.5 text-[10px] text-slate-400">{record.gender || '-'} · {record.race || 'Bangsa belum dipilih'}{record.birth_year ? ` · Lahir ${record.birth_year}` : ''}{record.no_rumah ? ` · Rumah ${record.no_rumah}` : ''}</p>
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-slate-700">{record.umur ?? '—'}</td>
                                             <td className="min-w-40 px-4 py-3 text-[11px] text-slate-600">

@@ -121,6 +121,7 @@ class PemilihBaruController extends Controller
                 'dm' => $record->dm,
                 'locality' => $record->locality,
                 'gender' => $record->gender,
+                'race' => $record->race,
                 'birth_year' => $record->birth_year,
                 'umur' => $this->calculateAgeFromIdentity($record->no_kp)
                     ?? ($record->birth_year ? max(0, now()->year - $record->birth_year) : null),
@@ -165,15 +166,17 @@ class PemilihBaruController extends Controller
 
         $validated = $request->validate([
             'cula_code' => ['required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
+            'race' => ['required', 'string', Rule::in(['Melayu', 'Bukan Melayu'])],
         ]);
 
-        $pemilihBaru->updateCula($pemilihBaruRecord, $validated['cula_code']);
+        $pemilihBaru->updateCula($pemilihBaruRecord, $validated['cula_code'], $validated['race']);
 
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Kod cula pemilih baharu berjaya dikemaskini.',
                 'record_id' => $pemilihBaruRecord->id,
                 'cula_code' => $validated['cula_code'],
+                'race' => $validated['race'],
             ]);
         }
 

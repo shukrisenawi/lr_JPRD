@@ -277,7 +277,87 @@ function CulaPartyTable({ rows }) {
     );
 }
 
-export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null }) {
+function MovementCells({ row, prefix }) {
+    return (
+        <>
+            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_total`])}</td>
+            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_dikenali_melayu`])}</td>
+            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_dikenali_bukan_melayu`])}</td>
+            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_melayu`])}</td>
+            <td className="border border-slate-300 px-2 py-1.5 text-right tabular-nums">{fmt(row[`${prefix}_tidak_dikenali_bukan_melayu`])}</td>
+            <td className="border border-slate-300 px-2 py-1.5 text-center">{row[`${prefix}_cula_b`] ?? ''}</td>
+        </>
+    );
+}
+
+function PemilihBaruMovementTable({ movement }) {
+    const rows = movement?.rows ?? [];
+
+    return (
+        <section className="card overflow-hidden">
+            <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
+                <div>
+                    <h3 className="text-sm font-bold text-slate-900">Pergerakan Pemilih Baharu</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">Ringkasan bulanan berdasarkan data pemilih baharu.</p>
+                </div>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">{movement?.year}</span>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-[1600px] w-full border-collapse text-[10px] sm:text-xs">
+                    <caption className="sr-only">Jadual pergerakan pemilih baharu mengikut bulan, pengundi baru dan pemilih berpindah</caption>
+                    <thead className="text-center font-bold text-slate-900">
+                        <tr>
+                            <th rowSpan={3} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Bulan</th>
+                            <th rowSpan={3} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Jumlah Pemilih</th>
+                            <th colSpan={6} className="border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Pengundi Baru (18 Tahun)</th>
+                            <th colSpan={6} className="border border-emerald-800 bg-sky-700 px-2 py-2 text-white">Pengundi Pindah Masuk</th>
+                            <th colSpan={6} className="border border-emerald-800 bg-indigo-700 px-2 py-2 text-white">Pengundi Pindah Keluar</th>
+                        </tr>
+                        <tr>
+                            <th rowSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Jumlah</th>
+                            <th colSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Dikenali</th>
+                            <th colSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Tidak Dikenali</th>
+                            <th rowSpan={2} className="border border-slate-300 bg-emerald-100 px-2 py-2">Cula (B)</th>
+
+                            <th rowSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Jumlah</th>
+                            <th colSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Dikenali</th>
+                            <th colSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Tidak Dikenali</th>
+                            <th rowSpan={2} className="border border-slate-300 bg-sky-100 px-2 py-2">Cula (B)</th>
+
+                            <th rowSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Jumlah</th>
+                            <th colSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Dikenali</th>
+                            <th colSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Tidak Dikenali</th>
+                            <th rowSpan={2} className="border border-slate-300 bg-indigo-100 px-2 py-2">Cula (B)</th>
+                        </tr>
+                        <tr>
+                            {['bg-emerald-50', 'bg-sky-50', 'bg-indigo-50'].map((tone) => (
+                                <Fragment key={tone}>
+                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Melayu</th>
+                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Bukan Melayu</th>
+                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Melayu</th>
+                                    <th className={`border border-slate-300 ${tone} px-2 py-1.5`}>Bukan Melayu</th>
+                                </Fragment>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="text-slate-700">
+                        {rows.map((row, index) => (
+                            <tr key={row.key} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
+                                <td className="whitespace-nowrap border border-slate-300 px-2 py-1.5 font-semibold">{row.month}</td>
+                                <td className="border border-slate-300 px-2 py-1.5 text-right font-semibold tabular-nums">{fmt(row.jumlah_pemilih)}</td>
+                                <MovementCells row={row} prefix="pengundi_baru" />
+                                <MovementCells row={row} prefix="pindah_masuk" />
+                                <MovementCells row={row} prefix="pindah_keluar" />
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    );
+}
+
+export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null }) {
     const { auth } = usePage().props;
     const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
@@ -611,6 +691,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
                         <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows />
                         <CulaPartyTable rows={culaPartyRows} />
+                        <PemilihBaruMovementTable movement={pemilih_baru_movement} />
                         {udm_snapshot_meta && (
                             <p className="text-center text-[10px] text-slate-400" style={{marginTop:'5px'}}>Data pergerakan cula dikira bermula {(()=>{const m=udm_snapshot_meta.snapshot_time.match(/^(\d{2})-(\d{2})-(\d{4})/);if(!m)return'';const dt=new Date(+m[3],+m[2]-1,+m[1]);return isNaN(dt.getTime())?'':hari[dt.getDay()]})()}, {udm_snapshot_meta.snapshot_time}</p>
                         )}

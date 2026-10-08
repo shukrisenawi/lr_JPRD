@@ -22,6 +22,7 @@ class PemilihBaruRecord extends Model
         'no_kp',
         'id_lain',
         'gender',
+        'race',
         'birth_year',
         'name',
         'no_rumah',

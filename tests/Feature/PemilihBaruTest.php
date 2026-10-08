@@ -3,6 +3,7 @@
 use App\Models\PemilihBaruRecord;
 use App\Models\PemilihRecord;
 use App\Models\User;
+use App\Services\PemilihBaruService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -44,10 +45,11 @@ HTML;
         ->and($record->remark)->toBe('Belum link');
 
     $this->actingAs($user)
-        ->post(route('pemilih-baru.cula.update', $record), ['cula_code' => '2'])
+        ->post(route('pemilih-baru.cula.update', $record), ['cula_code' => '2', 'race' => 'Melayu'])
         ->assertRedirect(route('pemilih-baru.index', ['bulan' => '09', 'tahun' => '2026', 'semua_bulan' => 1]));
 
-    expect($record->fresh()->cula_code)->toBe('2');
+    expect($record->fresh()->cula_code)->toBe('2')
+        ->and($record->fresh()->race)->toBe('Melayu');
     expect(PemilihRecord::query()->count())->toBe(1);
 
     $currentVoterSheet = <<<'HTML'
@@ -221,4 +223,72 @@ it('lists pemilih baharu imports and only deletes a batch after typing delete', 
 
     $this->assertDatabaseMissing('pemilih_baru_records', ['record_key' => sha1('mistaken-upload')]);
     $this->assertDatabaseHas('pemilih_baru_records', ['record_key' => sha1('valid-upload')]);
+});
+
+it('builds monthly new voter report groups from transaction, cula code and bangsa', function () {
+    Carbon\Carbon::setTestNow('2026-10-08 12:00:00');
+
+    $records = [
+        [
+            'record_key' => sha1('report-new-known-malay'),
+            'name' => 'PENGUNDI BARU MELAYU DIKENALI',
+            'no_kp' => '08010102****',
+            'transaction' => 'PENDAFTARAN BARU',
+            'cula_code' => '2',
+            'race' => 'Melayu',
+        ],
+        [
+            'record_key' => sha1('report-new-unknown-non-malay'),
+            'name' => 'PENGUNDI BARU BUKAN MELAYU TIDAK DIKENALI',
+            'no_kp' => '05010102****',
+            'transaction' => 'PENDAFTARAN BARU',
+            'cula_code' => '7P',
+            'race' => 'Bukan Melayu',
+        ],
+        [
+            'record_key' => sha1('report-new-underage'),
+            'name' => 'PENGUNDI BARU BAWAH UMUR',
+            'no_kp' => '09010102****',
+            'transaction' => 'PENDAFTARAN BARU',
+            'cula_code' => '2',
+            'race' => 'Melayu',
+        ],
+        [
+            'record_key' => sha1('report-move-in'),
+            'name' => 'PEMILIH PINDAH MASUK',
+            'transaction' => 'PERTUKARAN BAHAGIAN PILIHAN RAYA',
+            'cula_code' => '7',
+            'race' => 'Melayu',
+        ],
+        [
+            'record_key' => sha1('report-move-out'),
+            'name' => 'PEMILIH PINDAH KELUAR',
+            'transaction' => 'PENANDAAN PEMOTONGAN - PEMILIH BERTUKAR ALAMAT (KELUAR)',
+            'cula_code' => '2',
+            'race' => 'Bukan Melayu',
+        ],
+    ];
+
+    foreach ($records as $record) {
+        PemilihBaruRecord::query()->create([
+            ...$record,
+            'import_month' => '2026-09',
+        ]);
+    }
+
+    $report = app(PemilihBaruService::class)->monthlyMovementReport();
+    $september = collect($report['rows'])->firstWhere('key', '2026-09');
+
+    expect($report['year'])->toBe(2026)
+        ->and($september['jumlah_pemilih'])->toBe(5)
+        ->and($september['pengundi_baru_total'])->toBe(2)
+        ->and($september['pengundi_baru_dikenali_melayu'])->toBe(1)
+        ->and($september['pengundi_baru_tidak_dikenali_bukan_melayu'])->toBe(1)
+        ->and($september['pengundi_baru_cula_b'])->toBe('')
+        ->and($september['pindah_masuk_total'])->toBe(1)
+        ->and($september['pindah_masuk_tidak_dikenali_melayu'])->toBe(1)
+        ->and($september['pindah_keluar_total'])->toBe(1)
+        ->and($september['pindah_keluar_dikenali_bukan_melayu'])->toBe(1);
+
+    Carbon\Carbon::setTestNow();
 });
