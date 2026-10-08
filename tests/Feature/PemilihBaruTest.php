@@ -132,6 +132,49 @@ it('reads an uploaded xlsx using its original extension and filters to DUN 24', 
     }
 });
 
+it('automatically assigns Melayu when the voter name has bin binti or bt', function () {
+    $user = User::factory()->withModules(['settings'])->create();
+    $sheet = <<<'HTML'
+<html><body><table>
+<tr><th>Kod DUN</th><th>No KP</th><th>Nama</th><th>Nama DM</th><th>Nama Lokaliti</th><th>Jantina</th><th>Transaksi</th><th>Kod Cula</th></tr>
+<tr><td>24</td><td>80010102****</td><td>MOHD BIN AHMAD</td><td>UDM A</td><td>LOKALITI A</td><td>L</td><td>PENDAFTARAN BARU</td><td></td></tr>
+<tr><td>24</td><td>85020202****</td><td>SITI BINTI ALI</td><td>UDM A</td><td>LOKALITI A</td><td>P</td><td>PENDAFTARAN BARU</td><td></td></tr>
+<tr><td>24</td><td>82030302****</td><td>AHMAD BT OSMAN</td><td>UDM A</td><td>LOKALITI A</td><td>L</td><td>PENDAFTARAN BARU</td><td></td></tr>
+<tr><td>24</td><td>90040402****</td><td>ALI TANPA PENANDA</td><td>UDM A</td><td>LOKALITI A</td><td>L</td><td>PENDAFTARAN BARU</td><td></td></tr>
+</table></body></html>
+HTML;
+
+    $upload = fn () => UploadedFile::fake()->createWithContent('pemilih-bangsa.xls', $sheet);
+
+    $this->actingAs($user)
+        ->post(route('settings.pemilih-baru-upload'), [
+            'pemilih_baru_file' => $upload(),
+            'bulan' => '9',
+            'tahun' => '2026',
+        ])
+        ->assertRedirect(route('settings.edit'))
+        ->assertSessionHas('success');
+
+    $this->assertDatabaseHas('pemilih_baru_records', ['name' => 'MOHD BIN AHMAD', 'race' => 'Melayu']);
+    $this->assertDatabaseHas('pemilih_baru_records', ['name' => 'SITI BINTI ALI', 'race' => 'Melayu']);
+    $this->assertDatabaseHas('pemilih_baru_records', ['name' => 'AHMAD BT OSMAN', 'race' => 'Melayu']);
+    $this->assertDatabaseHas('pemilih_baru_records', ['name' => 'ALI TANPA PENANDA', 'race' => null]);
+
+    $unmarked = PemilihBaruRecord::query()->where('name', 'ALI TANPA PENANDA')->firstOrFail();
+    $unmarked->update(['race' => 'Bukan Melayu', 'cula_code' => '2']);
+
+    $this->actingAs($user)
+        ->post(route('settings.pemilih-baru-upload'), [
+            'pemilih_baru_file' => $upload(),
+            'bulan' => '9',
+            'tahun' => '2026',
+        ])
+        ->assertRedirect(route('settings.edit'));
+
+    expect($unmarked->fresh()->race)->toBe('Bukan Melayu')
+        ->and($unmarked->fresh()->cula_code)->toBe('2');
+});
+
 it('shows the pemilih baharu cula menu with all months selected by default', function () {
     $user = User::factory()->withModules(['culaan.senarai'])->create();
     Carbon\Carbon::setTestNow('2026-10-08 12:00:00');

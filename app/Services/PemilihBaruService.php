@@ -208,6 +208,9 @@ class PemilihBaruService
                         $data['cula_code'] = $record->cula_code;
                         $data['cula_display_label'] = $record->cula_display_label;
                     }
+                    if (blank($data['race']) && filled($record->race)) {
+                        $data['race'] = $record->race;
+                    }
                     $record->fill($data)->save();
                     $updated++;
 
@@ -381,6 +384,12 @@ class PemilihBaruService
         $noKp = $this->normalizeIdentity($this->value($row, ['No KP', 'No. KP', 'No K/P', 'No. K/P (Baru)', 'No K/P (Baru)']));
         $idLain = $this->normalizeIdentity($this->value($row, ['ID Lain', 'No ID', 'ID']));
         $name = $this->nullable($this->value($row, ['Nama', 'Nama Pemilih']));
+        $race = $this->nullable($this->value($row, ['Bangsa', 'Race', 'Keturunan']));
+
+        if ($this->hasMalayNameMarker($name)) {
+            $race = 'Melayu';
+        }
+
         $dm = $this->nullable($this->value($row, ['Nama DM', 'DM']));
         $locality = $this->nullable($this->value($row, ['Nama Lokaliti', 'Lokaliti']));
         $transaction = $this->nullable($this->value($row, ['Transaksi', 'Jenis Transaksi']));
@@ -421,7 +430,7 @@ class PemilihBaruService
             'no_kp' => $noKp ?: null,
             'id_lain' => $idLain ?: null,
             'gender' => $this->nullable($this->value($row, ['Jantina'])),
-            'race' => $this->nullable($this->value($row, ['Bangsa', 'Race', 'Keturunan'])),
+            'race' => $race,
             'birth_year' => $birthYear,
             'name' => $name,
             'no_rumah' => $this->nullable($this->value($row, ['No Rumah', 'No. Rumah'])),
@@ -867,5 +876,10 @@ class PemilihBaruService
         }
 
         return $race !== '' ? 'bukan_melayu' : null;
+    }
+
+    private function hasMalayNameMarker(?string $name): bool
+    {
+        return $name !== null && preg_match('/(?:^|\s)(?:bin|binti|bt)\.?(?:\s|$)/iu', trim($name)) === 1;
     }
 }
