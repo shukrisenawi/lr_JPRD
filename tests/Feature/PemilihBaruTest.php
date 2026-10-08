@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Cawangan;
 use App\Models\PemilihBaruRecord;
 use App\Models\PemilihRecord;
 use App\Models\User;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\File;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('imports pemilih baharu into its own monthly table and transfers cula when the current file is imported', function () {
-    $user = User::factory()->withModules(['settings', 'culaan.senarai'])->create();
+    $user = User::factory()->withModules(['settings', 'culaan.pemilih-baharu'])->create();
 
     PemilihRecord::query()->create([
         'identity_number' => '900101021234',
@@ -176,7 +177,7 @@ HTML;
 });
 
 it('shows the pemilih baharu cula menu with all months selected by default', function () {
-    $user = User::factory()->withModules(['culaan.senarai'])->create();
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
     Carbon\Carbon::setTestNow('2026-10-08 12:00:00');
 
     $this->actingAs($user)
@@ -188,6 +189,7 @@ it('shows the pemilih baharu cula menu with all months selected by default', fun
             ->where('filters.tahun', '2026')
             ->where('filters.semua_bulan', true)
             ->where('summary.total', 0)
+            ->where('can_select_udm', true)
             ->where('filters.udm', '')
             ->where('records.data', []));
 
@@ -195,7 +197,7 @@ it('shows the pemilih baharu cula menu with all months selected by default', fun
 });
 
 it('requires UDM selection before showing new voter records and shows the pending menu badge', function () {
-    $user = User::factory()->withModules(['culaan.senarai'])->create();
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
     Carbon\Carbon::setTestNow('2026-10-08 12:00:00');
 
     PemilihBaruRecord::query()->create([
@@ -271,6 +273,89 @@ it('requires UDM selection before showing new voter records and shows the pendin
             ->where('records.data.2.import_month', '2026-08'));
 
     Carbon\Carbon::setTestNow();
+});
+
+it('limits pemilih baharu cula to the assigned UDM and auto-selects that UDM', function () {
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+    ]);
+
+    foreach ([
+        ['alpha', 'UDM ALPHA', 'LOKALITI A', 'PEMILIH UDM SENDIRI'],
+        ['beta', 'UDM BETA', 'LOKALITI B', 'PEMILIH UDM LAIN'],
+    ] as [$key, $udm, $locality, $name]) {
+        PemilihBaruRecord::query()->create([
+            'record_key' => sha1($key),
+            'import_month' => '2026-09',
+            'name' => $name,
+            'dm' => $udm,
+            'locality' => $locality,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'UDM BETA']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.udm', 'UDM ALPHA')
+            ->where('can_select_udm', false)
+            ->where('can_select_locality', true)
+            ->where('udms', ['UDM ALPHA'])
+            ->where('summary.total', 1)
+            ->where('records.data.0.name', 'PEMILIH UDM SENDIRI'));
+});
+
+it('limits cawangan access to its own locality and fixes the UDM and locality filters', function () {
+    $cawangan = Cawangan::query()->create(['name' => 'CAWANGAN SENDIRI', 'udm' => 'UDM ALPHA']);
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create([
+        'access_level' => 'cawangan',
+        'scope_key' => (string) $cawangan->id,
+    ]);
+
+    foreach ([
+        ['own', 'UDM ALPHA', 'CAWANGAN SENDIRI', 'PEMILIH CAWANGAN SENDIRI'],
+        ['other-locality', 'UDM ALPHA', 'CAWANGAN LAIN', 'PEMILIH CAWANGAN LAIN'],
+        ['other-udm', 'UDM BETA', 'CAWANGAN BETA', 'PEMILIH UDM LAIN'],
+    ] as [$key, $udm, $locality, $name]) {
+        PemilihBaruRecord::query()->create([
+            'record_key' => sha1($key),
+            'import_month' => '2026-09',
+            'name' => $name,
+            'dm' => $udm,
+            'locality' => $locality,
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'UDM BETA', 'locality' => 'CAWANGAN LAIN']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.udm', 'UDM ALPHA')
+            ->where('filters.locality', 'CAWANGAN SENDIRI')
+            ->where('can_select_udm', false)
+            ->where('can_select_locality', false)
+            ->where('localities', ['CAWANGAN SENDIRI'])
+            ->where('summary.total', 1)
+            ->where('records.data.0.name', 'PEMILIH CAWANGAN SENDIRI')
+            ->where('badgeCounts.culaPemilihBaruBelumCula', 1));
+
+    $outsideRecord = PemilihBaruRecord::query()->where('name', 'PEMILIH CAWANGAN LAIN')->firstOrFail();
+
+    $this->actingAs($user)
+        ->postJson(route('pemilih-baru.cula.update', $outsideRecord), [
+            'cula_code' => '2',
+            'race' => 'Melayu',
+        ])
+        ->assertForbidden();
+});
+
+it('requires the dedicated role permission for pemilih baharu cula', function () {
+    $user = User::factory()->withModules(['culaan.senarai'])->create();
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index'))
+        ->assertRedirect(route('profile.edit', absolute: false));
 });
 
 it('lists pemilih baharu imports and only deletes a batch after typing delete', function () {

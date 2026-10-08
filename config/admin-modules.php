@@ -85,6 +85,7 @@ return [
             'culaan.senarai' => ['label' => 'Senarai Belum Cula'],
             'culaan.laporan' => ['label' => 'Laporan (Graf)'],
             'culaan.jadual' => ['label' => 'Laporan (Jadual)'],
+            'culaan.pemilih-baharu' => ['label' => 'Cula Pemilih Baharu'],
         ],
     ],
     'culaan-bot' => [

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cawangan;
 use App\Models\PemilihBaruRecord;
 use App\Services\PemilihBaruService;
 use App\Support\CulaCodes;
@@ -33,6 +34,7 @@ class PemilihBaruController extends Controller
             : true;
         $scope = $request->user()?->accessScope();
         $defaultUdm = filled($scope['dm'] ?? null) ? $scope['dm'] : '';
+        $defaultLocality = $this->scopedLocality($scope);
         $udm = trim((string) $request->query('udm', $defaultUdm));
 
         if ($defaultUdm !== '' && $udm !== $defaultUdm) {
@@ -40,7 +42,7 @@ class PemilihBaruController extends Controller
         }
 
         $search = trim((string) $request->query('q', ''));
-        $requestedLocality = trim((string) $request->query('locality', ''));
+        $requestedLocality = trim((string) $request->query('locality', $defaultLocality));
         $udms = $this->availableUdms($request);
         $monthQuery = PemilihBaruRecord::query()
             ->when(! $showAllMonths, fn (Builder $builder) => $builder->where('import_month', $importMonth));
@@ -69,7 +71,9 @@ class PemilihBaruController extends Controller
             ->all();
 
         $localities = $udm !== '' ? $this->availableLocalities($request, $udm) : [];
-        $locality = in_array($requestedLocality, $localities, true) ? $requestedLocality : '';
+        $locality = $defaultLocality !== ''
+            ? $defaultLocality
+            : (in_array($requestedLocality, $localities, true) ? $requestedLocality : '');
         $query = clone $monthQuery;
 
         if ($udm === '') {
@@ -144,8 +148,10 @@ class PemilihBaruController extends Controller
                 'q' => $search,
             ],
             'udms' => $udms,
+            'can_select_udm' => ! filled($scope['dm'] ?? null),
             'udm_summaries' => $udmSummaries,
             'localities' => $localities,
+            'can_select_locality' => ! filled($defaultLocality),
             'requires_udm' => true,
             'month_options' => $pemilihBaru->monthOptions(),
             'year_options' => $pemilihBaru->yearOptions(),
@@ -243,7 +249,28 @@ class PemilihBaruController extends Controller
 
         if (filled($scope['locality'] ?? null)) {
             $query->where('locality', $scope['locality']);
+        } elseif (filled($scope['cawangan_id'] ?? null)) {
+            $cawangan = Cawangan::query()->find($scope['cawangan_id']);
+
+            if ($cawangan) {
+                $query->where('locality', $cawangan->name);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
+    }
+
+    private function scopedLocality(?array $scope): string
+    {
+        if (filled($scope['locality'] ?? null)) {
+            return (string) $scope['locality'];
+        }
+
+        if (filled($scope['cawangan_id'] ?? null)) {
+            return (string) Cawangan::query()->find($scope['cawangan_id'])?->name;
+        }
+
+        return '';
     }
 
     private function calculateAgeFromIdentity(?string $identity): ?int
@@ -278,8 +305,26 @@ class PemilihBaruController extends Controller
     {
         $scope = $request->user()?->accessScope();
 
-        return $scope === null
-            || ((! filled($scope['dm'] ?? null) || $record->dm === $scope['dm'])
-                && (! filled($scope['locality'] ?? null) || $record->locality === $scope['locality']));
+        if ($scope === null) {
+            return true;
+        }
+
+        if (filled($scope['dm'] ?? null) && $record->dm !== $scope['dm']) {
+            return false;
+        }
+
+        if (filled($scope['locality'] ?? null)) {
+            return $record->locality === $scope['locality'];
+        }
+
+        if (filled($scope['cawangan_id'] ?? null)) {
+            $cawangan = Cawangan::query()->find($scope['cawangan_id']);
+
+            return $cawangan !== null
+                && $record->dm === $cawangan->udm
+                && $record->locality === $cawangan->name;
+        }
+
+        return true;
     }
 }

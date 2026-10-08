@@ -116,7 +116,7 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
     );
 }
 
-export default function Index({ filters, month_options, year_options, summary, records, available_cula_codes, udms, udm_summaries, localities }) {
+export default function Index({ filters, month_options, year_options, summary, records, available_cula_codes, udms, udm_summaries, localities, can_select_udm = true, can_select_locality = true }) {
     const [search, setSearch] = useState(filters.q ?? '');
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [saving, setSaving] = useState(false);
@@ -187,17 +187,27 @@ export default function Index({ filters, month_options, year_options, summary, r
                         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-black text-amber-800">⌕</span>
                         <div>
                             <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700">Tapisan Pemilih Baharu</h3>
-                            <p className="mt-0.5 text-[10px] text-slate-500">Pilih UDM dahulu untuk membuka senarai culaan.</p>
+                            <p className="mt-0.5 text-[10px] text-slate-500">{can_select_udm ? 'Pilih UDM dahulu untuk membuka senarai culaan.' : 'Skop UDM ditentukan mengikut peringkat akses pengguna.'}</p>
                         </div>
                     </div>
                     <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-6">
-                        <div>
-                            <label htmlFor="filter-udm" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">UDM</label>
-                            <select id="filter-udm" value={filters.udm} onChange={(event) => changeUdm(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
-                                <option value="">Pilih UDM</option>
-                                {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
-                            </select>
-                        </div>
+                        {can_select_udm ? (
+                            <div>
+                                <label htmlFor="filter-udm" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">UDM</label>
+                                <select id="filter-udm" value={filters.udm} onChange={(event) => changeUdm(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                    <option value="">Pilih UDM</option>
+                                    {udms.map((udm) => <option key={udm} value={udm}>{udm}</option>)}
+                                </select>
+                            </div>
+                        ) : (
+                            <div>
+                                <p className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">UDM</p>
+                                <div className="mt-1 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs font-bold text-sky-800">
+                                    {filters.udm || 'UDM belum ditetapkan'}
+                                    <p className="mt-0.5 text-[10px] font-medium text-sky-700">Ditentukan mengikut peringkat akses pengguna</p>
+                                </div>
+                            </div>
+                        )}
                         <label htmlFor="filter-all-months" className="flex min-h-10 cursor-pointer items-center gap-2 px-1 py-2 text-xs font-medium text-slate-700">
                             <input id="filter-all-months" type="checkbox" checked={showAllMonths} onChange={(event) => changeAllMonths(event.target.checked)} className="h-4 w-4 rounded border-slate-300" />
                             Semua bulan &amp; tahun
@@ -220,13 +230,23 @@ export default function Index({ filters, month_options, year_options, summary, r
                         )}
                         {filters.udm && (
                             <>
-                                <div>
-                                    <label htmlFor="filter-locality" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Lokaliti</label>
-                                    <select id="filter-locality" value={filters.locality} onChange={(event) => changeLocality(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
-                                        <option value="">Semua Lokaliti</option>
-                                        {localities.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
-                                    </select>
-                                </div>
+                                {can_select_locality ? (
+                                    <div>
+                                        <label htmlFor="filter-locality" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Lokaliti</label>
+                                        <select id="filter-locality" value={filters.locality} onChange={(event) => changeLocality(event.target.value)} className="input-field mt-1 w-full py-2 text-xs">
+                                            <option value="">Semua Lokaliti</option>
+                                            {localities.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
+                                        </select>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Lokaliti</p>
+                                        <div className="mt-1 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">
+                                            {filters.locality || 'Lokaliti belum ditetapkan'}
+                                            <p className="mt-0.5 text-[10px] font-medium text-emerald-700">Ditentukan mengikut peringkat akses pengguna</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <form onSubmit={submitSearch} className="flex items-end gap-2">
                                     <div className="min-w-0 flex-1">
                                         <label htmlFor="search-new-voter" className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Cari Pemilih</label>

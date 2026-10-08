@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Cawangan;
 use App\Models\CommitteeMembership;
 use App\Models\PemilihBaruRecord;
 use App\Models\PemilihRecord;
@@ -153,7 +154,24 @@ class HandleInertiaRequests extends Middleware
                         ->orWhereRaw('UPPER(COALESCE(cula_display_label, \'\')) like ?', ['%BELUM DICULA%']);
                 });
 
-            $user->applyScopeToPemilihQuery($query);
+            if (($user->access_level ?? 'jprd') === 'cawangan') {
+                $scope = $user->accessScope();
+                $cawangan = filled($scope['cawangan_id'] ?? null)
+                    ? Cawangan::query()->find($scope['cawangan_id'])
+                    : null;
+
+                if ($cawangan) {
+                    $query->where('dm', $cawangan->udm)
+                        ->where('locality', $cawangan->name);
+                } elseif (filled($scope['dm'] ?? null) && filled($scope['locality'] ?? null)) {
+                    $query->where('dm', $scope['dm'])
+                        ->where('locality', $scope['locality']);
+                } else {
+                    return 0;
+                }
+            } else {
+                $user->applyScopeToPemilihQuery($query);
+            }
 
             return $query->count();
         } catch (\Exception $e) {

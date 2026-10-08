@@ -152,8 +152,8 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::delete('/keluarga-pemilih/{pemilihFamily}/members/{pemilihRecord}', [KeluargaPemilihController::class, 'removeMember'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.members.destroy');
 
     Route::get('/culaan', [CulaanController::class, 'index'])->middleware('module:culaan')->name('culaan.index');
-    Route::get('/pemilih-baru/culaan', [PemilihBaruController::class, 'index'])->middleware('module:culaan.senarai')->name('pemilih-baru.index');
-    Route::post('/pemilih-baru/{pemilihBaruRecord}/cula', [PemilihBaruController::class, 'updateCula'])->middleware('module:culaan.senarai')->name('pemilih-baru.cula.update');
+    Route::get('/pemilih-baru/culaan', [PemilihBaruController::class, 'index'])->middleware('module:culaan.pemilih-baharu')->name('pemilih-baru.index');
+    Route::post('/pemilih-baru/{pemilihBaruRecord}/cula', [PemilihBaruController::class, 'updateCula'])->middleware('module:culaan.pemilih-baharu')->name('pemilih-baru.cula.update');
     Route::get('/culaan/export', [CulaanController::class, 'export'])->middleware('module:culaan.senarai')->name('culaan.export');
     Route::get('/culaan/search', [CulaanController::class, 'search'])->middleware('module:culaan.senarai')->name('culaan.search');
     Route::get('/culaan/alamat/{pemilihRecord}', [CulaanController::class, 'searchByAddress'])->middleware('module:culaan.senarai')->name('culaan.alamat');

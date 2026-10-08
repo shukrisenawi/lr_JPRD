@@ -26,6 +26,9 @@ it('allows master admin to open access management page', function () {
             ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'jawatankuasa'
                 && collect($module['children'] ?? [])->contains(fn ($child) => $child['key'] === 'jawatankuasa.ajk-bukan-pas'
                     && $child['label'] === 'AJK Bukan PAS')))
+            ->where('modules', fn ($modules) => collect($modules)->contains(fn ($module) => $module['key'] === 'culaan'
+                && collect($module['children'] ?? [])->contains(fn ($child) => $child['key'] === 'culaan.pemilih-baharu'
+                    && $child['label'] === 'Cula Pemilih Baharu')))
             ->where('users.0.id', $managedUser->id)
             ->where('users.0.avatar_url', $managedUser->avatarUrl()));
 });
