@@ -119,13 +119,69 @@ HTML;
         ->and($currentVoter->cula_code)->toBe('1');
 
     $this->actingAs($user)
-        ->get(route('pemilih-baru.index', ['udm' => 'PADANG CHICHAK']))
+        ->get(route('pemilih-baru.index', ['udm' => 'PADANG CHICHAK', 'tab' => 'dah_link']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('records.data.0.is_linked', true)
             ->where('records.data.0.cula_code', '1'));
 
     File::delete(storage_path('app/reports/pemilih-latest.xls'));
+});
+
+it('separates unlinked new voters from linked existing voters in status tabs', function () {
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
+    Carbon\Carbon::setTestNow('2026-10-08 12:00:00');
+
+    $currentVoter = PemilihRecord::query()->create([
+        'identity_number' => '900101021234',
+        'no_kp' => '900101021234',
+        'name' => 'PEMILIH LAMA LINKED',
+        'dm' => 'UDM TAB',
+        'locality' => 'LOKALITI TAB',
+        'gender' => 'L',
+        'status' => 'aktif',
+        'is_manual' => false,
+    ]);
+
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('tab-unlinked'),
+        'import_month' => '2026-09',
+        'name' => 'PEMILIH BAHARU BELUM LINK',
+        'dm' => 'UDM TAB',
+        'locality' => 'LOKALITI TAB',
+    ]);
+    PemilihBaruRecord::query()->create([
+        'record_key' => sha1('tab-linked'),
+        'import_month' => '2026-09',
+        'name' => 'PEMILIH LAMA LINKED',
+        'dm' => 'UDM TAB',
+        'locality' => 'LOKALITI TAB',
+        'linked_pemilih_record_id' => $currentVoter->id,
+        'remark' => 'Dah link',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'UDM TAB']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.tab', 'belum_link')
+            ->where('summary.total', 2)
+            ->where('summary.unlinked', 1)
+            ->where('summary.linked', 1)
+            ->where('records.total', 1)
+            ->where('records.data.0.name', 'PEMILIH BAHARU BELUM LINK')
+            ->where('records.data.0.is_linked', false));
+
+    $this->actingAs($user)
+        ->get(route('pemilih-baru.index', ['udm' => 'UDM TAB', 'tab' => 'dah_link']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('filters.tab', 'dah_link')
+            ->where('records.total', 1)
+            ->where('records.data.0.name', 'PEMILIH LAMA LINKED')
+            ->where('records.data.0.is_linked', true));
+
+    Carbon\Carbon::setTestNow();
 });
 
 it('reads an uploaded xlsx using its original extension and filters to DUN 24', function () {

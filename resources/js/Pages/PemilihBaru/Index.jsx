@@ -125,6 +125,7 @@ export default function Index({ filters, month_options, year_options, summary, r
     const selectedMonthLabel = showAllMonths
         ? 'Semua bulan & tahun'
         : (month_options.find((option) => option.value === filters.bulan)?.label ?? filters.bulan);
+    const selectedTabLabel = filters.tab === 'dah_link' ? 'Pemilih Lama · Dah Link' : 'Pemilih Baharu · Belum Link';
 
     const visit = (values) => router.get(route('pemilih-baru.index'), values, {
         preserveState: true,
@@ -164,6 +165,7 @@ export default function Index({ filters, month_options, year_options, summary, r
             udm: filters.udm,
             locality: filters.locality,
             q: filters.q,
+            tab: filters.tab,
         }, {
             preserveScroll: true,
             onSuccess: () => setSelectedRecord(null),
@@ -287,10 +289,37 @@ export default function Index({ filters, month_options, year_options, summary, r
                             <SummaryCard label="Dah link" value={summary.linked} tone="blue" />
                         </section>
 
+                        <nav className="flex flex-wrap gap-2" aria-label="Kategori status pemilih">
+                            {[
+                                { value: 'belum_link', title: 'Pemilih Baharu', subtitle: 'Belum link', count: summary.unlinked },
+                                { value: 'dah_link', title: 'Pemilih Lama', subtitle: 'Dah link', count: summary.linked },
+                            ].map((tab) => {
+                                const selected = filters.tab === tab.value;
+
+                                return (
+                                    <button
+                                        key={tab.value}
+                                        type="button"
+                                        aria-pressed={selected}
+                                        onClick={() => visit({ ...filters, tab: tab.value })}
+                                        className={`flex min-w-[12rem] flex-1 items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition ${selected ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white hover:border-amber-200 hover:bg-amber-50/40'}`}
+                                    >
+                                        <span>
+                                            <span className="block text-xs font-bold text-slate-800">{tab.title}</span>
+                                            <span className="mt-0.5 block text-[10px] text-slate-500">{tab.subtitle}</span>
+                                        </span>
+                                        <span className={`rounded-full px-2.5 py-1 text-xs font-black ${selected ? 'bg-amber-200 text-amber-900' : 'bg-slate-100 text-slate-600'}`}>
+                                            {numberFormat.format(tab.count ?? 0)}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </nav>
+
                         <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
                         <div>
-                            <h3 className="text-sm font-bold text-slate-800">Senarai Pemilih Baharu · {filters.udm}</h3>
+                            <h3 className="text-sm font-bold text-slate-800">{selectedTabLabel} · {filters.udm}</h3>
                             <p className="mt-0.5 text-[10px] text-slate-400">{numberFormat.format(records.total ?? 0)} rekod · {selectedMonthLabel} {filters.tahun}</p>
                         </div>
                         {filters.q && <button type="button" onClick={clearSearch} className="rounded-md border border-slate-200 px-2.5 py-1.5 text-[10px] font-bold text-slate-500 hover:bg-slate-50">Kosongkan carian</button>}
@@ -298,7 +327,7 @@ export default function Index({ filters, month_options, year_options, summary, r
 
                     {records.data.length === 0 ? (
                         <div className="px-4 py-12 text-center">
-                            <p className="text-sm font-bold text-slate-700">Tiada rekod untuk tapisan ini</p>
+                            <p className="text-sm font-bold text-slate-700">Tiada rekod {filters.tab === 'dah_link' ? 'pemilih lama yang dah link' : 'pemilih baharu yang belum link'} untuk tapisan ini</p>
                             <p className="mt-1 text-xs text-slate-400">Import fail pemilih baharu dari halaman Settings atau pilih bulan lain.</p>
                         </div>
                     ) : (

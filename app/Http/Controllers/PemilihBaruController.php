@@ -42,6 +42,8 @@ class PemilihBaruController extends Controller
         }
 
         $search = trim((string) $request->query('q', ''));
+        $requestedTab = $request->query('tab');
+        $tab = in_array($requestedTab, ['belum_link', 'dah_link'], true) ? $requestedTab : 'belum_link';
         $requestedLocality = trim((string) $request->query('locality', $defaultLocality));
         $udms = $this->availableUdms($request);
         $monthQuery = PemilihBaruRecord::query()
@@ -54,7 +56,7 @@ class PemilihBaruController extends Controller
             ->select('dm')
             ->selectRaw('COUNT(*) as total')
             ->selectRaw("SUM(CASE WHEN cula_code IS NOT NULL AND cula_code != '' AND cula_code NOT IN ('0', '?', 'TIADA') THEN 1 ELSE 0 END) as completed")
-            ->selectRaw("SUM(CASE WHEN remark = 'Dah link' THEN 1 ELSE 0 END) as linked")
+            ->selectRaw('SUM(CASE WHEN linked_pemilih_record_id IS NOT NULL THEN 1 ELSE 0 END) as linked')
             ->groupBy('dm')
             ->get()
             ->keyBy('dm');
@@ -103,7 +105,8 @@ class PemilihBaruController extends Controller
 
         $summaryQuery = clone $query;
         $total = (clone $summaryQuery)->count();
-        $linked = (clone $summaryQuery)->where('remark', 'Dah link')->count();
+        $linked = (clone $summaryQuery)->whereNotNull('linked_pemilih_record_id')->count();
+        $unlinked = (clone $summaryQuery)->whereNull('linked_pemilih_record_id')->count();
         $completed = (clone $summaryQuery)
             ->whereNotNull('cula_code')
             ->where('cula_code', '!=', '')
@@ -111,6 +114,12 @@ class PemilihBaruController extends Controller
             ->where('cula_code', '!=', '?')
             ->where('cula_code', '!=', 'TIADA')
             ->count();
+
+        if ($tab === 'dah_link') {
+            $query->whereNotNull('linked_pemilih_record_id');
+        } else {
+            $query->whereNull('linked_pemilih_record_id');
+        }
 
         $records = $query
             ->orderBy('name')
@@ -147,6 +156,7 @@ class PemilihBaruController extends Controller
                 'tahun' => (string) $year,
                 'semua_bulan' => $showAllMonths,
                 'q' => $search,
+                'tab' => $tab,
             ],
             'udms' => $udms,
             'can_select_udm' => ! filled($scope['dm'] ?? null),
@@ -159,6 +169,7 @@ class PemilihBaruController extends Controller
             'summary' => [
                 'total' => $total,
                 'linked' => $linked,
+                'unlinked' => $unlinked,
                 'completed' => $completed,
                 'pending' => max(0, $total - $completed),
             ],
@@ -193,6 +204,7 @@ class PemilihBaruController extends Controller
             'udm' => $request->input('udm'),
             'locality' => $request->input('locality'),
             'q' => $request->input('q'),
+            'tab' => $request->input('tab'),
             'semua_bulan' => $request->has('semua_bulan')
                 ? (int) $request->boolean('semua_bulan')
                 : 1,
