@@ -39,14 +39,16 @@ HTML;
             'tahun' => '2026',
         ])
         ->assertRedirect(route('settings.edit'))
-        ->assertSessionHas('success', fn (string $message): bool => str_contains($message, '1 rekod bukan Kod DUN 24 diabaikan'));
+        ->assertSessionHas('success', fn (string $message): bool => str_contains($message, '1 rekod pemilih baharu dipadankan dengan data pemilih semasa')
+            && str_contains($message, '1 rekod bukan Kod DUN 24 diabaikan'));
 
     $record = PemilihBaruRecord::query()->sole();
     expect($record->import_month)->toBe('2026-09')
         ->and($record->kod_dun)->toBe('24')
         ->and($record->no_kp)->toBe('90010102****')
         ->and($record->cula_code)->toBeNull()
-        ->and($record->remark)->toBe('Belum link');
+        ->and($record->remark)->toBe('Dah link')
+        ->and($record->linked_pemilih_record_id)->toBe(PemilihRecord::query()->firstOrFail()->id);
 
     $this->actingAs($user)
         ->post(route('pemilih-baru.cula.update', $record), ['cula_code' => '2', 'race' => 'Melayu'])
@@ -68,7 +70,7 @@ HTML;
             'pemilih_file' => UploadedFile::fake()->createWithContent('pemilih-semasa.xls', $currentVoterSheet),
         ])
         ->assertRedirect(route('settings.edit'))
-        ->assertSessionHas('success', fn (string $message): bool => str_contains($message, '1 rekod pemilih baharu'));
+        ->assertSessionHas('success', fn (string $message): bool => str_contains($message, 'Fail pemilih berjaya dimuat naik'));
 
     expect($record->fresh()->remark)->toBe('Dah link')
         ->and($record->fresh()->linked_pemilih_record_id)->toBe(PemilihRecord::query()->firstOrFail()->id);

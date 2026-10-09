@@ -162,14 +162,16 @@ class SettingsController extends Controller
         ]);
 
         $month = sprintf('%04d-%02d', $validated['tahun'], $validated['bulan']);
+        $filename = $validated['pemilih_baru_file']->getClientOriginalName();
 
         try {
             $result = $pemilihBaru->importFile(
                 $validated['pemilih_baru_file']->getRealPath(),
-                $validated['pemilih_baru_file']->getClientOriginalName(),
+                $filename,
                 $month,
                 $request->user()->name,
             );
+            $links = $pemilihBaru->linkCurrentVoters($filename, $month);
         } catch (\Throwable $e) {
             report($e);
             $message = 'Ralat memproses fail pemilih baharu: '.$e->getMessage();
@@ -190,6 +192,12 @@ class SettingsController extends Controller
             number_format($result['created']),
             number_format($result['updated']),
         );
+        if ($links['linked_count'] > 0) {
+            $message .= ' '.number_format($links['linked_count']).' rekod pemilih baharu dipadankan dengan data pemilih semasa.';
+        }
+        if ($links['cula_applied_count'] > 0) {
+            $message .= ' Kod cula daripada '.number_format($links['cula_applied_count']).' rekod turut dikemaskini.';
+        }
         if ($result['skipped'] > 0) {
             $message .= ' '.number_format($result['skipped']).' rekod bukan Kod DUN 24 diabaikan.';
         }

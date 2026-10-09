@@ -236,34 +236,48 @@ class PemilihBaruService
         ];
     }
 
-    public function linkCurrentVoters(): array
+    public function linkCurrentVoters(?string $sourceFile = null, ?string $month = null): array
     {
         $linkedCount = 0;
         $culaAppliedCount = 0;
-
-        PemilihBaruRecord::query()
+        $query = PemilihBaruRecord::query()
             ->orderByDesc('import_month')
-            ->orderByDesc('id')
-            ->chunk(250, function ($records) use (&$linkedCount, &$culaAppliedCount): void {
-                foreach ($records as $record) {
-                    $pemilih = $this->findCurrentVoter($record);
+            ->orderByDesc('id');
 
-                    if (! $pemilih) {
-                        continue;
-                    }
+        if ($sourceFile !== null) {
+            $query->where('source_file', $sourceFile);
+        }
 
-                    $record->forceFill([
-                        'linked_pemilih_record_id' => $pemilih->id,
-                        'linked_at' => $record->linked_at ?? now(),
-                        'remark' => 'Dah link',
-                    ])->save();
-                    $linkedCount++;
+        if ($month !== null) {
+            $query->where('import_month', $month);
+        }
 
-                    if ($this->syncLinkedCula($record, $pemilih)) {
-                        $culaAppliedCount++;
-                    }
+        $query->chunk(250, function ($records) use (&$linkedCount, &$culaAppliedCount): void {
+            foreach ($records as $record) {
+                $pemilih = $this->findCurrentVoter($record);
+
+                if (! $pemilih) {
+                    continue;
                 }
-            });
+
+                $alreadyLinked = (int) $record->linked_pemilih_record_id === (int) $pemilih->id
+                    && $record->remark === 'Dah link';
+
+                $record->forceFill([
+                    'linked_pemilih_record_id' => $pemilih->id,
+                    'linked_at' => $record->linked_at ?? now(),
+                    'remark' => 'Dah link',
+                ])->save();
+
+                if (! $alreadyLinked) {
+                    $linkedCount++;
+                }
+
+                if ($this->syncLinkedCula($record, $pemilih)) {
+                    $culaAppliedCount++;
+                }
+            }
+        });
 
         return [
             'linked_count' => $linkedCount,
