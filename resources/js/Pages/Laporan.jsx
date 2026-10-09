@@ -716,12 +716,12 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
 
                         <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows />
-                        <CulaPartyTable rows={culaPartyRows} />
                         {udm_snapshot_meta?.snapshot_time && (
                             <p className="text-center text-[10px] text-slate-400">
                                 Data pergerakan cula dikira bermula {formatSnapshotStart(udm_snapshot_meta.snapshot_time)}
                             </p>
                         )}
+                        <CulaPartyTable rows={culaPartyRows} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
