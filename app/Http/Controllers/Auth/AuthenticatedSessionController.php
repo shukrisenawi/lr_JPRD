@@ -19,6 +19,35 @@ class AuthenticatedSessionController extends Controller
 {
     private const LAST_USER_COOKIE = 'last_user';
 
+    /** @var array<int, array{module: string, route: string, access_level?: string}> */
+    private const NAVBAR_MENU_ROUTES = [
+        ['module' => 'laporan', 'route' => 'laporan.index'],
+        ['module' => 'carian-pemilih', 'route' => 'carian-pemilih.index'],
+        ['module' => 'tambah-pemilih', 'route' => 'tambah-pemilih.index'],
+        ['module' => 'group-pemilih', 'route' => 'group-pemilih.index'],
+        ['module' => 'ahli-pas', 'route' => 'ahli-pas.index'],
+        ['module' => 'jawatankuasa.ajk-bukan-pas', 'route' => 'jawatankuasa.ajk-bukan-pas'],
+        ['module' => 'pusat-khidmat', 'route' => 'pusat-khidmat.index'],
+        ['module' => 'dashboard', 'route' => 'dashboard'],
+        ['module' => 'aktiviti', 'route' => 'aktiviti.index'],
+        ['module' => 'kenderaan', 'route' => 'kenderaan.index'],
+        ['module' => 'dana', 'route' => 'dana.index'],
+        ['module' => 'program', 'route' => 'program.index'],
+        ['module' => 'culaan', 'route' => 'culaan.index'],
+        ['module' => 'culaan.pemilih-baharu', 'route' => 'pemilih-baru.index'],
+        ['module' => 'culaan-bot', 'route' => 'culaan-bot.index'],
+        ['module' => 'vcc', 'route' => 'vcc.index'],
+        ['module' => 'plk', 'route' => 'plk.index'],
+        ['module' => 'keluarga-pemilih', 'route' => 'keluarga-pemilih.index'],
+        ['module' => 'kad-ten', 'route' => 'kad-ten.index'],
+        ['module' => 'spokas', 'route' => 'admin.spokas.index'],
+        ['module' => 'jawatankuasa', 'route' => 'jawatankuasa.index'],
+        ['module' => 'jawatankuasa.laporan', 'route' => 'jawatankuasa.laporan'],
+        ['module' => 'jawatankuasa.senarai-udm', 'route' => 'jawatankuasa.senarai-ajk-udm', 'access_level' => 'udm'],
+        ['module' => 'cawangan', 'route' => 'admin.cawangan.index'],
+        ['module' => 'settings', 'route' => 'settings.edit'],
+    ];
+
     /**
      * Display the login view.
      */
@@ -49,7 +78,7 @@ class AuthenticatedSessionController extends Controller
 
         $this->writeLastUserCookie($user);
 
-        return redirect()->intended($this->firstAccessibleRoute($request));
+        return redirect()->to($this->loginRedirectPath($user));
     }
 
     /**
@@ -90,24 +119,19 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('login');
     }
 
-    private function firstAccessibleRoute(Request $request): string
+    private function loginRedirectPath(User $user): string
     {
-        $user = $request->user();
-        $moduleRoutes = [
-            'dashboard' => 'dashboard',
-            'laporan' => 'laporan.index',
-            'carian-pemilih' => 'carian-pemilih.index',
-            'ahli-pas' => 'ahli-pas.index',
-            'program' => 'program.index',
-            'jawatankuasa' => 'jawatankuasa.index',
-            'culaan' => 'culaan.index',
-            'culaan-bot' => 'culaan-bot.index',
-            'settings' => 'settings.edit',
-        ];
+        if ($user->isMasterAdmin()) {
+            return route('dashboard', absolute: false);
+        }
 
-        foreach ($moduleRoutes as $module => $routeName) {
-            if ($user?->canAccessModule($module)) {
-                return route($routeName, absolute: false);
+        foreach (self::NAVBAR_MENU_ROUTES as $menu) {
+            if (isset($menu['access_level']) && $user->access_level !== $menu['access_level']) {
+                continue;
+            }
+
+            if ($user->canAccessModule($menu['module'])) {
+                return route($menu['route'], absolute: false);
             }
         }
 

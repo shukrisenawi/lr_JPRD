@@ -23,6 +23,18 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
+    $response->assertRedirect(route('laporan.index', absolute: false));
+});
+
+test('master admins are redirected to the dashboard after login', function () {
+    $user = User::factory()->masterAdmin()->create();
+
+    $response = $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
     $response->assertRedirect(route('dashboard', absolute: false));
 });
 
@@ -40,8 +52,8 @@ test('users can authenticate with a case-insensitive email address', function ()
     $response->assertRedirect(route('dashboard', absolute: false));
 });
 
-test('users are redirected to the first accessible menu after login', function () {
-    $user = User::factory()->withModules(['laporan', 'program'])->create();
+test('users are redirected to their first accessible navbar menu after login', function () {
+    $user = User::factory()->withModules(['dashboard', 'laporan', 'carian-pemilih', 'program'])->create();
 
     $response = $this->post('/login', [
         'email' => $user->email,
