@@ -26,7 +26,7 @@ test('users can authenticate using the login screen', function () {
     $response->assertRedirect(route('laporan.index', absolute: false));
 });
 
-test('master admins are redirected to the dashboard after login', function () {
+test('master admins are redirected to the laporan page after login', function () {
     $user = User::factory()->masterAdmin()->create();
 
     $response = $this->post('/login', [
@@ -35,7 +35,7 @@ test('master admins are redirected to the dashboard after login', function () {
     ]);
 
     $this->assertAuthenticatedAs($user);
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('laporan.index', absolute: false));
 });
 
 test('users can authenticate with a case-insensitive email address', function () {

@@ -122,7 +122,7 @@ class AuthenticatedSessionController extends Controller
     private function loginRedirectPath(User $user): string
     {
         if ($user->isMasterAdmin()) {
-            return route('dashboard', absolute: false);
+            return route('laporan.index', absolute: false);
         }
 
         foreach (self::NAVBAR_MENU_ROUTES as $menu) {
