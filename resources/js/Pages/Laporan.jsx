@@ -297,6 +297,79 @@ function MovementCells({ row, prefix }) {
     );
 }
 
+function PlkCostSummaryTable({ summary }) {
+    const rows = useMemo(() => [...(summary?.rows ?? [])].sort((a, b) => compareUdms({ name: a.udm }, { name: b.udm })), [summary]);
+    if (!summary) return null;
+
+    const { codes, rates, totals } = summary;
+    const money = (value) => Number(value || 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const totalVoters = Object.values(totals.counts).reduce((sum, count) => sum + count, 0);
+    const costCells = (row) => codes.map(({ code }) => (
+        <Fragment key={code}>
+            <td className="border border-slate-200 px-2 py-2 text-center tabular-nums">{fmt(row.counts[code])}</td>
+            <td className="border border-slate-200 px-2 py-2 text-right tabular-nums">{money(row.amounts[code])}</td>
+        </Fragment>
+    ));
+
+    return (
+        <section className="card overflow-hidden">
+            <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
+                <div>
+                    <h3 className="text-sm font-bold text-slate-900">Ringkasan Kiraan Kos PLK</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">Bilangan pemilih aktif dan anggaran kos mengikut UDM, berdasarkan kadar bayaran PLK semasa.</p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">{fmt(totalVoters)} pemilih</span>
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">Jumlah RM {money(totals.total)}</span>
+                </div>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="w-full min-w-[1200px] border-separate border-spacing-0 text-[10px] sm:text-xs">
+                    <caption className="sr-only">Ringkasan kos PLK bagi setiap UDM dengan bilangan pemilih, kadar seorang dan kos setiap kod Cula</caption>
+                    <thead className="text-center font-bold">
+                        <tr className="bg-emerald-700 text-white">
+                            <th rowSpan={2} scope="col" className="border border-emerald-800 px-2 py-2">Bil.</th>
+                            <th rowSpan={2} scope="col" className="sticky left-0 z-10 min-w-40 border border-emerald-800 bg-emerald-700 px-3 py-2 text-left">UDM</th>
+                            {codes.map(({ code, label }) => (
+                                <th key={code} colSpan={2} scope="colgroup" title={label} className="border border-emerald-800 px-2 py-2">
+                                    {code}<span className="mt-0.5 block text-[9px] font-medium text-emerald-100">RM {money(rates[code])} / orang</span>
+                                </th>
+                            ))}
+                            <th rowSpan={2} scope="col" className="border border-emerald-800 px-3 py-2">Jumlah UDM<br />(RM)</th>
+                        </tr>
+                        <tr className="bg-emerald-50 text-emerald-900">
+                            {codes.map(({ code }) => (
+                                <Fragment key={code}>
+                                    <th scope="col" className="border border-slate-200 px-2 py-1.5">Bilangan</th>
+                                    <th scope="col" className="border border-slate-200 px-2 py-1.5">Kos (RM)</th>
+                                </Fragment>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="text-slate-700">
+                        {rows.map((row, index) => (
+                            <tr key={row.udm} className="group odd:bg-white even:bg-slate-50 hover:bg-emerald-50">
+                                <td className="border border-slate-200 px-2 py-2 text-center">{index + 1}</td>
+                                <th scope="row" className={`sticky left-0 z-10 border border-slate-200 px-3 py-2 text-left font-semibold group-hover:bg-emerald-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>{row.udm}</th>
+                                {costCells(row)}
+                                <td className="border border-slate-200 bg-emerald-50 px-3 py-2 text-right font-bold tabular-nums text-emerald-800">{money(row.total)}</td>
+                            </tr>
+                        ))}
+                        {rows.length === 0 && <tr><td colSpan={codes.length * 2 + 3} className="px-4 py-8 text-center text-slate-500">Tiada data pemilih PLK ditemui.</td></tr>}
+                    </tbody>
+                    <tfoot>
+                        <tr className="bg-emerald-100 font-bold text-emerald-950">
+                            <th colSpan={2} scope="row" className="sticky left-0 z-10 border border-slate-200 bg-emerald-100 px-3 py-2 text-left">Jumlah keseluruhan</th>
+                            {costCells(totals)}
+                            <td className="border border-slate-200 px-3 py-2 text-right tabular-nums">{money(totals.total)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    );
+}
+
 function PemilihBaruMovementTable({ movement }) {
     const rows = movement?.rows ?? [];
     const [activeRowKey, setActiveRowKey] = useState(null);
@@ -383,7 +456,7 @@ function PemilihBaruMovementTable({ movement }) {
     );
 }
 
-export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null }) {
+export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null, plk_cost_summary = null }) {
     const { auth } = usePage().props;
     const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
@@ -723,6 +796,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         )}
                         <CulaPartyTable rows={culaPartyRows} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
+                        <PlkCostSummaryTable summary={plk_cost_summary} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Pemilih Mengikut UDM">

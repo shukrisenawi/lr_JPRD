@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\Setting;
+use App\Services\PlkCostService;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -319,62 +320,11 @@ class PlkController extends Controller
 
     private function rates(): array
     {
-        $stored = json_decode((string) Setting::valueOf(self::RATES_SETTING_KEY, '{}'), true);
-        $rates = array_fill_keys(self::CULA_CODES, 0);
-
-        if (is_array($stored)) {
-            foreach (self::CULA_CODES as $code) {
-                if (isset($stored[$code]) && is_numeric($stored[$code]) && (float) $stored[$code] >= 0) {
-                    $rates[$code] = round((float) $stored[$code], 2);
-                }
-            }
-        }
-
-        return $rates;
+        return app(PlkCostService::class)->rates();
     }
 
     private function costRows(Builder $base, array $rates, array $udms): array
     {
-        $grouped = [];
-
-        foreach ($udms as $udm) {
-            $grouped[$udm] = [
-                'udm' => $udm,
-                'counts' => array_fill_keys(self::CULA_CODES, 0),
-                'amounts' => array_fill_keys(self::CULA_CODES, 0),
-                'total' => 0,
-            ];
-        }
-
-        (clone $base)
-            ->select(['dm', 'cula_code'])
-            ->selectRaw('COUNT(*) as quantity')
-            ->groupBy('dm', 'cula_code')
-            ->get()
-            ->each(function ($record) use (&$grouped, $rates): void {
-                $udm = trim((string) $record->dm);
-                $udm = $udm !== '' && $udm !== '-' ? $udm : 'UDM TIDAK DINYATAKAN';
-                $code = (string) $record->cula_code;
-
-                if (! isset($grouped[$udm])) {
-                    $grouped[$udm] = [
-                        'udm' => $udm,
-                        'counts' => array_fill_keys(self::CULA_CODES, 0),
-                        'amounts' => array_fill_keys(self::CULA_CODES, 0),
-                        'total' => 0,
-                    ];
-                }
-
-                $quantity = (int) $record->quantity;
-                $amount = round($quantity * (float) ($rates[$code] ?? 0), 2);
-                $grouped[$udm]['counts'][$code] = $quantity;
-                $grouped[$udm]['amounts'][$code] = $amount;
-                $grouped[$udm]['total'] = round($grouped[$udm]['total'] + $amount, 2);
-            });
-
-        return collect($grouped)
-            ->sortKeys()
-            ->values()
-            ->all();
+        return app(PlkCostService::class)->rows($base, $rates, $udms);
     }
 }

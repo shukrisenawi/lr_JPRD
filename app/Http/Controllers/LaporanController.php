@@ -8,6 +8,7 @@ use App\Services\CulaanMessageService;
 use App\Services\N8nWebhookService;
 use App\Services\PemilihBaruService;
 use App\Services\PemilihReportService;
+use App\Services\PlkCostService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ use Inertia\Response;
 
 class LaporanController extends Controller
 {
-    public function index(Request $request, PemilihReportService $reportService, CulaanMessageService $messageService, PemilihBaruService $pemilihBaru): Response
+    public function index(Request $request, PemilihReportService $reportService, CulaanMessageService $messageService, PemilihBaruService $pemilihBaru, PlkCostService $plkCosts): Response
     {
         $snapshot = $reportService->getLatestUdmSnapshot();
         $report = $reportService->buildFromDatabase();
@@ -24,6 +25,9 @@ class LaporanController extends Controller
         return Inertia::render('Laporan', [
             'report' => $report,
             'pemilih_baru_movement' => $pemilihBaru->monthlyMovementReport(),
+            'plk_cost_summary' => $request->user()?->canAccessModule('plk-kos')
+                ? $plkCosts->summary($request->user())
+                : null,
             'culaan_message' => $messageService->build($report),
             'pemilih_report' => $reportService->getMetadata(),
             'udm_snapshot' => $snapshot ? $snapshot->rows : null,
