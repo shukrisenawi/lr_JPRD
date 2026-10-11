@@ -1,0 +1,279 @@
+/* Scoped styles for the two main culaan report tables. */
+.report-data-card {
+    overflow: hidden;
+    border: 1px solid #dbe5e1;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px -5px rgb(6 78 59 / 18%);
+}
+
+.report-data-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 17px 18px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.report-data-heading h3 {
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.report-data-heading p {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.report-table-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    color: #64748b;
+    font-size: 10px;
+}
+
+.report-table-legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.report-legend-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #059669;
+}
+
+.report-total-badge {
+    padding: 5px 9px;
+    border: 1px solid #d1fae5;
+    border-radius: 6px;
+    background: #ecfdf5;
+    color: #065f46;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.report-overview-table,
+.report-party-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.report-overview-table {
+    width: 100%;
+    min-width: 1160px;
+}
+
+.report-overview-table thead th {
+    padding: 12px 8px;
+    border-bottom: 1px solid #dbe5e1;
+    background: #f1f5f4;
+    color: #475569;
+    text-align: right;
+    font-size: 10px;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+}
+
+.report-overview-table .table-header-sticky th {
+    top: 0;
+}
+
+.report-overview-table thead th:first-child {
+    min-width: 160px;
+    padding-left: 16px;
+    background: #065f46;
+    color: #fff;
+    text-align: left;
+}
+
+.report-overview-table thead th:nth-child(2),
+.report-overview-table thead th:nth-child(11),
+.report-overview-table thead th:nth-child(14),
+.report-overview-table thead th:last-child {
+    background: #e1f2e9;
+    color: #065f46;
+}
+
+.report-overview-table tbody td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #edf1f3;
+    background: #fff !important;
+    color: #475569;
+    text-align: right;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.report-overview-table tbody td:first-child {
+    padding-left: 16px;
+    text-align: left;
+}
+
+.report-overview-table tbody tr:nth-child(even) td {
+    background: #f8faf9 !important;
+}
+
+.report-overview-table th:nth-child(4),
+.report-overview-table td:nth-child(4),
+.report-overview-table th:nth-child(9),
+.report-overview-table td:nth-child(9),
+.report-overview-table th:nth-child(20),
+.report-overview-table td:nth-child(20) {
+    border-left: 1px solid #dbe5e1;
+}
+
+.report-overview-table tbody td:last-child {
+    color: #065f46;
+    font-weight: 700;
+}
+
+.report-overview-table tbody tr:hover:not([data-total]) td {
+    background: #ecfdf5 !important;
+}
+
+.report-overview-table tbody tr[aria-selected="true"] td,
+.report-overview-table tbody tr[aria-selected="true"]:hover td {
+    background: #d1fae5 !important;
+    color: #064e3b;
+    font-weight: 700;
+}
+
+.report-overview-table tbody tr[data-total] td {
+    border-top: 2px solid #a7d8c0;
+    border-bottom: 0;
+    background: #e1f2e9 !important;
+    color: #064e3b;
+    font-weight: 700;
+}
+
+.report-overview-table tbody tr[aria-selected="true"] td:first-child,
+.report-party-table tbody tr[aria-selected="true"] td:nth-child(2) {
+    box-shadow: inset 3px 0 #059669;
+}
+
+.report-party-table thead tr:first-child th {
+    padding: 13px 8px;
+    border: 0;
+    border-right: 1px solid rgb(255 255 255 / 14%);
+    background: #065f46;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.report-party-table thead tr:nth-child(2) th {
+    padding: 8px;
+    border: 0;
+    border-bottom: 1px solid #dbe5e1;
+    background: #f1f5f4;
+    color: #475569;
+    font-size: 10px;
+}
+
+.report-party-table tbody td,
+.report-party-table tfoot td {
+    padding: 10px 8px;
+    border: 0;
+    border-bottom: 1px solid #edf1f3;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.report-party-table tbody td:nth-child(2),
+.report-party-table thead th:nth-child(2) {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    min-width: 160px;
+    padding-left: 14px;
+}
+
+.report-party-table tbody td:nth-child(2) {
+    background: #fff;
+    color: #1e293b;
+}
+
+.report-party-table tbody tr:nth-child(even) td {
+    background: #f8faf9;
+}
+
+.report-party-table tbody tr:hover td {
+    background: #ecfdf5;
+}
+
+.report-party-table tbody tr[aria-selected="true"] td {
+    background: #d1fae5;
+    color: #064e3b;
+}
+
+.report-party-table tbody td:nth-child(n+4):nth-child(-n+14):nth-child(even) {
+    color: #64748b;
+    font-size: 10px;
+}
+
+.report-party-table tbody td:nth-child(3),
+.report-party-table tbody td:nth-child(5),
+.report-party-table tbody td:nth-child(7),
+.report-party-table tbody td:nth-child(9),
+.report-party-table tbody td:nth-child(11),
+.report-party-table tbody td:nth-child(13),
+.report-party-table tbody td:nth-child(15) {
+    border-left: 1px solid #e2e8f0;
+}
+
+.report-party-table tbody td:last-child {
+    background: #f0f7f3;
+    color: #065f46;
+    font-weight: 700;
+}
+
+.report-party-table tbody tr[aria-selected="true"] td:last-child {
+    background: #bcebd4;
+}
+
+.report-party-table tbody td.bg-rose-100,
+.report-party-table tbody tr[aria-selected="true"] td.bg-rose-100,
+.report-party-table tfoot td.text-rose-700 {
+    background: #fff1f2;
+    color: #be123c;
+    font-weight: 700;
+}
+
+.report-party-table tfoot td {
+    padding-top: 13px;
+    padding-bottom: 13px;
+    border-top: 2px solid #a7d8c0;
+    border-bottom: 0;
+    background: #e1f2e9;
+    color: #064e3b;
+}
+
+.report-overview-table tbody tr:focus-visible,
+.report-party-table tbody tr:focus-visible {
+    outline: 2px solid #059669;
+    outline-offset: -2px;
+}
+
+@media (max-width: 640px) {
+    .report-data-heading {
+        padding: 14px;
+    }
+
+    .report-data-heading h3 {
+        font-size: 13px;
+    }
+}

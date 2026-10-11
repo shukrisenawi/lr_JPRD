@@ -129,10 +129,11 @@ function TTip({ active, payload, label }) {
     );
 }
 
-function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false }) {
+function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false, reportStyle = false }) {
     const [activeRowKey, setActiveRowKey] = useState(null);
     const table = (
-        <table className="min-w-full divide-y divide-slate-200 text-xs">
+        <table className={`min-w-full divide-y divide-slate-200 text-xs ${reportStyle ? 'report-overview-table' : ''}`}>
+            {reportStyle && <caption className="sr-only">Ringkasan culaan dan demografi pemilih mengikut daerah mengundi</caption>}
             <thead className={stickyHeader ? 'table-header table-header-sticky' : 'table-header'}>
                 <tr>{columns.map((c) => <th key={c.key} title={c.title} aria-label={c.ariaLabel} className={`px-2.5 py-1.5 ${c.headerClass ?? ''}`}>{c.label}</th>)}</tr>
             </thead>
@@ -155,6 +156,7 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
                                     setActiveRowKey(rowKey);
                                 }
                             } : undefined}
+                            data-total={row.isTotal ? 'true' : undefined}
                             className={row.isTotal
                                 ? 'bg-violet-100 font-bold text-slate-900'
                                 : `${i % 2 === 1 ? 'bg-slate-50/70' : ''} ${isInteractiveRow ? 'group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold' : 'hover:bg-green-50/50'} ${isActive ? 'bg-lime-200 font-bold text-slate-950' : ''}`}
@@ -175,8 +177,20 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
     );
 
     return (
-        <div className={`card ${stickyHeader ? 'overflow-visible' : 'overflow-hidden'}`}>
-            {stickyHeader ? <div className="overflow-x-auto xl:overflow-visible">{table}</div> : <div className="overflow-x-auto">{table}</div>}
+        <div className={`${reportStyle ? 'report-data-card' : 'card'} ${stickyHeader ? 'overflow-visible' : 'overflow-hidden'}`}>
+            {reportStyle && (
+                <div className="report-data-heading">
+                    <div>
+                        <h3>Ringkasan Culaan Mengikut UDM</h3>
+                        <p>Demografi, status culaan dan baki pemilih bagi setiap daerah mengundi.</p>
+                    </div>
+                    <div className="report-table-legend">
+                        <span><span className="report-legend-dot" />Pertambahan cula</span>
+                        <span>Klik baris untuk sorotan</span>
+                    </div>
+                </div>
+            )}
+            {stickyHeader ? <div className={reportStyle ? 'overflow-x-auto' : 'overflow-x-auto xl:overflow-visible'}>{table}</div> : <div className="overflow-x-auto">{table}</div>}
         </div>
     );
 }
@@ -198,13 +212,20 @@ function CulaPartyTable({ rows }) {
     totals.SKC = totals.PN - totals.attendance_51;
 
     return (
-        <section className="card overflow-hidden">
-            <div className="border-b border-slate-200 px-3 py-2.5 sm:px-4">
-                <h3 className="text-sm font-bold text-slate-900">Pecahan Cula Mengikut Daerah Mengundi</h3>
-                <p className="mt-0.5 text-xs text-slate-500">Jumlah dan peratus pemilih mengikut kumpulan kod cula.</p>
+        <section className="report-data-card overflow-hidden">
+            <div className="report-data-heading">
+                <div>
+                    <h3>Pecahan Cula Mengikut Daerah Mengundi</h3>
+                    <p>Jumlah dan peratus pemilih mengikut kumpulan kod cula.</p>
+                </div>
+                <div className="report-table-legend">
+                    <span className="report-total-badge">{fmt(totals.total)} pemilih</span>
+                    <span>Klik baris untuk sorotan</span>
+                </div>
             </div>
             <div className="overflow-x-auto">
-                <table className="min-w-[1120px] w-full border-collapse text-[10px] sm:text-xs">
+                <table className="report-party-table min-w-[1120px] w-full border-collapse text-[10px] sm:text-xs">
+                    <caption className="sr-only">Pecahan cula mengikut daerah mengundi, kumpulan parti, peratus dan unjuran kehadiran</caption>
                     <thead className="text-center font-bold text-slate-900">
                         <tr>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
@@ -241,7 +262,7 @@ function CulaPartyTable({ rows }) {
                                             setActiveRowKey(row.key);
                                         }
                                     }}
-                                    className={`${isActive ? 'bg-lime-200 font-bold text-slate-950' : index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold`}
+                                    className={`${isActive ? 'bg-emerald-100 font-bold text-slate-950' : index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-emerald-50 hover:font-bold`}
                                 >
                                     <td className="border border-slate-300 px-1.5 py-1 text-center">{index + 1}</td>
                                     <td className={`border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold ${isActive ? '!font-bold' : ''}`}>{row.name}</td>
@@ -802,7 +823,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         </div>
 
 
-                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows />
+                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows reportStyle />
                         {udm_snapshot_meta?.snapshot_time && (
                             <p className="text-center text-[10px] text-slate-400">
                                 Data pergerakan cula dikira bermula {formatSnapshotStart(udm_snapshot_meta.snapshot_time)}
