@@ -299,6 +299,7 @@ function MovementCells({ row, prefix }) {
 
 function PlkCostSummaryTable({ summary }) {
     const rows = useMemo(() => [...(summary?.rows ?? [])].sort((a, b) => compareUdms({ name: a.udm }, { name: b.udm })), [summary]);
+    const [activeUdm, setActiveUdm] = useState(null);
     if (!summary) return null;
 
     const { codes, rates, totals } = summary;
@@ -347,14 +348,27 @@ function PlkCostSummaryTable({ summary }) {
                         </tr>
                     </thead>
                     <tbody className="text-slate-700">
-                        {rows.map((row, index) => (
-                            <tr key={row.udm} className="group odd:bg-white even:bg-slate-50 hover:bg-emerald-50">
+                        {rows.map((row, index) => {
+                            const isActive = activeUdm === row.udm;
+                            const rowTone = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+                            return (
+                            <tr key={row.udm} aria-selected={isActive} tabIndex={0}
+                                onClick={() => setActiveUdm(row.udm)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        setActiveUdm(row.udm);
+                                    }
+                                }}
+                                className={`group cursor-pointer transition-colors ${isActive ? 'bg-emerald-100 font-bold text-slate-950' : `${rowTone} hover:bg-emerald-50 hover:font-bold`}`}>
                                 <td className="border border-slate-200 px-2 py-2 text-center">{index + 1}</td>
-                                <th scope="row" className={`sticky left-0 z-10 border border-slate-200 px-3 py-2 text-left font-semibold group-hover:bg-emerald-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>{row.udm}</th>
+                                <th scope="row" className={`sticky left-0 z-10 border border-slate-200 px-3 py-2 text-left ${isActive ? 'bg-emerald-100 font-bold' : `${rowTone} font-semibold group-hover:bg-emerald-50 group-hover:font-bold`}`}>{row.udm}</th>
                                 {costCells(row)}
-                                <td className="border border-slate-200 bg-emerald-50 px-3 py-2 text-right font-bold tabular-nums text-emerald-800">{money(row.total)}</td>
+                                <td className={`border border-slate-200 px-3 py-2 text-right font-bold tabular-nums text-emerald-800 ${isActive ? 'bg-emerald-100' : 'bg-emerald-50'}`}>{money(row.total)}</td>
                             </tr>
-                        ))}
+                            );
+                        })}
                         {rows.length === 0 && <tr><td colSpan={codes.length * 2 + 3} className="px-4 py-8 text-center text-slate-500">Tiada data pemilih PLK ditemui.</td></tr>}
                     </tbody>
                     <tfoot>
