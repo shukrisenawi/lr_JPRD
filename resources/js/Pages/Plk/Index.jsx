@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 const numberFormat = new Intl.NumberFormat('ms-MY');
 const moneyFormat = new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' });
+const COST_CULA_CODE_ORDER = ['3U', '3D', '3P', '3K', '3B', '3M'];
 const verificationStatusLabels = {
     maklumat_sah: 'Maklumat Sah',
     maklumat_tidak_sah: 'Maklumat Tidak Sah',
@@ -20,6 +21,10 @@ function formatMoney(value) {
 
 function calculateAmount(row, code, rates) {
     return Number(row.counts?.[code] || 0) * Number(rates[code] || 0);
+}
+
+function orderCostCodes(codes = []) {
+    return [...codes].sort((a, b) => COST_CULA_CODE_ORDER.indexOf(a.code) - COST_CULA_CODE_ORDER.indexOf(b.code));
 }
 
 function compareVoterIdentityNumbers(a, b) {
@@ -358,6 +363,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     const [exporting, setExporting] = useState(false);
     const [exportingCosts, setExportingCosts] = useState(false);
     const [exportError, setExportError] = useState('');
+    const costCodes = useMemo(() => orderCostCodes(codes || []), [codes]);
 
     useEffect(() => setSearch(filters.q || ''), [filters.q]);
     useEffect(() => setSelectedUdm(filters.udm || ''), [filters.udm]);
@@ -686,7 +692,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             let totalAllUdms = 0;
             orderUdms(costRows || []).forEach((row) => {
                 let totalUdm = 0;
-                codes.forEach((code) => {
+                costCodes.forEach((code) => {
                     const quantity = Number(row.counts?.[code.code] || 0);
                     const rate = Number(rates[code.code] || 0);
                     const amount = quantity * rate;
@@ -850,7 +856,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-                                    {codes.map((code) => (
+                                    {costCodes.map((code) => (
                                         <label key={code.code} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
                                             <span className="flex items-start justify-between gap-2">
                                                 <span className="text-xs font-black text-slate-800">{code.code}</span>
@@ -874,7 +880,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                 </div>
                             </form>
                             {exportError && <p role="alert" className="mb-3 border-b border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{exportError}</p>}
-                            <CostTable rows={costRows || []} codes={codes || []} rates={rates} />
+                            <CostTable rows={costRows || []} codes={costCodes} rates={rates} />
                         </div>
                     )}
                 </section>
