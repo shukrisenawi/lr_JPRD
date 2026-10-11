@@ -652,22 +652,28 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                     margins: { left: 0.3, right: 0.3, top: 0.55, bottom: 0.55, header: 0.25, footer: 0.25 },
                 },
             });
-            worksheet.views = [{ showGridLines: false }];
-            worksheet.pageSetup.printTitlesRow = '3:3';
-            [32, 14, 20, 24, 24].forEach((width, index) => {
-                worksheet.getColumn(index + 1).width = width;
+            worksheet.views = [{ state: 'frozen', xSplit: 2, ySplit: 6, showGridLines: false }];
+            worksheet.pageSetup.printTitlesRow = '1:6';
+            worksheet.headerFooter.oddFooter = '&LJPrD Jeneri&RHalaman &P / &N';
+            const lastColumn = costCodes.length * 2 + 3;
+            const orderedCostRows = orderUdms(costRows || []);
+            worksheet.getColumn(1).width = 5;
+            worksheet.getColumn(2).width = 26;
+            costCodes.forEach((code, index) => {
+                worksheet.getColumn(index * 2 + 3).width = 8;
+                worksheet.getColumn(index * 2 + 4).width = 15;
             });
+            worksheet.getColumn(lastColumn).width = 19;
 
-            const headers = ['UDM', 'Kod Cula', 'Bil. Pemilih', 'Kadar Seorang (RM)', 'Jumlah Bayaran (RM)'];
             const border = {
-                top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-                left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-                bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
-                right: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+                top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
             };
             const addMergedTitle = (text, { size, color, fill }) => {
                 const row = worksheet.addRow([text]);
-                worksheet.mergeCells(row.number, 1, row.number, headers.length);
+                worksheet.mergeCells(row.number, 1, row.number, lastColumn);
                 row.height = size >= 18 ? 30 : 20;
                 const cell = row.getCell(1);
                 cell.font = { name: 'Calibri', size, bold: true, color: { argb: color } };
@@ -679,54 +685,85 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             const dateLabel = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
             addMergedTitle('KIRAAN KOS PEMILIH PLK DUN JENERI', { size: 18, color: 'FFFFFFFF', fill: 'FF047857' });
             addMergedTitle(`Tarikh : ${dateLabel}`, { size: 10, color: 'FF475569', fill: 'FFF8FAFC' });
+            const totalVoters = orderedCostRows.reduce((total, row) => total + costCodes.reduce((sum, code) => sum + Number(row.counts?.[code.code] || 0), 0), 0);
+            const overallAmount = orderedCostRows.reduce((total, row) => total + costCodes.reduce((sum, code) => sum + calculateAmount(row, code.code, rates), 0), 0);
+            addMergedTitle(`${formatNumber(orderedCostRows.length)} UDM  |  ${formatNumber(totalVoters)} pemilih  |  Jumlah bayaran: ${formatMoney(overallAmount)}`, { size: 11, color: 'FF065F46', fill: 'FFECFDF5' });
 
-            const headerRow = worksheet.addRow(headers);
-            headerRow.height = 23;
-            headerRow.eachCell({ includeEmpty: true }, (cell) => {
-                cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1F2937' } };
-                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
-                cell.border = border;
-            });
-
-            let totalAllUdms = 0;
-            orderUdms(costRows || []).forEach((row) => {
-                let totalUdm = 0;
-                costCodes.forEach((code) => {
-                    const quantity = Number(row.counts?.[code.code] || 0);
-                    const rate = Number(rates[code.code] || 0);
-                    const amount = quantity * rate;
-                    totalUdm += amount;
-
-                    const dataRow = worksheet.addRow([row.udm, code.code, quantity, rate, amount]);
-                    dataRow.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
-                        cell.font = { name: 'Calibri', size: 10 };
-                        cell.alignment = { vertical: 'middle', horizontal: columnNumber === 1 ? 'left' : 'center', wrapText: true };
-                        cell.border = border;
-                        if (columnNumber === 3) cell.numFmt = '#,##0';
-                        if (columnNumber >= 4) cell.numFmt = '"RM" #,##0.00';
-                    });
-                });
-
-                totalAllUdms += totalUdm;
-                const subtotalRow = worksheet.addRow([row.udm, '', '', 'Jumlah UDM', totalUdm]);
-                subtotalRow.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
-                    cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF14532D' } };
-                    cell.alignment = { vertical: 'middle', horizontal: columnNumber === 1 ? 'left' : 'right', wrapText: true };
-                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECFDF5' } };
+            for (let rowNumber = 4; rowNumber <= 6; rowNumber += 1) {
+                worksheet.getRow(rowNumber).height = rowNumber === 6 ? 22 : 25;
+                for (let column = 1; column <= lastColumn; column += 1) {
+                    const cell = worksheet.getCell(rowNumber, column);
+                    cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: rowNumber === 4 ? 'FFFFFFFF' : 'FF334155' } };
+                    cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowNumber === 4 ? 'FF0F766E' : 'FFF1F5F9' } };
                     cell.border = border;
-                    if (columnNumber === 5) cell.numFmt = '"RM" #,##0.00';
+                }
+            }
+            [[1, 'Bil.'], [2, 'UDM'], [lastColumn, 'JUMLAH UDM\n(RM)']].forEach(([column, label]) => {
+                worksheet.mergeCells(4, column, 6, column);
+                worksheet.getCell(4, column).value = label;
+            });
+            costCodes.forEach((code, index) => {
+                const column = index * 2 + 3;
+                worksheet.mergeCells(4, column, 4, column + 1);
+                worksheet.getCell(4, column).value = code.code;
+                worksheet.getCell(4, column).note = code.label;
+                worksheet.getCell(5, column).value = 'Bilangan';
+                worksheet.getCell(5, column + 1).value = 'Kos (RM)';
+                worksheet.mergeCells(6, column, 6, column + 1);
+                const rateCell = worksheet.getCell(6, column);
+                rateCell.value = Number(rates[code.code] || 0);
+                rateCell.numFmt = '"RM" #,##0.00" / orang"';
+                rateCell.font = { name: 'Calibri', size: 9, color: { argb: 'FF64748B' } };
+            });
+
+            orderedCostRows.forEach((row, index) => {
+                const dataRow = worksheet.addRow([index + 1, row.udm]);
+                dataRow.height = 27;
+                let totalUdm = 0;
+                const amountAddresses = [];
+                costCodes.forEach((code, codeIndex) => {
+                    const column = codeIndex * 2 + 3;
+                    const quantity = Number(row.counts?.[code.code] || 0);
+                    const amount = calculateAmount(row, code.code, rates);
+                    totalUdm += amount;
+                    const quantityCell = dataRow.getCell(column);
+                    const amountCell = dataRow.getCell(column + 1);
+                    quantityCell.value = quantity;
+                    quantityCell.numFmt = '#,##0;[Red](#,##0);"–"';
+                    amountCell.value = { formula: `${quantityCell.address}*${worksheet.getColumn(column).letter}$6`, result: amount };
+                    amountCell.numFmt = '#,##0.00;[Red](#,##0.00);"–"';
+                    amountAddresses.push(amountCell.address);
+                });
+                dataRow.getCell(lastColumn).value = { formula: `SUM(${amountAddresses.join(',')})`, result: totalUdm };
+                dataRow.getCell(lastColumn).numFmt = '"RM" #,##0.00';
+                dataRow.eachCell({ includeEmpty: true }, (cell, column) => {
+                    cell.font = { name: 'Calibri', size: 10, bold: column === 2 || column === lastColumn, color: { argb: column === lastColumn ? 'FF065F46' : 'FF334155' } };
+                    cell.alignment = { vertical: 'middle', horizontal: column === 2 ? 'left' : column <= 2 || column % 2 === 1 ? 'center' : 'right', wrapText: true };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: column === lastColumn ? 'FFECFDF5' : index % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC' } };
+                    cell.border = border;
                 });
             });
 
-            const totalRow = worksheet.addRow(['', '', '', 'JUMLAH KESELURUHAN', totalAllUdms]);
-            totalRow.eachCell({ includeEmpty: true }, (cell, columnNumber) => {
+            const totalRow = worksheet.addRow(['JUMLAH KESELURUHAN']);
+            worksheet.mergeCells(totalRow.number, 1, totalRow.number, 2);
+            totalRow.height = 30;
+            for (let column = 3; column <= lastColumn; column += 1) {
+                const result = column === lastColumn ? overallAmount : orderedCostRows.reduce((sum, row) => {
+                    const code = costCodes[Math.floor((column - 3) / 2)].code;
+                    return sum + (column % 2 === 1 ? Number(row.counts?.[code] || 0) : calculateAmount(row, code, rates));
+                }, 0);
+                const cell = totalRow.getCell(column);
+                cell.value = orderedCostRows.length ? { formula: `SUM(${worksheet.getColumn(column).letter}7:${worksheet.getColumn(column).letter}${totalRow.number - 1})`, result } : 0;
+                cell.numFmt = column === lastColumn ? '"RM" #,##0.00' : column % 2 === 1 ? '#,##0' : '#,##0.00';
+            }
+            totalRow.eachCell({ includeEmpty: true }, (cell, column) => {
                 cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-                cell.alignment = { vertical: 'middle', horizontal: 'right', wrapText: true };
+                cell.alignment = { vertical: 'middle', horizontal: column <= 2 ? 'left' : column % 2 === 1 && column !== lastColumn ? 'center' : 'right', wrapText: true };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF047857' } };
                 cell.border = border;
-                if (columnNumber === 5) cell.numFmt = '"RM" #,##0.00';
             });
+            worksheet.pageSetup.printArea = `A1:${worksheet.getColumn(lastColumn).letter}${totalRow.number}`;
 
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
