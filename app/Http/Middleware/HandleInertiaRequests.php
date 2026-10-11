@@ -81,6 +81,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'badgeCounts' => [
                 'pusatKhidmatBelumSemak' => $this->getPusatKhidmatBelumSemakCount($request->user()),
+                'plkBelumSemak' => $this->getPlkBelumSemakCount($request->user()),
                 'belumDicula' => $this->getBelumDiculaCount($request->user()),
                 'culaPemilihBaruBelumCula' => $this->getPemilihBaruBelumCulaCount($request->user()),
                 'ahliPasSalahCula' => $this->getAhliPasSalahCulaCount($request->user()),
@@ -105,6 +106,26 @@ class HandleInertiaRequests extends Middleware
                     $q->where('status', 'aktif');
                     $user->applyScopeToPemilihQuery($q);
                 });
+
+            return $query->count();
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getPlkBelumSemakCount($user): int
+    {
+        if (! $user || ! $user->canAccessModule('plk')) {
+            return 0;
+        }
+
+        try {
+            $query = PemilihRecord::query()
+                ->where('status', 'aktif')
+                ->whereIn('cula_code', ['3B', '3D', '3K', '3M', '3P', '3U'])
+                ->whereNull('plk_verified_at');
+
+            $user->applyScopeToPemilihQuery($query);
 
             return $query->count();
         } catch (\Exception $e) {

@@ -42,6 +42,7 @@ it('lists only active PLK voters and separates voters already verified', functio
             ->where('summary.total', 2)
             ->where('summary.pending', 1)
             ->where('summary.checked', 1)
+            ->where('badgeCounts.plkBelumSemak', 1)
             ->where('code_counts.3B', 1)
             ->where('code_counts.3U', 1)
             ->where('voters.total', 2)
@@ -210,6 +211,7 @@ it('limits PLK lists and verification actions to the users pemilih scope', funct
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('summary.total', 1)
+            ->where('badgeCounts.plkBelumSemak', 1)
             ->where('voters.total', 1)
             ->where('voters.data.0.id', $inScope->id));
 
