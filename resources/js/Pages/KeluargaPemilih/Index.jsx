@@ -506,6 +506,18 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             : current.length < 30 ? [...current, voter] : current);
     };
 
+    const selectUnassignedGroup = (voters) => {
+        const selectedIds = new Set(selectedUnassignedVoters.map((voter) => voter.id));
+        const additionalVoters = voters.filter((voter) => !selectedIds.has(voter.id));
+        if (selectedUnassignedVoters.length + additionalVoters.length > 30) return;
+
+        setSelectedUnassignedVoters((current) => {
+            const currentIds = new Set(current.map((voter) => voter.id));
+            const missingVoters = voters.filter((voter) => !currentIds.has(voter.id));
+            return current.length + missingVoters.length > 30 ? current : [...current, ...missingVoters];
+        });
+    };
+
     const startSelectedFamily = () => {
         if (!selectedUnassignedVoters.length) return;
 
@@ -1350,8 +1362,26 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 <div key={group.key} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
                                     {group.parentName && (
                                         <div className="flex flex-wrap items-center justify-between gap-1 border-b border-green-100 bg-green-50 px-3 py-2">
-                                            <p className="text-[10px] font-black uppercase tracking-wide text-green-900">Bin / Binti / BT · {group.parentName}</p>
-                                            <span className="text-[10px] font-semibold text-green-800">{group.voters.length} pemilih</span>
+                                            <div>
+                                                <p className="text-[10px] font-black uppercase tracking-wide text-green-900">Bin / Binti / BT · {group.parentName}</p>
+                                                <span className="text-[10px] font-semibold text-green-800">{group.voters.length} pemilih</span>
+                                            </div>
+                                            {group.voters.length > 1 && (() => {
+                                                const selectedCount = group.voters.filter((voter) => selectedUnassignedIds.has(voter.id)).length;
+                                                const remainingCount = group.voters.length - selectedCount;
+                                                const exceedsSelectionLimit = selectedUnassignedVoters.length + remainingCount > 30;
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => selectUnassignedGroup(group.voters)}
+                                                        disabled={remainingCount === 0 || exceedsSelectionLimit}
+                                                        title={exceedsSelectionLimit ? 'Pilihannya melebihi had 30 pemilih sekali.' : undefined}
+                                                        className="rounded-md border border-green-200 bg-white px-2.5 py-1 text-[10px] font-bold text-green-800 transition hover:border-green-400 hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        {remainingCount === 0 ? 'Semua dipilih' : `Pilih semua (${group.voters.length})`}
+                                                    </button>
+                                                );
+                                            })()}
                                         </div>
                                     )}
                                     <div className="divide-y divide-slate-100">
