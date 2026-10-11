@@ -124,7 +124,7 @@ class PlkController extends Controller
                 ->select([
                     'id', 'no_kp', 'old_ic', 'name', 'dm', 'locality',
                     'cula_code', 'cula_display_label', 'phone_mobile', 'phone_home', 'catatan',
-                    'plk_verified_at', 'plk_verified_by',
+                    'plk_verified_at', 'plk_verified_by', 'plk_verification_status', 'plk_verification_remark',
                 ])
                 ->orderBy('dm')
                 ->orderBy('name')
@@ -145,6 +145,8 @@ class PlkController extends Controller
                 'catatan' => $voter->catatan,
                 'verified_at' => $voter->plk_verified_at?->format('d-m-Y H:i'),
                 'verified_by' => $voter->plkVerifier?->name,
+                'verification_status' => $voter->plk_verification_status,
+                'verification_remark' => $voter->plk_verification_remark,
             ]);
         } else {
             $costRows = $this->costRows($base, $rates, $udms);
@@ -171,15 +173,19 @@ class PlkController extends Controller
     public function verify(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
     {
         $record = $this->baseQuery($request->user())->findOrFail($pemilihRecord->id);
+        $validated = $request->validate([
+            'status' => ['required', 'in:maklumat_sah,maklumat_tidak_sah'],
+            'remark' => ['nullable', 'string', 'max:1000'],
+        ]);
 
-        if (! $record->plk_verified_at) {
-            $record->forceFill([
-                'plk_verified_at' => now(),
-                'plk_verified_by' => $request->user()->id,
-            ])->save();
-        }
+        $record->forceFill([
+            'plk_verified_at' => now(),
+            'plk_verified_by' => $request->user()->id,
+            'plk_verification_status' => $validated['status'],
+            'plk_verification_remark' => filled($validated['remark'] ?? null) ? trim($validated['remark']) : null,
+        ])->save();
 
-        return back()->with('success', 'Maklumat pemilih ditanda sebagai betul.');
+        return back()->with('success', 'Semakan maklumat pemilih berjaya disimpan.');
     }
 
     public function export(Request $request): JsonResponse
@@ -224,6 +230,8 @@ class PlkController extends Controller
         $record->forceFill([
             'plk_verified_at' => null,
             'plk_verified_by' => null,
+            'plk_verification_status' => null,
+            'plk_verification_remark' => null,
         ])->save();
 
         return back()->with('success', 'Semakan maklumat pemilih berjaya dibatalkan.');

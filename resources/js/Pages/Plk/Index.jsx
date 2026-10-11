@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from 'react';
 
 const numberFormat = new Intl.NumberFormat('ms-MY');
 const moneyFormat = new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' });
+const verificationStatusLabels = {
+    maklumat_sah: 'Maklumat Sah',
+    maklumat_tidak_sah: 'Maklumat Tidak Sah',
+};
 
 function formatNumber(value) {
     return numberFormat.format(value ?? 0);
@@ -163,7 +167,7 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
     return (
         <>
             <div className="overflow-x-auto">
-                <table className={`w-full border-collapse text-left ${hideCulaCode ? 'min-w-[1040px]' : 'min-w-[1180px]'}`}>
+                <table className={`w-full border-collapse text-left ${checkedTab ? 'min-w-[1420px]' : hideCulaCode ? 'min-w-[1040px]' : 'min-w-[1180px]'}`}>
                     <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500">
                         <tr>
                             <th className="px-4 py-3">Maklumat pemilih</th>
@@ -171,6 +175,8 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
                             <th className="px-4 py-3">UDM / Lokaliti</th>
                             <th className="px-4 py-3">Telefon</th>
                             <th className="px-4 py-3">Catatan</th>
+                            {checkedTab && <th className="px-4 py-3">Status Semakan</th>}
+                            {checkedTab && <th className="px-4 py-3">Remark</th>}
                             {checkedTab && <th className="px-4 py-3">Disemak</th>}
                             <th className="px-4 py-3 text-right">Tindakan</th>
                         </tr>
@@ -196,6 +202,18 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
                                 <td className="max-w-[260px] whitespace-pre-line break-words px-4 py-3 text-[11px] leading-relaxed text-slate-600">{voter.catatan || '-'}</td>
                                 {checkedTab && (
                                     <td className="px-4 py-3">
+                                        <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${voter.verification_status === 'maklumat_tidak_sah' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                            {verificationStatusLabels[voter.verification_status] || '-'}
+                                        </span>
+                                    </td>
+                                )}
+                                {checkedTab && (
+                                    <td className="max-w-[280px] whitespace-pre-line break-words px-4 py-3 text-[11px] leading-relaxed text-slate-600">
+                                        {voter.verification_remark || '-'}
+                                    </td>
+                                )}
+                                {checkedTab && (
+                                    <td className="px-4 py-3">
                                         <p className="text-[11px] font-semibold text-emerald-700">{voter.verified_at || '-'}</p>
                                         <p className="mt-0.5 text-[10px] text-slate-500">{voter.verified_by || ''}</p>
                                     </td>
@@ -210,13 +228,13 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
                                                 className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60"
                                             >
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-                                                {verifyingIds.includes(voter.id) ? 'Menyimpan…' : 'Maklumat betul'}
+                                                {verifyingIds.includes(voter.id) ? 'Menyimpan…' : 'Telah semak'}
                                             </button>
                                         ) : (
                                             <>
                                                 <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-                                                    {checkedTab ? 'Sudah disemak' : 'Maklumat betul'}
+                                                    Telah semak
                                                 </span>
                                                 {checkedTab && (
                                                     <button
@@ -317,6 +335,10 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     const [selectedUdm, setSelectedUdm] = useState(filters.udm || '');
     const [rates, setRates] = useState(initialRates || {});
     const [verifyingIds, setVerifyingIds] = useState([]);
+    const [verificationToSave, setVerificationToSave] = useState(null);
+    const [verificationStatus, setVerificationStatus] = useState('');
+    const [verificationRemark, setVerificationRemark] = useState('');
+    const [verificationErrors, setVerificationErrors] = useState({});
     const [savingRates, setSavingRates] = useState(false);
     const [verificationToCancel, setVerificationToCancel] = useState(null);
     const [cancelingVerification, setCancelingVerification] = useState(false);
@@ -342,12 +364,39 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     const visitTab = (tab) => navigate({ tab, cula_code: tab === 'senarai' ? (filters.cula_code || '') : '', show_voters: 0, page: 1 });
     const visitCulaCode = (code) => navigate({ tab: 'senarai', cula_code: code, page: 1 });
 
-    const verifyVoter = (voter) => {
-        setVerifyingIds((current) => [...current, voter.id]);
-        router.post(route('plk.verify', voter.id), {}, {
+    const openVerificationModal = (voter) => {
+        setVerificationToSave(voter);
+        setVerificationStatus('');
+        setVerificationRemark('');
+        setVerificationErrors({});
+    };
+
+    const saveVerification = (event) => {
+        event.preventDefault();
+        if (!verificationToSave || verifyingIds.includes(verificationToSave.id)) return;
+
+        const voterId = verificationToSave.id;
+        setVerificationErrors({});
+        setVerifyingIds((current) => [...current, voterId]);
+        router.post(route('plk.verify', voterId), {
+            status: verificationStatus,
+            remark: verificationRemark,
+        }, {
             preserveScroll: true,
-            onFinish: () => setVerifyingIds((current) => current.filter((id) => id !== voter.id)),
+            onSuccess: () => {
+                setVerificationToSave(null);
+                setVerificationStatus('');
+                setVerificationRemark('');
+            },
+            onError: (formErrors) => setVerificationErrors(formErrors),
+            onFinish: () => setVerifyingIds((current) => current.filter((id) => id !== voterId)),
         });
+    };
+
+    const closeVerificationModal = () => {
+        if (verificationToSave && verifyingIds.includes(verificationToSave.id)) return;
+        setVerificationToSave(null);
+        setVerificationErrors({});
     };
 
     const cancelVerification = () => {
@@ -734,7 +783,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                             </button>
                                         </div>
                                     )}
-                                    <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={verifyVoter} onRequestUnverify={setVerificationToCancel} onPage={onPage} />
+                                    <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={openVerificationModal} onRequestUnverify={setVerificationToCancel} onPage={onPage} />
                                 </>
                             ) : null}
                         </>
@@ -783,6 +832,66 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                     )}
                 </section>
             </div>
+            {verificationToSave && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
+                    <form
+                        onSubmit={saveVerification}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="plk-verification-title"
+                        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 id="plk-verification-title" className="text-base font-black text-slate-900">Semakan pemilih PLK</h3>
+                                <p className="mt-1 text-xs leading-relaxed text-slate-500">Pilih status maklumat dan tambah remark jika perlu.</p>
+                            </div>
+                            <button type="button" onClick={closeVerificationModal} disabled={verifyingIds.includes(verificationToSave.id)} className="text-xl leading-none text-slate-400 hover:text-slate-700 disabled:opacity-50" aria-label="Tutup">&times;</button>
+                        </div>
+
+                        <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2.5">
+                            <p className="text-xs font-bold text-slate-800">{verificationToSave.name || 'Nama tidak direkodkan'}</p>
+                            <p className="mt-0.5 text-[11px] text-slate-500">No. KP: {verificationToSave.no_kp || '-'}</p>
+                        </div>
+
+                        <label htmlFor="plk-verification-status" className="mt-4 block text-xs font-bold text-slate-700">Status <span className="text-rose-600">*</span></label>
+                        <select
+                            id="plk-verification-status"
+                            value={verificationStatus}
+                            onChange={(event) => setVerificationStatus(event.target.value)}
+                            disabled={verifyingIds.includes(verificationToSave.id)}
+                            required
+                            className="input-field mt-1.5 text-sm"
+                        >
+                            <option value="">Pilih status</option>
+                            <option value="maklumat_sah">Maklumat Sah</option>
+                            <option value="maklumat_tidak_sah">Maklumat Tidak Sah</option>
+                        </select>
+                        {verificationErrors.status && <p role="alert" className="mt-1 text-xs font-semibold text-rose-600">{verificationErrors.status}</p>}
+
+                        <label htmlFor="plk-verification-remark" className="mt-4 block text-xs font-bold text-slate-700">Remark</label>
+                        <textarea
+                            id="plk-verification-remark"
+                            rows="4"
+                            maxLength="1000"
+                            value={verificationRemark}
+                            onChange={(event) => setVerificationRemark(event.target.value)}
+                            disabled={verifyingIds.includes(verificationToSave.id)}
+                            placeholder="Catatan tambahan untuk semakan ini..."
+                            className="input-field mt-1.5 resize-y text-sm"
+                        />
+                        <p className="mt-1 text-right text-[10px] text-slate-400">{verificationRemark.length}/1000</p>
+                        {verificationErrors.remark && <p role="alert" className="mt-1 text-xs font-semibold text-rose-600">{verificationErrors.remark}</p>}
+
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button type="button" onClick={closeVerificationModal} disabled={verifyingIds.includes(verificationToSave.id)} className="btn-outline px-3 py-2 text-xs disabled:opacity-50">Batal</button>
+                            <button type="submit" disabled={!verificationStatus || verifyingIds.includes(verificationToSave.id)} className="btn-primary px-3 py-2 text-xs disabled:cursor-wait disabled:opacity-60">
+                                {verifyingIds.includes(verificationToSave.id) ? 'Menyimpan…' : 'Simpan semakan'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
             {verificationToCancel && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
                     <div

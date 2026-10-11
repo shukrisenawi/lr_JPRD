@@ -27,6 +27,8 @@ it('lists only active PLK voters and separates voters already verified', functio
         'cula_code' => '3U',
         'plk_verified_at' => now(),
         'plk_verified_by' => $user->id,
+        'plk_verification_status' => 'maklumat_sah',
+        'plk_verification_remark' => 'Maklumat disahkan di lapangan.',
     ]);
     createPlkRecord(['name' => 'BUKAN KOD PLK', 'cula_code' => '2']);
     createPlkRecord(['name' => 'TIDAK AKTIF', 'cula_code' => '3D', 'status' => 'xaktif']);
@@ -62,7 +64,9 @@ it('lists only active PLK voters and separates voters already verified', functio
             ->where('active_tab', 'disemak')
             ->where('voters.total', 1)
             ->where('voters.data.0.id', $checked->id)
-            ->where('voters.data.0.verified_by', $user->name));
+            ->where('voters.data.0.verified_by', $user->name)
+            ->where('voters.data.0.verification_status', 'maklumat_sah')
+            ->where('voters.data.0.verification_remark', 'Maklumat disahkan di lapangan.'));
 });
 
 it('marks a PLK voter as verified by the current user', function () {
@@ -70,14 +74,33 @@ it('marks a PLK voter as verified by the current user', function () {
     $voter = createPlkRecord();
 
     $this->actingAs($user)
-        ->post(route('plk.verify', $voter))
+        ->post(route('plk.verify', $voter), [
+            'status' => 'maklumat_tidak_sah',
+            'remark' => 'Nombor telefon tidak tepat.',
+        ])
         ->assertRedirect();
 
     $this->assertDatabaseHas('pemilih_records', [
         'id' => $voter->id,
         'plk_verified_by' => $user->id,
+        'plk_verification_status' => 'maklumat_tidak_sah',
+        'plk_verification_remark' => 'Nombor telefon tidak tepat.',
     ]);
     expect($voter->fresh()->plk_verified_at)->not->toBeNull();
+});
+
+it('requires a valid status when verifying a PLK voter', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    $voter = createPlkRecord();
+
+    $this->actingAs($user)
+        ->post(route('plk.verify', $voter), [
+            'status' => 'not-a-valid-status',
+            'remark' => 'Semakan belum selesai.',
+        ])
+        ->assertSessionHasErrors('status');
+
+    expect($voter->fresh()->plk_verified_at)->toBeNull();
 });
 
 it('cancels a PLK verification and returns the voter to the full list', function () {
@@ -85,6 +108,8 @@ it('cancels a PLK verification and returns the voter to the full list', function
     $voter = createPlkRecord([
         'plk_verified_at' => now(),
         'plk_verified_by' => $user->id,
+        'plk_verification_status' => 'maklumat_tidak_sah',
+        'plk_verification_remark' => 'Data perlu dikemas kini.',
     ]);
 
     $this->actingAs($user)
@@ -95,6 +120,8 @@ it('cancels a PLK verification and returns the voter to the full list', function
         'id' => $voter->id,
         'plk_verified_at' => null,
         'plk_verified_by' => null,
+        'plk_verification_status' => null,
+        'plk_verification_remark' => null,
     ]);
 
     $this->actingAs($user)

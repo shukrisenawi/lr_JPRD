@@ -29,6 +29,8 @@ class PemilihRecord extends Model
         'cula_display_label',
         'plk_verified_at',
         'plk_verified_by',
+        'plk_verification_status',
+        'plk_verification_remark',
         'address',
         'phone_home',
         'phone_mobile',
