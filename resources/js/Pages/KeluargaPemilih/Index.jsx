@@ -535,6 +535,13 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         setFamilyName(`Keluarga ${selectedUnassignedVoters[0].name || 'Pemilih'}`);
     };
 
+    const openFamilyPicker = () => {
+        setFamilyPickerSearch('');
+        setFamilyPickerPage(1);
+        setFamilyPickerResults(null);
+        setFamilyPickerOpen(true);
+    };
+
     const addSelectedToFamily = (family) => {
         if (processing || !selectedUnassignedVoters.length) return;
         const ids = selectedUnassignedVoters.map((voter) => voter.id);
@@ -1053,7 +1060,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             </div>
         }>
             <Head title="Keluarga Pemilih" />
-            <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
+            <div className={`mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6 ${selectedUnassignedVoters.length > 0 && filters.tab === 'unassigned' ? 'pb-28 sm:pb-20' : ''}`}>
                 <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarFileSelected} className="hidden" />
                 <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                     <StatCard label="Jumlah Keluarga" value={visibleStats.families} icon="home" />
@@ -1355,7 +1362,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <div className="flex flex-wrap items-center gap-2">
                             {selectedUnassignedVoters.length > 0 && <button type="button" onClick={() => setSelectedUnassignedVoters([])} className="btn-ghost text-xs">Kosongkan pilihan</button>}
                             <button type="button" onClick={startSelectedFamily} disabled={!selectedUnassignedVoters.length || processing} className="btn-primary inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="plus" />Masukkan ke Keluarga ({selectedUnassignedVoters.length})</button>
-                            <button type="button" onClick={() => { setFamilyPickerSearch(''); setFamilyPickerPage(1); setFamilyPickerResults(null); setFamilyPickerOpen(true); }} disabled={!selectedUnassignedVoters.length || processing} className="btn-primary inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="users" />Tambah ke Keluarga</button>
+                            <button type="button" onClick={openFamilyPicker} disabled={!selectedUnassignedVoters.length || processing} className="btn-primary inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="users" />Tambah ke Keluarga</button>
                         </div>
                     </div>
 
@@ -1443,6 +1450,20 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         </nav>
                     )}
                 </section>}
+                {filters.udm && filters.tab === 'unassigned' && selectedUnassignedVoters.length > 0 && !mode && !familyPickerOpen && !selectedVoterForCula && !cropTarget && !lightbox && (
+                    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-green-200 bg-white/95 px-3 pt-2.5 pb-[calc(env(safe-area-inset-bottom)+0.625rem)] shadow-[0_-8px_24px_rgba(15,23,42,0.12)] backdrop-blur-sm sm:px-5">
+                        <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center justify-between gap-3 sm:justify-start">
+                                <p role="status" aria-live="polite" className="text-xs font-bold text-green-900">{selectedUnassignedVoters.length} pemilih dipilih</p>
+                                <button type="button" onClick={() => setSelectedUnassignedVoters([])} disabled={processing} className="text-[11px] font-bold text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-800 disabled:opacity-50">Kosongkan</button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+                                <button type="button" onClick={startSelectedFamily} disabled={processing} className="btn-primary justify-center whitespace-nowrap px-2.5 py-2 text-[11px] disabled:cursor-not-allowed disabled:opacity-50 sm:text-xs"><Icon name="plus" /><span className="sm:hidden">Keluarga baharu</span><span className="hidden sm:inline">Masukkan ke Keluarga</span></button>
+                                <button type="button" onClick={openFamilyPicker} disabled={processing} className="btn-primary justify-center whitespace-nowrap px-2.5 py-2 text-[11px] disabled:cursor-not-allowed disabled:opacity-50 sm:text-xs"><Icon name="users" /><span className="sm:hidden">Tambah keluarga</span><span className="hidden sm:inline">Tambah ke Keluarga</span></button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {familyPickerOpen && (
                     <Modal show onClose={() => !processing && setFamilyPickerOpen(false)} maxWidth="lg" title="Tambah ke Keluarga">
                         <div className="space-y-3 rounded-xl bg-white p-4">
