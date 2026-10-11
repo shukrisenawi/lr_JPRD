@@ -27,3 +27,14 @@
 
 - `deploy.py` and `.vscode/sftp.json` target the live `paskawasansik.com` server. Do not run `python deploy.py` or rely on editor upload-on-save without explicit deployment approval; the script uploads changed files, replaces remote build assets, and clears server caches.
 - Never expose, copy, or add the deployment credentials in `deploy.py` or related local configuration to commits, logs, or responses.
+
+## Production Asset Rules — Apply in Every Session
+
+- `public/build` is tracked and is part of the deliverable. After frontend changes, run `npm run build`, then include the complete updated `public/build` directory (manifest, new assets, removed obsolete assets) with the intended source changes when committing. Do not commit only the JSX source and leave the tracked production build stale.
+- NEVER run `git restore public/build`, `git checkout -- public/build`, or clean new build assets after a successful build/deployment merely to make Git status clean. This previously restored an old manifest and caused the live site to revert. Keep the verified build and commit it when authorized.
+- SFTP `uploadOnSave` and watcher auto-upload/auto-delete MUST remain disabled. `npm run build` now checks this as well as manifest integrity. If checking local SFTP configuration, inspect only the relevant boolean properties; never print credentials. Do not stage credential-bearing configuration files.
+- Deployment must include the intended backend/controller/routes changes even if already committed. The local `deploy.py` only discovers uncommitted files; a clean working tree does NOT mean the server has the latest PHP files.
+- Upload all build assets before publishing `public/build/manifest.json` last. Clear Laravel route/config/view caches after updating backend routes.
+- After deployment, read back the remote manifest and compare it with the local manifest. Verify the actual HTML references the new app script/CSS, the page chunk exists, and the changed interaction works in an authenticated browser when a session is available. A 200 response, successful upload message, or matching Git commit alone is insufficient.
+- Do not conclude that the user has a browser-cache problem until checking the server's manifest and the script/CSS references in freshly requested HTML.
+- Git push is not deployment. Only deploy with explicit user approval; keep deployed and tracked build versions consistent.
