@@ -151,7 +151,7 @@ function Pagination({ voters, onPage }) {
     );
 }
 
-function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, onRequestUnverify, onPage }) {
+function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemulaIds, onVerify, onRequestUnverify, onStartCula, onCompleteCula, onCancelCula, onPage }) {
     if (!voters?.data?.length) {
         return (
             <div className="px-5 py-12 text-center">
@@ -247,7 +247,16 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, onVerify, 
                                                 )}
                                             </>
                                         )}
-                                        <button type="button" onClick={() => openTelegram('kemascula', voter)} disabled={!voter.telegram_identity} className="inline-flex items-center rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-sky-700 transition hover:bg-sky-50 disabled:opacity-40">Cula</button>
+                                        {culaSemulaIds.has(voter.id) ? (
+                                            <>
+                                                <button type="button" onClick={() => onCompleteCula(voter)} className="inline-flex items-center rounded-lg bg-blue-600 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-blue-500">Siap Cula</button>
+                                                <button type="button" onClick={() => onCancelCula(voter.id)} title="Kembali ke asal" aria-label={`Batalkan tindakan Cula untuk ${voter.name}`} className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-slate-500 transition hover:border-rose-300 hover:text-rose-600">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button type="button" onClick={() => onStartCula(voter)} disabled={!voter.telegram_identity} className="inline-flex items-center rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-sky-700 transition hover:bg-sky-50 disabled:opacity-40">Cula</button>
+                                        )}
                                         <button type="button" onClick={() => openTelegram('kemastel', voter)} disabled={!voter.telegram_identity} className="inline-flex items-center rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-violet-700 transition hover:bg-violet-50 disabled:opacity-40">Tukar tel</button>
                                     </div>
                                 </td>
@@ -342,6 +351,10 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     const [savingRates, setSavingRates] = useState(false);
     const [verificationToCancel, setVerificationToCancel] = useState(null);
     const [cancelingVerification, setCancelingVerification] = useState(false);
+    const [culaSemulaIds, setCulaSemulaIds] = useState(() => new Set());
+    const [selectedVoterForCula, setSelectedVoterForCula] = useState(null);
+    const [savingCula, setSavingCula] = useState(false);
+    const [culaActionError, setCulaActionError] = useState('');
     const [exporting, setExporting] = useState(false);
     const [exportingCosts, setExportingCosts] = useState(false);
     const [exportError, setExportError] = useState('');
@@ -408,6 +421,40 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             onSuccess: () => setVerificationToCancel(null),
             onFinish: () => setCancelingVerification(false),
         });
+    };
+
+    const startCula = (voter) => {
+        setCulaSemulaIds((current) => new Set([...current, voter.id]));
+        openTelegram('kemascula', voter);
+    };
+
+    const saveCula = async (code) => {
+        if (!selectedVoterForCula || savingCula) return;
+
+        setSavingCula(true);
+        setCulaActionError('');
+
+        try {
+            const response = await fetch(route('plk.update-cula', selectedVoterForCula.id), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ cula_code: code }),
+            });
+
+            if (!response.ok) throw new Error('Request failed');
+
+            setSelectedVoterForCula(null);
+            router.reload({ preserveScroll: true });
+        } catch (error) {
+            setCulaActionError('Kod Cula tidak berjaya disimpan. Sila cuba lagi.');
+        } finally {
+            setSavingCula(false);
+        }
     };
 
     const saveRates = (event) => {
@@ -783,7 +830,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                             </button>
                                         </div>
                                     )}
-                                    <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} onVerify={openVerificationModal} onRequestUnverify={setVerificationToCancel} onPage={onPage} />
+                                    <VoterTable voters={voters} checkedTab={activeTab === 'disemak'} hideCulaCode={activeTab === 'senarai' && Boolean(filters.cula_code)} verifyingIds={verifyingIds} culaSemulaIds={culaSemulaIds} onVerify={openVerificationModal} onRequestUnverify={setVerificationToCancel} onStartCula={startCula} onCompleteCula={(voter) => { setCulaActionError(''); setSelectedVoterForCula(voter); }} onCancelCula={(voterId) => setCulaSemulaIds((current) => { const next = new Set(current); next.delete(voterId); return next; })} onPage={onPage} />
                                 </>
                             ) : null}
                         </>
@@ -832,6 +879,26 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                     )}
                 </section>
             </div>
+            {selectedVoterForCula && (
+                <div role="presentation" className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
+                    <button type="button" onClick={() => !savingCula && setSelectedVoterForCula(null)} disabled={savingCula} aria-label="Tutup dialog Siap Cula" className="absolute inset-0 h-full w-full cursor-default bg-transparent disabled:cursor-wait" />
+                    <div className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="plk-cula-title">
+                        <div className="flex items-center justify-between gap-2">
+                            <h3 id="plk-cula-title" className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
+                            <button type="button" onClick={() => setSelectedVoterForCula(null)} disabled={savingCula} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50 disabled:opacity-50">Tutup</button>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">Pilih kod Cula PLK yang telah dikemaskini:</p>
+                        {culaActionError && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{culaActionError}</p>}
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                            {(codes || []).map((code) => (
+                                <button key={code.code} type="button" onClick={() => saveCula(code.code)} disabled={savingCula} className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md disabled:cursor-wait disabled:opacity-50 ${code.code === selectedVoterForCula.cula_code ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:text-emerald-700'}`}>
+                                    {savingCula ? 'Menyimpan…' : `${code.code} — ${code.label}`}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
             {verificationToSave && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4">
                     <form

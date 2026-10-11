@@ -104,6 +104,39 @@ it('requires a valid status when verifying a PLK voter', function () {
     expect($voter->fresh()->plk_verified_at)->toBeNull();
 });
 
+it('updates a PLK voters cula code and marks the voter as processed', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    $voter = createPlkRecord(['cula_code' => '3B']);
+
+    $this->actingAs($user)
+        ->postJson(route('plk.update-cula', $voter), ['cula_code' => '3D'])
+        ->assertOk()
+        ->assertJsonPath('voter_id', $voter->id);
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'id' => $voter->id,
+        'cula_code' => '3D',
+        'cula_display_label' => 'PAS LUAR DUN',
+    ]);
+    $this->assertDatabaseHas('cula_work_items', [
+        'pemilih_record_id' => $voter->id,
+        'marked_by' => $user->id,
+    ]);
+});
+
+it('only accepts PLK codes when completing a PLK cula action', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    $voter = createPlkRecord();
+
+    $this->actingAs($user)
+        ->postJson(route('plk.update-cula', $voter), ['cula_code' => '2'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('cula_code');
+
+    expect($voter->fresh()->cula_code)->toBe('3B');
+    $this->assertDatabaseMissing('cula_work_items', ['pemilih_record_id' => $voter->id]);
+});
+
 it('cancels a PLK verification and returns the voter to the full list', function () {
     $user = User::factory()->withModules(['plk'])->create();
     $voter = createPlkRecord([

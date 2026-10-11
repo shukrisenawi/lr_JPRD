@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\Setting;
 use App\Support\CulaCodes;
@@ -9,6 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -186,6 +189,35 @@ class PlkController extends Controller
         ])->save();
 
         return back()->with('success', 'Semakan maklumat pemilih berjaya disimpan.');
+    }
+
+    public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
+    {
+        $record = $this->baseQuery($request->user())->findOrFail($pemilihRecord->id);
+        $validated = $request->validate([
+            'cula_code' => ['required', 'string', Rule::in(self::CULA_CODES)],
+        ]);
+
+        DB::transaction(function () use ($record, $validated, $request): void {
+            $record->update([
+                'cula_code' => $validated['cula_code'],
+                'cula_display_label' => CulaCodes::label($validated['cula_code']),
+            ]);
+
+            CulaWorkItem::query()->firstOrCreate(
+                ['pemilih_record_id' => $record->id],
+                [
+                    'marked_by' => $request->user()->id,
+                    'marked_at' => now(),
+                    'notes' => null,
+                ]
+            );
+        });
+
+        return response()->json([
+            'message' => 'Kod Cula PLK dikemaskini dan pemilih ditanda sebagai sudah diproses.',
+            'voter_id' => $record->id,
+        ]);
     }
 
     public function export(Request $request): JsonResponse

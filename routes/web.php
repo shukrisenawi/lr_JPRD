@@ -184,6 +184,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
 
     Route::get('/plk', [PlkController::class, 'index'])->middleware('module:plk')->name('plk.index');
     Route::get('/plk/export', [PlkController::class, 'export'])->middleware('module:plk')->name('plk.export');
+    Route::post('/plk/{pemilihRecord}/update-cula', [PlkController::class, 'updateCula'])->middleware('module:plk')->name('plk.update-cula');
     Route::post('/plk/{pemilihRecord}/verify', [PlkController::class, 'verify'])->middleware('module:plk')->name('plk.verify');
     Route::delete('/plk/{pemilihRecord}/verify', [PlkController::class, 'unverify'])->middleware('module:plk')->name('plk.unverify');
     Route::put('/plk/rates', [PlkController::class, 'updateRates'])->middleware(['module:plk', 'module:plk-kos'])->name('plk.rates.update');
