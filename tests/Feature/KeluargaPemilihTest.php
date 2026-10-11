@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PemilihFamily;
 use App\Models\PemilihRecord;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +69,28 @@ it('creates a voter family manually, adds members, and removes a member', functi
             ->where('families.data.0.members.1.catatan', 'Catatan ujian')
             ->where('stats.assigned', 2)
             ->where('stats.unassigned', 1));
+});
+
+it('lists existing families for the picker within the user scope and includes reviewed families', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create([
+        'access_level' => 'udm', 'scope_key' => 'UDM 1',
+    ]);
+    foreach (['UDM 1', 'UDM 2'] as $udm) {
+        $voter = createKeluargaPemilihRecord(['dm' => $udm]);
+        $family = PemilihFamily::query()->create([
+            'name' => 'Keluarga Ali '.$udm, 'created_by' => $user->id, 'reviewed_at' => now(),
+        ]);
+        $family->members()->attach($voter->id, ['created_by' => $user->id]);
+    }
+
+    $this->actingAs($user)->getJson(route('keluarga-pemilih.families.search', ['q' => 'Ali']))
+        ->assertOk()->assertJsonPath('total', 1)
+        ->assertJsonPath('data.0.name', 'Keluarga Ali UDM 1')
+        ->assertJsonPath('data.0.members_count', 1);
+    $this->getJson(route('keluarga-pemilih.families.search', ['udm' => 'UDM 2']))
+        ->assertOk()->assertJsonPath('total', 0);
+    $this->getJson(route('keluarga-pemilih.families.search', ['q' => 'Tiada']))
+        ->assertOk()->assertJsonPath('total', 0);
 });
 
 it('shows only Malay voters in family lists, unassigned lists, and voter search', function () {

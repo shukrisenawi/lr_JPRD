@@ -184,6 +184,14 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const familySearchRequestId = useRef(0);
     const [results, setResults] = useState([]);
     const [selectedVoters, setSelectedVoters] = useState([]);
+    const [selectedUnassignedVoters, setSelectedUnassignedVoters] = useState([]);
+    const unassignedSelectionScope = useRef([filters.udm, filters.locality].join('|'));
+    const [familyPickerOpen, setFamilyPickerOpen] = useState(false);
+    const [familyPickerSearch, setFamilyPickerSearch] = useState('');
+    const [familyPickerPage, setFamilyPickerPage] = useState(1);
+    const [familyPickerResults, setFamilyPickerResults] = useState(null);
+    const [familyPickerLoading, setFamilyPickerLoading] = useState(false);
+    const [familyPickerError, setFamilyPickerError] = useState('');
     const [familyName, setFamilyName] = useState('');
     const [loading, setLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -223,6 +231,39 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     useEffect(() => {
         setCulaCodeDraft(selectedCulaCodes);
     }, [selectedCulaCodes]);
+
+    useEffect(() => {
+        const scope = [filters.udm, filters.locality].join('|');
+        if (unassignedSelectionScope.current !== scope) {
+            setSelectedUnassignedVoters([]);
+            setFamilyPickerOpen(false);
+            unassignedSelectionScope.current = scope;
+        }
+    }, [filters.udm, filters.locality]);
+
+    useEffect(() => {
+        if (!familyPickerOpen) return undefined;
+        const controller = new AbortController();
+        setFamilyPickerLoading(true);
+        setFamilyPickerError('');
+        const timer = window.setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({ q: familyPickerSearch, page: familyPickerPage });
+                if (filters.udm) params.set('udm', filters.udm);
+                if (filters.locality) params.set('locality', filters.locality);
+                const response = await fetch(`${route('keluarga-pemilih.families.search')}?${params}`, {
+                    headers: { Accept: 'application/json' }, signal: controller.signal,
+                });
+                if (!response.ok) throw new Error('Senarai keluarga tidak berjaya dimuatkan. Cuba lagi.');
+                setFamilyPickerResults(await response.json());
+            } catch (error) {
+                if (error.name !== 'AbortError') setFamilyPickerError(error.message);
+            } finally {
+                if (!controller.signal.aborted) setFamilyPickerLoading(false);
+            }
+        }, 250);
+        return () => { window.clearTimeout(timer); controller.abort(); };
+    }, [familyPickerOpen, familyPickerSearch, familyPickerPage, filters.udm, filters.locality]);
 
     useEffect(() => {
         setFatherOverrides(Object.fromEntries(families.data.map((family) => [family.id, {
@@ -459,6 +500,38 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         setFamilyName(voter ? `Keluarga ${voter.name || 'Pemilih'}` : '');
     };
 
+    const toggleUnassignedVoter = (voter) => {
+        setSelectedUnassignedVoters((current) => current.some((selected) => selected.id === voter.id)
+            ? current.filter((selected) => selected.id !== voter.id)
+            : current.length < 30 ? [...current, voter] : current);
+    };
+
+    const startSelectedFamily = () => {
+        if (!selectedUnassignedVoters.length) return;
+
+        setMode({ type: 'new', modal: true });
+        setSearchText('');
+        setSelectedVoters([...selectedUnassignedVoters]);
+        setFamilyName(`Keluarga ${selectedUnassignedVoters[0].name || 'Pemilih'}`);
+    };
+
+    const addSelectedToFamily = (family) => {
+        if (processing || !selectedUnassignedVoters.length) return;
+        const ids = selectedUnassignedVoters.map((voter) => voter.id);
+        router.post(route('keluarga-pemilih.members.store', family.id), {
+            pemilih_ids: ids, ...currentRouteFilters(),
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => setProcessing(false),
+            onSuccess: () => {
+                setSelectedUnassignedVoters((current) => current.filter((voter) => !ids.includes(voter.id)));
+                setFamilyPickerOpen(false);
+            },
+        });
+    };
+
     const startAddingToFamily = (family) => {
         const details = fatherDetails(family, fatherOverrides);
         const members = details.members || family.members || [];
@@ -506,6 +579,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             onFinish: () => setProcessing(false),
             onSuccess: () => {
                 if (mode.type === 'add') setUpdatedFamilyId(mode.familyId);
+                setSelectedUnassignedVoters((current) => current.filter((voter) => !payload.pemilih_ids.includes(voter.id)));
                 closeManual();
             },
         });
@@ -821,6 +895,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     };
 
     const selectedIds = new Set(selectedVoters.map((voter) => voter.id));
+    const selectedUnassignedIds = new Set(selectedUnassignedVoters.map((voter) => voter.id));
     const visibleFamilies = families.data.filter((family) => !removedFamilyIds.has(Number(family.id)));
     const activeFamilyTab = filters.tab === 'reviewed' ? 'reviewed' : 'families';
     const allVisibleFamiliesExpanded = visibleFamilies.length > 0
@@ -1252,6 +1327,18 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         </div>
                     </div>
 
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
+                        <div>
+                            <p aria-live="polite" className="text-xs font-bold text-green-900">{selectedUnassignedVoters.length} pemilih dipilih</p>
+                            <p className="mt-0.5 text-[10px] text-green-800">Pilih sehingga 30 pemilih. Pilihan kekal apabila bertukar halaman atau membuat carian.</p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            {selectedUnassignedVoters.length > 0 && <button type="button" onClick={() => setSelectedUnassignedVoters([])} className="btn-ghost text-xs">Kosongkan pilihan</button>}
+                            <button type="button" onClick={startSelectedFamily} disabled={!selectedUnassignedVoters.length || processing} className="btn-primary inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="plus" />Masukkan ke Keluarga ({selectedUnassignedVoters.length})</button>
+                            <button type="button" onClick={() => { setFamilyPickerSearch(''); setFamilyPickerPage(1); setFamilyPickerResults(null); setFamilyPickerOpen(true); }} disabled={!selectedUnassignedVoters.length || processing} className="btn-primary inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="users" />Tambah ke Keluarga</button>
+                        </div>
+                    </div>
+
                     {unassignedVoters.data.length === 0 ? (
                         <div className="card-dashed px-4 py-8 text-center">
                             <p className="text-sm font-bold text-slate-800">{filters.q ? 'Tiada pemilih sepadan dengan carian' : selectedCulaCodes.length ? 'Tiada pemilih dengan Kod Cula dipilih' : 'Semua pemilih dalam tapisan ini sudah berkeluarga'}</p>
@@ -1275,6 +1362,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 return (
                                 <div key={voter.id} className="flex flex-col gap-2 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex min-w-0 items-center gap-3">
+                                         <input type="checkbox" checked={selectedUnassignedIds.has(voter.id)} onChange={() => toggleUnassignedVoter(voter)} disabled={!selectedUnassignedIds.has(voter.id) && selectedUnassignedVoters.length >= 30} aria-label={`Pilih ${voter.name || 'pemilih'}${voter.no_kp ? ` (${voter.no_kp})` : ''}`} className="shrink-0 rounded border-slate-300 text-green-600 focus:ring-green-500 disabled:opacity-50" />
                                          <VoterAvatar
                                              voter={voter}
                                              src={avatarOverrides[voter.id] || voter.avatar_url}
@@ -1310,12 +1398,40 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         <nav aria-label="Halaman pemilih belum berkeluarga" className="flex flex-wrap justify-center gap-1.5 pt-2">
                             {unassignedVoters.links.map((link) => (
                                 link.url
-                                    ? <Link key={link.url} href={link.url} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
+                                    ? <Link key={link.url} href={link.url} preserveState preserveScroll className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
                                     : <span key={`unassigned-${link.label}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
                             ))}
                         </nav>
                     )}
                 </section>}
+                {familyPickerOpen && (
+                    <Modal show onClose={() => !processing && setFamilyPickerOpen(false)} maxWidth="lg" title="Tambah ke Keluarga">
+                        <div className="space-y-3 rounded-xl bg-white p-4">
+                            <div className="flex items-start justify-between gap-3">
+                                <div><h3 className="text-sm font-bold text-slate-900">Pilih keluarga sedia ada</h3><p className="mt-1 text-xs text-slate-500">Masukkan {selectedUnassignedVoters.length} pemilih dipilih ke keluarga dalam tapisan UDM / lokaliti semasa.</p></div>
+                                <button type="button" disabled={processing} onClick={() => setFamilyPickerOpen(false)} className="btn-ghost text-xs">Tutup</button>
+                            </div>
+                            <input type="search" aria-label="Cari keluarga sedia ada" maxLength={100} value={familyPickerSearch} disabled={processing} onChange={(event) => { setFamilyPickerSearch(event.target.value); setFamilyPickerPage(1); }} placeholder="Cari nama keluarga…" className="input-field w-full text-xs" />
+                            {errors.pemilih_ids && <p role="alert" className="text-xs font-semibold text-rose-700">{errors.pemilih_ids}</p>}
+                            {familyPickerError ? <p role="alert" className="text-xs text-rose-700">{familyPickerError}</p> : familyPickerLoading ? <p className="py-4 text-center text-xs text-slate-500">Memuatkan keluarga…</p> : (
+                                <div className="max-h-[50vh] space-y-2 overflow-y-auto">
+                                    {familyPickerResults?.data.map((family) => (
+                                        <div key={family.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3">
+                                            <div><p className="text-xs font-bold text-slate-900">{family.name}</p><p className="mt-1 text-[10px] text-slate-500">{family.members_count} ahli</p></div>
+                                            <button type="button" disabled={processing} onClick={() => addSelectedToFamily(family)} className="btn-primary text-xs disabled:opacity-50">{processing ? 'Menyimpan…' : 'Masukkan di sini'}</button>
+                                        </div>
+                                    ))}
+                                    {familyPickerResults?.data.length === 0 && <p className="py-4 text-center text-xs text-slate-500">Tiada keluarga sedia ada yang sepadan.</p>}
+                                </div>
+                            )}
+                            {familyPickerResults?.last_page > 1 && <div className="flex items-center justify-between gap-2 text-xs">
+                                <button type="button" disabled={processing || familyPickerLoading || familyPickerPage <= 1} onClick={() => setFamilyPickerPage((page) => page - 1)} className="btn-ghost disabled:opacity-50">Sebelumnya</button>
+                                <span>{familyPickerPage} / {familyPickerResults.last_page}</span>
+                                <button type="button" disabled={processing || familyPickerLoading || familyPickerPage >= familyPickerResults.last_page} onClick={() => setFamilyPickerPage((page) => page + 1)} className="btn-ghost disabled:opacity-50">Seterusnya</button>
+                            </div>}
+                        </div>
+                    </Modal>
+                )}
                 {selectedVoterForCula && (
                     <Modal show onClose={() => !savingCula && setSelectedVoterForCula(null)} maxWidth="md" title={`Kemas Cula — ${selectedVoterForCula.name || 'Pemilih'}`}>
                         <div className="space-y-3 rounded-xl bg-white p-4">

@@ -141,6 +141,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
 
     Route::get('/keluarga-pemilih', [KeluargaPemilihController::class, 'index'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.index');
     Route::get('/keluarga-pemilih/search', [KeluargaPemilihController::class, 'search'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.search');
+    Route::get('/keluarga-pemilih/families', [KeluargaPemilihController::class, 'searchFamilies'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.families.search');
     Route::post('/keluarga-pemilih', [KeluargaPemilihController::class, 'store'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.store');
     Route::post('/keluarga-pemilih/{pemilihRecord}/cula', [KeluargaPemilihController::class, 'updateCula'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.cula.update');
     Route::put('/keluarga-pemilih/{pemilihFamily}', [KeluargaPemilihController::class, 'updateName'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.update');

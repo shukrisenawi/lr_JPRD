@@ -320,6 +320,22 @@ class KeluargaPemilihController extends Controller
         return response()->json(['voters' => $results]);
     }
 
+    public function searchFamilies(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'udm' => ['nullable', 'string', 'max:255'],
+            'locality' => ['nullable', 'string', 'max:255'],
+        ]);
+        $query = $this->visibleFamilyQuery($request->user(), $validated['udm'] ?? null, $validated['locality'] ?? null);
+        $search = trim((string) ($validated['q'] ?? ''));
+        if ($search !== '') {
+            $query->where('name', 'like', '%'.$search.'%');
+        }
+
+        return response()->json($query->select(['id', 'name'])->withCount('members')->orderBy('name')->paginate(20));
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
