@@ -1354,18 +1354,6 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2.5">
-                        <div>
-                            <p aria-live="polite" className="text-xs font-bold text-green-900">{selectedUnassignedVoters.length} pemilih dipilih</p>
-                            <p className="mt-0.5 text-[10px] text-green-800">Pilih sehingga 30 pemilih. Pilihan kekal apabila bertukar halaman atau membuat carian.</p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {selectedUnassignedVoters.length > 0 && <button type="button" onClick={() => setSelectedUnassignedVoters([])} className="btn-ghost text-xs">Kosongkan pilihan</button>}
-                            <button type="button" onClick={startSelectedFamily} disabled={!selectedUnassignedVoters.length || processing} className="btn-primary inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="plus" />Masukkan ke Keluarga ({selectedUnassignedVoters.length})</button>
-                            <button type="button" onClick={openFamilyPicker} disabled={!selectedUnassignedVoters.length || processing} className="btn-primary inline-flex items-center gap-1.5 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="users" />Tambah ke Keluarga</button>
-                        </div>
-                    </div>
-
                     {unassignedVoters.data.length === 0 ? (
                         <div className="card-dashed px-4 py-8 text-center">
                             <p className="text-sm font-bold text-slate-800">{filters.q ? 'Tiada pemilih sepadan dengan carian' : selectedCulaCodes.length ? 'Tiada pemilih dengan Kod Cula dipilih' : 'Semua pemilih dalam tapisan ini sudah berkeluarga'}</p>
