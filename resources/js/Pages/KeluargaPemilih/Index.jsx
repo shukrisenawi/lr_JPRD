@@ -200,6 +200,9 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     const [renamingFamilyId, setRenamingFamilyId] = useState(null);
     const [renameValue, setRenameValue] = useState('');
     const [renameProcessing, setRenameProcessing] = useState(false);
+    const [addressFamilyId, setAddressFamilyId] = useState(null);
+    const [addressValue, setAddressValue] = useState('');
+    const [addressProcessing, setAddressProcessing] = useState(false);
     const [fatherProcessingId, setFatherProcessingId] = useState(null);
     const [fatherOverrides, setFatherOverrides] = useState({});
     const [fatherErrors, setFatherErrors] = useState({});
@@ -1232,6 +1235,31 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                 </div>
                                                 {renamingFamilyId === family.id && errors.name && <p role="alert" className="mt-1 text-[10px] font-semibold text-rose-700">{errors.name}</p>}
                                                 <p className="mt-1 flex items-center gap-1 text-[10px] text-slate-500"><Icon name="pin" className="h-3 w-3 shrink-0" />{locations.join(' · ') || 'Lokaliti tidak dinyatakan'}</p>
+                                                {addressFamilyId === family.id ? (
+                                                    <form className="mt-2 space-y-2" onSubmit={(event) => {
+                                                        event.preventDefault();
+                                                        if (addressProcessing) return;
+                                                        router.put(route('keluarga-pemilih.address.update', family.id), { address: addressValue, ...currentRouteFilters() }, {
+                                                            preserveScroll: true,
+                                                            onStart: () => setAddressProcessing(true),
+                                                            onFinish: () => setAddressProcessing(false),
+                                                            onSuccess: () => setAddressFamilyId(null),
+                                                        });
+                                                    }}>
+                                                        <label htmlFor={`family-address-${family.id}`} className="block text-xs font-semibold text-slate-700">Alamat Keluarga</label>
+                                                        <textarea id={`family-address-${family.id}`} value={addressValue} onChange={(event) => setAddressValue(event.target.value)} rows={3} maxLength={2000} className="input-field w-full text-xs" placeholder="Masukkan alamat sebenar keluarga" disabled={addressProcessing} />
+                                                        {errors.address && <p role="alert" className="text-xs text-rose-700">{errors.address}</p>}
+                                                        <div className="flex gap-2">
+                                                            <button type="submit" disabled={addressProcessing} className="btn-ghost text-green-800 disabled:opacity-50">{addressProcessing ? 'Menyimpan…' : 'Simpan alamat'}</button>
+                                                            <button type="button" disabled={addressProcessing} onClick={() => setAddressFamilyId(null)} className="btn-ghost">Batal</button>
+                                                        </div>
+                                                    </form>
+                                                ) : (
+                                                    <div className="mt-2">
+                                                        <p className="whitespace-pre-line break-words text-xs text-slate-600"><span className="font-semibold">Alamat Keluarga: </span>{family.address || 'Belum diisi'}</p>
+                                                        <button type="button" disabled={addressProcessing} onClick={() => { setAddressFamilyId(family.id); setAddressValue(family.address || ''); }} className="mt-1 text-xs font-semibold text-green-700 hover:underline">{family.address ? 'Sunting alamat' : 'Tambah alamat'}</button>
+                                                    </div>
+                                                )}
                                             </div>
                                             <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
                                             {isReviewedTab && (

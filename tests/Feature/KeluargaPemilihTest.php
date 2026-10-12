@@ -71,6 +71,33 @@ it('creates a voter family manually, adds members, and removes a member', functi
             ->where('stats.unassigned', 1));
 });
 
+it('saves, displays and clears a family address within the user scope', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM 1',
+    ]);
+    $voter = createKeluargaPemilihRecord();
+    $family = PemilihFamily::query()->create(['name' => 'Keluarga Ujian', 'created_by' => $user->id]);
+    $family->members()->attach($voter->id);
+
+    $this->actingAs($user)->put(route('keluarga-pemilih.address.update', $family), [
+        'address' => "  No. 12, Jalan Baru\n08200 Sik, Kedah  ",
+    ])->assertRedirect();
+    expect($family->fresh()->address)->toBe("No. 12, Jalan Baru\n08200 Sik, Kedah");
+    $this->get(route('keluarga-pemilih.index'))->assertInertia(fn ($page) => $page
+        ->where('families.data.0.address', "No. 12, Jalan Baru\n08200 Sik, Kedah"));
+
+    $this->put(route('keluarga-pemilih.address.update', $family), ['address' => str_repeat('a', 2001)])
+        ->assertSessionHasErrors('address');
+    $this->put(route('keluarga-pemilih.address.update', $family), ['address' => ''])->assertRedirect();
+    expect($family->fresh()->address)->toBeNull();
+
+    $outside = PemilihFamily::query()->create(['name' => 'Keluarga Luar', 'address' => 'Alamat asal']);
+    $outside->members()->attach(createKeluargaPemilihRecord(['dm' => 'UDM 2'])->id);
+    $this->put(route('keluarga-pemilih.address.update', $outside), ['address' => 'Alamat baharu'])->assertNotFound();
+    expect($outside->fresh()->address)->toBe('Alamat asal');
+});
+
 it('lists existing families for the picker within the user scope and includes reviewed families', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create([
         'access_level' => 'udm', 'scope_key' => 'UDM 1',

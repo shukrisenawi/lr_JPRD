@@ -10,6 +10,7 @@ class PemilihFamily extends Model
 {
     protected $fillable = [
         'name',
+        'address',
         'created_by',
         'father_pemilih_record_id',
         'reviewed_at',

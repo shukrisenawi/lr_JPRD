@@ -206,6 +206,7 @@ class KeluargaPemilihController extends Controller
             ->through(fn (PemilihFamily $family): array => [
                 'id' => $family->id,
                 'name' => $family->name,
+                'address' => $family->address,
                 'father_id' => $family->father?->id,
                 'father_name' => $family->father?->name,
                 'reviewed_at' => $family->reviewed_at,
@@ -384,6 +385,20 @@ class KeluargaPemilihController extends Controller
         return redirect()
             ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
             ->with('success', 'Nama keluarga berjaya dikemaskini.');
+    }
+
+    public function updateAddress(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
+    {
+        $validated = $request->validate([
+            'address' => ['nullable', 'string', 'max:2000'],
+            ...$this->routeFilterRules(),
+        ]);
+        $family = $this->visibleFamilyQuery($request->user())->findOrFail($pemilihFamily->id);
+        $family->update(['address' => trim((string) ($validated['address'] ?? '')) ?: null]);
+
+        return redirect()
+            ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
+            ->with('success', 'Alamat keluarga berjaya dikemaskini.');
     }
 
     public function updateReview(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
