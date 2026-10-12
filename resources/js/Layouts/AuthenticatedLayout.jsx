@@ -103,7 +103,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     { key: 'vcc', href: 'vcc.index', routePattern: 'vcc.*', label: 'VCC' },
                     { key: 'plk', href: 'plk.index', routePattern: 'plk.*', label: 'PLK', badge: plkBelumSemak },
                     { key: 'keluarga-pemilih', href: 'keluarga-pemilih.index', routePattern: 'keluarga-pemilih.*', label: 'Keluarga Pemilih' },
-                    { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'Kad 10' },
+                    { key: 'kad-ten', href: 'kad-ten.index', routePattern: 'kad-ten.*', label: 'KKR10' },
                     { key: 'spokas', href: 'admin.spokas.index', routePattern: 'admin.spokas.*', label: 'SPoKAS' },
             ],
         },
@@ -270,7 +270,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('vcc') && { href: route('vcc.index'), active: route().current('vcc.*'), label: 'VCC' },
                                     canAccess('plk') && { href: route('plk.index'), active: route().current('plk.*'), label: 'PLK', badge: plkBelumSemak },
                                     canAccess('keluarga-pemilih') && { href: route('keluarga-pemilih.index'), active: route().current('keluarga-pemilih.*'), label: 'Keluarga Pemilih' },
-                                    canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'Kad 10' },
+                                    canAccess('kad-ten') && { href: route('kad-ten.index'), active: route().current('kad-ten.*'), label: 'KKR10' },
                                     canAccess('spokas') && { href: route('admin.spokas.index'), active: route().current('admin.spokas.*'), label: 'SPoKAS' },
                                 ].filter(Boolean) },
                                 { label: 'Pentadbiran', items: [

@@ -102,7 +102,7 @@ return [
         ],
     ],
     'kad-ten' => [
-        'label' => 'Kad 10',
+        'label' => 'KKR10',
         'description' => 'Agih pemilih di bawah ketua untuk tugasan.',
     ],
     'vcc' => [
