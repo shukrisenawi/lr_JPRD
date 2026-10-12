@@ -206,7 +206,7 @@ class KeluargaPemilihController extends Controller
             ->through(fn (PemilihFamily $family): array => [
                 'id' => $family->id,
                 'name' => $family->name,
-                'address' => $family->address,
+                'address' => $family->address ?: $this->majorityFamilyAddress($family->members),
                 'father_id' => $family->father?->id,
                 'father_name' => $family->father?->name,
                 'reviewed_at' => $family->reviewed_at,
@@ -1221,6 +1221,26 @@ class KeluargaPemilihController extends Controller
             'match_score' => $match['match_score'] ?? 0,
             'match_reasons' => $match['match_reasons'] ?? [],
         ];
+    }
+
+    private function majorityFamilyAddress(EloquentCollection $members): ?string
+    {
+        $addresses = $members
+            ->map(fn (PemilihRecord $member): ?string => $this->effectiveAddress($member))
+            ->filter(fn (?string $address): bool => filled($address))
+            ->groupBy(fn (string $address): string => $this->normalize($address));
+
+        if ($addresses->isEmpty()) {
+            return null;
+        }
+
+        $highestCount = $addresses->map->count()->max();
+
+        return $addresses
+            ->filter(fn (Collection $group): bool => $group->count() === $highestCount)
+            ->values()
+            ->random()
+            ->first();
     }
 
     private function effectiveAddress(PemilihRecord $voter): ?string

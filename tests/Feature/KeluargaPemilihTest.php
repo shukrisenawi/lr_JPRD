@@ -98,6 +98,35 @@ it('saves, displays and clears a family address within the user scope', function
     expect($outside->fresh()->address)->toBe('Alamat asal');
 });
 
+it('defaults the family address to the most common nonempty member address', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $family = PemilihFamily::query()->create(['name' => 'Keluarga Majoriti']);
+    foreach ([
+        ['alamat_kediaman' => 'Jalan Baru', 'address' => 'Alamat Lama'],
+        ['address' => '  jalan   baru  '],
+        ['alamat_kp' => 'Jalan Lain'],
+        [], [], [],
+    ] as $attributes) {
+        $family->members()->attach(createKeluargaPemilihRecord($attributes)->id);
+    }
+
+    $this->actingAs($user)->get(route('keluarga-pemilih.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('families.data.0.address', fn ($address) => in_array($address, ['Jalan Baru', 'jalan   baru'], true)));
+});
+
+it('randomly selects only among the most common addresses when tied', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $family = PemilihFamily::query()->create(['name' => 'Keluarga Seri']);
+    foreach (['Alamat A', 'Alamat A', 'Alamat B', 'Alamat B', 'Alamat C'] as $address) {
+        $family->members()->attach(createKeluargaPemilihRecord(['address' => $address])->id);
+    }
+
+    $this->actingAs($user)->get(route('keluarga-pemilih.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('families.data.0.address', fn ($address) => in_array($address, ['Alamat A', 'Alamat B'], true)));
+});
+
 it('lists existing families for the picker within the user scope and includes reviewed families', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create([
         'access_level' => 'udm', 'scope_key' => 'UDM 1',
