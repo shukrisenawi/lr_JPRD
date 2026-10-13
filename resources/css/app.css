@@ -140,6 +140,24 @@
         z-index: 20;
         box-shadow: 0 2px 5px -3px rgba(15, 23, 42, 0.35);
     }
+    .cula-party-table th,
+    .cula-party-table td {
+        border-right-width: 0;
+        border-bottom-width: 0;
+    }
+    .cula-party-table tr > :last-child {
+        border-right-width: 1px;
+    }
+    .cula-party-table thead th {
+        border-bottom-width: 1px;
+    }
+    .cula-party-table thead tr + tr th,
+    .cula-party-table tbody tr:first-child td {
+        border-top-width: 0;
+    }
+    .cula-party-table tfoot td {
+        border-bottom-width: 1px;
+    }
     .table-body {
         @apply divide-y divide-green-100 bg-white text-xs text-slate-600;
     }

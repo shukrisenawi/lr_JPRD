@@ -204,7 +204,7 @@ function CulaPartyTable({ rows }) {
                 <p className="mt-0.5 text-xs text-slate-500">Jumlah dan peratus pemilih mengikut kumpulan kod cula.</p>
             </div>
             <div className="overflow-x-auto xl:overflow-visible">
-                <table className="min-w-[1120px] w-full border-collapse text-[10px] sm:text-xs">
+                <table className="cula-party-table min-w-[1120px] w-full border-separate border-spacing-0 text-[10px] sm:text-xs">
                     <thead className="report-table-header-sticky text-center font-bold text-slate-900">
                         <tr>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
