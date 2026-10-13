@@ -198,14 +198,14 @@ function CulaPartyTable({ rows }) {
     totals.SKC = totals.PN - totals.attendance_51;
 
     return (
-        <section className="card overflow-hidden">
+        <section className="card overflow-visible">
             <div className="border-b border-slate-200 px-3 py-2.5 sm:px-4">
                 <h3 className="text-sm font-bold text-slate-900">Pecahan Cula Mengikut Daerah Mengundi</h3>
                 <p className="mt-0.5 text-xs text-slate-500">Jumlah dan peratus pemilih mengikut kumpulan kod cula.</p>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto xl:overflow-visible">
                 <table className="min-w-[1120px] w-full border-collapse text-[10px] sm:text-xs">
-                    <thead className="text-center font-bold text-slate-900">
+                    <thead className="report-table-header-sticky text-center font-bold text-slate-900">
                         <tr>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 text-left">Daerah Mengundi</th>
@@ -313,7 +313,7 @@ function PlkCostSummaryTable({ summary }) {
     ));
 
     return (
-        <section className="card overflow-hidden">
+        <section className="card overflow-visible">
             <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">Ringkasan Kiraan Kos PLK</h3>
@@ -324,10 +324,10 @@ function PlkCostSummaryTable({ summary }) {
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">Jumlah RM {money(totals.total)}</span>
                 </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto xl:overflow-visible">
                 <table className="w-full min-w-[1200px] border-separate border-spacing-0 text-[10px] sm:text-xs">
                     <caption className="sr-only">Ringkasan kos PLK bagi setiap UDM dengan bilangan pemilih, kadar seorang dan kos setiap kod Cula</caption>
-                    <thead className="text-center font-bold">
+                    <thead className="report-table-header-sticky text-center font-bold">
                         <tr className="bg-emerald-700 text-white">
                             <th rowSpan={2} scope="col" className="border border-emerald-800 px-2 py-2">Bil.</th>
                             <th rowSpan={2} scope="col" className="sticky left-0 z-10 min-w-40 border border-emerald-800 bg-emerald-700 px-3 py-2 text-left">UDM</th>
@@ -389,7 +389,7 @@ function PemilihBaruMovementTable({ movement }) {
     const [activeRowKey, setActiveRowKey] = useState(null);
 
     return (
-        <section className="card overflow-hidden">
+        <section className="card overflow-visible">
             <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
                 <div>
                     <h3 className="text-sm font-bold text-slate-900">Pergerakan Pemilih Baharu</h3>
@@ -397,10 +397,10 @@ function PemilihBaruMovementTable({ movement }) {
                 </div>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">{movement?.year}</span>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto xl:overflow-visible">
                 <table className="w-full min-w-0 table-fixed border-separate border-spacing-0 text-[10px] sm:text-xs">
                     <caption className="sr-only">Jadual pergerakan pemilih baharu mengikut bulan, pengundi baru dan pemilih berpindah</caption>
-                    <thead className="text-center font-bold text-slate-900">
+                    <thead className="report-table-header-sticky text-center font-bold text-slate-900">
                         <tr>
                             <th rowSpan={3} className="sticky left-0 z-30 w-16 border border-emerald-800 bg-emerald-700 px-2 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]">Bulan</th>
                             <th rowSpan={3} className="w-14 border border-emerald-800 bg-emerald-700 px-0.5 py-2 text-white"><span className="block whitespace-normal leading-tight">Jumlah<br />Pemilih</span></th>
