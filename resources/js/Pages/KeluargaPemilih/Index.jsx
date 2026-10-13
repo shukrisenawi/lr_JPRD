@@ -1256,7 +1256,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                     </form>
                                                 ) : (
                                                     <div className="mt-2">
-                                                        <p className="whitespace-pre-line break-words text-xs text-slate-600"><span className="font-semibold">Alamat: </span>{family.address || 'Belum diisi'}</p>
+                                                        <p className="whitespace-pre-line break-words text-xs text-slate-600">{family.address || 'Belum diisi'}</p>
                                                         <button type="button" disabled={addressProcessing} onClick={() => { setAddressFamilyId(family.id); setAddressValue(family.address || ''); }} className="mt-1 text-xs font-semibold text-green-700 hover:underline">{family.address ? 'Sunting alamat' : 'Tambah alamat'}</button>
                                                     </div>
                                                 )}
