@@ -1246,7 +1246,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                             onSuccess: () => setAddressFamilyId(null),
                                                         });
                                                     }}>
-                                                        <label htmlFor={`family-address-${family.id}`} className="block text-xs font-semibold text-slate-700">Alamat Keluarga</label>
+                                                        <label htmlFor={`family-address-${family.id}`} className="block text-xs font-semibold text-slate-700">Alamat</label>
                                                         <textarea id={`family-address-${family.id}`} value={addressValue} onChange={(event) => setAddressValue(event.target.value)} rows={3} maxLength={2000} className="input-field w-full text-xs" placeholder="Masukkan alamat sebenar keluarga" disabled={addressProcessing} />
                                                         {errors.address && <p role="alert" className="text-xs text-rose-700">{errors.address}</p>}
                                                         <div className="flex gap-2">
@@ -1256,7 +1256,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                     </form>
                                                 ) : (
                                                     <div className="mt-2">
-                                                        <p className="whitespace-pre-line break-words text-xs text-slate-600"><span className="font-semibold">Alamat Keluarga: </span>{family.address || 'Belum diisi'}</p>
+                                                        <p className="whitespace-pre-line break-words text-xs text-slate-600"><span className="font-semibold">Alamat: </span>{family.address || 'Belum diisi'}</p>
                                                         <button type="button" disabled={addressProcessing} onClick={() => { setAddressFamilyId(family.id); setAddressValue(family.address || ''); }} className="mt-1 text-xs font-semibold text-green-700 hover:underline">{family.address ? 'Sunting alamat' : 'Tambah alamat'}</button>
                                                     </div>
                                                 )}
