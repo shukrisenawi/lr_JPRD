@@ -137,7 +137,7 @@
     .report-table-header-sticky {
         position: sticky;
         top: 3.5rem;
-        z-index: 40;
+        z-index: 20;
         box-shadow: 0 2px 5px -3px rgba(15, 23, 42, 0.35);
     }
     .table-body {
