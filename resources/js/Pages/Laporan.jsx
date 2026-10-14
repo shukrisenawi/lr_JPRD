@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, usePage } from '@inertiajs/react';
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Fragment, useMemo, useState } from 'react';
 import { compareUdms } from '@/Utils/udmOrder';
 
@@ -129,11 +129,10 @@ function TTip({ active, payload, label }) {
     );
 }
 
-function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false, title, description }) {
+function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false }) {
     const [activeRowKey, setActiveRowKey] = useState(null);
     const table = (
         <table className="min-w-full divide-y divide-slate-200 text-xs">
-            {title && <caption className="sr-only">{title}</caption>}
             <thead className={stickyHeader ? 'table-header table-header-sticky' : 'table-header'}>
                 <tr>{columns.map((c) => <th key={c.key} title={c.title} aria-label={c.ariaLabel} className={`px-2.5 py-1.5 ${c.headerClass ?? ''}`}>{c.label}</th>)}</tr>
             </thead>
@@ -177,7 +176,6 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
 
     return (
         <div className={`card ${stickyHeader ? 'overflow-visible' : 'overflow-hidden'}`}>
-            {title && <div className="border-b border-slate-200 px-3 py-2.5 sm:px-4"><h3 className="text-sm font-bold text-slate-900">{title}</h3>{description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}</div>}
             {stickyHeader ? <div className="overflow-x-auto xl:overflow-visible">{table}</div> : <div className="overflow-x-auto">{table}</div>}
         </div>
     );
@@ -386,32 +384,45 @@ function PlkCostSummaryTable({ summary }) {
     );
 }
 
-function DanaSummaryTable({ summary }) {
+function DanaPaymentChart({ summary }) {
     const rows = useMemo(() => [...(summary?.rows ?? [])]
         .sort((a, b) => compareUdms({ name: a.udm }, { name: b.udm }))
-        .map((row, index) => ({ ...row, key: row.udm, number: index + 1 })), [summary]);
+        .map(row => ({ ...row, total_bayaran: Number(row.total_bayaran || 0) })), [summary]);
     if (!summary) return null;
 
     const money = value => Number(value || 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const numeric = 'text-right whitespace-nowrap tabular-nums';
-    const columns = [
-        { key: 'number', label: 'Bil.', headerClass: 'bg-green-100 text-center', cellClass: 'text-center' },
-        { key: 'udm', label: 'UDM', headerClass: 'bg-green-100', cellClass: 'font-semibold whitespace-nowrap' },
-        { key: 'count', label: 'Transaksi', headerClass: `bg-green-100 ${numeric}`, cellClass: numeric, format: fmt },
-        { key: 'total_masuk', label: 'Dana Masuk (RM)', headerClass: `bg-green-100 ${numeric}`, cellClass: numeric, format: money },
-        { key: 'total_keluar', label: 'Dana Keluar (RM)', headerClass: `bg-green-100 ${numeric}`, cellClass: numeric, format: money },
-        { key: 'baki', label: 'Baki (RM)', headerClass: `bg-green-100 ${numeric}`, cellClass: `${numeric} font-bold`,
-            format: value => <span className={Number(value) < 0 ? 'text-rose-700' : 'text-emerald-800'}>{money(value)}</span> },
-    ];
 
-    return <DataTable
-        title="Ringkasan Dana"
-        description="Jumlah dana masuk, dana keluar dan baki mengikut UDM berdasarkan rekod Dana."
-        rows={[...rows, { ...summary.totals, key: 'dana-total', udm: 'Jumlah keseluruhan', number: '', isTotal: true }]}
-        columns={columns}
-        stickyHeader
-        interactiveRows
-    />;
+    return (
+        <section className="card overflow-hidden" aria-labelledby="dana-payment-title">
+            <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
+                <div>
+                    <h3 id="dana-payment-title" className="text-sm font-bold text-slate-900">Graf Bayaran Peralatan Pilihanraya PRU16</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{summary.category} · Transaksi dana keluar mengikut UDM sahaja.</p>
+                </div>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">Jumlah bayaran RM {money(summary.totals.total_bayaran)}</span>
+            </div>
+            {summary.totals.count === 0 ? (
+                <p className="px-4 py-8 text-center text-xs text-slate-500">Belum ada rekod bayaran untuk kategori ini dalam skop anda.</p>
+            ) : (
+                <div className="overflow-x-auto p-3 sm:p-4">
+                    <div className="min-w-[600px]" style={{ height: Math.max(220, rows.length * 36 + 48) }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={rows} layout="vertical" accessibilityLayer margin={{ top: 8, right: 110, bottom: 8, left: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#d1d5db" />
+                                <XAxis type="number" domain={[0, 'auto']} tickFormatter={value => `RM ${fmt(value)}`} tick={{ fontSize: 10, fill: '#475569' }} />
+                                <YAxis type="category" dataKey="udm" width={170} interval={0} tick={{ fontSize: 10, fill: '#475569' }} />
+                                <Tooltip formatter={value => [`RM ${money(value)}`, 'Bayaran']} cursor={{ fill: '#ecfdf5' }} />
+                                <Bar dataKey="total_bayaran" name="Bayaran" fill="#059669" radius={[0, 3, 3, 0]} maxBarSize={22} isAnimationActive={false}>
+                                    <LabelList dataKey="total_bayaran" position="right" formatter={value => `RM ${money(value)}`} style={{ fontSize: 10, fill: '#065f46' }} />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <ul className="sr-only">{rows.map(row => <li key={row.udm}>{row.udm}: RM {money(row.total_bayaran)}</li>)}</ul>
+                </div>
+            )}
+        </section>
+    );
 }
 
 function PemilihBaruMovementTable({ movement }) {
@@ -841,7 +852,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         <CulaPartyTable rows={culaPartyRows} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
                         <PlkCostSummaryTable summary={plk_cost_summary} />
-                        <DanaSummaryTable summary={dana_summary} />
+                        <DanaPaymentChart summary={dana_summary} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Pemilih Mengikut UDM">

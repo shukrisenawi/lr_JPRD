@@ -9,11 +9,14 @@ use App\Models\User;
 
 class DanaSummaryService
 {
+    public const PAYMENT_CATEGORY = 'BAYARAN DUIT PERALATAN PILIHANRAYA PRU16';
+
     public function summary(User $user): array
     {
         $scope = $user->accessScope();
         $scopedUdm = trim((string) ($scope['dm'] ?? ''));
-        $dana = Dana::query();
+        $dana = Dana::query()->where('jenis', 'keluar')
+            ->whereHas('kategori', fn ($query) => $query->whereRaw('UPPER(TRIM(name)) = ?', [self::PAYMENT_CATEGORY]));
         $cawangan = Cawangan::query();
         if ($scopedUdm !== '') {
             $dana->where('udm', $scopedUdm);
@@ -24,8 +27,7 @@ class DanaSummaryService
 
         $amounts = $dana->select('udm')
             ->selectRaw('COUNT(*) as record_count')
-            ->selectRaw("SUM(CASE WHEN jenis = 'masuk' THEN jumlah ELSE 0 END) as total_masuk")
-            ->selectRaw("SUM(CASE WHEN jenis = 'keluar' THEN jumlah ELSE 0 END) as total_keluar")
+            ->selectRaw('SUM(jumlah) as total_bayaran')
             ->groupBy('udm')->get()->keyBy('udm');
         $udms = $voters->whereNotNull('dm')->select('dm')->distinct()->pluck('dm')
             ->merge($cawangan->select('udm')->distinct()->pluck('udm'))
@@ -35,25 +37,20 @@ class DanaSummaryService
             ->unique()->sort()->values();
         $rows = $udms->map(function (string $udm) use ($amounts): array {
             $amount = $amounts->get($udm);
-            $masuk = (float) ($amount?->total_masuk ?? 0);
-            $keluar = (float) ($amount?->total_keluar ?? 0);
 
             return [
                 'udm' => $udm,
                 'count' => (int) ($amount?->record_count ?? 0),
-                'total_masuk' => number_format($masuk, 2, '.', ''),
-                'total_keluar' => number_format($keluar, 2, '.', ''),
-                'baki' => number_format($masuk - $keluar, 2, '.', ''),
+                'total_bayaran' => number_format((float) ($amount?->total_bayaran ?? 0), 2, '.', ''),
             ];
         });
 
         return [
+            'category' => self::PAYMENT_CATEGORY,
             'rows' => $rows->all(),
             'totals' => [
                 'count' => $rows->sum('count'),
-                'total_masuk' => number_format($rows->sum('total_masuk'), 2, '.', ''),
-                'total_keluar' => number_format($rows->sum('total_keluar'), 2, '.', ''),
-                'baki' => number_format($rows->sum('baki'), 2, '.', ''),
+                'total_bayaran' => number_format($rows->sum('total_bayaran'), 2, '.', ''),
             ],
         ];
     }
