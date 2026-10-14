@@ -110,17 +110,23 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                     </div>
                     <p role="status" className="text-xs text-slate-600 xl:pb-3">{loading ? 'Memuatkan keluarga...' : 'Senarai ditapis secara automatik.'}</p>
                     </div>
-                    <form className="mt-3 space-y-3 border-t border-slate-100 pt-3" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); applyFilter(filters.udm, filters.locality || '', { cula_codes: data.getAll('cula_codes'), group_ids: data.getAll('group_ids').map(Number) }); }} key={JSON.stringify([filters.cula_codes, filters.group_ids])}>
-                        <fieldset disabled={loading}>
+                    {filters.udm && <details className="card mt-3 overflow-hidden">
+                        <summary className="cursor-pointer px-3 py-3 text-xs font-bold text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">Tapisan group pemilih dan kod cula{Boolean(filters.group_ids?.length || filters.cula_codes?.length) && <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800">Penapis aktif</span>}</summary>
+                        <div className="space-y-3 border-t border-slate-100 p-3">
+                        <div className="sm:max-w-xs">
+                            <label htmlFor="pemilih-group" className="block text-xs font-bold text-slate-700">Group pemilih</label>
+                            <select id="pemilih-group" value={filters.group_ids?.[0] || ''} disabled={loading} onChange={(event) => applyFilter(filters.udm, filters.locality || '', { group_ids: event.target.value ? [Number(event.target.value)] : [], cula_codes: [] })} className="input-field mt-1.5 w-full disabled:opacity-60">
+                                <option value="">Semua group / Pilih kod cula</option>
+                                {pemilihGroups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+                            </select>
+                        </div>
+                        <fieldset disabled={loading || Boolean(filters.group_ids?.length)} className={filters.group_ids?.length ? 'opacity-50' : ''}>
                             <legend className="text-xs font-bold text-slate-700">Kod cula</legend>
-                            <div className="mt-2 flex flex-wrap gap-2">{filterCulaCodes.map((option) => <label key={option.code} className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"><input type="checkbox" name="cula_codes" value={option.code} defaultChecked={(filters.cula_codes || []).includes(option.code)} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />{option.label}</label>)}</div>
+                            <div className="mt-2 flex flex-wrap gap-2">{filterCulaCodes.map((option) => <label key={option.code} className={`inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 ${filters.group_ids?.length || loading ? 'cursor-not-allowed' : 'cursor-pointer'}`}><input type="checkbox" name="cula_codes" value={option.code} checked={(filters.cula_codes || []).includes(option.code)} onChange={(event) => applyFilter(filters.udm, filters.locality || '', { cula_codes: event.target.checked ? [...(filters.cula_codes || []), option.code] : (filters.cula_codes || []).filter((code) => code !== option.code) })} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />{option.label}</label>)}</div>
                         </fieldset>
-                        <fieldset disabled={loading}>
-                            <legend className="text-xs font-bold text-slate-700">Group pemilih</legend>
-                            <div className="mt-2 flex flex-wrap gap-2">{pemilihGroups.map((group) => <label key={group.id} className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"><input type="checkbox" name="group_ids" value={group.id} defaultChecked={(filters.group_ids || []).includes(group.id)} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />{group.name}</label>)}{pemilihGroups.length === 0 && <p className="text-xs text-slate-500">Tiada group pemilih tersedia.</p>}</div>
-                        </fieldset>
-                        <div className="flex flex-wrap items-center gap-2"><button type="submit" disabled={loading} className="btn-primary disabled:opacity-50">Tapis</button><button type="button" disabled={loading} onClick={() => applyFilter(filters.udm, filters.locality || '', { cula_codes: [], group_ids: [] })} className="btn-ghost">Reset penapis</button><p className="text-[10px] text-slate-500">Boleh pilih lebih daripada satu. Kod cula dan group ditapis bersama.</p></div>
-                    </form>
+                        <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={loading} onClick={() => applyFilter(filters.udm, filters.locality || '', { cula_codes: [], group_ids: [] })} className="btn-ghost">Reset penapis</button><p className="text-[10px] text-slate-500">{filters.group_ids?.length ? 'Kod cula mengikut group dipilih. Pilih semua group untuk menapis kod cula sendiri.' : 'Tanda satu atau lebih kod cula untuk terus menapis.'}</p></div>
+                        </div>
+                    </details>}
                 </section>
 
                 {!filters.udm ? (
