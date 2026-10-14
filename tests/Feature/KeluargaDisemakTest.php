@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\GroupPemilih;
 use App\Models\PemilihFamily;
 use App\Models\PemilihRecord;
 use App\Models\User;
@@ -14,6 +15,34 @@ function reviewedFamilyMember(array $attributes = []): PemilihRecord
         'status' => 'aktif',
     ], $attributes));
 }
+
+it('filters multiple cula codes and groups in summaries and member lists', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $group = GroupPemilih::create(['user_id' => $user->id, 'nama_group' => 'Wanita', 'jantina' => 'P']);
+    $family = PemilihFamily::create(['name' => 'Padanan', 'reviewed_at' => now()]);
+    foreach ([['1', 'P'], ['5', 'P'], ['4', 'P'], ['1', 'L']] as [$code, $gender]) {
+        $family->members()->attach(reviewedFamilyMember(['cula_code' => $code, 'gender' => $gender])->id);
+    }
+    $other = PemilihFamily::create(['name' => 'Bukan padanan', 'reviewed_at' => now()]);
+    $other->members()->attach(reviewedFamilyMember(['cula_code' => '4', 'gender' => 'P'])->id);
+    $this->actingAs($user)->get(route('keluarga-disemak.index', ['udm' => 'UDM A', 'cula_codes' => ['1', '5'], 'group_ids' => [$group->id]]))
+        ->assertOk()->assertInertia(fn ($page) => $page
+        ->where('families.total', 1)
+        ->where('udmSummaries.0.families', 1)
+        ->has('families.data.0.members', 2)
+        ->where('filters.cula_codes', ['1', '5'])
+        ->where('filters.group_ids', [$group->id]));
+});
+
+it('rejects excluded target codes and invalid groups', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    foreach (['2', '3', '3B', '4P'] as $code) {
+        $this->actingAs($user)->getJson(route('keluarga-disemak.index', ['cula_codes' => [$code]]))
+            ->assertUnprocessable()->assertJsonValidationErrors('cula_codes.0');
+    }
+    $this->getJson(route('keluarga-disemak.index', ['group_ids' => [999999]]))
+        ->assertUnprocessable()->assertJsonValidationErrors('group_ids.0');
+});
 
 it('shows UDM cards and counts only reviewed families without loading member details', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();

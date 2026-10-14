@@ -5,7 +5,7 @@ import { calculateAgeFromNoKp, familyMemberTone, sortFamilyMembers } from '@/Uti
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
-export default function Index({ filters, udmSummaries: unorderedUdmSummaries, families, localities = [] }) {
+export default function Index({ filters, udmSummaries: unorderedUdmSummaries, families, localities = [], filter_cula_codes: filterCulaCodes = [], pemilih_groups: pemilihGroups = [] }) {
     const udmSummaries = orderUdms(unorderedUdmSummaries);
     const [loading, setLoading] = useState(false);
     const { errors, available_cula_codes: culaCodes = [] } = usePage().props;
@@ -59,8 +59,12 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
     const reviewedUdm = udmSummaries.filter((item) => item.families > 0).length;
     const formatNumber = (value) => Number(value).toLocaleString('ms-MY');
 
-    function applyFilter(udm, locality = '') {
-        router.get(route('keluarga-disemak.index'), udm ? { udm, ...(locality ? { locality } : {}) } : {}, {
+    function filterParams(udm, locality = '', extra = {}) {
+        return { ...(udm ? { udm, ...(locality ? { locality } : {}) } : {}), cula_codes: filters.cula_codes || [], group_ids: filters.group_ids || [], ...extra };
+    }
+
+    function applyFilter(udm, locality = '', extra = {}) {
+        router.get(route('keluarga-disemak.index'), filterParams(udm, locality, extra), {
             preserveScroll: true,
             onStart: () => setLoading(true),
             onFinish: () => setLoading(false),
@@ -106,6 +110,17 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                     </div>
                     <p role="status" className="text-xs text-slate-600 xl:pb-3">{loading ? 'Memuatkan keluarga...' : 'Senarai ditapis secara automatik.'}</p>
                     </div>
+                    <form className="mt-3 space-y-3 border-t border-slate-100 pt-3" onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); applyFilter(filters.udm, filters.locality || '', { cula_codes: data.getAll('cula_codes'), group_ids: data.getAll('group_ids').map(Number) }); }} key={JSON.stringify([filters.cula_codes, filters.group_ids])}>
+                        <fieldset disabled={loading}>
+                            <legend className="text-xs font-bold text-slate-700">Kod cula</legend>
+                            <div className="mt-2 flex flex-wrap gap-2">{filterCulaCodes.map((option) => <label key={option.code} className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"><input type="checkbox" name="cula_codes" value={option.code} defaultChecked={(filters.cula_codes || []).includes(option.code)} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />{option.label}</label>)}</div>
+                        </fieldset>
+                        <fieldset disabled={loading}>
+                            <legend className="text-xs font-bold text-slate-700">Group pemilih</legend>
+                            <div className="mt-2 flex flex-wrap gap-2">{pemilihGroups.map((group) => <label key={group.id} className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700"><input type="checkbox" name="group_ids" value={group.id} defaultChecked={(filters.group_ids || []).includes(group.id)} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />{group.name}</label>)}{pemilihGroups.length === 0 && <p className="text-xs text-slate-500">Tiada group pemilih tersedia.</p>}</div>
+                        </fieldset>
+                        <div className="flex flex-wrap items-center gap-2"><button type="submit" disabled={loading} className="btn-primary disabled:opacity-50">Tapis</button><button type="button" disabled={loading} onClick={() => applyFilter(filters.udm, filters.locality || '', { cula_codes: [], group_ids: [] })} className="btn-ghost">Reset penapis</button><p className="text-[10px] text-slate-500">Boleh pilih lebih daripada satu. Kod cula dan group ditapis bersama.</p></div>
+                    </form>
                 </section>
 
                 {!filters.udm ? (
@@ -115,7 +130,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                             <span className="text-xs text-slate-500">{udmSummaries.length} UDM</span>
                         </div>
                         {udmSummaries.map((item) => (
-                            <Link key={item.udm} href={route('keluarga-disemak.index', { udm: item.udm })} className="card block w-full p-3 text-left transition hover:border-green-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">
+                            <Link key={item.udm} href={route('keluarga-disemak.index', filterParams(item.udm))} className="card block w-full p-3 text-left transition hover:border-green-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">
                                 <h3 className="truncate text-xs font-black text-slate-900">{item.udm}</h3>
                                 <p className="mt-2 text-lg font-black tabular-nums text-green-800">{formatNumber(item.families)}</p>
                                 <p className="text-[10px] font-semibold text-slate-500">Keluarga telah disemak</p>
@@ -128,7 +143,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                     <section aria-label="Senarai keluarga" className="space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div><h2 className="text-lg font-bold text-slate-800">{filters.udm} <span className="text-sm font-normal text-slate-600">({families.total} keluarga)</span></h2>{filters.locality && <p className="mt-1 text-sm text-green-800">{filters.locality}</p>}</div>
-                            <Link href={route('keluarga-disemak.index')} className="text-sm font-semibold text-green-800 underline underline-offset-4">Kembali ke semua UDM</Link>
+                            <Link href={route('keluarga-disemak.index', filterParams(''))} className="text-sm font-semibold text-green-800 underline underline-offset-4">Kembali ke semua UDM</Link>
                         </div>
                         <div className="grid grid-cols-1 items-start gap-2.5 xl:grid-cols-2">
                         {families.data.map((family) => (
