@@ -343,7 +343,7 @@ function CostTable({ rows, codes, rates }) {
 }
 
 export default function PlkIndex({ active_tab: activeTab, filters, udms, summary, voters, codes, code_counts: codeCounts = {}, udm_cula_counts: udmCulaCounts = [], rates: initialRates, cost_rows: costRows }) {
-    const { errors = {}, auth, can_view_costs: canViewCosts = false } = usePage().props;
+    const { errors = {}, auth, can_view_costs: canViewCosts = false, localities = [], cula_options: culaOptions = [] } = usePage().props;
     const isUdmUser = auth?.user?.access_level === 'udm';
     const [search, setSearch] = useState(filters.q || '');
     const [selectedUdm, setSelectedUdm] = useState(filters.udm || '');
@@ -373,6 +373,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
         router.get(route('plk.index'), {
             tab: activeTab,
             udm: selectedUdm,
+            locality: filters.locality || '',
             q: search,
             cula_code: filters.cula_code || '',
             show_voters: filters.show_voters ? 1 : 0,
@@ -485,6 +486,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                 tab: activeTab,
                 udm: selectedUdm,
                 q: filters.q || '',
+                locality: filters.locality || '',
                 cula_code: activeTab === 'senarai' ? (filters.cula_code || '') : '',
             });
             const response = await fetch(`${route('plk.export')}?${params.toString()}`, {
@@ -824,6 +826,12 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                                         {orderUdms(udms).map((udm) => <option key={udm} value={udm}>{udm}</option>)}
                                     </select>
                                 )}
+                                {isUdmUser && (
+                                    <select aria-label="Lokaliti" value={filters.locality || ''} onChange={(event) => navigate({ locality: event.target.value, page: 1 })} className="input-field text-xs sm:w-56">
+                                        <option value="">Semua Lokaliti</option>
+                                        {localities.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
+                                    </select>
+                                )}
                                 <button type="submit" className="btn-primary justify-center px-4 py-2 text-xs">Cari</button>
                                 <button type="button" onClick={exportToExcel} disabled={exporting} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-50">
                                     {exporting ? 'Menyediakan Excel…' : 'Eksport Excel'}
@@ -930,12 +938,12 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                             <h3 id="plk-cula-title" className="text-sm font-bold text-slate-800">Siap Cula — {selectedVoterForCula.name}</h3>
                             <button type="button" onClick={() => setSelectedVoterForCula(null)} disabled={savingCula} className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-500 shadow-sm hover:bg-slate-50 disabled:opacity-50">Tutup</button>
                         </div>
-                        <p className="mt-1 text-xs text-slate-500">Pilih kod Cula PLK yang telah dikemaskini:</p>
+                        <p className="mt-1 text-xs text-slate-500">Pilih kod Cula yang telah dikemaskini:</p>
                         {culaActionError && <p role="alert" className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{culaActionError}</p>}
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                            {(codes || []).map((code) => (
+                        <div className="mt-3 flex max-h-[60vh] flex-wrap gap-1.5 overflow-y-auto">
+                            {culaOptions.map((code) => (
                                 <button key={code.code} type="button" onClick={() => saveCula(code.code)} disabled={savingCula} className={`rounded-md border px-2.5 py-1 text-xs font-bold shadow-sm transition hover:shadow-md disabled:cursor-wait disabled:opacity-50 ${code.code === selectedVoterForCula.cula_code ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:text-emerald-700'}`}>
-                                    {savingCula ? 'Menyimpan…' : `${code.code} — ${code.label}`}
+                                    {savingCula ? 'Menyimpan…' : code.label}
                                 </button>
                             ))}
                         </div>

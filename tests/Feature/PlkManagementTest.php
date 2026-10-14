@@ -3,6 +3,7 @@
 use App\Models\PemilihRecord;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\CulaCodes;
 use Illuminate\Support\Str;
 
 function createPlkRecord(array $attributes = []): PemilihRecord
@@ -124,17 +125,48 @@ it('updates a PLK voters cula code and marks the voter as processed', function (
     ]);
 });
 
-it('only accepts PLK codes when completing a PLK cula action', function () {
+it('accepts non PLK codes when completing a PLK cula action', function () {
     $user = User::factory()->withModules(['plk'])->create();
     $voter = createPlkRecord();
 
     $this->actingAs($user)
         ->postJson(route('plk.update-cula', $voter), ['cula_code' => '2'])
+        ->assertOk();
+
+    expect($voter->fresh()->cula_code)->toBe('2');
+    $this->assertDatabaseHas('cula_work_items', ['pemilih_record_id' => $voter->id]);
+});
+
+it('rejects unknown codes when completing a PLK cula action', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    $voter = createPlkRecord();
+
+    $this->actingAs($user)
+        ->postJson(route('plk.update-cula', $voter), ['cula_code' => 'INVALID'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('cula_code');
 
     expect($voter->fresh()->cula_code)->toBe('3B');
     $this->assertDatabaseMissing('cula_work_items', ['pemilih_record_id' => $voter->id]);
+});
+
+it('filters UDM voters and exports by locality within their scope', function () {
+    $user = User::factory()->withModules(['plk'])->create(['access_level' => 'udm', 'scope_key' => 'UDM A']);
+    $voter = createPlkRecord(['locality' => 'LOKALITI A']);
+    createPlkRecord(['locality' => 'LOKALITI B']);
+    createPlkRecord(['dm' => 'UDM B', 'locality' => 'LOKALITI LUAR']);
+
+    $this->actingAs($user)->get(route('plk.index', ['locality' => 'LOKALITI A']))
+        ->assertOk()->assertInertia(fn ($page) => $page
+        ->where('localities', ['LOKALITI A', 'LOKALITI B'])
+        ->where('filters.locality', 'LOKALITI A')
+        ->where('cula_options', CulaCodes::options())
+        ->has('codes', 6)
+        ->where('voters.total', 1)
+        ->where('voters.data.0.id', $voter->id));
+
+    $this->getJson(route('plk.export', ['locality' => 'LOKALITI A']))
+        ->assertOk()->assertJsonCount(1, 'voters')->assertJsonPath('voters.0.locality', 'LOKALITI A');
 });
 
 it('cancels a PLK verification and returns the voter to the full list', function () {

@@ -35,6 +35,7 @@ class PlkController extends Controller
         $filters = [
             'udm' => $request->string('udm')->trim()->toString(),
             'q' => $request->string('q')->trim()->toString(),
+            'locality' => $user?->access_level === 'udm' ? $request->string('locality')->trim()->toString() : '',
             'cula_code' => $tab === 'senarai' && in_array($requestedCulaCode, self::CULA_CODES, true)
                 ? $requestedCulaCode
                 : '',
@@ -61,6 +62,11 @@ class PlkController extends Controller
         }
 
         $filters['show_voters'] = $request->boolean('show_voters') || $filters['udm'] !== '';
+
+        $localities = (clone $base)
+            ->when($filters['udm'], fn (Builder $query, string $udm) => $query->where('dm', $udm))
+            ->whereNotNull('locality')->where('locality', '!=', '')
+            ->select('locality')->distinct()->orderBy('locality')->pluck('locality')->all();
 
         $udmCulaCounts = [];
         if ($tab === 'senarai' && $filters['udm'] === '') {
@@ -161,6 +167,8 @@ class PlkController extends Controller
             'can_view_costs' => $canViewCosts,
             'filters' => $filters,
             'udms' => $udms,
+            'localities' => $localities,
+            'cula_options' => CulaCodes::options(),
             'udm_cula_counts' => array_values($udmCulaCounts),
             'code_counts' => $codeCounts,
             'summary' => $summary,
@@ -196,7 +204,7 @@ class PlkController extends Controller
     {
         $record = $this->baseQuery($request->user())->findOrFail($pemilihRecord->id);
         $validated = $request->validate([
-            'cula_code' => ['required', 'string', Rule::in(self::CULA_CODES)],
+            'cula_code' => ['required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
         ]);
 
         DB::transaction(function () use ($record, $validated, $request): void {
@@ -228,6 +236,7 @@ class PlkController extends Controller
         $filters = [
             'udm' => $request->string('udm')->trim()->toString(),
             'q' => $request->string('q')->trim()->toString(),
+            'locality' => $request->user()?->access_level === 'udm' ? $request->string('locality')->trim()->toString() : '',
             'cula_code' => $tab === 'senarai' && in_array($requestedCulaCode, self::CULA_CODES, true)
                 ? $requestedCulaCode
                 : '',
@@ -304,6 +313,7 @@ class PlkController extends Controller
     {
         return $query
             ->when($filters['udm'], fn (Builder $builder, string $udm) => $builder->where('dm', $udm))
+            ->when($filters['locality'] ?? '', fn (Builder $builder, string $locality) => $builder->where('locality', $locality))
             ->when($filters['cula_code'], fn (Builder $builder, string $code) => $builder->where('cula_code', $code))
             ->when($filters['q'], function (Builder $builder, string $search): void {
                 $like = '%'.$search.'%';
