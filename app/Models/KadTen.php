@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class KadTen extends Model
@@ -33,6 +34,11 @@ class KadTen extends Model
     public function members(): HasMany
     {
         return $this->hasMany(KadTenMember::class, 'kad_ten_id');
+    }
+
+    public function families(): BelongsToMany
+    {
+        return $this->belongsToMany(PemilihFamily::class, 'kad_ten_families')->withTimestamps();
     }
 
     public function creator(): BelongsTo

@@ -103,7 +103,7 @@ return [
     ],
     'kad-ten' => [
         'label' => 'KKR10',
-        'description' => 'Agih pemilih di bawah ketua untuk tugasan.',
+        'description' => 'Agih 10 keluarga yang telah disemak di bawah setiap ketua mengikut alamat keluarga.',
     ],
     'vcc' => [
         'label' => 'VCC',

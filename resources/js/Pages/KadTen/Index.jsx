@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
 import { orderUdms } from '@/Utils/udmOrder';
 
-function Icon({ name, className = 'h-5 w-5' }) {
+export function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
         users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
         user: <><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></>,
@@ -443,7 +443,7 @@ function KadCard({ kad, cardNumber, canManage, expanded, onToggle, onEdit, onDel
     );
 }
 
-function UdmSummaryCard({ summary, onSelect }) {
+export function UdmSummaryCard({ summary, onSelect }) {
     const complete = summary.required_leaders > 0 && summary.existing_leaders >= summary.required_leaders;
 
     return (
@@ -451,15 +451,15 @@ function UdmSummaryCard({ summary, onSelect }) {
             <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700"><Icon name="layers" className="h-5 w-5" /></span>
-                    <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{summary.name}</p><p className="mt-0.5 text-[10px] text-slate-400">Ringkasan Kad 10</p></div>
+                    <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{summary.name}</p><p className="mt-0.5 text-[10px] text-slate-400">Ringkasan KKR10</p></div>
                 </div>
                 <span className={'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ' + (complete ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>{complete ? 'Lengkap' : 'Belum cukup'}</span>
             </div>
             <div className="flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
-                <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ketua Kad 10</p><p className="mt-0.5 text-2xl font-black text-slate-800">{summary.existing_leaders}<span className="text-sm font-bold text-slate-400"> / {summary.required_leaders}</span></p></div>
+                <div><p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ketua KKR10</p><p className="mt-0.5 text-2xl font-black text-slate-800">{summary.existing_leaders}<span className="text-sm font-bold text-slate-400"> / {summary.required_leaders}</span></p></div>
                 <span className="text-[10px] font-bold text-green-700 group-hover:text-green-600">Lihat semua ketua -&gt;</span>
             </div>
-            <p className="text-[10px] font-semibold text-slate-500">{summary.pas_cula} pemilih Cula PAS · 1 ketua = 10 orang</p>
+            <p className="text-[10px] font-semibold text-slate-500">{summary.total_families} keluarga · 1 ketua = 10 keluarga</p>
         </button>
     );
 }

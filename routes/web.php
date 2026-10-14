@@ -20,6 +20,7 @@ use App\Http\Controllers\GroupPemilihController;
 use App\Http\Controllers\KadTenController;
 use App\Http\Controllers\KeluargaPemilihController;
 use App\Http\Controllers\KenderaanController;
+use App\Http\Controllers\KkrTenController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PemilihBaruController;
 use App\Http\Controllers\PemilihHashtagController;
@@ -191,21 +192,15 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::delete('/plk/{pemilihRecord}/verify', [PlkController::class, 'unverify'])->middleware('module:plk')->name('plk.unverify');
     Route::put('/plk/rates', [PlkController::class, 'updateRates'])->middleware(['module:plk', 'module:plk-kos'])->name('plk.rates.update');
 
-    Route::get('/kad-ten', [KadTenController::class, 'index'])->middleware('module:kad-ten')->name('kad-ten.index');
+    Route::get('/kad-ten', [KkrTenController::class, 'index'])->middleware('module:kad-ten')->name('kad-ten.index');
     Route::post('/kad-ten', [KadTenController::class, 'store'])->middleware('module:kad-ten')->name('kad-ten.store');
-    Route::post('/kad-ten/auto-input', [KadTenController::class, 'autoInput'])->middleware('module:kad-ten')->name('kad-ten.auto-input');
-    Route::post('/kad-ten/reset-auto-input', [KadTenController::class, 'resetAutoInput'])->middleware('module:kad-ten')->name('kad-ten.reset-auto-input');
-    Route::post('/kad-ten/update-members-cula', [KadTenController::class, 'updateMembersCula'])->middleware('module:kad-ten')->name('kad-ten.update-members-cula');
+    Route::post('/kad-ten/auto-input', [KkrTenController::class, 'autoFamilies'])->middleware('module:kad-ten')->name('kad-ten.auto-input');
+    Route::post('/kad-ten/reset-auto-input', [KkrTenController::class, 'reset'])->middleware('module:kad-ten')->name('kad-ten.reset-auto-input');
+    Route::delete('/kad-ten/{kadTen}/families/{family}', [KkrTenController::class, 'removeFamily'])->middleware('module:kad-ten')->name('kad-ten.families.destroy');
     Route::put('/kad-ten/{kadTen}', [KadTenController::class, 'update'])->middleware('module:kad-ten')->name('kad-ten.update');
     Route::delete('/kad-ten/{kadTen}', [KadTenController::class, 'destroy'])->middleware('module:kad-ten')->name('kad-ten.destroy');
-    Route::post('/kad-ten/{kadTen}/members', [KadTenController::class, 'storeMember'])->middleware('module:kad-ten')->name('kad-ten.members.store');
-    Route::delete('/kad-ten/{kadTen}/members/{member}', [KadTenController::class, 'destroyMember'])->middleware('module:kad-ten')->name('kad-ten.members.destroy');
-    Route::get('/kad-ten/search-pemilih', [KadTenController::class, 'searchPemilih'])->middleware('module:kad-ten')->name('kad-ten.search-pemilih');
     Route::get('/kad-ten/suggest-pemimpin', [KadTenController::class, 'suggestPemimpin'])->middleware('module:kad-ten')->name('kad-ten.suggest-pemimpin');
-    Route::get('/kad-ten/{kadTen}/recommendations', [KadTenController::class, 'recommendations'])->middleware('module:kad-ten')->name('kad-ten.recommendations');
-    Route::get('/kad-ten/{pemilihRecord}/clusters', [KadTenController::class, 'clustersFor'])->middleware('module:kad-ten')->name('kad-ten.clusters');
-    Route::get('/kad-ten/senarai-pemilih', [KadTenController::class, 'senaraiPemilih'])->middleware('module:kad-ten')->name('kad-ten.senarai-pemilih');
-    Route::post('/kad-ten/{kadTen}/assign-voter', [KadTenController::class, 'assignVoter'])->middleware('module:kad-ten')->name('kad-ten.assign-voter');
+    Route::get('/kad-ten/senarai-pemilih', fn () => redirect()->route('kad-ten.index'))->middleware('module:kad-ten')->name('kad-ten.senarai-pemilih');
 
     Route::get('/settings', [SettingsController::class, 'edit'])->middleware('module:settings')->name('settings.edit');
     Route::put('/settings', [SettingsController::class, 'update'])->middleware('module:settings')->name('settings.update');

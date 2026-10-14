@@ -43,4 +43,9 @@ class PemilihFamily extends Model
             'pemilih_record_id',
         )->withPivot(['created_by', 'auto_added_by_father_id'])->withTimestamps()->orderBy('pemilih_records.name');
     }
+
+    public function kadTens(): BelongsToMany
+    {
+        return $this->belongsToMany(KadTen::class, 'kad_ten_families')->withTimestamps();
+    }
 }

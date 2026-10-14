@@ -231,7 +231,7 @@ class KadTenController extends Controller
         }
 
         if (KadTen::query()->where('pemimpin_id', $voter->id)->exists()) {
-            return back()->withErrors(['pemimpin_id' => 'Pemilih ini sudah mempunyai Kad 10.']);
+            return back()->withErrors(['pemimpin_id' => 'Pemilih ini sudah mempunyai KKR10.']);
         }
 
         $scopeKey = $this->leaderScopeKey($validated['level'], $voter);
@@ -252,7 +252,7 @@ class KadTenController extends Controller
 
         return redirect()
             ->route('kad-ten.index')
-            ->with('success', 'Kad 10 berjaya dicipta.');
+            ->with('success', 'Ketua KKR10 berjaya dicipta.');
     }
 
     public function autoInput(Request $request): RedirectResponse|JsonResponse
@@ -617,7 +617,7 @@ class KadTenController extends Controller
             ->exists();
 
         if ($leaderTaken) {
-            return back()->withErrors(['pemimpin_id' => 'Pemilih ini sudah mempunyai Kad 10.']);
+            return back()->withErrors(['pemimpin_id' => 'Pemilih ini sudah mempunyai KKR10.']);
         }
 
         if ($this->hasMembersOutsideScope($kadTen, $validated['level'], $scopeKey)) {
@@ -657,7 +657,7 @@ class KadTenController extends Controller
 
         return redirect()
             ->route('kad-ten.index')
-            ->with('success', 'Kad 10 berjaya dikemaskini.');
+            ->with('success', 'KKR10 berjaya dikemaskini.');
     }
 
     public function destroy(Request $request, KadTen $kadTen): RedirectResponse
@@ -667,7 +667,7 @@ class KadTenController extends Controller
 
         return redirect()
             ->route('kad-ten.index')
-            ->with('success', 'Kad 10 berjaya dipadam.');
+            ->with('success', 'Ketua KKR10 berjaya dipadam.');
     }
 
     public function storeMember(Request $request, KadTen $kadTen): RedirectResponse|JsonResponse
@@ -1066,7 +1066,7 @@ class KadTenController extends Controller
 
     private function ensureManager(User $user): void
     {
-        abort_unless($this->isManager($user), 403, 'Hanya pengguna UDM boleh mengurus Kad 10.');
+        abort_unless($this->isManager($user), 403, 'Hanya pengguna UDM boleh mengurus KKR10.');
     }
 
     private function ensureMasterAdmin(User $user): void
@@ -1087,7 +1087,7 @@ class KadTenController extends Controller
 
     private function ensureCanManage(User $user, KadTen $kadTen): void
     {
-        abort_unless($this->isManager($user) && $kadTen->isManageableBy($user), 403, 'Kad 10 ini bukan dalam skop UDM anda.');
+        abort_unless($this->isManager($user) && $kadTen->isManageableBy($user), 403, 'KKR10 ini bukan dalam skop UDM anda.');
     }
 
     private function managerLeader(User $user, int $voterId, string $level): ?PemilihRecord
@@ -1130,6 +1130,15 @@ class KadTenController extends Controller
 
     private function hasMembersOutsideScope(KadTen $kadTen, string $level, string $scopeKey): bool
     {
+        if ($kadTen->families()->with('members')->get()->contains(
+            fn ($family) => $family->members->contains(
+                fn (PemilihRecord $member) => ($member->cula_code === '2' || $member->cula_code === '4P' || str_starts_with((string) $member->cula_code, '3'))
+                    && ! $this->scopeMatches($level, $scopeKey, $member)
+            )
+        )) {
+            return true;
+        }
+
         return $kadTen->members()
             ->with('voter')
             ->get()
