@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cawangan;
 use App\Models\User;
 use App\Services\CulaanMessageService;
+use App\Services\DanaSummaryService;
 use App\Services\N8nWebhookService;
 use App\Services\PemilihBaruService;
 use App\Services\PemilihReportService;
@@ -17,7 +18,7 @@ use Inertia\Response;
 
 class LaporanController extends Controller
 {
-    public function index(Request $request, PemilihReportService $reportService, CulaanMessageService $messageService, PemilihBaruService $pemilihBaru, PlkCostService $plkCosts): Response
+    public function index(Request $request, PemilihReportService $reportService, CulaanMessageService $messageService, PemilihBaruService $pemilihBaru, PlkCostService $plkCosts, DanaSummaryService $danaSummary): Response
     {
         $snapshot = $reportService->getLatestUdmSnapshot();
         $report = $reportService->buildFromDatabase();
@@ -27,6 +28,9 @@ class LaporanController extends Controller
             'pemilih_baru_movement' => $pemilihBaru->monthlyMovementReport(),
             'plk_cost_summary' => $request->user()?->canAccessModule('plk-kos')
                 ? $plkCosts->summary($request->user())
+                : null,
+            'dana_summary' => $request->user()?->canAccessModule('dana')
+                ? $danaSummary->summary($request->user())
                 : null,
             'culaan_message' => $messageService->build($report),
             'pemilih_report' => $reportService->getMetadata(),

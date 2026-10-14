@@ -129,10 +129,11 @@ function TTip({ active, payload, label }) {
     );
 }
 
-function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false }) {
+function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false, title, description }) {
     const [activeRowKey, setActiveRowKey] = useState(null);
     const table = (
         <table className="min-w-full divide-y divide-slate-200 text-xs">
+            {title && <caption className="sr-only">{title}</caption>}
             <thead className={stickyHeader ? 'table-header table-header-sticky' : 'table-header'}>
                 <tr>{columns.map((c) => <th key={c.key} title={c.title} aria-label={c.ariaLabel} className={`px-2.5 py-1.5 ${c.headerClass ?? ''}`}>{c.label}</th>)}</tr>
             </thead>
@@ -176,6 +177,7 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
 
     return (
         <div className={`card ${stickyHeader ? 'overflow-visible' : 'overflow-hidden'}`}>
+            {title && <div className="border-b border-slate-200 px-3 py-2.5 sm:px-4"><h3 className="text-sm font-bold text-slate-900">{title}</h3>{description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}</div>}
             {stickyHeader ? <div className="overflow-x-auto xl:overflow-visible">{table}</div> : <div className="overflow-x-auto">{table}</div>}
         </div>
     );
@@ -384,6 +386,34 @@ function PlkCostSummaryTable({ summary }) {
     );
 }
 
+function DanaSummaryTable({ summary }) {
+    const rows = useMemo(() => [...(summary?.rows ?? [])]
+        .sort((a, b) => compareUdms({ name: a.udm }, { name: b.udm }))
+        .map((row, index) => ({ ...row, key: row.udm, number: index + 1 })), [summary]);
+    if (!summary) return null;
+
+    const money = value => Number(value || 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const numeric = 'text-right whitespace-nowrap tabular-nums';
+    const columns = [
+        { key: 'number', label: 'Bil.', headerClass: 'bg-green-100 text-center', cellClass: 'text-center' },
+        { key: 'udm', label: 'UDM', headerClass: 'bg-green-100', cellClass: 'font-semibold whitespace-nowrap' },
+        { key: 'count', label: 'Transaksi', headerClass: `bg-green-100 ${numeric}`, cellClass: numeric, format: fmt },
+        { key: 'total_masuk', label: 'Dana Masuk (RM)', headerClass: `bg-green-100 ${numeric}`, cellClass: numeric, format: money },
+        { key: 'total_keluar', label: 'Dana Keluar (RM)', headerClass: `bg-green-100 ${numeric}`, cellClass: numeric, format: money },
+        { key: 'baki', label: 'Baki (RM)', headerClass: `bg-green-100 ${numeric}`, cellClass: `${numeric} font-bold`,
+            format: value => <span className={Number(value) < 0 ? 'text-rose-700' : 'text-emerald-800'}>{money(value)}</span> },
+    ];
+
+    return <DataTable
+        title="Ringkasan Dana"
+        description="Jumlah dana masuk, dana keluar dan baki mengikut UDM berdasarkan rekod Dana."
+        rows={[...rows, { ...summary.totals, key: 'dana-total', udm: 'Jumlah keseluruhan', number: '', isTotal: true }]}
+        columns={columns}
+        stickyHeader
+        interactiveRows
+    />;
+}
+
 function PemilihBaruMovementTable({ movement }) {
     const rows = movement?.rows ?? [];
     const [activeRowKey, setActiveRowKey] = useState(null);
@@ -470,7 +500,7 @@ function PemilihBaruMovementTable({ movement }) {
     );
 }
 
-export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null, plk_cost_summary = null }) {
+export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null, plk_cost_summary = null, dana_summary = null }) {
     const { auth } = usePage().props;
     const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
@@ -811,6 +841,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         <CulaPartyTable rows={culaPartyRows} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
                         <PlkCostSummaryTable summary={plk_cost_summary} />
+                        <DanaSummaryTable summary={dana_summary} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
                             <ChartPanel title="Pemilih Mengikut UDM">
