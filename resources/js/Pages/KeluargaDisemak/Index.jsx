@@ -71,16 +71,16 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
         <AuthenticatedLayout>
             <Head title="Pemilih Sasaran" />
             <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-                <header className="overflow-hidden rounded-2xl border border-green-200 bg-white shadow-sm shadow-green-900/5">
-                    <div className="border-b border-green-100 bg-green-50/70 px-5 py-6 sm:px-8 sm:py-8">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-700">Operasi / Semakan keluarga</p>
-                        <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Pemilih Sasaran</h1>
+                <header className="space-y-3">
+                    <div>
+                        <p className="label-section">Operasi / Semakan keluarga</p>
+                        <h1 className="mt-0.5 heading-lg">Pemilih Sasaran</h1>
                     </div>
-                    <dl className="grid grid-cols-3 divide-x divide-green-100 px-2 py-5 sm:px-4">
+                    <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         {[[formatNumber(totalFamilies), 'Keluarga disemak'], [formatNumber(reviewedUdm), 'UDM dengan semakan'], [formatNumber(udmSummaries.length), 'UDM dalam akses']].map(([value, label]) => (
-                            <div key={label} className="px-3 sm:px-6">
-                                <dd className="text-2xl font-bold tabular-nums tracking-tight text-green-800 sm:text-3xl">{value}</dd>
-                                <dt className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">{label}</dt>
+                            <div key={label} className="card p-3">
+                                <dt className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</dt>
+                                <dd className="mt-0.5 text-lg font-black tabular-nums text-slate-900">{value}</dd>
                             </div>
                         ))}
                     </dl>
