@@ -237,17 +237,19 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
                                             </button>
                                         ) : (
                                             <>
-                                                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
+                                                {!checkedTab && <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
                                                     Telah semak
-                                                </span>
+                                                </span>}
                                                 {checkedTab && (
                                                     <button
                                                         type="button"
                                                         onClick={() => onRequestUnverify(voter)}
+                                                        aria-label={`Batalkan semakan ${voter.name || 'pemilih'}`}
+                                                        title="Batalkan semakan"
                                                         className="inline-flex items-center rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-700 transition hover:bg-rose-50"
                                                     >
-                                                        Batalkan semakan
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M3 7v6h6" /><path d="M3 13a9 9 0 1 1 3 6.7" /></svg>
                                                     </button>
                                                 )}
                                             </>

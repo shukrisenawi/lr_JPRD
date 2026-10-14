@@ -370,7 +370,7 @@ it('auto-marks the unique man whose name matches the repeated bin or binti ancho
 
 it('moves a confirmed family to the reviewed tab and supports cancelling review', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
-    $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
+    $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI', 'alamat_kediaman' => '122 PEKAN BATU LIMA']);
 
     $this->actingAs($user)
         ->post(route('keluarga-pemilih.store'), [
@@ -391,6 +391,7 @@ it('moves a confirmed family to the reviewed tab and supports cancelling review'
     $this->assertDatabaseHas('pemilih_families', [
         'id' => $familyId,
         'reviewed_by' => $user->id,
+        'address' => '122 PEKAN BATU LIMA',
     ]);
     $this->actingAs($user)
         ->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1']))

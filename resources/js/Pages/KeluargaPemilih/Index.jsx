@@ -641,6 +641,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         router.put(route('keluarga-pemilih.review', family.id), {
             ...currentRouteFilters(),
             reviewed,
+            ...(reviewed ? { address: family.address || null } : {}),
             tab: reviewed ? 'reviewed' : 'families',
             page: 1,
         }, {

@@ -405,16 +405,26 @@ class KeluargaPemilihController extends Controller
     {
         $validated = $request->validate([
             'reviewed' => ['required', 'boolean'],
+            'address' => ['nullable', 'string', 'max:2000'],
             ...$this->routeFilterRules(),
         ]);
         $user = $request->user();
         $family = $this->visibleFamilyQuery($user)->findOrFail($pemilihFamily->id);
         $reviewed = filter_var($validated['reviewed'], FILTER_VALIDATE_BOOLEAN);
 
-        $family->update([
+        $updates = [
             'reviewed_at' => $reviewed ? now() : null,
             'reviewed_by' => $reviewed ? $user->id : null,
-        ]);
+        ];
+        if ($reviewed && blank($family->address)) {
+            $members = $family->members()->where(function ($query) use ($user): void {
+                $user->applyScopeToPemilihQuery($query);
+                $this->whereMalayRace($query);
+            })->get();
+            $updates['address'] = trim((string) ($validated['address'] ?? ''))
+                ?: $this->majorityFamilyAddress($members);
+        }
+        $family->update($updates);
 
         $validated['tab'] = $reviewed ? 'reviewed' : 'families';
         $validated['page'] = 1;
