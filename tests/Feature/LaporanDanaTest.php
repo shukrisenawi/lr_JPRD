@@ -17,13 +17,13 @@ function laporanDanaRecord(string $udm, string $jenis, string $jumlah, string $c
     ]);
 }
 
-it('charts only outgoing payments for the PRU16 equipment category with zero-data UDMs', function () {
+it('charts received payments recorded as incoming funds for the PRU16 equipment category only', function () {
     $user = User::factory()->withModules(['laporan', 'dana'])->create();
-    laporanDanaRecord('UDM A', 'masuk', '500.25');
-    laporanDanaRecord('UDM A', 'keluar', '125.50');
-    laporanDanaRecord('UDM B', 'keluar', '30.10');
-    laporanDanaRecord('UDM A', 'keluar', '999.00', 'Sumbangan Ujian');
-    laporanDanaRecord('UDM A', 'keluar', '888.00', 'BAYARAN DUIT PERALATAN PILIHANRAYA PRU15');
+    laporanDanaRecord('UDM A', 'keluar', '500.25');
+    laporanDanaRecord('UDM A', 'masuk', '125.50');
+    laporanDanaRecord('UDM B', 'masuk', '30.10');
+    laporanDanaRecord('UDM A', 'masuk', '999.00', 'Sumbangan Ujian');
+    laporanDanaRecord('UDM A', 'masuk', '888.00', 'BAYARAN DUIT PERALATAN PILIHANRAYA PRU15');
     PemilihRecord::query()->create([
         'identity_number' => (string) Str::uuid(), 'name' => 'PEMILIH DANA',
         'dm' => 'UDM C', 'status' => 'aktif', 'is_manual' => false,
@@ -41,8 +41,8 @@ it('charts only outgoing payments for the PRU16 equipment category with zero-dat
         ->where('dana_summary.totals.count', 2)
         ->where('dana_summary.totals.total_bayaran', '155.60'));
     $this->get(route('dana.index'))->assertInertia(fn ($page) => $page
-        ->where('totals.total_masuk', '500.25')->where('totals.total_keluar', '2042.60')
-        ->where('totals.baki', '-1542.35'));
+        ->where('totals.total_masuk', '2042.60')->where('totals.total_keluar', '500.25')
+        ->where('totals.baki', '1542.35'));
 });
 
 it('does not expose financial data without Dana module access', function () {
@@ -57,8 +57,8 @@ it('limits financial summaries to the same UDM scope as the Dana menu', function
     $user = User::factory()->withModules(['laporan', 'dana'])->create([
         'access_level' => $level, 'scope_key' => $level === 'cawangan' ? (string) $cawangan->id : 'UDM A',
     ]);
-    laporanDanaRecord('UDM A', 'keluar', '10.25');
-    laporanDanaRecord('UDM B', 'keluar', '999.00');
+    laporanDanaRecord('UDM A', 'masuk', '10.25');
+    laporanDanaRecord('UDM B', 'masuk', '999.00');
     $this->actingAs($user)->get(route('laporan.index'))->assertOk()->assertInertia(fn ($page) => $page
         ->has('dana_summary.rows', 1)->where('dana_summary.rows.0.udm', 'UDM A')
         ->where('dana_summary.totals.total_bayaran', '10.25')->where('dana_summary.totals.count', 1));
@@ -73,8 +73,8 @@ it('returns an empty financial summary with zero totals when no data exists', fu
 
 it('matches the requested category regardless of case or surrounding whitespace without matching other names', function () {
     $user = User::factory()->withModules(['laporan', 'dana'])->create();
-    laporanDanaRecord('UDM A', 'keluar', '12.34', '  bayaran duit peralatan pilihanraya pru16  ');
-    laporanDanaRecord('UDM A', 'keluar', '100.00', 'LAIN-LAIN BAYARAN DUIT PERALATAN PILIHANRAYA PRU16');
+    laporanDanaRecord('UDM A', 'masuk', '12.34', '  bayaran duit peralatan pilihanraya pru16  ');
+    laporanDanaRecord('UDM A', 'masuk', '100.00', 'LAIN-LAIN BAYARAN DUIT PERALATAN PILIHANRAYA PRU16');
     $this->actingAs($user)->get(route('laporan.index'))->assertOk()->assertInertia(fn ($page) => $page
         ->where('dana_summary.totals.count', 1)->where('dana_summary.totals.total_bayaran', '12.34'));
 });

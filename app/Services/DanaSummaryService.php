@@ -15,7 +15,7 @@ class DanaSummaryService
     {
         $scope = $user->accessScope();
         $scopedUdm = trim((string) ($scope['dm'] ?? ''));
-        $dana = Dana::query()->where('jenis', 'keluar')
+        $dana = Dana::query()->where('jenis', 'masuk')
             ->whereHas('kategori', fn ($query) => $query->whereRaw('UPPER(TRIM(name)) = ?', [self::PAYMENT_CATEGORY]));
         $cawangan = Cawangan::query();
         if ($scopedUdm !== '') {

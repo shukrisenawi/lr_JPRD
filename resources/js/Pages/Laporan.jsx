@@ -397,7 +397,7 @@ function DanaPaymentChart({ summary }) {
             <div className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-200 px-3 py-2.5 sm:px-4">
                 <div>
                     <h3 id="dana-payment-title" className="text-sm font-bold text-slate-900">Graf Bayaran Peralatan Pilihanraya PRU16</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">{summary.category} · Transaksi dana keluar mengikut UDM sahaja.</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{summary.category} · Bayaran diterima (dana masuk) mengikut UDM sahaja.</p>
                 </div>
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">Jumlah bayaran RM {money(summary.totals.total_bayaran)}</span>
             </div>
