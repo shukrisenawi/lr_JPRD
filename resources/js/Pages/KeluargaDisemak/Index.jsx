@@ -109,23 +109,17 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                 </section>
 
                 {!filters.udm ? (
-                    <section aria-label="Ringkasan UDM" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <section aria-label="Ringkasan UDM" className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
                         <div className="col-span-full flex items-center justify-between gap-3 pb-1">
                             <h2 className="text-lg font-bold tracking-tight text-slate-900">Ringkasan mengikut UDM</h2>
                             <span className="text-xs text-slate-500">{udmSummaries.length} UDM</span>
                         </div>
-                        {udmSummaries.map((item, index) => (
-                            <Link key={item.udm} href={route('keluarga-disemak.index', { udm: item.udm })} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white transition-colors hover:border-green-500 hover:bg-green-50/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">
-                                <div className="p-5">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-xs font-bold tabular-nums text-green-800">{String(index + 1).padStart(2, '0')}</span>
-                                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${item.families > 0 ? 'bg-green-50 text-green-800' : 'bg-slate-100 text-slate-600'}`}>{item.families > 0 ? 'Ada semakan' : 'Belum disemak'}</span>
-                                    </div>
-                                    <h3 className="mt-4 min-h-10 text-sm font-bold leading-5 text-slate-800">{item.udm}</h3>
-                                    <p className={`mt-3 text-4xl font-bold tabular-nums tracking-tight ${item.families > 0 ? 'text-green-800' : 'text-slate-400'}`}>{formatNumber(item.families)}</p>
-                                    <p className="mt-1 text-xs text-slate-600">keluarga telah disemak</p>
-                                </div>
-                                <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs font-semibold text-green-800"><span>Lihat keluarga</span><span aria-hidden="true" className="transition-transform group-hover:translate-x-1 motion-reduce:transform-none">&rarr;</span></div>
+                        {udmSummaries.map((item) => (
+                            <Link key={item.udm} href={route('keluarga-disemak.index', { udm: item.udm })} className="card block w-full p-3 text-left transition hover:border-green-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">
+                                <h3 className="truncate text-xs font-black text-slate-900">{item.udm}</h3>
+                                <p className="mt-2 text-lg font-black tabular-nums text-green-800">{formatNumber(item.families)}</p>
+                                <p className="text-[10px] font-semibold text-slate-500">Keluarga telah disemak</p>
+                                <p className="mt-2 border-t border-slate-200/70 pt-1.5 text-[10px] text-slate-500">{item.families > 0 ? 'Lihat keluarga' : 'Belum disemak'}</p>
                             </Link>
                         ))}
                         {udmSummaries.length === 0 && <p className="col-span-full rounded-xl border border-green-200 bg-white p-6 text-sm text-slate-600">Tiada UDM dalam skop akses anda.</p>}
@@ -136,22 +130,22 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                             <div><h2 className="text-lg font-bold text-slate-800">{filters.udm} <span className="text-sm font-normal text-slate-600">({families.total} keluarga)</span></h2>{filters.locality && <p className="mt-1 text-sm text-green-800">{filters.locality}</p>}</div>
                             <Link href={route('keluarga-disemak.index')} className="text-sm font-semibold text-green-800 underline underline-offset-4">Kembali ke semua UDM</Link>
                         </div>
-                        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+                        <div className="grid grid-cols-1 items-start gap-2.5 xl:grid-cols-2">
                         {families.data.map((family) => (
-                            <article key={family.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-green-900/5">
-                                <div className="border-b border-green-100 bg-green-50/60 p-5 sm:p-6">
-                                    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold text-slate-800">{family.name || `Keluarga #${family.id}`}</h3><span className="rounded-full border border-green-200 bg-white px-3 py-1 text-xs font-semibold text-green-800">{family.members.length} ahli keluarga</span></div>
-                                    <p className="mt-1 text-xs text-slate-600"><span className="font-semibold">Lokaliti:</span> {[...new Set(family.members.map((member) => member.locality?.trim()).filter(Boolean))].join(' · ') || '-'}</p>
-                                    <p className="mt-1 whitespace-pre-line text-xs text-slate-600"><span className="font-semibold">Alamat:</span> {family.address || '-'}</p>
-                                    <p className="mt-2 text-xs text-slate-600">Disemak {family.reviewed_at} · {family.members.length} ahli</p>
+                            <article key={family.id} className="card overflow-hidden">
+                                <div className="border-b border-slate-100 bg-white px-3 py-3">
+                                    <div className="flex flex-wrap items-center gap-2"><h3 className="truncate text-sm font-black text-slate-900">{family.name || `Keluarga #${family.id}`}</h3><span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800">{family.members.length} ahli</span></div>
+                                    <p className="mt-1 text-[10px] text-slate-500"><span className="font-semibold">Lokaliti:</span> {[...new Set(family.members.map((member) => member.locality?.trim()).filter(Boolean))].join(' · ') || '-'}</p>
+                                    <p className="mt-2 whitespace-pre-line break-words text-xs text-slate-600">{family.address || 'Belum diisi'}</p>
+                                    <p className="mt-1 text-[10px] text-slate-500">Disemak {family.reviewed_at}</p>
                                 </div>
-                                <ul className="divide-y divide-slate-100 px-5 sm:px-6">
+                                <ul className="divide-y divide-slate-100">
                                      {sortFamilyMembers(family.members, family.father_id).map((member) => {
                                          const age = calculateAgeFromNoKp(member.no_kp);
                                          const culaMember = { ...member, ...(culaOverrides[member.id] || {}) };
                                          const tone = familyMemberTone(culaMember);
                                          return (
-                                         <li key={member.id} className={`flex flex-wrap items-start gap-3 rounded-md px-2 py-3 ${tone === 'pink' ? 'bg-pink-50/60' : tone === 'green' ? 'bg-green-50/60' : ''}`}>
+                                         <li key={member.id} className={`flex flex-wrap items-start gap-3 px-3 py-2.5 ${tone === 'pink' ? 'bg-pink-50/70' : tone === 'green' ? 'bg-green-50/70' : ''}`}>
                                              {member.avatar_url ? <img src={member.avatar_url} alt={member.name} className="h-8 w-8 shrink-0 rounded-full object-cover" /> : <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">{member.name?.charAt(0) || '?'}</span>}
                                              <div className="min-w-0 flex-1">
                                              <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800">{member.name}{Number(family.father_id) === Number(member.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black text-green-800">AYAH</span>}{age !== null && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px]">{age} tahun</span>}</p>
