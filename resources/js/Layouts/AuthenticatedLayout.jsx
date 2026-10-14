@@ -70,7 +70,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     };
 
     const navGroups = [
-        ...(canViewDashboardUdm ? [{ key: 'dashboard-udm', href: 'dashboard-udm', routePattern: 'dashboard-udm', label: 'Dashboard UDM', icon: <HeaderIcon name="fileText" className="h-4 w-4" /> }] : []),
+        ...(canViewDashboardUdm ? [{ key: 'dashboard-udm', href: 'dashboard-udm', routePattern: 'dashboard-udm', label: 'Dashboard', icon: <HeaderIcon name="fileText" className="h-4 w-4" /> }] : []),
         { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Dashboard', icon: <HeaderIcon name="fileText" className="h-4 w-4" /> },
         {
             label: 'Pemilih',
@@ -248,7 +248,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {(() => {
                             const groups = [
                                 { label: 'Dashboard', items: [
-                                    canViewDashboardUdm && { href: route('dashboard-udm'), active: route().current('dashboard-udm'), label: 'Dashboard UDM' },
+                                    canViewDashboardUdm && { href: route('dashboard-udm'), active: route().current('dashboard-udm'), label: 'Dashboard' },
                                     canAccess('laporan') && { href: route('laporan.index'), active: route().current('laporan.*'), label: 'Dashboard' },
                                 ].filter(Boolean) },
                                 { label: 'Pemilih', items: [
