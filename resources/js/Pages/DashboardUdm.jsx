@@ -44,13 +44,21 @@ export default function DashboardUdm({ udm, statistics, payments }) {
         ['Kemajuan Culaan', `${totals.percentage}%`],
         ['Ahli PAS', fmt(totals.members)],
     ];
-    const cell = 'whitespace-nowrap px-4 py-3 text-right tabular-nums';
+    const cell = 'border-b border-r border-slate-200 whitespace-nowrap px-3 py-2.5 text-right tabular-nums';
+    const localityCell = 'sticky left-0 z-10 min-w-44 border-b border-r border-slate-200 bg-inherit px-3 py-2.5 text-left font-semibold';
+    const headerCell = 'border-b border-r border-lime-600 bg-lime-300 px-3 py-3 text-center font-bold text-slate-900';
+    const rowClass = 'odd:bg-white even:bg-slate-50 text-slate-700 transition-colors hover:!bg-lime-100';
     const progressRow = (row, label) => <>
-        <th scope="row" className="px-4 py-3 text-left font-medium">{label}</th>
-        <td className={cell}>{fmt(row.total)}</td>
-        <td className={`${cell} text-green-700`}>{fmt(row.with_cula)}</td>
-        <td className={cell}>{fmt(row.without_cula)}</td>
-        <td className={cell}>{row.percentage}%</td>
+        <th scope="row" className={localityCell}>{label}</th>
+        <td className={`${cell} font-bold`}>{fmt(row.total)}</td>
+        <td className={cell}><span className="inline-flex min-w-10 justify-center rounded-md bg-green-100 px-2 py-1 font-semibold text-green-800">{fmt(row.with_cula)}</span></td>
+        <td className={cell}><span className={`inline-flex min-w-10 justify-center rounded-md px-2 py-1 font-semibold ${row.without_cula ? 'bg-amber-100 text-amber-800' : 'text-slate-400'}`}>{fmt(row.without_cula)}</span></td>
+        <td className={cell}>
+            <div className="ml-auto flex min-w-32 items-center justify-end gap-2">
+                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-200" aria-hidden="true"><div className="h-full rounded-full bg-green-600" style={{ width: `${row.percentage}%` }} /></div>
+                <span className="w-12 font-semibold text-green-800">{row.percentage}%</span>
+            </div>
+        </td>
         <td className={cell}>{fmt(row.members)}</td>
     </>;
     return (
@@ -75,37 +83,37 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                     </div>
                 </Section>
                 <Section title="Cula Mengikut Lokaliti" description="Kemajuan berdasarkan kod cula yang telah direkodkan.">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-green-50 text-xs text-slate-600"><tr>
-                                {['Lokaliti', 'Pemilih', 'Sudah Dicula', 'Belum Dicula', 'Kemajuan', 'Ahli PAS'].map((label, i) => <th key={label} scope="col" className={`${cell} ${i === 0 ? 'text-left' : ''}`}>{label}</th>)}
+                    <div className="overflow-x-auto rounded-b-xl">
+                        <table className="w-full min-w-[760px] border-separate border-spacing-0 text-xs">
+                            <thead><tr>
+                                {['Lokaliti', 'Pemilih', 'Sudah Dicula', 'Belum Dicula', 'Kemajuan', 'Ahli PAS'].map((label, i) => <th key={label} scope="col" className={`${headerCell} ${i === 0 ? 'sticky left-0 z-20 text-left' : ''}`}>{label}</th>)}
                             </tr></thead>
-                            <tbody className="divide-y divide-green-100">
-                                {rows.map((row) => <tr key={row.locality} className="hover:bg-green-50/50">{progressRow(row, row.locality)}</tr>)}
+                            <tbody>
+                                {rows.map((row) => <tr key={row.locality} className={rowClass}>{progressRow(row, row.locality)}</tr>)}
                                 {!rows.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">Tiada data pemilih untuk UDM ini.</td></tr>}
                             </tbody>
-                            <tfoot className="border-t border-green-200 bg-green-50 font-bold"> <tr>{progressRow(totals, 'Jumlah')}</tr></tfoot>
+                            <tfoot className="font-bold text-slate-900"><tr className="bg-violet-100">{progressRow(totals, 'Jumlah')}</tr></tfoot>
                         </table>
                     </div>
                 </Section>
                 <Section title="Pecahan Cula Mengikut Lokaliti" description="Bilangan pemilih bagi setiap kod cula. Kod kosong, ?, TIADA dan 0 dikira belum dicula.">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-green-50 text-xs text-slate-600"><tr>
-                                <th scope="col" className="px-4 py-3 text-left">Lokaliti</th>
-                                {codes.map(({ code, label }) => <th key={code} scope="col" className="min-w-28 px-4 py-3 text-right"><span className="block font-bold">{code}</span><span className="mt-1 block text-[10px] font-normal">{label}</span></th>)}
-                                <th scope="col" className={cell}>Jumlah</th>
+                    <div className="overflow-x-auto rounded-b-xl">
+                        <table className="w-full border-separate border-spacing-0 text-xs">
+                            <thead><tr>
+                                <th scope="col" className={`${headerCell} sticky left-0 z-20 min-w-44 text-left`}>Lokaliti</th>
+                                {codes.map(({ code, label }) => <th key={code} scope="col" className={`${headerCell} min-w-28 max-w-40`}><span className="inline-flex min-w-8 justify-center rounded bg-lime-100 px-2 py-0.5 text-sm font-extrabold">{code}</span><span className="mt-1.5 block text-[10px] font-semibold leading-tight">{label}</span></th>)}
+                                <th scope="col" className={`${headerCell} min-w-24`}>Jumlah</th>
                             </tr></thead>
-                            <tbody className="divide-y divide-green-100">
-                                {rows.map((row) => <tr key={row.locality} className="hover:bg-green-50/50">
-                                    <th scope="row" className="px-4 py-3 text-left font-medium">{row.locality}</th>
-                                    {codes.map(({ code }) => <td key={code} className={cell}>{fmt(row.breakdown[code])}</td>)}
-                                    <td className={`${cell} font-bold`}>{fmt(row.total)}</td>
+                            <tbody>
+                                {rows.map((row) => <tr key={row.locality} className={rowClass}>
+                                    <th scope="row" className={localityCell}>{row.locality}</th>
+                                    {codes.map(({ code }) => <td key={code} className={`${cell} ${row.breakdown[code] ? 'font-semibold' : 'text-slate-400'}`}>{fmt(row.breakdown[code])}</td>)}
+                                    <td className={`${cell} bg-green-50/70 font-bold text-green-800`}>{fmt(row.total)}</td>
                                 </tr>)}
                                 {!rows.length && <tr><td colSpan={codes.length + 2} className="p-6 text-center text-slate-500">Tiada data culaan untuk UDM ini.</td></tr>}
                             </tbody>
-                            <tfoot className="border-t border-green-200 bg-green-50 font-bold"><tr>
-                                <th scope="row" className="px-4 py-3 text-left">Jumlah</th>
+                            <tfoot className="font-bold text-slate-900"><tr className="bg-violet-100">
+                                <th scope="row" className={localityCell}>Jumlah</th>
                                 {codes.map(({ code }) => <td key={code} className={cell}>{fmt(totals.breakdown[code])}</td>)}
                                 <td className={cell}>{fmt(totals.total)}</td>
                             </tr></tfoot>
