@@ -90,7 +90,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                     </dl>
                 </header>
 
-                <section aria-label="Penapis keluarga" aria-busy={loading} className="overflow-hidden rounded-xl border border-green-600 bg-white p-4 shadow-sm shadow-green-600/20">
+                <section aria-label="Penapis keluarga" aria-busy={loading} className="overflow-hidden rounded-xl border border-white bg-white p-4 shadow-sm shadow-green-600/20">
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_18rem_minmax(0,1fr)] xl:items-end">
                     <div>
                         <label htmlFor="udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
@@ -110,7 +110,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                     </div>
                     <p role="status" className="text-xs text-slate-600 xl:pb-3">{loading ? 'Memuatkan keluarga...' : 'Senarai ditapis secara automatik.'}</p>
                     </div>
-                    {filters.udm && <details className="card mt-3 overflow-hidden">
+                    {filters.udm && <details className="card mt-3 overflow-hidden border-white">
                         <summary className="cursor-pointer px-3 py-3 text-xs font-bold text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">Tapisan group pemilih dan kod cula{Boolean(filters.group_ids?.length || filters.cula_codes?.length) && <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800">Penapis aktif</span>}</summary>
                         <div className="space-y-3 border-t border-slate-100 p-3">
                         <div className="sm:max-w-xs">
