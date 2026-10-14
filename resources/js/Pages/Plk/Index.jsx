@@ -171,9 +171,9 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
 
     return (
         <>
-            <div className="overflow-x-auto">
-                <table className={`w-full border-collapse text-left ${checkedTab ? 'min-w-[1420px]' : hideCulaCode ? 'min-w-[1040px]' : 'min-w-[1180px]'}`}>
-                    <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500">
+            <div className="w-full">
+                <table className="block w-full border-collapse text-left md:table md:table-fixed [&_td]:break-words [&_th]:break-words [&_td]:px-2 [&_th]:px-2">
+                    <thead className="hidden bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500 md:table-header-group">
                         <tr>
                             <th className="px-4 py-3">Maklumat pemilih</th>
                             {!hideCulaCode && <th className="px-4 py-3">Kod Cula</th>}
@@ -182,13 +182,12 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
                             <th className="px-4 py-3">Catatan</th>
                             {checkedTab && <th className="px-4 py-3">Status Semakan</th>}
                             {checkedTab && <th className="px-4 py-3">Remark</th>}
-                            {checkedTab && <th className="px-4 py-3">Disemak</th>}
                             <th className="px-4 py-3 text-right">Tindakan</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="block divide-y divide-slate-100 md:table-row-group">
                         {voters.data.map((voter) => (
-                            <tr key={voter.id} className="align-top transition hover:bg-emerald-50/40">
+                            <tr key={voter.id} className="grid grid-cols-2 align-top transition hover:bg-emerald-50/40 md:table-row [&_td]:min-w-0">
                                 <td className="px-4 py-3">
                                     <p className="max-w-[280px] text-xs font-bold uppercase leading-relaxed text-slate-800">{voter.name || 'Nama tidak direkodkan'}</p>
                                     <p className="mt-0.5 text-[11px] font-medium text-slate-500">No. KP: {voter.no_kp || '-'}</p>
@@ -217,14 +216,8 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
                                         {voter.verification_remark || '-'}
                                     </td>
                                 )}
-                                {checkedTab && (
-                                    <td className="px-4 py-3">
-                                        <p className="text-[11px] font-semibold text-emerald-700">{voter.verified_at || '-'}</p>
-                                        <p className="mt-0.5 text-[10px] text-slate-500">{voter.verified_by || ''}</p>
-                                    </td>
-                                )}
                                 <td className="px-4 py-3">
-                                    <div className="flex min-w-[290px] flex-wrap justify-end gap-1.5">
+                                    <div className="flex flex-wrap justify-end gap-1.5">
                                         {!voter.verified_at ? (
                                             <button
                                                 type="button"
