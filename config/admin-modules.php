@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'dashboard-udm' => [
+        'label' => 'Dashboard UDM',
+        'description' => 'Dashboard khas untuk pengguna tahap UDM (bukan master admin).',
+    ],
     'laporan' => [
         'label' => 'Laporan',
         'description' => 'Lihat dan muat naik laporan pemilih.',

@@ -21,6 +21,7 @@ class AuthenticatedSessionController extends Controller
 
     /** @var array<int, array{module: string, route: string, access_level?: string}> */
     private const NAVBAR_MENU_ROUTES = [
+        ['module' => 'dashboard-udm', 'route' => 'dashboard-udm', 'access_level' => 'udm'],
         ['module' => 'laporan', 'route' => 'laporan.index'],
         ['module' => 'carian-pemilih', 'route' => 'carian-pemilih.index'],
         ['module' => 'tambah-pemilih', 'route' => 'tambah-pemilih.index'],

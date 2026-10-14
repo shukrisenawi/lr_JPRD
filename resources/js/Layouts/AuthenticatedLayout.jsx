@@ -51,6 +51,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const allowedModules = user.allowed_modules ?? [];
     const canAccess = (module) => allowedModules.includes(module);
     const isMasterAdmin = user.role?.is_master_admin === true;
+    const canViewDashboardUdm = user.access_level === 'udm' && !isMasterAdmin && canAccess('dashboard-udm');
     const impersonation = auth.impersonation ?? { is_active: false, impersonator: null };
     const mustChangePassword = user.must_change_password ?? false;
     const pusatKhidmatBelumSemak = badgeCounts?.pusatKhidmatBelumSemak ?? 0;
@@ -69,6 +70,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     };
 
     const navGroups = [
+        ...(canViewDashboardUdm ? [{ key: 'dashboard-udm', href: 'dashboard-udm', routePattern: 'dashboard-udm', label: 'Dashboard UDM', icon: <HeaderIcon name="fileText" className="h-4 w-4" /> }] : []),
         { key: 'laporan', href: 'laporan.index', routePattern: 'laporan.*', label: 'Dashboard', icon: <HeaderIcon name="fileText" className="h-4 w-4" /> },
         {
             label: 'Pemilih',
@@ -246,6 +248,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                         {(() => {
                             const groups = [
                                 { label: 'Dashboard', items: [
+                                    canViewDashboardUdm && { href: route('dashboard-udm'), active: route().current('dashboard-udm'), label: 'Dashboard UDM' },
                                     canAccess('laporan') && { href: route('laporan.index'), active: route().current('laporan.*'), label: 'Dashboard' },
                                 ].filter(Boolean) },
                                 { label: 'Pemilih', items: [
