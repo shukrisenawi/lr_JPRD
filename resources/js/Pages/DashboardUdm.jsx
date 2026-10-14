@@ -7,9 +7,9 @@ const number = new Intl.NumberFormat('ms-MY');
 const money = new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' });
 const fmt = (value) => number.format(value ?? 0);
 
-function Section({ title, description, children }) {
-    return <section className="min-w-0 rounded-xl border border-green-200 bg-white">
-        <div className="border-b border-green-100 px-5 py-4">
+function Section({ title, description, children, table = false }) {
+    return <section className={`min-w-0 rounded-xl border bg-white ${table ? 'border-slate-200 shadow-sm' : 'border-green-200'}`}>
+        <div className={`border-b px-5 py-4 ${table ? 'border-slate-100' : 'border-green-100'}`}>
             <h2 className="text-base font-bold text-slate-800">{title}</h2>
             {description && <p className="mt-1 text-xs text-slate-600">{description}</p>}
         </div>
@@ -48,9 +48,9 @@ export default function DashboardUdm({ udm, statistics, payments }) {
         return () => observer.disconnect();
     }, []);
     const codeBlocks = codes.length ? Array.from({ length: Math.ceil(codes.length / codesPerTable) }, (_, index) => codes.slice(index * codesPerTable, (index + 1) * codesPerTable)) : [[]];
-    const breakdownCell = 'border-b border-r border-slate-200 px-1 py-2 text-right tabular-nums break-all';
-    const breakdownLocalityCell = 'border-b border-r border-slate-200 px-2 py-2 text-left font-semibold break-words';
-    const breakdownHeader = 'border-b border-r border-lime-600 bg-lime-300 px-1 py-2 text-center font-bold text-slate-900';
+    const breakdownCell = 'border-b border-slate-100 px-1 py-3 text-right tabular-nums break-all';
+    const breakdownLocalityCell = 'border-b border-slate-100 px-2 py-3 text-left font-medium break-words';
+    const breakdownHeader = 'border-b border-slate-200 bg-slate-100 px-1 py-3 text-center font-semibold text-slate-600';
     const metrics = [
         ['Jumlah Pemilih', fmt(totals.total)],
         ['Sudah Dicula', fmt(totals.with_cula)],
@@ -58,19 +58,19 @@ export default function DashboardUdm({ udm, statistics, payments }) {
         ['Kemajuan Culaan', `${totals.percentage}%`],
         ['Ahli PAS', fmt(totals.members)],
     ];
-    const cell = 'border-b border-r border-slate-200 whitespace-nowrap px-3 py-2.5 text-right tabular-nums';
-    const localityCell = 'sticky left-0 z-10 min-w-44 border-b border-r border-slate-200 bg-inherit px-3 py-2.5 text-left font-semibold';
-    const headerCell = 'border-b border-r border-lime-600 bg-lime-300 px-3 py-3 text-center font-bold text-slate-900';
-    const rowClass = 'odd:bg-white even:bg-slate-50 text-slate-700 transition-colors hover:!bg-lime-100';
+    const cell = 'border-b border-slate-100 whitespace-nowrap px-4 py-3 text-right tabular-nums';
+    const localityCell = 'sticky left-0 z-10 min-w-44 border-b border-slate-100 bg-inherit px-4 py-3 text-left font-medium';
+    const headerCell = 'border-b border-slate-200 bg-slate-100 px-4 py-3 text-right font-semibold text-slate-600';
+    const rowClass = 'odd:bg-white even:bg-slate-50/60 text-slate-700 transition-colors hover:!bg-emerald-50/60';
     const progressRow = (row, label) => <>
         <th scope="row" className={localityCell}>{label}</th>
         <td className={`${cell} font-bold`}>{fmt(row.total)}</td>
-        <td className={cell}><span className="inline-flex min-w-10 justify-center rounded-md bg-green-100 px-2 py-1 font-semibold text-green-800">{fmt(row.with_cula)}</span></td>
-        <td className={cell}><span className={`inline-flex min-w-10 justify-center rounded-md px-2 py-1 font-semibold ${row.without_cula ? 'bg-amber-100 text-amber-800' : 'text-slate-400'}`}>{fmt(row.without_cula)}</span></td>
+        <td className={cell}><span className="inline-flex min-w-10 justify-center rounded-md bg-emerald-50 px-2 py-1 font-semibold text-emerald-800">{fmt(row.with_cula)}</span></td>
+        <td className={cell}><span className={`inline-flex min-w-10 justify-center rounded-md px-2 py-1 font-semibold ${row.without_cula ? 'bg-slate-100 text-slate-600' : 'text-slate-400'}`}>{fmt(row.without_cula)}</span></td>
         <td className={cell}>
             <div className="ml-auto flex min-w-32 items-center justify-end gap-2">
-                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-200" aria-hidden="true"><div className="h-full rounded-full bg-green-600" style={{ width: `${row.percentage}%` }} /></div>
-                <span className="w-12 font-semibold text-green-800">{row.percentage}%</span>
+                <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-100" aria-hidden="true"><div className="h-full rounded-full bg-emerald-700" style={{ width: `${row.percentage}%` }} /></div>
+                <span className="w-12 font-medium text-slate-700">{row.percentage}%</span>
             </div>
         </td>
         <td className={cell}>{fmt(row.members)}</td>
@@ -96,7 +96,7 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                         <p className="mt-2 text-sm text-slate-600">{fmt(payments.count)} rekod bayaran</p>
                     </div>
                 </Section>
-                <Section title="Cula Mengikut Lokaliti" description="Kemajuan berdasarkan kod cula yang telah direkodkan.">
+                <Section table title="Cula Mengikut Lokaliti" description="Kemajuan berdasarkan kod cula yang telah direkodkan.">
                     <div className="overflow-x-auto rounded-b-xl">
                         <table className="w-full min-w-[760px] border-separate border-spacing-0 text-xs">
                             <thead><tr>
@@ -106,11 +106,11 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                                 {rows.map((row) => <tr key={row.locality} className={rowClass}>{progressRow(row, row.locality)}</tr>)}
                                 {!rows.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">Tiada data pemilih untuk UDM ini.</td></tr>}
                             </tbody>
-                            <tfoot className="font-bold text-slate-900"><tr className="bg-violet-100">{progressRow(totals, 'Jumlah')}</tr></tfoot>
+                            <tfoot className="font-bold text-emerald-900"><tr className="bg-emerald-50/70">{progressRow(totals, 'Jumlah')}</tr></tfoot>
                         </table>
                     </div>
                 </Section>
-                <Section title="Pecahan Cula Mengikut Lokaliti" description="Bilangan pemilih bagi setiap kod cula. Kod kosong, ?, TIADA dan 0 dikira belum dicula.">
+                <Section table title="Pecahan Cula Mengikut Lokaliti" description="Bilangan pemilih bagi setiap kod cula. Kod kosong, ?, TIADA dan 0 dikira belum dicula.">
                     <div ref={breakdownRef} className="space-y-4 rounded-b-xl p-2 sm:p-3">
                         {codeBlocks.map((block, blockIndex) => <div key={blockIndex}>
                         {codeBlocks.length > 1 && <p className="mb-1.5 text-xs font-medium text-slate-600">Kod {block.map(({ code }) => code).join(', ')} <span className="font-normal">· Jumlah ialah semua kod bagi lokaliti.</span></p>}
@@ -118,18 +118,18 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                             <colgroup><col style={{ width: 100 }} />{block.map(({ code }) => <col key={code} />)}<col style={{ width: 60 }} /></colgroup>
                             <thead><tr>
                                 <th scope="col" className={`${breakdownHeader} text-left px-2`}>Lokaliti</th>
-                                {block.map(({ code, label }) => <th key={code} scope="col" className={breakdownHeader}><span title={label} aria-label={`${code} - ${label}`} tabIndex={0} className="inline-flex cursor-help justify-center rounded bg-lime-100 px-1 py-0.5 font-extrabold focus:outline-none focus:ring-2 focus:ring-green-700">{code}</span></th>)}
+                                {block.map(({ code, label }) => <th key={code} scope="col" className={breakdownHeader}><span title={label} aria-label={`${code} - ${label}`} tabIndex={0} className="inline-flex cursor-help justify-center rounded border border-slate-200 bg-white px-1.5 py-0.5 font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-700">{code}</span></th>)}
                                 <th scope="col" className={breakdownHeader}>Jumlah</th>
                             </tr></thead>
                             <tbody>
                                 {rows.map((row) => <tr key={row.locality} className={rowClass}>
                                     <th scope="row" className={breakdownLocalityCell}>{row.locality}</th>
                                     {block.map(({ code }) => <td key={code} className={`${breakdownCell} ${row.breakdown[code] ? 'font-semibold' : 'text-slate-400'}`}>{fmt(row.breakdown[code])}</td>)}
-                                    <td className={`${breakdownCell} bg-green-50/70 font-bold text-green-800`}>{fmt(row.total)}</td>
+                                    <td className={`${breakdownCell} font-bold text-slate-900`}>{fmt(row.total)}</td>
                                 </tr>)}
                                 {!rows.length && <tr><td colSpan={block.length + 2} className="p-6 text-center text-slate-500">Tiada data culaan untuk UDM ini.</td></tr>}
                             </tbody>
-                            <tfoot className="font-bold text-slate-900"><tr className="bg-violet-100">
+                            <tfoot className="font-bold text-emerald-900"><tr className="bg-emerald-50/70">
                                 <th scope="row" className={breakdownLocalityCell}>Jumlah</th>
                                 {block.map(({ code }) => <td key={code} className={breakdownCell}>{fmt(totals.breakdown[code])}</td>)}
                                 <td className={breakdownCell}>{fmt(totals.total)}</td>
