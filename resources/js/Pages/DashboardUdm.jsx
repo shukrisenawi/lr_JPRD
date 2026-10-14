@@ -101,7 +101,7 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                         <table className="w-full border-separate border-spacing-0 text-xs">
                             <thead><tr>
                                 <th scope="col" className={`${headerCell} sticky left-0 z-20 min-w-44 text-left`}>Lokaliti</th>
-                                {codes.map(({ code, label }) => <th key={code} scope="col" className={`${headerCell} min-w-28 max-w-40`}><span className="inline-flex min-w-8 justify-center rounded bg-lime-100 px-2 py-0.5 text-sm font-extrabold">{code}</span><span className="mt-1.5 block text-[10px] font-semibold leading-tight">{label}</span></th>)}
+                                {codes.map(({ code, label }) => <th key={code} scope="col" className={`${headerCell} min-w-16`}><span title={label} aria-label={`${code} - ${label}`} tabIndex={0} className="inline-flex min-w-8 cursor-help justify-center rounded bg-lime-100 px-2 py-0.5 text-sm font-extrabold focus:outline-none focus:ring-2 focus:ring-green-700">{code}</span></th>)}
                                 <th scope="col" className={`${headerCell} min-w-24`}>Jumlah</th>
                             </tr></thead>
                             <tbody>
