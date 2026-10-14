@@ -40,6 +40,7 @@ class KeluargaDisemakController extends Controller
             ->selectRaw('COUNT(DISTINCT pemilih_families.id) as family_count')
             ->groupBy('pemilih_records.dm');
         $user->applyScopeToPemilihQuery($counts);
+        $this->onlyTargetVoters($counts);
         $counts = $counts->pluck('family_count', 'dm');
 
         $families = null;
@@ -48,6 +49,7 @@ class KeluargaDisemakController extends Controller
                 ->whereNotNull('reviewed_at')
                 ->whereHas('members', function ($query) use ($user, $udm, $locality): void {
                     $user->applyScopeToPemilihQuery($query);
+                    $this->onlyTargetVoters($query);
                     $query->where('dm', $udm);
                     if ($locality !== '') {
                         $query->where('locality', $locality);
@@ -56,6 +58,7 @@ class KeluargaDisemakController extends Controller
                 ->with(['members' => function ($query) use ($user): void {
                     // Show every family member the user may access, not only the selected UDM.
                     $user->applyScopeToPemilihQuery($query);
+                    $this->onlyTargetVoters($query);
                     $query->select('pemilih_records.*');
                 }])
                 ->orderBy('name')->orderBy('id')
@@ -95,5 +98,16 @@ class KeluargaDisemakController extends Controller
             ])->values(),
             'families' => $families,
         ]);
+    }
+
+    private function onlyTargetVoters($query): void
+    {
+        $query->where(function ($query): void {
+            $query->whereNull('pemilih_records.cula_code')
+                ->orWhere(function ($query): void {
+                    $query->whereRaw("UPPER(TRIM(pemilih_records.cula_code)) NOT IN ('2', '4P')")
+                        ->whereRaw("UPPER(TRIM(pemilih_records.cula_code)) NOT LIKE '3%'");
+                });
+        });
     }
 }

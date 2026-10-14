@@ -33,7 +33,7 @@ it('shows UDM cards and counts only reviewed families without loading member det
         ->where('udmSummaries.1.families', 0));
 });
 
-it('opens reviewed families with all members regardless of code, race or UDM', function () {
+it('opens reviewed families with target members regardless of race or UDM', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $family = PemilihFamily::query()->create(['name' => 'Keluarga Lengkap', 'reviewed_at' => now()]);
     foreach (['2', '3', '3B', '3P', '4P', '1', null] as $index => $code) {
@@ -51,11 +51,30 @@ it('opens reviewed families with all members regardless of code, race or UDM', f
         ->assertOk()->assertInertia(fn ($page) => $page
         ->where('families.total', 1)
         ->where('families.data.0.name', 'Keluarga Lengkap')
-        ->has('families.data.0.members', 7)
-        ->where('families.data.0.members.6.udm', 'UDM B')
-        ->where('families.data.0.members.0.cula_code', '2')
+        ->has('families.data.0.members', 2)
+        ->where('families.data.0.members.1.udm', 'UDM B')
+        ->where('families.data.0.members.0.cula_code', '1')
         ->has('families.data.0.members.0.no_kp')
         ->has('families.data.0.members.0.old_ic'));
+});
+
+it('hides families without target voters and excludes all 3 codes from UDM counts', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $excluded = PemilihFamily::query()->create(['name' => 'Tiada sasaran', 'reviewed_at' => now()]);
+    foreach (['2', '3', '3B', '3D', '3K', '3M', '3P', '3U', '4P'] as $code) {
+        $excluded->members()->attach(reviewedFamilyMember(['cula_code' => $code])->id);
+    }
+    $target = PemilihFamily::query()->create(['name' => 'Ada sasaran', 'reviewed_at' => now()]);
+    foreach (['1', '4', null, ''] as $code) {
+        $target->members()->attach(reviewedFamilyMember(['cula_code' => $code])->id);
+    }
+
+    $this->actingAs($user)->get(route('keluarga-disemak.index', ['udm' => 'UDM A']))
+        ->assertOk()->assertInertia(fn ($page) => $page
+        ->where('families.total', 1)
+        ->where('families.data.0.name', 'Ada sasaran')
+        ->has('families.data.0.members', 4)
+        ->where('udmSummaries.0.families', 1));
 });
 
 it('respects UDM scope for cards and members and rejects an outside UDM', function () {
