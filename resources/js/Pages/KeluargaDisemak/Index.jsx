@@ -3,11 +3,12 @@ import Modal from '@/Components/Modal';
 import { orderUdms } from '@/Utils/udmOrder';
 import { calculateAgeFromNoKp, familyMemberTone, sortFamilyMembers } from '@/Utils/familyMemberOrder';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 export default function Index({ filters, udmSummaries: unorderedUdmSummaries, families, localities = [], filter_cula_codes: filterCulaCodes = [], pemilih_groups: pemilihGroups = [] }) {
     const udmSummaries = orderUdms(unorderedUdmSummaries);
     const [loading, setLoading] = useState(false);
+    const filterCardRef = useRef(null);
     const { errors, available_cula_codes: culaCodes = [] } = usePage().props;
     const [pendingIds, setPendingIds] = useState(new Set());
     const [selectedVoter, setSelectedVoter] = useState(null);
@@ -66,6 +67,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
     function applyFilter(udm, locality = '', extra = {}) {
         router.get(route('keluarga-disemak.index'), filterParams(udm, locality, extra), {
             preserveScroll: true,
+            preserveState: true,
             onStart: () => setLoading(true),
             onFinish: () => setLoading(false),
         });
@@ -110,7 +112,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                     </div>
                     <p role="status" className="text-xs text-slate-600 xl:pb-3">{loading ? 'Memuatkan keluarga...' : 'Senarai ditapis secara automatik.'}</p>
                     </div>
-                    {filters.udm && <details className="card mt-3 overflow-hidden border-white">
+                    {filters.udm && <details ref={filterCardRef} className="card mt-3 overflow-hidden border-white">
                         <summary className="cursor-pointer px-3 py-3 text-xs font-bold text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">Tapisan group pemilih dan kod cula{Boolean(filters.group_ids?.length || filters.cula_codes?.length) && <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800">Penapis aktif</span>}</summary>
                         <div className="space-y-3 border-t border-slate-100 p-3">
                         <div className="sm:max-w-xs">
@@ -124,7 +126,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                             <legend className="text-xs font-bold text-slate-700">Kod cula</legend>
                             <div className="mt-2 flex flex-wrap gap-2">{filterCulaCodes.map((option) => <label key={option.code} className={`inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 ${filters.group_ids?.length || loading ? 'cursor-not-allowed' : 'cursor-pointer'}`}><input type="checkbox" name="cula_codes" value={option.code} checked={(filters.cula_codes || []).includes(option.code)} onChange={(event) => applyFilter(filters.udm, filters.locality || '', { cula_codes: event.target.checked ? [...(filters.cula_codes || []), option.code] : (filters.cula_codes || []).filter((code) => code !== option.code) })} className="rounded border-slate-300 text-green-600 focus:ring-green-500" />{option.label}</label>)}</div>
                         </fieldset>
-                        <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={loading} onClick={() => applyFilter(filters.udm, filters.locality || '', { cula_codes: [], group_ids: [] })} className="btn-ghost">Reset penapis</button><p className="text-[10px] text-slate-500">{filters.group_ids?.length ? 'Kod cula mengikut group dipilih. Pilih semua group untuk menapis kod cula sendiri.' : 'Tanda satu atau lebih kod cula untuk terus menapis.'}</p></div>
+                        <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={loading} onClick={() => { if (filterCardRef.current) filterCardRef.current.open = false; applyFilter(filters.udm, filters.locality || '', { cula_codes: [], group_ids: [] }); }} className="btn-ghost">Reset</button><p className="text-[10px] text-slate-500">{filters.group_ids?.length ? 'Kod cula mengikut group dipilih. Pilih semua group untuk menapis kod cula sendiri.' : 'Tanda satu atau lebih kod cula untuk terus menapis.'}</p></div>
                         </div>
                     </details>}
                 </section>
