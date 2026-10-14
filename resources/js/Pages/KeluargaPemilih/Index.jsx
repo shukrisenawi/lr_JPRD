@@ -3,6 +3,7 @@ import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import Modal from '@/Components/Modal';
 import { calculateAgeFromNoKp, familyMemberTone, sortFamilyMembers } from '@/Utils/familyMemberOrder';
+import { orderUdms } from '@/Utils/udmOrder';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -164,7 +165,8 @@ function groupUnassignedVoters(voters = []) {
     return [...groups.values()];
 }
 
-export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, familyTabCounts = { families: 0, reviewed: 0 }, udmSummaries, localities }) {
+export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, familyTabCounts = { families: 0, reviewed: 0 }, udmSummaries: unorderedUdmSummaries, localities }) {
+    const udmSummaries = orderUdms(unorderedUdmSummaries);
     const { errors = {}, available_cula_codes: availableCulaCodes = [], auth } = usePage().props;
     const isMasterAdmin = Boolean(auth?.user?.role?.is_master_admin);
     const isUdmUser = auth?.user?.access_level === 'udm';

@@ -53,7 +53,9 @@ it('opens reviewed families with all members regardless of code, race or UDM', f
         ->where('families.data.0.name', 'Keluarga Lengkap')
         ->has('families.data.0.members', 7)
         ->where('families.data.0.members.6.udm', 'UDM B')
-        ->missing('families.data.0.members.0.cula_code'));
+        ->where('families.data.0.members.0.cula_code', '2')
+        ->has('families.data.0.members.0.no_kp')
+        ->has('families.data.0.members.0.old_ic'));
 });
 
 it('respects UDM scope for cards and members and rejects an outside UDM', function () {
@@ -75,6 +77,29 @@ it('respects UDM scope for cards and members and rejects an outside UDM', functi
 
 it('requires authentication', function () {
     $this->get(route('keluarga-disemak.index'))->assertRedirect(route('login'));
+});
+
+it('filters by locality within the selected UDM while keeping all accessible family members', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $family = PemilihFamily::query()->create(['name' => 'Keluarga Lokaliti', 'reviewed_at' => now()]);
+    $family->members()->attach(reviewedFamilyMember(['locality' => 'Lokaliti A'])->id);
+    $family->members()->attach(reviewedFamilyMember(['locality' => 'Lokaliti B'])->id);
+    $other = PemilihFamily::query()->create(['name' => 'Keluarga Lain', 'reviewed_at' => now()]);
+    $other->members()->attach(reviewedFamilyMember(['locality' => 'Lokaliti B'])->id);
+    reviewedFamilyMember(['dm' => 'UDM B', 'locality' => 'Lokaliti Luar']);
+
+    $this->actingAs($user)->get(route('keluarga-disemak.index', ['udm' => 'UDM A', 'locality' => 'Lokaliti A']))
+        ->assertOk()->assertInertia(fn ($page) => $page
+        ->where('filters.locality', 'Lokaliti A')
+        ->where('localities', ['Lokaliti A', 'Lokaliti B'])
+        ->where('families.total', 1)
+        ->has('families.data.0.members', 2));
+    $this->getJson(route('keluarga-disemak.index', ['udm' => 'UDM A', 'locality' => 'Lokaliti Luar']))
+        ->assertUnprocessable()->assertJsonValidationErrors('locality');
+    $this->getJson(route('keluarga-disemak.index', ['locality' => 'Lokaliti A']))
+        ->assertUnprocessable()->assertJsonValidationErrors('locality');
+    $this->get(route('keluarga-disemak.index', ['udm' => 'UDM B']))
+        ->assertInertia(fn ($page) => $page->where('filters.locality', '')->where('localities', ['Lokaliti Luar']));
 });
 
 it('requires family module access', function () {
