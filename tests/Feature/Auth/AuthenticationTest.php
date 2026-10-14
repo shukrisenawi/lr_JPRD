@@ -83,3 +83,30 @@ test('users can logout', function () {
     $this->assertGuest();
     $response->assertRedirect('/');
 });
+
+test('UDM users land on their dashboard regardless of an intended URL', function () {
+    $user = User::factory()->withModules(['dashboard-udm', 'laporan'])->create(['access_level' => 'udm']);
+    $this->withSession(['url.intended' => route('laporan.index')])->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect(route('dashboard-udm', absolute: false));
+    $this->assertAuthenticatedAs($user);
+});
+
+test('UDM users using the default password must change it before opening the dashboard', function () {
+    $user = User::factory()->withModules(['dashboard-udm'])->create([
+        'access_level' => 'udm', 'password' => '123', 'must_change_password' => false,
+    ]);
+    $this->post('/login', ['email' => $user->email, 'password' => '123'])
+        ->assertRedirect(route('profile.edit', absolute: false));
+    expect($user->fresh()->must_change_password)->toBeTrue();
+    $this->get(route('dashboard-udm'))->assertRedirect(route('profile.edit'));
+});
+
+test('UDM users flagged for a password change land on their profile', function () {
+    $user = User::factory()->withModules(['dashboard-udm'])->create([
+        'access_level' => 'udm', 'must_change_password' => true,
+    ]);
+    $this->post('/login', ['email' => $user->email, 'password' => 'password'])
+        ->assertRedirect(route('profile.edit', absolute: false));
+});

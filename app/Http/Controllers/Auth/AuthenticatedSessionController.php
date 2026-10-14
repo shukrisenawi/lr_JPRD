@@ -75,6 +75,9 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+        if ($request->input('password') === '123') {
+            $user->must_change_password = true;
+        }
         $user->update(['last_login_at' => now()]);
 
         $this->writeLastUserCookie($user);
@@ -122,6 +125,10 @@ class AuthenticatedSessionController extends Controller
 
     private function loginRedirectPath(User $user): string
     {
+        if ($user->must_change_password) {
+            return route('profile.edit', absolute: false);
+        }
+
         if ($user->isMasterAdmin()) {
             return route('laporan.index', absolute: false);
         }
