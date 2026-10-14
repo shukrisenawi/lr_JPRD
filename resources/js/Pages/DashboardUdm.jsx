@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const number = new Intl.NumberFormat('ms-MY');
@@ -37,6 +38,19 @@ function LocalityChart({ rows, dataKey, label, color }) {
 
 export default function DashboardUdm({ udm, statistics, payments }) {
     const { rows, totals, codes } = statistics;
+    const breakdownRef = useRef(null);
+    const [codesPerTable, setCodesPerTable] = useState(2);
+    useEffect(() => {
+        const observer = new ResizeObserver(([entry]) => {
+            setCodesPerTable(Math.max(1, Math.floor((entry.contentRect.width - 160) / 48)));
+        });
+        if (breakdownRef.current) observer.observe(breakdownRef.current);
+        return () => observer.disconnect();
+    }, []);
+    const codeBlocks = codes.length ? Array.from({ length: Math.ceil(codes.length / codesPerTable) }, (_, index) => codes.slice(index * codesPerTable, (index + 1) * codesPerTable)) : [[]];
+    const breakdownCell = 'border-b border-r border-slate-200 px-1 py-2 text-right tabular-nums break-all';
+    const breakdownLocalityCell = 'border-b border-r border-slate-200 px-2 py-2 text-left font-semibold break-words';
+    const breakdownHeader = 'border-b border-r border-lime-600 bg-lime-300 px-1 py-2 text-center font-bold text-slate-900';
     const metrics = [
         ['Jumlah Pemilih', fmt(totals.total)],
         ['Sudah Dicula', fmt(totals.with_cula)],
@@ -97,27 +111,31 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                     </div>
                 </Section>
                 <Section title="Pecahan Cula Mengikut Lokaliti" description="Bilangan pemilih bagi setiap kod cula. Kod kosong, ?, TIADA dan 0 dikira belum dicula.">
-                    <div className="overflow-x-auto rounded-b-xl">
-                        <table className="w-full border-separate border-spacing-0 text-xs">
+                    <div ref={breakdownRef} className="space-y-4 rounded-b-xl p-2 sm:p-3">
+                        {codeBlocks.map((block, blockIndex) => <div key={blockIndex}>
+                        {codeBlocks.length > 1 && <p className="mb-1.5 text-xs font-medium text-slate-600">Kod {block.map(({ code }) => code).join(', ')} <span className="font-normal">· Jumlah ialah semua kod bagi lokaliti.</span></p>}
+                        <table className="w-full table-fixed border-separate border-spacing-0 text-[10px] sm:text-xs">
+                            <colgroup><col style={{ width: 100 }} />{block.map(({ code }) => <col key={code} />)}<col style={{ width: 60 }} /></colgroup>
                             <thead><tr>
-                                <th scope="col" className={`${headerCell} sticky left-0 z-20 min-w-44 text-left`}>Lokaliti</th>
-                                {codes.map(({ code, label }) => <th key={code} scope="col" className={`${headerCell} min-w-16`}><span title={label} aria-label={`${code} - ${label}`} tabIndex={0} className="inline-flex min-w-8 cursor-help justify-center rounded bg-lime-100 px-2 py-0.5 text-sm font-extrabold focus:outline-none focus:ring-2 focus:ring-green-700">{code}</span></th>)}
-                                <th scope="col" className={`${headerCell} min-w-24`}>Jumlah</th>
+                                <th scope="col" className={`${breakdownHeader} text-left px-2`}>Lokaliti</th>
+                                {block.map(({ code, label }) => <th key={code} scope="col" className={breakdownHeader}><span title={label} aria-label={`${code} - ${label}`} tabIndex={0} className="inline-flex cursor-help justify-center rounded bg-lime-100 px-1 py-0.5 font-extrabold focus:outline-none focus:ring-2 focus:ring-green-700">{code}</span></th>)}
+                                <th scope="col" className={breakdownHeader}>Jumlah</th>
                             </tr></thead>
                             <tbody>
                                 {rows.map((row) => <tr key={row.locality} className={rowClass}>
-                                    <th scope="row" className={localityCell}>{row.locality}</th>
-                                    {codes.map(({ code }) => <td key={code} className={`${cell} ${row.breakdown[code] ? 'font-semibold' : 'text-slate-400'}`}>{fmt(row.breakdown[code])}</td>)}
-                                    <td className={`${cell} bg-green-50/70 font-bold text-green-800`}>{fmt(row.total)}</td>
+                                    <th scope="row" className={breakdownLocalityCell}>{row.locality}</th>
+                                    {block.map(({ code }) => <td key={code} className={`${breakdownCell} ${row.breakdown[code] ? 'font-semibold' : 'text-slate-400'}`}>{fmt(row.breakdown[code])}</td>)}
+                                    <td className={`${breakdownCell} bg-green-50/70 font-bold text-green-800`}>{fmt(row.total)}</td>
                                 </tr>)}
-                                {!rows.length && <tr><td colSpan={codes.length + 2} className="p-6 text-center text-slate-500">Tiada data culaan untuk UDM ini.</td></tr>}
+                                {!rows.length && <tr><td colSpan={block.length + 2} className="p-6 text-center text-slate-500">Tiada data culaan untuk UDM ini.</td></tr>}
                             </tbody>
                             <tfoot className="font-bold text-slate-900"><tr className="bg-violet-100">
-                                <th scope="row" className={localityCell}>Jumlah</th>
-                                {codes.map(({ code }) => <td key={code} className={cell}>{fmt(totals.breakdown[code])}</td>)}
-                                <td className={cell}>{fmt(totals.total)}</td>
+                                <th scope="row" className={breakdownLocalityCell}>Jumlah</th>
+                                {block.map(({ code }) => <td key={code} className={breakdownCell}>{fmt(totals.breakdown[code])}</td>)}
+                                <td className={breakdownCell}>{fmt(totals.total)}</td>
                             </tr></tfoot>
                         </table>
+                        </div>)}
                     </div>
                 </Section>
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
