@@ -12,11 +12,13 @@ use Illuminate\Auth\AuthManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class AccessManagementController extends Controller
 {
@@ -227,6 +229,7 @@ class AccessManagementController extends Controller
         }
 
         $impersonatorId = (int) $request->user()->id;
+        $destination = $this->impersonationDestination($request, $user);
 
         $auth->guard()->logout();
         $request->session()->invalidate();
@@ -238,8 +241,33 @@ class AccessManagementController extends Controller
         $request->session()->forget('url.intended');
 
         return redirect()
-            ->route($user->canAccessModule('dashboard') ? 'dashboard' : 'profile.edit')
+            ->to($destination)
             ->with('success', "Anda kini melihat sistem sebagai {$user->name}.");
+    }
+
+    private function impersonationDestination(Request $request, User $user, ?string $fallback = null): string
+    {
+        $fallback ??= route('dashboard');
+        $previous = $request->headers->get('referer');
+
+        if (! is_string($previous) || ! str_starts_with($previous, $request->getSchemeAndHttpHost().'/')) {
+            return $fallback;
+        }
+
+        try {
+            $route = Route::getRoutes()->match(Request::create($previous, 'GET'));
+        } catch (HttpExceptionInterface) {
+            return $fallback;
+        }
+
+        $modules = collect($route->gatherMiddleware())
+            ->filter(fn ($middleware) => is_string($middleware) && str_starts_with($middleware, 'module:'));
+
+        if ($modules->isEmpty() || $modules->contains(fn ($middleware) => ! $user->canAccessModule(substr($middleware, 7)))) {
+            return $fallback;
+        }
+
+        return $previous;
     }
 
     public function stopImpersonation(Request $request, AuthManager $auth): RedirectResponse
@@ -248,6 +276,7 @@ class AccessManagementController extends Controller
         $impersonator = User::query()->find($impersonatorId);
 
         abort_unless($impersonator?->isMasterAdmin(), 403);
+        $destination = $this->impersonationDestination($request, $impersonator, route('laporan.index'));
 
         $auth->guard()->logout();
         $request->session()->invalidate();
@@ -258,7 +287,7 @@ class AccessManagementController extends Controller
         $request->session()->forget('url.intended');
 
         return redirect()
-            ->route('admin.access.index')
+            ->to($destination)
             ->with('success', 'Anda kembali sebagai master admin.');
     }
 

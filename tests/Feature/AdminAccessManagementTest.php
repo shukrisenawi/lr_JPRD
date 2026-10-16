@@ -278,6 +278,31 @@ it('allows master admin to impersonate another user and keeps return session', f
     expect(session('impersonator_id'))->toBe($masterAdmin->id);
 });
 
+it('keeps the current page and query when switching to a UDM with access', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->withModules(['dashboard', 'laporan'])->create([
+        'access_level' => 'udm', 'scope_key' => 'UDM ALPHA',
+    ]);
+    $current = route('laporan.index', ['search' => 'test', 'page' => 2]);
+
+    $this->actingAs($admin)->from($current)
+        ->post(route('admin.access.users.impersonate', $user))
+        ->assertRedirect($current);
+
+    $this->assertAuthenticatedAs($user);
+});
+
+it('falls back to dashboard for inaccessible missing or external current pages', function ($page) {
+    $admin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->withModules(['dashboard'])->create();
+
+    $this->actingAs($admin)->from($page === 'external' ? 'https://example.com/laporan' : url($page))
+        ->post(route('admin.access.users.impersonate', $user))
+        ->assertRedirect(route('dashboard'));
+
+    $this->assertAuthenticatedAs($user);
+})->with(['/laporan', '/missing-page', '/admin/access', 'external']);
+
 it('does not log out an impersonated user because of an old remember cookie', function () {
     $masterAdmin = User::factory()->masterAdmin()->create();
     $targetUser = User::factory()->withModules(['dashboard', 'kad-ten'])->create([
@@ -302,7 +327,7 @@ it('allows impersonated user session to return to original master admin', functi
         ->withSession(['impersonator_id' => $masterAdmin->id])
         ->be($targetUser)
         ->post(route('admin.access.impersonation.destroy'))
-        ->assertRedirect(route('admin.access.index'));
+        ->assertRedirect(route('laporan.index'));
 
     $this->assertAuthenticatedAs($masterAdmin);
     expect(session()->has('impersonator_id'))->toBeFalse();
@@ -317,9 +342,21 @@ it('restores master admin access to module routes after stopping impersonation',
         ->assertRedirect(route('dashboard'));
 
     $this->post(route('admin.access.impersonation.destroy'))
-        ->assertRedirect(route('admin.access.index'));
+        ->assertRedirect(route('laporan.index'));
 
     $this->get(route('dashboard'))->assertOk();
     $this->get(route('laporan.index'))->assertOk();
     $this->get(route('program.index'))->assertOk();
+});
+
+it('keeps the current page when returning to admin', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->withModules(['dashboard'])->create();
+    $current = route('laporan.index', ['page' => 2]);
+
+    $this->actingAs($user)->withSession(['impersonator_id' => $admin->id])
+        ->from($current)->post(route('admin.access.impersonation.destroy'))
+        ->assertRedirect($current);
+
+    $this->assertAuthenticatedAs($admin);
 });
