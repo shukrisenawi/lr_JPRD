@@ -1335,7 +1335,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                         <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
                                                             {phone ? (
-                                                                <PhoneNumber phone={phone} voterId={voter.id} module="vcc"><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{phone}</a></PhoneNumber>
+                                                                <PhoneNumber phone={phone}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{phone}</a></PhoneNumber>
                                                             ) : '-'}
                                                         </td>
                                                         {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
@@ -1434,7 +1434,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                     <td className="whitespace-nowrap px-2 py-2">
                                                         {phone ? (
-                                                            <PhoneNumber phone={phone} voterId={voter.id} module="vcc"><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{fmtPhone(phone)}</a></PhoneNumber>
+                                                            <PhoneNumber phone={phone}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{fmtPhone(phone)}</a></PhoneNumber>
                                                         ) : '-'}
                                                     </td>
                                                     {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}

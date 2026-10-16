@@ -71,3 +71,23 @@ it('normalizes Malaysian country prefixes consistently', function () {
         ->and(PhoneNumber::normalize('0060123456789'))->toBe('0123456789')
         ->and(PhoneNumber::normalize(null))->toBe('');
 });
+
+it('automatically verifies the phone for confirmed VCC responses', function (string $status) {
+    $user = User::factory()->withModules(['vcc'])->create();
+    $voter = phoneVerificationVoter();
+    $this->actingAs($user)->postJson(route('vcc.communication.call'), [
+        'voter_id' => $voter->id, 'status' => $status,
+    ])->assertOk();
+    $this->assertDatabaseHas('phone_verifications', [
+        'phone' => '0123456789', 'verified_by' => $user->id,
+    ]);
+})->with(['support', 'oppose']);
+
+it('does not verify the phone for unconfirmed VCC responses', function (string $status) {
+    $user = User::factory()->withModules(['vcc'])->create();
+    $voter = phoneVerificationVoter();
+    $this->actingAs($user)->postJson(route('vcc.communication.call'), [
+        'voter_id' => $voter->id, 'status' => $status,
+    ])->assertOk();
+    $this->assertDatabaseCount('phone_verifications', 0);
+})->with(['unmarked', 'no_response', 'other']);
