@@ -20,6 +20,7 @@ class PhoneVerificationController extends Controller
         $data = $request->validate([
             'phone' => ['required', 'string', 'max:40'],
             'verified' => ['required', 'boolean'],
+            'is_valid' => ['sometimes', 'required', 'boolean'],
         ]);
         $phone = PhoneNumber::normalize($data['phone']);
         abort_unless(strlen($phone) >= 9 && strlen($phone) <= 15 && in_array($phone, [
@@ -32,13 +33,16 @@ class PhoneVerificationController extends Controller
                 'phone' => $phone,
                 'pemilih_record_id' => $pemilihRecord->id,
                 'verified_by' => $user->id,
+                'is_valid' => $data['is_valid'] ?? true,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]], ['phone'], ['pemilih_record_id', 'verified_by', 'updated_at']);
+            ]], ['phone'], ['pemilih_record_id', 'verified_by', 'is_valid', 'updated_at']);
         } else {
             DB::table('phone_verifications')->where('phone', $phone)->delete();
         }
 
-        return back()->with('success', $data['verified'] ? 'Nombor telefon disahkan aktif.' : 'Pengesahan nombor telefon dibatalkan.');
+        return back()->with('success', $data['verified']
+            ? (($data['is_valid'] ?? true) ? 'Nombor telefon disahkan sah.' : 'Nombor telefon ditandakan tidak sah.')
+            : 'Pengesahan nombor telefon dibatalkan.');
     }
 }

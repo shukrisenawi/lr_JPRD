@@ -48,7 +48,18 @@ class HandleInertiaRequests extends Middleware
                 $request->user()->applyScopeToPemilihQuery($visible);
 
                 return DB::table('phone_verifications')
-                    ->whereIn('pemilih_record_id', $visible)->pluck('phone');
+                    ->where('is_valid', true)->whereIn('pemilih_record_id', $visible)->pluck('phone');
+            },
+            'invalidPhones' => function () use ($request) {
+                if (! $request->user()) {
+                    return [];
+                }
+
+                $visible = PemilihRecord::query()->select('id');
+                $request->user()->applyScopeToPemilihQuery($visible);
+
+                return DB::table('phone_verifications')
+                    ->where('is_valid', false)->whereIn('pemilih_record_id', $visible)->pluck('phone');
             },
             'auth' => [
                 'user' => $request->user()

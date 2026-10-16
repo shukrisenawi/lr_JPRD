@@ -72,6 +72,29 @@ it('normalizes Malaysian country prefixes consistently', function () {
         ->and(PhoneNumber::normalize(null))->toBe('');
 });
 
+it('marks a phone invalid and allows correcting it to valid', function () {
+    $user = User::factory()->withModules(['plk', 'vcc'])->create();
+    $voter = phoneVerificationVoter();
+    $this->actingAs($user)->put(route('plk.phone-verification', $voter), [
+        'phone' => $voter->phone_mobile, 'verified' => true, 'is_valid' => false,
+    ])->assertRedirect();
+    $this->assertDatabaseHas('phone_verifications', ['phone' => '0123456789', 'is_valid' => false]);
+    $this->get(route('plk.index'))->assertInertia(fn ($page) => $page
+        ->where('invalidPhones.0', '0123456789')->where('verifiedPhones', []));
+
+    $this->postJson(route('vcc.communication.call'), ['voter_id' => $voter->id, 'status' => 'support'])->assertOk();
+    $this->assertDatabaseHas('phone_verifications', ['phone' => '0123456789', 'is_valid' => true]);
+
+    $this->put(route('plk.phone-verification', $voter), [
+        'phone' => $voter->phone_mobile, 'verified' => true, 'is_valid' => false,
+    ])->assertRedirect();
+    $this->put(route('plk.phone-verification', $voter), [
+        'phone' => $voter->phone_mobile, 'verified' => true, 'is_valid' => true,
+    ])->assertRedirect();
+    $this->get(route('plk.index'))->assertInertia(fn ($page) => $page
+        ->where('verifiedPhones.0', '0123456789')->where('invalidPhones', []));
+});
+
 it('automatically verifies the phone for confirmed VCC responses', function (string $status) {
     $user = User::factory()->withModules(['vcc'])->create();
     $voter = phoneVerificationVoter();

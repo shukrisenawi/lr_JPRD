@@ -272,9 +272,10 @@ class VccController extends Controller
                     'phone' => $phone,
                     'pemilih_record_id' => $voter->id,
                     'verified_by' => $request->user()->id,
+                    'is_valid' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]], ['phone'], ['pemilih_record_id', 'verified_by', 'updated_at']);
+                ]], ['phone'], ['pemilih_record_id', 'verified_by', 'is_valid', 'updated_at']);
             }
         }
 
