@@ -518,6 +518,7 @@ export default function AhliPasIndex({
                                 key: "senarai",
                                 label: "Senarai Ahli",
                                 icon: "users",
+                                badge: Number(members?.total ?? 0),
                             },
                             {
                                 key: "statistik",
