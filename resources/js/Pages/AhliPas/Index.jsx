@@ -406,13 +406,13 @@ export default function AhliPasIndex({
         }
     };
 
-    const saveCula = async (code) => {
-        if (!selectedMemberForCula) return;
+    const saveCula = async (code, memberToSave = selectedMemberForCula) => {
+        if (!memberToSave || savingCula) return;
         setSavingCula(true);
         setCulaError("");
         try {
             const response = await fetch(
-                route("ahli-pas.cula.update", selectedMemberForCula.id),
+                route("ahli-pas.cula.update", memberToSave.id),
                 {
                     method: "POST",
                     headers: {
@@ -423,17 +423,17 @@ export default function AhliPasIndex({
                                 ?.content ?? "",
                         "X-Requested-With": "XMLHttpRequest",
                     },
-                    body: JSON.stringify({
+                    body: JSON.stringify(code ? {
                         cula_code: code.code,
                         cula_display_label: code.label,
-                    }),
+                    } : { keep_cula: true }),
                 },
             );
             if (!response.ok) throw new Error("Request failed");
             setLocalWrongCulaMembers((current) => ({
                 ...current,
                 data: (current?.data ?? []).map((member) =>
-                    member.id === selectedMemberForCula.id
+                    member.id === memberToSave.id && code
                         ? {
                               ...member,
                               cula_code: code.code,
@@ -443,19 +443,19 @@ export default function AhliPasIndex({
                 ),
             }));
             setCompletedCulaIds(
-                (current) => new Set([...current, selectedMemberForCula.id]),
+                (current) => new Set([...current, memberToSave.id]),
             );
             setDetailMember((current) =>
-                current?.id === selectedMemberForCula.id ? null : current,
+                current?.id === memberToSave.id ? null : current,
             );
             setCulaPendingIds((current) => {
                 const next = new Set(current);
-                next.delete(selectedMemberForCula.id);
+                next.delete(memberToSave.id);
                 return next;
             });
             setSelectedMemberForCula(null);
         } catch {
-            setCulaError("Kod culaan gagal dikemaskini. Sila cuba lagi.");
+            setCulaError("Semakan culaan gagal disimpan. Sila cuba lagi.");
         } finally {
             setSavingCula(false);
         }
@@ -506,15 +506,15 @@ export default function AhliPasIndex({
                     <div className="grid grid-cols-3 gap-1">
                         {[
                             {
-                                key: "senarai",
-                                label: "Senarai Ahli",
-                                icon: "users",
-                            },
-                            {
                                 key: "salah-cula",
                                 label: "Salah Cula",
                                 icon: "alert",
                                 badge: wrongCulaCount,
+                            },
+                            {
+                                key: "senarai",
+                                label: "Senarai Ahli",
+                                icon: "users",
                             },
                             {
                                 key: "statistik",
@@ -995,6 +995,16 @@ export default function AhliPasIndex({
                                                             className="flex-1 rounded-md bg-green-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-green-500 active:scale-[0.98]"
                                                         >
                                                             Cula
+                                                        </button>
+                                                    )}
+                                                    {!isCompleted && (
+                                                        <button
+                                                            type="button"
+                                                            disabled={savingCula}
+                                                            onClick={() => saveCula(null, member)}
+                                                            className="flex-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                        >
+                                                            Cula Sama
                                                         </button>
                                                     )}
                                                     <button

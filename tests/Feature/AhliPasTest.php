@@ -208,6 +208,33 @@ it('requires the ahli pas role permission', function () {
     $this->assertAuthenticatedAs($user);
 });
 
+it('approves cula sama without changing the existing code or label', function () {
+    $user = User::factory()->withModules(['ahli-pas'])->create();
+    $member = createAhliPasRecord([
+        'no_ahli' => 'PAS-001',
+        'cula_code' => '1',
+        'cula_display_label' => '1 - UMNO',
+    ]);
+
+    $this->actingAs($user)
+        ->postJson(route('ahli-pas.cula.update', $member), ['keep_cula' => true])
+        ->assertOk();
+
+    $this->assertDatabaseHas('pemilih_records', [
+        'id' => $member->id,
+        'cula_code' => '1',
+        'cula_display_label' => '1 - UMNO',
+    ]);
+    $this->assertDatabaseHas('cula_work_items', [
+        'pemilih_record_id' => $member->id,
+        'marked_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get('/ahli-pas?tab=salah-cula')
+        ->assertInertia(fn ($page) => $page->where('wrong_cula_members.total', 0));
+});
+
 it('updates salah cula member to any cula code within the user scope', function () {
     $user = User::factory()->withModules(['ahli-pas'])->create([
         'access_level' => 'cawangan',

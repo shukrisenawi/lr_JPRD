@@ -98,15 +98,18 @@ class AhliPasController extends Controller
     public function updateCula(Request $request, PemilihRecord $pemilihRecord): JsonResponse
     {
         $validated = $request->validate([
-            'cula_code' => ['required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
-            'cula_display_label' => ['required', 'string', 'max:255'],
+            'keep_cula' => ['sometimes', 'boolean'],
+            'cula_code' => ['exclude_if:keep_cula,true', 'required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
+            'cula_display_label' => ['exclude_if:keep_cula,true', 'required', 'string', 'max:255'],
         ]);
 
         $record = $this->baseQuery($request->user())->findOrFail($pemilihRecord->id);
-        $record->update([
-            'cula_code' => $validated['cula_code'],
-            'cula_display_label' => $validated['cula_display_label'],
-        ]);
+        if (! $request->boolean('keep_cula')) {
+            $record->update([
+                'cula_code' => $validated['cula_code'],
+                'cula_display_label' => $validated['cula_display_label'],
+            ]);
+        }
 
         CulaWorkItem::query()->firstOrCreate(
             ['pemilih_record_id' => $record->id],
