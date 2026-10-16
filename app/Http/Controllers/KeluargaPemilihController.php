@@ -118,6 +118,7 @@ class KeluargaPemilihController extends Controller
 
         $familyCountsByUdmQuery = DB::table('pemilih_family_members')
             ->join('pemilih_records', 'pemilih_records.id', '=', 'pemilih_family_members.pemilih_record_id')
+            ->whereIn('pemilih_family_members.pemilih_family_id', $this->visibleFamilyQuery($user)->select('pemilih_families.id'))
             ->whereNotNull('pemilih_records.dm')
             ->where('pemilih_records.dm', '!=', '')
             ->select('pemilih_records.dm')
@@ -907,7 +908,9 @@ class KeluargaPemilihController extends Controller
     {
         abort_if($user->access_level === 'udm' && blank($user->scope_key), 403);
 
-        return PemilihFamily::query()->whereHas('members', function (Builder $query) use ($user, $udm, $locality): void {
+        return PemilihFamily::query()->whereHas('members', function (Builder $query): void {
+            $query->whereNull('cula_code')->orWhere('cula_code', 'not like', '3%');
+        })->whereHas('members', function (Builder $query) use ($user, $udm, $locality): void {
             $user->applyScopeToPemilihQuery($query);
             $this->whereMalayRace($query);
             if (filled($udm)) {

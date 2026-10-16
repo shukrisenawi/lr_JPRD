@@ -50,6 +50,26 @@ function createKeluargaPemilihRecord(array $attributes = []): PemilihRecord
     ], $attributes));
 }
 
+it('excludes all cula 3 families but retains mixed and uncoded families', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    foreach ([['3B', '3D'], ['3K', '1'], ['3M', null]] as $index => $codes) {
+        $family = PemilihFamily::query()->create(['name' => 'Keluarga '.$index]);
+        foreach ($codes as $code) {
+            $family->members()->attach(createKeluargaPemilihRecord(['cula_code' => $code])->id);
+        }
+    }
+
+    $this->actingAs($user)->get(route('keluarga-pemilih.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->has('families.data', 2)
+            ->where('families.data.0.name', 'Keluarga 2')
+            ->where('families.data.1.name', 'Keluarga 1')
+            ->where('familyTabCounts.families', 2)
+            ->where('allStats.families', 2)
+            ->where('udmSummaries.0.families', 2));
+});
+
 it('creates a voter family manually, adds members, and removes a member', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $first = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
