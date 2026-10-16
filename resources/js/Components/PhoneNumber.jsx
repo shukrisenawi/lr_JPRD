@@ -32,7 +32,7 @@ export default function PhoneNumber({ phone, voterId, module, children }) {
         {module && voterId && normalized.length >= 9 && normalized.length <= 15 && <button type="button" disabled={processing} onClick={toggle}
             title={verified ? 'Batalkan pengesahan telefon' : 'Sahkan nombor telefon aktif'}
             aria-label={verified ? 'Batalkan pengesahan telefon' : 'Sahkan nombor telefon aktif'}
-            className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded border text-sm font-bold disabled:opacity-40 ${verified ? 'border-rose-200 text-rose-600 hover:bg-rose-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'}`}>
+            className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition disabled:opacity-40 ${verified ? 'border-rose-500 text-rose-500 hover:bg-rose-50' : 'border-slate-300 text-slate-400 hover:border-emerald-500 hover:text-emerald-500'}`}>
             {processing ? '…' : verified ? '×' : '✓'}
         </button>}
     </span>;
