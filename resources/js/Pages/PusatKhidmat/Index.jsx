@@ -935,14 +935,6 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                                                         >
                                                             Cula
                                                         </a>
-                                                        <button
-                                                            type="button"
-                                                            disabled={checkingIds.has(record.id)}
-                                                            onClick={() => handleCheckToggle(record.id)}
-                                                            className="inline-flex flex-1 items-center justify-center rounded-md bg-blue-600 px-2 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                                        >
-                                                            {checkingIds.has(record.id) ? 'Menyimpan...' : 'Cula Sama'}
-                                                        </button>
                                                         {phone && phone !== '-' && (
                                                             <a
                                                                 href={buildTelegramLink('kemastel', record.pemilih.no_kp)}
