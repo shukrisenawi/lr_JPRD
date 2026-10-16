@@ -8,7 +8,6 @@ use App\Models\PemilihRecord;
 use App\Models\VoterCommunication;
 use App\Services\HashtagService;
 use App\Support\CulaCodes;
-use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -263,20 +262,6 @@ class VccController extends Controller
                 'type' => 'call',
                 ...$attributes,
             ]);
-        }
-
-        if (in_array($data['status'], ['support', 'oppose'], true)) {
-            $phone = PhoneNumber::normalize($voter->phone_mobile ?: $voter->phone_home);
-            if (strlen($phone) >= 9 && strlen($phone) <= 15) {
-                DB::table('phone_verifications')->upsert([[
-                    'phone' => $phone,
-                    'pemilih_record_id' => $voter->id,
-                    'verified_by' => $request->user()->id,
-                    'is_valid' => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]], ['phone'], ['pemilih_record_id', 'verified_by', 'is_valid', 'updated_at']);
-            }
         }
 
         return response()->json([

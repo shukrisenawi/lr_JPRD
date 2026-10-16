@@ -83,7 +83,7 @@ it('marks a phone invalid and allows correcting it to valid', function () {
         ->where('invalidPhones.0', '0123456789')->where('verifiedPhones', []));
 
     $this->postJson(route('vcc.communication.call'), ['voter_id' => $voter->id, 'status' => 'support'])->assertOk();
-    $this->assertDatabaseHas('phone_verifications', ['phone' => '0123456789', 'is_valid' => true]);
+    $this->assertDatabaseHas('phone_verifications', ['phone' => '0123456789', 'is_valid' => false]);
 
     $this->put(route('plk.phone-verification', $voter), [
         'phone' => $voter->phone_mobile, 'verified' => true, 'is_valid' => false,
@@ -95,22 +95,25 @@ it('marks a phone invalid and allows correcting it to valid', function () {
         ->where('verifiedPhones.0', '0123456789')->where('invalidPhones', []));
 });
 
-it('automatically verifies the phone for confirmed VCC responses', function (string $status) {
+it('preserves verified phone status when changing VCC responses', function (string $status) {
     $user = User::factory()->withModules(['vcc'])->create();
     $voter = phoneVerificationVoter();
+    $this->actingAs($user)->put(route('vcc.phone-verification', $voter), [
+        'phone' => $voter->phone_mobile, 'verified' => true, 'is_valid' => true,
+    ])->assertRedirect();
     $this->actingAs($user)->postJson(route('vcc.communication.call'), [
         'voter_id' => $voter->id, 'status' => $status,
     ])->assertOk();
     $this->assertDatabaseHas('phone_verifications', [
-        'phone' => '0123456789', 'verified_by' => $user->id,
+        'phone' => '0123456789', 'verified_by' => $user->id, 'is_valid' => true,
     ]);
-})->with(['support', 'oppose']);
+})->with(['unmarked', 'no_response', 'support', 'oppose', 'other']);
 
-it('does not verify the phone for unconfirmed VCC responses', function (string $status) {
+it('does not verify the phone when changing any VCC response', function (string $status) {
     $user = User::factory()->withModules(['vcc'])->create();
     $voter = phoneVerificationVoter();
     $this->actingAs($user)->postJson(route('vcc.communication.call'), [
         'voter_id' => $voter->id, 'status' => $status,
     ])->assertOk();
     $this->assertDatabaseCount('phone_verifications', 0);
-})->with(['unmarked', 'no_response', 'other']);
+})->with(['unmarked', 'no_response', 'support', 'oppose', 'other']);
