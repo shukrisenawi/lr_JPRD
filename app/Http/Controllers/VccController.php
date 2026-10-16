@@ -331,7 +331,7 @@ class VccController extends Controller
                 $q->whereNull('birthday_image')->orWhere('birthday_image', '');
             }));
 
-        if (! $skipMarkedFilter) {
+        if (! $skipMarkedFilter && ! request()->routeIs('kempen.hari-jadi.*')) {
             if ($filters['show_marked']) {
                 $query->whereHas('culaWorkItem');
             } elseif (empty($filters['hashtags'])) {
@@ -640,14 +640,14 @@ class VccController extends Controller
         return [
             'udm' => $requestedUdm,
             'locality' => $requestedLocality,
-            'show_marked' => $request->boolean('show_marked'),
+            'show_marked' => ! $request->routeIs('kempen.hari-jadi.*') && $request->boolean('show_marked'),
             'group_id' => $groupId,
             'custom_mode' => $customMode,
             'keturunan' => trim((string) $request->query('keturunan', '')),
             'jantina' => trim((string) $request->query('jantina', '')),
             'umur_dari' => $request->query('umur_dari') !== null && $request->query('umur_dari') !== '' ? (int) $request->query('umur_dari') : null,
             'umur_hingga' => $request->query('umur_hingga') !== null && $request->query('umur_hingga') !== '' ? (int) $request->query('umur_hingga') : null,
-            'per_udm_count' => $perUdmCount,
+            'per_udm_count' => $request->routeIs('kempen.hari-jadi.*') ? 0 : $perUdmCount,
             'bulan_lahir' => trim((string) $request->query('bulan_lahir', '')),
             'tarikh_lahir' => $this->normalizeDateFilter($request->query('tarikh_lahir', '')),
             'call_status' => $callStatus,

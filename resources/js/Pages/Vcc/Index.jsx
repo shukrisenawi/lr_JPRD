@@ -706,11 +706,22 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                 const resp = await fetch(`${route('vcc.search')}?${params.toString()}&all=1`, {
                     headers: { Accept: 'application/json' },
                 });
+                if (kempen && !resp.ok) throw new Error('Export failed');
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data.voters) exportRows = data.voters;
                 }
-            } catch (_) {}
+            } catch (_) {
+                if (kempen) { alert('Eksport gagal. Sila cuba lagi.'); return; }
+            }
+        }
+
+        if (kempen) {
+            try {
+                const { exportBirthdayVoters } = await import('@/Utils/exportBirthdayVoters');
+                await exportBirthdayVoters(exportRows, formState, selectedGroup?.nama_group || '', search.trim());
+            } catch (_) { alert('Eksport gagal. Sila cuba lagi.'); }
+            return;
         }
 
         const headers = ['No', 'No Kp', 'Nama', 'Alamat', 'Telefon', 'Cula'];
@@ -1025,7 +1036,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                             </div>
 
                             <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[7rem_5rem_5rem_10rem_12rem_12rem] xl:items-end">
-                                <div>
+                                {!kempen && <div>
                                     <label htmlFor="vcc-per-udm" className="block whitespace-nowrap text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bilangan / UDM</label>
                                     <input
                                         id="vcc-per-udm"
@@ -1036,9 +1047,9 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                         className="input-field mt-1"
                                         placeholder="cth: 20"
                                     />
-                                </div>
+                                </div>}
 
-                                <div>
+                                {!kempen && <div>
                                     <label htmlFor="vcc-dah-cula" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Dah Siap</label>
                                     <label
                                         htmlFor="vcc-dah-cula"
@@ -1052,7 +1063,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                             className="h-4 w-4 rounded border-slate-300 bg-white text-green-600 focus:ring-green-500"
                                         />
                                     </label>
-                                </div>
+                                </div>}
 
                                 <div>
                                     <label htmlFor="vcc-ada-tel" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Ada Tel</label>
@@ -1334,7 +1345,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                                         <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
                                                             {phone ? (
-                                                                <PhoneNumber phone={phone} voterId={voter.id} module={kempen ? 'kempen.hari-jadi' : 'vcc'}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{phone}</a></PhoneNumber>
+                                                                <PhoneNumber phone={phone} voterId={voter.id} module={kempen ? undefined : 'vcc'}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{phone}</a></PhoneNumber>
                                                             ) : '-'}
                                                         </td>
                                                         {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
@@ -1434,7 +1445,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                                     <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                     <td className="whitespace-nowrap px-2 py-2">
                                                         {phone ? (
-                                                            <PhoneNumber phone={phone} voterId={voter.id} module={kempen ? 'kempen.hari-jadi' : 'vcc'}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{fmtPhone(phone)}</a></PhoneNumber>
+                                                            <PhoneNumber phone={phone} voterId={voter.id} module={kempen ? undefined : 'vcc'}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{fmtPhone(phone)}</a></PhoneNumber>
                                                         ) : '-'}
                                                     </td>
                                                     {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}

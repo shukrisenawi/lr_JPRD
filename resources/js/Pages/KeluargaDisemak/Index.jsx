@@ -59,8 +59,6 @@ export default function Index({ filters, udm_locked: udmLocked = false, udmSumma
             setSaving(false);
         }
     }
-    const totalFamilies = udmSummaries.reduce((total, item) => total + Number(item.families), 0);
-    const reviewedUdm = udmSummaries.filter((item) => item.families > 0).length;
     const formatNumber = (value) => Number(value).toLocaleString('ms-MY');
 
     function filterParams(udm, locality = '', extra = {}) {
@@ -86,19 +84,10 @@ export default function Index({ filters, udm_locked: udmLocked = false, udmSumma
                         <h1 className="mt-0.5 heading-lg">Kempen</h1>
                     </div>
                     <KempenTabs active="sasaran" udm={filters.udm} locality={filters.locality || ''} udms={udmSummaries.map((item) => item.udm)} localities={localities} udmLocked={udmLocked} loading={loading} errors={errors} onFilterChange={(key, value) => key === 'udm' ? applyFilter(value) : applyFilter(filters.udm, value)} />
-                    <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        {[[formatNumber(totalFamilies), 'Keluarga disemak'], [formatNumber(reviewedUdm), 'UDM dengan semakan'], [formatNumber(udmSummaries.length), 'UDM dalam akses']].map(([value, label]) => (
-                            <div key={label} className="card p-3">
-                                <dt className="text-[10px] font-black uppercase tracking-wider text-slate-500">{label}</dt>
-                                <dd className="mt-0.5 text-lg font-black tabular-nums text-slate-900">{value}</dd>
-                            </div>
-                        ))}
-                    </dl>
                 </header>
 
-                <section aria-label="Penapis keluarga" aria-busy={loading} className="overflow-hidden rounded-xl border border-white bg-white p-4 shadow-sm shadow-green-600/20">
-                    <p role="status" className="text-xs text-slate-600">{loading ? 'Memuatkan keluarga...' : 'Senarai ditapis secara automatik.'}</p>
-                    {filters.udm && <details ref={filterCardRef} className="card mt-3 overflow-hidden border-white">
+                {filters.udm && <section aria-label="Penapis keluarga" aria-busy={loading}>
+                    <details ref={filterCardRef} className="card overflow-hidden border-white">
                         <summary className="cursor-pointer px-3 py-3 text-xs font-bold text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">Tapisan group pemilih dan kod cula{Boolean(filters.group_ids?.length || filters.cula_codes?.length) && <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800">Penapis aktif</span>}</summary>
                         <div className="space-y-3 border-t border-slate-100 p-3">
                         <div className="sm:max-w-xs">
@@ -114,8 +103,8 @@ export default function Index({ filters, udm_locked: udmLocked = false, udmSumma
                         </fieldset>
                         <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={loading} onClick={() => { if (filterCardRef.current) filterCardRef.current.open = false; applyFilter(filters.udm, filters.locality || '', { cula_codes: [], group_ids: [] }); }} className="btn-ghost">Reset</button><p className="text-[10px] text-slate-500">{filters.group_ids?.length ? 'Kod cula mengikut group dipilih. Pilih semua group untuk menapis kod cula sendiri.' : 'Tanda satu atau lebih kod cula untuk terus menapis.'}</p></div>
                         </div>
-                    </details>}
-                </section>
+                    </details>
+                </section>}
 
                 {!filters.udm ? (
                     <section aria-label="Ringkasan UDM" className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
