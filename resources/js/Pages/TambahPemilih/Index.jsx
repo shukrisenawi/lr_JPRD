@@ -2,6 +2,7 @@ import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import HashtagInput from '@/Components/HashtagInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { orderUdms } from '@/Utils/udmOrder';
@@ -322,7 +323,7 @@ function DetailModal({ voter, onClose }) {
                     {fields.map(([l, v]) => (
                         <div key={l} className="rounded-md border border-slate-100 bg-slate-50 px-2.5 py-1.5">
                             <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
-                            <p className="mt-0.5 text-xs font-medium text-slate-800">{v}</p>
+                            <p className="mt-0.5 text-xs font-medium text-slate-800">{l.startsWith('Tel') ? <PhoneNumber phone={v} /> : v}</p>
                         </div>
                     ))}
                 </div>
@@ -611,7 +612,7 @@ function SenaraiTab({ manualVoters, manualSearch = '', dms, localitiesByDm, cula
                                         </td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.no_kp || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.is_member ? 'Ya' : 'Tidak'}</td>
-                                        <td className="px-3 py-2.5 text-slate-600">{voter.phone_mobile || '-'}</td>
+                                        <td className="px-3 py-2.5 text-slate-600"><PhoneNumber phone={voter.phone_mobile} /></td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.cula_code || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.dm || '-'}</td>
                                         <td className="px-3 py-2.5 text-slate-600">{voter.locality || '-'}</td>

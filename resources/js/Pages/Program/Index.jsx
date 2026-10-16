@@ -6,6 +6,7 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router, usePage, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Swal from 'sweetalert2';
@@ -187,7 +188,7 @@ function VoterDetailCard({ voter, onAdd, adding, subPrograms, selectedSubIds, on
                 {fields.map(([l, v]) => (
                     <div key={l} className="rounded-md border border-slate-100 bg-white px-2 py-1">
                         <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
-                        <p className="text-xs font-medium text-slate-800">{v || '-'}</p>
+                        <p className="text-xs font-medium text-slate-800">{l.startsWith('Tel') ? <PhoneNumber phone={v} /> : v || '-'}</p>
                     </div>
                 ))}
             </div>
@@ -265,7 +266,7 @@ function AttendeeDetailModal({ attendee, onClose, onOpenTelegram, tgReady, isCul
                     {fields.map(([l, v]) => (
                         <div key={l} className="rounded border border-green-100 bg-white px-2 py-1.5">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-green-700">{l}</p>
-                            <p className="truncate text-xs font-medium text-slate-800">{v}</p>
+                            <p className="truncate text-xs font-medium text-slate-800">{l.startsWith('Tel') ? <PhoneNumber phone={v} /> : v}</p>
                         </div>
                     ))}
                 </div>
@@ -896,7 +897,7 @@ function SearchVoterPanel({ selectedProgram, committeeGroupOptions }) {
                                             ) : (
                                                 <div className={`flex h-7 w-7 items-center justify-center rounded-full ${alreadyAdded ? 'bg-slate-200 text-slate-500' : 'bg-green-50 text-green-700'}`}><UserIcon className="h-3.5 w-3.5" /></div>
                                             )}
-                                            <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">No Kp: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {v.phone_mobile || '-'}</p></div>
+                                            <div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{v.name}</p><p className="text-xs font-medium text-slate-500">No Kp: {v.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: <PhoneNumber phone={v.phone_mobile} /></p></div>
                                             <div className="min-w-0 text-left">
                                                 <p className="truncate text-xs font-bold text-slate-800">{alreadyAdded ? (hasSubs ? 'Klik untuk tambah sub program' : 'Pemilih ini telah dipilih') : (v.dm || '-')}</p>
                                                 <p className="truncate text-xs font-medium text-slate-500">{alreadyAdded ? '' : (v.locality || '-')}</p>
@@ -1406,7 +1407,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
                                                         <span className="text-slate-400">/</span>
                                                         <span className="font-medium text-slate-600">{a.locality || '-'}</span>
                                                         <span className="text-slate-300">•</span>
-                                                        <span className="font-medium text-slate-600">{a.phone_mobile || a.phone_home || '-'}</span>
+                                                        <span className="font-medium text-slate-600"><PhoneNumber phone={a.phone_mobile || a.phone_home} /></span>
                                                     </div>
                                                 </div>
                                                 {(a.group_badges?.length > 0 || a.committee_badges?.length > 0 || selectedProgram?.sub_programs?.length > 0) && (

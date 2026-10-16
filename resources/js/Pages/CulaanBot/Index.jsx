@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import InputError from '@/Components/InputError';
 import CropModal from '@/Components/CropModal';
 import { Head, router, usePage } from '@inertiajs/react';
@@ -895,7 +896,7 @@ export default function CulaanBotIndex({ filters, summary, udms, localities, vot
                                                 </div>
                                                 <div>
                                                     <span className="font-semibold text-green-700">Telefon </span>
-                                                    {phone ? <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline" onClick={(e) => e.stopPropagation()}>{phone}</a> : <p className="mt-0.5 font-bold text-slate-800">-</p>}
+                                                    {phone ? <PhoneNumber phone={phone}><a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold hover:underline" onClick={(e) => e.stopPropagation()}>{phone}</a></PhoneNumber> : <p className="mt-0.5 font-bold text-slate-800">-</p>}
                                                 </div>
                                                 <div>
                                                     <span className="font-semibold text-green-700">Umur</span>

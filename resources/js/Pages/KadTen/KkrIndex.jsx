@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
@@ -131,7 +132,7 @@ export default function KkrIndex({ kads, udms, filters, udm_summaries: udmSummar
                 <p className="my-2 text-xs text-slate-600">Alamat keluarga: {family.address || 'Belum dinyatakan'}{!family.reviewed_at && ' · Semakan telah ditarik balik'}</p>
                 <div className="space-y-2">{family.members.map(member => <div key={member.id} className="flex flex-col gap-1 rounded-lg bg-slate-50 p-3 text-xs sm:flex-row sm:items-center sm:justify-between">
                     <div><p className="font-semibold text-slate-800">{member.name}</p><p className="text-slate-600">{member.no_kp || member.old_ic} · {member.dm} / {member.locality}</p></div>
-                    <p className="text-slate-600">{formatPhoneNumber(member.phone_mobile || member.phone_home)}</p><span className="font-bold text-green-800">{member.cula_display_label || member.cula_code}</span>
+                    <p className="text-slate-600"><PhoneNumber phone={member.phone_mobile || member.phone_home}>{formatPhoneNumber(member.phone_mobile || member.phone_home)}</PhoneNumber></p><span className="font-bold text-green-800">{member.cula_display_label || member.cula_code}</span>
                 </div>)}{!family.members.length && <p className="text-xs text-slate-600">Tiada ahli dengan cula sasaran.</p>}</div>
                 {canManage && <button type="button" className="mt-3 text-xs font-semibold text-red-700" onClick={() => {
                     if (window.confirm('Keluarkan keluarga ini daripada jagaan ketua? Rekod keluarga dikekalkan.')) {

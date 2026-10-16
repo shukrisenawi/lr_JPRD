@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router, usePage } from '@inertiajs/react';
 import { orderUdms } from '@/Utils/udmOrder';
 import { useEffect, useMemo, useState } from 'react';
@@ -202,7 +203,7 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
                                     <p className="text-xs font-semibold text-slate-700">{voter.dm || 'UDM tidak dinyatakan'}</p>
                                     <p className="mt-0.5 text-[11px] text-slate-500">{voter.locality || '-'}</p>
                                 </td>
-                                <td className="px-4 py-3 text-xs font-medium text-slate-700">{voter.phone || '-'}</td>
+                                <td className="px-4 py-3 text-xs font-medium text-slate-700"><PhoneNumber phone={voter.phone} voterId={voter.id} module="plk" /></td>
                                 <td className="max-w-[260px] whitespace-pre-line break-words px-4 py-3 text-[11px] leading-relaxed text-slate-600">{voter.catatan || '-'}</td>
                                 {checkedTab && (
                                     <td className="px-4 py-3">

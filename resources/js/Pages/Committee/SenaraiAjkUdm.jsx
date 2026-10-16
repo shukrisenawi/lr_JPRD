@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import { Head } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
@@ -158,7 +159,7 @@ function GroupMembersPopup({ group, onClose, onAvatarClick }) {
                                             <span>{m.voter?.no_kp || m.voter?.old_ic || '-'}</span>
                                             {(m.voter?.phone_mobile || m.voter?.phone_home) && (
                                                 <span className="ml-2 text-slate-500">
-                                                    <Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}
+                                                    <Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" /><PhoneNumber phone={m.voter?.phone_mobile || m.voter?.phone_home} />
                                                 </span>
                                             )}
                                         </p>

@@ -1,6 +1,7 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import { compareUdms } from '@/Utils/udmOrder';
 
@@ -585,7 +586,7 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
                                                     <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
                                                     <p className="text-[10px] text-slate-400">
                                                         <CopyableIc voter={m.voter} />
-                                                        {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
+                                                        {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" /><PhoneNumber phone={m.voter?.phone_mobile || m.voter?.phone_home} /></span>}
                                                     </p>
                                                     <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
                                                     <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
@@ -654,7 +655,7 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                                         <p className={`text-xs font-bold ${m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{m.voter?.name}</p>
                                         <p className="text-[10px] text-slate-400">
                                             <CopyableIc voter={m.voter} />
-                                            {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
+                                            {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" /><PhoneNumber phone={m.voter?.phone_mobile || m.voter?.phone_home} /></span>}
                                         </p>
                                         <span className="mt-0.5 inline-block rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">{m.scope_name || 'Tiada UDM'}</span>
                                         <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
@@ -1117,7 +1118,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                                                     {m.scope_name ? <span className="text-sky-500"> — {m.scope_name}</span> : ''}
                                                                 </p>
                                                                  {(m.voter?.phone_mobile || m.voter?.phone_home) && (
-                                                                     <p className="text-[10px] text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</p>
+                                                                     <p className="text-[10px] text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" /><PhoneNumber phone={m.voter?.phone_mobile || m.voter?.phone_home} /></p>
                                                                  )}
                                                                  <JprdAssignments member={m} jprdAssignmentsByMemberKey={jprdAssignmentsByMemberKey} />
                                                              </div>
@@ -1335,7 +1336,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                                 <p className={'text-xs font-bold ' + (match ? 'text-amber-900' : (m.voter?.is_manual ? 'text-blue-700' : 'text-slate-800'))}>{m.voter?.name}</p>
                                                 <p className="text-[10px] text-slate-400">
                                                     <CopyableIc voter={m.voter} />
-                                                    {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" />{m.voter?.phone_mobile || m.voter?.phone_home}</span>}
+                                                    {(m.voter?.phone_mobile || m.voter?.phone_home) && <span className="ml-2 text-slate-500"><Icon name="phone" className="mr-0.5 inline h-2 w-2 align-middle" /><PhoneNumber phone={m.voter?.phone_mobile || m.voter?.phone_home} /></span>}
                                                 </p>
                                                 <span className="mt-0.5 inline-block rounded-md bg-green-50 px-2 py-0.5 text-[10px] font-bold text-green-700">{m.position?.name}</span>
                                                 {m.notes && <p className="mt-0.5 text-[9px] text-amber-600">{m.notes}</p>}

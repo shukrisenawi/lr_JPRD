@@ -26,6 +26,7 @@ use App\Http\Controllers\KkrTenController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PemilihBaruController;
 use App\Http\Controllers\PemilihHashtagController;
+use App\Http\Controllers\PhoneVerificationController;
 use App\Http\Controllers\PlkController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgramController;
@@ -184,6 +185,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/culaan-bot/{pemilihRecord}/update-cula', [CulaanBotController::class, 'updateCula'])->middleware('module:culaan-bot')->name('culaan-bot.update-cula');
 
     Route::get('/vcc', [VccController::class, 'index'])->middleware('module:vcc')->name('vcc.index');
+    Route::put('/vcc/{pemilihRecord}/phone-verification', [PhoneVerificationController::class, 'update'])->middleware('module:vcc')->name('vcc.phone-verification');
     Route::get('/vcc/search', [VccController::class, 'search'])->middleware('module:vcc')->name('vcc.search');
     Route::post('/vcc/{pemilihRecord}/mark', [VccController::class, 'storeMark'])->middleware('module:vcc')->name('vcc.mark.store');
     Route::delete('/vcc/{pemilihRecord}/mark', [VccController::class, 'destroyMark'])->middleware('module:vcc')->name('vcc.mark.destroy');
@@ -192,6 +194,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/vcc/communication/call', [VccController::class, 'updateCallStatus'])->middleware('module:vcc')->name('vcc.communication.call');
 
     Route::get('/plk', [PlkController::class, 'index'])->middleware('module:plk')->name('plk.index');
+    Route::put('/plk/{pemilihRecord}/phone-verification', [PhoneVerificationController::class, 'update'])->middleware('module:plk')->name('plk.phone-verification');
     Route::get('/plk/export', [PlkController::class, 'export'])->middleware('module:plk')->name('plk.export');
     Route::post('/plk/{pemilihRecord}/update-cula', [PlkController::class, 'updateCula'])->middleware('module:plk')->name('plk.update-cula');
     Route::post('/plk/{pemilihRecord}/verify', [PlkController::class, 'verify'])->middleware('module:plk')->name('plk.verify');

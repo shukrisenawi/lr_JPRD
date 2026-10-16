@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
@@ -254,7 +255,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
                                             <td className="px-3 py-2 text-slate-600">{voter.no_kp || voter.old_ic || '-'}</td>
                                             <td className="px-3 py-2 text-slate-600">{voter.dm || '-'}</td>
                                             <td className="px-3 py-2 text-slate-600">{voter.locality || '-'}</td>
-                                             <td className="px-3 py-2 text-slate-600">{formatPhoneNumber(voter.phone_mobile || voter.phone_home)}</td>
+                                             <td className="px-3 py-2 text-slate-600"><PhoneNumber phone={voter.phone_mobile || voter.phone_home}>{formatPhoneNumber(voter.phone_mobile || voter.phone_home)}</PhoneNumber></td>
                                             <td className="px-3 py-2">
                                                 <span className="inline-block rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700">
                                                     {voter.cula_display_label || voter.cula_code || '-'}

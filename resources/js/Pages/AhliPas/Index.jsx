@@ -1,4 +1,5 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import PhoneNumber from '@/Components/PhoneNumber';
 import N8nMessageModal from "@/Components/N8nMessageModal";
 import { Head, router, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
@@ -193,7 +194,7 @@ function DetailModal({ member, onClose, canViewMemberNumber }) {
                                 {label}
                             </p>
                             <p className="mt-0.5 break-words text-xs font-medium text-slate-700">
-                                {value || "-"}
+                                {label === 'No. Telefon' ? <PhoneNumber phone={value} /> : value || "-"}
                             </p>
                         </div>
                     ))}

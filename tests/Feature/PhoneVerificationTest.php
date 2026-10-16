@@ -1,0 +1,73 @@
+<?php
+
+use App\Models\PemilihRecord;
+use App\Models\User;
+use App\Support\PhoneNumber;
+use Illuminate\Support\Str;
+
+function phoneVerificationVoter(array $attributes = []): PemilihRecord
+{
+    return PemilihRecord::create(array_merge([
+        'identity_number' => (string) Str::uuid(),
+        'name' => 'UJIAN TELEFON',
+        'dm' => 'UDM A',
+        'locality' => 'LOKALITI A',
+        'status' => 'aktif',
+        'cula_code' => '3B',
+        'phone_mobile' => '012-3456789',
+    ], $attributes));
+}
+
+it('verifies and cancels the same phone across PLK and VCC without changing PLK verification', function () {
+    $user = User::factory()->withModules(['plk', 'vcc'])->create();
+    $voter = phoneVerificationVoter();
+    $this->actingAs($user)->put(route('plk.phone-verification', $voter), [
+        'phone' => '+60 12-3456789', 'verified' => true,
+    ])->assertRedirect();
+    $this->assertDatabaseHas('phone_verifications', ['phone' => '0123456789', 'verified_by' => $user->id]);
+    expect($voter->fresh()->plk_verified_at)->toBeNull();
+    $this->get(route('plk.index'))->assertInertia(fn ($page) => $page->where('verifiedPhones.0', '0123456789'));
+    $this->actingAs($user)->put(route('vcc.phone-verification', $voter), [
+        'phone' => '0123456789', 'verified' => false,
+    ])->assertRedirect();
+    $this->assertDatabaseCount('phone_verifications', 0);
+});
+
+it('does not duplicate differently formatted phone numbers', function () {
+    $user = User::factory()->withModules(['vcc'])->create();
+    foreach ([phoneVerificationVoter(), phoneVerificationVoter(['phone_mobile' => '+60123456789'])] as $voter) {
+        $this->actingAs($user)->put(route('vcc.phone-verification', $voter), [
+            'phone' => $voter->phone_mobile, 'verified' => true,
+        ])->assertRedirect();
+    }
+    $this->assertDatabaseCount('phone_verifications', 1);
+});
+
+it('rejects unrelated empty and malformed phone numbers', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    $voter = phoneVerificationVoter();
+    foreach (['0199999999', '', 'abc', str_repeat('1', 41)] as $phone) {
+        $this->actingAs($user)->putJson(route('plk.phone-verification', $voter), [
+            'phone' => $phone, 'verified' => true,
+        ])->assertUnprocessable();
+    }
+    $this->assertDatabaseCount('phone_verifications', 0);
+});
+
+it('requires the relevant module and respects voter scope', function () {
+    $voter = phoneVerificationVoter();
+    $user = User::factory()->withModules(['vcc'])->create();
+    $this->actingAs($user)->putJson(route('plk.phone-verification', $voter), [
+        'phone' => $voter->phone_mobile, 'verified' => true,
+    ])->assertForbidden();
+    $scoped = User::factory()->withModules(['plk'])->create(['access_level' => 'udm', 'scope_key' => 'UDM B']);
+    $this->actingAs($scoped)->putJson(route('plk.phone-verification', $voter), [
+        'phone' => $voter->phone_mobile, 'verified' => true,
+    ])->assertForbidden();
+});
+
+it('normalizes Malaysian country prefixes consistently', function () {
+    expect(PhoneNumber::normalize('+60 12-3456789'))->toBe('0123456789')
+        ->and(PhoneNumber::normalize('0060123456789'))->toBe('0123456789')
+        ->and(PhoneNumber::normalize(null))->toBe('');
+});

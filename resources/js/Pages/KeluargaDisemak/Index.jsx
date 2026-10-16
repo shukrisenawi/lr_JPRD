@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import Modal from '@/Components/Modal';
 import { orderUdms } from '@/Utils/udmOrder';
 import { calculateAgeFromNoKp, familyMemberTone, sortFamilyMembers } from '@/Utils/familyMemberOrder';
@@ -174,7 +175,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
                                              <p className="flex flex-wrap items-center gap-1.5 text-xs font-bold text-slate-800">{member.name}{Number(family.father_id) === Number(member.id) && <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[8px] font-black text-green-800">AYAH</span>}{age !== null && <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px]">{age} tahun</span>}</p>
                                              <p className="mt-0.5 text-[10px] text-slate-500">{[member.no_kp, member.no_rumah ? `Rumah ${member.no_rumah}` : null, member.udm, member.locality].filter(Boolean).join(' · ') || 'Maklumat alamat tiada'}</p>
                                              {member.address && <p className="mt-0.5 text-[10px] text-slate-500">{member.address}</p>}
-                                             <p className="mt-0.5 text-[10px] text-slate-500">Tel: {member.phone ? <a href={`tel:${member.phone}`} className="text-green-700 hover:underline">{member.phone}</a> : '-'}</p>
+                                             <p className="mt-0.5 text-[10px] text-slate-500">Tel: <PhoneNumber phone={member.phone}>{member.phone ? <a href={`tel:${member.phone}`} className="hover:underline">{member.phone}</a> : '-'}</PhoneNumber></p>
                                              {member.catatan && <p className="mt-1 break-words rounded-md bg-amber-50 px-2 py-1 text-[10px] text-amber-800"><span className="font-bold">Catatan:</span> {member.catatan}</p>}
                                              {culaMember.cula_display_label && <p className="mt-1 text-[10px] text-slate-600">{culaMember.cula_display_label}</p>}
                                              {actionErrors[member.id] && <p role="alert" className="mt-1 text-xs text-red-700">{actionErrors[member.id]}</p>}

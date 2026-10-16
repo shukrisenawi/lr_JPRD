@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -96,7 +97,7 @@ function DetailModal({ member, canViewMemberNumber, onClose }) {
                         {fields.map(([label, value]) => (
                             <div key={label} className={`rounded-lg border border-slate-100 px-3 py-2 ${label === 'Alamat' || label === 'Catatan' ? 'sm:col-span-2' : ''}`}>
                                 <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-amber-700">{label}</p>
-                                <p className="mt-0.5 break-words text-xs font-medium text-slate-700">{value || '-'}</p>
+                                <p className="mt-0.5 break-words text-xs font-medium text-slate-700">{label.startsWith('Tel') ? <PhoneNumber phone={value} /> : value || '-'}</p>
                             </div>
                         ))}
                     </div>

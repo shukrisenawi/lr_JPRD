@@ -1,5 +1,6 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import CropModal from '@/Components/CropModal';
 import HashtagEditor from '@/Components/HashtagEditor';
 import { Head, usePage } from '@inertiajs/react';
@@ -146,7 +147,7 @@ function ResultCard({ voter, onClear, onOpenTelegram, tgReady, isCulaPending, on
                 {fields.map(([l, v]) => (
                     <div key={l} className="rounded-md border border-slate-100 bg-white px-2.5 py-1.5">
                         <p className="text-xs font-bold uppercase tracking-[0.08em] text-green-700">{l}</p>
-                        <p className="mt-0.5 text-xs font-medium text-slate-800">{v || '-'}</p>
+                        <p className="mt-0.5 text-xs font-medium text-slate-800">{l.startsWith('Tel') ? <PhoneNumber phone={v} /> : v || '-'}</p>
                     </div>
                 ))}
             </div>
@@ -402,7 +403,7 @@ function SearchPanel() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className={`truncate text-xs font-bold ${matchFilter ? 'text-green-700' : 'text-slate-800'}`}>{voter.name}</p>
-                                        <p className="text-xs font-medium text-slate-500">No Kp: {voter.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: {voter.phone_mobile || '-'}</p>
+                                        <p className="text-xs font-medium text-slate-500">No Kp: {voter.no_kp || '-'} <span className="mx-1 text-slate-300">|</span> HP: <PhoneNumber phone={voter.phone_mobile} /></p>
                                     </div>
                                     <div className="min-w-0 text-left">
                                         <p className={`flex items-center gap-1 truncate text-xs font-bold ${matchFilter ? 'text-green-700' : 'text-slate-800'}`}>{voter.dm || '-'}</p>

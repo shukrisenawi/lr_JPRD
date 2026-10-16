@@ -10,6 +10,7 @@ use App\Models\PusatKhidmatData;
 use App\Models\User;
 use App\Support\ModuleRegistry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -38,6 +39,17 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            'verifiedPhones' => function () use ($request) {
+                if (! $request->user()) {
+                    return [];
+                }
+
+                $visible = PemilihRecord::query()->select('id');
+                $request->user()->applyScopeToPemilihQuery($visible);
+
+                return DB::table('phone_verifications')
+                    ->whereIn('pemilih_record_id', $visible)->pluck('phone');
+            },
             'auth' => [
                 'user' => $request->user()
                     ? [

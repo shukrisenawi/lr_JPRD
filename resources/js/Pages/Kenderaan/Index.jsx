@@ -2,6 +2,7 @@ import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { orderUdms } from '@/Utils/udmOrder';
@@ -42,7 +43,7 @@ function VehicleRow({ vehicle, onEdit, onDelete }) {
                     <p className="font-mono text-sm font-black tracking-wide text-slate-900">{vehicle.no_plate}</p>
                     <p className="mt-0.5 truncate text-xs font-medium text-slate-500">{vehicle.jenis_kenderaan}</p>
                     <p className="mt-1 truncate text-[11px] font-semibold text-slate-700">{vehicle.nama_pemandu || 'Pemandu belum ditetapkan'}</p>
-                    {(vehicle.no_tel || vehicle.lokaliti) && <p className="mt-0.5 truncate text-[10px] text-slate-400">{[vehicle.no_tel, vehicle.lokaliti].filter(Boolean).join(' · ')}</p>}
+                    {(vehicle.no_tel || vehicle.lokaliti) && <p className="mt-0.5 truncate text-[10px] text-slate-400">{vehicle.no_tel && <PhoneNumber phone={vehicle.no_tel} />}{vehicle.no_tel && vehicle.lokaliti ? ' · ' : ''}{vehicle.lokaliti}</p>}
                 </div>
             </div>
             <div className="pointer-events-auto flex shrink-0 gap-2 pl-12 sm:pl-0">
@@ -381,7 +382,7 @@ export default function Index({ vehicles = [], udms = [], udmSummaries = [], sel
                                                 <button key={driver.id} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => selectDriver(driver)} className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition last:border-0 hover:bg-green-50">
                                                     <span className={`block truncate text-xs font-bold ${preferredDriverUdm && driver.dm?.toLowerCase() === preferredDriverUdm.toLowerCase() ? 'text-green-700' : 'text-slate-800'}`}>{driver.name}</span>
                                                     <span className="mt-0.5 block truncate text-[10px] text-slate-500">{driver.is_manual ? 'Pemilih manual' : 'Data pemilih'}{driver.no_kp ? ` · ${driver.no_kp}` : ''}</span>
-                                                    {(driver.phone_mobile || driver.phone_home) && <span className="mt-0.5 block truncate text-[10px] text-green-700">Tel: {driver.phone_mobile || driver.phone_home}</span>}
+                                                    {(driver.phone_mobile || driver.phone_home) && <span className="mt-0.5 block truncate text-[10px] text-green-700">Tel: <PhoneNumber phone={driver.phone_mobile || driver.phone_home} /></span>}
                                                     {(driver.dm || driver.locality) && <span className="mt-0.5 block truncate text-[10px] text-slate-400">{[driver.dm, driver.locality].filter(Boolean).join(' · ')}</span>}
                                                 </button>
                                             ))}

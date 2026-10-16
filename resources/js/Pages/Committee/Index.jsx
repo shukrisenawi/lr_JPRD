@@ -6,6 +6,7 @@ import N8nMessageModal from '@/Components/N8nMessageModal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { orderUdms } from '@/Utils/udmOrder';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
@@ -1606,7 +1607,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                                                          <p className={`text-xs font-bold ${m.voter.is_manual ? 'text-blue-700' : 'text-slate-800'}`}>{pos.members.length > 1 ? `${i + 1}. ` : ''}{m.voter.name}</p>
                                                                                          <p className="text-xs text-slate-500">
                                                                                               <CopyableIc voter={m.voter} />
-                                                                                             {phone && <span className="ml-2">Tel:{formatPhoneNumber(phone)}</span>}
+                                                                                             {phone && <span className="ml-2">Tel:<PhoneNumber phone={phone}>{formatPhoneNumber(phone)}</PhoneNumber></span>}
                                                                                          </p>
                                                                                     </div>
                                                                                     <div className="flex shrink-0 items-center gap-1">

@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import HashtagEditor from '@/Components/HashtagEditor';
@@ -1722,9 +1723,9 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                                                         const phone = voter.phone_mobile || voter.phone_home;
                                                         if (!phone) return <p className="mt-0.5 font-bold text-slate-800">-</p>;
                                                         return (
-                                                            <a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold text-slate-800 hover:text-green-700 hover:underline " onClick={(e) => e.stopPropagation()}>
+                                                            <PhoneNumber phone={phone}><a href={`tel:${phone}`} className="mt-0.5 inline-block font-bold hover:underline" onClick={(e) => e.stopPropagation()}>
                                                                 {phone}
-                                                            </a>
+                                                            </a></PhoneNumber>
                                                         );
                                                     })()}
                                                 </div>
@@ -1913,7 +1914,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                                                             <td className="whitespace-nowrap px-2 py-2">
                                                                 {(() => {
                                                                     const phone = voter.phone_mobile || voter.phone_home;
-                                                                    return phone ? <a href={`tel:${phone}`} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a> : '-';
+                                                                    return phone ? <PhoneNumber phone={phone}><a href={`tel:${phone}`} className="font-mono hover:underline">{phone}</a></PhoneNumber> : '-';
                                                                 })()}
                                                             </td>
                                                             {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
@@ -2038,7 +2039,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                                                         <td className="whitespace-nowrap px-2 py-2">
                                                             {(() => {
                                                                 const phone = voter.phone_mobile || voter.phone_home;
-                                                                return phone ? <a href={`tel:${phone}`} className="font-mono text-slate-700 hover:text-green-700 hover:underline">{phone}</a> : '-';
+                                                                return phone ? <PhoneNumber phone={phone}><a href={`tel:${phone}`} className="font-mono hover:underline">{phone}</a></PhoneNumber> : '-';
                                                             })()}
                                                         </td>
                                                         {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
