@@ -615,7 +615,7 @@ class VccController extends Controller
             'tarikh_lahir' => $this->normalizeDateFilter($request->query('tarikh_lahir', '')),
             'call_status' => $callStatus,
             'cula_codes' => trim((string) $request->query('cula_codes', '')),
-            'has_phone' => $request->has('has_phone') ? $request->boolean('has_phone') : true,
+            'has_phone' => $request->has('has_phone') ? $request->boolean('has_phone') : ! $request->routeIs('kempen.hari-jadi.*'),
             'birthday_image_status' => trim((string) $request->query('birthday_image_status', '')),
             'hashtags' => HashtagService::normalizeTags($request->query('hashtags', [])),
         ];

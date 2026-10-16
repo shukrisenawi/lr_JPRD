@@ -972,12 +972,12 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
             <Head title={kempen ? 'Kempen - Hari Jadi' : 'VCC'} />
 
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
-                {kempen && <KempenTabs active="hari-jadi" />}
+                {kempen && <KempenTabs active="hari-jadi" udm={formState.udm} locality={formState.locality} udms={orderUdms(udms)} localities={localities} onFilterChange={updateFilter} />}
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
                     <div className="rounded-xl border border-green-600 bg-white p-3 shadow-sm shadow-green-600/20 overflow-hidden">
                         <div className="space-y-2">
-                            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-[12rem_12rem_10rem] xl:items-end">
-                                <div>
+                            <div className={`grid gap-2 sm:grid-cols-2 md:grid-cols-3 ${kempen ? 'xl:grid-cols-[10rem]' : 'xl:grid-cols-[12rem_12rem_10rem]'} xl:items-end`}>
+                                {!kempen && <div>
                                     <label htmlFor="vcc-udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                                     <select
                                         id="vcc-udm"
@@ -990,9 +990,9 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                             <option key={udm} value={udm}>{udm}</option>
                                         ))}
                                     </select>
-                                </div>
+                                </div>}
 
-                                <div>
+                                {!kempen && <div>
                                     <label htmlFor="vcc-locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
                                     <select
                                         id="vcc-locality"
@@ -1005,7 +1005,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                             <option key={locality} value={locality}>{locality}</option>
                                         ))}
                                     </select>
-                                </div>
+                                </div>}
 
                                 <div>
                                     <label htmlFor="vcc-group" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Group Pemilih</label>

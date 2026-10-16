@@ -85,7 +85,7 @@ export default function Index({ filters, udm_locked: udmLocked = false, udmSumma
                         <p className="label-section">Operasi / Semakan keluarga</p>
                         <h1 className="mt-0.5 heading-lg">Kempen</h1>
                     </div>
-                    <KempenTabs active="sasaran" />
+                    <KempenTabs active="sasaran" udm={filters.udm} locality={filters.locality || ''} udms={udmSummaries.map((item) => item.udm)} localities={localities} udmLocked={udmLocked} loading={loading} errors={errors} onFilterChange={(key, value) => key === 'udm' ? applyFilter(value) : applyFilter(filters.udm, value)} />
                     <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         {[[formatNumber(totalFamilies), 'Keluarga disemak'], [formatNumber(reviewedUdm), 'UDM dengan semakan'], [formatNumber(udmSummaries.length), 'UDM dalam akses']].map(([value, label]) => (
                             <div key={label} className="card p-3">
@@ -97,25 +97,7 @@ export default function Index({ filters, udm_locked: udmLocked = false, udmSumma
                 </header>
 
                 <section aria-label="Penapis keluarga" aria-busy={loading} className="overflow-hidden rounded-xl border border-white bg-white p-4 shadow-sm shadow-green-600/20">
-                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_18rem_minmax(0,1fr)] xl:items-end">
-                    {!udmLocked && <div>
-                        <label htmlFor="udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
-                        <select id="udm" value={filters.udm} disabled={loading} onChange={(event) => applyFilter(event.target.value)} className="input-field mt-1.5 disabled:opacity-60">
-                            <option value="">Semua UDM</option>
-                            {udmSummaries.map((item) => <option key={item.udm} value={item.udm}>{item.udm}</option>)}
-                        </select>
-                        {errors.udm && <p role="alert" className="mt-1 text-sm text-red-700">{errors.udm}</p>}
-                    </div>}
-                    <div>
-                        <label htmlFor="locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
-                        <select id="locality" value={filters.locality || ''} disabled={!filters.udm || loading} onChange={(event) => applyFilter(filters.udm, event.target.value)} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60">
-                            <option value="">{filters.udm ? 'Semua Lokaliti' : 'Pilih UDM dahulu'}</option>
-                            {localities.map((locality) => <option key={locality} value={locality}>{locality}</option>)}
-                        </select>
-                        {errors.locality && <p role="alert" className="mt-1 text-sm text-red-700">{errors.locality}</p>}
-                    </div>
-                    <p role="status" className="text-xs text-slate-600 xl:pb-3">{loading ? 'Memuatkan keluarga...' : 'Senarai ditapis secara automatik.'}</p>
-                    </div>
+                    <p role="status" className="text-xs text-slate-600">{loading ? 'Memuatkan keluarga...' : 'Senarai ditapis secara automatik.'}</p>
                     {filters.udm && <details ref={filterCardRef} className="card mt-3 overflow-hidden border-white">
                         <summary className="cursor-pointer px-3 py-3 text-xs font-bold text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">Tapisan group pemilih dan kod cula{Boolean(filters.group_ids?.length || filters.cula_codes?.length) && <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800">Penapis aktif</span>}</summary>
                         <div className="space-y-3 border-t border-slate-100 p-3">

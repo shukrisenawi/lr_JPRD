@@ -7,7 +7,9 @@ it('allows kempen birthday page without vcc permission', function () {
 
     $this->actingAs($user)->get(route('kempen.hari-jadi.index'))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('Vcc/Index')->where('kempen', true));
+        ->assertInertia(fn ($page) => $page->component('Vcc/Index')
+            ->where('kempen', true)
+            ->where('filters.has_phone', false));
     $this->getJson(route('kempen.hari-jadi.search', ['q' => 'test']))->assertOk();
     $this->getJson(route('vcc.index'))->assertForbidden();
 });
