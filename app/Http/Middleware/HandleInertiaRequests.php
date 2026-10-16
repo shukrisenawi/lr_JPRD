@@ -62,6 +62,12 @@ class HandleInertiaRequests extends Middleware
                     ->where('is_valid', false)->whereIn('pemilih_record_id', $visible)->pluck('phone');
             },
             'auth' => [
+                'switch_users' => fn () => $request->user()?->isMasterAdmin()
+                    ? User::query()->where('access_level', 'udm')
+                        ->whereNotNull('scope_key')->where('scope_key', '!=', '')
+                        ->orderBy('created_at')->orderBy('id')->get(['id', 'name', 'scope_key'])
+                        ->unique('scope_key')->sortBy('scope_key')->values()
+                    : [],
                 'user' => $request->user()
                     ? [
                         'id' => $request->user()->id,

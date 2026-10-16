@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import Modal from '@/Components/Modal';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -62,6 +63,8 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const plkBelumSemak = badgeCounts?.plkBelumSemak ?? 0;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const [showSwitchUser, setShowSwitchUser] = useState(false);
+    const [switchSearch, setSwitchSearch] = useState('');
     const isLight = variant === 'light';
 
     const navHref = (item) => {
@@ -127,6 +130,25 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
 
     return (
         <div className="min-h-screen bg-green-50/60 text-slate-800">
+            <Modal show={showSwitchUser} onClose={() => setShowSwitchUser(false)} title="Switch user" maxWidth="lg" animate={false}>
+                <div className="p-5">
+                    <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-base font-bold">Switch user</h2>
+                        <button type="button" onClick={() => setShowSwitchUser(false)} className="text-sm text-slate-500">Tutup</button>
+                    </div>
+                    <p className="mt-2 text-xs text-slate-500">Pilih UDM. Akses mengikut akaun pengguna peringkat UDM yang paling awal didaftarkan.</p>
+                    <input type="search" aria-label="Cari UDM atau pengguna" placeholder="Cari UDM atau pengguna…" value={switchSearch} onChange={(event) => setSwitchSearch(event.target.value)} className="mt-4 w-full rounded-lg border-slate-300 text-sm" />
+                    <div className="mt-3 max-h-80 overflow-y-auto divide-y divide-green-100">
+                        {(auth.switch_users ?? []).filter((account) => `${account.scope_key} ${account.name}`.toLowerCase().includes(switchSearch.toLowerCase())).map((account) => (
+                            <Link key={account.id} href={route('admin.access.users.impersonate', account.id)} method="post" as="button" replace preserveState={false} onSuccess={() => setShowSwitchUser(false)} className="flex w-full items-center justify-between gap-3 rounded-lg p-3 text-left hover:bg-green-50">
+                                <span><span className="block text-sm font-semibold">{account.scope_key}</span><span className="text-xs text-slate-500">{account.name}</span></span>
+                                <span className="text-xs font-semibold text-green-700">Masuk sebagai</span>
+                            </Link>
+                        ))}
+                        {!(auth.switch_users ?? []).some((account) => `${account.scope_key} ${account.name}`.toLowerCase().includes(switchSearch.toLowerCase())) && <p className="py-5 text-center text-sm text-slate-500">Tiada pengguna UDM dijumpai.</p>}
+                    </div>
+                </div>
+            </Modal>
             <nav className="sticky top-0 z-30 border-b border-green-200 bg-white/95 shadow-sm backdrop-blur-xl">
                 <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
                     <div className="flex h-14 items-center justify-between">
@@ -222,6 +244,10 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                                 <span className="ml-auto text-xs text-slate-400">Lihat & kemas kini profil</span>
                                             </Dropdown.Link>
                                             <div className="my-1 border-t border-green-100" />
+                                            {isMasterAdmin && <button type="button" onClick={() => { setSwitchSearch(''); setShowSwitchUser(true); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-green-50">
+                                                <HeaderIcon name="users" className="h-4 w-4 text-green-600" />
+                                                <span>Switch user</span>
+                                            </button>}
                                             <Dropdown.Link href={route('logout')} method="post" as="button" className="flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-green-50 focus:bg-green-50">
                                                 <HeaderIcon name="logout" className="h-4 w-4 shrink-0 text-green-600" />
                                                 <span>Log Out</span>
