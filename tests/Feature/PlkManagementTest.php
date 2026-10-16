@@ -46,7 +46,7 @@ it('lists only active PLK voters and separates voters already verified', functio
             ->where('badgeCounts.plkBelumSemak', 1)
             ->where('code_counts.3B', 1)
             ->where('code_counts.3U', 1)
-            ->where('voters.total', 2)
+            ->where('voters.total', 1)
             ->where('voters.data.0.id', $pending->id)
             ->where('voters.data.0.cula_code', '3B')
             ->where('voters.data.0.catatan', 'Perlu dihubungi semula'));
@@ -56,8 +56,7 @@ it('lists only active PLK voters and separates voters already verified', functio
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('filters.cula_code', '3U')
-            ->where('voters.total', 1)
-            ->where('voters.data.0.id', $checked->id));
+            ->where('voters.total', 0));
 
     $this->actingAs($user)
         ->get(route('plk.index', ['tab' => 'disemak']))
@@ -69,6 +68,18 @@ it('lists only active PLK voters and separates voters already verified', functio
             ->where('voters.data.0.verified_by', $user->name)
             ->where('voters.data.0.verification_status', 'maklumat_sah')
             ->where('voters.data.0.verification_remark', 'Maklumat disahkan di lapangan.'));
+});
+
+it('exports only voters belonging to the selected verification tab', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    createPlkRecord(['name' => 'BELUM SEMAK']);
+    createPlkRecord(['name' => 'SUDAH SEMAK', 'plk_verified_at' => now(), 'plk_verified_by' => $user->id]);
+
+    $this->actingAs($user)->getJson(route('plk.export'))
+        ->assertOk()->assertJsonCount(1, 'voters')->assertJsonPath('voters.0.name', 'BELUM SEMAK');
+
+    $this->getJson(route('plk.export', ['tab' => 'disemak']))
+        ->assertOk()->assertJsonCount(1, 'voters')->assertJsonPath('voters.0.name', 'SUDAH SEMAK');
 });
 
 it('marks a PLK voter as verified by the current user', function () {

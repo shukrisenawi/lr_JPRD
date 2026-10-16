@@ -127,6 +127,7 @@ class PlkController extends Controller
 
         if ($tab !== 'kos') {
             $voterQuery = $this->applyFilters(clone $base, $filters)
+                ->when($tab === 'senarai', fn (Builder $query) => $query->whereNull('plk_verified_at'))
                 ->when($tab === 'disemak', fn (Builder $query) => $query->whereNotNull('plk_verified_at'));
 
             $voters = $voterQuery
@@ -247,6 +248,7 @@ class PlkController extends Controller
         ];
 
         $voters = $this->applyFilters($this->baseQuery($request->user()), $filters)
+            ->when($tab === 'senarai', fn (Builder $query) => $query->whereNull('plk_verified_at'))
             ->when($tab === 'disemak', fn (Builder $query) => $query->whereNotNull('plk_verified_at'))
             ->select([
                 'name', 'no_kp', 'old_ic', 'phone_mobile', 'phone_home', 'catatan',
