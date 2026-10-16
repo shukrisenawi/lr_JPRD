@@ -16,6 +16,21 @@ function reviewedFamilyMember(array $attributes = []): PemilihRecord
     ], $attributes));
 }
 
+it('automatically selects the scoped UDM for UDM users', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM A',
+    ]);
+    $family = PemilihFamily::create(['name' => 'Keluarga UDM', 'reviewed_at' => now()]);
+    $family->members()->attach(reviewedFamilyMember()->id);
+
+    $this->actingAs($user)->get(route('keluarga-disemak.index'))
+        ->assertOk()->assertInertia(fn ($page) => $page
+        ->where('udm_locked', true)
+        ->where('filters.udm', 'UDM A')
+        ->where('families.total', 1));
+});
+
 it('filters multiple cula codes and groups in summaries and member lists', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $group = GroupPemilih::create(['user_id' => $user->id, 'nama_group' => 'Wanita', 'jantina' => 'P']);

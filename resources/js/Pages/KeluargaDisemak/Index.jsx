@@ -7,7 +7,7 @@ import { calculateAgeFromNoKp, familyMemberTone, sortFamilyMembers } from '@/Uti
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
-export default function Index({ filters, udmSummaries: unorderedUdmSummaries, families, localities = [], filter_cula_codes: filterCulaCodes = [], pemilih_groups: pemilihGroups = [] }) {
+export default function Index({ filters, udm_locked: udmLocked = false, udmSummaries: unorderedUdmSummaries, families, localities = [], filter_cula_codes: filterCulaCodes = [], pemilih_groups: pemilihGroups = [] }) {
     const udmSummaries = orderUdms(unorderedUdmSummaries);
     const [loading, setLoading] = useState(false);
     const filterCardRef = useRef(null);
@@ -96,14 +96,14 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
 
                 <section aria-label="Penapis keluarga" aria-busy={loading} className="overflow-hidden rounded-xl border border-white bg-white p-4 shadow-sm shadow-green-600/20">
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[12rem_18rem_minmax(0,1fr)] xl:items-end">
-                    <div>
+                    {!udmLocked && <div>
                         <label htmlFor="udm" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">UDM</label>
                         <select id="udm" value={filters.udm} disabled={loading} onChange={(event) => applyFilter(event.target.value)} className="input-field mt-1.5 disabled:opacity-60">
                             <option value="">Semua UDM</option>
                             {udmSummaries.map((item) => <option key={item.udm} value={item.udm}>{item.udm}</option>)}
                         </select>
                         {errors.udm && <p role="alert" className="mt-1 text-sm text-red-700">{errors.udm}</p>}
-                    </div>
+                    </div>}
                     <div>
                         <label htmlFor="locality" className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Lokaliti</label>
                         <select id="locality" value={filters.locality || ''} disabled={!filters.udm || loading} onChange={(event) => applyFilter(filters.udm, event.target.value)} className="input-field mt-1.5 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60">

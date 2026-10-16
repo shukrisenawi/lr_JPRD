@@ -29,7 +29,8 @@ class KeluargaDisemakController extends Controller
             'group_ids' => ['nullable', 'array'],
             'group_ids.*' => ['integer', Rule::in($groups->pluck('id')->all())],
         ]);
-        $udm = $validated['udm'] ?? '';
+        $lockedUdm = $user->access_level === 'udm' ? ($user->accessScope()['dm'] ?? null) : null;
+        $udm = $lockedUdm ?? ($validated['udm'] ?? '');
         $culaCodes = $validated['cula_codes'] ?? [];
         $groupIds = array_map('intval', $validated['group_ids'] ?? []);
         $selectedGroups = $groups->whereIn('id', $groupIds);
@@ -102,6 +103,7 @@ class KeluargaDisemakController extends Controller
         }
 
         return Inertia::render('KeluargaDisemak/Index', [
+            'udm_locked' => $lockedUdm !== null,
             'available_cula_codes' => CulaCodes::options(),
             'filter_cula_codes' => $culaOptions->push(['code' => '__empty', 'label' => 'Tiada kod cula']),
             'pemilih_groups' => $groups->map(fn ($group) => ['id' => $group->id, 'name' => $group->nama_group])->values(),
