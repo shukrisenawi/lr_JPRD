@@ -1127,29 +1127,6 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                 </div>
                             </div>
 
-                            <div className="mt-3 overflow-x-auto border-t border-slate-100 pt-3">
-                                <div className="flex min-w-max gap-1.5">
-                                    {responseStatusTabs.map((tab) => {
-                                        const selected = formState.call_status === tab.value;
-                                        const count = Number(localSummary.call_status_counts?.[tab.value] ?? 0);
-
-                                        return (
-                                            <button
-                                                key={tab.value}
-                                                type="button"
-                                                onClick={() => updateFilter('call_status', tab.value)}
-                                                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-bold transition ${selected ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700'}`}
-                                            >
-                                                {tab.label}
-                                                <span className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none ${selected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                                    {count}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
                             <div className="mt-3">
                                 <label className="block text-xs font-bold uppercase tracking-[0.08em] text-slate-600">Bulan Lahir</label>
                                 <div className="mt-1 flex flex-wrap gap-1">
@@ -1282,6 +1259,29 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 </section>
 
                 <section>
+                    <div className="mb-3 overflow-x-auto" role="group" aria-label="Status respon pemilih">
+                        <div className="flex min-w-max gap-1.5">
+                            {responseStatusTabs.map((tab) => {
+                                const selected = formState.call_status === tab.value;
+                                const count = Number(localSummary.call_status_counts?.[tab.value] ?? 0);
+
+                                return (
+                                    <button
+                                        key={tab.value}
+                                        type="button"
+                                        aria-pressed={selected}
+                                        onClick={() => updateFilter('call_status', tab.value)}
+                                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-bold transition ${selected ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700'}`}
+                                    >
+                                        {tab.label}
+                                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none ${selected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                            {count}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
                     {rows.length === 0 ? (
                         <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                             {searching ? 'Mencari...' : 'Tiada pemilih untuk paparan ini.'}
