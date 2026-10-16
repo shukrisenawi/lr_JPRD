@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\UdmSnapshot;
 use App\Models\User;
 use App\Support\CulaCodes;
+use App\Support\PhoneNumber;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -306,6 +307,16 @@ class PemilihReportService
                 ['identity_number' => $voter['identity_number']],
                 $voter,
             );
+
+            // A phone status belongs to the checked number, not a replacement
+            // number supplied by a later import. Formatting alone is unchanged.
+            DB::table('phone_verifications')
+                ->where('pemilih_record_id', $record->id)
+                ->whereNotIn('phone', array_filter([
+                    PhoneNumber::normalize($record->phone_mobile),
+                    PhoneNumber::normalize($record->phone_home),
+                ]))
+                ->delete();
 
             if ($record->no_kp || $record->old_ic) {
                 ProgramAttendee::query()
