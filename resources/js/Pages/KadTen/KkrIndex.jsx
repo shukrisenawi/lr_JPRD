@@ -142,7 +142,7 @@ export default function KkrIndex({ kads, udms, filters, udm_summaries: udmSummar
             </details>)}</div>
             </div>}
         </section>)}{!kads.data.length && <p className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">Belum ada ketua KKR10 dalam skop ini.</p>}</div>}
-        {!allUdmSelected && <nav aria-label="Halaman KKR10" className="mt-4 flex flex-wrap gap-2">{kads.links.map((link, index) => link.url ? <Link key={index} href={link.url} className={`rounded-lg border px-3 py-2 text-sm ${link.active ? 'bg-green-700 text-white' : 'bg-white text-slate-700'}`} dangerouslySetInnerHTML={{ __html: link.label }} /> : null)}</nav>}
+        {!allUdmSelected && kads.data.length > 0 && kads.last_page > 1 && <nav aria-label="Halaman KKR10" className="mt-4 flex flex-wrap gap-2">{kads.links.map((link, index) => link.url ? <Link key={index} href={link.url} className={`rounded-lg border px-3 py-2 text-sm ${link.active ? 'bg-green-700 text-white' : 'bg-white text-slate-700'}`} dangerouslySetInnerHTML={{ __html: link.label }} /> : null)}</nav>}
         {editing !== undefined && <LeaderForm kad={editing} onClose={() => setEditing(undefined)} />}
         </div>
     </AuthenticatedLayout>;
