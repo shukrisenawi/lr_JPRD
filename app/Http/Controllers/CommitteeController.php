@@ -624,7 +624,8 @@ class CommitteeController extends Controller
         $recordQuery = PemilihRecord::query()
             ->whereKey($pemilihRecord->id)
             ->where('is_manual', false);
-        $request->user()->applyScopeToPemilihQuery($recordQuery);
+        // Committee access follows the appointment scope, not the voter's UDM.
+        // The visible membership check below authorizes this update.
         $record = $recordQuery->firstOrFail();
 
         $membershipQuery = CommitteeMembership::query()

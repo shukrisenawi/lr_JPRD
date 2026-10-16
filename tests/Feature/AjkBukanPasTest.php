@@ -208,6 +208,53 @@ it('updates cula for an AJK Bukan PAS member in the users scope', function () {
     ]);
 });
 
+it('allows cula for an outside UDM voter appointed in the users UDM but rejects outside appointments', function () {
+    $user = User::factory()->withModules(['jawatankuasa.ajk-bukan-pas'])->create([
+        'access_level' => 'udm',
+        'scope_key' => 'UDM ALPHA',
+    ]);
+    $position = CommitteePosition::query()->create([
+        'name' => 'AJK',
+        'slug' => 'ajk',
+        'sort_order' => 1,
+    ]);
+
+    foreach (['UDM ALPHA' => 200, 'UDM BETA' => 404] as $appointmentScope => $expectedStatus) {
+        $voter = createAjkBukanPasVoter([
+            'name' => 'AHLI LUAR '.$appointmentScope,
+            'dm' => 'UDM BETA',
+            'cula_code' => '1',
+        ]);
+        CommitteeMembership::query()->create([
+            'pemilih_record_id' => $voter->id,
+            'committee_position_id' => $position->id,
+            'level' => 'udm',
+            'scope_key' => $appointmentScope,
+            'scope_name' => $appointmentScope,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('jawatankuasa.ajk-bukan-pas.cula', $voter), [
+                'cula_code' => '2',
+                'cula_display_label' => '2 - PAS',
+            ])
+            ->assertStatus($expectedStatus);
+
+        $this->assertDatabaseHas('pemilih_records', [
+            'id' => $voter->id,
+            'cula_code' => $expectedStatus === 200 ? '2' : '1',
+        ]);
+        if ($expectedStatus === 200) {
+            $this->assertDatabaseHas('cula_work_items', [
+                'pemilih_record_id' => $voter->id,
+                'marked_by' => $user->id,
+            ]);
+        } else {
+            $this->assertDatabaseMissing('cula_work_items', ['pemilih_record_id' => $voter->id]);
+        }
+    }
+});
+
 it('requires the AJK Bukan PAS module permission', function () {
     $user = User::factory()->withModules(['dashboard'])->create();
 

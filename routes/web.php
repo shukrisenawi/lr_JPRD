@@ -34,6 +34,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SheetPageController;
 use App\Http\Controllers\TambahPemilihController;
 use App\Http\Controllers\VccController;
+use App\Http\Middleware\EnsurePemilihScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -116,7 +117,8 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::get('/jawatankuasa/senarai-ajk', [CommitteeController::class, 'laporan'])->middleware('module:jawatankuasa.laporan')->name('jawatankuasa.laporan');
     Route::get('/jawatankuasa/senarai-ajk-udm', [CommitteeController::class, 'senaraiAjkUdm'])->middleware('module:jawatankuasa.senarai-udm')->name('jawatankuasa.senarai-ajk-udm');
     Route::get('/jawatankuasa/ajk-bukan-pas', [CommitteeController::class, 'ajkBukanPas'])->middleware('module:jawatankuasa.ajk-bukan-pas')->name('jawatankuasa.ajk-bukan-pas');
-    Route::post('/jawatankuasa/ajk-bukan-pas/{pemilihRecord}/cula', [CommitteeController::class, 'updateAjkBukanPasCula'])->middleware('module:jawatankuasa.ajk-bukan-pas')->name('jawatankuasa.ajk-bukan-pas.cula');
+    // The controller authorizes by committee appointment scope, including voters from another UDM.
+    Route::post('/jawatankuasa/ajk-bukan-pas/{pemilihRecord}/cula', [CommitteeController::class, 'updateAjkBukanPasCula'])->withoutMiddleware(EnsurePemilihScope::class)->middleware('module:jawatankuasa.ajk-bukan-pas')->name('jawatankuasa.ajk-bukan-pas.cula');
     Route::get('/jawatankuasa/search', [CommitteeController::class, 'search'])->middleware('module:jawatankuasa.senarai')->name('jawatankuasa.search');
     Route::post('/jawatankuasa/groups', [CommitteeController::class, 'storeGroup'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.store');
     Route::put('/jawatankuasa/groups/{group}', [CommitteeController::class, 'updateGroup'])->middleware('module:jawatankuasa.kumpulan')->name('jawatankuasa.groups.update');
