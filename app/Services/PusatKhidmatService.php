@@ -387,6 +387,7 @@ class PusatKhidmatService
                 'dm' => $pemilih->dm,
                 'locality' => $pemilih->locality,
                 'no_rumah' => $pemilih->no_rumah,
+                'alamat_kediaman' => $pemilih->alamat_kediaman,
                 'cula_code' => $pemilih->cula_code,
                 'cula_display_label' => $pemilih->cula_display_label,
                 'status' => $pemilih->status,
