@@ -11,6 +11,7 @@ it('excludes PAS related cula codes only from the birthday campaign', function (
             'identity_number' => '900924'.str_pad((string) $index, 6, '0', STR_PAD_LEFT),
             'no_kp' => '900924'.str_pad((string) $index, 6, '0', STR_PAD_LEFT),
             'name' => 'PEMILIH '.$code,
+            'date_of_birth' => (1990 + $index).'-09-24',
             'dm' => 'UDM UJIAN',
             'locality' => 'LOKALITI UJIAN',
             'status' => 'aktif',
@@ -24,6 +25,10 @@ it('excludes PAS related cula codes only from the birthday campaign', function (
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('summary.total', 3)
+            ->where('filters.call_status', '')
+            ->where('voters.data.0.cula_code', '?')
+            ->where('voters.data.1.cula_code', '4')
+            ->where('voters.data.2.cula_code', '1')
             ->where('available_cula_codes', fn ($options) => collect($options)->every(fn ($option) => ! in_array($option['code'], ['2', '4P'], true) && ! str_starts_with($option['code'], '3'))));
 
     $this->get(route('vcc.index', $params))
@@ -38,6 +43,7 @@ it('allows kempen birthday page without vcc permission', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('Vcc/Index')
             ->where('kempen', true)
+            ->where('filters.call_status', '')
             ->where('filters.has_phone', false));
     $this->getJson(route('kempen.hari-jadi.search', ['q' => 'test']))->assertOk();
     $this->getJson(route('vcc.index'))->assertForbidden();

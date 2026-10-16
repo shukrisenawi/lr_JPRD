@@ -63,6 +63,7 @@ class VccController extends Controller
         if ($exportAll) {
             $voters = $this->buildEligibleVotersQuery($filters)
                 ->with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication')
+                ->when($request->routeIs('kempen.hari-jadi.*'), fn (Builder $builder) => $this->orderBirthdayVoters($builder))
                 ->orderBy('dm')
                 ->orderBy('locality')
                 ->orderBy('no_kp')
@@ -100,6 +101,7 @@ class VccController extends Controller
                     });
                 }
             })
+            ->when($request->routeIs('kempen.hari-jadi.*'), fn (Builder $builder) => $this->orderBirthdayVoters($builder))
             ->orderBy('name')
             ->limit(8)
             ->get()
@@ -367,6 +369,11 @@ class VccController extends Controller
 
         $query->with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication');
 
+        if (request()->routeIs('kempen.hari-jadi.*')) {
+            return $this->orderBirthdayVoters($query)->paginate(20)->withQueryString()
+                ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
+        }
+
         if ($filters['udm'] === '') {
             $query->orderBy('dm');
         }
@@ -387,6 +394,16 @@ class VccController extends Controller
             ->through(fn (PemilihRecord $voter) => $this->transformVoter($voter));
     }
 
+    private function orderBirthdayVoters(Builder $query): Builder
+    {
+        return $query->orderByRaw('CASE
+            WHEN date_of_birth IS NOT NULL THEN CAST(SUBSTRING(date_of_birth, 1, 4) AS UNSIGNED)
+            WHEN LENGTH(no_kp) >= 6 AND CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED) > ? THEN 1900 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
+            WHEN LENGTH(no_kp) >= 6 THEN 2000 + CAST(SUBSTRING(no_kp, 1, 2) AS UNSIGNED)
+            ELSE 0 END DESC', [(int) now()->format('y')])
+            ->orderByDesc('date_of_birth')->orderByRaw('SUBSTRING(no_kp, 3, 4) DESC')->orderBy('id');
+    }
+
     private function paginateDistributedVoters(array $filters): LengthAwarePaginator
     {
         $perUdmCount = $filters['per_udm_count'];
@@ -405,6 +422,10 @@ class VccController extends Controller
                 $allIds = $allIds->merge($ids);
             }
 
+            if (request()->routeIs('kempen.hari-jadi.*')) {
+                $allIds = $this->orderBirthdayVoters(PemilihRecord::query()->whereIn('id', $allIds))->pluck('id');
+            }
+
             $page = Paginator::resolveCurrentPage();
             $perPage = 20;
             $total = $allIds->count();
@@ -413,6 +434,7 @@ class VccController extends Controller
 
             $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication')
                 ->whereIn('id', $sliceIds)
+                ->when(request()->routeIs('kempen.hari-jadi.*'), fn (Builder $builder) => $this->orderBirthdayVoters($builder))
                 ->orderBy('dm')
                 ->orderBy('locality')
                 ->orderBy('no_kp')
@@ -430,6 +452,10 @@ class VccController extends Controller
 
         $ids = $this->distributeIdsForUdm($filters);
 
+        if (request()->routeIs('kempen.hari-jadi.*')) {
+            $ids = $this->orderBirthdayVoters(PemilihRecord::query()->whereIn('id', $ids))->pluck('id');
+        }
+
         $page = Paginator::resolveCurrentPage();
         $perPage = 20;
         $total = $ids->count();
@@ -438,6 +464,7 @@ class VccController extends Controller
 
         $items = PemilihRecord::with('culaWorkItem.marker', 'hashtags', 'latestCallCommunication')
             ->whereIn('id', $sliceIds)
+            ->when(request()->routeIs('kempen.hari-jadi.*'), fn (Builder $builder) => $this->orderBirthdayVoters($builder))
             ->orderBy('locality')
             ->orderBy('no_kp')
             ->get()
@@ -606,9 +633,9 @@ class VccController extends Controller
         }
 
         $requestedCallStatus = trim((string) $request->query('call_status', 'unmarked'));
-        $callStatus = in_array($requestedCallStatus, ['unmarked', ...self::RESPONSE_STATUSES], true)
+        $callStatus = $request->routeIs('kempen.hari-jadi.*') ? '' : (in_array($requestedCallStatus, ['unmarked', ...self::RESPONSE_STATUSES], true)
             ? $requestedCallStatus
-            : 'unmarked';
+            : 'unmarked');
 
         return [
             'udm' => $requestedUdm,

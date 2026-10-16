@@ -1245,7 +1245,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-100 text-lg text-green-700">●●</div>
                         <div className="min-w-0 flex-1">
                             <div className="text-right">
-                                <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">Jumlah Paparan</p>
+                                <p className="text-xs font-bold uppercase tracking-[0.1em] text-green-700">{kempen ? 'Jumlah Pemilih (mengikut tapisan)' : 'Jumlah Paparan'}</p>
                                 <p className="mt-0.5 text-2xl font-black leading-none text-slate-800">{visibleTotal}</p>
                             </div>
                             <div className="mt-2 border-t border-green-100 pt-2 text-right">
@@ -1257,7 +1257,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                 </section>
 
                 <section>
-                    <div className="mb-3 overflow-x-auto" role="group" aria-label="Status respon pemilih">
+                    {!kempen && <div className="mb-3 overflow-x-auto" role="group" aria-label="Status respon pemilih">
                         <div className="flex min-w-max gap-1.5">
                             {responseStatusTabs.map((tab) => {
                                 const selected = formState.call_status === tab.value;
@@ -1279,7 +1279,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                 );
                             })}
                         </div>
-                    </div>
+                    </div>}
                     {rows.length === 0 ? (
                         <p className="rounded-xl border border-green-600 bg-white py-6 text-center text-xs font-medium text-slate-500 shadow-sm shadow-green-600/20 overflow-hidden">
                             {searching ? 'Mencari...' : 'Tiada pemilih untuk paparan ini.'}
@@ -1325,6 +1325,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                                         <td className="sticky left-0 z-10 bg-white px-2 py-2">
                                                             <div className="flex flex-col items-start">
                                                                 <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                                {kempen && (voter.no_rumah || voter.address) && <span className="max-w-[18rem] break-words text-[10px] font-normal text-slate-500">{[voter.no_rumah && `No. Rumah ${voter.no_rumah}`, voter.address].filter(Boolean).join(' · ')}</span>}
                                                                 {voter.call_status !== 'unmarked' && voter.call_remark && (
                                                                     <span className="max-w-[18rem] break-words text-xs font-normal text-slate-500">- {voter.call_remark}</span>
                                                                 )}
@@ -1379,8 +1380,8 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                                                                  WA
                                                                              </a>
                                                                          )}
-                                                                          <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
-                                                                          {voter.call_status !== 'unmarked' && (
+                                                                          {!kempen && <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />}
+                                                                          {!kempen && voter.call_status !== 'unmarked' && (
                                                                               <CancelStatusButton
                                                                                   onClick={() => cancelCallStatus(voter)}
                                                                                   disabled={cancelingCallIds.has(voter.id)}
@@ -1424,6 +1425,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                                     <td className="sticky left-0 z-10 bg-white px-2 py-2">
                                                         <div className="flex flex-col items-start">
                                                             <span className="font-semibold text-slate-800">{voter.name}</span>
+                                                            {kempen && (voter.no_rumah || voter.address) && <span className="max-w-[18rem] break-words text-[10px] font-normal text-slate-500">{[voter.no_rumah && `No. Rumah ${voter.no_rumah}`, voter.address].filter(Boolean).join(' · ')}</span>}
                                                             {voter.call_status !== 'unmarked' && voter.call_remark && (
                                                                 <span className="max-w-[18rem] break-words text-xs font-normal text-slate-500">- {voter.call_remark}</span>
                                                             )}
@@ -1478,8 +1480,8 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                                                                              WA
                                                                          </a>
                                                                      )}
-                                                                      <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />
-                                                                      {voter.call_status !== 'unmarked' && (
+                                                                      {!kempen && <CallStatusButton voter={voter} onClick={() => openCallModal(voter)} />}
+                                                                      {!kempen && voter.call_status !== 'unmarked' && (
                                                                           <CancelStatusButton
                                                                               onClick={() => cancelCallStatus(voter)}
                                                                               disabled={cancelingCallIds.has(voter.id)}
