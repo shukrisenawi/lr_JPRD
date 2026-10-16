@@ -813,7 +813,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
 
                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className={`grid ${canViewCosts ? 'grid-cols-3' : 'grid-cols-2'} gap-1 border-b border-slate-200 bg-slate-50/70 p-1.5`}>
-                        <TabButton active={activeTab === 'senarai'} label="Senarai pemilih PLK" count={summary.total} onClick={() => visitTab('senarai')} />
+                        <TabButton active={activeTab === 'senarai'} label="Senarai pemilih PLK" count={summary.pending} onClick={() => visitTab('senarai')} />
                         <TabButton active={activeTab === 'disemak'} label="Pemilih sudah semak" count={summary.checked} onClick={() => visitTab('disemak')} />
                         {canViewCosts && <TabButton active={activeTab === 'kos'} label="Kiraan kos" onClick={() => visitTab('kos')} />}
                     </div>
@@ -842,7 +842,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
                             {exportError && <p role="alert" className="border-b border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{exportError}</p>}
                             {activeTab === 'senarai' && (
                                 <div role="tablist" aria-label="Tapisan kod Cula" className="flex gap-1.5 overflow-x-auto border-b border-slate-100 px-3 py-2">
-                                    <CulaCodeTab active={!filters.cula_code} code="Semua" count={summary.total} onClick={() => visitCulaCode('')} />
+                                    <CulaCodeTab active={!filters.cula_code} code="Semua" count={summary.pending} onClick={() => visitCulaCode('')} />
                                     {codes.map((code) => (
                                         <CulaCodeTab
                                             key={code.code}

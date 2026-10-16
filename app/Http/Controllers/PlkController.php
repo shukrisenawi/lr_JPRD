@@ -79,6 +79,7 @@ class PlkController extends Controller
             }
 
             (clone $base)
+                ->whereNull('plk_verified_at')
                 ->select(['dm', 'cula_code'])
                 ->selectRaw('COUNT(*) as quantity')
                 ->groupBy('dm', 'cula_code')
@@ -109,6 +110,7 @@ class PlkController extends Controller
             );
         $codeCounts = array_fill_keys(self::CULA_CODES, 0);
         (clone $countBase)
+            ->when($tab === 'senarai', fn (Builder $query) => $query->whereNull('plk_verified_at'))
             ->select('cula_code')
             ->selectRaw('COUNT(*) as quantity')
             ->groupBy('cula_code')
