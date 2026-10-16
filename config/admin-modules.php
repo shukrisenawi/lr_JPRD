@@ -125,6 +125,10 @@ return [
         'label' => 'Keluarga Pemilih',
         'description' => 'Susun pemilih ke dalam keluarga secara manual atau melalui padanan kediaman yang kuat.',
     ],
+    'keluarga-disemak' => [
+        'label' => 'Pemilih Sasaran',
+        'description' => 'Lihat pemilih sasaran daripada keluarga yang telah disemak.',
+    ],
     'pusat-khidmat' => [
         'label' => 'Pusat Khidmat',
         'description' => 'Data Pusat Khidmat dari Google Sheet.',

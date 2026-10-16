@@ -149,7 +149,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::put('/group-pemilih/{group}', [GroupPemilihController::class, 'update'])->middleware('module:group-pemilih')->name('group-pemilih.update');
     Route::delete('/group-pemilih/{group}', [GroupPemilihController::class, 'destroy'])->middleware('module:group-pemilih')->name('group-pemilih.destroy');
 
-    Route::get('/keluarga-disemak', [KeluargaDisemakController::class, 'index'])->middleware('module:keluarga-pemilih')->name('keluarga-disemak.index');
+    Route::get('/keluarga-disemak', [KeluargaDisemakController::class, 'index'])->middleware('module:keluarga-disemak')->name('keluarga-disemak.index');
     Route::get('/keluarga-pemilih', [KeluargaPemilihController::class, 'index'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.index');
     Route::get('/keluarga-pemilih/search', [KeluargaPemilihController::class, 'search'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.search');
     Route::get('/keluarga-pemilih/families', [KeluargaPemilihController::class, 'searchFamilies'])->middleware('module:keluarga-pemilih')->name('keluarga-pemilih.families.search');
