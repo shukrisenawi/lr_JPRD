@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import KempenTabs from '@/Components/KempenTabs';
 import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import PhoneNumber from '@/Components/PhoneNumber';
 import Modal from '@/Components/Modal';
@@ -77,13 +78,14 @@ export default function Index({ filters, udm_locked: udmLocked = false, udmSumma
 
     return (
         <AuthenticatedLayout>
-            <Head title="Pemilih Sasaran" />
+            <Head title="Kempen" />
             <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
                 <header className="space-y-3">
                     <div>
                         <p className="label-section">Operasi / Semakan keluarga</p>
-                        <h1 className="mt-0.5 heading-lg">Pemilih Sasaran</h1>
+                        <h1 className="mt-0.5 heading-lg">Kempen</h1>
                     </div>
+                    <KempenTabs active="sasaran" />
                     <dl className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                         {[[formatNumber(totalFamilies), 'Keluarga disemak'], [formatNumber(reviewedUdm), 'UDM dengan semakan'], [formatNumber(udmSummaries.length), 'UDM dalam akses']].map(([value, label]) => (
                             <div key={label} className="card p-3">

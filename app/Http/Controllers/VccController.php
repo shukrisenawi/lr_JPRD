@@ -36,6 +36,7 @@ class VccController extends Controller
             ->count();
 
         return Inertia::render('Vcc/Index', [
+            'kempen' => $request->routeIs('kempen.hari-jadi.*'),
             'filters' => $filters,
             'requires_udm' => false,
             'summary' => [
@@ -130,7 +131,7 @@ class VccController extends Controller
         }
 
         return redirect()
-            ->route('vcc.index')
+            ->route($request->routeIs('kempen.hari-jadi.*') ? 'kempen.hari-jadi.index' : 'vcc.index')
             ->with('success', 'Pemilih ditanda sebagai sudah diproses.');
     }
 
@@ -149,7 +150,7 @@ class VccController extends Controller
         }
 
         return redirect()
-            ->route('vcc.index')
+            ->route($request->routeIs('kempen.hari-jadi.*') ? 'kempen.hari-jadi.index' : 'vcc.index')
             ->with('success', 'Tanda culaan berjaya dibuka semula.');
     }
 

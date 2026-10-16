@@ -1,5 +1,6 @@
 import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import InputError from '@/Components/InputError';
+import KempenTabs from '@/Components/KempenTabs';
 import PhoneNumber from '@/Components/PhoneNumber';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import AvatarLightbox from '@/Components/AvatarLightbox';
@@ -173,7 +174,8 @@ function CancelStatusButton({ onClick, disabled }) {
     );
 }
 
-export default function VccIndex({ filters, summary, udms, localities, groups, voters, requires_udm, available_races = [], available_cula_codes: initialCulaCodes = [], available_hashtags = [] }) {
+export default function VccIndex({ kempen = false, filters, summary, udms, localities, groups, voters, requires_udm, available_races = [], available_cula_codes: initialCulaCodes = [], available_hashtags = [] }) {
+    const route = (name, ...params) => window.route(kempen && name.startsWith('vcc.') ? name.replace('vcc.', 'kempen.hari-jadi.') : name, ...params);
     const { auth } = usePage().props;
     const suggestionsAbort = useRef(null);
     const [search, setSearch] = useState('');
@@ -951,7 +953,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
             header={
                 <div className="relative z-10 flex items-start justify-between gap-4">
                     <div>
-                        <p className="label-section">VCC</p>
+                        <p className="label-section">{kempen ? 'Kempen / Hari Jadi' : 'VCC'}</p>
                         {formState.udm && <p className="mt-0.5 text-xl font-black uppercase tracking-[0.15em] text-slate-800">{formState.udm}</p>}
                         <h2 className="mt-0.5 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">{headerTitle}</h2>
                         <p className="mt-1 text-xs font-medium text-slate-500">Tapisan ikut UDM dan lokasi, kemudian kemas data atau tandakan rekod yang sudah diurus.</p>
@@ -967,9 +969,10 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                 </div>
             }
         >
-            <Head title="VCC" />
+            <Head title={kempen ? 'Kempen - Hari Jadi' : 'VCC'} />
 
             <div className="mx-auto max-w-7xl space-y-3 px-3 sm:px-4 lg:px-6">
+                {kempen && <KempenTabs active="hari-jadi" />}
                 <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_14rem]">
                     <div className="rounded-xl border border-green-600 bg-white p-3 shadow-sm shadow-green-600/20 overflow-hidden">
                         <div className="space-y-2">
@@ -1330,7 +1333,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                         <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                         <td className="whitespace-nowrap px-2 py-2">
                                                             {phone ? (
-                                                                <PhoneNumber phone={phone} voterId={voter.id} module="vcc"><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{phone}</a></PhoneNumber>
+                                                                <PhoneNumber phone={phone} voterId={voter.id} module={kempen ? 'kempen.hari-jadi' : 'vcc'}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{phone}</a></PhoneNumber>
                                                             ) : '-'}
                                                         </td>
                                                         {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}
@@ -1429,7 +1432,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                     <td className="whitespace-nowrap px-2 py-2 font-mono text-slate-700">{voter.no_kp || voter.old_ic || '-'}</td>
                                                     <td className="whitespace-nowrap px-2 py-2">
                                                         {phone ? (
-                                                            <PhoneNumber phone={phone} voterId={voter.id} module="vcc"><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{fmtPhone(phone)}</a></PhoneNumber>
+                                                            <PhoneNumber phone={phone} voterId={voter.id} module={kempen ? 'kempen.hari-jadi' : 'vcc'}><a href={`tel:${phone}`} onClick={() => logCommunication(voter.id, 'call')} className="font-mono hover:underline">{fmtPhone(phone)}</a></PhoneNumber>
                                                         ) : '-'}
                                                     </td>
                                                     {showUdmColumn && <td className="whitespace-nowrap px-2 py-2 text-slate-600">{voter.dm || '-'}</td>}

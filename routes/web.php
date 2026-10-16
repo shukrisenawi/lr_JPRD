@@ -188,6 +188,16 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::post('/culaan-bot/{pemilihRecord}/update-cula', [CulaanBotController::class, 'updateCula'])->middleware('module:culaan-bot')->name('culaan-bot.update-cula');
 
     Route::get('/vcc', [VccController::class, 'index'])->middleware('module:vcc')->name('vcc.index');
+    Route::prefix('kempen/hari-jadi')->name('kempen.hari-jadi.')->middleware('module:keluarga-disemak')->group(function () {
+        Route::get('/', [VccController::class, 'index'])->name('index');
+        Route::get('/search', [VccController::class, 'search'])->name('search');
+        Route::put('/{pemilihRecord}/phone-verification', [PhoneVerificationController::class, 'update'])->name('phone-verification');
+        Route::post('/{pemilihRecord}/mark', [VccController::class, 'storeMark'])->name('mark.store');
+        Route::delete('/{pemilihRecord}/mark', [VccController::class, 'destroyMark'])->name('mark.destroy');
+        Route::post('/{pemilihRecord}/update-cula', [VccController::class, 'updateCula'])->name('update-cula');
+        Route::post('/communication/log', [VccController::class, 'logCommunication'])->name('communication.log');
+        Route::post('/communication/call', [VccController::class, 'updateCallStatus'])->name('communication.call');
+    });
     Route::put('/vcc/{pemilihRecord}/phone-verification', [PhoneVerificationController::class, 'update'])->middleware('module:vcc')->name('vcc.phone-verification');
     Route::get('/vcc/search', [VccController::class, 'search'])->middleware('module:vcc')->name('vcc.search');
     Route::post('/vcc/{pemilihRecord}/mark', [VccController::class, 'storeMark'])->middleware('module:vcc')->name('vcc.mark.store');
