@@ -155,6 +155,8 @@ class PlkController extends Controller
                 'catatan' => $voter->catatan,
                 'verified_at' => $voter->plk_verified_at?->format('d-m-Y H:i'),
                 'verified_by' => $voter->plkVerifier?->name,
+                'can_unverify' => $voter->plk_verified_at !== null
+                    && (int) $voter->plk_verified_by === (int) $user->id,
                 'verification_status' => $voter->plk_verification_status,
                 'verification_remark' => $voter->plk_verification_remark,
             ]);
@@ -269,6 +271,12 @@ class PlkController extends Controller
     public function unverify(Request $request, PemilihRecord $pemilihRecord): RedirectResponse
     {
         $record = $this->baseQuery($request->user())->findOrFail($pemilihRecord->id);
+        abort_unless(
+            $record->plk_verified_at !== null
+                && (int) $record->plk_verified_by === (int) $request->user()->id,
+            403,
+        );
+
         $record->forceFill([
             'plk_verified_at' => null,
             'plk_verified_by' => null,

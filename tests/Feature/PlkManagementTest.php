@@ -196,6 +196,41 @@ it('cancels a PLK verification and returns the voter to the full list', function
         ->assertInertia(fn ($page) => $page->where('voters.total', 0));
 });
 
+it('only allows the original verifier to see and use PLK rollback', function () {
+    $verifier = User::factory()->withModules(['plk'])->create();
+    $otherUser = User::factory()->withModules(['plk'])->create();
+    $voter = createPlkRecord([
+        'plk_verified_at' => now(),
+        'plk_verified_by' => $verifier->id,
+        'plk_verification_status' => 'maklumat_sah',
+        'plk_verification_remark' => 'Semakan asal.',
+    ]);
+
+    $this->actingAs($verifier)->get(route('plk.index', ['tab' => 'disemak']))
+        ->assertOk()->assertInertia(fn ($page) => $page->where('voters.data.0.can_unverify', true));
+
+    $this->actingAs($otherUser)->get(route('plk.index', ['tab' => 'disemak']))
+        ->assertOk()->assertInertia(fn ($page) => $page->where('voters.data.0.can_unverify', false));
+
+    $this->deleteJson(route('plk.unverify', $voter))->assertForbidden();
+    expect($voter->fresh()->plk_verified_at)->not->toBeNull();
+    $this->assertDatabaseHas('pemilih_records', [
+        'id' => $voter->id,
+        'plk_verified_by' => $verifier->id,
+        'plk_verification_status' => 'maklumat_sah',
+        'plk_verification_remark' => 'Semakan asal.',
+    ]);
+});
+
+it('does not allow rollback of an unverified PLK voter', function () {
+    $user = User::factory()->withModules(['plk'])->create();
+    $voter = createPlkRecord();
+
+    $this->actingAs($user)->get(route('plk.index'))
+        ->assertOk()->assertInertia(fn ($page) => $page->where('voters.data.0.can_unverify', false));
+    $this->deleteJson(route('plk.unverify', $voter))->assertForbidden();
+});
+
 it('exports all matching PLK voters without pagination', function () {
     $user = User::factory()->withModules(['plk'])->create();
     createPlkRecord(['identity_number' => 'PLK-EXPORT-A-1', 'name' => 'PEMILIH EXPORT A', 'dm' => 'UDM A', 'locality' => 'LOKALITI 1', 'cula_code' => '3B', 'catatan' => 'Bawa dokumen']);

@@ -234,7 +234,7 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
                                                     Telah semak
                                                 </span>}
-                                                {checkedTab && (
+                                                {checkedTab && voter.can_unverify && (
                                                     <button
                                                         type="button"
                                                         onClick={() => onRequestUnverify(voter)}
