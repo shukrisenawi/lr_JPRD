@@ -595,6 +595,7 @@ class KeluargaPemilihController extends Controller
             'cula_code' => ['required', 'string', Rule::in(collect(CulaCodes::options())->pluck('code')->all())],
         ]);
         $user = $request->user();
+        abort_if($user->access_level === 'udm' && blank($user->scope_key), 403);
         abort_unless($user->canAccessPemilihRecord($pemilihRecord), 404);
 
         $code = $validated['cula_code'];
@@ -702,7 +703,7 @@ class KeluargaPemilihController extends Controller
     public function auto(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->isMasterAdmin(), 403);
+        abort_unless($user->isMasterAdmin() || ($user->access_level === 'udm' && filled($user->scope_key)), 403);
 
         $validated = $request->validate([
             ...$this->routeFilterRules(),
@@ -789,7 +790,7 @@ class KeluargaPemilihController extends Controller
     public function autoFather(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->isMasterAdmin(), 403);
+        abort_unless($user->isMasterAdmin() || ($user->access_level === 'udm' && filled($user->scope_key)), 403);
 
         $validated = $request->validate([
             ...$this->routeFilterRules(),
@@ -878,6 +879,9 @@ class KeluargaPemilihController extends Controller
     private function activeVoterQuery(User $user, ?string $udm = null, ?string $locality = null): Builder
     {
         $query = PemilihRecord::query()->where('status', 'aktif');
+        if ($user->access_level === 'udm' && blank($user->scope_key)) {
+            $query->whereRaw('1 = 0');
+        }
         $user->applyScopeToPemilihQuery($query);
         if (filled($udm)) {
             $query->where('dm', $udm);
@@ -901,6 +905,8 @@ class KeluargaPemilihController extends Controller
 
     private function visibleFamilyQuery(User $user, ?string $udm = null, ?string $locality = null): Builder
     {
+        abort_if($user->access_level === 'udm' && blank($user->scope_key), 403);
+
         return PemilihFamily::query()->whereHas('members', function (Builder $query) use ($user, $udm, $locality): void {
             $user->applyScopeToPemilihQuery($query);
             $this->whereMalayRace($query);

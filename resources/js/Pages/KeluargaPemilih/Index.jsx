@@ -1057,7 +1057,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                 <div><p className="label-section">Operasi · Pengurusan Pemilih</p><h2 className="mt-0.5 heading-lg">Keluarga Pemilih</h2><p className="mt-1 max-w-2xl text-xs text-slate-500">Satukan pemilih yang tinggal serumah. Semak padanan cadangan dahulu atau biarkan sistem mengumpulkan rekod yang mempunyai bukti kediaman sepadan tepat.</p></div>
                 <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={startNewFamily} className="btn-primary inline-flex items-center gap-1.5"><Icon name="plus" />Tambah Manual</button>
-                    {isMasterAdmin && (
+                    {(isMasterAdmin || (isUdmUser && filters.udm)) && (
                         <>
                             <button type="button" onClick={runAuto} disabled={autoProcessing || visibleStats.unassigned === 0} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="sparkles" />{autoProcessing ? 'Memproses…' : 'Auto Keluarga'}</button>
                             <button type="button" onClick={runAutoFather} disabled={autoFatherProcessing} className="btn-ghost inline-flex items-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="users" />{autoFatherProcessing ? 'Memproses…' : 'Auto Add Ayah'}</button>

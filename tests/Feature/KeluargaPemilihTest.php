@@ -6,6 +6,36 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+it('allows UDM automatic family management only within its own scope', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create([
+        'access_level' => 'udm', 'scope_key' => 'UDM 1',
+    ]);
+    foreach (['UDM 1', 'UDM 2'] as $udm) {
+        foreach (['AHMAD BIN ALI', 'SITI BINTI OMAR'] as $name) {
+            createKeluargaPemilihRecord(['name' => $name, 'dm' => $udm, 'no_rumah' => '12', 'address' => 'Jalan Ujian']);
+        }
+    }
+
+    $this->actingAs($user)->post(route('keluarga-pemilih.auto'))->assertRedirect();
+    $this->assertDatabaseCount('pemilih_families', 1);
+    $this->assertDatabaseCount('pemilih_family_members', 2);
+    $family = PemilihFamily::query()->firstOrFail();
+    expect($family->members()->pluck('dm')->unique()->all())->toBe(['UDM 1']);
+    $this->post(route('keluarga-pemilih.auto-father'))->assertRedirect();
+    $this->put(route('keluarga-pemilih.review', $family), ['reviewed' => true])->assertRedirect();
+    expect($family->fresh()->reviewed_by)->toBe($user->id);
+    $this->post(route('keluarga-pemilih.auto'), ['udm' => 'UDM 2'])->assertRedirect();
+    $this->assertDatabaseCount('pemilih_families', 1);
+});
+
+it('denies automatic family management for a UDM account without a scope', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create([
+        'access_level' => 'udm', 'scope_key' => null,
+    ]);
+    $this->actingAs($user)->postJson(route('keluarga-pemilih.auto'))->assertForbidden();
+    $this->postJson(route('keluarga-pemilih.auto-father'))->assertForbidden();
+});
+
 function createKeluargaPemilihRecord(array $attributes = []): PemilihRecord
 {
     return PemilihRecord::query()->create(array_merge([
