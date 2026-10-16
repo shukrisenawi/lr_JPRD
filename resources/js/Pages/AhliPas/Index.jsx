@@ -276,6 +276,7 @@ export default function AhliPasIndex({
     const [completedCulaIds, setCompletedCulaIds] = useState(new Set());
     const [selectedMemberForCula, setSelectedMemberForCula] = useState(null);
     const [savingCula, setSavingCula] = useState(false);
+    const [confirmCulaSameMember, setConfirmCulaSameMember] = useState(null);
     const [culaError, setCulaError] = useState("");
     const [localitySearch, setLocalitySearch] = useState("");
     const [n8nModalOpen, setN8nModalOpen] = useState(false);
@@ -454,6 +455,7 @@ export default function AhliPasIndex({
                 return next;
             });
             setSelectedMemberForCula(null);
+            setConfirmCulaSameMember(null);
         } catch {
             setCulaError("Semakan culaan gagal disimpan. Sila cuba lagi.");
         } finally {
@@ -1001,7 +1003,7 @@ export default function AhliPasIndex({
                                                         <button
                                                             type="button"
                                                             disabled={savingCula}
-                                                            onClick={() => saveCula(null, member)}
+                                                            onClick={() => setConfirmCulaSameMember(member)}
                                                             className="flex-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                                                         >
                                                             Cula Sama
@@ -1210,6 +1212,20 @@ export default function AhliPasIndex({
                     onSave={saveCula}
                     onClose={() => setSelectedMemberForCula(null)}
                 />
+            )}
+            {confirmCulaSameMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <section role="dialog" aria-modal="true" aria-labelledby="confirm-cula-sama-title" className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
+                        <h3 id="confirm-cula-sama-title" className="text-sm font-bold text-slate-800">Sahkan Cula Sama</h3>
+                        <p className="mt-3 text-sm text-slate-600">
+                            Sahkan semakan untuk <strong>{confirmCulaSameMember.name}</strong> tanpa menukar kod cula sedia ada ({culaStatus(confirmCulaSameMember)})?
+                        </p>
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button type="button" autoFocus disabled={savingCula} onClick={() => setConfirmCulaSameMember(null)} className="rounded-md border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 disabled:opacity-50">Batal</button>
+                            <button type="button" disabled={savingCula} onClick={() => saveCula(null, confirmCulaSameMember)} className="rounded-md bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50">{savingCula ? 'Menyimpan...' : 'Ya, Sahkan'}</button>
+                        </div>
+                    </section>
+                </div>
             )}
         </AuthenticatedLayout>
     );

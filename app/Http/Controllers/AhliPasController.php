@@ -22,7 +22,7 @@ class AhliPasController extends Controller
     {
         $user = $request->user();
         $tab = $request->string('tab')->toString();
-        $tab = in_array($tab, ['senarai', 'salah-cula', 'statistik'], true) ? $tab : 'senarai';
+        $tab = in_array($tab, ['senarai', 'salah-cula', 'statistik'], true) ? $tab : 'salah-cula';
         $base = $this->baseQuery($user);
         $canViewMemberNumber = $user?->canViewMemberNumber() ?? false;
 

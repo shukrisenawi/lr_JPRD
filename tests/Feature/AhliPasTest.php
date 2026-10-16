@@ -43,7 +43,7 @@ it('renders ahli pas list and statistics using only records with no ahli', funct
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('AhliPas/Index')
-            ->where('active_tab', 'senarai')
+            ->where('active_tab', 'salah-cula')
             ->where('members.per_page', 20)
             ->where('members.total', 1)
             ->where('members.data.0.name', 'AHLI SATU')
