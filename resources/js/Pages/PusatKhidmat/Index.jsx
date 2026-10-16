@@ -262,7 +262,7 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
     const [selectedUdm, setSelectedUdm] = useState(userScopeDm || '');
     const [selectedLocality, setSelectedLocality] = useState(userScopeLocality || '');
     const [currentPage, setCurrentPage] = useState(1);
-    const [activeTab, setActiveTab] = useState('belum');
+    const [activeTab, setActiveTab] = useState('siap');
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [showCulaModal, setShowCulaModal] = useState(false);
     const [pendingIds, setPendingIds] = useState(new Set());
@@ -720,17 +720,17 @@ export default function PusatKhidmatIndex({ sheet_url: initialSheetUrl, records:
                         <div className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1">
                             <button
                                 type="button"
-                                onClick={() => handleTabChange('belum')}
-                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'belum' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
-                            >
-                                Belum Cula ({tabCountsByUdm.belum})
-                            </button>
-                            <button
-                                type="button"
                                 onClick={() => handleTabChange('siap')}
                                 className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'siap' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
                             >
                                 Telah Cula ({tabCountsByUdm.siap})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleTabChange('belum')}
+                                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${activeTab === 'belum' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}
+                            >
+                                Belum Cula ({tabCountsByUdm.belum})
                             </button>
                             {isAdmin && (
                             <button
