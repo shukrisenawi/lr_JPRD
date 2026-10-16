@@ -136,7 +136,9 @@ class PlkController extends Controller
                     'cula_code', 'cula_display_label', 'phone_mobile', 'phone_home', 'catatan',
                     'plk_verified_at', 'plk_verified_by', 'plk_verification_status', 'plk_verification_remark',
                 ])
-                ->orderBy('dm')
+                ->orderByRaw("CASE WHEN no_kp IS NULL OR LENGTH(REPLACE(no_kp, '-', '')) != 12 THEN 1 ELSE 0 END")
+                ->orderByRaw("CASE WHEN SUBSTR(REPLACE(no_kp, '-', ''), 1, 2) > ? THEN 0 ELSE 1 END DESC", [now()->format('y')])
+                ->orderByRaw("SUBSTR(REPLACE(no_kp, '-', ''), 1, 6) DESC")
                 ->orderBy('name')
                 ->orderBy('id')
                 ->paginate(30)
