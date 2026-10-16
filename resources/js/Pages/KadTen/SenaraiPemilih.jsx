@@ -131,7 +131,7 @@ export default function SenaraiPemilih({ filters, voters, udms, localities, kads
         if (next.q) params.q = next.q;
         router.get(route('kad-ten.senarai-pemilih'), params, {
             preserveState: true,
-            preserveScroll: true,
+            preserveScroll: false,
             replace: true,
         });
     };

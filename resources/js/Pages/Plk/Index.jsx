@@ -371,7 +371,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
     useEffect(() => setSelectedUdm(filters.udm || ''), [filters.udm]);
     useEffect(() => setRates(initialRates || {}), [initialRates]);
 
-    const navigate = (next = {}) => {
+    const navigate = (next = {}, options = {}) => {
         router.get(route('plk.index'), {
             tab: activeTab,
             udm: selectedUdm,
@@ -380,7 +380,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
             cula_code: filters.cula_code || '',
             show_voters: filters.show_voters ? 1 : 0,
             ...next,
-        }, { preserveState: true, preserveScroll: true, replace: true });
+        }, { preserveState: true, preserveScroll: true, replace: true, ...options });
     };
 
     const visitTab = (tab) => navigate({ tab, cula_code: tab === 'senarai' ? (filters.cula_code || '') : '', show_voters: 0, page: 1 });
@@ -475,7 +475,7 @@ export default function PlkIndex({ active_tab: activeTab, filters, udms, summary
         });
     };
 
-    const onPage = (page) => navigate({ page });
+    const onPage = (page) => navigate({ page }, { preserveScroll: false });
 
     const exportToExcel = async () => {
         if (exporting) return;

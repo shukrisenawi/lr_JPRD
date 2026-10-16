@@ -550,7 +550,7 @@ export default function KadTenIndex({ kads: kadsPaginator = [], kad_stats: kadSt
     const goToPage = page => {
         const params = { page };
         if (udmFilter) params.udm = udmFilter;
-        router.get(route('kad-ten.index'), params, { preserveState: true, preserveScroll: true, replace: true });
+        router.get(route('kad-ten.index'), params, { preserveState: true, preserveScroll: false, replace: true });
     };
 
     const applyUdmFilter = value => {

@@ -336,7 +336,7 @@ export default function AhliPasIndex({
             preserveState: true,
             preserveScroll: true,
             replace: true,
-            onSuccess: options.onSuccess,
+            ...options,
         });
     const selectTab = (tab) =>
         load(
@@ -355,23 +355,12 @@ export default function AhliPasIndex({
         });
     };
     const goToPage = (page) => {
-        const resultSectionId =
-            active_tab === "salah-cula"
-                ? "salah-cula-results"
-                : "ahli-pas-results";
-
         load(
             active_tab === "salah-cula"
                 ? { ...form, tab: active_tab, salah_cula_page: page }
                 : { ...form, tab: active_tab, page },
             {
-                onSuccess: () => {
-                    requestAnimationFrame(() => {
-                        document
-                            .getElementById(resultSectionId)
-                            ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    });
-                },
+                preserveScroll: false,
             },
         );
     };

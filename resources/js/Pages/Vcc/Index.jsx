@@ -288,13 +288,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
 
     const goToPage = (page) => {
         applyFilters({ ...formState, page }, {
-            onFinish: () => {
-                const el = document.getElementById('senarai-grid');
-                if (el) {
-                    const y = el.getBoundingClientRect().top + window.scrollY - 100;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
-                }
-            },
+            preserveScroll: false,
         });
     };
 

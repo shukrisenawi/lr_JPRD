@@ -492,13 +492,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                 page,
             },
             {
-                onFinish: () => {
-                    const el = document.getElementById('senarai-grid');
-                    if (el) {
-                        const y = el.getBoundingClientRect().top + window.scrollY - 100;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                    }
-                },
+                preserveScroll: false,
             }
         );
     };

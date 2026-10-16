@@ -387,7 +387,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                     {records.links?.length > 3 && (
                         <div className="flex flex-wrap items-center justify-center gap-1 border-t border-slate-100 px-3 py-3">
                             {records.links.map((link) => (
-                                <button key={`${link.label}-${link.url ?? 'disabled'}`} type="button" disabled={!link.url || link.active} onClick={() => link.url && router.visit(link.url, { preserveScroll: true })} className={`min-w-8 rounded-md px-2.5 py-1.5 text-[10px] font-bold ${link.active ? 'bg-slate-800 text-white' : link.url ? 'text-slate-500 hover:bg-slate-100' : 'cursor-not-allowed text-slate-300'}`}>
+                                <button key={`${link.label}-${link.url ?? 'disabled'}`} type="button" disabled={!link.url || link.active} onClick={() => link.url && router.visit(link.url, { preserveScroll: false })} className={`min-w-8 rounded-md px-2.5 py-1.5 text-[10px] font-bold ${link.active ? 'bg-slate-800 text-white' : link.url ? 'text-slate-500 hover:bg-slate-100' : 'cursor-not-allowed text-slate-300'}`}>
                                     {link.label.replace(/&laquo;|&raquo;/g, '').trim() || '‹ ›'}
                                 </button>
                             ))}

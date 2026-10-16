@@ -213,7 +213,7 @@ export default function Spokas({ spokas_count, pemilih_count, run, results, resu
             search: nextSearch || undefined,
         }, {
             preserveState: true,
-            preserveScroll: true,
+            preserveScroll: false,
             only: ['run', 'results', 'result_counts', 'active_tab', 'search', 'last_migrated_at'],
         });
     };

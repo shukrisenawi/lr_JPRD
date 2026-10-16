@@ -487,7 +487,7 @@ function SenaraiTab({ manualVoters, manualSearch = '', dms, localitiesByDm, cula
 
         router.get(route('tambah-pemilih.index'), params, {
             preserveState: true,
-            preserveScroll: true,
+            preserveScroll: false,
             replace: true,
         });
     };
