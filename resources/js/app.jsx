@@ -4,6 +4,8 @@ import './bootstrap';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
+import TelegramPhoneModal from './Components/TelegramPhoneModal';
+import { notifyTelegramPhoneChange } from './Utils/telegram';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 const uppercaseInputTypes = new Set(['text', 'search', 'tel', 'url', 'email']);
@@ -48,8 +50,14 @@ createInertiaApp({
         const root = createRoot(el);
 
         document.addEventListener('input', uppercaseInputValue, true);
+        document.addEventListener('click', (event) => {
+            const anchor = event.target.closest('a[href^="tg:"]');
+            if (anchor) queueMicrotask(() => {
+                if (!event.defaultPrevented) notifyTelegramPhoneChange(anchor.href);
+            });
+        }, true);
 
-        root.render(<App {...props} />);
+        root.render(<><App {...props} /><TelegramPhoneModal /></>);
     },
     progress: {
         color: '#4B5563',

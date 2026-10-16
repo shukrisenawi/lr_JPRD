@@ -1,3 +1,4 @@
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PhoneNumber from '@/Components/PhoneNumber';
@@ -245,7 +246,7 @@ function SearchPanel() {
         if (!c) { setErr('No Kp tidak tersedia.'); return; }
         const w = window.open('about:blank', '_blank');
         setOpeningTg(true);
-        try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); setErr('Telegram gagal dibuka.'); }
+        try { if (w) launchTelegram(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`, w); } catch { w?.close(); setErr('Telegram gagal dibuka.'); }
         finally { setOpeningTg(false); }
         if (prefix === 'kemascula') {
             setCulaPendingIds((prev) => new Set([...prev, voter.id]));

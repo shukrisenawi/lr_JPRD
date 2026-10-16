@@ -1,3 +1,4 @@
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import InputError from '@/Components/InputError';
 import PhoneNumber from '@/Components/PhoneNumber';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -1396,7 +1397,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                              className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500">
                                                                              Cula
                                                                          </button>
-                                                                         <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                         <button type="button" onClick={() => { launchTelegram(buildTelegramLink('kemastel', voter.telegram_identity)); }}
                                                                              className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500">
                                                                              Tel
                                                                          </button>
@@ -1495,7 +1496,7 @@ export default function VccIndex({ filters, summary, udms, localities, groups, v
                                                                              className="rounded bg-green-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-green-500">
                                                                              Cula
                                                                          </button>
-                                                                         <button type="button" onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                         <button type="button" onClick={() => { launchTelegram(buildTelegramLink('kemastel', voter.telegram_identity)); }}
                                                                              className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500">
                                                                              Tel
                                                                          </button>

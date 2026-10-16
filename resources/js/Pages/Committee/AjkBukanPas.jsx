@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import PhoneNumber from '@/Components/PhoneNumber';
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
@@ -252,7 +253,7 @@ export default function AjkBukanPas({ members = [], total_assignments = 0, level
         const telegramWindow = window.open('about:blank', '_blank');
 
         try {
-            telegramWindow?.location.replace(`tg://resolve?domain=${TELEGRAM_BOT}&text=${encodeURIComponent(`/${prefix} ${identity}`)}`);
+            if (telegramWindow) launchTelegram(`tg://resolve?domain=${TELEGRAM_BOT}&text=${encodeURIComponent(`/${prefix} ${identity}`)}`, telegramWindow);
             if (prefix === 'kemascula') {
                 setCulaPendingIds((current) => new Set([...current, member.id]));
             }

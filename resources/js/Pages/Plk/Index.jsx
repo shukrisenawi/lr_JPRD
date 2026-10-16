@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router, usePage } from '@inertiajs/react';
 import { orderUdms } from '@/Utils/udmOrder';
@@ -48,7 +49,7 @@ function openTelegram(command, voter) {
     if (!identity) return;
 
     const popup = window.open('about:blank', '_blank');
-    if (popup) popup.location.replace(telegramLink(command, identity));
+    if (popup) launchTelegram(telegramLink(command, identity), popup);
 }
 
 function TabButton({ active, label, count, onClick }) {

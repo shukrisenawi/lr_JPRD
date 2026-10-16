@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
@@ -2002,7 +2003,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                                                                              ))}
                                                                              <button
                                                                                  type="button"
-                                                                                 onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                                  onClick={() => { launchTelegram(buildTelegramLink('kemastel', voter.telegram_identity)); }}
                                                                                  className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
                                                                              >
                                                                                  Tel
@@ -2127,7 +2128,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                                                                          ))}
                                                                          <button
                                                                              type="button"
-                                                                             onClick={() => { window.open(buildTelegramLink('kemastel', voter.telegram_identity), '_blank'); }}
+                                                                              onClick={() => { launchTelegram(buildTelegramLink('kemastel', voter.telegram_identity)); }}
                                                                              className="rounded bg-amber-600 px-1 py-0.5 text-xs font-bold text-white hover:bg-amber-500"
                                                                          >
                                                                              Tel

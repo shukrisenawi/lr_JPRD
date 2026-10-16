@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
 import Modal from '@/Components/Modal';
@@ -799,7 +800,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         }
 
         try {
-            telegramWindow.location.replace(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/${command} ${identity}`)}`);
+            launchTelegram(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/${command} ${identity}`)}`, telegramWindow);
             onOpened?.();
             setCulaErrors((current) => ({ ...current, [voter.id]: null }));
         } catch {

@@ -1,4 +1,5 @@
 import AvatarLightbox from '@/Components/AvatarLightbox';
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import CropModal from '@/Components/CropModal';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -1175,7 +1176,7 @@ export default function ProgramIndex({ programs, selectedProgram, shareableUsers
     const cancelEdit = () => { setEditingId(null); f.reset('tajuk', 'tarikh', 'masa', 'group_id', 'committee_group_filters', 'group_pemilih_filters', 'has_laporan', 'is_mesyuarat', 'gambar', 'gambar_url'); f.setData('tempat', defaultTempat); f.setData('gambar_url', null); f.clearErrors(); if (imgRef.current) imgRef.current.value = ''; };
     const delProgram = (p) => { if (!window.confirm(`Padam "${p.tajuk}"?`)) return; setDeletingId(p.id); router.delete(route('program.destroy', p.id), { preserveScroll: true, onSuccess: () => { if (editingId === p.id) cancelEdit(); }, onFinish: () => setDeletingId(null) }); };
     const delAttendee = (a) => { if (!selectedProgram || !window.confirm(`Padam "${a.name}"?`)) return; setDeletingAtt(a.id); router.delete(route('program.attendees.destroy', [selectedProgram.id, a.id]), { preserveScroll: true, onSuccess: () => setSelAttendee(null), onFinish: () => setDeletingAtt(null) }); };
-    const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { w?.location.replace(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`); } catch { w?.close(); } finally { setOpeningTg(false); } if (prefix === 'kemascula') { setCulaPendingIds((prev) => new Set([...prev, v.id])); } };
+    const openTg = async (v, prefix) => { const c = cmd(v, prefix); if (!c) return; const w = window.open('about:blank', '_blank'); setOpeningTg(true); try { if (w) launchTelegram(`tg://resolve?domain=${bot}&text=${encodeURIComponent(c)}`, w); } catch { w?.close(); } finally { setOpeningTg(false); } if (prefix === 'kemascula') { setCulaPendingIds((prev) => new Set([...prev, v.id])); } };
     const handleCulaSiap = async (code, label) => {
         if (!selectedVoterForCula || !selectedProgram) return;
         const attendee = selectedVoterForCula;

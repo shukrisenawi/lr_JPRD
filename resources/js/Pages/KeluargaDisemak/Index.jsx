@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import PhoneNumber from '@/Components/PhoneNumber';
 import Modal from '@/Components/Modal';
 import { orderUdms } from '@/Utils/udmOrder';
@@ -27,7 +28,7 @@ export default function Index({ filters, udmSummaries: unorderedUdmSummaries, fa
             return;
         }
         try {
-            popup.location.replace(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/${command} ${identity}`)}`);
+            launchTelegram(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/${command} ${identity}`)}`, popup);
             if (command === 'kemascula') setPendingIds((current) => new Set([...current, member.id]));
             setActionErrors((current) => ({ ...current, [member.id]: null }));
         } catch {
