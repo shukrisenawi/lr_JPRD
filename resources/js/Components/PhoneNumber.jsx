@@ -38,7 +38,7 @@ export default function PhoneNumber({ phone, voterId, module, children }) {
             title="Semak status nombor telefon"
             aria-label="Semak status nombor telefon"
             className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-slate-300 text-xs font-bold text-slate-400 transition hover:border-emerald-500 hover:text-emerald-500 disabled:opacity-40">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-3 w-3" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.19 19a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-2.91-8.67A2 2 0 0 1 4.26 2.15h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.23 10.05a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.33 1.84.56 2.8.69A2 2 0 0 1 22 16.92Z" /></svg>
+            <span aria-hidden="true">?</span>
         </button>}
     </span>
         {module && voterId && <Modal show={show} maxWidth="sm" animate={false} closeable={!processing} onClose={() => setShow(false)} title="Pengesahan nombor telefon">
