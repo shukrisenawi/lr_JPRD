@@ -283,6 +283,16 @@ class VccController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
+        if (request()->routeIs('kempen.hari-jadi.*')) {
+            $query->where(function (Builder $builder) {
+                $builder->whereNull('cula_code')
+                    ->orWhere(function (Builder $builder) {
+                        $builder->whereRaw('UPPER(TRIM(cula_code)) NOT IN (?, ?)', ['2', '4P'])
+                            ->whereRaw('TRIM(cula_code) NOT LIKE ?', ['3%']);
+                    });
+            });
+        }
+
         $query->when($groupKodCulas !== null, fn (Builder $builder) => $builder->whereIn('cula_code', $groupKodCulas))
             ->when($filters['udm'] !== '', fn (Builder $builder) => $builder->where('dm', $filters['udm']))
             ->when($filters['locality'] !== '', fn (Builder $builder) => $builder->where('locality', $filters['locality']))
@@ -902,6 +912,8 @@ class VccController extends Controller
 
     private function availableCulaCodes(): array
     {
-        return CulaCodes::options();
+        return array_values(array_filter(CulaCodes::options(), fn (array $option) => ! request()->routeIs('kempen.hari-jadi.*')
+            || (! in_array($option['code'], ['2', '4P'], true) && ! str_starts_with($option['code'], '3'))
+        ));
     }
 }
