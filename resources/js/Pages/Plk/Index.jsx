@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import PhoneNumber from '@/Components/PhoneNumber';
+import { calculateAgeFromNoKp } from '@/Utils/familyMemberOrder';
 import { Head, router, usePage } from '@inertiajs/react';
 import { orderUdms } from '@/Utils/udmOrder';
 import { useEffect, useMemo, useState } from 'react';
@@ -173,11 +174,12 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
 
     return (
         <>
-            <div className="w-full">
-                <table className="block w-full border-collapse text-left md:table md:table-fixed [&_td]:break-words [&_th]:break-words [&_td]:px-2 [&_th]:px-2">
+            <div className="w-full overflow-x-auto">
+                <table className="block w-full border-collapse text-left md:table [&_td]:break-words [&_th]:break-words [&_td]:px-2 [&_th]:px-2">
                     <thead className="hidden bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-500 md:table-header-group">
                         <tr>
                             <th className="px-4 py-3">Maklumat pemilih</th>
+                            <th className="px-4 py-3">Umur</th>
                             {!hideCulaCode && <th className="px-4 py-3">Kod Cula</th>}
                             <th className="px-4 py-3">UDM / Lokaliti</th>
                             <th className="px-4 py-3">Telefon</th>
@@ -194,10 +196,13 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
                                     <p className="max-w-[280px] text-xs font-bold uppercase leading-relaxed text-slate-800">{voter.name || 'Nama tidak direkodkan'}</p>
                                     <p className="mt-0.5 text-[11px] font-medium text-slate-500">No. KP: {voter.no_kp || '-'}</p>
                                 </td>
+                                <td className="px-4 py-3 text-xs font-medium text-slate-700">
+                                    <span className="mb-1 block text-[10px] font-bold uppercase text-slate-500 md:hidden">Umur</span>
+                                    {calculateAgeFromNoKp(voter.no_kp) ?? '-'}
+                                </td>
                                 {!hideCulaCode && (
                                     <td className="px-4 py-3">
-                                        <span className="inline-flex rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-800">{voter.cula_code}</span>
-                                        <p className="mt-1 max-w-[160px] text-[10px] leading-relaxed text-slate-500">{voter.cula_label}</p>
+                                        <p className="max-w-[160px] text-[11px] leading-relaxed text-slate-600">{voter.cula_label || '-'}</p>
                                     </td>
                                 )}
                                 <td className="px-4 py-3">
@@ -218,23 +223,23 @@ function VoterTable({ voters, checkedTab, hideCulaCode, verifyingIds, culaSemula
                                         {voter.verification_remark || '-'}
                                     </td>
                                 )}
-                                <td className="px-4 py-3">
-                                    <div className="flex flex-wrap justify-end gap-1.5">
+                                <td className="col-span-2 px-4 py-3">
+                                    <div className="flex flex-nowrap items-center justify-end gap-1.5 whitespace-nowrap [&>*]:shrink-0">
                                         {!voter.verified_at ? (
                                             <button
                                                 type="button"
                                                 onClick={() => onVerify(voter)}
                                                 disabled={verifyingIds.includes(voter.id)}
+                                                aria-label={verifyingIds.includes(voter.id) ? 'Menyimpan…' : 'Telah semak'}
+                                                title="Telah semak"
                                                 className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-2.5 py-1.5 text-[10px] font-bold text-white transition hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60"
                                             >
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-                                                {verifyingIds.includes(voter.id) ? 'Menyimpan…' : 'Telah semak'}
                                             </button>
                                         ) : (
                                             <>
-                                                {!checkedTab && <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
+                                                {!checkedTab && <span aria-label="Telah semak" title="Telah semak" className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[10px] font-bold text-emerald-700">
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
-                                                    Telah semak
                                                 </span>}
                                                 {checkedTab && voter.can_unverify && (
                                                     <button
