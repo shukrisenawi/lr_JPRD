@@ -258,7 +258,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                 </Dropdown>
                             </div>
 
-                            <button type="button" onClick={() => setShowingNavigationDropdown((prev) => !prev)}
+                            <button type="button" aria-label={showingNavigationDropdown ? 'Tutup menu' : 'Buka menu'} aria-expanded={showingNavigationDropdown} aria-controls="mobile-navigation" onClick={() => setShowingNavigationDropdown((prev) => !prev)}
                                 className="inline-flex items-center justify-center rounded-lg p-1.5 text-green-700 transition hover:bg-green-100 sm:hidden">
                                 <svg className="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                                     <path className={!showingNavigationDropdown ? 'inline-flex' : 'hidden'} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -269,7 +269,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                     </div>
                 </div>
 
-                <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' border-t border-green-200 bg-white sm:hidden'}>
+                <div id="mobile-navigation" className={(showingNavigationDropdown ? 'block' : 'hidden') + ' max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain border-t border-green-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden'}>
                     {!mustChangePassword && (
                     <div className="space-y-0.5 px-2 py-2">
                         {(() => {
