@@ -666,7 +666,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
             });
             const payload = await response.json();
             if (!response.ok) throw new Error(payload.message || 'Tidak berjaya mengesahkan keluarga.');
-            setReviewFeedback({ success: true, message: payload.message });
+            setReviewFeedback({ success: true, message: payload.message, familyName: family.name });
             router.reload({ preserveScroll: true, preserveState: true });
         } catch (error) {
             setReviewFeedback({ success: false, message: error.message || 'Tidak berjaya mengesahkan keluarga.' });
@@ -1100,6 +1100,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                     </div>
                     <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-900">{reviewFeedback?.success ? 'Berjaya!' : 'Tidak berjaya'}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-slate-600" role="status">{reviewFeedback?.message}</p>
+                    {reviewFeedback?.familyName && <p className="mt-3 break-words rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm font-bold text-green-900">{reviewFeedback.familyName}</p>}
                     <button type="button" onClick={() => setReviewFeedback(null)} className="mt-6 w-full rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-green-800 active:bg-green-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">{reviewFeedback?.success ? 'Selesai' : 'Tutup'}</button>
                 </div>
             </Modal>
