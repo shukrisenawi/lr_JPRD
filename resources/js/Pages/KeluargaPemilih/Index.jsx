@@ -219,6 +219,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
     const [fatherErrors, setFatherErrors] = useState({});
     const [updatedFamilyId, setUpdatedFamilyId] = useState(null);
     const [reviewFamilyProcessingId, setReviewFamilyProcessingId] = useState(null);
+    const [reviewFeedback, setReviewFeedback] = useState(null);
     const [familyCardExpansionModes, setFamilyCardExpansionModes] = useState({ families: true, reviewed: false });
     const [familyCardExpansionOverrides, setFamilyCardExpansionOverrides] = useState({});
     const [removedFamilyIds, setRemovedFamilyIds] = useState(new Set());
@@ -665,10 +666,10 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
             });
             const payload = await response.json();
             if (!response.ok) throw new Error(payload.message || 'Tidak berjaya mengesahkan keluarga.');
-            window.alert(payload.message);
+            setReviewFeedback({ success: true, message: payload.message });
             router.reload({ preserveScroll: true, preserveState: true });
         } catch (error) {
-            window.alert(error.message || 'Tidak berjaya mengesahkan keluarga.');
+            setReviewFeedback({ success: false, message: error.message || 'Tidak berjaya mengesahkan keluarga.' });
         } finally {
             setReviewFamilyProcessingId(null);
         }
@@ -1089,6 +1090,19 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
             </div>
         }>
             <Head title="Keluarga Pemilih" />
+            <Modal show={Boolean(reviewFeedback)} maxWidth="sm" title={reviewFeedback?.success ? 'Keluarga berjaya disimpan' : 'Tidak berjaya disimpan'} animate={false} onClose={() => setReviewFeedback(null)}>
+                <div className="relative bg-white px-6 pb-6 pt-8 text-center sm:px-8">
+                    <button type="button" onClick={() => setReviewFeedback(null)} aria-label="Tutup notifikasi" className="absolute right-3 top-3 rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-700">
+                        <Icon name="close" />
+                    </button>
+                    <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ring-8 ${reviewFeedback?.success ? 'bg-green-100 text-green-700 ring-green-50' : 'bg-red-100 text-red-700 ring-red-50'}`}>
+                        <Icon name={reviewFeedback?.success ? 'check' : 'close'} className="h-8 w-8" />
+                    </div>
+                    <h3 className="mt-6 text-xl font-bold tracking-tight text-slate-900">{reviewFeedback?.success ? 'Berjaya!' : 'Tidak berjaya'}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600" role="status">{reviewFeedback?.message}</p>
+                    <button type="button" onClick={() => setReviewFeedback(null)} className="mt-6 w-full rounded-xl bg-green-700 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-green-800 active:bg-green-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">{reviewFeedback?.success ? 'Selesai' : 'Tutup'}</button>
+                </div>
+            </Modal>
             <div className={`mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6 ${selectedUnassignedVoters.length > 0 && filters.tab === 'unassigned' ? 'pb-28 sm:pb-20' : ''}`}>
                 <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarFileSelected} className="hidden" />
                 <section className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -1231,8 +1245,8 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                     : familyCardExpansionModes[activeFamilyTab];
                                 return (
                                     <article key={family.id} className={`card overflow-hidden transition-all duration-300 ${isUpdated ? 'border-yellow-400 bg-yellow-50/70 ring-2 ring-yellow-300 shadow-md' : ''}`}>
-                                        <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                                            <div className={`min-w-0 ${managingFamily ? 'flex-1' : ''}`}>
+                                        <div className="flex flex-col gap-3 border-b border-slate-100 bg-white px-3 py-3">
+                                            <div className="min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     {father.father_id && fatherAvatar && (
                                                         <VoterAvatar
@@ -1287,7 +1301,8 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                                     </div>
                                                 )}
                                             </div>
-                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className={`btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800 ${managingFamily ? 'self-end sm:ml-auto sm:self-center' : ''}`}><Icon name="plus" />Tambah Ahli</button>
+                                            <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2">
+                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} aria-label="Tambah ahli" title="Tambah ahli" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-green-200 bg-green-50 text-green-800 transition-colors hover:border-green-300 hover:bg-green-100 active:bg-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"><Icon name="plus" className="h-5 w-5" /></button>
                                             {!managingFamily && isReviewedTab && (
                                                 <button
                                                     type="button"
@@ -1303,9 +1318,11 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                                     <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${isFamilyExpanded ? 'rotate-180' : ''}`} />
                                                 </button>
                                             )}
-                                            {!managingFamily && <button type="button" onClick={() => updateFamilyReview(family, !isReviewedTab)} disabled={reviewFamilyProcessingId === family.id} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-wait disabled:opacity-50">
+                                            {!managingFamily && <button type="button" onClick={() => updateFamilyReview(family, !isReviewedTab)} disabled={reviewFamilyProcessingId !== null} className={`inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-3.5 py-2.5 text-xs font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700 disabled:cursor-wait disabled:opacity-50 ${isReviewedTab ? 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100' : 'border-green-700 bg-green-700 text-white shadow-sm shadow-green-900/10 hover:border-green-800 hover:bg-green-800 active:bg-green-900'}`}>
+                                                <Icon name={isReviewedTab ? 'close' : 'check'} className="h-4 w-4" />
                                                 {reviewFamilyProcessingId === family.id ? 'Memproses…' : isReviewedTab ? 'Batalkan semakan' : 'Sahkan keluarga'}
                                             </button>}
+                                            </div>
                                         </div>
                                         <div id={`family-members-${family.id}`} className={isFamilyExpanded ? '' : 'hidden'}>
                                             {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
