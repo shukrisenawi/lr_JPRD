@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -149,6 +150,8 @@ class PemilihBaruController extends Controller
                 'linked_at' => $record->linked_at?->format('d-m-Y H:i'),
                 'is_linked' => $record->linked_pemilih_record_id !== null,
                 'telegram_identity' => $record->linkedPemilih?->no_kp ?: $record->linkedPemilih?->old_ic,
+                'is_death_transaction' => strtoupper(trim((string) $record->transaction)) === 'PENANDAAN PEMOTONGAN - KEMATIAN',
+                'death_cula_completed' => $record->death_cula_completed_at !== null || (string) $record->linkedPemilih?->cula_code === '8',
                 'can_cula_telegram' => $record->linkedPemilih !== null
                     && ! $record->telegram_cula_confirmed_at
                     && in_array(strtoupper(trim((string) $record->linkedPemilih->cula_code)), ['', '0', '?', 'TIADA'], true),
@@ -221,6 +224,34 @@ class PemilihBaruController extends Controller
         return redirect()
             ->route('pemilih-baru.index', array_filter($redirectFilters, fn ($value) => $value !== null && $value !== ''))
             ->with('success', 'Kod cula pemilih baharu berjaya dikemaskini.');
+    }
+
+    public function completeDeathCula(Request $request, PemilihBaruRecord $pemilihBaruRecord): RedirectResponse
+    {
+        abort_unless($this->isWithinScope($pemilihBaruRecord, $request), 403);
+        abort_unless(strtoupper(trim((string) $pemilihBaruRecord->transaction)) === 'PENANDAAN PEMOTONGAN - KEMATIAN', 422);
+        abort_if($pemilihBaruRecord->death_cula_completed_at !== null, 409);
+        $validated = $request->validate([
+            'cula_code' => ['required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
+            'catatan' => ['nullable', 'string', 'max:2000'],
+        ]);
+        DB::transaction(function () use ($pemilihBaruRecord, $validated): void {
+            $voter = $pemilihBaruRecord->linkedPemilih;
+            abort_unless($voter !== null, 422);
+            $voter->forceFill([
+                'cula_code' => $validated['cula_code'],
+                'cula_display_label' => CulaCodes::label($validated['cula_code']),
+                'cula_remark' => $validated['catatan'] ?? null,
+            ])->save();
+            $pemilihBaruRecord->forceFill([
+                'cula_code' => $validated['cula_code'],
+                'cula_display_label' => CulaCodes::label($validated['cula_code']),
+                'catatan' => $validated['catatan'] ?? null,
+                'death_cula_completed_at' => now(),
+            ])->save();
+        });
+
+        return back()->with('success', 'Culaan kematian disimpan.');
     }
 
     public function confirmTelegramCula(Request $request, PemilihBaruRecord $pemilihBaruRecord): RedirectResponse

@@ -62,6 +62,7 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
                     <button type="button" onClick={onClose} aria-label="Tutup" className="rounded-lg px-2 py-1 text-lg leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
                 </div>
 
+                {!record.is_linked && <>
                 <p className="mt-5 text-xs font-bold text-slate-700">Pilih bangsa</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                     {['Melayu', 'Bukan Melayu'].map((option) => {
@@ -81,7 +82,8 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
                     })}
                 </div>
 
-                <p className="mt-4 text-xs font-bold text-slate-700">Pilih kod cula</p>
+                </>}
+                <p className="mt-4 text-xs font-bold text-slate-700">Pilih kod cula{record.is_death_transaction ? ' (kematian: 8)' : ''}</p>
                 <div className="mt-2 flex max-h-[55vh] flex-wrap gap-2 overflow-y-auto pr-1">
                     {codes.map((option) => {
                         const selected = code === option.code;
@@ -110,7 +112,7 @@ function CulaModal({ record, codes, onClose, onSave, processing, error }) {
 
                 <div className="mt-5 flex justify-end gap-2">
                     <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50">Batal</button>
-                    <button type="button" onClick={() => onSave(code, race, catatan)} disabled={!code || !race || processing} className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50">
+                    <button type="button" onClick={() => onSave(code, race, catatan)} disabled={!code || (!record.is_linked && !race) || processing} className="rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50">
                         {processing ? 'Menyimpan...' : 'Simpan Cula'}
                     </button>
                 </div>
@@ -125,13 +127,18 @@ export default function Index({ filters, month_options, year_options, summary, r
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [telegramRecord, setTelegramRecord] = useState(null);
+    const [deathPendingIds, setDeathPendingIds] = useState(() => new Set());
     const [confirmingTelegram, setConfirmingTelegram] = useState(false);
     const [telegramError, setTelegramError] = useState('');
 
     const openTelegramCula = (record) => {
         setTelegramError('');
         window.open(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/kemascula ${record.telegram_identity}`)}`, '_blank');
-        setTelegramRecord(record);
+        if (record.is_death_transaction) {
+            setDeathPendingIds((current) => new Set([...current, record.id]));
+        } else {
+            setTelegramRecord(record);
+        }
     };
 
     const confirmTelegramCula = () => {
@@ -175,10 +182,10 @@ export default function Index({ filters, month_options, year_options, summary, r
     };
 
     const saveCula = (code, race, catatan) => {
-        if (!selectedRecord || !code || !race) return;
+        if (!selectedRecord || !code || (!selectedRecord.is_linked && !race)) return;
         setSaving(true);
         setSaveError('');
-        router.post(route('pemilih-baru.cula.update', selectedRecord.id), {
+        router.post(route(selectedRecord.is_linked ? 'pemilih-baru.death-cula.complete' : 'pemilih-baru.cula.update', selectedRecord.id), {
             cula_code: code,
             race,
             catatan,
@@ -406,7 +413,16 @@ export default function Index({ filters, month_options, year_options, summary, r
                                                 {record.catatan || '—'}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-right">
-                                                {record.is_linked && record.can_cula_telegram && (
+                                                {record.is_linked && record.is_death_transaction && (
+                                                    record.death_cula_completed ? (
+                                                        <button type="button" disabled className="rounded-lg bg-slate-200 px-3 py-2 text-[10px] font-bold text-slate-500">Selesai Cula</button>
+                                                    ) : deathPendingIds.has(record.id) ? (
+                                                        <button type="button" onClick={() => { setSelectedRecord(record); setSaveError(''); }} className="rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-bold text-white">Siap Cula</button>
+                                                    ) : (
+                                                        <button type="button" disabled={!record.telegram_identity} onClick={() => openTelegramCula(record)} className="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white disabled:opacity-50">Cula</button>
+                                                    )
+                                                )}
+                                                {record.is_linked && !record.is_death_transaction && record.can_cula_telegram && (
                                                     <button type="button" disabled={!record.telegram_identity} onClick={() => openTelegramCula(record)} className="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white shadow-sm hover:bg-amber-500 disabled:opacity-50">Cula Telegram</button>
                                                 )}
                                                 {!record.is_linked && (

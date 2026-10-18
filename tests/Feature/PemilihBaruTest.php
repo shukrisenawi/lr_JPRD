@@ -402,7 +402,20 @@ it('confirms telegram cula and rechecks linked voter codes on import linking', f
     app(PemilihBaruService::class)->linkCurrentVoters();
     $this->get($url)->assertInertia(fn (Assert $page) => $page->where('records.data.0.can_cula_telegram', false));
 
+    $record->update(['transaction' => 'PENANDAAN PEMOTONGAN - KEMATIAN']);
+    $this->get($url)->assertInertia(fn (Assert $page) => $page
+        ->where('records.data.0.is_death_transaction', true)
+        ->where('records.data.0.death_cula_completed', false));
+    $this->post(route('pemilih-baru.death-cula.complete', $record), [
+        'cula_code' => '8', 'catatan' => 'Kematian disahkan',
+    ])->assertRedirect();
+    expect($voter->fresh()->cula_code)->toBe('8')
+        ->and($voter->fresh()->cula_remark)->toBe('Kematian disahkan')
+        ->and($record->fresh()->death_cula_completed_at)->not->toBeNull();
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('records.data.0.death_cula_completed', true));
+
     $scopedUser = User::factory()->withModules(['culaan.pemilih-baharu'])->create(['access_level' => 'udm', 'scope_key' => 'UDM LAIN']);
+    $this->actingAs($scopedUser)->postJson(route('pemilih-baru.death-cula.complete', $record), ['cula_code' => '8'])->assertForbidden();
     $this->actingAs($scopedUser)->postJson(route('pemilih-baru.telegram-cula.confirm', $record))->assertForbidden();
 });
 
