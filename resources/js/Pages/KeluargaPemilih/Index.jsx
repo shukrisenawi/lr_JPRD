@@ -1221,7 +1221,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                 return (
                                     <article key={family.id} className={`card overflow-hidden transition-all duration-300 ${isUpdated ? 'border-yellow-400 bg-yellow-50/70 ring-2 ring-yellow-300 shadow-md' : ''}`}>
                                         <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                                            <div className="min-w-0">
+                                            <div className={`min-w-0 ${managingFamily ? 'flex-1' : ''}`}>
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     {father.father_id && fatherAvatar && (
                                                         <VoterAvatar
@@ -1276,8 +1276,8 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                                     </div>
                                                 )}
                                             </div>
-                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800"><Icon name="plus" />Tambah Ahli</button>
-                                            {isReviewedTab && (
+                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} className={`btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-green-200 text-green-800 ${managingFamily ? 'self-end sm:ml-auto sm:self-center' : ''}`}><Icon name="plus" />Tambah Ahli</button>
+                                            {!managingFamily && isReviewedTab && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setFamilyCardExpansionOverrides((current) => ({
@@ -1292,9 +1292,9 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                                     <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${isFamilyExpanded ? 'rotate-180' : ''}`} />
                                                 </button>
                                             )}
-                                            <button type="button" onClick={() => updateFamilyReview(family, !isReviewedTab)} disabled={reviewFamilyProcessingId === family.id} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-wait disabled:opacity-50">
+                                            {!managingFamily && <button type="button" onClick={() => updateFamilyReview(family, !isReviewedTab)} disabled={reviewFamilyProcessingId === family.id} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-wait disabled:opacity-50">
                                                 {reviewFamilyProcessingId === family.id ? 'Memproses…' : isReviewedTab ? 'Batalkan semakan' : 'Sahkan keluarga'}
-                                            </button>
+                                            </button>}
                                         </div>
                                         <div id={`family-members-${family.id}`} className={isFamilyExpanded ? '' : 'hidden'}>
                                             {fatherErrors[family.id] && <p role="alert" className="px-3 pt-2 text-[10px] font-semibold text-rose-700">{fatherErrors[family.id]}</p>}
