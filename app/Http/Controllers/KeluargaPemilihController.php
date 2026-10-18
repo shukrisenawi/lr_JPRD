@@ -452,7 +452,7 @@ class KeluargaPemilihController extends Controller
         $family->update($updates);
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => $reviewed ? 'Keluarga berjaya ditambah.' : 'Semakan keluarga dibatalkan.']);
+            return response()->json(['message' => $reviewed ? 'Keluarga berjaya disahkan.' : 'Semakan keluarga dibatalkan.']);
         }
 
         if (($validated['tab'] ?? null) !== 'unassigned' || empty($validated['manage_family'])) {

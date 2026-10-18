@@ -456,7 +456,7 @@ it('confirms a family without redirecting JSON requests and supports cancelling 
             'tab' => 'families',
         ])
         ->assertOk()
-        ->assertJsonPath('message', 'Keluarga berjaya ditambah.');
+        ->assertJsonPath('message', 'Keluarga berjaya disahkan.');
 
     $this->assertDatabaseHas('pemilih_families', [
         'id' => $familyId,
