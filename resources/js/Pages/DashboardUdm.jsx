@@ -10,8 +10,8 @@ const fmt = (value) => number.format(value ?? 0);
 function Section({ title, description, children, table = false, tone = 'emerald' }) {
     const accent = { emerald: 'border-t-emerald-500', sky: 'border-t-sky-500', amber: 'border-t-amber-500', teal: 'border-t-teal-500' }[tone];
     return <section className={`min-w-0 overflow-hidden rounded-2xl border border-t-4 border-slate-200 bg-white shadow-sm ${accent}`}>
-        <div className={`border-b px-5 py-4 ${table ? 'border-slate-100 bg-slate-50/70' : 'border-slate-100'}`}>
-            <h2 className="text-base font-bold text-slate-800">{title}</h2>
+        <div className={`border-b px-4 py-3 ${table ? 'border-slate-100 bg-slate-50/70' : 'border-slate-100'}`}>
+            <h2 className="text-sm font-bold text-slate-800">{title}</h2>
             {description && <p className="mt-1 text-xs text-slate-600">{description}</p>}
         </div>
         {children}
@@ -21,7 +21,7 @@ function Section({ title, description, children, table = false, tone = 'emerald'
 function LocalityChart({ rows, dataKey, label, color }) {
     if (!rows.length) return <p className="p-6 text-sm text-slate-500">Tiada data pemilih untuk UDM ini.</p>;
     return <div className="overflow-x-auto p-4">
-        <div style={{ height: Math.max(280, rows.length * 44 + 50), minWidth: 320 }} aria-label={label}>
+        <div style={{ height: Math.max(220, rows.length * 34 + 44), minWidth: 320 }} aria-label={label}>
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={rows} layout="vertical" accessibilityLayer margin={{ top: 8, right: 50, left: 0, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
@@ -49,9 +49,9 @@ export default function DashboardUdm({ udm, statistics, payments }) {
         return () => observer.disconnect();
     }, []);
     const codeBlocks = codes.length ? Array.from({ length: Math.ceil(codes.length / codesPerTable) }, (_, index) => codes.slice(index * codesPerTable, (index + 1) * codesPerTable)) : [[]];
-    const breakdownCell = 'border-b border-slate-100 px-1 py-3 text-right tabular-nums break-all';
-    const breakdownLocalityCell = 'border-b border-slate-100 px-2 py-3 text-left font-medium break-words';
-    const breakdownHeader = 'border-b border-slate-200 bg-slate-100 px-1 py-3 text-center font-semibold text-slate-600';
+    const breakdownCell = 'border-b border-slate-100 px-1 py-2 text-right tabular-nums break-all';
+    const breakdownLocalityCell = 'border-b border-slate-100 px-2 py-2 text-left font-medium break-words';
+    const breakdownHeader = 'border-b border-slate-200 bg-slate-100 px-1 py-2 text-center font-semibold text-slate-600';
     const pnTotal = ['2', '3B', '3D', '3K', '3M', '3P', '3U', '1B', '1P', '4P', '6', '11', '12', '17', '18']
         .reduce((sum, code) => sum + (totals.breakdown[code] ?? 0), 0);
     const activeTotal = Math.max(totals.total - (totals.breakdown['8'] ?? 0), 0);
@@ -65,9 +65,9 @@ export default function DashboardUdm({ udm, statistics, payments }) {
         ['Ahli PAS', fmt(totals.members), 'border-lime-200 border-t-lime-500 bg-lime-50 text-lime-900', 'Keahlian berdaftar'],
         ['SKC', fmt(skc), skcTheme, 'Sasaran Kena Cari'],
     ];
-    const cell = 'border-b border-slate-100 whitespace-nowrap px-4 py-3 text-right tabular-nums';
-    const localityCell = 'sticky left-0 z-10 min-w-44 border-b border-slate-100 bg-inherit px-4 py-3 text-left font-medium';
-    const headerCell = 'border-b border-slate-200 bg-slate-100 px-4 py-3 text-right font-semibold text-slate-600';
+    const cell = 'border-b border-slate-100 whitespace-nowrap px-3 py-2 text-right tabular-nums';
+    const localityCell = 'sticky left-0 z-10 min-w-44 border-b border-slate-100 bg-inherit px-3 py-2 text-left font-medium';
+    const headerCell = 'border-b border-slate-200 bg-slate-100 px-3 py-2 text-right font-semibold text-slate-600';
     const rowClass = 'odd:bg-white even:bg-slate-50/60 text-slate-700 transition-colors hover:!bg-emerald-50/60';
     const progressRow = (row, label) => <>
         <th scope="row" className={localityCell}>{label}</th>
@@ -85,36 +85,33 @@ export default function DashboardUdm({ udm, statistics, payments }) {
     return (
         <AuthenticatedLayout>
             <Head title="Dashboard" />
-            <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                <div className="rounded-2xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-800 p-6 text-white shadow-sm sm:p-8">
-                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mx-auto max-w-7xl space-y-4 px-4 py-4 sm:px-6 lg:px-8">
+                <div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
-                            <p className="mt-2 text-sm text-emerald-100">Ringkasan pemilih, kemajuan culaan dan dana pilihanraya.</p>
+                            <h1 className="text-xl font-bold tracking-tight text-slate-800">Dashboard</h1>
+                            <p className="mt-1 text-xs text-slate-500">Pemilih aktif sahaja · Tidak termasuk rekod manual</p>
                         </div>
-                        <div className="self-start rounded-xl border border-white/20 bg-white/10 px-4 py-3 sm:max-w-xs sm:self-auto">
-                            <p className="text-xs font-medium text-emerald-100">Unit Daerah Mengundi</p>
-                            <p className="mt-1 text-sm font-bold">{udm || 'Belum ditetapkan'}</p>
+                        <div className="self-start sm:max-w-xs sm:self-auto">
+                            <p className="text-xs text-slate-600">UDM: <span className="font-bold text-slate-800">{udm || 'Belum ditetapkan'}</span></p>
                         </div>
                     </div>
-                    <div className="mt-6 border-t border-white/15 pt-4 text-xs text-emerald-100">Pemilih aktif sahaja · Tidak termasuk rekod manual</div>
                 </div>
                 {!udm && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Sila tetapkan UDM pengguna dalam pengurusan akses untuk melihat statistik.</p>}
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-                    {metrics.map(([label, value, theme, description]) => <div key={label} className={`min-w-0 rounded-2xl border border-t-4 p-4 shadow-sm ${theme}`}>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+                    {metrics.map(([label, value, theme, description]) => <div key={label} className={`min-w-0 rounded-xl border border-t-4 px-3 py-2.5 shadow-sm ${theme}`}>
                         <p className="text-xs font-semibold">{label}</p>
-                        <p className="mt-3 break-words text-2xl font-bold tracking-tight tabular-nums">{value}</p>
+                        <p className="mt-1 break-words text-xl font-bold tracking-tight tabular-nums">{value}</p>
                         {label === 'Kemajuan Culaan' && <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-teal-200" aria-hidden="true"><div className="h-full rounded-full bg-teal-700" style={{ width: `${totals.percentage}%` }} /></div>}
-                        {description && <p className="mt-2 text-[11px] leading-relaxed">{description}</p>}
+                        {label === 'SKC' && <p className="mt-1 text-[11px] leading-tight">{description}</p>}
                     </div>)}
                 </div>
                 <Section tone="sky" title="Jumlah Bayaran Peralatan Pilihanraya PRU16" description="Jumlah dana masuk dalam kategori bayaran peralatan pilihanraya untuk UDM ini sahaja.">
-                    <div className="flex flex-col gap-4 bg-gradient-to-r from-sky-50 to-white px-5 py-6 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-2 bg-gradient-to-r from-sky-50 to-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <p className="text-xs font-semibold text-sky-800">Jumlah dana diterima</p>
-                            <p className="mt-2 break-words text-3xl font-bold tracking-tight tabular-nums text-sky-950">{money.format(Number(payments.total_bayaran))}</p>
+                            <p className="break-words text-2xl font-bold tracking-tight tabular-nums text-sky-950">{money.format(Number(payments.total_bayaran))}</p>
                         </div>
-                        <p className="self-start rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-medium text-sky-900 sm:self-auto">{fmt(payments.count)} rekod bayaran</p>
+                        <p className="self-start rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-900 sm:self-auto">{fmt(payments.count)} rekod bayaran</p>
                     </div>
                 </Section>
                 <Section table title="Cula Mengikut Lokaliti" description="Kemajuan berdasarkan kod cula yang telah direkodkan.">
@@ -159,7 +156,7 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                         </div>)}
                     </div>
                 </Section>
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <Section tone="sky" title="Graf Pemilih Mengikut Lokaliti">
                         <LocalityChart rows={rows} dataKey="total" label="Pemilih" color="#0284c7" />
                     </Section>
