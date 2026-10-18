@@ -831,11 +831,6 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
         setCulaError('');
     };
 
-    const closeCulaEditor = () => {
-        setSelectedVoterForCula(null);
-        setManagedFamilyId(null);
-    };
-
     const saveCula = async (option) => {
         if (!selectedVoterForCula || savingCula) return;
         setSavingCula(true);
@@ -867,7 +862,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                 next.delete(selectedVoterForCula.id);
                 return next;
             });
-            closeCulaEditor();
+            setSelectedVoterForCula(null);
         } catch (error) {
             setCulaError(error.message || 'Kod cula tidak berjaya disimpan.');
         } finally {
@@ -1529,7 +1524,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                     </Modal>
                 )}
                 {selectedVoterForCula && (
-                    <Modal show onClose={() => !savingCula && closeCulaEditor()} maxWidth="md" title={`Kemas Cula — ${selectedVoterForCula.name || 'Pemilih'}`}>
+                    <Modal show onClose={() => !savingCula && setSelectedVoterForCula(null)} maxWidth="md" title={`Kemas Cula — ${selectedVoterForCula.name || 'Pemilih'}`}>
                         <div className="space-y-3 rounded-xl bg-white p-4">
                             <div className="flex items-start justify-between gap-3">
                                 <div>
@@ -1537,7 +1532,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                     <h3 className="mt-0.5 text-sm font-bold text-slate-900">{selectedVoterForCula.name || 'Pemilih'}</h3>
                                     <p className="mt-1 text-[10px] text-slate-500">Pilih kod culaan yang betul.</p>
                                 </div>
-                                <button type="button" onClick={closeCulaEditor} disabled={savingCula} className="btn-ghost px-2 py-1 text-xs">Tutup</button>
+                                <button type="button" onClick={() => setSelectedVoterForCula(null)} disabled={savingCula} className="btn-ghost px-2 py-1 text-xs">Tutup</button>
                             </div>
                             {culaError && <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{culaError}</p>}
                             <div className="flex max-h-[50vh] flex-wrap gap-1.5 overflow-y-auto">
