@@ -36,11 +36,11 @@ function LocalityChart({ rows }) {
                     <Bar dataKey="total" name="Pemilih" fill="#0284c7" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                         <LabelList dataKey="total" position="right" formatter={fmt} fontSize={11} />
                     </Bar>
-                    <Bar dataKey="members" name="Ahli PAS" fill="#4d7c0f" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
-                        <LabelList dataKey="members" position="right" formatter={fmt} fontSize={11} />
-                    </Bar>
-                    <Bar dataKey="pas_cula" name="Cula PAS" fill="#d97706" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                    <Bar dataKey="pas_cula" name="Cula PAS" fill="#15803d" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                         <LabelList dataKey="pas_cula" position="right" formatter={fmt} fontSize={11} />
+                    </Bar>
+                    <Bar dataKey="members" name="Ahli PAS" fill="#84cc16" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                        <LabelList dataKey="members" position="right" formatter={fmt} fontSize={11} />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
