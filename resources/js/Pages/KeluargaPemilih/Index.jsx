@@ -1347,10 +1347,10 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
 
                     {!managingFamily && families.last_page > 1 && (
                         <nav aria-label="Halaman keluarga pemilih" className="flex flex-wrap justify-center gap-1.5 pt-2">
-                            {families.links.map((link) => (
+                            {families.links.map((link, index) => (
                                 link.url
-                                    ? <Link key={link.url} href={link.url} preserveState className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
-                                    : <span key={`disabled-${link.label}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
+                                    ? <Link key={`families-${link.label}-${index}`} href={link.url} preserveState className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
+                                    : <span key={`families-${link.label}-${index}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
                             ))}
                         </nav>
                     )}
@@ -1473,10 +1473,10 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
 
                     {unassignedVoters.last_page > 1 && (
                         <nav aria-label="Halaman pemilih belum berkeluarga" className="flex flex-wrap justify-center gap-1.5 pt-2">
-                            {unassignedVoters.links.map((link) => (
+                            {unassignedVoters.links.map((link, index) => (
                                 link.url
-                                    ? <Link key={link.url} href={link.url} preserveState preserveScroll={false} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
-                                    : <span key={`unassigned-${link.label}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
+                                    ? <Link key={`unassigned-${link.label}-${index}`} href={link.url} preserveState preserveScroll={false} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${link.active ? 'bg-green-600 text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:text-green-700'}`}>{paginationText(link.label)}</Link>
+                                    : <span key={`unassigned-${link.label}-${index}`} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400">{paginationText(link.label)}</span>
                             ))}
                         </nav>
                     )}
