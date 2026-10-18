@@ -7,9 +7,10 @@ const number = new Intl.NumberFormat('ms-MY');
 const money = new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' });
 const fmt = (value) => number.format(value ?? 0);
 
-function Section({ title, description, children, table = false }) {
-    return <section className={`min-w-0 rounded-xl border bg-white ${table ? 'border-slate-200 shadow-sm' : 'border-green-200'}`}>
-        <div className={`border-b px-5 py-4 ${table ? 'border-slate-100' : 'border-green-100'}`}>
+function Section({ title, description, children, table = false, tone = 'emerald' }) {
+    const accent = { emerald: 'border-t-emerald-500', sky: 'border-t-sky-500', amber: 'border-t-amber-500', teal: 'border-t-teal-500' }[tone];
+    return <section className={`min-w-0 overflow-hidden rounded-2xl border border-t-4 border-slate-200 bg-white shadow-sm ${accent}`}>
+        <div className={`border-b px-5 py-4 ${table ? 'border-slate-100 bg-slate-50/70' : 'border-slate-100'}`}>
             <h2 className="text-base font-bold text-slate-800">{title}</h2>
             {description && <p className="mt-1 text-xs text-slate-600">{description}</p>}
         </div>
@@ -55,13 +56,13 @@ export default function DashboardUdm({ udm, statistics, payments }) {
         .reduce((sum, code) => sum + (totals.breakdown[code] ?? 0), 0);
     const activeTotal = Math.max(totals.total - (totals.breakdown['8'] ?? 0), 0);
     const skc = pnTotal - Math.round(Math.round(activeTotal * 0.85) * 0.51);
-    const skcTheme = skc < 0 ? 'border-red-200 bg-red-50 text-red-800' : skc > 0 ? 'border-green-200 bg-green-50 text-green-800' : 'border-slate-200 bg-slate-50 text-slate-700';
+    const skcTheme = skc < 0 ? 'border-red-200 border-t-red-500 bg-red-50 text-red-900' : skc > 0 ? 'border-green-200 border-t-green-500 bg-green-50 text-green-900' : 'border-slate-200 border-t-slate-400 bg-slate-50 text-slate-700';
     const metrics = [
-        ['Jumlah Pemilih', fmt(totals.total)],
-        ['Sudah Dicula', fmt(totals.with_cula)],
-        ['Belum Dicula', fmt(totals.without_cula)],
-        ['Kemajuan Culaan', `${totals.percentage}%`],
-        ['Ahli PAS', fmt(totals.members)],
+        ['Jumlah Pemilih', fmt(totals.total), 'border-sky-200 border-t-sky-500 bg-sky-50 text-sky-900', 'Pemilih aktif'],
+        ['Sudah Dicula', fmt(totals.with_cula), 'border-emerald-200 border-t-emerald-500 bg-emerald-50 text-emerald-900', 'Culaan direkodkan'],
+        ['Belum Dicula', fmt(totals.without_cula), 'border-amber-200 border-t-amber-500 bg-amber-50 text-amber-900', 'Perlu tindakan'],
+        ['Kemajuan Culaan', `${totals.percentage}%`, 'border-teal-200 border-t-teal-500 bg-teal-50 text-teal-900', 'Daripada jumlah pemilih'],
+        ['Ahli PAS', fmt(totals.members), 'border-lime-200 border-t-lime-500 bg-lime-50 text-lime-900', 'Keahlian berdaftar'],
         ['SKC', fmt(skc), skcTheme, 'Sasaran Kena Cari'],
     ];
     const cell = 'border-b border-slate-100 whitespace-nowrap px-4 py-3 text-right tabular-nums';
@@ -85,22 +86,35 @@ export default function DashboardUdm({ udm, statistics, payments }) {
         <AuthenticatedLayout>
             <Head title="Dashboard" />
             <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-green-800">Dashboard</h1>
-                    <p className="mt-1 text-sm text-slate-600">UDM: {udm || 'Belum ditetapkan'} · Pemilih aktif, tidak termasuk rekod manual.</p>
+                <div className="rounded-2xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-800 p-6 text-white shadow-sm sm:p-8">
+                    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Dashboard</h1>
+                            <p className="mt-2 text-sm text-emerald-100">Ringkasan pemilih, kemajuan culaan dan dana pilihanraya.</p>
+                        </div>
+                        <div className="self-start rounded-xl border border-white/20 bg-white/10 px-4 py-3 sm:max-w-xs sm:self-auto">
+                            <p className="text-xs font-medium text-emerald-100">Unit Daerah Mengundi</p>
+                            <p className="mt-1 text-sm font-bold">{udm || 'Belum ditetapkan'}</p>
+                        </div>
+                    </div>
+                    <div className="mt-6 border-t border-white/15 pt-4 text-xs text-emerald-100">Pemilih aktif sahaja · Tidak termasuk rekod manual</div>
                 </div>
                 {!udm && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Sila tetapkan UDM pengguna dalam pengurusan akses untuk melihat statistik.</p>}
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-                    {metrics.map(([label, value, theme, description]) => <div key={label} className={`rounded-xl border p-4 ${theme ?? 'border-green-200 bg-white'}`}>
-                        <p className={`text-xs font-medium ${theme ? '' : 'text-slate-600'}`}>{label}</p>
-                        <p className={`mt-2 text-2xl font-bold tabular-nums ${theme ? '' : 'text-green-800'}`}>{value}</p>
-                        {description && <p className="mt-1 text-xs">{description}</p>}
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+                    {metrics.map(([label, value, theme, description]) => <div key={label} className={`min-w-0 rounded-2xl border border-t-4 p-4 shadow-sm ${theme}`}>
+                        <p className="text-xs font-semibold">{label}</p>
+                        <p className="mt-3 break-words text-2xl font-bold tracking-tight tabular-nums">{value}</p>
+                        {label === 'Kemajuan Culaan' && <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-teal-200" aria-hidden="true"><div className="h-full rounded-full bg-teal-700" style={{ width: `${totals.percentage}%` }} /></div>}
+                        {description && <p className="mt-2 text-[11px] leading-relaxed">{description}</p>}
                     </div>)}
                 </div>
-                <Section title="Jumlah Bayaran Peralatan Pilihanraya PRU16" description="Jumlah dana masuk dalam kategori bayaran peralatan pilihanraya untuk UDM ini sahaja.">
-                    <div className="px-5 py-5">
-                        <p className="text-3xl font-bold tabular-nums text-green-800">{money.format(Number(payments.total_bayaran))}</p>
-                        <p className="mt-2 text-sm text-slate-600">{fmt(payments.count)} rekod bayaran</p>
+                <Section tone="sky" title="Jumlah Bayaran Peralatan Pilihanraya PRU16" description="Jumlah dana masuk dalam kategori bayaran peralatan pilihanraya untuk UDM ini sahaja.">
+                    <div className="flex flex-col gap-4 bg-gradient-to-r from-sky-50 to-white px-5 py-6 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-xs font-semibold text-sky-800">Jumlah dana diterima</p>
+                            <p className="mt-2 break-words text-3xl font-bold tracking-tight tabular-nums text-sky-950">{money.format(Number(payments.total_bayaran))}</p>
+                        </div>
+                        <p className="self-start rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-medium text-sky-900 sm:self-auto">{fmt(payments.count)} rekod bayaran</p>
                     </div>
                 </Section>
                 <Section table title="Cula Mengikut Lokaliti" description="Kemajuan berdasarkan kod cula yang telah direkodkan.">
@@ -117,7 +131,7 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                         </table>
                     </div>
                 </Section>
-                <Section table title="Pecahan Cula Mengikut Lokaliti" description="Bilangan pemilih bagi setiap kod cula. Kod kosong, ?, TIADA dan 0 dikira belum dicula.">
+                <Section table tone="amber" title="Pecahan Cula Mengikut Lokaliti" description="Bilangan pemilih bagi setiap kod cula. Kod kosong, ?, TIADA dan 0 dikira belum dicula.">
                     <div ref={breakdownRef} className="space-y-4 rounded-b-xl p-2 sm:p-3">
                         {codeBlocks.map((block, blockIndex) => <div key={blockIndex}>
                         {codeBlocks.length > 1 && <p className="mb-1.5 text-xs font-medium text-slate-600">Kod {block.map(({ code }) => code).join(', ')} <span className="font-normal">· Jumlah ialah semua kod bagi lokaliti.</span></p>}
@@ -146,10 +160,10 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                     </div>
                 </Section>
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    <Section title="Graf Pemilih Mengikut Lokaliti">
-                        <LocalityChart rows={rows} dataKey="total" label="Pemilih" color="#15803d" />
+                    <Section tone="sky" title="Graf Pemilih Mengikut Lokaliti">
+                        <LocalityChart rows={rows} dataKey="total" label="Pemilih" color="#0284c7" />
                     </Section>
-                    <Section title="Graf Keahlian PAS Mengikut Lokaliti" description="Pemilih yang mempunyai nombor ahli PAS (bukan kosong atau tanda -).">
+                    <Section tone="teal" title="Graf Keahlian PAS Mengikut Lokaliti" description="Pemilih yang mempunyai nombor ahli PAS (bukan kosong atau tanda -).">
                         <LocalityChart rows={rows} dataKey="members" label="Ahli PAS" color="#4d7c0f" />
                     </Section>
                 </div>
