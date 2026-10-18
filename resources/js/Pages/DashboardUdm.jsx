@@ -19,11 +19,15 @@ function Section({ title, description, children, table = false, tone = 'emerald'
 }
 
 function LocalityChart({ rows }) {
+    const chartRows = rows.map((row) => ({
+        ...row,
+        pas_cula: Object.entries(row.breakdown).reduce((sum, [code, count]) => sum + (code === '2' || code.startsWith('3') ? count : 0), 0),
+    }));
     if (!rows.length) return <p className="p-6 text-sm text-slate-500">Tiada data pemilih untuk UDM ini.</p>;
     return <div className="overflow-x-auto p-4">
-        <div style={{ height: Math.max(240, rows.length * 54 + 64), minWidth: 320 }} aria-label="Perbandingan jumlah pemilih dan ahli PAS mengikut lokaliti">
+        <div style={{ height: Math.max(240, rows.length * 72 + 64), minWidth: 320 }} aria-label="Perbandingan jumlah pemilih, ahli PAS dan cula PAS mengikut lokaliti">
             <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rows} layout="vertical" accessibilityLayer margin={{ top: 8, right: 50, left: 0, bottom: 8 }}>
+                <BarChart data={chartRows} layout="vertical" accessibilityLayer margin={{ top: 8, right: 50, left: 0, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
                     <YAxis type="category" dataKey="locality" width={130} tick={{ fontSize: 11 }} />
@@ -34,6 +38,9 @@ function LocalityChart({ rows }) {
                     </Bar>
                     <Bar dataKey="members" name="Ahli PAS" fill="#4d7c0f" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
                         <LabelList dataKey="members" position="right" formatter={fmt} fontSize={11} />
+                    </Bar>
+                    <Bar dataKey="pas_cula" name="Cula PAS" fill="#d97706" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                        <LabelList dataKey="pas_cula" position="right" formatter={fmt} fontSize={11} />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
@@ -160,7 +167,7 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                         </div>)}
                     </div>
                 </Section>
-                <Section tone="sky" title="Graf Pemilih & Ahli PAS Mengikut Lokaliti" description="Perbandingan jumlah pemilih dengan pemilih yang mempunyai nombor ahli PAS (bukan kosong atau tanda -).">
+                <Section tone="sky" title="Graf Pemilih, Ahli PAS & Cula PAS Mengikut Lokaliti" description="Cula PAS merangkumi kod 2 dan semua kod bermula dengan 3. Ahli PAS berdasarkan nombor ahli yang bukan kosong atau tanda -.">
                     <LocalityChart rows={rows} />
                 </Section>
             </div>
