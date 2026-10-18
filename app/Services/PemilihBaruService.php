@@ -354,7 +354,7 @@ class PemilihBaruService
                 $pemilih->forceFill([
                     'cula_code' => $code,
                     'cula_display_label' => $label,
-                    'cula_remark' => null,
+                    'cula_remark' => $record->catatan,
                 ])->save();
             }
         });

@@ -402,6 +402,11 @@ it('confirms telegram cula and rechecks linked voter codes on import linking', f
     app(PemilihBaruService::class)->linkCurrentVoters();
     $this->get($url)->assertInertia(fn (Assert $page) => $page->where('records.data.0.can_cula_telegram', false));
 
+    $this->post(route('pemilih-baru.cula.update', $record), [
+        'cula_code' => '2', 'race' => 'Melayu', 'catatan' => 'Catatan cula terus',
+    ])->assertRedirect();
+    expect($voter->fresh()->cula_code)->toBe('2')
+        ->and($voter->fresh()->cula_remark)->toBe('Catatan cula terus');
     $record->update(['transaction' => 'PENANDAAN PEMOTONGAN - KEMATIAN']);
     $this->get($url)->assertInertia(fn (Assert $page) => $page
         ->where('records.data.0.is_death_transaction', true)
