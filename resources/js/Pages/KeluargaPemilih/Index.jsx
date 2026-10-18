@@ -1245,8 +1245,8 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                     : familyCardExpansionModes[activeFamilyTab];
                                 return (
                                     <article key={family.id} className={`card overflow-hidden transition-all duration-300 ${isUpdated ? 'border-yellow-400 bg-yellow-50/70 ring-2 ring-yellow-300 shadow-md' : ''}`}>
-                                        <div className="flex flex-col gap-3 border-b border-slate-100 bg-white px-3 py-3">
-                                            <div className="min-w-0">
+                                        <div className="flex flex-col gap-2 border-b border-slate-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="min-w-0 flex-1">
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     {father.father_id && fatherAvatar && (
                                                         <VoterAvatar
@@ -1301,8 +1301,8 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="ml-auto flex w-full flex-wrap items-center justify-end gap-2">
-                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} aria-label="Tambah ahli" title="Tambah ahli" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-green-200 bg-green-50 text-green-800 transition-colors hover:border-green-300 hover:bg-green-100 active:bg-green-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"><Icon name="plus" className="h-5 w-5" /></button>
+                                            <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+                                            <button type="button" onClick={() => startAddingToFamily({ ...family, name: familyName, members })} aria-label="Tambah ahli" title="Tambah ahli" className="btn-ghost inline-flex shrink-0 items-center justify-center border-green-200 text-green-800"><Icon name="plus" /></button>
                                             {!managingFamily && isReviewedTab && (
                                                 <button
                                                     type="button"
@@ -1318,7 +1318,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                                                     <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${isFamilyExpanded ? 'rotate-180' : ''}`} />
                                                 </button>
                                             )}
-                                            {!managingFamily && <button type="button" onClick={() => updateFamilyReview(family, !isReviewedTab)} disabled={reviewFamilyProcessingId !== null} className={`inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border px-3.5 py-2.5 text-xs font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700 disabled:cursor-wait disabled:opacity-50 ${isReviewedTab ? 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100' : 'border-green-700 bg-green-700 text-white shadow-sm shadow-green-900/10 hover:border-green-800 hover:bg-green-800 active:bg-green-900'}`}>
+                                            {!managingFamily && <button type="button" onClick={() => updateFamilyReview(family, !isReviewedTab)} disabled={reviewFamilyProcessingId !== null} className={`btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap disabled:cursor-wait disabled:opacity-50 ${isReviewedTab ? 'border-slate-200 text-slate-600' : 'border-green-200 text-green-800 hover:bg-green-50'}`}>
                                                 <Icon name={isReviewedTab ? 'close' : 'check'} className="h-4 w-4" />
                                                 {reviewFamilyProcessingId === family.id ? 'Memproses…' : isReviewedTab ? 'Batalkan semakan' : 'Sahkan keluarga'}
                                             </button>}
