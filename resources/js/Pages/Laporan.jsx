@@ -175,7 +175,7 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
 
     return (
         <div className={`card ${stickyHeader ? 'overflow-visible' : 'overflow-hidden'}`}>
-            {stickyHeader ? <div className="overflow-x-auto xl:overflow-visible">{table}</div> : <div className="overflow-x-auto">{table}</div>}
+            <div className="overflow-x-auto">{table}</div>
         </div>
     );
 }
