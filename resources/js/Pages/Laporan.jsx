@@ -514,7 +514,6 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const [tab, setTab] = useState('udm');
     const [activeUdm, setActiveUdm] = useState(null);
     const [search, setSearch] = useState('');
-    const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
     const [n8nModalOpen, setN8nModalOpen] = useState(false);
     const [n8nMessage, setN8nMessage] = useState(culaan_message);
     const [n8nSending, setN8nSending] = useState(false);
@@ -703,8 +702,8 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const localityRows = filteredLocs.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((r) => r.total > 0);
-    const selUdm = dmDetails.find((r) => r.key === udmKey) ?? dmDetails[0] ?? null;
-    const selCula = dmCulaRows.find((r) => r.key === udmKey) ?? dmCulaRows[0] ?? null;
+    const selUdm = dmDetails.find((r) => r.name === activeUdm) ?? dmDetails[0] ?? null;
+    const selCula = dmCulaRows.find((r) => r.key === selUdm?.key) ?? null;
     const selCulaChart = (selCula?.cula_breakdown ?? []).filter((e) => e.code !== '?' && !e.display_label?.includes('BELUM DICULA')).slice(0, 12);
     const selLoc = selUdm?.localities.slice(0, 12) ?? [];
     const selRace = selUdm?.race_breakdown.slice(0, 8) ?? [];
@@ -942,12 +941,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
                         {tab === 'udm' && (
                             <section className="space-y-3">
-                                <ChartPanel title={`Ringkasan ${selUdm?.name ?? '-'}`} compact
-                                    action={
-                                        <select value={selUdm?.key ?? ''} onChange={(e) => setUdmKey(e.target.value)} className="input-field w-auto py-1.5 text-xs">
-                                            {dmDetails.map((r) => <option key={r.key} value={r.key}>{r.name}</option>)}
-                                        </select>
-                                    }>
+                                <ChartPanel title={`Ringkasan ${selUdm?.name ?? '-'}`} compact>
                                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                         <StatCard label="Jumlah" value={selUdm?.summary.total_voters ?? 0} detail={`${fmt(selUdm?.summary.total_localities ?? 0)} lokaliti`} color="violet" />
                                         <StatCard label="Sudah" value={selUdm?.summary.with_cula ?? 0} detail="Dicula" color="emerald" />
