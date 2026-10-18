@@ -101,6 +101,50 @@ it('creates a voter family manually, adds members, and removes a member', functi
             ->where('stats.unassigned', 1));
 });
 
+it('returns the affected family for management without leaving unassigned voters', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    $first = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI']);
+    $second = createKeluargaPemilihRecord(['name' => 'SITI BINTI ALI']);
+    $filters = ['udm' => 'UDM 1', 'q' => 'AHMAD', 'tab' => 'unassigned'];
+
+    $this->actingAs($user)->post(route('keluarga-pemilih.store'), [
+        ...$filters, 'pemilih_ids' => [$first->id],
+    ])->assertSessionHas('managed_family_id');
+    $family = PemilihFamily::query()->sole();
+
+    $this->get(route('keluarga-pemilih.index', $filters))->assertInertia(fn ($page) => $page
+        ->where('filters.tab', 'unassigned')
+        ->where('filters.q', 'AHMAD')
+        ->where('managedFamily.id', $family->id)
+        ->where('managedFamily.member_count', 1));
+
+    $this->post(route('keluarga-pemilih.members.store', $family), [
+        ...$filters, 'pemilih_ids' => [$second->id],
+    ])->assertSessionHas('managed_family_id', $family->id);
+    $this->get(route('keluarga-pemilih.index', $filters))->assertInertia(fn ($page) => $page
+        ->where('managedFamily.member_count', 2));
+
+    $this->put(route('keluarga-pemilih.address.update', $family), [
+        ...$filters, 'manage_family' => $family->id, 'address' => 'Alamat ujian',
+    ])->assertRedirect(route('keluarga-pemilih.index', [...$filters, 'manage_family' => $family->id]));
+    $this->get(route('keluarga-pemilih.index', [...$filters, 'manage_family' => $family->id]))
+        ->assertInertia(fn ($page) => $page->where('managedFamily.address', 'Alamat ujian'));
+
+    $this->put(route('keluarga-pemilih.review', $family), [
+        ...$filters, 'manage_family' => $family->id, 'reviewed' => true,
+    ])->assertRedirect(route('keluarga-pemilih.index', [...$filters, 'manage_family' => $family->id]));
+});
+
+it('does not expose a managed family outside the user scope', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create(['access_level' => 'udm', 'scope_key' => 'UDM 1']);
+    $voter = createKeluargaPemilihRecord(['dm' => 'UDM 2']);
+    $family = PemilihFamily::query()->create(['name' => 'Keluarga luar', 'created_by' => $user->id]);
+    $family->members()->attach($voter->id, ['created_by' => $user->id]);
+
+    $this->actingAs($user)->get(route('keluarga-pemilih.index', ['manage_family' => $family->id]))
+        ->assertInertia(fn ($page) => $page->where('managedFamily', null));
+});
+
 it('saves, displays and clears a family address within the user scope', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create([
         'access_level' => 'udm',

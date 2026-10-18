@@ -166,7 +166,15 @@ function groupUnassignedVoters(voters = []) {
     return [...groups.values()];
 }
 
-export default function KeluargaPemilihIndex({ families, unassignedVoters, stats, allStats, filters, familyTabCounts = { families: 0, reviewed: 0 }, udmSummaries: unorderedUdmSummaries, localities }) {
+function FamilySection({ popup, hidden, onClose, children }) {
+    return popup
+        ? <Modal show={!hidden} onClose={onClose} maxWidth="4xl" title="Urus keluarga"><section className="space-y-2.5 bg-slate-50 p-3"><div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-slate-900">Urus keluarga</h3><button type="button" onClick={onClose} className="btn-ghost">Tutup · Teruskan pemilih lain</button></div>{children}</section></Modal>
+        : <section className="space-y-2.5">{children}</section>;
+}
+
+export default function KeluargaPemilihIndex({ families, managedFamily = null, unassignedVoters, stats, allStats, filters, familyTabCounts = { families: 0, reviewed: 0 }, udmSummaries: unorderedUdmSummaries, localities }) {
+    const [managedFamilyId, setManagedFamilyId] = useState(null);
+    const managingFamily = filters.tab === 'unassigned' && managedFamilyId && managedFamily?.id === managedFamilyId;
     const udmSummaries = orderUdms(unorderedUdmSummaries);
     const { errors = {}, available_cula_codes: availableCulaCodes = [], auth } = usePage().props;
     const isMasterAdmin = Boolean(auth?.user?.role?.is_master_admin);
@@ -272,7 +280,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     }, [familyPickerOpen, familyPickerSearch, familyPickerPage, filters.udm, filters.locality]);
 
     useEffect(() => {
-        setFatherOverrides(Object.fromEntries(families.data.map((family) => [family.id, {
+        setFatherOverrides(Object.fromEntries([...families.data, ...(managedFamily ? [managedFamily] : [])].map((family) => [family.id, {
             father_id: family.father_id,
             father_name: family.father_name,
             family_name: family.name,
@@ -291,7 +299,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         setCulaError('');
         setAvatarOverrides({});
         setAvatarErrors({});
-    }, [families.data]);
+    }, [families.data, managedFamily]);
 
     useEffect(() => {
         const serverQuery = filters.q || '';
@@ -343,8 +351,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
     };
 
     const targetFamily = useMemo(
-        () => mode?.type === 'add' ? families.data.find((family) => family.id === mode.familyId) : null,
-        [families.data, mode],
+        () => mode?.type === 'add' ? [managedFamily, ...families.data].find((family) => family?.id === mode.familyId) : null,
+        [families.data, managedFamily, mode],
     );
     const targetFather = targetFamily ? fatherDetails(targetFamily, fatherOverrides) : null;
     const sharedParentAnchor = mode?.type === 'add' && !targetFather?.father_id
@@ -413,6 +421,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
         q: filters.q || null,
         cula_codes: filters.tab === 'unassigned' ? selectedCulaCodes : [],
         tab: filters.tab || 'families',
+        ...(managingFamily ? { manage_family: managedFamilyId } : {}),
         page: filters.tab === 'unassigned' ? unassignedVoters.current_page : families.current_page,
     });
 
@@ -558,9 +567,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             preserveScroll: true,
             onStart: () => setProcessing(true),
             onFinish: () => setProcessing(false),
-            onSuccess: () => {
+            onSuccess: (page) => {
                 setSelectedUnassignedVoters((current) => current.filter((voter) => !ids.includes(voter.id)));
                 setFamilyPickerOpen(false);
+                setManagedFamilyId(page.props.managedFamily?.id ?? null);
             },
         });
     };
@@ -610,10 +620,11 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             preserveState: true,
             onStart: () => setProcessing(true),
             onFinish: () => setProcessing(false),
-            onSuccess: () => {
+            onSuccess: (page) => {
                 if (mode.type === 'add') setUpdatedFamilyId(mode.familyId);
                 setSelectedUnassignedVoters((current) => current.filter((voter) => !payload.pemilih_ids.includes(voter.id)));
                 closeManual();
+                setManagedFamilyId(page.props.managedFamily?.id ?? null);
             },
         });
     };
@@ -643,8 +654,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
             ...currentRouteFilters(),
             reviewed,
             ...(reviewed ? { address: family.address || null } : {}),
-            tab: reviewed ? 'reviewed' : 'families',
-            page: 1,
+            tab: managingFamily ? 'unassigned' : reviewed ? 'reviewed' : 'families',
+            page: managingFamily ? unassignedVoters.current_page : 1,
         }, {
             preserveScroll: true,
             onStart: () => setReviewFamilyProcessingId(family.id),
@@ -930,7 +941,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
 
     const selectedIds = new Set(selectedVoters.map((voter) => voter.id));
     const selectedUnassignedIds = new Set(selectedUnassignedVoters.map((voter) => voter.id));
-    const visibleFamilies = families.data.filter((family) => !removedFamilyIds.has(Number(family.id)));
+    const visibleFamilies = (managingFamily ? [managedFamily] : families.data).filter((family) => !removedFamilyIds.has(Number(family.id)));
     const activeFamilyTab = filters.tab === 'reviewed' ? 'reviewed' : 'families';
     const allVisibleFamiliesExpanded = visibleFamilies.length > 0
         && visibleFamilies.every((family) => {
@@ -1151,8 +1162,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                     </nav>
                 )}
 
-                {filters.udm && filters.tab !== 'unassigned' && <section className="space-y-2.5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                {filters.udm && (filters.tab !== 'unassigned' || managingFamily) && <FamilySection popup={managingFamily} hidden={Boolean(mode)} onClose={() => setManagedFamilyId(null)}>
+                    {!managingFamily && <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div><p className="label-section">{filters.tab === 'reviewed' ? 'Keluarga Telah disemak' : 'Senarai Keluarga'}</p><h3 className="mt-0.5 text-sm font-bold text-slate-900">{visibleFamilyTotal.toLocaleString('ms-MY')} keluarga{filters.udm ? ` · ${[filters.udm, filters.locality].filter(Boolean).join(' · ')}` : ` · ${allUdmLabel}`}</h3></div>
                         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                             <div className="relative w-full sm:max-w-sm">
@@ -1179,7 +1190,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             )}
                         </div>
                         {visibleStats.unassigned > 0 && <p className="text-left text-[11px] text-slate-500 sm:text-right">{visibleStats.unassigned.toLocaleString('ms-MY')} pemilih belum dikelompokkan</p>}
-                    </div>
+                    </div>}
 
                     {visibleFamilies.length === 0 ? (
                         <div className="card-dashed px-4 py-10 text-center">
@@ -1189,7 +1200,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             {!filters.q && filters.tab === 'families' && <button type="button" onClick={startNewFamily} className="btn-primary mt-4">Mula Tambah Manual</button>}
                         </div>
                     ) : (
-                        <div className="grid gap-2.5 xl:grid-cols-2">
+                        <div className={`grid gap-2.5 ${managingFamily ? '' : 'xl:grid-cols-2'}`}>
                             {visibleFamilies.map((family) => {
                                 const father = fatherDetails(family, fatherOverrides);
                                 const members = father.members || family.members;
@@ -1201,10 +1212,10 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                 const locations = [...new Set(members.map(locationLabel).filter(Boolean))];
                                 const familyName = father.family_name || family.name;
                                 const isUpdated = updatedFamilyId === family.id;
-                                const isReviewedTab = filters.tab === 'reviewed';
+                                const isReviewedTab = managingFamily ? Boolean(family.reviewed_at) : filters.tab === 'reviewed';
                                 const familyId = Number(family.id);
                                 const familyExpansionKey = `${activeFamilyTab}:${familyId}`;
-                                const isFamilyExpanded = Object.prototype.hasOwnProperty.call(familyCardExpansionOverrides, familyExpansionKey)
+                                const isFamilyExpanded = managingFamily ? true : Object.prototype.hasOwnProperty.call(familyCardExpansionOverrides, familyExpansionKey)
                                     ? familyCardExpansionOverrides[familyExpansionKey]
                                     : familyCardExpansionModes[activeFamilyTab];
                                 return (
@@ -1281,8 +1292,8 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                                                     <Icon name="chevronDown" className={`h-3.5 w-3.5 transition-transform ${isFamilyExpanded ? 'rotate-180' : ''}`} />
                                                 </button>
                                             )}
-                                            <button type="button" onClick={() => updateFamilyReview(family, filters.tab !== 'reviewed')} disabled={reviewFamilyProcessingId === family.id} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-wait disabled:opacity-50">
-                                                {reviewFamilyProcessingId === family.id ? 'Memproses…' : filters.tab === 'reviewed' ? 'Batalkan semakan' : 'Sahkan keluarga'}
+                                            <button type="button" onClick={() => updateFamilyReview(family, !isReviewedTab)} disabled={reviewFamilyProcessingId === family.id} className="btn-ghost inline-flex shrink-0 items-center justify-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-wait disabled:opacity-50">
+                                                {reviewFamilyProcessingId === family.id ? 'Memproses…' : isReviewedTab ? 'Batalkan semakan' : 'Sahkan keluarga'}
                                             </button>
                                         </div>
                                         <div id={`family-members-${family.id}`} className={isFamilyExpanded ? '' : 'hidden'}>
@@ -1334,7 +1345,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                         </div>
                     )}
 
-                    {families.last_page > 1 && (
+                    {!managingFamily && families.last_page > 1 && (
                         <nav aria-label="Halaman keluarga pemilih" className="flex flex-wrap justify-center gap-1.5 pt-2">
                             {families.links.map((link) => (
                                 link.url
@@ -1343,7 +1354,7 @@ export default function KeluargaPemilihIndex({ families, unassignedVoters, stats
                             ))}
                         </nav>
                     )}
-                </section>}
+                </FamilySection>}
 
                 {filters.udm && filters.tab === 'unassigned' && <section className="space-y-2.5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

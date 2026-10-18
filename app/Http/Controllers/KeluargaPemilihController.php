@@ -27,6 +27,7 @@ class KeluargaPemilihController extends Controller
     {
         $validated = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
+            'manage_family' => ['nullable', 'integer', 'min:1'],
             'cula_codes' => ['nullable', 'array', 'max:40'],
             'cula_codes.*' => ['required', 'string', Rule::in([...array_column(CulaCodes::options(), 'code'), 'belum_dicula'])],
             'cula_code' => $this->culaCodeFilterRule(),
@@ -173,6 +174,7 @@ class KeluargaPemilihController extends Controller
                 'cula_codes' => $culaCodes,
                 'tab' => $tabFilter,
                 'page' => $lastPage,
+                'manage_family' => $request->query('manage_family', $request->session()->get('managed_family_id')),
             ]));
         }
 
@@ -228,6 +230,28 @@ class KeluargaPemilihController extends Controller
             ]);
 
         return Inertia::render('KeluargaPemilih/Index', [
+            'managedFamily' => function () use ($request, $user): ?array {
+                $id = $request->query('manage_family', $request->session()->get('managed_family_id'));
+                $family = $id ? $this->visibleFamilyQuery($user)->find($id) : null;
+                if (! $family) {
+                    return null;
+                }
+                $family->load(['members' => function ($query) use ($user): void {
+                    $user->applyScopeToPemilihQuery($query);
+                    $this->whereMalayRace($query);
+                }]);
+
+                return [
+                    'id' => $family->id,
+                    'name' => $family->name,
+                    'address' => $family->address ?: $this->majorityFamilyAddress($family->members),
+                    'father_id' => $family->members->firstWhere('id', $family->father_pemilih_record_id)?->id,
+                    'father_name' => $family->members->firstWhere('id', $family->father_pemilih_record_id)?->name,
+                    'reviewed_at' => $family->reviewed_at,
+                    'members' => $family->members->map(fn (PemilihRecord $voter): array => $this->voterPayload($voter)),
+                    'member_count' => $family->members->count(),
+                ];
+            },
             'families' => $families,
             'unassignedVoters' => $unassignedVoters,
             'available_cula_codes' => CulaCodes::options(),
@@ -370,6 +394,7 @@ class KeluargaPemilihController extends Controller
 
         return redirect()
             ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
+            ->with('managed_family_id', $family->id)
             ->with('success', "{$family->name} berjaya dicipta dengan ".count($validated['pemilih_ids']).' pemilih.');
     }
 
@@ -426,8 +451,10 @@ class KeluargaPemilihController extends Controller
         }
         $family->update($updates);
 
-        $validated['tab'] = $reviewed ? 'reviewed' : 'families';
-        $validated['page'] = 1;
+        if (($validated['tab'] ?? null) !== 'unassigned' || empty($validated['manage_family'])) {
+            $validated['tab'] = $reviewed ? 'reviewed' : 'families';
+            $validated['page'] = 1;
+        }
 
         return redirect()
             ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
@@ -643,6 +670,7 @@ class KeluargaPemilihController extends Controller
 
         return redirect()
             ->route('keluarga-pemilih.index', $this->filterRouteParams($validated))
+            ->with('managed_family_id', $family->id)
             ->with('success', count($validated['pemilih_ids'])." pemilih berjaya ditambah ke {$family->name}.");
     }
 
@@ -949,6 +977,7 @@ class KeluargaPemilihController extends Controller
             'cula_code' => $this->culaCodeFilterRule(),
             'tab' => ['nullable', Rule::in(['families', 'unassigned', 'reviewed'])],
             'page' => ['nullable', 'integer', 'min:1'],
+            'manage_family' => ['nullable', 'integer', 'min:1'],
         ];
     }
 
@@ -968,6 +997,7 @@ class KeluargaPemilihController extends Controller
             'cula_codes' => $culaCodes !== [] ? $culaCodes : null,
             'tab' => filled($validated['tab'] ?? null) ? $validated['tab'] : null,
             'page' => (int) ($validated['page'] ?? 0) > 1 ? (int) $validated['page'] : null,
+            'manage_family' => $validated['manage_family'] ?? null,
         ]);
     }
 
