@@ -649,18 +649,29 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
         });
     };
 
-    const updateFamilyReview = (family, reviewed) => {
-        router.put(route('keluarga-pemilih.review', family.id), {
-            ...currentRouteFilters(),
-            reviewed,
-            ...(reviewed ? { address: family.address || null } : {}),
-            tab: managingFamily ? 'unassigned' : reviewed ? 'reviewed' : 'families',
-            page: managingFamily ? unassignedVoters.current_page : 1,
-        }, {
-            preserveScroll: true,
-            onStart: () => setReviewFamilyProcessingId(family.id),
-            onFinish: () => setReviewFamilyProcessingId(null),
-        });
+    const updateFamilyReview = async (family, reviewed) => {
+        if (reviewFamilyProcessingId !== null) return;
+        setReviewFamilyProcessingId(family.id);
+        try {
+            const response = await fetch(route('keluarga-pemilih.review', family.id), {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': window.appConfig?.csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ reviewed, ...(reviewed ? { address: family.address || null } : {}) }),
+            });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || 'Tidak berjaya mengesahkan keluarga.');
+            window.alert(payload.message);
+            router.reload({ preserveScroll: true, preserveState: true });
+        } catch (error) {
+            window.alert(error.message || 'Tidak berjaya mengesahkan keluarga.');
+        } finally {
+            setReviewFamilyProcessingId(null);
+        }
     };
 
     const removeMember = async (family, voter) => {

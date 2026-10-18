@@ -426,7 +426,7 @@ class KeluargaPemilihController extends Controller
             ->with('success', 'Alamat keluarga berjaya dikemaskini.');
     }
 
-    public function updateReview(Request $request, PemilihFamily $pemilihFamily): RedirectResponse
+    public function updateReview(Request $request, PemilihFamily $pemilihFamily): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'reviewed' => ['required', 'boolean'],
@@ -450,6 +450,10 @@ class KeluargaPemilihController extends Controller
                 ?: $this->majorityFamilyAddress($members);
         }
         $family->update($updates);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $reviewed ? 'Keluarga berjaya ditambah.' : 'Semakan keluarga dibatalkan.']);
+        }
 
         if (($validated['tab'] ?? null) !== 'unassigned' || empty($validated['manage_family'])) {
             $validated['tab'] = $reviewed ? 'reviewed' : 'families';

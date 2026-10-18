@@ -437,7 +437,7 @@ it('auto-marks the unique man whose name matches the repeated bin or binti ancho
     ]);
 });
 
-it('moves a confirmed family to the reviewed tab and supports cancelling review', function () {
+it('confirms a family without redirecting JSON requests and supports cancelling review', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     $voter = createKeluargaPemilihRecord(['name' => 'AHMAD BIN ALI', 'alamat_kediaman' => '122 PEKAN BATU LIMA']);
 
@@ -450,12 +450,13 @@ it('moves a confirmed family to the reviewed tab and supports cancelling review'
 
     $familyId = DB::table('pemilih_families')->value('id');
     $this->actingAs($user)
-        ->put(route('keluarga-pemilih.review', $familyId), [
+        ->putJson(route('keluarga-pemilih.review', $familyId), [
             'reviewed' => true,
             'udm' => 'UDM 1',
             'tab' => 'families',
         ])
-        ->assertRedirect(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => 'reviewed']));
+        ->assertOk()
+        ->assertJsonPath('message', 'Keluarga berjaya ditambah.');
 
     $this->assertDatabaseHas('pemilih_families', [
         'id' => $familyId,
