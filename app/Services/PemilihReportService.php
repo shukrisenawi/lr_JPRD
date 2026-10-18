@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\ProgramAttendee;
 use App\Models\Setting;
@@ -286,7 +285,7 @@ class PemilihReportService
 
     public function syncUploadedVoters(string $path): void
     {
-        CulaWorkItem::query()->delete();
+        // Keep completed cula reviews attached to the existing voter across imports.
         $rows = $this->readRows($path);
         $voters = $this->normalizeUploadedVoters($rows, basename($path));
         $identityNumbers = array_values(array_filter(array_column($voters, 'identity_number')));

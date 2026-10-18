@@ -3,6 +3,7 @@
 use App\Models\CulaWorkItem;
 use App\Models\PemilihRecord;
 use App\Models\User;
+use App\Services\PemilihReportService;
 use App\Support\CulaCodes;
 use Illuminate\Support\Str;
 
@@ -233,6 +234,54 @@ it('approves cula sama without changing the existing code or label', function ()
     $this->actingAs($user)
         ->get('/ahli-pas?tab=salah-cula')
         ->assertInertia(fn ($page) => $page->where('wrong_cula_members.total', 0));
+});
+
+it('preserves cula sama approval after importing updated voters', function () {
+    $path = storage_path('app/testing-ahli-pas-'.Str::uuid().'.xls');
+    $writeImport = function (string $name) use ($path): void {
+        file_put_contents($path, '<html><body><table>'
+            .'<tr><th>Bil.</th><th>Nama DM</th><th>Nama Lokaliti</th><th>No. K/P (Baru)</th><th>Nama Pemilih</th><th>Kod Cula</th></tr>'
+            .'<tr><td>1</td><td>UDM A</td><td>LOKALITI A</td><td>900101025555</td><td>'.$name.'</td><td>1</td></tr>'
+            .'</table></body></html>');
+    };
+
+    try {
+        $service = app(PemilihReportService::class);
+        $writeImport('AHLI SEBELUM IMPORT');
+        $service->syncUploadedVoters($path);
+        $member = PemilihRecord::where('no_kp', '900101025555')->firstOrFail();
+        $member->update(['no_ahli' => 'PAS-001']);
+        $user = User::factory()->withModules(['ahli-pas'])->create();
+
+        $this->actingAs($user)
+            ->postJson(route('ahli-pas.cula.update', $member), ['keep_cula' => true])
+            ->assertOk();
+        $review = CulaWorkItem::where('pemilih_record_id', $member->id)->firstOrFail();
+
+        $writeImport('AHLI SELEPAS IMPORT');
+        $service->syncUploadedVoters($path);
+
+        $this->assertDatabaseHas('pemilih_records', [
+            'id' => $member->id,
+            'name' => 'AHLI SELEPAS IMPORT',
+            'cula_code' => '1',
+        ]);
+        $this->assertDatabaseHas('cula_work_items', [
+            'id' => $review->id,
+            'pemilih_record_id' => $member->id,
+            'marked_by' => $user->id,
+        ]);
+        $this->get('/ahli-pas?tab=salah-cula')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('members.total', 1)
+                ->where('wrong_cula_members.total', 0)
+                ->where('badgeCounts.ahliPasSalahCula', 0));
+    } finally {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
 });
 
 it('updates salah cula member to any cula code within the user scope', function () {
