@@ -1067,8 +1067,8 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div><p className="label-section">Operasi · Pengurusan Pemilih</p><h2 className="mt-0.5 heading-lg">Keluarga Pemilih</h2><p className="mt-1 max-w-2xl text-xs text-slate-500">Satukan pemilih yang tinggal serumah. Semak padanan cadangan dahulu atau biarkan sistem mengumpulkan rekod yang mempunyai bukti kediaman sepadan tepat.</p></div>
                 <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={startNewFamily} className="btn-primary inline-flex items-center gap-1.5"><Icon name="plus" />Tambah Manual</button>
-                    {(isMasterAdmin || (isUdmUser && filters.udm)) && (
+                    <button type="button" onClick={() => startNewFamily()} className="btn-primary inline-flex items-center gap-1.5"><Icon name="plus" />Tambah Manual</button>
+                    {isMasterAdmin && (
                         <>
                             <button type="button" onClick={runAuto} disabled={autoProcessing || visibleStats.unassigned === 0} className="btn-ghost inline-flex items-center gap-1.5 border-green-200 text-green-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="sparkles" />{autoProcessing ? 'Memproses…' : 'Auto Keluarga'}</button>
                             <button type="button" onClick={runAutoFather} disabled={autoFatherProcessing} className="btn-ghost inline-flex items-center gap-1.5 border-indigo-200 text-indigo-800 disabled:cursor-not-allowed disabled:opacity-50"><Icon name="users" />{autoFatherProcessing ? 'Memproses…' : 'Auto Add Ayah'}</button>
@@ -1197,7 +1197,7 @@ export default function KeluargaPemilihIndex({ families, managedFamily = null, u
                             <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-green-50 text-green-700"><Icon name="home" className="h-5 w-5" /></span>
                             <h4 className="mt-3 text-sm font-bold text-slate-800">{filters.q ? 'Tiada keluarga sepadan dengan carian' : filters.tab === 'reviewed' ? 'Belum ada keluarga disemak' : 'Belum ada keluarga pemilih'}</h4>
                             <p className="mx-auto mt-1 max-w-md text-xs text-slate-500">{filters.q ? 'Cuba nama, nombor KP, no. rumah atau alamat yang lain.' : filters.tab === 'reviewed' ? 'Keluarga yang disahkan akan dipaparkan di sini.' : 'Tambah keluarga secara manual atau jalankan auto untuk mengumpulkan rekod dengan maklumat kediaman yang sama tepat.'}</p>
-                            {!filters.q && filters.tab === 'families' && <button type="button" onClick={startNewFamily} className="btn-primary mt-4">Mula Tambah Manual</button>}
+                            {!filters.q && filters.tab === 'families' && <button type="button" onClick={() => startNewFamily()} className="btn-primary mt-4">Mula Tambah Manual</button>}
                         </div>
                     ) : (
                         <div className={`grid gap-2.5 ${managingFamily ? '' : 'xl:grid-cols-2'}`}>

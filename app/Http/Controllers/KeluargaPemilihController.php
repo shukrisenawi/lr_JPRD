@@ -731,7 +731,7 @@ class KeluargaPemilihController extends Controller
     public function auto(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->isMasterAdmin() || ($user->access_level === 'udm' && filled($user->scope_key)), 403);
+        abort_unless($user->isMasterAdmin(), 403);
 
         $validated = $request->validate([
             ...$this->routeFilterRules(),
@@ -818,7 +818,7 @@ class KeluargaPemilihController extends Controller
     public function autoFather(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->isMasterAdmin() || ($user->access_level === 'udm' && filled($user->scope_key)), 403);
+        abort_unless($user->isMasterAdmin(), 403);
 
         $validated = $request->validate([
             ...$this->routeFilterRules(),

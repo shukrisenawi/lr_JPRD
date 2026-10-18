@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-it('allows UDM automatic family management only within its own scope', function () {
+it('denies automatic family management for a UDM account with a scope', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create([
         'access_level' => 'udm', 'scope_key' => 'UDM 1',
     ]);
@@ -16,16 +16,11 @@ it('allows UDM automatic family management only within its own scope', function 
         }
     }
 
-    $this->actingAs($user)->post(route('keluarga-pemilih.auto'))->assertRedirect();
-    $this->assertDatabaseCount('pemilih_families', 1);
-    $this->assertDatabaseCount('pemilih_family_members', 2);
-    $family = PemilihFamily::query()->firstOrFail();
-    expect($family->members()->pluck('dm')->unique()->all())->toBe(['UDM 1']);
-    $this->post(route('keluarga-pemilih.auto-father'))->assertRedirect();
-    $this->put(route('keluarga-pemilih.review', $family), ['reviewed' => true])->assertRedirect();
-    expect($family->fresh()->reviewed_by)->toBe($user->id);
-    $this->post(route('keluarga-pemilih.auto'), ['udm' => 'UDM 2'])->assertRedirect();
-    $this->assertDatabaseCount('pemilih_families', 1);
+    $this->actingAs($user)->postJson(route('keluarga-pemilih.auto'))->assertForbidden();
+    $this->postJson(route('keluarga-pemilih.auto-father'))->assertForbidden();
+    $this->postJson(route('keluarga-pemilih.auto'), ['udm' => 'UDM 2'])->assertForbidden();
+    $this->assertDatabaseCount('pemilih_families', 0);
+    $this->assertDatabaseCount('pemilih_family_members', 0);
 });
 
 it('denies automatic family management for a UDM account without a scope', function () {
