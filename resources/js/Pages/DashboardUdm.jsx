@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, LabelList, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const number = new Intl.NumberFormat('ms-MY');
 const money = new Intl.NumberFormat('ms-MY', { style: 'currency', currency: 'MYR' });
@@ -18,18 +18,22 @@ function Section({ title, description, children, table = false, tone = 'emerald'
     </section>;
 }
 
-function LocalityChart({ rows, dataKey, label, color }) {
+function LocalityChart({ rows }) {
     if (!rows.length) return <p className="p-6 text-sm text-slate-500">Tiada data pemilih untuk UDM ini.</p>;
     return <div className="overflow-x-auto p-4">
-        <div style={{ height: Math.max(220, rows.length * 34 + 44), minWidth: 320 }} aria-label={label}>
+        <div style={{ height: Math.max(240, rows.length * 54 + 64), minWidth: 320 }} aria-label="Perbandingan jumlah pemilih dan ahli PAS mengikut lokaliti">
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={rows} layout="vertical" accessibilityLayer margin={{ top: 8, right: 50, left: 0, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
                     <YAxis type="category" dataKey="locality" width={130} tick={{ fontSize: 11 }} />
-                    <Tooltip formatter={(value) => [fmt(value), label]} />
-                    <Bar dataKey={dataKey} name={label} fill={color} barSize={20} radius={[0, 4, 4, 0]} isAnimationActive={false}>
-                        <LabelList dataKey={dataKey} position="right" formatter={fmt} fontSize={11} />
+                    <Tooltip formatter={(value, name) => [fmt(value), name]} />
+                    <Legend wrapperStyle={{ fontSize: 12 }} />
+                    <Bar dataKey="total" name="Pemilih" fill="#0284c7" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                        <LabelList dataKey="total" position="right" formatter={fmt} fontSize={11} />
+                    </Bar>
+                    <Bar dataKey="members" name="Ahli PAS" fill="#4d7c0f" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+                        <LabelList dataKey="members" position="right" formatter={fmt} fontSize={11} />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
@@ -106,7 +110,7 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                         {label === 'SKC' && <p className="mt-1 text-[11px] leading-tight">{description}</p>}
                     </div>)}
                 </div>
-                <Section tone="sky" title="Jumlah Bayaran Peralatan Pilihanraya PRU16" description="Jumlah dana masuk dalam kategori bayaran peralatan pilihanraya untuk UDM ini sahaja.">
+                <Section tone="sky" title="Jumlah Bayaran Peralatan Pilihanraya PRU16">
                     <div className="flex flex-col gap-2 bg-gradient-to-r from-sky-50 to-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p className="break-words text-2xl font-bold tracking-tight tabular-nums text-sky-950">{money.format(Number(payments.total_bayaran))}</p>
@@ -156,14 +160,9 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                         </div>)}
                     </div>
                 </Section>
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <Section tone="sky" title="Graf Pemilih Mengikut Lokaliti">
-                        <LocalityChart rows={rows} dataKey="total" label="Pemilih" color="#0284c7" />
-                    </Section>
-                    <Section tone="teal" title="Graf Keahlian PAS Mengikut Lokaliti" description="Pemilih yang mempunyai nombor ahli PAS (bukan kosong atau tanda -).">
-                        <LocalityChart rows={rows} dataKey="members" label="Ahli PAS" color="#4d7c0f" />
-                    </Section>
-                </div>
+                <Section tone="sky" title="Graf Pemilih & Ahli PAS Mengikut Lokaliti" description="Perbandingan jumlah pemilih dengan pemilih yang mempunyai nombor ahli PAS (bukan kosong atau tanda -).">
+                    <LocalityChart rows={rows} />
+                </Section>
             </div>
         </AuthenticatedLayout>
     );
