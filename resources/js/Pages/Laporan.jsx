@@ -30,8 +30,11 @@ function fmtP(v) { return `${fmt(v ?? 0)}%`; }
 function fmtDiff(v, diff) {
     if (diff === undefined || diff === 0 || diff < 0) return fmt(v);
     return (
-        <span className="inline-flex rounded bg-green-100 px-1.5 py-0.5 text-xs font-bold leading-tight text-green-800">
+        <span className="relative inline-flex text-xs font-semibold">
             {fmt(v)}
+            <span className="pointer-events-none absolute -top-3 right-0 z-10 whitespace-nowrap rounded border border-green-200 bg-green-100 px-1 py-px text-[9px] font-bold leading-none text-green-800 shadow-sm">
+                +{fmt(diff)}
+            </span>
         </span>
     );
 }
