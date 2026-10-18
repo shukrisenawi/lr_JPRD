@@ -122,6 +122,7 @@ class PemilihBaruController extends Controller
         }
 
         $records = $query
+            ->with('linkedPemilih')
             ->orderBy('name')
             ->orderBy('id')
             ->paginate(30)
@@ -147,6 +148,10 @@ class PemilihBaruController extends Controller
                 'import_month' => $record->import_month,
                 'linked_at' => $record->linked_at?->format('d-m-Y H:i'),
                 'is_linked' => $record->linked_pemilih_record_id !== null,
+                'telegram_identity' => $record->linkedPemilih?->no_kp ?: $record->linkedPemilih?->old_ic,
+                'can_cula_telegram' => $record->linkedPemilih !== null
+                    && ! $record->telegram_cula_confirmed_at
+                    && in_array(strtoupper(trim((string) $record->linkedPemilih->cula_code)), ['', '0', '?', 'TIADA'], true),
             ]);
 
         return Inertia::render('PemilihBaru/Index', [
@@ -216,6 +221,15 @@ class PemilihBaruController extends Controller
         return redirect()
             ->route('pemilih-baru.index', array_filter($redirectFilters, fn ($value) => $value !== null && $value !== ''))
             ->with('success', 'Kod cula pemilih baharu berjaya dikemaskini.');
+    }
+
+    public function confirmTelegramCula(Request $request, PemilihBaruRecord $pemilihBaruRecord): RedirectResponse
+    {
+        abort_unless($this->isWithinScope($pemilihBaruRecord, $request), 403);
+        abort_unless($pemilihBaruRecord->linked_pemilih_record_id !== null, 422);
+        $pemilihBaruRecord->forceFill(['telegram_cula_confirmed_at' => now()])->save();
+
+        return back()->with('success', 'Pengesahan culaan Telegram disimpan.');
     }
 
     private function availableUdms(Request $request): array

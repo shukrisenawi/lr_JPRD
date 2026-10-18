@@ -377,6 +377,35 @@ it('requires UDM selection before showing new voter records and shows the pendin
     Carbon\Carbon::setTestNow();
 });
 
+it('confirms telegram cula and rechecks linked voter codes on import linking', function () {
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
+    $voter = PemilihRecord::query()->create([
+        'record_key' => sha1('telegram-current'), 'identity_number' => '900101021234',
+        'no_kp' => '900101021234', 'name' => 'UJIAN TELEGRAM', 'status' => 'aktif', 'is_manual' => false,
+    ]);
+    $record = PemilihBaruRecord::query()->create([
+        'record_key' => sha1('telegram-new'), 'import_month' => '2026-09',
+        'name' => 'UJIAN TELEGRAM', 'no_kp' => '900101021234', 'dm' => 'UDM ALPHA',
+        'linked_pemilih_record_id' => $voter->id,
+    ]);
+    $url = route('pemilih-baru.index', ['udm' => 'UDM ALPHA', 'tab' => 'dah_link']);
+    $this->actingAs($user)->get($url)->assertInertia(fn (Assert $page) => $page
+        ->where('records.data.0.can_cula_telegram', true)
+        ->where('records.data.0.telegram_identity', '900101021234'));
+    $this->from($url)->post(route('pemilih-baru.telegram-cula.confirm', $record))->assertRedirect($url);
+    expect($record->fresh()->telegram_cula_confirmed_at)->not->toBeNull();
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('records.data.0.can_cula_telegram', false));
+
+    app(PemilihBaruService::class)->linkCurrentVoters();
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('records.data.0.can_cula_telegram', true));
+    $voter->update(['cula_code' => '2']);
+    app(PemilihBaruService::class)->linkCurrentVoters();
+    $this->get($url)->assertInertia(fn (Assert $page) => $page->where('records.data.0.can_cula_telegram', false));
+
+    $scopedUser = User::factory()->withModules(['culaan.pemilih-baharu'])->create(['access_level' => 'udm', 'scope_key' => 'UDM LAIN']);
+    $this->actingAs($scopedUser)->postJson(route('pemilih-baru.telegram-cula.confirm', $record))->assertForbidden();
+});
+
 it('saves optional cula notes and preserves them when omitted', function () {
     $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
     $record = PemilihBaruRecord::query()->create([

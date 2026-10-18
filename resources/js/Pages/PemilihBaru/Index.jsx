@@ -124,6 +124,25 @@ export default function Index({ filters, month_options, year_options, summary, r
     const [selectedRecord, setSelectedRecord] = useState(null);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
+    const [telegramRecord, setTelegramRecord] = useState(null);
+    const [confirmingTelegram, setConfirmingTelegram] = useState(false);
+    const [telegramError, setTelegramError] = useState('');
+
+    const openTelegramCula = (record) => {
+        setTelegramError('');
+        window.open(`tg://resolve?domain=SSDP_Kedah_Bot&text=${encodeURIComponent(`/kemascula ${record.telegram_identity}`)}`, '_blank');
+        setTelegramRecord(record);
+    };
+
+    const confirmTelegramCula = () => {
+        setConfirmingTelegram(true);
+        router.post(route('pemilih-baru.telegram-cula.confirm', telegramRecord.id), {}, {
+            preserveScroll: true,
+            onSuccess: () => setTelegramRecord(null),
+            onError: () => setTelegramError('Pengesahan gagal disimpan. Sila cuba lagi.'),
+            onFinish: () => setConfirmingTelegram(false),
+        });
+    };
     const showAllMonths = Boolean(filters.semua_bulan);
     const selectedMonthLabel = showAllMonths
         ? 'Semua bulan & tahun'
@@ -187,6 +206,19 @@ export default function Index({ filters, month_options, year_options, summary, r
             </div>
         }>
             <Head title="Cula Pemilih Baharu" />
+            {telegramRecord && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+                    <section role="dialog" aria-modal="true" aria-labelledby="telegram-cula-title" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+                        <h2 id="telegram-cula-title" className="text-base font-bold text-slate-900">Dah cula di Telegram?</h2>
+                        <p className="mt-2 text-sm text-slate-600">Sahkan selepas selesai cula {telegramRecord.name} di Telegram. Pilih belum jika Telegram tidak berjaya dibuka.</p>
+                        {telegramError && <p role="alert" className="mt-2 text-xs text-rose-600">{telegramError}</p>}
+                        <div className="mt-5 flex justify-end gap-2">
+                            <button type="button" disabled={confirmingTelegram} onClick={() => setTelegramRecord(null)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600">Belum</button>
+                            <button type="button" disabled={confirmingTelegram} onClick={confirmTelegramCula} className="rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{confirmingTelegram ? 'Menyimpan...' : 'Dah cula'}</button>
+                        </div>
+                    </section>
+                </div>
+            )}
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
                 <section className="overflow-hidden rounded-xl border border-amber-300 bg-white shadow-sm">
                     <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50 px-4 py-3">
@@ -374,6 +406,9 @@ export default function Index({ filters, month_options, year_options, summary, r
                                                 {record.catatan || '—'}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-right">
+                                                {record.is_linked && record.can_cula_telegram && (
+                                                    <button type="button" disabled={!record.telegram_identity} onClick={() => openTelegramCula(record)} className="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white shadow-sm hover:bg-amber-500 disabled:opacity-50">Cula Telegram</button>
+                                                )}
                                                 {!record.is_linked && (
                                                     <button type="button" onClick={() => { setSelectedRecord(record); setSaveError(''); }} className="rounded-lg bg-amber-600 px-3 py-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-amber-500">
                                                         {record.cula_code ? 'Ubah Cula' : 'Cula'}

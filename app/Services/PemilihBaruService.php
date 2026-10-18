@@ -267,6 +267,7 @@ class PemilihBaruService
                     'linked_pemilih_record_id' => $pemilih->id,
                     'linked_at' => $record->linked_at ?? now(),
                     'remark' => 'Dah link',
+                    'telegram_cula_confirmed_at' => null,
                 ])->save();
 
                 if (! $alreadyLinked) {

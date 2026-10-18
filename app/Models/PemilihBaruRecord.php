@@ -45,6 +45,7 @@ class PemilihBaruRecord extends Model
         return [
             'birth_year' => 'integer',
             'linked_at' => 'datetime',
+            'telegram_cula_confirmed_at' => 'datetime',
         ];
     }
 
