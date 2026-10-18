@@ -513,6 +513,11 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
     const [activeUdm, setActiveUdm] = useState(null);
+    const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
+    const selectActiveUdm = (name) => {
+        setActiveUdm(name);
+        setUdmKey(report.dm_details?.find((row) => row.name === name)?.key ?? '');
+    };
     const [search, setSearch] = useState('');
     const [n8nModalOpen, setN8nModalOpen] = useState(false);
     const [n8nMessage, setN8nMessage] = useState(culaan_message);
@@ -702,7 +707,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const localityRows = filteredLocs.slice(0, 20);
     const culaRows = report.by_cula.slice(0, 12);
     const genderRows = report.gender.filter((r) => r.total > 0);
-    const selUdm = dmDetails.find((r) => r.name === activeUdm) ?? dmDetails[0] ?? null;
+    const selUdm = dmDetails.find((r) => r.key === udmKey) ?? dmDetails[0] ?? null;
     const selCula = dmCulaRows.find((r) => r.key === selUdm?.key) ?? null;
     const selCulaChart = (selCula?.cula_breakdown ?? []).filter((e) => e.code !== '?' && !e.display_label?.includes('BELUM DICULA')).slice(0, 12);
     const selLoc = selUdm?.localities.slice(0, 12) ?? [];
@@ -840,14 +845,14 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         </div>
 
 
-                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows activeUdm={activeUdm} onSelectUdm={setActiveUdm} />
+                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
                         {udm_snapshot_meta?.snapshot_time && (
                             <p className="text-center text-[10px] text-slate-400">
                                 Data pergerakan cula dikira bermula {formatSnapshotStart(udm_snapshot_meta.snapshot_time)}
                             </p>
                         )}
-                        <CulaPartyTable rows={culaPartyRows} activeUdm={activeUdm} onSelectUdm={setActiveUdm} />
-                        <PlkCostSummaryTable summary={plk_cost_summary} activeUdm={activeUdm} onSelectUdm={setActiveUdm} />
+                        <CulaPartyTable rows={culaPartyRows} activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
+                        <PlkCostSummaryTable summary={plk_cost_summary} activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
                         <DanaPaymentChart summary={dana_summary} />
 
@@ -941,7 +946,12 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
 
                         {tab === 'udm' && (
                             <section className="space-y-3">
-                                <ChartPanel title={`Ringkasan ${selUdm?.name ?? '-'}`} compact>
+                                <ChartPanel title={`Ringkasan ${selUdm?.name ?? '-'}`} compact
+                                    action={
+                                        <select value={selUdm?.key ?? ''} onChange={(event) => setUdmKey(event.target.value)} aria-label="Pilih UDM ringkasan" className="input-field w-auto py-1.5 text-xs">
+                                            {dmDetails.map((row) => <option key={row.key} value={row.key}>{row.name}</option>)}
+                                        </select>
+                                    }>
                                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                         <StatCard label="Jumlah" value={selUdm?.summary.total_voters ?? 0} detail={`${fmt(selUdm?.summary.total_localities ?? 0)} lokaliti`} color="violet" />
                                         <StatCard label="Sudah" value={selUdm?.summary.with_cula ?? 0} detail="Dicula" color="emerald" />
