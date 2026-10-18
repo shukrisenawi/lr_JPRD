@@ -129,8 +129,7 @@ function TTip({ active, payload, label }) {
     );
 }
 
-function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false }) {
-    const [activeRowKey, setActiveRowKey] = useState(null);
+function DataTable({ rows, columns, stickyHeader = false, interactiveRows = false, activeUdm, onSelectUdm }) {
     const table = (
         <table className="min-w-full divide-y divide-slate-200 text-xs">
             <thead className={stickyHeader ? 'table-header table-header-sticky' : 'table-header'}>
@@ -140,7 +139,7 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
                 {rows.map((row, i) => {
                     const rowKey = row.key ?? `${row.name}-${i}`;
                     const isInteractiveRow = interactiveRows && !row.isTotal;
-                    const isActive = isInteractiveRow && activeRowKey === rowKey;
+                    const isActive = isInteractiveRow && activeUdm === row.name;
                     const activeCellClass = isActive ? '!bg-lime-200 group-hover:!bg-lime-200' : '';
 
                     return (
@@ -148,11 +147,11 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
                             key={rowKey}
                             aria-selected={isInteractiveRow ? isActive : undefined}
                             tabIndex={isInteractiveRow ? 0 : undefined}
-                            onClick={isInteractiveRow ? () => setActiveRowKey(rowKey) : undefined}
+                            onClick={isInteractiveRow ? () => onSelectUdm(row.name) : undefined}
                             onKeyDown={isInteractiveRow ? (event) => {
                                 if (event.key === 'Enter' || event.key === ' ') {
                                     event.preventDefault();
-                                    setActiveRowKey(rowKey);
+                                    onSelectUdm(row.name);
                                 }
                             } : undefined}
                             className={row.isTotal
@@ -181,8 +180,7 @@ function DataTable({ rows, columns, stickyHeader = false, interactiveRows = fals
     );
 }
 
-function CulaPartyTable({ rows }) {
-    const [activeRowKey, setActiveRowKey] = useState(null);
+function CulaPartyTable({ rows, activeUdm, onSelectUdm }) {
     const totals = rows.reduce((result, row) => {
         result.total += row.total;
         result.turnout_85 += row.turnout_85;
@@ -228,17 +226,17 @@ function CulaPartyTable({ rows }) {
                     </thead>
                     <tbody>
                         {rows.map((row, index) => {
-                            const isActive = activeRowKey === row.key;
+                            const isActive = activeUdm === row.name;
                             return (
                                 <tr
                                     key={row.key}
                                     aria-selected={isActive}
                                     tabIndex={0}
-                                    onClick={() => setActiveRowKey(row.key)}
+                                    onClick={() => onSelectUdm(row.name)}
                                     onKeyDown={(event) => {
                                         if (event.key === 'Enter' || event.key === ' ') {
                                             event.preventDefault();
-                                            setActiveRowKey(row.key);
+                                            onSelectUdm(row.name);
                                         }
                                     }}
                                     className={`${isActive ? 'bg-lime-200 font-bold text-slate-950' : index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold`}
@@ -297,9 +295,8 @@ function MovementCells({ row, prefix }) {
     );
 }
 
-function PlkCostSummaryTable({ summary }) {
+function PlkCostSummaryTable({ summary, activeUdm, onSelectUdm }) {
     const rows = useMemo(() => [...(summary?.rows ?? [])].sort((a, b) => compareUdms({ name: a.udm }, { name: b.udm })), [summary]);
-    const [activeUdm, setActiveUdm] = useState(null);
     if (!summary) return null;
 
     const { codes, rates, totals } = summary;
@@ -354,11 +351,11 @@ function PlkCostSummaryTable({ summary }) {
 
                             return (
                             <tr key={row.udm} aria-selected={isActive} tabIndex={0}
-                                onClick={() => setActiveUdm(row.udm)}
+                                onClick={() => onSelectUdm(row.udm)}
                                 onKeyDown={(event) => {
                                     if (event.key === 'Enter' || event.key === ' ') {
                                         event.preventDefault();
-                                        setActiveUdm(row.udm);
+                                        onSelectUdm(row.udm);
                                     }
                                 }}
                                 className={`group cursor-pointer transition-colors ${isActive ? 'bg-emerald-100 font-bold text-slate-950' : `${rowTone} hover:bg-emerald-50 hover:font-bold`}`}>
@@ -515,6 +512,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
     const { auth } = usePage().props;
     const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
+    const [activeUdm, setActiveUdm] = useState(null);
     const [search, setSearch] = useState('');
     const [udmKey, setUdmKey] = useState(() => report.dm_details?.[0]?.key ?? '');
     const [n8nModalOpen, setN8nModalOpen] = useState(false);
@@ -843,15 +841,15 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         </div>
 
 
-                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows />
+                        <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows activeUdm={activeUdm} onSelectUdm={setActiveUdm} />
                         {udm_snapshot_meta?.snapshot_time && (
                             <p className="text-center text-[10px] text-slate-400">
                                 Data pergerakan cula dikira bermula {formatSnapshotStart(udm_snapshot_meta.snapshot_time)}
                             </p>
                         )}
-                        <CulaPartyTable rows={culaPartyRows} />
+                        <CulaPartyTable rows={culaPartyRows} activeUdm={activeUdm} onSelectUdm={setActiveUdm} />
+                        <PlkCostSummaryTable summary={plk_cost_summary} activeUdm={activeUdm} onSelectUdm={setActiveUdm} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
-                        <PlkCostSummaryTable summary={plk_cost_summary} />
                         <DanaPaymentChart summary={dana_summary} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
