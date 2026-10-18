@@ -51,12 +51,18 @@ export default function DashboardUdm({ udm, statistics, payments }) {
     const breakdownCell = 'border-b border-slate-100 px-1 py-3 text-right tabular-nums break-all';
     const breakdownLocalityCell = 'border-b border-slate-100 px-2 py-3 text-left font-medium break-words';
     const breakdownHeader = 'border-b border-slate-200 bg-slate-100 px-1 py-3 text-center font-semibold text-slate-600';
+    const pnTotal = ['2', '3B', '3D', '3K', '3M', '3P', '3U', '1B', '1P', '4P', '6', '11', '12', '17', '18']
+        .reduce((sum, code) => sum + (totals.breakdown[code] ?? 0), 0);
+    const activeTotal = Math.max(totals.total - (totals.breakdown['8'] ?? 0), 0);
+    const skc = pnTotal - Math.round(Math.round(activeTotal * 0.85) * 0.51);
+    const skcTheme = skc < 0 ? 'border-red-200 bg-red-50 text-red-800' : skc > 0 ? 'border-green-200 bg-green-50 text-green-800' : 'border-slate-200 bg-slate-50 text-slate-700';
     const metrics = [
         ['Jumlah Pemilih', fmt(totals.total)],
         ['Sudah Dicula', fmt(totals.with_cula)],
         ['Belum Dicula', fmt(totals.without_cula)],
         ['Kemajuan Culaan', `${totals.percentage}%`],
         ['Ahli PAS', fmt(totals.members)],
+        ['SKC', fmt(skc), skcTheme, 'Sasaran Kena Cari'],
     ];
     const cell = 'border-b border-slate-100 whitespace-nowrap px-4 py-3 text-right tabular-nums';
     const localityCell = 'sticky left-0 z-10 min-w-44 border-b border-slate-100 bg-inherit px-4 py-3 text-left font-medium';
@@ -84,10 +90,11 @@ export default function DashboardUdm({ udm, statistics, payments }) {
                     <p className="mt-1 text-sm text-slate-600">UDM: {udm || 'Belum ditetapkan'} · Pemilih aktif, tidak termasuk rekod manual.</p>
                 </div>
                 {!udm && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Sila tetapkan UDM pengguna dalam pengurusan akses untuk melihat statistik.</p>}
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-                    {metrics.map(([label, value]) => <div key={label} className="rounded-xl border border-green-200 bg-white p-4">
-                        <p className="text-xs font-medium text-slate-600">{label}</p>
-                        <p className="mt-2 text-2xl font-bold tabular-nums text-green-800">{value}</p>
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+                    {metrics.map(([label, value, theme, description]) => <div key={label} className={`rounded-xl border p-4 ${theme ?? 'border-green-200 bg-white'}`}>
+                        <p className={`text-xs font-medium ${theme ? '' : 'text-slate-600'}`}>{label}</p>
+                        <p className={`mt-2 text-2xl font-bold tabular-nums ${theme ? '' : 'text-green-800'}`}>{value}</p>
+                        {description && <p className="mt-1 text-xs">{description}</p>}
                     </div>)}
                 </div>
                 <Section title="Jumlah Bayaran Peralatan Pilihanraya PRU16" description="Jumlah dana masuk dalam kategori bayaran peralatan pilihanraya untuk UDM ini sahaja.">
