@@ -122,6 +122,21 @@ class PemilihBaruController extends Controller
             $query->whereNull('linked_pemilih_record_id');
         }
 
+        $orderedIds = (clone $query)
+            ->get(['id', 'no_kp', 'birth_year', 'name'])
+            ->sortBy(fn (PemilihBaruRecord $record) => [
+                $this->calculateAgeFromIdentity($record->no_kp)
+                    ?? ($record->birth_year ? max(0, now()->year - $record->birth_year) : PHP_INT_MAX),
+                $record->name,
+                $record->id,
+            ])
+            ->pluck('id');
+
+        if ($orderedIds->isNotEmpty()) {
+            $order = $orderedIds->values()->map(fn ($id, $position) => 'WHEN '.(int) $id.' THEN '.$position)->implode(' ');
+            $query->orderByRaw('CASE id '.$order.' END');
+        }
+
         $records = $query
             ->with('linkedPemilih')
             ->orderBy('name')

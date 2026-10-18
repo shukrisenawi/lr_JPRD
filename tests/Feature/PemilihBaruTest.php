@@ -424,6 +424,26 @@ it('confirms telegram cula and rechecks linked voter codes on import linking', f
     $this->actingAs($scopedUser)->postJson(route('pemilih-baru.telegram-cula.confirm', $record))->assertForbidden();
 });
 
+it('sorts voters by ascending displayed age with unknown ages last', function (string $tab) {
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
+    $linkedVoter = $tab === 'dah_link' ? PemilihRecord::query()->create([
+        'identity_number' => '900101021234', 'name' => 'AGE TEST', 'status' => 'aktif', 'is_manual' => false,
+    ]) : null;
+    foreach ([['OLD', 1960], ['UNKNOWN', null], ['YOUNG', 2005], ['MIDDLE', 1980]] as [$name, $year]) {
+        PemilihBaruRecord::query()->create([
+            'record_key' => sha1($name), 'import_month' => '2026-09',
+            'name' => $name, 'birth_year' => $year, 'dm' => 'UDM ALPHA',
+            'linked_pemilih_record_id' => $linkedVoter?->id,
+        ]);
+    }
+    $this->actingAs($user)->get(route('pemilih-baru.index', ['udm' => 'UDM ALPHA', 'tab' => $tab]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('records.data.0.name', 'YOUNG')
+            ->where('records.data.1.name', 'MIDDLE')
+            ->where('records.data.2.name', 'OLD')
+            ->where('records.data.3.name', 'UNKNOWN'));
+})->with(['belum_link', 'dah_link']);
+
 it('saves optional cula notes and preserves them when omitted', function () {
     $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
     $record = PemilihBaruRecord::query()->create([
