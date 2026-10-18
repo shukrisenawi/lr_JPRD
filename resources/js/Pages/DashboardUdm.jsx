@@ -23,8 +23,24 @@ function LocalityChart({ rows }) {
         ...row,
         pas_cula: Object.entries(row.breakdown).reduce((sum, [code, count]) => sum + (code === '2' || code.startsWith('3') ? count : 0), 0),
     }));
+    const chartTotals = chartRows.reduce((totals, row) => ({
+        total: totals.total + row.total,
+        pas_cula: totals.pas_cula + row.pas_cula,
+        members: totals.members + row.members,
+    }), { total: 0, pas_cula: 0, members: 0 });
     if (!rows.length) return <p className="p-6 text-sm text-slate-500">Tiada data pemilih untuk UDM ini.</p>;
-    return <div className="overflow-x-auto p-4">
+    return <div className="p-4">
+        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {[
+                ['Total Pemilih', chartTotals.total, 'border-sky-200 bg-sky-50 text-sky-900'],
+                ['Total Cula PAS', chartTotals.pas_cula, 'border-green-200 bg-green-50 text-green-900'],
+                ['Total Ahli PAS', chartTotals.members, 'border-lime-200 bg-lime-50 text-lime-900'],
+            ].map(([label, value, theme]) => <div key={label} className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 ${theme}`}>
+                <span className="text-xs font-medium">{label}</span>
+                <span className="text-lg font-bold tabular-nums">{fmt(value)}</span>
+            </div>)}
+        </div>
+        <div className="overflow-x-auto">
         <div style={{ height: Math.max(240, rows.length * 72 + 64), minWidth: 320 }} aria-label="Perbandingan jumlah pemilih, ahli PAS dan cula PAS mengikut lokaliti">
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartRows} layout="vertical" accessibilityLayer margin={{ top: 8, right: 50, left: 0, bottom: 8 }}>
@@ -44,6 +60,7 @@ function LocalityChart({ rows }) {
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
+        </div>
         </div>
     </div>;
 }
