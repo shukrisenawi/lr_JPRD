@@ -143,6 +143,7 @@ class PemilihBaruController extends Controller
                 'cula_code' => $record->cula_code,
                 'cula_display_label' => $record->cula_display_label,
                 'remark' => $record->remark,
+                'catatan' => $record->catatan,
                 'import_month' => $record->import_month,
                 'linked_at' => $record->linked_at?->format('d-m-Y H:i'),
                 'is_linked' => $record->linked_pemilih_record_id !== null,
@@ -185,9 +186,10 @@ class PemilihBaruController extends Controller
         $validated = $request->validate([
             'cula_code' => ['required', 'string', Rule::in(array_column(CulaCodes::options(), 'code'))],
             'race' => ['required', 'string', Rule::in(['Melayu', 'Bukan Melayu'])],
+            'catatan' => ['sometimes', 'nullable', 'string', 'max:2000'],
         ]);
 
-        $pemilihBaru->updateCula($pemilihBaruRecord, $validated['cula_code'], $validated['race']);
+        $pemilihBaru->updateCula($pemilihBaruRecord, $validated['cula_code'], $validated['race'], $validated);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -195,6 +197,7 @@ class PemilihBaruController extends Controller
                 'record_id' => $pemilihBaruRecord->id,
                 'cula_code' => $validated['cula_code'],
                 'race' => $validated['race'],
+                'catatan' => $pemilihBaruRecord->catatan,
             ]);
         }
 

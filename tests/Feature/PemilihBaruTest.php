@@ -377,6 +377,36 @@ it('requires UDM selection before showing new voter records and shows the pendin
     Carbon\Carbon::setTestNow();
 });
 
+it('saves optional cula notes and preserves them when omitted', function () {
+    $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
+    $record = PemilihBaruRecord::query()->create([
+        'record_key' => sha1('cula-notes'),
+        'import_month' => '2026-09',
+        'name' => 'REKOD UJIAN',
+        'dm' => 'UDM ALPHA',
+    ]);
+
+    $this->actingAs($user)->postJson(route('pemilih-baru.cula.update', $record), [
+        'cula_code' => '2', 'race' => 'Melayu', 'catatan' => 'Catatan ujian',
+    ])->assertOk()->assertJsonPath('catatan', 'Catatan ujian');
+
+    expect($record->fresh()->catatan)->toBe('Catatan ujian');
+
+    $this->postJson(route('pemilih-baru.cula.update', $record), [
+        'cula_code' => '2', 'race' => 'Melayu',
+    ])->assertOk();
+    expect($record->fresh()->catatan)->toBe('Catatan ujian');
+
+    $this->postJson(route('pemilih-baru.cula.update', $record), [
+        'cula_code' => '2', 'race' => 'Melayu', 'catatan' => str_repeat('a', 2001),
+    ])->assertUnprocessable()->assertJsonValidationErrors('catatan');
+
+    $this->postJson(route('pemilih-baru.cula.update', $record), [
+        'cula_code' => '2', 'race' => 'Melayu', 'catatan' => null,
+    ])->assertOk();
+    expect($record->fresh()->catatan)->toBeNull();
+});
+
 it('limits pemilih baharu cula to the assigned UDM and auto-selects that UDM', function () {
     $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create([
         'access_level' => 'udm',

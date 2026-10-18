@@ -331,15 +331,16 @@ class PemilihBaruService
         return $this->hasCula($code) ? $code : null;
     }
 
-    public function updateCula(PemilihBaruRecord $record, string $code, string $race): void
+    public function updateCula(PemilihBaruRecord $record, string $code, string $race, array $attributes = []): void
     {
         $label = CulaCodes::label($code);
 
-        DB::transaction(function () use ($record, $code, $label, $race): void {
+        DB::transaction(function () use ($record, $code, $label, $race, $attributes): void {
             $record->forceFill([
                 'cula_code' => $code,
                 'cula_display_label' => $label,
                 'race' => $race,
+                'catatan' => array_key_exists('catatan', $attributes) ? $attributes['catatan'] : $record->catatan,
             ])->save();
 
             $pemilih = PemilihRecord::query()
