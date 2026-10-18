@@ -344,7 +344,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                                         <th className="px-4 py-2.5">Kawasan</th>
                                         <th className="px-4 py-2.5">Transaksi</th>
                                         <th className="px-4 py-2.5">Cula</th>
-                                        <th className="px-4 py-2.5">Remark</th>
+                                        <th className="px-4 py-2.5">Catatan</th>
                                         <th className="px-4 py-2.5 text-right">Tindakan</th>
                                     </tr>
                                 </thead>
@@ -370,9 +370,8 @@ export default function Index({ filters, month_options, year_options, summary, r
                                                     </span>
                                                 ) : <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">Belum cula</span>}
                                             </td>
-                                            <td className="px-4 py-3">
-                                                <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${record.remark === 'Dah link' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-800'}`}>{record.remark}</span>
-                                                {record.linked_at && <p className="mt-1 text-[9px] text-slate-400">{record.linked_at}</p>}
+                                            <td className="min-w-40 max-w-xs whitespace-pre-wrap break-words px-4 py-3 text-xs text-slate-600">
+                                                {record.catatan || '—'}
                                             </td>
                                             <td className="whitespace-nowrap px-4 py-3 text-right">
                                                 {!record.is_linked && (
