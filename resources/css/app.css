@@ -127,7 +127,7 @@
     }
     .table-header-sticky th {
         position: sticky;
-        top: 3.5rem;
+        top: 0;
         z-index: 20;
         box-shadow: 0 2px 5px -3px rgba(15, 23, 42, 0.35);
     }
@@ -136,9 +136,15 @@
     }
     .report-table-header-sticky {
         position: sticky;
-        top: 3.5rem;
+        top: 0;
         z-index: 20;
         box-shadow: 0 2px 5px -3px rgba(15, 23, 42, 0.35);
+    }
+    @media (min-width: 1280px) {
+        .table-header-sticky th,
+        .report-table-header-sticky {
+            top: 3.5rem;
+        }
     }
     .cula-party-table th,
     .cula-party-table td {
