@@ -439,8 +439,8 @@ function PemilihBaruMovementTable({ movement }) {
                     <caption className="sr-only">Jadual pergerakan pemilih baharu mengikut bulan, pengundi baru dan pemilih berpindah</caption>
                     <thead className="report-table-header-sticky text-center font-bold text-slate-900">
                         <tr>
-                            <th rowSpan={3} className="sticky left-0 z-30 w-16 border border-emerald-800 bg-emerald-700 px-2 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]">Bulan</th>
-                            <th rowSpan={3} className="w-14 border border-emerald-800 bg-emerald-700 px-0.5 py-2 text-white"><span className="block whitespace-normal leading-tight">Jumlah<br />Pemilih</span></th>
+                            <th rowSpan={3} className="w-16 border border-emerald-800 bg-emerald-700 px-2 py-2 text-white">Bulan</th>
+                            <th rowSpan={3} className="sticky left-0 z-30 w-14 border border-emerald-800 bg-emerald-700 px-0.5 py-2 text-white shadow-[2px_0_3px_rgba(15,23,42,0.18)]"><span className="block whitespace-normal leading-tight">Jumlah<br />Pemilih</span></th>
                             <th colSpan={6} className="border border-emerald-800 bg-emerald-700 px-0.5 py-2 text-white leading-tight">Pengundi Baru (18 Tahun)</th>
                             <th colSpan={6} className="border border-emerald-800 bg-sky-700 px-0.5 py-2 text-white leading-tight">Pengundi Pindah Masuk</th>
                             <th colSpan={6} className="border border-emerald-800 bg-indigo-700 px-0.5 py-2 text-white leading-tight">Pengundi Pindah Keluar</th>
@@ -492,8 +492,8 @@ function PemilihBaruMovementTable({ movement }) {
                                     }}
                                     className={`group cursor-pointer transition-colors ${isActive ? 'bg-emerald-100 font-bold text-slate-950' : `${rowTone} hover:bg-emerald-50 hover:font-bold`}`}
                                 >
-                                    <td className={`sticky left-0 z-10 w-16 whitespace-nowrap border border-slate-300 px-2 py-1.5 text-center font-semibold shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${isActive ? '!bg-emerald-100' : `${rowTone} group-hover:!bg-emerald-50`} ${activeTextClass}`}>{row.month}</td>
-                                    <td className={`w-14 border border-slate-300 px-0.5 py-1.5 text-center font-semibold tabular-nums ${activeTextClass}`}>{fmt(row.jumlah_pemilih)}</td>
+                                    <td className={`w-16 whitespace-nowrap border border-slate-300 px-2 py-1.5 text-center font-semibold ${activeTextClass}`}>{row.month}</td>
+                                    <td className={`sticky left-0 z-10 w-14 border border-slate-300 px-0.5 py-1.5 text-center font-semibold tabular-nums shadow-[2px_0_3px_rgba(15,23,42,0.12)] ${isActive ? '!bg-emerald-100' : `${rowTone} group-hover:!bg-emerald-50`} ${activeTextClass}`}>{fmt(row.jumlah_pemilih)}</td>
                                     <MovementCells row={row} prefix="pengundi_baru" />
                                     <MovementCells row={row} prefix="pindah_masuk" />
                                     <MovementCells row={row} prefix="pindah_keluar" />
