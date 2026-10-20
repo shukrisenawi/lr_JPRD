@@ -63,6 +63,10 @@ class PhoneUpdateController extends Controller
                 ->whereNotIn('phone', array_filter([$phone, PhoneNumber::normalize($record->phone_home)]))->delete();
         });
 
-        return response()->json(['message' => 'Nombor telefon berjaya dikemas kini.']);
+        return response()->json([
+            'message' => 'Nombor telefon berjaya dikemas kini.',
+            'record_id' => $record->id,
+            'phone_mobile' => $phone,
+        ]);
     }
 }

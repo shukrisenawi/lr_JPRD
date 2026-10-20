@@ -18,7 +18,9 @@ it('updates and normalizes a phone from every supported module', function (strin
     $voter = phoneUpdateVoter();
     $this->actingAs($user)->putJson(route('pemilih.phone.update'), [
         'identity' => $voter->no_kp, 'phone' => '+60 19-8887777',
-    ])->assertOk();
+    ])->assertOk()
+        ->assertJsonPath('record_id', $voter->id)
+        ->assertJsonPath('phone_mobile', '0198887777');
     expect($voter->fresh()->phone_mobile)->toBe('0198887777');
 })->with(['carian-pemilih', 'culaan.senarai', 'culaan-bot', 'vcc', 'plk', 'program', 'keluarga-pemilih', 'jawatankuasa.ajk-bukan-pas', 'pusat-khidmat']);
 

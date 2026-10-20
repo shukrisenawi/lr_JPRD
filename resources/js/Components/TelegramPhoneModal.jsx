@@ -59,6 +59,8 @@ export default function TelegramPhoneModal() {
                 const data = await response.json().catch(() => ({}));
                 throw new Error(data.errors?.phone?.[0] || data.message || 'Nombor telefon gagal disimpan. Sila cuba lagi.');
             }
+            const data = await response.json();
+            window.dispatchEvent(new CustomEvent('pemilih:phone-updated', { detail: data }));
             dialog.current.close();
             router.reload({ preserveScroll: true });
         } catch (error) {

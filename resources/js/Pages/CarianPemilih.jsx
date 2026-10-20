@@ -188,6 +188,18 @@ function SearchPanel() {
     const rid = useRef(0);
     useEffect(() => () => ac.current?.abort(), []);
 
+    useEffect(() => {
+        const updatePhone = ({ detail }) => {
+            const updateVoter = (voter) => voter?.record_id === detail.record_id
+                ? { ...voter, phone_mobile: detail.phone_mobile }
+                : voter;
+            setSelected(updateVoter);
+            setSuggestions((voters) => voters.map(updateVoter));
+        };
+        window.addEventListener('pemilih:phone-updated', updatePhone);
+        return () => window.removeEventListener('pemilih:phone-updated', updatePhone);
+    }, []);
+
     const fetchSuggestions = async (searchQ, dm, locality, culaCodes) => {
         ac.current?.abort();
         if (searchQ.trim().length < 2) { setSuggestions([]); setSearching(false); return; }
