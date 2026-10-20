@@ -435,7 +435,7 @@ function PemilihBaruMovementTable({ movement }) {
                 <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">{movement?.year}</span>
             </div>
             <div className="overflow-x-auto xl:overflow-visible">
-                <table className="w-full min-w-0 table-fixed border-separate border-spacing-0 text-[10px] sm:text-xs">
+                <table className="w-full min-w-[1200px] table-fixed border-separate border-spacing-0 text-[10px] sm:text-xs xl:min-w-0">
                     <caption className="sr-only">Jadual pergerakan pemilih baharu mengikut bulan, pengundi baru dan pemilih berpindah</caption>
                     <thead className="report-table-header-sticky text-center font-bold text-slate-900">
                         <tr>
