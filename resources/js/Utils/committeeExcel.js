@@ -1,49 +1,102 @@
-const escapeXml = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const palette = {
+    green: 'FF184D3C',
+    ink: 'FF203B32',
+    muted: 'FF63776E',
+    pale: 'FFF1F6F3',
+    line: 'FFDCE7E0',
+    white: 'FFFFFFFF',
+};
 
-export function buildCommitteeWorkbook(sections) {
-    const borders = ['Bottom', 'Left', 'Right', 'Top'].map((position) => `<Border ss:Position="${position}" ss:LineStyle="Continuous" ss:Weight="1"/>`).join('');
-    const styles = `<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-        <Style ss:ID="title"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="20" ss:Bold="1"/></Style>
-        <Style ss:ID="subtitle"><Alignment ss:Horizontal="Center"/><Font ss:Size="11" ss:Color="#475569"/></Style>
-        <Style ss:ID="header"><Alignment ss:Horizontal="Center"/><Font ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/><Borders>${borders}</Borders></Style>
-        <Style ss:ID="cell"><Borders>${borders}</Borders><NumberFormat ss:Format="@"/></Style>
-        <Style ss:ID="center" ss:Parent="cell"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/></Style>`;
-    let rowCount = 0;
-    const breaks = [];
-    const cell = (value, style = 'cell', type = 'String') => `<Cell ss:StyleID="${style}"><Data ss:Type="${type}">${escapeXml(value)}</Data></Cell>`;
-    const rows = sections.map((section, index) => {
-        if (index > 0) breaks.push(rowCount);
+const fill = (color) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: color } });
+
+export async function buildCommitteeWorkbook(sections) {
+    const { default: ExcelJS } = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'JPRD Jeneri';
+    const sheet = workbook.addWorksheet('Jawatankuasa', {
+        views: [{ showGridLines: false }],
+        pageSetup: {
+            paperSize: 9,
+            orientation: 'portrait',
+            fitToPage: false,
+            scale: 100,
+            horizontalCentered: true,
+            margins: { left: 0.35, right: 0.35, top: 0.4, bottom: 0.5, header: 0.15, footer: 0.2 },
+        },
+        headerFooter: { oddFooter: '&L&"Calibri"&9&K63776EJPRD JENERI&R&9&K63776EMuka surat &P / &N' },
+    });
+    sheet.columns = [{ width: 6 }, { width: 44 }, { width: 20 }, { width: 18 }];
+
+    const mergedRow = (value, height, font, background) => {
+        const row = sheet.addRow([value]);
+        row.height = height;
+        sheet.mergeCells(row.number, 1, row.number, 4);
+        const cell = row.getCell(1);
+        cell.font = { name: 'Calibri', color: { argb: palette.ink }, ...font };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        if (background) cell.fill = fill(background);
+        return row;
+    };
+
+    sections.forEach((section, sectionIndex) => {
         const title = String(section.title || 'Tanpa Kumpulan').replace(/\bKETUA\b\s*/gi, '').trim();
-        const subtitle = section.subtitle ? `<Row ss:Height="22"><Cell ss:MergeAcross="3" ss:StyleID="subtitle"><Data ss:Type="String">${escapeXml(section.subtitle)}</Data></Cell></Row>` : '';
-        const heading = section.formalHeading
-            ? `<Row ss:Height="54"><Cell ss:MergeAcross="3" ss:StyleID="title"><Data ss:Type="String">SENARAI AHLI JAWATANKUASA JPRD</Data></Cell></Row>
-                <Row ss:Height="40"><Cell ss:MergeAcross="3" ss:StyleID="title"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>
-                <Row ss:Height="28"><Cell ss:MergeAcross="3" ss:StyleID="subtitle"><Data ss:Type="String">SESI 2025/2027</Data></Cell></Row><Row ss:Height="22"/>`
-            : `<Row ss:Height="54"><Cell ss:MergeAcross="3" ss:StyleID="title"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>${subtitle}`;
-        rowCount += (section.formalHeading ? 5 : 2 + (section.subtitle ? 1 : 0)) + section.members.length;
-        return `${heading}
-            <Row ss:Height="26">${['Bil', 'Nama', 'No. KP', 'No. Tel'].map((label) => cell(label, 'header')).join('')}</Row>
-            ${section.members.map((member, memberIndex) => `<Row ss:AutoFitHeight="1" ss:Height="30">${cell(memberIndex + 1, 'center', 'Number')}${cell(member.voter?.name || '-')}${cell(member.voter?.no_kp || member.voter?.old_ic || '-', 'center')}${cell(member.voter?.phone_mobile || member.voter?.phone_home || '-', 'center')}</Row>`).join('')}`;
-    }).join('');
-    return `<?xml version="1.0" encoding="UTF-8"?>
-        <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x="urn:schemas-microsoft-com:office:excel">
-        <Styles>${styles}</Styles><Worksheet ss:Name="Jawatankuasa"><Table>
-        ${[32, 260, 110, 100].map((width) => `<Column ss:Width="${width}"/>`).join('')}${rows}</Table>
-        <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup><Layout x:Orientation="Portrait"/><PageMargins x:Bottom="0.5" x:Left="0.3" x:Right="0.3" x:Top="0.5"/></PageSetup><Print><PaperSizeIndex>9</PaperSizeIndex><Scale>100</Scale></Print></WorksheetOptions>
-        ${breaks.length ? `<PageBreaks xmlns="urn:schemas-microsoft-com:office:excel"><RowBreaks>${breaks.map((row) => `<RowBreak><Row>${row}</Row></RowBreak>`).join('')}</RowBreaks></PageBreaks>` : ''}
-        </Worksheet></Workbook>`;
+        mergedRow('', 5, {}, palette.green);
+        mergedRow('', 12, {});
+        mergedRow('SENARAI AHLI JAWATANKUASA JPRD', 28, { size: 14, bold: true });
+        mergedRow(title, Math.max(42, Math.ceil(title.length / 34) * 29), { size: 24, bold: true, color: { argb: palette.green } });
+        mergedRow('SESI 2025/2027', 24, { size: 11, color: { argb: palette.muted } });
+        if (section.subtitle) mergedRow(section.subtitle, 22, { size: 10, color: { argb: palette.muted } });
+        mergedRow('', 18, {});
+
+        const header = sheet.addRow(['Bil', 'Nama', 'No. KP', 'No. Tel']);
+        header.height = 29;
+        header.eachCell((cell, column) => {
+            cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: palette.white } };
+            cell.fill = fill(palette.green);
+            cell.alignment = { horizontal: column === 2 ? 'left' : 'center', vertical: 'middle', indent: column === 2 ? 1 : 0 };
+        });
+
+        section.members.forEach((member, index) => {
+            const name = String(member.voter?.name || '-');
+            const row = sheet.addRow([
+                index + 1,
+                name,
+                String(member.voter?.no_kp || member.voter?.old_ic || '-'),
+                String(member.voter?.phone_mobile || member.voter?.phone_home || '-'),
+            ]);
+            row.height = Math.max(31, Math.ceil(name.length / 38) * 15 + 12);
+            row.eachCell((cell, column) => {
+                cell.font = { name: 'Calibri', size: 11, bold: column === 2, color: { argb: column === 1 ? palette.muted : palette.ink } };
+                cell.fill = fill(index % 2 === 0 ? palette.white : palette.pale);
+                cell.alignment = { horizontal: column === 2 ? 'left' : 'center', vertical: 'middle', wrapText: true, indent: column === 2 ? 1 : 0 };
+                cell.border = { bottom: { style: 'hair', color: { argb: palette.line } } };
+                if (column >= 3) cell.numFmt = '@';
+            });
+        });
+        mergedRow(`JUMLAH AHLI: ${section.members.length}`, 26, { size: 10, bold: true, color: { argb: palette.green } }, palette.pale);
+        if (sectionIndex < sections.length - 1) sheet.lastRow.addPageBreak();
+    });
+    sheet.pageSetup.printArea = `A1:D${Math.max(sheet.rowCount, 1)}`;
+    return workbook;
 }
 
-export function downloadCommitteeExcel(filename, sections) {
-    const blob = new Blob(['\uFEFF' + buildCommitteeWorkbook(sections)], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+export async function downloadCommitteeExcel(filename, sections) {
+    try {
+        const workbook = await buildCommitteeWorkbook(sections);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename.replace(/\.xlsx?$/i, '') + '.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+        console.error('Eksport Excel jawatankuasa gagal.', error);
+        window.alert('Eksport Excel gagal. Sila cuba sekali lagi.');
+    }
 }
 
 export function groupCommitteeExport(members, groups, subtitle) {
@@ -63,7 +116,6 @@ export function groupCommitteeExport(members, groups, subtitle) {
 export function udmPositionExport(positions) {
     return positions.filter((position) => position.members.length > 0).map((position) => ({
         title: position.name,
-        formalHeading: true,
         members: position.members,
     }));
 }

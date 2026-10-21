@@ -476,7 +476,7 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
                                             )}
                                             <button
                                             type="button"
-                                            onClick={() => downloadCommitteeExcel('AJK_' + g.groupName.replace(/[\/\s]+/g, '_') + '_' + scope.name.replace(/[\/\s]+/g, '_') + '.xls', [{
+                                            onClick={() => downloadCommitteeExcel('AJK_' + g.groupName.replace(/[\/\s]+/g, '_') + '_' + scope.name.replace(/[\/\s]+/g, '_') + '.xlsx', [{
                                                 title: g.groupName,
                                                 subtitle: `${levelMeta[level]?.label ?? level} — ${scope.parent_scope_name ? scope.parent_scope_name + ' / ' : ''}${scope.name}`,
                                                 members: g.members,
@@ -547,7 +547,7 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                         {members.length > 0 && (
                             <ExportButtons
                                 text={buildMemberListText(title, members, groups)}
-                                onExport={() => downloadCommitteeExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xls', udmPositionExport([{ name: position.name, members }]))}
+                                onExport={() => downloadCommitteeExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xlsx', udmPositionExport([{ name: position.name, members }]))}
                             />
                         )}
                         <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -939,7 +939,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                     )}
                                     <ExportButtons
                                         text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
-                                        onExport={() => downloadCommitteeExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', activeTab === 'udm-jawatan'
+                                        onExport={() => downloadCommitteeExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xlsx', activeTab === 'udm-jawatan'
                                             ? udmPositionExport(filteredPositionStats)
                                             : groupCommitteeExport(currentTabMembers, groups, currentTabTitle))}
                                     />
@@ -1188,7 +1188,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => downloadCommitteeExcel('AJK_JPRD_' + detailGroup.groupName.replace(/[\/\s]+/g, '_') + '.xls', [{ title: detailGroup.groupName, subtitle: 'JPRD', members: detailGroup.members }])}
+                                    onClick={() => downloadCommitteeExcel('AJK_JPRD_' + detailGroup.groupName.replace(/[\/\s]+/g, '_') + '.xlsx', [{ title: detailGroup.groupName, subtitle: 'JPRD', members: detailGroup.members }])}
                                     className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                 >
                                     <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">X</span>
