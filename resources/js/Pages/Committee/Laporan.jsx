@@ -4,7 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import { compareUdms } from '@/Utils/udmOrder';
-import { downloadCommitteeExcel, groupCommitteeExport } from '@/Utils/committeeExcel';
+import { downloadCommitteeExcel, groupCommitteeExport, udmPositionExport } from '@/Utils/committeeExcel';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -547,7 +547,7 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                         {members.length > 0 && (
                             <ExportButtons
                                 text={buildMemberListText(title, members, groups)}
-                                onExport={() => downloadCommitteeExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xls', [{ title: position.name, subtitle: 'UDM', members }])}
+                                onExport={() => downloadCommitteeExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xls', udmPositionExport([{ name: position.name, members }]))}
                             />
                         )}
                         <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -939,7 +939,9 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                     )}
                                     <ExportButtons
                                         text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
-                                        onExport={() => downloadCommitteeExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', groupCommitteeExport(currentTabMembers, groups, currentTabTitle))}
+                                        onExport={() => downloadCommitteeExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', activeTab === 'udm-jawatan'
+                                            ? udmPositionExport(filteredPositionStats)
+                                            : groupCommitteeExport(currentTabMembers, groups, currentTabTitle))}
                                     />
                                 </div>
                             </div>

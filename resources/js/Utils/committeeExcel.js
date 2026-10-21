@@ -15,8 +15,13 @@ export function buildCommitteeWorkbook(sections) {
         if (index > 0) breaks.push(rowCount);
         const title = String(section.title || 'Tanpa Kumpulan').replace(/\bKETUA\b\s*/gi, '').trim();
         const subtitle = section.subtitle ? `<Row ss:Height="22"><Cell ss:MergeAcross="3" ss:StyleID="subtitle"><Data ss:Type="String">${escapeXml(section.subtitle)}</Data></Cell></Row>` : '';
-        rowCount += 2 + (section.subtitle ? 1 : 0) + section.members.length;
-        return `<Row ss:Height="54"><Cell ss:MergeAcross="3" ss:StyleID="title"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>${subtitle}
+        const heading = section.formalHeading
+            ? `<Row ss:Height="54"><Cell ss:MergeAcross="3" ss:StyleID="title"><Data ss:Type="String">SENARAI AHLI JAWATANKUASA JPRD</Data></Cell></Row>
+                <Row ss:Height="40"><Cell ss:MergeAcross="3" ss:StyleID="title"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>
+                <Row ss:Height="28"><Cell ss:MergeAcross="3" ss:StyleID="subtitle"><Data ss:Type="String">SESI 2025/2027</Data></Cell></Row><Row ss:Height="22"/>`
+            : `<Row ss:Height="54"><Cell ss:MergeAcross="3" ss:StyleID="title"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>${subtitle}`;
+        rowCount += (section.formalHeading ? 5 : 2 + (section.subtitle ? 1 : 0)) + section.members.length;
+        return `${heading}
             <Row ss:Height="26">${['Bil', 'Nama', 'No. KP', 'No. Tel'].map((label) => cell(label, 'header')).join('')}</Row>
             ${section.members.map((member, memberIndex) => `<Row ss:AutoFitHeight="1" ss:Height="30">${cell(memberIndex + 1, 'center', 'Number')}${cell(member.voter?.name || '-')}${cell(member.voter?.no_kp || member.voter?.old_ic || '-', 'center')}${cell(member.voter?.phone_mobile || member.voter?.phone_home || '-', 'center')}</Row>`).join('')}`;
     }).join('');
@@ -52,5 +57,13 @@ export function groupCommitteeExport(members, groups, subtitle) {
     return [...sections.values()].sort((a, b) => a.sortOrder - b.sortOrder).map((section) => ({
         ...section,
         members: [...section.members].sort((a, b) => (a.position?.sort_order ?? 999) - (b.position?.sort_order ?? 999)),
+    }));
+}
+
+export function udmPositionExport(positions) {
+    return positions.filter((position) => position.members.length > 0).map((position) => ({
+        title: position.name,
+        formalHeading: true,
+        members: position.members,
     }));
 }

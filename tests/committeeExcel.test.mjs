@@ -1,10 +1,29 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildCommitteeWorkbook, groupCommitteeExport } from '../resources/js/Utils/committeeExcel.js';
+import { buildCommitteeWorkbook, groupCommitteeExport, udmPositionExport } from '../resources/js/Utils/committeeExcel.js';
 
 const member = (groupId, name = 'NAMA UJIAN') => ({
     committee_group_id: groupId,
     voter: { name, no_kp: '001122334455', phone_mobile: '0123456789' },
+});
+
+test('UDM export separates position groups sharing the same parent committee and prints formal headings', () => {
+    const sections = udmPositionExport([
+        { name: 'KETUA BIG DATA', members: [member(1, 'AHLI BIG DATA')] },
+        { name: 'KETUA DATA APP', members: [member(1, 'AHLI DATA APP'), member(1, 'AHLI DATA APP KEDUA')] },
+        { name: 'KUMPULAN KOSONG', members: [] },
+    ]);
+    assert.equal(sections.length, 2);
+    assert.equal(sections[0].members.length, 1);
+    assert.equal(sections[1].members.length, 2);
+    const xml = buildCommitteeWorkbook(sections);
+    assert.equal((xml.match(/>SENARAI AHLI JAWATANKUASA JPRD</g) || []).length, 2);
+    assert.equal((xml.match(/>SESI 2025\/2027</g) || []).length, 2);
+    assert.match(xml, />BIG DATA<\/Data>/);
+    assert.match(xml, />DATA APP<\/Data>/);
+    assert.doesNotMatch(xml, /KETUA|KUMPULAN KOSONG/);
+    assert.match(xml, /<RowBreak><Row>6<\/Row><\/RowBreak>/);
+    assert.match(xml, /SESI 2025\/2027<\/Data><\/Cell><\/Row><Row ss:Height="22"\/>/);
 });
 
 test('exports four columns, portrait A4 and a page break before each subsequent group', () => {
