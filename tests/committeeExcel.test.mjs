@@ -69,6 +69,27 @@ test('groups missing assignments and orders committees and positions', () => {
     assert.equal(sections[1].title, 'Tanpa Kumpulan');
 });
 
+test('management exports preserve selected columns, position names and portrait print width', async () => {
+    const workbook = await buildCommitteeWorkbook([{ title: 'CONTOH', members: [{ ...member(1), positionName: 'SETIAUSAHA' }] }], ['bil', 'jawatan', 'nama', 'ic', 'telefon']);
+    const sheet = workbook.worksheets[0];
+    assert.deepEqual(sheet.getRow(7).values.slice(1), ['Bil', 'Jawatan', 'Nama', 'No. KP', 'No. Tel']);
+    assert.equal(sheet.getCell('B8').value, 'SETIAUSAHA');
+    assert.equal(sheet.getCell('D8').value, '001122334455');
+    assert.equal(sheet.pageSetup.printArea, 'A1:E8');
+    assert.ok(sheet.columns.reduce((sum, column) => sum + column.width, 0) <= 88.01);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const loaded = new ExcelJS.Workbook();
+    await loaded.xlsx.load(buffer);
+    assert.equal(loaded.worksheets[0].getCell('D8').numFmt, '@');
+});
+
+test('single selected column exports a valid workbook without invalid merges', async () => {
+    const workbook = await buildCommitteeWorkbook([{ title: 'CONTOH', members: [member(1)] }], ['bil']);
+    assert.equal(workbook.worksheets[0].getColumn(1).width, 88);
+    assert.equal(workbook.worksheets[0].getCell('A8').value, 1);
+    await workbook.xlsx.writeBuffer();
+});
+
 test('download uses an XLSX extension and MIME type even with a legacy XLS filename', async () => {
     let downloaded;
     let blob;

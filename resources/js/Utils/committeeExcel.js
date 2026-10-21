@@ -9,7 +9,7 @@ const palette = {
 
 const fill = (color) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: color } });
 
-export async function buildCommitteeWorkbook(sections) {
+export async function buildCommitteeWorkbook(sections, selectedColumns = ['bil', 'nama', 'ic', 'telefon']) {
     const { default: ExcelJS } = await import('exceljs');
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'JPRD Jeneri';
@@ -25,12 +25,22 @@ export async function buildCommitteeWorkbook(sections) {
         },
         headerFooter: { oddFooter: '&L&"Calibri"&9&K63776EJPRD JENERI&R&9&K63776EMuka surat &P / &N' },
     });
-    sheet.columns = [{ width: 6 }, { width: 44 }, { width: 20 }, { width: 18 }];
+    const definitions = {
+        bil: { label: 'Bil', width: 6, value: (_, index) => index + 1 },
+        nama: { label: 'Nama', width: 44, value: (member) => String(member.voter?.name || '-') },
+        ic: { label: 'No. KP', width: 20, value: (member) => String(member.voter?.no_kp || member.voter?.old_ic || '-') },
+        telefon: { label: 'No. Tel', width: 18, value: (member) => String(member.voter?.phone_mobile || member.voter?.phone_home || '-') },
+        jawatan: { label: 'Jawatan', width: 24, value: (member) => String(member.positionName || member.position?.name || '-') },
+    };
+    const columns = selectedColumns.filter((key) => definitions[key]);
+    if (!columns.length) throw new Error('Pilih sekurang-kurangnya satu kolum.');
+    const totalWidth = columns.reduce((sum, key) => sum + definitions[key].width, 0);
+    sheet.columns = columns.map((key) => ({ width: definitions[key].width * 88 / totalWidth }));
 
     const mergedRow = (value, height, font, background) => {
         const row = sheet.addRow([value]);
         row.height = height;
-        sheet.mergeCells(row.number, 1, row.number, 4);
+        if (columns.length > 1) sheet.mergeCells(row.number, 1, row.number, columns.length);
         const cell = row.getCell(1);
         cell.font = { name: 'Calibri', color: { argb: palette.ink }, ...font };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -48,40 +58,39 @@ export async function buildCommitteeWorkbook(sections) {
         if (section.subtitle) mergedRow(section.subtitle, 22, { size: 10, color: { argb: palette.muted } });
         mergedRow('', 18, {});
 
-        const header = sheet.addRow(['Bil', 'Nama', 'No. KP', 'No. Tel']);
+        const header = sheet.addRow(columns.map((key) => definitions[key].label));
         header.height = 29;
         header.eachCell((cell, column) => {
             cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: palette.white } };
             cell.fill = fill(palette.green);
-            cell.alignment = { horizontal: column === 2 ? 'left' : 'center', vertical: 'middle', indent: column === 2 ? 1 : 0 };
+            const left = ['nama', 'jawatan'].includes(columns[column - 1]);
+            cell.alignment = { horizontal: left ? 'left' : 'center', vertical: 'middle', indent: left ? 1 : 0 };
         });
 
         section.members.forEach((member, index) => {
-            const name = String(member.voter?.name || '-');
-            const row = sheet.addRow([
-                index + 1,
-                name,
-                String(member.voter?.no_kp || member.voter?.old_ic || '-'),
-                String(member.voter?.phone_mobile || member.voter?.phone_home || '-'),
-            ]);
-            row.height = Math.max(31, Math.ceil(name.length / 38) * 15 + 12);
+            const row = sheet.addRow(columns.map((key) => definitions[key].value(member, index)));
+            row.height = Math.max(31, ...columns.map((key, column) => ['nama', 'jawatan'].includes(key)
+                ? Math.ceil(String(definitions[key].value(member, index)).length / Math.max(1, sheet.getColumn(column + 1).width - 6)) * 15 + 12
+                : 31));
             row.eachCell((cell, column) => {
-                cell.font = { name: 'Calibri', size: 11, bold: column === 2, color: { argb: column === 1 ? palette.muted : palette.ink } };
+                const key = columns[column - 1];
+                const left = ['nama', 'jawatan'].includes(key);
+                cell.font = { name: 'Calibri', size: 11, bold: key === 'nama', color: { argb: key === 'bil' ? palette.muted : palette.ink } };
                 cell.fill = fill(index % 2 === 0 ? palette.white : palette.pale);
-                cell.alignment = { horizontal: column === 2 ? 'left' : 'center', vertical: 'middle', wrapText: true, indent: column === 2 ? 1 : 0 };
+                cell.alignment = { horizontal: left ? 'left' : 'center', vertical: 'middle', wrapText: true, indent: left ? 1 : 0 };
                 cell.border = { bottom: { style: 'hair', color: { argb: palette.line } } };
-                if (column >= 3) cell.numFmt = '@';
+                if (key !== 'bil') cell.numFmt = '@';
             });
         });
         if (sectionIndex < sections.length - 1) sheet.lastRow.addPageBreak();
     });
-    sheet.pageSetup.printArea = `A1:D${Math.max(sheet.rowCount, 1)}`;
+    sheet.pageSetup.printArea = `A1:${sheet.getColumn(columns.length).letter}${Math.max(sheet.rowCount, 1)}`;
     return workbook;
 }
 
-export async function downloadCommitteeExcel(filename, sections) {
+export async function downloadCommitteeExcel(filename, sections, selectedColumns) {
     try {
-        const workbook = await buildCommitteeWorkbook(sections);
+        const workbook = await buildCommitteeWorkbook(sections, selectedColumns);
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const url = URL.createObjectURL(blob);

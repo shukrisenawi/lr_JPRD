@@ -14,6 +14,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
+import { downloadCommitteeExcel, groupCommitteeExport } from '@/Utils/committeeExcel';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -1258,33 +1259,11 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         prepareExcelExport(allMembers, `${group.name} — ${tabLabel}${tabKey === 'jprd' ? '' : ` — ${scopePart.replace(/_/g, ' ')}`}`, `AJK_${groupNameClean}_${tabLabel}${scopePart ? `_${scopePart}` : ''}.xls`);
     }, [resolvedTab, currentScopes, form.data.scope_key, prepareExcelExport]);
 
-    const confirmExcelExport = useCallback(() => {
+    const confirmExcelExport = useCallback(async () => {
         if (!excelExportTarget || !excelColumns.length) return;
-        const definitions = {
-            bil: { label: 'Bil', width: 38, value: (_, i) => i + 1, type: 'Number', center: true },
-            jawatan: { label: 'Jawatan', width: 115, value: (m) => m.positionName ?? m.position?.name ?? '-', center: false },
-            ic: { label: 'No. KP', width: 95, value: (m) => m.voter?.no_kp ?? m.voter?.old_ic ?? '-', center: true },
-            nama: { label: 'Nama', width: 190, value: (m) => m.voter?.name ?? '-', center: false },
-            telefon: { label: 'No. Tel', width: 90, value: (m) => m.voter?.phone_mobile || m.voter?.phone_home || '-', center: true },
-        };
-        const columns = excelColumns.map((key) => definitions[key]);
-        const rowXml = (cells, header = false) => `<Row>${cells.map(({ value, center, numeric }) => `<Cell ss:StyleID="${header ? (center ? 'headerCenter' : 'header') : (center ? (numeric ? 'cellNumber' : 'cellCenter') : 'cell')}"><Data ss:Type="${numeric ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`).join('')}</Row>`;
-        const titleRows = `<Row><Cell ss:MergeAcross="${columns.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">${escapeXml(excelExportTarget.title)}</Data></Cell></Row>`;
-        const headers = rowXml(columns.map((column) => ({ value: column.label, center: true })), true);
-        const body = excelExportTarget.members.map((member, i) => rowXml(columns.map((column) => ({ value: column.value(member, i), center: column.center, numeric: column.type === 'Number' })))).join('');
-        const styles = `<Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center" ss:WrapText="1"/><Borders/><Font ss:FontName="Calibri" ss:Size="10"/></Style><Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="14" ss:Bold="1"/></Style>${['header','headerCenter','cell','cellCenter','cellNumber'].map((id) => `<Style ss:ID="${id}"><Alignment ss:Horizontal="${id === 'header' || id === 'cell' ? 'Left' : 'Center'}" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="10"${id.startsWith('header') ? ' ss:Bold="1"' : ''}/>${id.startsWith('header') ? '<Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/>' : ''}</Style>`).join('')}</Styles>`;
-        const xml = `<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><x:ExcelWorkbook><x:WorksheetOptions><x:PageSetup><x:Layout x:Orientation="Portrait"/><x:PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></x:PageSetup><x:FitToPage/><x:Print><x:ValidPrinterInfo/><x:PaperSizeIndex>9</x:PaperSizeIndex><x:Scale>85</x:Scale><x:HorizontalResolution>600</x:HorizontalResolution><x:VerticalResolution>600</x:VerticalResolution></x:Print><x:DoNotDisplayGridlines/></x:WorksheetOptions></x:ExcelWorkbook>${styles}<Worksheet ss:Name="Jawatankuasa"><Table>${columns.map((column) => `<Column ss:AutoFitWidth="0" ss:Width="${column.width}"/>`).join('')}${titleRows}${headers}${body}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup><Layout x:Orientation="Portrait"/><PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></PageSetup><FitToPage/><Print><PaperSizeIndex>9</PaperSizeIndex><Scale>85</Scale></Print></WorksheetOptions></Worksheet></Workbook>`;
-        const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = excelExportTarget.filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        await downloadCommitteeExcel(excelExportTarget.filename, groupCommitteeExport(excelExportTarget.members, groups, excelExportTarget.title), excelColumns);
         setExcelExportTarget(null);
-    }, [excelExportTarget, excelColumns]);
+    }, [excelExportTarget, excelColumns, groups]);
 
     useImperativeHandle(ref, () => ({ exportToExcel }), [exportToExcel]);
 
@@ -2126,32 +2105,14 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
         setExcelTarget(group);
     };
 
-    const downloadPositionExcel = () => {
+    const downloadPositionExcel = async () => {
         if (!excelTarget || !excelColumns.length) return;
-        const defs = {
-            bil: { label: 'Bil', width: 38, value: (_, i) => i + 1, center: true, number: true },
-            jawatan: { label: 'Jawatan', width: 115, value: (m) => m.position?.name ?? '-', center: false },
-            ic: { label: 'No. KP', width: 95, value: (m) => m.voter?.no_kp ?? m.voter?.old_ic ?? '-', center: true },
-            nama: { label: 'Nama', width: 190, value: (m) => m.voter?.name ?? '-', center: false },
-            telefon: { label: 'No. Tel', width: 90, value: (m) => m.voter?.phone_mobile || m.voter?.phone_home || '-', center: true },
-        };
-        const cols = excelColumns.map((key) => defs[key]);
-        const cell = (value, style, numeric = false) => `<Cell ss:StyleID="${style}"><Data ss:Type="${numeric ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`;
-        const header = `<Row>${cols.map((c) => cell(c.label, 'headerCenter')).join('')}</Row>`;
-        const body = excelTarget.members.map((member, i) => `<Row>${cols.map((c) => cell(c.value(member, i), c.center ? (c.number ? 'cellNumber' : 'cellCenter') : 'cell', c.number)).join('')}</Row>`).join('');
-        const styles = `<Styles><Style ss:ID="Default"><Alignment ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="10"/></Style><Style ss:ID="title"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/></Style><Style ss:ID="subtitle"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="12" ss:Bold="1"/></Style><Style ss:ID="spacer"><Font ss:FontName="Calibri" ss:Size="8"/></Style>${['headerCenter','cell','cellCenter','cellNumber'].map((id) => `<Style ss:ID="${id}"><Alignment ss:Horizontal="${id === 'cell' ? 'Left' : 'Center'}" ss:Vertical="Center" ss:WrapText="1"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="10"/></Style>`).join('')}</Styles>`;
         const scopePart = scope.parent_scope_name ? `${scope.parent_scope_name}_${scope.name}` : scope.name;
-        const udmName = level === 'cawangan' ? (scope.parent_scope_name ?? scope.name) : scope.name;
-        const blankRow = `<Row ss:AutoFitHeight="0" ss:Height="12"><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="spacer"><Data ss:Type="String"></Data></Cell></Row>`;
-        const xml = `<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">${styles}<Worksheet ss:Name="Jawatankuasa"><Table>${cols.map((c) => `<Column ss:AutoFitWidth="0" ss:Width="${c.width}"/>`).join('')}<Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="title"><Data ss:Type="String">${escapeXml(excelTarget.groupName)}</Data></Cell></Row><Row><Cell ss:MergeAcross="${cols.length - 1}" ss:StyleID="subtitle"><Data ss:Type="String">${escapeXml(`UDM ${udmName}`)}</Data></Cell></Row>${blankRow}${header}${body}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup><Layout x:Orientation="Portrait"/><PageMargins x:Bottom="0.25" x:Left="0.25" x:Right="0.25" x:Top="0.25"/></PageSetup><FitToPage/><Print><PaperSizeIndex>9</PaperSizeIndex><Scale>85</Scale></Print></WorksheetOptions></Worksheet></Workbook>`;
-        const url = URL.createObjectURL(new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' }));
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `AJK_${excelTarget.groupName.replace(/[\/\s]+/g, '_')}_${(levelMeta[level]?.label ?? level)}_${scopePart.replace(/[\/\s]+/g, '_')}.xls`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        await downloadCommitteeExcel(`AJK_${excelTarget.groupName.replace(/[\/\s]+/g, '_')}_${(levelMeta[level]?.label ?? level)}_${scopePart.replace(/[\/\s]+/g, '_')}.xlsx`, [{
+            title: excelTarget.groupName,
+            subtitle: `${levelMeta[level]?.label ?? level} — ${scopePart.replace(/_/g, ' ')}`,
+            members: excelTarget.members,
+        }], excelColumns);
         setExcelTarget(null);
     };
 
