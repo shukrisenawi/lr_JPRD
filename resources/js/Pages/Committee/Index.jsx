@@ -1261,7 +1261,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
 
     const confirmExcelExport = useCallback(async () => {
         if (!excelExportTarget || !excelColumns.length) return;
-        await downloadCommitteeExcel(excelExportTarget.filename, groupCommitteeExport(excelExportTarget.members, groups, excelExportTarget.title), excelColumns);
+        await downloadCommitteeExcel(excelExportTarget.filename, groupCommitteeExport(excelExportTarget.members, groups), excelColumns);
         setExcelExportTarget(null);
     }, [excelExportTarget, excelColumns, groups]);
 
