@@ -1919,10 +1919,17 @@ function WhatsAppCopyModal({ group, vacantOnly = false, onClose }) {
             return lines.join('\n');
         }
 
-        return buildCommitteeWhatsapp([{
-            title: group.name,
-            members: group.positionsWithMembers.flatMap((position) => position.members),
-        }]);
+        group.positionsWithMembers.forEach((position) => {
+            if (position.members.length === 0) return;
+            lines.push('*' + position.name + '*');
+            const memberLines = buildCommitteeWhatsapp([{
+                title: group.name,
+                members: position.members,
+            }]).split('\n').slice(2);
+            lines.push(...memberLines.map((line) => position.members.length === 1 ? line.replace(/^1\. /, '') : line));
+            lines.push('');
+        });
+        return lines.join('\n');
     };
 
     const handleCopy = async () => {
