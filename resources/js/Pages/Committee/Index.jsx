@@ -15,6 +15,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
 import { downloadCommitteeExcel, groupCommitteeExport } from '@/Utils/committeeExcel';
+import { buildCommitteeWhatsapp } from '@/Utils/committeeWhatsapp';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -1918,19 +1919,10 @@ function WhatsAppCopyModal({ group, vacantOnly = false, onClose }) {
             return lines.join('\n');
         }
 
-        group.positionsWithMembers.forEach(pos => {
-            if (pos.members.length === 0) return;
-            lines.push('*' + pos.name + '*');
-            pos.members.forEach((m, i) => {
-                if (pos.members.length === 1) {
-                    lines.push(m.voter?.name || '-');
-                } else {
-                    lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
-                }
-            });
-            lines.push('');
-        });
-        return lines.join('\n');
+        return buildCommitteeWhatsapp([{
+            title: group.name,
+            members: group.positionsWithMembers.flatMap((position) => position.members),
+        }]);
     };
 
     const handleCopy = async () => {
