@@ -5,6 +5,7 @@ import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import { compareUdms } from '@/Utils/udmOrder';
 import { downloadCommitteeExcel, groupCommitteeExport, udmPositionExport } from '@/Utils/committeeExcel';
+import { buildCommitteeWhatsapp } from '@/Utils/committeeWhatsapp';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -19,21 +20,6 @@ function Icon({ name, className = 'h-5 w-5' }) {
         check: <><path d="M20 6 9 17l-5-5" /></>,
     };
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
-}
-
-function buildMemberListText(title, members, groups = []) {
-    return [
-        '*' + title + '*',
-        '',
-        ...members.map((member, index) => {
-            const group = groups.find((item) => item.id === member.committee_group_id);
-            const scope = member.parent_scope_name ? `${member.parent_scope_name} / ${member.scope_name || '-'}` : (member.scope_name || '-');
-            const position = member.position?.name || 'Tanpa Jawatan';
-            const name = member.voter?.name || '-';
-
-            return `${index + 1}. ${name} — ${position} — ${scope} — ${group?.name || 'Tanpa Kumpulan'}`;
-        }),
-    ].join('\n');
 }
 
 async function copyToClipboard(text) {
@@ -373,32 +359,8 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
 
     const sortedGroups = Object.entries(groupedByGroup).sort(([, a], [, b]) => a.sortOrder - b.sortOrder);
 
-    const buildGroupText = (g) => {
-        const lines = [];
-        lines.push('*' + g.groupName + '*');
-        lines.push('');
-        const byPos = {};
-        g.members.forEach((m) => {
-            const pname = m.position?.name || 'Tanpa Jawatan';
-            if (!byPos[pname]) byPos[pname] = [];
-            byPos[pname].push(m);
-        });
-        Object.entries(byPos).forEach(([pname, ms]) => {
-            lines.push('*' + pname + '*');
-            ms.forEach((m, i) => {
-                if (ms.length === 1) {
-                    lines.push(m.voter?.name || '-');
-                } else {
-                    lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
-                }
-            });
-            lines.push('');
-        });
-        return lines.join('\n');
-    };
-
     const handleCopyGroup = async (gid, g) => {
-        const text = buildGroupText(g);
+        const text = buildCommitteeWhatsapp([{ title: g.groupName, members: g.members }]);
         const flash = (ok) => {
             if (!ok) return;
             setCopiedGroupId(gid);
@@ -546,7 +508,7 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                         )}
                         {members.length > 0 && (
                             <ExportButtons
-                                text={buildMemberListText(title, members, groups)}
+                                text={buildCommitteeWhatsapp([{ title: position.name, members }])}
                                 onExport={() => downloadCommitteeExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xlsx', udmPositionExport([{ name: position.name, members }]))}
                             />
                         )}
@@ -685,27 +647,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
     };
 
     const handleCopyGroupText = async (groupName, members) => {
-        const lines = [];
-        lines.push('*' + groupName + '*');
-        lines.push('');
-        const byPos = {};
-        members.forEach((m) => {
-            const pname = m.position?.name || 'Tanpa Jawatan';
-            if (!byPos[pname]) byPos[pname] = [];
-            byPos[pname].push(m);
-        });
-        Object.entries(byPos).forEach(([pname, ms]) => {
-            lines.push('*' + pname + '*');
-            ms.forEach((m, i) => {
-                if (ms.length === 1) {
-                    lines.push(m.voter?.name || '-');
-                } else {
-                    lines.push((i + 1) + '. ' + (m.voter?.name || '-'));
-                }
-            });
-            lines.push('');
-        });
-        const text = lines.join('\n');
+        const text = buildCommitteeWhatsapp([{ title: groupName, members }]);
         const flash = (ok) => {
             if (!ok) return;
             setCopiedGroupFlag(true);
@@ -938,7 +880,9 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                         <SelectAllJprdMembers members={currentTabMembers} selectedMemberIds={selectedJprdMemberIds} jprdMemberKeys={jprdMemberKeys} onSelectAll={toggleJprdMembers} />
                                     )}
                                     <ExportButtons
-                                        text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
+                                        text={buildCommitteeWhatsapp(activeTab === 'udm-jawatan'
+                                            ? udmPositionExport(filteredPositionStats)
+                                            : groupCommitteeExport(currentTabMembers, groups))}
                                         onExport={() => downloadCommitteeExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xlsx', activeTab === 'udm-jawatan'
                                             ? udmPositionExport(filteredPositionStats)
                                             : groupCommitteeExport(currentTabMembers, groups, currentTabTitle))}
