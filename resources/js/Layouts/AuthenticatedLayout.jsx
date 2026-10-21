@@ -52,6 +52,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const allowedModules = user.allowed_modules ?? [];
     const canAccess = (module) => allowedModules.includes(module);
     const isMasterAdmin = user.role?.is_master_admin === true;
+    const logoRoute = isMasterAdmin ? 'laporan.index' : user.access_level === 'udm' ? 'dashboard-udm' : 'dashboard';
     const canViewDashboardUdm = user.access_level === 'udm' && !isMasterAdmin && canAccess('dashboard-udm');
     const impersonation = auth.impersonation ?? { is_active: false, impersonator: null };
     const mustChangePassword = user.must_change_password ?? false;
@@ -153,7 +154,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
                     <div className="flex h-14 items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <Link href={route('dashboard')} className="flex shrink-0 items-center gap-2">
+                            <Link href={route(logoRoute)} className="flex shrink-0 items-center gap-2">
                                 <ApplicationLogo className="block h-9 w-9 object-contain" />
                                 <span className="text-sm font-bold text-green-800">JPrD Jeneri</span>
                             </Link>
