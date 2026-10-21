@@ -1904,7 +1904,7 @@ function WhatsAppCopyModal({ group, vacantOnly = false, onClose }) {
 
     const buildText = () => {
         const lines = [];
-        lines.push('*' + group.name + '*');
+        lines.push('*AHLI JAWATANKUASA ' + group.name + '*');
         lines.push('');
 
         if (vacantOnly) {
