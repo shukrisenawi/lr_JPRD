@@ -80,8 +80,8 @@ test('download uses an XLSX extension and MIME type even with a legacy XLS filen
     URL.createObjectURL = (value) => { blob = value; return 'blob:test'; };
     URL.revokeObjectURL = () => {};
     try {
-        await downloadCommitteeExcel('AJK_TEST.xls', [{ title: 'TEST', members: [member(1)] }]);
-        assert.equal(downloaded, 'AJK_TEST.xlsx');
+        await downloadCommitteeExcel('AJK_UDM_KETUA_DATA_APPS.xls', [{ title: 'TEST', members: [member(1)] }]);
+        assert.equal(downloaded, 'AJK_DATA_APPS.xlsx');
         assert.equal(blob.type, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         assert.equal(Buffer.from(await blob.arrayBuffer()).subarray(0, 2).toString(), 'PK');
     } finally {

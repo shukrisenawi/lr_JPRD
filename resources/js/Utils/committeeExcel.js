@@ -87,7 +87,7 @@ export async function downloadCommitteeExcel(filename, sections) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = filename.replace(/\.xlsx?$/i, '') + '.xlsx';
+        link.download = filename.replace(/UDM_KETUA_/gi, '').replace(/\.xlsx?$/i, '') + '.xlsx';
         document.body.appendChild(link);
         link.click();
         link.remove();
