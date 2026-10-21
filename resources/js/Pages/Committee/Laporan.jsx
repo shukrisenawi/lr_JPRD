@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import { compareUdms } from '@/Utils/udmOrder';
+import { downloadCommitteeExcel, groupCommitteeExport } from '@/Utils/committeeExcel';
 
 function Icon({ name, className = 'h-5 w-5' }) {
     const paths = {
@@ -20,27 +21,6 @@ function Icon({ name, className = 'h-5 w-5' }) {
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{paths[name]}</svg>;
 }
 
-function escapeXml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
-const memberExportColumns = ['Bil', 'Jawatan', 'Nama', 'No. KP', 'Peringkat', 'No. Tel', 'Kumpulan'];
-
-function buildMemberRows(members, groups = []) {
-    return members.map((member, index) => {
-        const group = groups.find((item) => item.id === member.committee_group_id);
-        const scope = member.parent_scope_name ? `${member.parent_scope_name} / ${member.scope_name || '-'}` : (member.scope_name || '-');
-
-        return [
-            index + 1,
-            member.position?.name || '-',
-            member.voter?.name || '-',
-            member.voter?.no_kp || member.voter?.old_ic || '-',
-            scope,
-            member.voter?.phone_mobile || member.voter?.phone_home || '-',
-            group?.name || 'Tanpa Kumpulan',
-        ];
-    });
-}
-
 function buildMemberListText(title, members, groups = []) {
     return [
         '*' + title + '*',
@@ -54,41 +34,6 @@ function buildMemberListText(title, members, groups = []) {
             return `${index + 1}. ${name} — ${position} — ${scope} — ${group?.name || 'Tanpa Kumpulan'}`;
         }),
     ].join('\n');
-}
-
-function downloadExcel(filename, title, columns, rows) {
-    const widths = columns.map((_, index) => {
-        if (index === 0) return 30;
-        if (index === 2) return 420;
-        if (index === 5) return 130;
-        return 160;
-    });
-    const alignments = columns.map((_, index) => (index === 0 || index === 1 || index === 3 || index === 4 || index === 5 ? 'center' : 'left'));
-    const colXml = widths.map((width) => `<Column ss:AutoFitWidth="1" ss:Width="${width}"/>`).join('');
-    const titleXml = `<Row><Cell ss:MergeAcross="${columns.length - 1}" ss:StyleID="titleMain"><Data ss:Type="String">${escapeXml(title)}</Data></Cell></Row>`;
-    const headerXml = '<Row>' + columns.map((column, index) => `<Cell ss:StyleID="${alignments[index] === 'center' ? 'headerCenter' : 'header'}"><Data ss:Type="String">${escapeXml(column)}</Data></Cell>`).join('') + '</Row>';
-    const bodyXml = rows.map((row) => '<Row>' + row.map((value, index) => `<Cell ss:StyleID="${alignments[index] === 'center' ? 'cellCenter' : 'cell'}"><Data ss:Type="${index === 0 ? 'Number' : 'String'}">${escapeXml(value)}</Data></Cell>`).join('') + '</Row>').join('');
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">
-<Styles>
-<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style>
-<Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="18" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style>
-<Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style>
-<Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-<Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style>
-</Styles>
-<Worksheet ss:Name="Jawatankuasa"><Table>${colXml}${titleXml}${headerXml}${bodyXml}</Table></Worksheet>
-</Workbook>`;
-    const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
 }
 
 async function copyToClipboard(text) {
@@ -531,36 +476,11 @@ function DetailPopup({ scope, members, level, groups, highlight, canAddToJprd, s
                                             )}
                                             <button
                                             type="button"
-                                            onClick={() => {
-                                                const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
-                                                const align = ['center', 'center', 'left', 'center'];
-                                                const widths = [30, 150, 520, 100];
-                                                const dataRows = g.members.map((m, i) => [
-                                                    { value: i + 1, type: 'Number', align: 'center' },
-                                                    { value: m.position?.name ?? '-', type: 'String', align: 'center' },
-                                                    { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
-                                                    { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
-                                                ]);
-                                                const colXml = widths.map((w) => '<Column ss:AutoFitWidth="1" ss:Width="' + w + '"/>').join('');
-                                                const titleXml = '<Row><Cell ss:MergeAcross="' + (cols.length - 1) + '" ss:StyleID="titleMain"><Data ss:Type="String">' + escapeXml(g.groupName) + ' — ' + (levelMeta[level]?.label ?? level) + '</Data></Cell></Row>';
-                                                const headerXml = '<Row>' + cols.map((h, i) => '<Cell ss:StyleID="' + (align[i] === 'center' ? 'headerCenter' : 'header') + '"><Data ss:Type="String">' + escapeXml(h) + '</Data></Cell>').join('') + '</Row>';
-                                                const bodyXml = dataRows.map((cells) => '<Row>' + cells.map((c) => '<Cell ss:StyleID="' + (c.align === 'center' ? 'cellCenter' : 'cell') + '"><Data ss:Type="' + c.type + '">' + escapeXml(c.value) + '</Data></Cell>').join('') + '</Row>').join('');
-                                         const xml = '<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40"><Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style><Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="24" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style><Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style><Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style><Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style><Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style></Styles>' + colXml + '<Worksheet ss:Name="AJK"><Table>' + titleXml + headerXml + bodyXml + '</Table></Worksheet></Workbook>';
-                                                 const workbookXml = xml.replace(
-                                                     '</Styles>' + colXml + '<Worksheet ss:Name="AJK"><Table>',
-                                                     '</Styles><Worksheet ss:Name="AJK"><Table>' + colXml,
-                                                 );
-                                                 const blob = new Blob(['\uFEFF' + workbookXml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-                                                const url = URL.createObjectURL(blob);
-                                                const link = document.createElement('a');
-                                                link.href = url;
-                                                const scopePart = scope.parent_scope_name ? scope.parent_scope_name.replace(/[\/\s]+/g, '_') + '_' + scope.name.replace(/[\/\s]+/g, '_') : scope.name.replace(/[\/\s]+/g, '_');
-                                                link.download = 'AJK_' + g.groupName.replace(/[\/\s]+/g, '_') + '_' + (levelMeta[level]?.label ?? level) + '_' + scopePart + '.xls';
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                document.body.removeChild(link);
-                                                URL.revokeObjectURL(url);
-                                            }}
+                                            onClick={() => downloadCommitteeExcel('AJK_' + g.groupName.replace(/[\/\s]+/g, '_') + '_' + scope.name.replace(/[\/\s]+/g, '_') + '.xls', [{
+                                                title: g.groupName,
+                                                subtitle: `${levelMeta[level]?.label ?? level} — ${scope.parent_scope_name ? scope.parent_scope_name + ' / ' : ''}${scope.name}`,
+                                                members: g.members,
+                                            }])}
                                             className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                         >
                                             <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">X</span>
@@ -627,7 +547,7 @@ function UdmPositionPopup({ position, members, groups, canAddToJprd, selectedMem
                         {members.length > 0 && (
                             <ExportButtons
                                 text={buildMemberListText(title, members, groups)}
-                                onExport={() => downloadExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xls', title, memberExportColumns, buildMemberRows(members, groups))}
+                                onExport={() => downloadCommitteeExcel('AJK_UDM_' + position.name.replace(/[\/\s]+/g, '_') + '.xls', [{ title: position.name, subtitle: 'UDM', members }])}
                             />
                         )}
                         <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
@@ -1019,7 +939,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                                     )}
                                     <ExportButtons
                                         text={buildMemberListText(currentTabTitle, currentTabMembers, groups)}
-                                        onExport={() => downloadExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', currentTabTitle, memberExportColumns, buildMemberRows(currentTabMembers, groups))}
+                                        onExport={() => downloadCommitteeExcel(currentTabTitle.replace(/[\/\s,]+/g, '_') + '.xls', groupCommitteeExport(currentTabMembers, groups, currentTabTitle))}
                                     />
                                 </div>
                             </div>
@@ -1266,35 +1186,7 @@ export default function CommitteeLaporan({ memberships, scopes, groups, can_add_
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        const cols = ['Bil', 'Jawatan', 'Nama', 'No. Tel'];
-                                        const align = ['center', 'center', 'left', 'center'];
-                                        const widths = [30, 150, 520, 100];
-                                        const dataRows = detailGroup.members.map((m, i) => [
-                                            { value: i + 1, type: 'Number', align: 'center' },
-                                            { value: m.position?.name ?? '-', type: 'String', align: 'center' },
-                                            { value: m.voter?.name ?? '-', type: 'String', align: 'left' },
-                                            { value: m.voter?.phone_mobile || m.voter?.phone_home || '-', type: 'String', align: 'center' },
-                                        ]);
-                                        const colXml = widths.map((w) => '<Column ss:AutoFitWidth="1" ss:Width="' + w + '"/>').join('');
-                                        const titleXml = '<Row><Cell ss:MergeAcross="' + (cols.length - 1) + '" ss:StyleID="titleMain"><Data ss:Type="String">' + escapeXml('JPRD — ' + detailGroup.groupName) + '</Data></Cell></Row>';
-                                        const headerXml = '<Row>' + cols.map((h, i) => '<Cell ss:StyleID="' + (align[i] === 'center' ? 'headerCenter' : 'header') + '"><Data ss:Type="String">' + escapeXml(h) + '</Data></Cell>').join('') + '</Row>';
-                                        const bodyXml = dataRows.map((cells) => '<Row>' + cells.map((c) => '<Cell ss:StyleID="' + (c.align === 'center' ? 'cellCenter' : 'cell') + '"><Data ss:Type="' + c.type + '">' + escapeXml(c.value) + '</Data></Cell>').join('') + '</Row>').join('');
-                                         const xml = '<?xml version="1.0" encoding="UTF-8"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40"><Styles><Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Borders/><Font ss:FontName="Calibri" ss:Size="11"/><Interior/><NumberFormat/><Protection/></Style><Style ss:ID="titleMain"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="24" ss:Bold="1"/><Interior ss:Color="#FFFFFF" ss:Pattern="Solid"/></Style><Style ss:ID="header"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style><Style ss:ID="headerCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/><Interior ss:Color="#E2E8F0" ss:Pattern="Solid"/></Style><Style ss:ID="cell"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style><Style ss:ID="cellCenter"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders><Font ss:FontName="Calibri" ss:Size="11"/></Style></Styles>' + colXml + '<Worksheet ss:Name="AJK"><Table>' + titleXml + headerXml + bodyXml + '</Table></Worksheet></Workbook>';
-                                         const workbookXml = xml.replace(
-                                             '</Styles>' + colXml + '<Worksheet ss:Name="AJK"><Table>',
-                                             '</Styles><Worksheet ss:Name="AJK"><Table>' + colXml,
-                                         );
-                                         const blob = new Blob(['\uFEFF' + workbookXml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-                                        const url = URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.download = 'AJK_JPRD_' + detailGroup.groupName.replace(/[\/\s]+/g, '_') + '.xls';
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                        URL.revokeObjectURL(url);
-                                    }}
+                                    onClick={() => downloadCommitteeExcel('AJK_JPRD_' + detailGroup.groupName.replace(/[\/\s]+/g, '_') + '.xls', [{ title: detailGroup.groupName, subtitle: 'JPRD', members: detailGroup.members }])}
                                     className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                 >
                                     <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">X</span>
