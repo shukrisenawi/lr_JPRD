@@ -23,10 +23,11 @@ test('UDM position groups sharing a parent remain separate with formal headings 
     assert.equal(sheet.getRow(6).getCell(1).value, '');
     assert.deepEqual(sheet.getRow(7).values.slice(1), ['Bil', 'Nama', 'No. KP', 'No. Tel']);
     assert.equal(sheet.getCell('B8').value, 'AHLI BIG DATA');
-    assert.equal(sheet.getCell('A13').value, 'DATA APP');
-    assert.equal(sheet.getCell('B17').value, 'AHLI DATA APP');
-    assert.equal(sheet.getCell('A17').value, 1);
-    assert.deepEqual(sheet.rowBreaks.map((item) => item.id), [9]);
+    assert.equal(sheet.getCell('A12').value, 'DATA APP');
+    assert.equal(sheet.getCell('B16').value, 'AHLI DATA APP');
+    assert.equal(sheet.getCell('A16').value, 1);
+    assert.deepEqual(sheet.rowBreaks.map((item) => item.id), [8]);
+    assert.equal(sheet.lastRow.getCell(2).value, 'AHLI DATA APP KEDUA');
     assert.equal(sheet.pageSetup.orientation, 'portrait');
     assert.equal(sheet.pageSetup.paperSize, 9);
     assert.equal(sheet.pageSetup.fitToPage, false);

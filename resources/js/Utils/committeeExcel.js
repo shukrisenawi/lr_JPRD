@@ -73,7 +73,6 @@ export async function buildCommitteeWorkbook(sections) {
                 if (column >= 3) cell.numFmt = '@';
             });
         });
-        mergedRow(`JUMLAH AHLI: ${section.members.length}`, 26, { size: 10, bold: true, color: { argb: palette.green } }, palette.pale);
         if (sectionIndex < sections.length - 1) sheet.lastRow.addPageBreak();
     });
     sheet.pageSetup.printArea = `A1:D${Math.max(sheet.rowCount, 1)}`;
