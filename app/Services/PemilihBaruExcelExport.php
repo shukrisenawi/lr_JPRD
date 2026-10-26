@@ -36,7 +36,7 @@ class PemilihBaruExcelExport
                 $merges[] = '<mergeCell ref="A'.$row.':F'.$row.'"/>';
                 $addRow(['Bil', 'Nama', 'Transaksi', 'No KP', 'Umur', 'No Rumah'], 3, 24);
                 foreach ($localityRecords as $record) {
-                    $addRow([++$bil, $record->name, $record->transaction, $record->no_kp, $record->umur, $record->no_rumah]);
+                    $addRow([++$bil, $record->name, $record->transaction, $record->no_kp, $record->umur, $record->no_rumah], 4);
                 }
             }
         }
@@ -48,6 +48,7 @@ class PemilihBaruExcelExport
         $sheet = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             .'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
             .'<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>'
+            .'<sheetViews><sheetView showGridLines="0" workbookViewId="0"/></sheetViews>'
             .'<cols><col min="1" max="1" width="6" customWidth="1"/><col min="2" max="2" width="32" customWidth="1"/>'
             .'<col min="3" max="3" width="24" customWidth="1"/><col min="4" max="4" width="19" customWidth="1"/>'
             .'<col min="5" max="5" width="7" customWidth="1"/><col min="6" max="6" width="13" customWidth="1"/></cols>'
@@ -107,10 +108,11 @@ class PemilihBaruExcelExport
             .'<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE2E8F0"/><bgColor indexed="64"/></patternFill></fill></fills>'
             .'<borders count="2"><border/><border><left style="thin"/><right style="thin"/><top style="thin"/><bottom style="thin"/></border></borders>'
             .'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-            .'<cellXfs count="4"><xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
+            .'<cellXfs count="5"><xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
             .'<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
             .'<xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="center"/></xf>'
-            .'<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs>'
+            .'<xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+            .'<xf numFmtId="49" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf></cellXfs>'
             .'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
     }
 }

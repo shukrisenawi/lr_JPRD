@@ -113,14 +113,19 @@ class PemilihBaruController extends Controller
     {
         $context = $this->listingContext($request, $pemilihBaru, true);
         $query = $context['query'];
-        $query->when($context['tab'] === 'dah_link',
-            fn (Builder $builder) => $builder->whereNotNull('linked_pemilih_record_id'),
-            fn (Builder $builder) => $builder->whereNull('linked_pemilih_record_id'));
+        $query->whereNull('linked_pemilih_record_id');
         $records = $query->orderBy('dm')->orderBy('locality')->orderBy('no_kp')->orderBy('id')->get();
         $records->each(function (PemilihBaruRecord $record): void {
             $record->setAttribute('umur', $this->calculateAgeFromIdentity($record->no_kp)
                 ?? ($record->birth_year ? max(0, now()->year - $record->birth_year) : null));
         });
+        $records = $records->sortBy(fn (PemilihBaruRecord $record) => [
+            $record->dm ?? '',
+            $record->locality ?? '',
+            $record->umur ?? PHP_INT_MAX,
+            $record->no_kp ?? '',
+            $record->id,
+        ])->values();
 
         return response()->download($exporter->create($records), 'DPT-UDM-'.now()->format('Ymd-His').'.xlsx', [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

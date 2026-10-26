@@ -2,6 +2,7 @@
 
 use App\Models\Cawangan;
 use App\Models\PemilihBaruRecord;
+use App\Models\PemilihRecord;
 use App\Models\User;
 
 function readDptExport($response): array
@@ -32,7 +33,7 @@ function createDptRecord(array $attributes = []): PemilihBaruRecord
     ], $attributes));
 }
 
-it('exports all matching pages grouped by udm and locality sorted by identity in portrait', function () {
+it('exports all matching pages grouped by udm and locality sorted by ascending age in portrait', function () {
     $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
     createDptRecord(['dm' => 'BETA', 'name' => 'UDM KEDUA']);
     createDptRecord(['locality' => 'KG B', 'name' => 'LOKALITI KEDUA']);
@@ -49,12 +50,19 @@ it('exports all matching pages grouped by udm and locality sorted by identity in
         'orientation="portrait"', 'paperSize="9"', 'fitToWidth="1"', 'fitToHeight="0"',
         '<rowBreaks count="1" manualBreakCount="1">', '=NAMA &amp; &lt;AWAL&gt;', 'REKOD 30')
         ->not->toContain('<f>');
-    expect(strpos($xml, '=NAMA'))->toBeLessThan(strpos($xml, 'KP KEMUDIAN'));
+    expect(strpos($xml, 'KP KEMUDIAN'))->toBeLessThan(strpos($xml, '=NAMA'));
     expect(strpos($xml, 'KP KEMUDIAN'))->toBeLessThan(strpos($xml, 'LOKALITI: KG B'));
     expect(strpos($xml, 'LOKALITI: KG B'))->toBeLessThan(strpos($xml, 'DPT UDM BETA'));
+    expect($xml)->toContain('showGridLines="0"', 'r="A1" s="1"', 'r="A2" s="2"', 'r="A3" s="3"', 'r="A4" s="4"');
+    $styles = simplexml_load_string($files['xl/styles.xml']);
+    expect((string) $styles->cellXfs->xf[0]['borderId'])->toBe('0');
+    expect((string) $styles->cellXfs->xf[1]['borderId'])->toBe('0');
+    expect((string) $styles->cellXfs->xf[2]['borderId'])->toBe('0');
+    expect((string) $styles->cellXfs->xf[3]['borderId'])->toBe('1');
+    expect((string) $styles->cellXfs->xf[4]['borderId'])->toBe('1');
 });
 
-it('uses month locality search and tab filters for the export', function () {
+it('uses month locality and search filters but always exports only unlinked records', function () {
     $user = User::factory()->withModules(['culaan.pemilih-baharu'])->create();
     createDptRecord(['name' => 'SASARAN']);
     createDptRecord(['name' => 'SASARAN BULAN LAIN', 'import_month' => '2026-08']);
@@ -65,7 +73,14 @@ it('uses month locality search and tab filters for the export', function () {
         'semua_bulan' => 0, 'bulan' => 9, 'tahun' => 2026, 'tab' => 'belum_link',
     ])))['xl/worksheets/sheet1.xml'];
     expect($xml)->toContain('SASARAN')->not->toContain('SASARAN BULAN LAIN', 'SASARAN LOKALITI LAIN', 'BUKAN CARIAN');
-    $empty = readDptExport($this->get(route('pemilih-baru.export', ['tab' => 'dah_link'])))['xl/worksheets/sheet1.xml'];
+    $linked = PemilihRecord::query()->create([
+        'identity_number' => '900101021234', 'name' => 'PEMILIH LINK', 'dm' => 'ALPHA',
+        'locality' => 'KG A', 'status' => 'aktif', 'is_manual' => false,
+    ]);
+    createDptRecord(['name' => 'JANGAN EKSPORT LINK', 'linked_pemilih_record_id' => $linked->id]);
+    $unlinked = readDptExport($this->get(route('pemilih-baru.export', ['tab' => 'dah_link'])))['xl/worksheets/sheet1.xml'];
+    expect($unlinked)->toContain('SASARAN')->not->toContain('JANGAN EKSPORT LINK');
+    $empty = readDptExport($this->get(route('pemilih-baru.export', ['q' => 'TIADA PADANAN'])))['xl/worksheets/sheet1.xml'];
     expect($empty)->toContain('Tiada rekod');
 });
 

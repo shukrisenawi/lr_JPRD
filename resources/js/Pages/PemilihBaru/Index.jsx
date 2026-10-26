@@ -234,7 +234,7 @@ export default function Index({ filters, month_options, year_options, summary, r
                             <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700">Tapisan Pemilih Baharu</h3>
                             <p className="mt-0.5 text-[10px] text-slate-500">{can_select_udm ? 'Pilih UDM dahulu untuk membuka senarai culaan.' : 'Skop UDM ditentukan mengikut peringkat akses pengguna.'}</p>
                         </div>
-                        <a href={route('pemilih-baru.export', { ...filters, semua_bulan: showAllMonths ? 1 : 0 })} className="ml-auto rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-600" title="Eksport semua rekod mengikut tapisan semasa, bukan halaman ini sahaja">
+                        <a href={route('pemilih-baru.export', { ...filters, semua_bulan: showAllMonths ? 1 : 0 })} className="ml-auto rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-600" title="Eksport rekod belum link sahaja mengikut tapisan semasa, disusun mengikut umur menaik">
                             Export Excel
                         </a>
                     </div>
