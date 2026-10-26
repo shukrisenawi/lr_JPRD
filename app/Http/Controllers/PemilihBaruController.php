@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cawangan;
 use App\Models\PemilihBaruRecord;
+use App\Services\PemilihBaruExcelExport;
 use App\Services\PemilihBaruService;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,10 +15,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PemilihBaruController extends Controller
 {
-    public function index(Request $request, PemilihBaruService $pemilihBaru): Response
+    private function listingContext(Request $request, PemilihBaruService $pemilihBaru, bool $export = false): array
     {
         [$defaultYear, $defaultMonth] = explode('-', $pemilihBaru->defaultMonth());
         $month = (int) $request->query('bulan', $defaultMonth);
@@ -79,10 +81,10 @@ class PemilihBaruController extends Controller
             : (in_array($requestedLocality, $localities, true) ? $requestedLocality : '');
         $query = clone $monthQuery;
 
-        if ($udm === '') {
+        if ($udm === '' && ! $export) {
             $query->whereRaw('1 = 0');
         } else {
-            $query->where('dm', $udm)
+            $query->when($udm !== '', fn (Builder $builder) => $builder->where('dm', $udm))
                 ->when($locality !== '', fn (Builder $builder) => $builder->where('locality', $locality));
         }
 
@@ -93,7 +95,7 @@ class PemilihBaruController extends Controller
                 $builder->whereRaw('LOWER(name) like ?', [$like])
                     ->orWhereRaw('LOWER(dm) like ?', [$like])
                     ->orWhereRaw('LOWER(locality) like ?', [$like])
-                    ->orWhereRaw('LOWER(transaction) like ?', [$like])
+                    ->orWhereRaw('LOWER('.$builder->getQuery()->getGrammar()->wrap('transaction').') like ?', [$like])
                     ->orWhereRaw('LOWER(no_kp) like ?', [$like])
                     ->orWhereRaw('LOWER(id_lain) like ?', [$like]);
 
@@ -103,6 +105,36 @@ class PemilihBaruController extends Controller
                 }
             });
         }
+
+        return compact('query', 'month', 'year', 'showAllMonths', 'scope', 'udm', 'locality', 'search', 'tab', 'udms', 'udmSummaries', 'localities', 'defaultLocality');
+    }
+
+    public function export(Request $request, PemilihBaruService $pemilihBaru, PemilihBaruExcelExport $exporter): BinaryFileResponse
+    {
+        $context = $this->listingContext($request, $pemilihBaru, true);
+        $query = $context['query'];
+        $query->when($context['tab'] === 'dah_link',
+            fn (Builder $builder) => $builder->whereNotNull('linked_pemilih_record_id'),
+            fn (Builder $builder) => $builder->whereNull('linked_pemilih_record_id'));
+        $records = $query->orderBy('dm')->orderBy('locality')->orderBy('no_kp')->orderBy('id')->get();
+        $records->each(function (PemilihBaruRecord $record): void {
+            $record->setAttribute('umur', $this->calculateAgeFromIdentity($record->no_kp)
+                ?? ($record->birth_year ? max(0, now()->year - $record->birth_year) : null));
+        });
+
+        return response()->download($exporter->create($records), 'DPT-UDM-'.now()->format('Ymd-His').'.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'private, no-store',
+        ])->deleteFileAfterSend(true);
+    }
+
+    public function index(Request $request, PemilihBaruService $pemilihBaru): Response
+    {
+        ['query' => $query, 'month' => $month, 'year' => $year, 'showAllMonths' => $showAllMonths,
+            'scope' => $scope, 'udm' => $udm, 'locality' => $locality, 'search' => $search,
+            'tab' => $tab, 'udms' => $udms, 'udmSummaries' => $udmSummaries,
+            'localities' => $localities, 'defaultLocality' => $defaultLocality,
+        ] = $this->listingContext($request, $pemilihBaru);
 
         $summaryQuery = clone $query;
         $total = (clone $summaryQuery)->count();

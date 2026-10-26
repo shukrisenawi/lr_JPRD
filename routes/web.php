@@ -166,6 +166,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
 
     Route::get('/culaan', [CulaanController::class, 'index'])->middleware('module:culaan')->name('culaan.index');
     Route::get('/pemilih-baru/culaan', [PemilihBaruController::class, 'index'])->middleware('module:culaan.pemilih-baharu')->name('pemilih-baru.index');
+    Route::get('/pemilih-baru/culaan/export', [PemilihBaruController::class, 'export'])->middleware('module:culaan.pemilih-baharu')->name('pemilih-baru.export');
     Route::post('/pemilih-baru/{pemilihBaruRecord}/death-cula', [PemilihBaruController::class, 'completeDeathCula'])->middleware('module:culaan.pemilih-baharu')->name('pemilih-baru.death-cula.complete');
     Route::post('/pemilih-baru/{pemilihBaruRecord}/telegram-cula', [PemilihBaruController::class, 'confirmTelegramCula'])->middleware('module:culaan.pemilih-baharu')->name('pemilih-baru.telegram-cula.confirm');
     Route::post('/pemilih-baru/{pemilihBaruRecord}/cula', [PemilihBaruController::class, 'updateCula'])->middleware('module:culaan.pemilih-baharu')->name('pemilih-baru.cula.update');

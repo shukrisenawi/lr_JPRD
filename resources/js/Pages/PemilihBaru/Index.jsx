@@ -228,12 +228,15 @@ export default function Index({ filters, month_options, year_options, summary, r
             )}
             <div className="mx-auto max-w-7xl space-y-4 px-3 sm:px-4 lg:px-6">
                 <section className="overflow-hidden rounded-xl border border-amber-300 bg-white shadow-sm">
-                    <div className="flex items-center gap-2 border-b border-amber-100 bg-amber-50 px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2 border-b border-amber-100 bg-amber-50 px-4 py-3">
                         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-xs font-black text-amber-800">⌕</span>
                         <div>
                             <h3 className="text-xs font-bold uppercase tracking-[0.08em] text-slate-700">Tapisan Pemilih Baharu</h3>
                             <p className="mt-0.5 text-[10px] text-slate-500">{can_select_udm ? 'Pilih UDM dahulu untuk membuka senarai culaan.' : 'Skop UDM ditentukan mengikut peringkat akses pengguna.'}</p>
                         </div>
+                        <a href={route('pemilih-baru.export', { ...filters, semua_bulan: showAllMonths ? 1 : 0 })} className="ml-auto rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-emerald-600" title="Eksport semua rekod mengikut tapisan semasa, bukan halaman ini sahaja">
+                            Export Excel
+                        </a>
                     </div>
                     <div className="flex flex-wrap items-end gap-3 p-4">
                         {can_select_udm ? (
