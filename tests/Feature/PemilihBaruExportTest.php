@@ -53,13 +53,14 @@ it('exports all matching pages grouped by udm and locality sorted by ascending a
     expect(strpos($xml, 'KP KEMUDIAN'))->toBeLessThan(strpos($xml, '=NAMA'));
     expect(strpos($xml, 'KP KEMUDIAN'))->toBeLessThan(strpos($xml, 'LOKALITI: KG B'));
     expect(strpos($xml, 'LOKALITI: KG B'))->toBeLessThan(strpos($xml, 'DPT UDM BETA'));
-    expect($xml)->toContain('showGridLines="0"', 'r="A1" s="1"', 'r="A2" s="2"', 'r="A3" s="3"', 'r="A4" s="4"');
+    expect($xml)->toContain('showGridLines="0"', 'r="A1" s="1"', 'r="A2" s="5"', 'Tarikh: '.now()->format('d/m/Y'), 'r="A3" s="2"', 'r="A4" s="3"', 'r="A5" s="4"');
     $styles = simplexml_load_string($files['xl/styles.xml']);
     expect((string) $styles->cellXfs->xf[0]['borderId'])->toBe('0');
     expect((string) $styles->cellXfs->xf[1]['borderId'])->toBe('0');
     expect((string) $styles->cellXfs->xf[2]['borderId'])->toBe('0');
     expect((string) $styles->cellXfs->xf[3]['borderId'])->toBe('1');
     expect((string) $styles->cellXfs->xf[4]['borderId'])->toBe('1');
+    expect((string) $styles->cellXfs->xf[5]['borderId'])->toBe('0');
 });
 
 it('uses month locality and search filters but always exports only unlinked records', function () {
