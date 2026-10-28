@@ -75,6 +75,25 @@ test('UDM position groups sharing a parent remain separate with formal headings 
     assert.equal(sheet.pageSetup.fitToPage, false);
 });
 
+test('all groups export follows the active level and selected scope only', () => {
+    const groups = [
+        { id: 1, name: 'UTAMA', levels: ['jprd', 'udm', 'cawangan'] },
+        { id: 2, name: 'JPRD SAHAJA', levels: ['jprd'] },
+        { id: 3, name: 'UDM KOSONG', levels: ['udm'] },
+    ];
+    const records = [
+        { ...member(1, 'AHLI JPRD'), level: 'jprd', scope_key: 'jprd' },
+        { ...member(1, 'AHLI UDM A'), level: 'udm', scope_key: 'A' },
+        { ...member(1, 'AHLI UDM B'), level: 'udm', scope_key: 'B' },
+        { ...member(1, 'AHLI CAWANGAN'), level: 'cawangan', scope_key: '1' },
+    ];
+    for (const [level, scopeKey, expected] of [['jprd', '', 'AHLI JPRD'], ['udm', 'A', 'AHLI UDM A'], ['udm', 'B', 'AHLI UDM B'], ['cawangan', 1, 'AHLI CAWANGAN']]) {
+        const sections = allCommitteeExport(records, groups, { level, scopeKey });
+        assert.deepEqual(sections.flatMap((section) => section.members.map((item) => item.voter.name)), [expected]);
+        assert.deepEqual(sections.map((section) => section.title).sort(), groups.filter((group) => group.levels.includes(level)).map((group) => group.name).sort());
+    }
+});
+
 test('writes a genuine XLSX ZIP and reads it back with exact text, leading zeros and styles intact', async () => {
     const workbook = await buildCommitteeWorkbook([{ title: 'KETUA A & B', members: [member(1, '<UJIAN> & NAMA'), member(1, 'NAMA KEDUA')] }]);
     const buffer = await workbook.xlsx.writeBuffer();

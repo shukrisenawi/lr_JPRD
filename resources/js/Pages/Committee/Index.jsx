@@ -1235,6 +1235,20 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
         setExcelExportTarget({ members, title, filename });
     }, []);
 
+    const [exportingAll, setExportingAll] = useState(false);
+    const exportAllGroups = async () => {
+        if (exportingAll) return;
+        setExportingAll(true);
+        try {
+            const scopeName = resolvedTab === 'jprd' ? 'JPRD' : `${resolvedTab}_${currentScope?.name || form.data.scope_key}`;
+            const filename = `JAWATANKUASA_${scopeName.replace(/[\\/\s]+/g, '_')}_2025_2027.xlsx`;
+            const sections = allCommitteeExport(memberships, groups, { level: resolvedTab, scopeKey: form.data.scope_key });
+            await downloadCommitteeExcel(filename, sections, ['bil', 'jawatan', 'nama', 'ic', 'telefon']);
+        } finally {
+            setExportingAll(false);
+        }
+    };
+
     const exportToExcel = useCallback(() => {
         const tabKey = resolvedTab;
         const tabLabel = tabs.find((t) => t.key === tabKey)?.label ?? tabKey.toUpperCase();
@@ -1473,9 +1487,16 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                 className="input-field w-full pl-9 text-xs"
                             />
                         </div>
-                        <PrimaryButton disabled={form.processing || !positionsForForm.length} className="rounded-lg px-4 py-2 text-xs font-bold">
-                            {form.processing ? '...' : 'Tambah Ahli'}
-                        </PrimaryButton>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button type="button" onClick={exportAllGroups} disabled={exportingAll || !groups.some((group) => group.levels?.includes(resolvedTab)) || (resolvedTab !== 'jprd' && !form.data.scope_key)}
+                                className="flex items-center gap-1.5 rounded-lg border border-green-600 bg-white px-3 py-2 text-xs font-bold text-green-700 shadow-sm transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                <Icon name="layers" className="h-4 w-4" />
+                                {exportingAll ? 'Menyediakan Excel…' : 'Excel Semua Kumpulan'}
+                            </button>
+                            <PrimaryButton disabled={form.processing || !positionsForForm.length} className="rounded-lg px-4 py-2 text-xs font-bold">
+                                {form.processing ? '...' : 'Tambah Ahli'}
+                            </PrimaryButton>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -2397,18 +2418,7 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
     }, []);
 
     const [searchOpen, setSearchOpen] = useState(false);
-    const [exportingAll, setExportingAll] = useState(false);
     const membershipRef = useRef(null);
-
-    const exportAllGroups = async () => {
-        if (exportingAll) return;
-        setExportingAll(true);
-        try {
-            await downloadCommitteeExcel('JAWATANKUASA_SEMUA_KUMPULAN_2025_2027.xlsx', allCommitteeExport(memberships, groups), ['bil', 'jawatan', 'nama', 'ic', 'telefon']);
-        } finally {
-            setExportingAll(false);
-        }
-    };
 
     const sectionTabs = [
         ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
@@ -2434,11 +2444,6 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
 
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                        {canSenarai && <button type="button" onClick={exportAllGroups} disabled={exportingAll || !groups.length}
-                            className="flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">
-                            <Icon name="layers" className="h-4 w-4" />
-                            {exportingAll ? 'Menyediakan Excel…' : 'Excel Semua Kumpulan'}
-                        </button>}
                         <button type="button" onClick={() => setSearchOpen(true)}
                             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                             <Icon name="search" className="h-4 w-4" />

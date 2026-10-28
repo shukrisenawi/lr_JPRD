@@ -134,7 +134,11 @@ export function udmPositionExport(positions) {
     }));
 }
 
-export function allCommitteeExport(members, groups) {
+export function allCommitteeExport(members, groups, { level, scopeKey } = {}) {
+    if (level) {
+        members = members.filter((member) => member.level === level && (level === 'jprd' || String(member.scope_key) === String(scopeKey)));
+        groups = groups.filter((group) => group.levels?.includes(level));
+    }
     const levels = { jprd: 'JPRD', udm: 'UDM', cawangan: 'Cawangan' };
     return [...groups].sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.name.localeCompare(b.name)).flatMap((group) => {
         const scopes = new Map();
