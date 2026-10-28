@@ -90,6 +90,7 @@ test('all groups export follows the active level and selected scope only', () =>
     for (const [level, scopeKey, expected] of [['jprd', '', 'AHLI JPRD'], ['udm', 'A', 'AHLI UDM A'], ['udm', 'B', 'AHLI UDM B'], ['cawangan', 1, 'AHLI CAWANGAN']]) {
         const sections = allCommitteeExport(records, groups, { level, scopeKey });
         assert.deepEqual(sections.flatMap((section) => section.members.map((item) => item.voter.name)), [expected]);
+        if (level === 'jprd') assert.equal(sections[0].subtitle, undefined);
         assert.deepEqual(sections.map((section) => section.title).sort(), groups.filter((group) => group.levels.includes(level)).map((group) => group.name).sort());
     }
 });

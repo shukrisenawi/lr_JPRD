@@ -147,13 +147,13 @@ export function allCommitteeExport(members, groups, { level, scopeKey } = {}) {
             if (!scopes.has(key)) scopes.set(key, {
                 title: group.name,
                 committeeHeading: true,
-                subtitle: [levels[member.level] || member.level, member.parent_scope_name, member.scope_name].filter(Boolean).join(' — '),
+                subtitle: member.level === 'jprd' ? undefined : [levels[member.level] || member.level, member.parent_scope_name, member.scope_name].filter(Boolean).join(' — '),
                 members: [],
             });
             scopes.get(key).members.push(member);
         });
         if (!scopes.size) return [{ title: group.name, committeeHeading: true, members: [] }];
-        return [...scopes.values()].sort((a, b) => a.subtitle.localeCompare(b.subtitle)).map((section) => ({
+        return [...scopes.values()].sort((a, b) => (a.subtitle || '').localeCompare(b.subtitle || '')).map((section) => ({
             ...section,
             members: [...section.members].sort((a, b) => {
                 const order = (member) => group.positions?.find((position) => String(position.id) === String(member.position?.id) && position.pivot_level === member.level)?.pivot_sort_order ?? member.position?.sort_order ?? 999;
