@@ -1,11 +1,53 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import ExcelJS from 'exceljs';
-import { buildCommitteeWorkbook, downloadCommitteeExcel, groupCommitteeExport, udmPositionExport } from '../resources/js/Utils/committeeExcel.js';
+import JSZip from 'jszip';
+import { allCommitteeExport, buildCommitteeWorkbook, downloadCommitteeExcel, groupCommitteeExport, udmPositionExport } from '../resources/js/Utils/committeeExcel.js';
 
 const member = (groupId, name = 'NAMA UJIAN') => ({
     committee_group_id: groupId,
     voter: { name, no_kp: '001122334455', phone_mobile: '0123456789' },
+});
+
+test('all committees export every group, isolate scopes and retain assigned position order', async () => {
+    const groups = [
+        { id: 2, name: 'KETUA DATA', sort_order: 2, positions: [] },
+        { id: 1, name: 'UTAMA', sort_order: 1, positions: [
+            { id: 1, pivot_level: 'udm', pivot_sort_order: 2 },
+            { id: 2, pivot_level: 'udm', pivot_sort_order: 1 },
+        ] },
+    ];
+    const records = [
+        { ...member(1, 'AHLI KEDUA'), level: 'udm', scope_key: 'A', scope_name: 'ALPHA', position: { id: 1, name: 'AJK', sort_order: 1 } },
+        { ...member(1, 'PENGERUSI'), level: 'udm', scope_key: 'A', scope_name: 'ALPHA', position: { id: 2, name: 'Pengerusi', sort_order: 2 } },
+        { ...member(1, 'AHLI BETA'), level: 'udm', scope_key: 'B', scope_name: 'BETA' },
+    ];
+    const sections = allCommitteeExport(records, groups);
+    assert.equal(sections.length, 3);
+    assert.equal(sections[0].members[0].voter.name, 'PENGERUSI');
+    assert.equal(sections[1].subtitle, 'UDM — BETA');
+    assert.equal(sections[2].title, 'KETUA DATA');
+    assert.equal(sections[2].members.length, 0);
+    const workbook = await buildCommitteeWorkbook(sections, ['bil', 'jawatan', 'nama', 'ic', 'telefon']);
+    const loaded = new ExcelJS.Workbook();
+    const buffer = await workbook.xlsx.writeBuffer();
+    await loaded.xlsx.load(buffer);
+    const sheet = loaded.worksheets[0];
+    assert.equal(sheet.getCell('A3').value, 'JAWATANKUASA UTAMA');
+    assert.equal(sheet.getCell('A4').value, 'Sesi 2025/2027');
+    assert.deepEqual(sheet.getRow(7).values.slice(1), ['Bil', 'Jawatan', 'Nama', 'No. KP', 'No. Tel']);
+    assert.equal(sheet.getCell('B8').value, 'Pengerusi');
+    assert.equal(sheet.getCell('D8').value, '001122334455');
+    assert.equal(sheet.getCell('E8').value, '0123456789');
+    assert.deepEqual(workbook.worksheets[0].rowBreaks.map((item) => item.id), [9, 17]);
+    const archive = await JSZip.loadAsync(buffer);
+    const xml = await archive.file('xl/worksheets/sheet1.xml').async('string');
+    assert.match(xml, /<rowBreaks count="2" manualBreakCount="2">/);
+    assert.match(xml, /<brk id="9"[^>]*man="1"/);
+    assert.match(xml, /<brk id="17"[^>]*man="1"/);
+    assert.equal(sheet.getCell('A20').value, 'JAWATANKUASA KETUA DATA');
+    assert.equal(sheet.getCell('A17').value, 1);
+    assert.deepEqual(allCommitteeExport([], []), []);
 });
 
 test('UDM position groups sharing a parent remain separate with formal headings and manual page breaks', async () => {

@@ -52,9 +52,15 @@ export async function buildCommitteeWorkbook(sections, selectedColumns = ['bil',
         const title = String(section.title || 'Tanpa Kumpulan').replace(/\bKETUA\b\s*/gi, '').trim();
         mergedRow('', 5, {}, palette.green);
         mergedRow('', 12, {});
-        mergedRow('SENARAI AHLI JAWATANKUASA JPRD', 28, { size: 14, bold: true });
-        mergedRow(title, Math.max(42, Math.ceil(title.length / 34) * 29), { size: 24, bold: true, color: { argb: palette.green } });
-        mergedRow('SESI 2025/2027', 24, { size: 11, color: { argb: palette.muted } });
+        if (section.committeeHeading) {
+            const heading = `JAWATANKUASA ${String(section.title).toUpperCase()}`;
+            mergedRow(heading, Math.max(42, Math.ceil(heading.length / 34) * 29), { size: 24, bold: true, color: { argb: palette.green } });
+            mergedRow('Sesi 2025/2027', 24, { size: 14, bold: true });
+        } else {
+            mergedRow('SENARAI AHLI JAWATANKUASA JPRD', 28, { size: 14, bold: true });
+            mergedRow(title, Math.max(42, Math.ceil(title.length / 34) * 29), { size: 24, bold: true, color: { argb: palette.green } });
+            mergedRow('SESI 2025/2027', 24, { size: 11, color: { argb: palette.muted } });
+        }
         if (section.subtitle) mergedRow(section.subtitle, 22, { size: 10, color: { argb: palette.muted } });
         mergedRow('', 18, {});
 
@@ -126,4 +132,29 @@ export function udmPositionExport(positions) {
         title: position.name,
         members: position.members,
     }));
+}
+
+export function allCommitteeExport(members, groups) {
+    const levels = { jprd: 'JPRD', udm: 'UDM', cawangan: 'Cawangan' };
+    return [...groups].sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999) || a.name.localeCompare(b.name)).flatMap((group) => {
+        const scopes = new Map();
+        members.filter((member) => String(member.committee_group_id) === String(group.id)).forEach((member) => {
+            const key = JSON.stringify([member.level, member.scope_key]);
+            if (!scopes.has(key)) scopes.set(key, {
+                title: group.name,
+                committeeHeading: true,
+                subtitle: [levels[member.level] || member.level, member.parent_scope_name, member.scope_name].filter(Boolean).join(' — '),
+                members: [],
+            });
+            scopes.get(key).members.push(member);
+        });
+        if (!scopes.size) return [{ title: group.name, committeeHeading: true, members: [] }];
+        return [...scopes.values()].sort((a, b) => a.subtitle.localeCompare(b.subtitle)).map((section) => ({
+            ...section,
+            members: [...section.members].sort((a, b) => {
+                const order = (member) => group.positions?.find((position) => String(position.id) === String(member.position?.id) && position.pivot_level === member.level)?.pivot_sort_order ?? member.position?.sort_order ?? 999;
+                return order(a) - order(b) || (a.voter?.name || '').localeCompare(b.voter?.name || '');
+            }),
+        }));
+    });
 }

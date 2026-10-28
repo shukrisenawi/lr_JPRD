@@ -14,7 +14,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatPhoneNumber } from '@/Utils/formatPhoneNumber';
-import { downloadCommitteeExcel, groupCommitteeExport } from '@/Utils/committeeExcel';
+import { allCommitteeExport, downloadCommitteeExcel, groupCommitteeExport } from '@/Utils/committeeExcel';
 import { buildCommitteeWhatsapp } from '@/Utils/committeeWhatsapp';
 
 function Icon({ name, className = 'h-5 w-5' }) {
@@ -2397,7 +2397,18 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
     }, []);
 
     const [searchOpen, setSearchOpen] = useState(false);
+    const [exportingAll, setExportingAll] = useState(false);
     const membershipRef = useRef(null);
+
+    const exportAllGroups = async () => {
+        if (exportingAll) return;
+        setExportingAll(true);
+        try {
+            await downloadCommitteeExcel('JAWATANKUASA_SEMUA_KUMPULAN_2025_2027.xlsx', allCommitteeExport(memberships, groups), ['bil', 'jawatan', 'nama', 'ic', 'telefon']);
+        } finally {
+            setExportingAll(false);
+        }
+    };
 
     const sectionTabs = [
         ...(canSenarai ? [{ key: 'senarai-jawatankuasa', label: 'Senarai Jawatankuasa', desc: 'Lantik dan semak ahli ikut peringkat.', icon: 'users' }] : []),
@@ -2416,13 +2427,18 @@ export default function CommitteeIndex({ groups, positions, memberships, scopes,
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p className="label-section">Jawatankuasa</p>
                         <h2 className="mt-0.5 heading-lg">Urus jawatan dan pelantikan</h2>
 
                     </div>
-                    <div className="mt-1 flex shrink-0 items-center gap-2">
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                        {canSenarai && <button type="button" onClick={exportAllGroups} disabled={exportingAll || !groups.length}
+                            className="flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            <Icon name="layers" className="h-4 w-4" />
+                            {exportingAll ? 'Menyediakan Excel…' : 'Excel Semua Kumpulan'}
+                        </button>}
                         <button type="button" onClick={() => setSearchOpen(true)}
                             className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700">
                             <Icon name="search" className="h-4 w-4" />
