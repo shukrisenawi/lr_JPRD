@@ -34,6 +34,9 @@ class PemilihBaruExcelExport
             $merges[] = '<mergeCell ref="A'.$row.':F'.$row.'"/>';
             $bil = 0;
             foreach ($udmRecords->groupBy(fn ($record) => $record->locality ?: 'TANPA LOKALITI') as $locality => $localityRecords) {
+                if ($bil > 0) {
+                    $breaks[] = '<brk id="'.$row.'" min="0" max="16383" man="1"/>';
+                }
                 $addRow(['LOKALITI: '.$locality], 2, 24);
                 $merges[] = '<mergeCell ref="A'.$row.':F'.$row.'"/>';
                 $addRow(['Bil', 'Nama', 'Transaksi', 'No KP', 'Umur', 'No Rumah'], 3, 24);

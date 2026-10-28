@@ -48,7 +48,7 @@ it('exports all matching pages grouped by udm and locality sorted by ascending a
     expect($xml)->toContain('DPT UDM ALPHA', 'DPT UDM BETA', 'LOKALITI: KG A', 'LOKALITI: KG B',
         'Bil', 'Nama', 'Transaksi', 'No KP', 'Umur', 'No Rumah', '001A', '000101020001',
         'orientation="portrait"', 'paperSize="9"', 'fitToWidth="1"', 'fitToHeight="0"',
-        '<rowBreaks count="1" manualBreakCount="1">', '=NAMA &amp; &lt;AWAL&gt;', 'REKOD 30')
+        '<rowBreaks count="2" manualBreakCount="2">', '=NAMA &amp; &lt;AWAL&gt;', 'REKOD 30')
         ->not->toContain('<f>');
     expect(strpos($xml, 'KP KEMUDIAN'))->toBeLessThan(strpos($xml, '=NAMA'));
     expect(strpos($xml, 'KP KEMUDIAN'))->toBeLessThan(strpos($xml, 'LOKALITI: KG B'));
