@@ -53,7 +53,7 @@ export async function buildCommitteeWorkbook(sections, selectedColumns = ['bil',
         mergedRow('', 5, {}, palette.green);
         mergedRow('', 12, {});
         if (section.committeeHeading) {
-            const heading = `JAWATANKUASA ${String(section.title).toUpperCase()}`;
+            const heading = ['JAWATANKUASA', section.title, section.level].filter(Boolean).join(' ').toUpperCase();
             mergedRow(heading, Math.max(42, Math.ceil(heading.length / 34) * 29), { size: 24, bold: true, color: { argb: palette.green } });
             mergedRow('Sesi 2025/2027', 24, { size: 14, bold: true });
         } else {
@@ -147,12 +147,13 @@ export function allCommitteeExport(members, groups, { level, scopeKey } = {}) {
             if (!scopes.has(key)) scopes.set(key, {
                 title: group.name,
                 committeeHeading: true,
+                level: member.level,
                 subtitle: member.level === 'jprd' ? undefined : [levels[member.level] || member.level, member.parent_scope_name, member.scope_name].filter(Boolean).join(' — '),
                 members: [],
             });
             scopes.get(key).members.push(member);
         });
-        if (!scopes.size) return [{ title: group.name, committeeHeading: true, members: [] }];
+        if (!scopes.size) return [{ title: group.name, committeeHeading: true, level, members: [] }];
         return [...scopes.values()].sort((a, b) => (a.subtitle || '').localeCompare(b.subtitle || '')).map((section) => ({
             ...section,
             members: [...section.members].sort((a, b) => {

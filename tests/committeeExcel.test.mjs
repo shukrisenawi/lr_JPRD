@@ -33,7 +33,7 @@ test('all committees export every group, isolate scopes and retain assigned posi
     const buffer = await workbook.xlsx.writeBuffer();
     await loaded.xlsx.load(buffer);
     const sheet = loaded.worksheets[0];
-    assert.equal(sheet.getCell('A3').value, 'JAWATANKUASA UTAMA');
+    assert.equal(sheet.getCell('A3').value, 'JAWATANKUASA UTAMA UDM');
     assert.equal(sheet.getCell('A4').value, 'Sesi 2025/2027');
     assert.deepEqual(sheet.getRow(7).values.slice(1), ['Bil', 'Jawatan', 'Nama', 'No. KP', 'No. Tel']);
     assert.equal(sheet.getCell('B8').value, 'Pengerusi');
@@ -92,6 +92,22 @@ test('all groups export follows the active level and selected scope only', () =>
         assert.deepEqual(sections.flatMap((section) => section.members.map((item) => item.voter.name)), [expected]);
         if (level === 'jprd') assert.equal(sections[0].subtitle, undefined);
         assert.deepEqual(sections.map((section) => section.title).sort(), groups.filter((group) => group.levels.includes(level)).map((group) => group.name).sort());
+    }
+});
+
+test('large committee headings include the active level even for empty groups', async () => {
+    for (const level of ['jprd', 'udm', 'cawangan']) {
+        const sections = allCommitteeExport([
+            { ...member(1), level, scope_key: 'A' },
+        ], [
+            { id: 1, name: 'BILIK OPERASI', levels: [level], sort_order: 1 },
+            { id: 2, name: 'KOSONG', levels: [level], sort_order: 2 },
+        ], { level, scopeKey: 'A' });
+        const workbook = await buildCommitteeWorkbook(sections);
+        const sheet = workbook.worksheets[0];
+        assert.equal(sheet.getCell('A3').value, `JAWATANKUASA BILIK OPERASI ${level.toUpperCase()}`);
+        assert.equal(sections[1].level, level);
+        assert.ok(sheet.getColumn(1).values.includes(`JAWATANKUASA KOSONG ${level.toUpperCase()}`));
     }
 });
 
