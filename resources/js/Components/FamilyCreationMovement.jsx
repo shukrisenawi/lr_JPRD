@@ -5,7 +5,7 @@ import { compareUdms } from '@/Utils/udmOrder';
 
 const fmt = (value) => new Intl.NumberFormat('ms-MY').format(value ?? 0);
 
-export default function FamilyCreationMovement({ summary }) {
+export default function FamilyCreationMovement({ summary, activeUdm, onSelectUdm }) {
     const [confirming, setConfirming] = useState(false);
     const [notice, setNotice] = useState('');
     const { post, processing, errors, clearErrors } = useForm({ confirmed: true });
@@ -41,7 +41,30 @@ export default function FamilyCreationMovement({ summary }) {
                 <table className="w-full text-xs">
                     <thead className="table-header"><tr><th scope="col" className="px-4 py-2">UDM</th><th scope="col" className="px-4 py-2 text-center">Keluarga dicipta</th><th scope="col" className="px-4 py-2 text-center">Jumlah keluarga</th><th scope="col" className="px-4 py-2 text-center">Pemilih belum bekerluarga</th></tr></thead>
                     <tbody className="divide-y divide-slate-200 text-slate-700">
-                        {rows.map((row) => <tr key={row.udm} className="odd:bg-slate-50 hover:bg-emerald-50"><th scope="row" className="px-4 py-2 text-left font-semibold">{row.udm}</th><td className="px-4 py-2 text-center font-semibold tabular-nums">{fmt(row.total)}</td><td className="px-4 py-2 text-center font-semibold tabular-nums">{fmt(row.family_count)}</td><td className="px-4 py-2 text-center font-semibold tabular-nums">{fmt(row.unassigned_voters)}</td></tr>)}
+                        {rows.map((row, index) => {
+                            const isActive = activeUdm === row.udm;
+                            const cellClass = `px-4 py-2 group-hover:font-bold ${isActive ? 'font-bold' : 'font-semibold'}`;
+                            return (
+                                <tr
+                                    key={row.udm}
+                                    aria-selected={isActive}
+                                    tabIndex={0}
+                                    onClick={() => onSelectUdm(row.udm)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            onSelectUdm(row.udm);
+                                        }
+                                    }}
+                                    className={`group cursor-pointer transition-colors ${isActive ? 'bg-lime-200 font-bold text-slate-950' : `${index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} hover:bg-lime-100/70 hover:font-bold`}`}
+                                >
+                                    <th scope="row" className={`${cellClass} text-left`}>{row.udm}</th>
+                                    <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.total)}</td>
+                                    <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.family_count)}</td>
+                                    <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.unassigned_voters)}</td>
+                                </tr>
+                            );
+                        })}
                         {rows.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">Belum ada keluarga dicipta. Cipta keluarga melalui menu Keluarga Pemilih.</td></tr>}
                     </tbody>
                     <tfoot className="border-t border-emerald-200 bg-emerald-50 font-bold text-emerald-900"><tr><th scope="row" className="px-4 py-2 text-left">Jumlah (keluarga unik)</th><td className="px-4 py-2 text-center tabular-nums">{fmt(summary.total)}</td><td className="px-4 py-2 text-center tabular-nums">{fmt(summary.family_count)}</td><td className="px-4 py-2 text-center tabular-nums">{fmt(summary.unassigned_voters)}</td></tr></tfoot>

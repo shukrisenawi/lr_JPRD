@@ -853,8 +853,8 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         )}
                         <CulaPartyTable rows={culaPartyRows} activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
                         <PlkCostSummaryTable summary={plk_cost_summary} activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
+                        <FamilyCreationMovement summary={family_creation_movement} activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
-                        <FamilyCreationMovement summary={family_creation_movement} />
                         <DanaPaymentChart summary={dana_summary} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">
