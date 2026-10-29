@@ -206,7 +206,7 @@ function CulaPartyTable({ rows, activeUdm, onSelectUdm }) {
                     <thead className="report-table-header-sticky text-center font-bold text-slate-900">
                         <tr>
                             <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
-                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-2 py-1 text-left">Daerah Mengundi</th>
+                            <th rowSpan={2} className="sticky left-0 z-10 border border-lime-700 bg-lime-400 px-2 py-1 text-left">Daerah Mengundi</th>
                             {culaPartyGroups.map(({ key }) => (
                                 <th key={key} colSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">{key}</th>
                             ))}
@@ -242,7 +242,7 @@ function CulaPartyTable({ rows, activeUdm, onSelectUdm }) {
                                     className={`${isActive ? 'bg-lime-200 font-bold text-slate-950' : index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold`}
                                 >
                                     <td className="border border-slate-300 px-1.5 py-1 text-center">{index + 1}</td>
-                                    <td className={`border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold ${isActive ? '!font-bold' : ''}`}>{row.name}</td>
+                                    <td className={`sticky left-0 z-10 border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold ${isActive ? 'bg-lime-200 !font-bold' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-lime-100`}`}>{row.name}</td>
                                     {culaPartyGroups.map(({ key }) => {
                                         const count = row.party_counts[key];
                                         const percentage = row.total > 0 ? `${((count / row.total) * 100).toFixed(2)}%` : '0.00%';
