@@ -37,15 +37,18 @@ export default function FamilyCreationMovement({ summary }) {
                 </div>
             </div>
             {notice && <p role="status" className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-800">{notice}</p>}
-            <table className="w-full text-xs">
-                <thead className="table-header"><tr><th scope="col" className="px-4 py-2">UDM</th><th scope="col" className="px-4 py-2 text-right">Keluarga dicipta</th></tr></thead>
-                <tbody className="divide-y divide-slate-200 text-slate-700">
-                    {rows.map((row) => <tr key={row.udm} className="odd:bg-slate-50 hover:bg-emerald-50"><th scope="row" className="px-4 py-2 text-left font-semibold">{row.udm}</th><td className="px-4 py-2 text-right font-semibold tabular-nums">{fmt(row.total)}</td></tr>)}
-                    {rows.length === 0 && <tr><td colSpan={2} className="px-4 py-6 text-center text-slate-500">Belum ada keluarga dicipta. Cipta keluarga melalui menu Keluarga Pemilih.</td></tr>}
-                </tbody>
-                <tfoot className="border-t border-emerald-200 bg-emerald-50 font-bold text-emerald-900"><tr><th scope="row" className="px-4 py-2 text-left">Jumlah keluarga unik</th><td className="px-4 py-2 text-right tabular-nums">{fmt(summary.total)}</td></tr></tfoot>
-            </table>
+            <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                    <thead className="table-header"><tr><th scope="col" className="px-4 py-2">UDM</th><th scope="col" className="px-4 py-2 text-right">Keluarga dicipta</th><th scope="col" className="px-4 py-2 text-right">Jumlah keluarga</th><th scope="col" className="px-4 py-2 text-right">Pemilih belum bekerluarga</th></tr></thead>
+                    <tbody className="divide-y divide-slate-200 text-slate-700">
+                        {rows.map((row) => <tr key={row.udm} className="odd:bg-slate-50 hover:bg-emerald-50"><th scope="row" className="px-4 py-2 text-left font-semibold">{row.udm}</th><td className="px-4 py-2 text-right font-semibold tabular-nums">{fmt(row.total)}</td><td className="px-4 py-2 text-right font-semibold tabular-nums">{fmt(row.family_count)}</td><td className="px-4 py-2 text-right font-semibold tabular-nums">{fmt(row.unassigned_voters)}</td></tr>)}
+                        {rows.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-center text-slate-500">Belum ada keluarga dicipta. Cipta keluarga melalui menu Keluarga Pemilih.</td></tr>}
+                    </tbody>
+                    <tfoot className="border-t border-emerald-200 bg-emerald-50 font-bold text-emerald-900"><tr><th scope="row" className="px-4 py-2 text-left">Jumlah (keluarga unik)</th><td className="px-4 py-2 text-right tabular-nums">{fmt(summary.total)}</td><td className="px-4 py-2 text-right tabular-nums">{fmt(summary.family_count)}</td><td className="px-4 py-2 text-right tabular-nums">{fmt(summary.unassigned_voters)}</td></tr></tfoot>
+                </table>
+            </div>
             <p className="px-4 py-2 text-[10px] text-slate-500">UDM mengikut ahli ketika keluarga dicipta. Keluarga merentas UDM dikira sekali di setiap UDM terlibat; jumlah unik tidak berganda.</p>
+            <p className="px-4 pb-2 text-[10px] text-slate-500">Jumlah keluarga dan pemilih belum bekerluarga ialah data semasa mengikut menu Keluarga Pemilih (pemilih Melayu; belum bekerluarga hanya pemilih aktif). Reset hanya mengosongkan kolum keluarga dicipta.</p>
             <Modal show={confirming} onClose={() => setConfirming(false)} closeable={!processing} maxWidth="md" title="Pengesahan reset kiraan keluarga" animate={false}>
                 <form onSubmit={submit} className="space-y-4 p-5">
                     <h4 className="text-base font-bold text-slate-900">Reset kiraan semua UDM?</h4>

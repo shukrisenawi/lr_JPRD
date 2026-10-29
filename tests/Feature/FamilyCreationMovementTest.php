@@ -81,7 +81,9 @@ it('restricts summaries to UDM and locality scope without double counting locali
         ->where('family_creation_movement.rows.0.total', 1)
         ->where('family_creation_movement.total', 1));
     $user->update(['access_level' => 'udm', 'scope_key' => 'UDM A']);
-    expect(app(FamilyCreationMovementService::class)->summary($user)['rows'])->toBe([['udm' => 'UDM A', 'total' => 1]]);
+    expect(app(FamilyCreationMovementService::class)->summary($user)['rows'])->toBe([
+        ['udm' => 'UDM A', 'total' => 1, 'family_count' => 1, 'unassigned_voters' => 0],
+    ]);
 });
 
 it('backfills existing families once per location and keeps zero count UDMs after reset', function () {
@@ -97,7 +99,8 @@ it('backfills existing families once per location and keeps zero count UDMs afte
     expect($service->summary($admin)['total'])->toBe(1);
     $service->reset($admin);
     expect($service->summary($admin)['rows'])->toBe([
-        ['udm' => 'UDM A', 'total' => 0], ['udm' => 'UDM B', 'total' => 0],
+        ['udm' => 'UDM A', 'total' => 0, 'family_count' => 1, 'unassigned_voters' => 0],
+        ['udm' => 'UDM B', 'total' => 0, 'family_count' => 1, 'unassigned_voters' => 0],
     ]);
 });
 
@@ -105,4 +108,38 @@ it('does not count failed family creation', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create(['access_level' => 'udm', 'scope_key' => 'UDM A']);
     $this->actingAs($user)->post(route('keluarga-pemilih.store'), ['pemilih_ids' => [movementVoter('UDM B')->id]])->assertSessionHasErrors();
     $this->assertDatabaseCount('family_creation_movements', 0);
+});
+
+it('reports current families and active unassigned Malay voters independently of reset', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $first = movementVoter();
+    $second = movementVoter();
+    $otherUdm = movementVoter('UDM B');
+    $unassigned = movementVoter();
+    movementVoter('UDM B');
+    movementVoter()->update(['status' => 'mati']);
+    movementVoter()->update(['race' => 'CINA']);
+    movementVoter()->update(['race' => ' m ']);
+
+    $this->actingAs($admin)->post(route('keluarga-pemilih.store'), [
+        'pemilih_ids' => [$first->id, $second->id, $otherUdm->id],
+    ])->assertSessionHasNoErrors();
+    $service = app(FamilyCreationMovementService::class);
+    $service->reset($admin);
+    $this->get(route('laporan.index'))->assertInertia(fn ($page) => $page
+        ->where('family_creation_movement.total', 0)
+        ->where('family_creation_movement.family_count', 1)
+        ->where('family_creation_movement.unassigned_voters', 3)
+        ->where('family_creation_movement.rows.0.family_count', 1)
+        ->where('family_creation_movement.rows.0.unassigned_voters', 2)
+        ->where('family_creation_movement.rows.1.family_count', 1)
+        ->where('family_creation_movement.rows.1.unassigned_voters', 1));
+
+    $family = PemilihFamily::query()->sole();
+    $this->post(route('keluarga-pemilih.members.store', $family), ['pemilih_ids' => [$unassigned->id]])->assertSessionHasNoErrors();
+    expect($service->summary($admin))->toMatchArray(['total' => 0, 'family_count' => 1, 'unassigned_voters' => 2]);
+
+    $scoped = User::factory()->withModules(['laporan'])->create(['access_level' => 'udm', 'scope_key' => 'UDM B']);
+    expect($service->summary($scoped))->toMatchArray(['family_count' => 1, 'unassigned_voters' => 1]);
+    expect($service->summary($scoped)['rows'])->toHaveCount(1);
 });

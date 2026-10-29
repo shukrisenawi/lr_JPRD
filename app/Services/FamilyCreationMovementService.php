@@ -36,15 +36,32 @@ class FamilyCreationMovementService
             ->groupBy('dm')->pluck('total', 'dm');
         $voters = PemilihRecord::query();
         $user->applyScopeToPemilihQuery($voters);
+
+        $familyMembers = (clone $voters)
+            ->whereRaw("UPPER(TRIM(COALESCE(pemilih_records.race, ''))) IN (?, ?)", ['MELAYU', 'M'])
+            ->join('pemilih_family_members', 'pemilih_family_members.pemilih_record_id', '=', 'pemilih_records.id');
+        $familyCounts = (clone $familyMembers)->select('dm')
+            ->selectRaw('COUNT(DISTINCT pemilih_family_members.pemilih_family_id) as total')
+            ->groupBy('dm')->pluck('total', 'dm');
+        $unassigned = (clone $voters)->where('status', 'aktif')
+            ->whereRaw("UPPER(TRIM(COALESCE(pemilih_records.race, ''))) IN (?, ?)", ['MELAYU', 'M'])
+            ->whereDoesntHave('families');
+        $unassignedCounts = (clone $unassigned)->select('dm')->selectRaw('COUNT(*) as total')
+            ->groupBy('dm')->pluck('total', 'dm');
         $udms = $voters->whereNotNull('dm')->where('dm', '!=', '')->distinct()->pluck('dm')
-            ->merge($counts->keys())->unique()->sort()->values();
+            ->merge($counts->keys())->merge($familyCounts->keys())->merge($unassignedCounts->keys())
+            ->map(fn ($dm) => (string) $dm)->unique()->sort()->values();
 
         return [
             'rows' => $udms->map(fn (string $dm) => [
                 'udm' => $dm === '' ? 'Tiada UDM' : $dm,
                 'total' => (int) ($counts[$dm] ?? 0),
+                'family_count' => (int) ($familyCounts[$dm] ?? 0),
+                'unassigned_voters' => (int) ($unassignedCounts[$dm] ?? 0),
             ])->all(),
             'total' => (clone $query)->distinct()->count('family_id'),
+            'family_count' => (clone $familyMembers)->distinct()->count('pemilih_family_members.pemilih_family_id'),
+            'unassigned_voters' => $unassigned->count(),
             'reset_at' => $reset['reset_at'] ?? null,
             'can_reset' => $user->isMasterAdmin(),
         ];
