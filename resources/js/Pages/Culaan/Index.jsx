@@ -1136,12 +1136,12 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
             ...exportRows.map((voter) => voter.phone_mobile || voter.phone_home || '-'),
         ]);
         const columnWidths = [noColumnWidth, 14, 30, 30, phoneColumnWidth, 5];
-        const titleRows = [];
+        const titleRows = [{ value: 'SENARAI PEMILIH BELUM CULA', size: 26, bold: true }];
         const nowTitle = new Date();
         const dateStr = 'Tarikh : ' + String(nowTitle.getDate()).padStart(2, '0') + '-' + String(nowTitle.getMonth() + 1).padStart(2, '0') + '-' + nowTitle.getFullYear();
 
         if (formState.udm) {
-            titleRows.push({ value: formState.udm, size: 26, bold: true });
+            titleRows.push({ value: `UDM ${formState.udm}`, size: 26, bold: true });
             titleRows.push({ value: dateStr, size: 14, bold: false });
         }
         if (formState.locality) {
@@ -1237,16 +1237,20 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
             return row;
         };
 
-        titleRows.forEach((title) => {
-            addMergedTitleRow(title.value, title.size, title.bold);
-        });
-        worksheet.addRow([]);
+        const addReportTitle = () => {
+            titleRows.forEach((title) => {
+                addMergedTitleRow(title.value, title.size, title.bold);
+            });
+            worksheet.addRow([]);
+        };
 
         if (exportGroups.length === 0) {
+            addReportTitle();
             addHeaderRow();
         }
 
         exportGroups.forEach(([locality, voters], groupIndex) => {
+            addReportTitle();
             if (groupByLocality) {
                 addMergedTitleRow(locality, 18, true);
                 worksheet.addRow([]);
@@ -1262,9 +1266,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
 
             if (groupByLocality && groupIndex < exportGroups.length - 1) {
                 const separatorRow = worksheet.addRow([]);
-                if (voters.length > 10) {
-                    separatorRow.addPageBreak();
-                }
+                separatorRow.addPageBreak();
             }
         });
 
