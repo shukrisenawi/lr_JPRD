@@ -6,12 +6,14 @@ use App\Models\Cawangan;
 use App\Models\User;
 use App\Services\CulaanMessageService;
 use App\Services\DanaSummaryService;
+use App\Services\FamilyCreationMovementService;
 use App\Services\N8nWebhookService;
 use App\Services\PemilihBaruService;
 use App\Services\PemilihReportService;
 use App\Services\PlkCostService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,6 +27,7 @@ class LaporanController extends Controller
 
         return Inertia::render('Laporan', [
             'report' => $report,
+            'family_creation_movement' => app(FamilyCreationMovementService::class)->summary($request->user()),
             'pemilih_baru_movement' => $pemilihBaru->monthlyMovementReport(),
             'plk_cost_summary' => $request->user()?->canAccessModule('plk-kos')
                 ? $plkCosts->summary($request->user())
@@ -57,6 +60,15 @@ class LaporanController extends Controller
                 ? $this->ahliPasStats($request->user())
                 : null,
         ]);
+    }
+
+    public function resetFamilyCreationMovement(Request $request, FamilyCreationMovementService $movement): RedirectResponse
+    {
+        abort_unless($request->user()->isMasterAdmin(), 403);
+        $request->validate(['confirmed' => ['required', 'accepted']]);
+        $movement->reset($request->user());
+
+        return back()->with('success', 'Kiraan keluarga dicipta telah direset. Data keluarga dan ahli tidak dipadam.');
     }
 
     public function sendN8nMessage(Request $request, N8nWebhookService $n8nWebhook): JsonResponse

@@ -361,6 +361,7 @@ it('auto-groups only unassigned voters and leaves existing family data untouched
         $this->assertDatabaseHas('pemilih_family_members', ['pemilih_record_id' => $member->id]);
     }
     $this->assertDatabaseCount('pemilih_families', 2);
+    $this->assertDatabaseCount('family_creation_movements', 2);
 });
 
 it('restricts auto family and auto father actions to master administrators', function () {

@@ -6,6 +6,7 @@ use App\Models\CulaWorkItem;
 use App\Models\PemilihFamily;
 use App\Models\PemilihRecord;
 use App\Models\User;
+use App\Services\FamilyCreationMovementService;
 use App\Support\CulaCodes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -388,6 +389,7 @@ class KeluargaPemilihController extends Controller
                 'created_by' => $user->id,
             ]);
             $family->members()->attach($voters->modelKeys(), ['created_by' => $user->id]);
+            app(FamilyCreationMovementService::class)->record($family, $voters);
 
             return $family;
         });
@@ -800,6 +802,7 @@ class KeluargaPemilihController extends Controller
                     'created_by' => $user->id,
                 ]);
                 $family->members()->attach($voters->modelKeys(), ['created_by' => $user->id]);
+                app(FamilyCreationMovementService::class)->record($family, $voters);
                 $created++;
                 $membersAdded += $voters->count();
             }

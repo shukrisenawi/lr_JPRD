@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import N8nMessageModal from '@/Components/N8nMessageModal';
+import FamilyCreationMovement from '@/Components/FamilyCreationMovement';
 import { Head, usePage } from '@inertiajs/react';
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Fragment, useMemo, useState } from 'react';
@@ -507,7 +508,7 @@ function PemilihBaruMovementTable({ movement }) {
     );
 }
 
-export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null, plk_cost_summary = null, dana_summary = null }) {
+export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null, plk_cost_summary = null, dana_summary = null, family_creation_movement = null }) {
     const { auth } = usePage().props;
     const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
@@ -853,6 +854,7 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                         <CulaPartyTable rows={culaPartyRows} activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
                         <PlkCostSummaryTable summary={plk_cost_summary} activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
                         <PemilihBaruMovementTable movement={pemilih_baru_movement} />
+                        <FamilyCreationMovement summary={family_creation_movement} />
                         <DanaPaymentChart summary={dana_summary} />
 
                         <div className="grid gap-3 xl:grid-cols-[2fr_1fr]">

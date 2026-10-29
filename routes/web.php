@@ -58,6 +58,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
     Route::get('/dashboard-udm', DashboardUdmController::class)->middleware('module:dashboard-udm')->name('dashboard-udm');
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('module:laporan')->name('laporan.index');
+    Route::post('/laporan/keluarga/reset', [LaporanController::class, 'resetFamilyCreationMovement'])->middleware('module:laporan')->name('laporan.keluarga.reset');
     Route::post('/laporan/n8n', [LaporanController::class, 'sendN8nMessage'])->middleware('module:laporan-hantar-status')->name('laporan.n8n.send');
     Route::get('/carian-pemilih', [CarianPemilihController::class, 'index'])->middleware('module:carian-pemilih')->name('carian-pemilih.index');
     Route::get('/ahli-pas', [AhliPasController::class, 'index'])->middleware('module:ahli-pas')->name('ahli-pas.index');
