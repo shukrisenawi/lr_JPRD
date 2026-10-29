@@ -24,7 +24,7 @@ export default function FamilyCreationMovement({ summary, activeUdm, onSelectUdm
     };
 
     return (
-        <section className="card overflow-hidden" aria-labelledby="family-movement-title">
+        <section className="card overflow-visible" aria-labelledby="family-movement-title">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-4">
                 <div>
                     <h3 id="family-movement-title" className="text-sm font-bold text-slate-900">Pergerakan Keluarga Dicipta Mengikut UDM</h3>
@@ -37,9 +37,9 @@ export default function FamilyCreationMovement({ summary, activeUdm, onSelectUdm
                 </div>
             </div>
             {notice && <p role="status" className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-xs text-emerald-800">{notice}</p>}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto xl:overflow-visible">
                 <table className="w-full text-xs">
-                    <thead className="table-header"><tr><th scope="col" className="px-4 py-2">UDM</th><th scope="col" className="px-4 py-2 text-center">Keluarga dicipta</th><th scope="col" className="px-4 py-2 text-center">Jumlah keluarga</th><th scope="col" className="px-4 py-2 text-center">Pemilih belum bekerluarga</th></tr></thead>
+                    <thead className="table-header report-table-header-sticky"><tr><th scope="col" className="px-4 py-2">UDM</th><th scope="col" className="px-4 py-2 text-center">Keluarga dicipta</th><th scope="col" className="px-4 py-2 text-center">Jumlah keluarga</th><th scope="col" className="px-4 py-2 text-center">Pemilih belum bekerluarga</th></tr></thead>
                     <tbody className="divide-y divide-slate-200 text-slate-700">
                         {rows.map((row, index) => {
                             const isActive = activeUdm === row.udm;
