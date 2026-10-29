@@ -56,9 +56,9 @@ export default function FamilyCreationMovement({ summary, activeUdm, onSelectUdm
                                             onSelectUdm(row.udm);
                                         }
                                     }}
-                                    className={`group cursor-pointer transition-colors ${isActive ? 'bg-emerald-100 font-bold text-slate-950' : `${index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} hover:bg-emerald-50 hover:font-bold`}`}
+                                    className={`group cursor-pointer transition-colors ${isActive ? 'bg-emerald-100 font-bold text-slate-950' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} hover:bg-emerald-50 hover:font-bold`}`}
                                 >
-                                    <th scope="row" className={`${cellClass} sticky left-0 z-10 text-left ${isActive ? 'bg-emerald-100' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-emerald-50`}`}>{row.udm}</th>
+                                    <th scope="row" className={`${cellClass} sticky left-0 z-10 text-left transition-colors ${isActive ? 'bg-emerald-100' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-emerald-50`}`}>{row.udm}</th>
                                     <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.total)}</td>
                                     <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.family_count)}</td>
                                     <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.reviewed_families)}</td>
