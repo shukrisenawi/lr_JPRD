@@ -205,8 +205,8 @@ function CulaPartyTable({ rows, activeUdm, onSelectUdm }) {
                 <table className="cula-party-table min-w-[1120px] w-full border-separate border-spacing-0 text-[10px] sm:text-xs">
                     <thead className="report-table-header-sticky text-center font-bold text-slate-900">
                         <tr>
-                            <th rowSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
-                            <th rowSpan={2} className="sticky left-0 z-10 border border-lime-700 bg-lime-400 px-2 py-1 text-left">Daerah Mengundi</th>
+                            <th rowSpan={2} className="sticky left-0 z-10 w-10 min-w-10 max-w-10 border border-lime-700 bg-lime-400 px-1.5 py-1">Bil.</th>
+                            <th rowSpan={2} className="sticky left-10 z-10 border border-lime-700 bg-lime-400 px-2 py-1 text-left">Daerah Mengundi</th>
                             {culaPartyGroups.map(({ key }) => (
                                 <th key={key} colSpan={2} className="border border-lime-700 bg-lime-400 px-1.5 py-1">{key}</th>
                             ))}
@@ -241,8 +241,8 @@ function CulaPartyTable({ rows, activeUdm, onSelectUdm }) {
                                     }}
                                     className={`${isActive ? 'bg-lime-200 font-bold text-slate-950' : index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white'} group cursor-pointer transition-colors hover:bg-lime-100/70 hover:font-bold`}
                                 >
-                                    <td className="border border-slate-300 px-1.5 py-1 text-center">{index + 1}</td>
-                                    <td className={`sticky left-0 z-10 border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold ${isActive ? 'bg-lime-200 !font-bold' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-lime-100`}`}>{row.name}</td>
+                                    <td className={`sticky left-0 z-10 w-10 min-w-10 max-w-10 border border-slate-300 px-1.5 py-1 text-center ${isActive ? 'bg-lime-200' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-lime-100`}`}>{index + 1}</td>
+                                    <td className={`sticky left-10 z-10 border border-slate-300 px-2 py-1 font-medium whitespace-nowrap group-hover:font-bold ${isActive ? 'bg-lime-200 !font-bold' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-lime-100`}`}>{row.name}</td>
                                     {culaPartyGroups.map(({ key }) => {
                                         const count = row.party_counts[key];
                                         const percentage = row.total > 0 ? `${((count / row.total) * 100).toFixed(2)}%` : '0.00%';
@@ -263,7 +263,7 @@ function CulaPartyTable({ rows, activeUdm, onSelectUdm }) {
                     </tbody>
                     <tfoot>
                         <tr className="bg-lime-50 font-bold text-slate-900">
-                            <td colSpan={2} className="border border-slate-300 px-2 py-1.5">Jumlah</td>
+                            <td colSpan={2} className="sticky left-0 z-10 border border-slate-300 bg-lime-50 px-2 py-1.5">Jumlah</td>
                             {culaPartyGroups.map(({ key }) => (
                                 <Fragment key={key}>
                                     <td className="border border-slate-300 px-1.5 py-1.5 text-right tabular-nums">{fmt(totals[key])}</td>
