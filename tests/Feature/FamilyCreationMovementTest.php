@@ -82,7 +82,7 @@ it('restricts summaries to UDM and locality scope without double counting locali
         ->where('family_creation_movement.total', 1));
     $user->update(['access_level' => 'udm', 'scope_key' => 'UDM A']);
     expect(app(FamilyCreationMovementService::class)->summary($user)['rows'])->toBe([
-        ['udm' => 'UDM A', 'total' => 1, 'family_count' => 1, 'unassigned_voters' => 0],
+        ['udm' => 'UDM A', 'total' => 1, 'family_count' => 1, 'reviewed_families' => 0, 'unassigned_voters' => 0],
     ]);
 });
 
@@ -99,8 +99,8 @@ it('backfills existing families once per location and keeps zero count UDMs afte
     expect($service->summary($admin)['total'])->toBe(1);
     $service->reset($admin);
     expect($service->summary($admin)['rows'])->toBe([
-        ['udm' => 'UDM A', 'total' => 0, 'family_count' => 1, 'unassigned_voters' => 0],
-        ['udm' => 'UDM B', 'total' => 0, 'family_count' => 1, 'unassigned_voters' => 0],
+        ['udm' => 'UDM A', 'total' => 0, 'family_count' => 1, 'reviewed_families' => 0, 'unassigned_voters' => 0],
+        ['udm' => 'UDM B', 'total' => 0, 'family_count' => 1, 'reviewed_families' => 0, 'unassigned_voters' => 0],
     ]);
 });
 
@@ -137,6 +137,9 @@ it('reports current families and active unassigned Malay voters independently of
 
     $family = PemilihFamily::query()->sole();
     $this->post(route('keluarga-pemilih.members.store', $family), ['pemilih_ids' => [$unassigned->id]])->assertSessionHasNoErrors();
+    $family->update(['reviewed_at' => now()]);
+    expect($service->summary($admin)['reviewed_families'])->toBe(1);
+    expect(array_column($service->summary($admin)['rows'], 'reviewed_families'))->toBe([1, 1]);
     expect($service->summary($admin))->toMatchArray(['total' => 0, 'family_count' => 1, 'unassigned_voters' => 2]);
 
     $scoped = User::factory()->withModules(['laporan'])->create(['access_level' => 'udm', 'scope_key' => 'UDM B']);
