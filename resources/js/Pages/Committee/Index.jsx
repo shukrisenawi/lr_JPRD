@@ -939,6 +939,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                 : (resolvedTab === 'udm' ? orderUdms(scopes.udm ?? [])[0]?.key : scopes[resolvedTab]?.[0]?.key) ?? '',
         }));
         setSelectedGroupId('');
+        setExpandedGroupId(null);
         setSelectedVoter(null);
         setSuggestions([]);
     }, [resolvedTab]);
@@ -957,6 +958,13 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
     const [expandedGroupId, setExpandedGroupId] = useState(null);
     const [committeeSearchQuery, setCommitteeSearchQuery] = useState('');
     const expandedGroupHeaderRef = useRef(null);
+
+    useEffect(() => {
+        if (expandedGroupId === null) return;
+
+        setSelectedGroupId(expandedGroupId);
+        form.setData('committee_group_id', expandedGroupId);
+    }, [expandedGroupId]);
 
     useEffect(() => {
         if (expandedGroupId === null) return;
