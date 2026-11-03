@@ -74,6 +74,17 @@ class KeluargaPemilihController extends Controller
 
         $voters = $this->activeMalayVoterQuery($user, $udmFilter, $localityFilter);
         $familyQueryBase = $this->visibleFamilyQuery($user, $udmFilter, $localityFilter);
+        $familyQueryBase->whereHas('members', function (Builder $query) use ($user, $udmFilter, $localityFilter): void {
+            $user->applyScopeToPemilihQuery($query);
+            $this->whereMalayRace($query);
+            $this->excludeDeceasedVoters($query);
+            if ($udmFilter !== '') {
+                $query->where('pemilih_records.dm', $udmFilter);
+            }
+            if ($localityFilter !== '') {
+                $query->where('pemilih_records.locality', $localityFilter);
+            }
+        });
         if ($searchFilter !== '') {
             $familyQueryBase->whereHas('members', function (Builder $query) use ($user, $udmFilter, $localityFilter, $searchFilter): void {
                 $user->applyScopeToPemilihQuery($query);
@@ -85,6 +96,7 @@ class KeluargaPemilihController extends Controller
                     $query->where('pemilih_records.locality', $localityFilter);
                 }
                 $this->applySearchTerm($query, $searchFilter);
+                $this->excludeDeceasedVoters($query);
             });
         }
         $familyTabCounts = [
@@ -185,6 +197,7 @@ class KeluargaPemilihController extends Controller
         $families = (clone $familiesQuery)
             ->with([
                 'father' => function ($query) use ($user, $udmFilter, $localityFilter): void {
+                    $this->excludeDeceasedVoters($query);
                     $user->applyScopeToPemilihQuery($query);
                     $this->whereMalayRace($query);
                     if ($udmFilter !== '') {
@@ -195,6 +208,7 @@ class KeluargaPemilihController extends Controller
                     }
                 },
                 'members' => function ($query) use ($user, $udmFilter, $localityFilter): void {
+                    $this->excludeDeceasedVoters($query);
                     $user->applyScopeToPemilihQuery($query);
                     $this->whereMalayRace($query);
                     if ($udmFilter !== '') {
@@ -939,6 +953,13 @@ class KeluargaPemilihController extends Controller
     private function whereMalayRace(Builder|QueryBuilder|Relation $query): Builder|QueryBuilder|Relation
     {
         return $query->whereRaw("UPPER(TRIM(COALESCE(pemilih_records.race, ''))) IN (?, ?)", ['MELAYU', 'M']);
+    }
+
+    private function excludeDeceasedVoters(Builder|Relation $query): void
+    {
+        $query->where(function (Builder $query): void {
+            $query->whereNull('pemilih_records.cula_code')->orWhere('pemilih_records.cula_code', '!=', '8');
+        });
     }
 
     private function visibleFamilyQuery(User $user, ?string $udm = null, ?string $locality = null): Builder

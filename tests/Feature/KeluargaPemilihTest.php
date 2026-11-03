@@ -761,6 +761,28 @@ it('groups unassigned voters by shared bin, binti or bt parent name before order
             ->where('unassignedVoters.data.3.parent_name', 'SALLEH'));
 });
 
+it('hides deceased members and deceased-only families in both family tabs', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    foreach (['families', 'reviewed'] as $tab) {
+        $family = PemilihFamily::query()->create(['name' => 'Keluarga Campuran', 'reviewed_at' => $tab === 'reviewed' ? now() : null]);
+        $living = createKeluargaPemilihRecord(['name' => 'AHLI HIDUP', 'cula_code' => null]);
+        $dead = createKeluargaPemilihRecord(['name' => 'AHLI MATI', 'cula_code' => '8']);
+        $family->members()->attach([$living->id, $dead->id]);
+        $family->update(['father_id' => $dead->id]);
+        $deadFamily = PemilihFamily::query()->create(['name' => 'Keluarga Mati', 'reviewed_at' => $family->reviewed_at]);
+        $deadFamily->members()->attach(createKeluargaPemilihRecord(['cula_code' => '8'])->id);
+
+        $this->actingAs($user)->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => $tab]))
+            ->assertOk()->assertInertia(fn ($page) => $page
+            ->where('families.total', 1)
+            ->where('families.data.0.member_count', 1)
+            ->where('families.data.0.members.0.id', $living->id)
+            ->where('families.data.0.father_id', null));
+        $this->actingAs($user)->get(route('keluarga-pemilih.index', ['udm' => 'UDM 1', 'tab' => $tab, 'q' => 'AHLI MATI']))
+            ->assertOk()->assertInertia(fn ($page) => $page->where('families.total', 0));
+    }
+});
+
 it('excludes deceased voters from the unassigned tab even when searched or filtered', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     createKeluargaPemilihRecord(['name' => 'PEMILIH HIDUP', 'cula_code' => null]);
