@@ -137,7 +137,10 @@ class KeluargaPemilihController extends Controller
         ])->values();
 
         $unassignedVotersQuery = $this->activeMalayVoterQuery($user, $udmFilter, $localityFilter)
-            ->whereDoesntHave('families');
+            ->whereDoesntHave('families')
+            ->where(function (Builder $query): void {
+                $query->whereNull('cula_code')->orWhere('cula_code', '!=', '8');
+            });
         if ($searchFilter !== '') {
             $this->applySearchTerm($unassignedVotersQuery, $searchFilter);
         }

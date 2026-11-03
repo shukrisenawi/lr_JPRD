@@ -761,6 +761,24 @@ it('groups unassigned voters by shared bin, binti or bt parent name before order
             ->where('unassignedVoters.data.3.parent_name', 'SALLEH'));
 });
 
+it('excludes deceased voters from the unassigned tab even when searched or filtered', function () {
+    $user = User::factory()->withModules(['keluarga-pemilih'])->create();
+    createKeluargaPemilihRecord(['name' => 'PEMILIH HIDUP', 'cula_code' => null]);
+    createKeluargaPemilihRecord(['name' => 'PEMILIH MATI', 'cula_code' => '8', 'cula_display_label' => 'MATI']);
+
+    foreach ([[], ['q' => 'PEMILIH MATI'], ['cula_codes' => ['8']]] as $filters) {
+        $this->actingAs($user)
+            ->get(route('keluarga-pemilih.index', array_merge([
+                'udm' => 'UDM 1',
+                'tab' => 'unassigned',
+            ], $filters)))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('unassignedVoters.total', $filters === [] ? 1 : 0)
+                ->where('unassignedVoters.data', fn ($voters) => collect($voters)->every(fn ($voter) => $voter['cula_code'] !== '8')));
+    }
+});
+
 it('filters unassigned voters by cula code, including voters not yet assigned a code', function () {
     $user = User::factory()->withModules(['keluarga-pemilih'])->create();
     createKeluargaPemilihRecord([
