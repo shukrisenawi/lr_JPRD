@@ -1060,10 +1060,6 @@ class CulaanController extends Controller
 
         request()->user()?->applyScopeToPemilihQuery($query);
 
-        if ($filters['udm'] === '') {
-            $query->whereRaw('1 = 0');
-        }
-
         $this->applyHashtagFilter($query, $filters);
 
         $this->applyGroupDemographicFilters($query, $filters['group_id']);

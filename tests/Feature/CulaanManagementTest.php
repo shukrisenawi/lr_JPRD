@@ -20,6 +20,37 @@ it('renders culaan page for authenticated user with module access', function () 
             ->where('voters.data', []));
 });
 
+it('counts data errors across all UDMs and respects the selected UDM', function () {
+    $user = User::factory()->withModules(['dashboard', 'culaan'])->create();
+
+    foreach (['UDM ALPHA', 'UDM BETA'] as $index => $udm) {
+        PemilihRecord::query()->create([
+            'identity_number' => '90010102558'.$index,
+            'no_kp' => '90010102558'.$index,
+            'name' => 'PEMILIH RALAT '.$index,
+            'dm' => $udm,
+            'status' => 'aktif',
+            'is_manual' => false,
+            'cula_code' => '2',
+            'cula_remark' => 'Kod culaan bercanggah',
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('culaan.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('filters.udm', '')
+            ->where('data_error_count', 2)
+            ->where('voters.data', []));
+
+    $this->actingAs($user)
+        ->get(route('culaan.index', ['udm' => 'UDM ALPHA']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('data_error_count', 1));
+});
+
 it('blocks culaan route when user role does not have module access', function () {
     $user = User::factory()->withModules(['dashboard'])->create();
 
