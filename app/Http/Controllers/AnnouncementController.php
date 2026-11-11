@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\Cawangan;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,11 +17,22 @@ class AnnouncementController extends Controller
     public function index(Request $request)
     {
         abort_unless($request->user()->isMasterAdmin(), 403);
+        $cawanganUdm = Cawangan::pluck('udm', 'id');
 
         return Inertia::render('Admin/Announcements', [
             'announcements' => Announcement::with(['roles:id,name', 'users:id,name'])->latest('id')->paginate(20)->through(fn ($item) => [...$item->popupData(), 'audience' => $item->audience, 'is_active' => $item->is_active, 'starts_at' => $item->starts_at?->format('Y-m-d'), 'expires_at' => $item->expires_at?->format('Y-m-d'), 'roles' => $item->roles, 'users' => $item->users]),
             'roles' => Role::orderBy('name')->get(['id', 'name']),
-            'users' => User::orderBy('name')->get(['id', 'name', 'email']),
+            'users' => User::orderBy('name')->get(['id', 'name', 'email', 'access_level', 'scope_key'])
+                ->map(fn (User $user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'udm' => match ($user->access_level) {
+                        'udm' => $user->scope_key,
+                        'cawangan' => $cawanganUdm->get($user->scope_key) ?? explode('|', $user->scope_key ?? '')[0],
+                        default => null,
+                    },
+                ]),
         ]);
     }
 
@@ -31,7 +43,7 @@ class AnnouncementController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(['text', 'poster'])],
             'body' => ['required_if:type,text', 'nullable', 'string', 'max:20000'],
-            'poster' => ['required_if:type,poster', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'poster' => ['required_if:type,poster', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'audience' => ['required', Rule::in(['all', 'roles', 'users'])],
             'role_ids' => ['required_if:audience,roles', 'array'],
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],

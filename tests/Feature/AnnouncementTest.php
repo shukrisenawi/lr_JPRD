@@ -5,6 +5,20 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+it('includes the recipient UDM in the selection list', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->create(['name' => 'AAA Penerima UDM', 'access_level' => 'udm', 'scope_key' => 'BUKIT']);
+    $this->actingAs($admin)->get(route('admin.announcements.index'))->assertInertia(fn ($page) => $page->where('users.0.id', $user->id)->where('users.0.udm', 'BUKIT'));
+});
+
+it('accepts posters up to 20 MB and rejects larger posters', function () {
+    Storage::fake('local');
+    $admin = User::factory()->masterAdmin()->create();
+    $data = ['title' => 'Poster besar', 'type' => 'poster', 'audience' => 'all'];
+    $this->actingAs($admin)->post(route('admin.announcements.store'), [...$data, 'poster' => UploadedFile::fake()->image('poster.png')->size(20480)])->assertSessionHasNoErrors()->assertRedirect();
+    $this->post(route('admin.announcements.store'), [...$data, 'poster' => UploadedFile::fake()->image('poster.png')->size(20481)])->assertSessionHasErrors('poster');
+});
+
 it('only displays announcements within their optional schedule including the expiry day', function () {
     $this->travelTo(now()->setDate(2026, 11, 11)->startOfDay());
     $user = User::factory()->withModules(['dashboard'])->create();
