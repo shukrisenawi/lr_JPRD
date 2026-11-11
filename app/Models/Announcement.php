@@ -30,6 +30,11 @@ class Announcement extends Model
         return $this->belongsToMany(User::class, 'announcement_dismissals');
     }
 
+    public function viewers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'announcement_views')->withPivot('viewed_at')->orderByPivot('viewed_at', 'desc');
+    }
+
     public function scopeForRecipient(Builder $query, User $user): void
     {
         $query->where('is_active', true)

@@ -5,6 +5,23 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+it('records first views per recipient and exposes names only to master admin', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->withModules(['dashboard'])->create();
+    $other = User::factory()->withModules(['dashboard'])->create();
+    $item = Announcement::create(['title' => 'Dilihat', 'body' => 'Mesej', 'audience' => 'users']);
+    $item->users()->attach($user);
+    $this->actingAs($other)->postJson(route('announcements.viewed', $item))->assertForbidden();
+    $this->actingAs($user)->postJson(route('announcements.viewed', $item))->assertOk();
+    $first = $item->viewers()->first()->pivot->viewed_at;
+    $this->travel(1)->hour();
+    $this->postJson(route('announcements.viewed', $item))->assertOk();
+    expect($item->viewers()->count())->toBe(1);
+    expect($item->viewers()->first()->pivot->viewed_at)->toBe($first);
+    $this->get(route('profile.edit'))->assertInertia(fn ($page) => $page->missing('pendingAnnouncements.0.viewers'));
+    $this->actingAs($admin)->get(route('admin.announcements.index'))->assertInertia(fn ($page) => $page->where('announcements.data.0.viewers.0.name', $user->name));
+});
+
 it('includes the recipient UDM in the selection list', function () {
     $admin = User::factory()->masterAdmin()->create();
     $user = User::factory()->create(['name' => 'AAA Penerima UDM', 'access_level' => 'udm', 'scope_key' => 'BUKIT']);

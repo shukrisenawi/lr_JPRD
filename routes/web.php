@@ -61,6 +61,7 @@ Route::middleware(['auth', 'scope.pemilih'])->group(function () {
     Route::put('/admin/pengumuman/{announcement}', [AnnouncementController::class, 'update'])->name('admin.announcements.update');
     Route::delete('/admin/pengumuman/{announcement}', [AnnouncementController::class, 'destroy'])->name('admin.announcements.destroy');
     Route::post('/pengumuman/{announcement}/dismiss', [AnnouncementController::class, 'dismiss'])->name('announcements.dismiss');
+    Route::post('/pengumuman/{announcement}/viewed', [AnnouncementController::class, 'viewed'])->name('announcements.viewed');
     Route::get('/pengumuman/{announcement}/poster', [AnnouncementController::class, 'poster'])->name('announcements.poster');
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
     Route::get('/dashboard-udm', DashboardUdmController::class)->middleware('module:dashboard-udm')->name('dashboard-udm');

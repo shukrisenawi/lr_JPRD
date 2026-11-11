@@ -1,6 +1,6 @@
 import Modal from '@/Components/Modal';
 import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 export default function AnnouncementPopup() {
@@ -12,6 +12,10 @@ export default function AnnouncementPopup() {
     const [error, setError] = useState('');
     const key = (item) => `${auth.user.id}:${url}:${item.id}`;
     const item = announcements.find((entry) => !closed.includes(key(entry)) && !hidden.includes(`${auth.user.id}:${entry.id}`));
+    const visibleId = !auth.user.must_change_password ? item?.id : null;
+    useEffect(() => {
+        if (visibleId) axios.post(route('announcements.viewed', visibleId)).catch(() => {});
+    }, [visibleId, auth.user.id, url]);
     const close = () => { setClosed((values) => [...values, key(item)]); setError(''); };
     const dismiss = async () => {
         setSaving(true);

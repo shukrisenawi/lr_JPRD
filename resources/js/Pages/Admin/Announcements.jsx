@@ -69,6 +69,10 @@ export default function Announcements({ announcements, roles, users }) {
                             <h3 className="break-words text-base font-bold text-slate-900">{item.title}</h3>
                             {item.body && <p className="mt-2 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600">{item.body}</p>}
                             <div className="mt-4 flex flex-wrap gap-1.5">{(item.audience === 'all' ? [{ id: 'all', name: 'Semua pengguna' }] : item.audience === 'roles' ? item.roles : item.users).map((entry) => <span key={entry.id} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">{entry.name}</span>)}</div>
+                            <details className="mt-4 rounded-lg border border-green-100 bg-green-50/60 px-3 py-2">
+                                <summary className="cursor-pointer text-xs font-semibold text-green-800">Telah lihat ({item.viewers.length} pengguna)</summary>
+                                {item.viewers.length ? <ul className="mt-3 max-h-48 space-y-2 overflow-y-auto">{item.viewers.map((viewer) => <li key={viewer.id} className="flex flex-wrap justify-between gap-x-4 gap-y-1 border-t border-green-100 pt-2 text-xs"><span className="font-medium text-slate-800">{viewer.name}</span><time className="text-slate-600">{viewer.viewed_at}</time></li>)}</ul> : <p className="mt-2 text-xs text-slate-600">Belum ada pengguna melihat pengumuman ini.</p>}
+                            </details>
                             <div className="mt-4 flex flex-col justify-between gap-4 border-t border-slate-100 pt-4 lg:flex-row lg:items-center">
                                 <p className="text-xs leading-relaxed text-slate-500">Mula: <span className="font-medium text-slate-700">{formatDate(item.starts_at) || 'Serta-merta'}</span><br />Tamat: <span className="font-medium text-slate-700">{formatDate(item.expires_at) || 'Tiada tarikh tamat'}</span></p>
                                 <div className="flex flex-wrap items-center gap-2">

@@ -20,7 +20,7 @@ class AnnouncementController extends Controller
         $cawanganUdm = Cawangan::pluck('udm', 'id');
 
         return Inertia::render('Admin/Announcements', [
-            'announcements' => Announcement::with(['roles:id,name', 'users:id,name'])->latest('id')->paginate(20)->through(fn ($item) => [...$item->popupData(), 'audience' => $item->audience, 'is_active' => $item->is_active, 'starts_at' => $item->starts_at?->format('Y-m-d'), 'expires_at' => $item->expires_at?->format('Y-m-d'), 'roles' => $item->roles, 'users' => $item->users]),
+            'announcements' => Announcement::with(['roles:id,name', 'users:id,name', 'viewers:id,name'])->latest('id')->paginate(20)->through(fn ($item) => [...$item->popupData(), 'audience' => $item->audience, 'is_active' => $item->is_active, 'starts_at' => $item->starts_at?->format('Y-m-d'), 'expires_at' => $item->expires_at?->format('Y-m-d'), 'roles' => $item->roles, 'users' => $item->users, 'viewers' => $item->viewers->map(fn ($user) => ['id' => $user->id, 'name' => $user->name, 'viewed_at' => $user->pivot->viewed_at])]),
             'roles' => Role::orderBy('name')->get(['id', 'name']),
             'users' => User::orderBy('name')->get(['id', 'name', 'email', 'access_level', 'scope_key'])
                 ->map(fn (User $user) => [
@@ -93,6 +93,18 @@ class AnnouncementController extends Controller
     {
         abort_unless(Announcement::forRecipient($request->user())->whereKey($announcement->id)->exists(), 403);
         $announcement->dismissals()->syncWithoutDetaching([$request->user()->id]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function viewed(Request $request, Announcement $announcement)
+    {
+        abort_unless(Announcement::forRecipient($request->user())->whereKey($announcement->id)->exists(), 403);
+        DB::table('announcement_views')->insertOrIgnore([
+            'announcement_id' => $announcement->id,
+            'user_id' => $request->user()->id,
+            'viewed_at' => now(),
+        ]);
 
         return response()->json(['ok' => true]);
     }
