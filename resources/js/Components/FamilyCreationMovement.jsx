@@ -43,6 +43,17 @@ export default function FamilyCreationMovement({ summary, activeUdm, onSelectUdm
                     <tbody className="divide-y divide-slate-200 text-slate-700">
                         {rows.map((row, index) => {
                             const isActive = activeUdm === row.udm;
+                            const hasCreatedFamilies = Number(row.total) > 0;
+                            const rowTheme = isActive
+                                ? 'bg-emerald-100 font-bold text-slate-950'
+                                : hasCreatedFamilies
+                                    ? 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100 hover:font-bold'
+                                    : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} hover:bg-emerald-50 hover:font-bold`;
+                            const stickyCellTheme = isActive
+                                ? 'bg-emerald-100'
+                                : hasCreatedFamilies
+                                    ? 'bg-emerald-50 group-hover:bg-emerald-100'
+                                    : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-emerald-50`;
                             const cellClass = `px-4 py-2 group-hover:font-bold ${isActive ? 'font-bold' : 'font-semibold'}`;
                             return (
                                 <tr
@@ -56,9 +67,9 @@ export default function FamilyCreationMovement({ summary, activeUdm, onSelectUdm
                                             onSelectUdm(row.udm);
                                         }
                                     }}
-                                    className={`group cursor-pointer transition-colors ${isActive ? 'bg-emerald-100 font-bold text-slate-950' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} hover:bg-emerald-50 hover:font-bold`}`}
+                                    className={`group cursor-pointer transition-colors ${rowTheme}`}
                                 >
-                                    <th scope="row" className={`${cellClass} sticky left-0 z-10 text-left transition-colors ${isActive ? 'bg-emerald-100' : `${index % 2 === 1 ? 'bg-slate-50' : 'bg-white'} group-hover:bg-emerald-50`}`}>{row.udm}</th>
+                                    <th scope="row" className={`${cellClass} sticky left-0 z-10 text-left transition-colors ${stickyCellTheme}`}>{row.udm}</th>
                                     <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.total)}</td>
                                     <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.family_count)}</td>
                                     <td className={`${cellClass} text-center tabular-nums`}>{fmt(row.reviewed_families)}</td>
