@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Announcement;
 use App\Models\Cawangan;
 use App\Models\CommitteeMembership;
 use App\Models\PemilihBaruRecord;
@@ -39,6 +40,11 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
+            'pendingAnnouncements' => fn () => $request->user()
+                ? Announcement::forRecipient($request->user())
+                    ->whereDoesntHave('dismissals', fn ($query) => $query->whereKey($request->user()->id))
+                    ->latest('id')->get()->map(fn ($item) => $item->popupData())
+                : [],
             'verifiedPhones' => function () use ($request) {
                 if (! $request->user()) {
                     return [];

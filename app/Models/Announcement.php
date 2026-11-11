@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+#[Fillable(['title', 'body', 'poster_path', 'audience', 'is_active'])]
+class Announcement extends Model
+{
+    protected function casts(): array
+    {
+        return ['is_active' => 'boolean'];
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class);
+    }
+
+    public function dismissals(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'announcement_dismissals');
+    }
+
+    public function scopeForRecipient(Builder $query, User $user): void
+    {
+        $query->where('is_active', true)->where(function (Builder $query) use ($user) {
+            $query->where('audience', 'all')
+                ->orWhere(fn (Builder $q) => $q->where('audience', 'roles')->whereHas('roles', fn (Builder $r) => $r->whereKey($user->role_id)))
+                ->orWhere(fn (Builder $q) => $q->where('audience', 'users')->whereHas('users', fn (Builder $u) => $u->whereKey($user->id)));
+        });
+    }
+
+    public function popupData(): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'body' => $this->body,
+            'poster_url' => $this->poster_path ? route('announcements.poster', $this) : null,
+        ];
+    }
+}

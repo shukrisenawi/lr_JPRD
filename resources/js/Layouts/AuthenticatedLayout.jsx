@@ -1,4 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import AnnouncementPopup from '@/Components/AnnouncementPopup';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -124,6 +125,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'cawangan', href: 'admin.cawangan.index', routePattern: 'admin.cawangan.*', label: 'Cawangan' },
                 { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
                 ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
+                ...(isMasterAdmin ? [{ key: 'pengumuman', href: 'admin.announcements.index', routePattern: 'admin.announcements.*', label: 'Pengumuman' }] : []),
                 ...(isMasterAdmin ? [{ key: 'api-keys', href: 'admin.api-keys.index', routePattern: 'admin.api-keys.*', label: 'Generate API Key' }] : []),
             ],
         },
@@ -163,7 +165,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                             <div className="ml-2 hidden items-stretch sm:flex">
                                 {navGroups.map((item) => {
                                     if (item.items) {
-                                        const accessibleItems = item.items.filter(i => canAccess(i.module ?? i.key) || ['akses', 'api-keys'].includes(i.key));
+                                        const accessibleItems = item.items.filter(i => canAccess(i.module ?? i.key) || (isMasterAdmin && ['akses', 'api-keys', 'pengumuman'].includes(i.key)));
                                         if (accessibleItems.length === 0) return null;
                                         const hasSubBadge = accessibleItems.some(sub => sub.badge > 0);
                                         const hasActiveSubmenu = accessibleItems.some(sub => route().current(sub.routePattern));
@@ -312,6 +314,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('cawangan') && { href: route('admin.cawangan.index'), active: route().current('admin.cawangan.*'), label: 'Cawangan' },
                                     canAccess('settings') && { href: route('settings.edit'), active: route().current('settings.edit'), label: 'Settings' },
                                     isMasterAdmin && { href: route('admin.access.index'), active: route().current('admin.access.*'), label: 'Akses Pengguna' },
+                                    isMasterAdmin && { href: route('admin.announcements.index'), active: route().current('admin.announcements.*'), label: 'Pengumuman' },
                                     isMasterAdmin && { href: route('admin.api-keys.index'), active: route().current('admin.api-keys.*'), label: 'Generate API Key' },
                                 ].filter(Boolean) },
                             ];
@@ -378,6 +381,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
             )}
 
             <main className="pb-6 pt-3">{children}</main>
+            <AnnouncementPopup />
         </div>
     );
 }

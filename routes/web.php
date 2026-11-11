@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\SpokasController;
 use App\Http\Controllers\AhliPasController;
 use App\Http\Controllers\AktivitiController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\CarianPemilihController;
@@ -55,6 +56,12 @@ Route::post('/aktiviti/awam/{token}/access', [AktivitiController::class, 'public
     ->name('aktiviti.public.access');
 
 Route::middleware(['auth', 'scope.pemilih'])->group(function () {
+    Route::get('/admin/pengumuman', [AnnouncementController::class, 'index'])->name('admin.announcements.index');
+    Route::post('/admin/pengumuman', [AnnouncementController::class, 'store'])->name('admin.announcements.store');
+    Route::put('/admin/pengumuman/{announcement}', [AnnouncementController::class, 'update'])->name('admin.announcements.update');
+    Route::delete('/admin/pengumuman/{announcement}', [AnnouncementController::class, 'destroy'])->name('admin.announcements.destroy');
+    Route::post('/pengumuman/{announcement}/dismiss', [AnnouncementController::class, 'dismiss'])->name('announcements.dismiss');
+    Route::get('/pengumuman/{announcement}/poster', [AnnouncementController::class, 'poster'])->name('announcements.poster');
     Route::get('/dashboard', DashboardController::class)->middleware('module:dashboard')->name('dashboard');
     Route::get('/dashboard-udm', DashboardUdmController::class)->middleware('module:dashboard-udm')->name('dashboard-udm');
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('module:laporan')->name('laporan.index');
