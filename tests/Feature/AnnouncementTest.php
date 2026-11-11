@@ -5,6 +5,15 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+it('stores rich text while keeping legacy messages as plain text', function () {
+    $admin = User::factory()->masterAdmin()->create();
+    $this->actingAs($admin)->post(route('admin.announcements.store'), ['title' => 'Format', 'type' => 'text', 'body' => '<p><strong>Mesej tebal</strong></p>', 'body_format' => 'html', 'audience' => 'all'])->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('announcements', ['title' => 'Format', 'body_format' => 'html']);
+    $legacy = Announcement::create(['title' => 'Lama', 'body' => '<teks asal>', 'audience' => 'all']);
+    expect($legacy->fresh()->popupData()['body_format'])->toBe('text');
+    $this->post(route('admin.announcements.store'), ['title' => 'Format salah', 'type' => 'text', 'body' => 'Mesej', 'body_format' => 'script', 'audience' => 'all'])->assertSessionHasErrors('body_format');
+});
+
 it('counts all currently active announcements for the master admin menu badge', function () {
     $this->travelTo(now()->setDate(2026, 11, 11)->startOfDay());
     $admin = User::factory()->masterAdmin()->create();

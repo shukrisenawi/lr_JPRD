@@ -43,6 +43,7 @@ class AnnouncementController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(['text', 'poster'])],
             'body' => ['required_if:type,text', 'nullable', 'string', 'max:20000'],
+            'body_format' => ['nullable', Rule::in(['text', 'html'])],
             'poster' => ['required_if:type,poster', 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'audience' => ['required', Rule::in(['all', 'roles', 'users'])],
             'role_ids' => ['required_if:audience,roles', 'array'],
@@ -55,7 +56,7 @@ class AnnouncementController extends Controller
         $path = $data['type'] === 'poster' ? $request->file('poster')->store('announcements', 'local') : null;
         try {
             DB::transaction(function () use ($data, $path) {
-                $announcement = Announcement::create(['title' => $data['title'], 'body' => $data['body'] ?? null, 'poster_path' => $path, 'audience' => $data['audience'], 'starts_at' => $data['starts_at'] ?? null, 'expires_at' => $data['expires_at'] ?? null]);
+                $announcement = Announcement::create(['title' => $data['title'], 'body' => $data['body'] ?? null, 'body_format' => $data['body_format'] ?? 'text', 'poster_path' => $path, 'audience' => $data['audience'], 'starts_at' => $data['starts_at'] ?? null, 'expires_at' => $data['expires_at'] ?? null]);
                 $announcement->roles()->sync($data['audience'] === 'roles' ? $data['role_ids'] : []);
                 $announcement->users()->sync($data['audience'] === 'users' ? $data['user_ids'] : []);
             });

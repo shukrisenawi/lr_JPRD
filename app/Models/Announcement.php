@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['title', 'body', 'poster_path', 'audience', 'is_active', 'starts_at', 'expires_at'])]
+#[Fillable(['title', 'body', 'body_format', 'poster_path', 'audience', 'is_active', 'starts_at', 'expires_at'])]
 class Announcement extends Model
 {
     protected function casts(): array
@@ -57,6 +57,7 @@ class Announcement extends Model
             'id' => $this->id,
             'title' => $this->title,
             'body' => $this->body,
+            'body_format' => $this->body_format ?? 'text',
             'poster_url' => $this->poster_path ? route('announcements.poster', $this) : null,
         ];
     }

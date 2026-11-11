@@ -1,10 +1,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Modal from '@/Components/Modal';
+import AnnouncementEditor from '@/Components/AnnouncementEditor';
+import AnnouncementBody from '@/Components/AnnouncementBody';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function Announcements({ announcements, roles, users }) {
-    const form = useForm({ title: '', type: 'text', body: '', poster: null, audience: 'all', role_ids: [], user_ids: [], starts_at: '', expires_at: '' });
+    const form = useForm({ title: '', type: 'text', body: '', body_format: 'html', poster: null, audience: 'all', role_ids: [], user_ids: [], starts_at: '', expires_at: '' });
     const [search, setSearch] = useState('');
     const [fileKey, setFileKey] = useState(0);
     const [showCreate, setShowCreate] = useState(false);
@@ -40,7 +42,7 @@ export default function Announcements({ announcements, roles, users }) {
                 <label className="block text-sm font-medium">Tajuk<input required maxLength={255} className={input} value={form.data.title} onChange={(e) => form.setData('title', e.target.value)} /></label>
                 <label className="block text-sm font-medium">Jenis<select className={input} value={form.data.type} onChange={(e) => form.setData('type', e.target.value)}><option value="text">Teks</option><option value="poster">Poster</option></select></label>
                 {form.data.type === 'poster' && <label className="block text-sm font-medium">Poster (JPG, PNG atau WebP, maksimum 20 MB)<input key={fileKey} type="file" required accept="image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm" onChange={(e) => form.setData('poster', e.target.files[0])} /></label>}
-                <label className="block text-sm font-medium">{form.data.type === 'text' ? 'Mesej' : 'Keterangan (pilihan)'}<textarea required={form.data.type === 'text'} rows={5} maxLength={20000} className={input} value={form.data.body} onChange={(e) => form.setData('body', e.target.value)} /></label>
+                <div><p className="text-sm font-medium">{form.data.type === 'text' ? 'Mesej' : 'Keterangan (pilihan)'}</p><AnnouncementEditor value={form.data.body} onChange={(value) => form.setData('body', value)} disabled={form.processing} /><p className="mt-1 text-xs text-slate-500">Pilih teks untuk mengubah format atau menambah pautan.</p></div>
                 <label className="block text-sm font-medium">Penerima<select className={input} value={form.data.audience} onChange={(e) => form.setData('audience', e.target.value)}><option value="all">Semua pengguna</option><option value="roles">Mengikut peranan (role)</option><option value="users">Pengguna individu / personal</option></select></label>
                 <div className="grid gap-4 sm:grid-cols-2">
                     <label className="block text-sm font-medium">Tarikh mula (pilihan)<input type="date" className={input} value={form.data.starts_at} onChange={(e) => form.setData('starts_at', e.target.value)} /></label>
@@ -67,7 +69,7 @@ export default function Announcements({ announcements, roles, users }) {
                         <div className="min-w-0 flex-1 p-5">
                             <div className="mb-3 flex flex-wrap items-center gap-2"><span className="text-xs font-medium text-slate-500">{item.poster_url ? 'Poster' : 'Teks'} · #{item.id}</span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status(item) === 'Aktif' ? 'bg-green-100 text-green-800' : status(item) === 'Dijadualkan' ? 'border border-green-200 bg-green-50 text-green-800' : 'bg-slate-100 text-slate-600'}`}>{status(item)}</span></div>
                             <h3 className="break-words text-base font-bold text-slate-900">{item.title}</h3>
-                            {item.body && <p className="mt-2 line-clamp-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-600">{item.body}</p>}
+                            {item.body && <div className="mt-2 max-h-40 overflow-y-auto"><AnnouncementBody item={item} /></div>}
                             <div className="mt-4 flex flex-wrap gap-1.5">{(item.audience === 'all' ? [{ id: 'all', name: 'Semua pengguna' }] : item.audience === 'roles' ? item.roles : item.users).map((entry) => <span key={entry.id} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700">{entry.name}</span>)}</div>
                             <details className="mt-4 rounded-lg border border-green-100 bg-green-50/60 px-3 py-2">
                                 <summary className="cursor-pointer text-xs font-semibold text-green-800">Telah lihat ({item.viewers.length} pengguna)</summary>
