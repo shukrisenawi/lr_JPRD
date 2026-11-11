@@ -18,7 +18,7 @@ class AnnouncementController extends Controller
         abort_unless($request->user()->isMasterAdmin(), 403);
 
         return Inertia::render('Admin/Announcements', [
-            'announcements' => Announcement::with(['roles:id,name', 'users:id,name'])->latest('id')->paginate(20)->through(fn ($item) => [...$item->popupData(), 'audience' => $item->audience, 'is_active' => $item->is_active, 'roles' => $item->roles, 'users' => $item->users]),
+            'announcements' => Announcement::with(['roles:id,name', 'users:id,name'])->latest('id')->paginate(20)->through(fn ($item) => [...$item->popupData(), 'audience' => $item->audience, 'is_active' => $item->is_active, 'starts_at' => $item->starts_at?->format('Y-m-d'), 'expires_at' => $item->expires_at?->format('Y-m-d'), 'roles' => $item->roles, 'users' => $item->users]),
             'roles' => Role::orderBy('name')->get(['id', 'name']),
             'users' => User::orderBy('name')->get(['id', 'name', 'email']),
         ]);
@@ -37,11 +37,13 @@ class AnnouncementController extends Controller
             'role_ids.*' => ['integer', 'distinct', 'exists:roles,id'],
             'user_ids' => ['required_if:audience,users', 'array'],
             'user_ids.*' => ['integer', 'distinct', 'exists:users,id'],
+            'starts_at' => ['nullable', 'date_format:Y-m-d'],
+            'expires_at' => ['nullable', 'date_format:Y-m-d', Rule::when($request->filled('starts_at'), ['after_or_equal:starts_at'])],
         ]);
         $path = $data['type'] === 'poster' ? $request->file('poster')->store('announcements', 'local') : null;
         try {
             DB::transaction(function () use ($data, $path) {
-                $announcement = Announcement::create(['title' => $data['title'], 'body' => $data['body'] ?? null, 'poster_path' => $path, 'audience' => $data['audience']]);
+                $announcement = Announcement::create(['title' => $data['title'], 'body' => $data['body'] ?? null, 'poster_path' => $path, 'audience' => $data['audience'], 'starts_at' => $data['starts_at'] ?? null, 'expires_at' => $data['expires_at'] ?? null]);
                 $announcement->roles()->sync($data['audience'] === 'roles' ? $data['role_ids'] : []);
                 $announcement->users()->sync($data['audience'] === 'users' ? $data['user_ids'] : []);
             });

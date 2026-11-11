@@ -7,12 +7,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['title', 'body', 'poster_path', 'audience', 'is_active'])]
+#[Fillable(['title', 'body', 'poster_path', 'audience', 'is_active', 'starts_at', 'expires_at'])]
 class Announcement extends Model
 {
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return ['is_active' => 'boolean', 'starts_at' => 'date', 'expires_at' => 'date'];
     }
 
     public function roles(): BelongsToMany
@@ -32,11 +32,14 @@ class Announcement extends Model
 
     public function scopeForRecipient(Builder $query, User $user): void
     {
-        $query->where('is_active', true)->where(function (Builder $query) use ($user) {
-            $query->where('audience', 'all')
-                ->orWhere(fn (Builder $q) => $q->where('audience', 'roles')->whereHas('roles', fn (Builder $r) => $r->whereKey($user->role_id)))
-                ->orWhere(fn (Builder $q) => $q->where('audience', 'users')->whereHas('users', fn (Builder $u) => $u->whereKey($user->id)));
-        });
+        $query->where('is_active', true)
+            ->where(fn (Builder $q) => $q->whereNull('starts_at')->orWhereDate('starts_at', '<=', today()->toDateString()))
+            ->where(fn (Builder $q) => $q->whereNull('expires_at')->orWhereDate('expires_at', '>=', today()->toDateString()))
+            ->where(function (Builder $query) use ($user) {
+                $query->where('audience', 'all')
+                    ->orWhere(fn (Builder $q) => $q->where('audience', 'roles')->whereHas('roles', fn (Builder $r) => $r->whereKey($user->role_id)))
+                    ->orWhere(fn (Builder $q) => $q->where('audience', 'users')->whereHas('users', fn (Builder $u) => $u->whereKey($user->id)));
+            });
     }
 
     public function popupData(): array

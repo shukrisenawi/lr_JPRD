@@ -5,6 +5,19 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+it('only displays announcements within their optional schedule including the expiry day', function () {
+    $this->travelTo(now()->setDate(2026, 11, 11)->startOfDay());
+    $user = User::factory()->withModules(['dashboard'])->create();
+    foreach ([['Tiada jadual', null, null], ['Hari ini', '2026-11-11', '2026-11-11'], ['Akan datang', '2026-11-12', null], ['Tamat', null, '2026-11-10']] as [$title, $start, $end]) {
+        Announcement::create(['title' => $title, 'body' => 'Mesej', 'audience' => 'all', 'starts_at' => $start, 'expires_at' => $end]);
+    }
+    expect(Announcement::forRecipient($user)->pluck('title')->all())->toBe(['Tiada jadual', 'Hari ini']);
+    $admin = User::factory()->masterAdmin()->create();
+    $this->actingAs($admin)->post(route('admin.announcements.store'), ['title' => 'Jadual', 'type' => 'text', 'body' => 'Mesej', 'audience' => 'all', 'starts_at' => '2026-11-12', 'expires_at' => '2026-11-11'])->assertSessionHasErrors('expires_at');
+    $this->post(route('admin.announcements.store'), ['title' => 'Jadual sah', 'type' => 'text', 'body' => 'Mesej', 'audience' => 'all', 'starts_at' => '2026-11-12', 'expires_at' => '2026-11-13'])->assertRedirect();
+    $this->assertDatabaseHas('announcements', ['title' => 'Jadual sah', 'starts_at' => '2026-11-12 00:00:00', 'expires_at' => '2026-11-13 00:00:00']);
+});
+
 it('lets only master admin publish announcements', function () {
     $admin = User::factory()->masterAdmin()->create();
     $this->actingAs($admin)->get(route('admin.announcements.index'))->assertOk();
