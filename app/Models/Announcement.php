@@ -35,16 +35,20 @@ class Announcement extends Model
         return $this->belongsToMany(User::class, 'announcement_views')->withPivot('viewed_at')->orderByPivot('viewed_at', 'desc');
     }
 
-    public function scopeForRecipient(Builder $query, User $user): void
+    public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true)
             ->where(fn (Builder $q) => $q->whereNull('starts_at')->orWhereDate('starts_at', '<=', today()->toDateString()))
-            ->where(fn (Builder $q) => $q->whereNull('expires_at')->orWhereDate('expires_at', '>=', today()->toDateString()))
-            ->where(function (Builder $query) use ($user) {
-                $query->where('audience', 'all')
-                    ->orWhere(fn (Builder $q) => $q->where('audience', 'roles')->whereHas('roles', fn (Builder $r) => $r->whereKey($user->role_id)))
-                    ->orWhere(fn (Builder $q) => $q->where('audience', 'users')->whereHas('users', fn (Builder $u) => $u->whereKey($user->id)));
-            });
+            ->where(fn (Builder $q) => $q->whereNull('expires_at')->orWhereDate('expires_at', '>=', today()->toDateString()));
+    }
+
+    public function scopeForRecipient(Builder $query, User $user): void
+    {
+        $query->active()->where(function (Builder $query) use ($user) {
+            $query->where('audience', 'all')
+                ->orWhere(fn (Builder $q) => $q->where('audience', 'roles')->whereHas('roles', fn (Builder $r) => $r->whereKey($user->role_id)))
+                ->orWhere(fn (Builder $q) => $q->where('audience', 'users')->whereHas('users', fn (Builder $u) => $u->whereKey($user->id)));
+        });
     }
 
     public function popupData(): array

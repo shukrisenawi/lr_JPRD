@@ -5,6 +5,17 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
+it('counts all currently active announcements for the master admin menu badge', function () {
+    $this->travelTo(now()->setDate(2026, 11, 11)->startOfDay());
+    $admin = User::factory()->masterAdmin()->create();
+    $user = User::factory()->withModules(['dashboard'])->create();
+    foreach ([['all', true, null, null], ['users', true, '2026-11-11', '2026-11-11'], ['all', false, null, null], ['all', true, '2026-11-12', null], ['all', true, null, '2026-11-10']] as [$audience, $active, $start, $end]) {
+        Announcement::create(['title' => 'Badge', 'audience' => $audience, 'is_active' => $active, 'starts_at' => $start, 'expires_at' => $end]);
+    }
+    $this->actingAs($admin)->get(route('admin.announcements.index'))->assertInertia(fn ($page) => $page->where('badgeCounts.pengumumanAktif', 2));
+    $this->actingAs($user)->get(route('profile.edit'))->assertInertia(fn ($page) => $page->where('badgeCounts.pengumumanAktif', 0));
+});
+
 it('records first views per recipient and exposes names only to master admin', function () {
     $admin = User::factory()->masterAdmin()->create();
     $user = User::factory()->withModules(['dashboard'])->create();

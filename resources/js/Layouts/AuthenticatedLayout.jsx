@@ -63,6 +63,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
     const ahliPasSalahCula = badgeCounts?.ahliPasSalahCula ?? 0;
     const ajkBukanPas = badgeCounts?.ajkBukanPas ?? 0;
     const plkBelumSemak = badgeCounts?.plkBelumSemak ?? 0;
+    const pengumumanAktif = badgeCounts?.pengumumanAktif ?? 0;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
     const [showSwitchUser, setShowSwitchUser] = useState(false);
@@ -125,7 +126,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                 { key: 'cawangan', href: 'admin.cawangan.index', routePattern: 'admin.cawangan.*', label: 'Cawangan' },
                 { key: 'settings', href: 'settings.edit', routePattern: 'settings.edit', label: 'Settings' },
                 ...(isMasterAdmin ? [{ key: 'akses', href: 'admin.access.index', routePattern: 'admin.access.*', label: 'Akses' }] : []),
-                ...(isMasterAdmin ? [{ key: 'pengumuman', href: 'admin.announcements.index', routePattern: 'admin.announcements.*', label: 'Pengumuman' }] : []),
+                ...(isMasterAdmin ? [{ key: 'pengumuman', href: 'admin.announcements.index', routePattern: 'admin.announcements.*', label: 'Pengumuman', badge: pengumumanAktif }] : []),
                 ...(isMasterAdmin ? [{ key: 'api-keys', href: 'admin.api-keys.index', routePattern: 'admin.api-keys.*', label: 'Generate API Key' }] : []),
             ],
         },
@@ -314,7 +315,7 @@ export default function AuthenticatedLayout({ header, children, variant = 'light
                                     canAccess('cawangan') && { href: route('admin.cawangan.index'), active: route().current('admin.cawangan.*'), label: 'Cawangan' },
                                     canAccess('settings') && { href: route('settings.edit'), active: route().current('settings.edit'), label: 'Settings' },
                                     isMasterAdmin && { href: route('admin.access.index'), active: route().current('admin.access.*'), label: 'Akses Pengguna' },
-                                    isMasterAdmin && { href: route('admin.announcements.index'), active: route().current('admin.announcements.*'), label: 'Pengumuman' },
+                                    isMasterAdmin && { href: route('admin.announcements.index'), active: route().current('admin.announcements.*'), label: 'Pengumuman', badge: pengumumanAktif },
                                     isMasterAdmin && { href: route('admin.api-keys.index'), active: route().current('admin.api-keys.*'), label: 'Generate API Key' },
                                 ].filter(Boolean) },
                             ];

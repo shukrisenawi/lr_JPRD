@@ -115,6 +115,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
             'badgeCounts' => [
+                'pengumumanAktif' => $request->user()?->isMasterAdmin() ? Announcement::active()->count() : 0,
                 'pusatKhidmatBelumSemak' => $this->getPusatKhidmatBelumSemakCount($request->user()),
                 'plkBelumSemak' => $this->getPlkBelumSemakCount($request->user()),
                 'belumDicula' => $this->getBelumDiculaCount($request->user()),
