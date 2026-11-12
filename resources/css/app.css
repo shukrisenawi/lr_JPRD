@@ -288,3 +288,11 @@
         @apply chip bg-violet-100 text-violet-800;
     }
 }
+/* Quill editor and announcement output share the same formatting rules. */
+.announcement-quill .ql-toolbar.ql-snow { border-color: #cbd5e1; border-radius: 8px 8px 0 0; background: #f8fafc; }
+.announcement-quill .ql-container.ql-snow { border-color: #cbd5e1; font-family: inherit; font-size: 14px; }
+.announcement-quill .ql-editor { min-height: 220px; max-height: 360px; color: #334155; }
+.announcement-quill .ql-tooltip { left: 8px !important; max-width: calc(100% - 16px); white-space: normal; z-index: 1; }
+.announcement-quill .ql-tooltip input { max-width: 100%; }
+.announcement-rich-body.ql-editor { padding: 0; min-height: 0; height: auto; overflow: visible; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 14px; line-height: 1.65; color: #334155; }
+.announcement-rich-body a { color: #15803d; text-decoration: underline; }
