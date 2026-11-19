@@ -6,6 +6,7 @@ import N8nMessageModal from '@/Components/N8nMessageModal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SummaryIcon from '@/Components/SummaryIcon';
 import PhoneNumber from '@/Components/PhoneNumber';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { orderUdms } from '@/Utils/udmOrder';
@@ -1540,7 +1541,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                 onClick={(e) => { e.stopPropagation(); setWhatsappModal({ group, vacantOnly: false }); }}
                                                 className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                             >
-                                                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white mr-1">C</span>
+                                                <SummaryIcon name="copy" className="mr-1 inline-block h-3.5 w-3.5 align-middle" />
                                                 Copy
                                             </button>
                                             {hasVacantPositions && (
@@ -1550,7 +1551,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                     className="whitespace-nowrap rounded-md border border-amber-200 bg-white px-2 py-1 text-[10px] font-bold text-amber-700 transition hover:bg-amber-50"
                                                     title="Copy jawatan masih kosong"
                                                 >
-                                                    <span className="mr-1 rounded bg-amber-500 px-1 py-0.5 text-[9px] font-black text-white">K</span>
+                                                    <SummaryIcon name="vacant" className="mr-1 inline-block h-3.5 w-3.5 align-middle" />
                                                     <span className="sm:hidden">Masih Kosong</span>
                                                     <span className="hidden sm:inline">Copy Jawatan Masih Kosong</span>
                                                 </button>
@@ -1560,7 +1561,7 @@ const MembershipManager = forwardRef(function MembershipManager({ groups, member
                                                 onClick={(e) => { e.stopPropagation(); exportGroupToExcel(group); }}
                                                 className="rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                             >
-                                                <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white mr-1">X</span>
+                                                <SummaryIcon name="table" className="mr-1 inline-block h-3.5 w-3.5 align-middle" />
                                                 Excel
                                             </button>
                                             <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700">{group.totalMembers} ahli</span>
@@ -2214,7 +2215,7 @@ function CommitteeDetailPopup({ scope, members, level, groups, highlight, onClos
                                             }}
                                             className="flex items-center gap-1 rounded-md border border-green-200 bg-white px-2 py-1 text-[10px] font-bold text-green-700 transition hover:bg-green-50"
                                         >
-                                            <span className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-black text-white">X</span>
+                                            <SummaryIcon name="table" className="h-4 w-4 text-green-600" />
                                             Excel
                                         </button>
                                     </div>

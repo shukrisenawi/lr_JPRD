@@ -3,6 +3,7 @@ import InputError from '@/Components/InputError';
 import KempenTabs from '@/Components/KempenTabs';
 import PhoneNumber from '@/Components/PhoneNumber';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SummaryIcon from '@/Components/SummaryIcon';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import { Head, router, usePage } from '@inertiajs/react';
 import { orderUdms } from '@/Utils/udmOrder';
@@ -974,7 +975,7 @@ export default function VccIndex({ kempen = false, filters, summary, udms, local
                         onClick={exportToExcel}
                         className="hidden shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex"
                     >
-                        <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
+                        <SummaryIcon name="table" className="h-4 w-4 text-green-600" />
                         Export Excel
                     </button>
                 </div>

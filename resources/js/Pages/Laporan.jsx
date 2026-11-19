@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SummaryIcon from '@/Components/SummaryIcon';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import FamilyCreationMovement from '@/Components/FamilyCreationMovement';
 import { Head, usePage } from '@inertiajs/react';
@@ -87,17 +88,17 @@ function renderCula(b = []) {
 
 function StatCard({ label, value, detail, color = 'violet' }) {
     const colors = {
-        violet: { card: 'border-slate-200 bg-white', icon: 'bg-green-100 text-green-700', value: 'text-slate-800', symbol: 'PE' },
-        emerald: { card: 'border-lime-100 bg-white', icon: 'bg-lime-100 text-lime-700', value: 'text-emerald-700', symbol: 'OK' },
-        amber: { card: 'border-amber-200 bg-white', icon: 'bg-amber-100 text-amber-700', value: 'text-orange-500', symbol: 'NO' },
-        slate: { card: 'border-slate-200 bg-white', icon: 'bg-slate-100 text-slate-600', value: 'text-slate-800', symbol: 'DB' },
-        cyan: { card: 'border-sky-100 bg-white', icon: 'bg-sky-100 text-sky-700', value: 'text-blue-700', symbol: '%' },
+        violet: { card: 'border-slate-200 bg-white', icon: 'bg-green-100 text-green-700', value: 'text-slate-800', iconName: 'users' },
+        emerald: { card: 'border-lime-100 bg-white', icon: 'bg-lime-100 text-lime-700', value: 'text-emerald-700', iconName: 'check' },
+        amber: { card: 'border-amber-200 bg-white', icon: 'bg-amber-100 text-amber-700', value: 'text-orange-500', iconName: 'clock' },
+        slate: { card: 'border-slate-200 bg-white', icon: 'bg-slate-100 text-slate-600', value: 'text-slate-800', iconName: 'users' },
+        cyan: { card: 'border-sky-100 bg-white', icon: 'bg-sky-100 text-sky-700', value: 'text-blue-700', iconName: 'chart' },
     };
     const theme = colors[color] ?? colors.violet;
 
     return (
         <div className={`flex items-center gap-4 rounded-lg border px-4 py-3 shadow-sm ${theme.card}`}>
-            <div className={`hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-black ${theme.icon}`}>{theme.symbol}</div>
+            <div className={`hidden sm:flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${theme.icon}`}><SummaryIcon name={theme.iconName} /></div>
             <div>
                 <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
                 <p className={`mt-1 text-xl font-bold leading-none ${theme.value}`}>{fmt(value)}</p>

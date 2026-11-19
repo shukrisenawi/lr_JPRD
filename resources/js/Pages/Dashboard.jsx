@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SummaryIcon from '@/Components/SummaryIcon';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -13,7 +14,7 @@ function StatCard({ label, value, color = 'slate' }) {
 
     return (
         <div className={`flex items-center gap-5 rounded-lg border p-4 shadow-sm ${theme.card}`}>
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-black ${theme.icon}`}>{theme.symbol}</div>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${theme.icon}`}><SummaryIcon name={{ '▤': 'file', '▧': 'table', '✓': 'check', '◷': 'clock' }[theme.symbol]} /></div>
             <div>
                 <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
                 <p className="mt-1 text-2xl font-black leading-none text-slate-800">{value}</p>

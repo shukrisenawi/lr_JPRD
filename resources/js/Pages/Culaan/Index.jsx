@@ -1,6 +1,7 @@
 import InputError from '@/Components/InputError';
 import { openTelegram as launchTelegram } from '@/Utils/telegram';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SummaryIcon from '@/Components/SummaryIcon';
 import PhoneNumber from '@/Components/PhoneNumber';
 import AvatarLightbox from '@/Components/AvatarLightbox';
 import CropModal from '@/Components/CropModal';
@@ -179,7 +180,7 @@ function StatCard({ label, value, detail, color = 'violet' }) {
 
     return (
         <div className={`flex items-center gap-4 rounded-lg border px-4 py-3 shadow-sm ${theme.card}`}>
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-black ${theme.icon}`}>{theme.symbol}</div>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${theme.icon}`}><SummaryIcon name={{ PE: 'users', OK: 'check', NO: 'clock', DB: 'database', '%': 'chart' }[theme.symbol]} /></div>
             <div>
                 <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
                 <p className={`mt-1 text-xl font-bold leading-none ${theme.value}`}>{fmt(value)}</p>
@@ -1303,7 +1304,7 @@ export default function CulaanIndex({ filters, summary, udms, udm_summaries: udm
                             onClick={exportToExcel}
                             className="hidden shrink-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:border-green-300 hover:text-green-700 sm:inline-flex"
                         >
-                            <span className="rounded bg-green-600 px-1.5 py-0.5 text-xs font-black text-white">X</span>
+                            <SummaryIcon name="table" className="h-4 w-4 text-green-600" />
                             Export Excel
                         </button>
                     )}

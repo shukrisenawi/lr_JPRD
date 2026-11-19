@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import SummaryIcon from '@/Components/SummaryIcon';
 import N8nMessageModal from '@/Components/N8nMessageModal';
 import { Head, router, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
@@ -21,7 +22,7 @@ function StatCard({ label, value, detail, color = 'violet' }) {
 
     return (
         <div className={`flex items-center gap-4 rounded-lg border px-4 py-3 shadow-sm ${theme.card}`}>
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-black ${theme.icon}`}>{theme.symbol}</div>
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${theme.icon}`}><SummaryIcon name={{ PK: 'database', BR: 'link', UP: 'plus', DP: 'edit' }[theme.symbol]} /></div>
             <div>
                 <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-500">{label}</p>
                 <p className={`mt-1 text-xl font-bold leading-none ${theme.value}`}>{fmt(value)}</p>
