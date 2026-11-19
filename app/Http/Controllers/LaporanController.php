@@ -9,6 +9,7 @@ use App\Services\DanaSummaryService;
 use App\Services\FamilyCreationMovementService;
 use App\Services\N8nWebhookService;
 use App\Services\PemilihBaruService;
+use App\Services\PemilihGroupSummaryService;
 use App\Services\PemilihReportService;
 use App\Services\PlkCostService;
 use Carbon\Carbon;
@@ -27,6 +28,7 @@ class LaporanController extends Controller
 
         return Inertia::render('Laporan', [
             'report' => $report,
+            'pemilih_group_summary' => app(PemilihGroupSummaryService::class)->summary($request->user()),
             'family_creation_movement' => app(FamilyCreationMovementService::class)->summary($request->user()),
             'pemilih_baru_movement' => $pemilihBaru->monthlyMovementReport(),
             'plk_cost_summary' => $request->user()?->canAccessModule('plk-kos')

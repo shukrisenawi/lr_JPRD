@@ -508,7 +508,7 @@ function PemilihBaruMovementTable({ movement }) {
     );
 }
 
-export default function Laporan({ report, culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null, plk_cost_summary = null, dana_summary = null, family_creation_movement = null }) {
+export default function Laporan({ report, pemilih_group_summary = [], culaan_message = '', pemilih_report = null, udm_snapshot = null, udm_snapshot_meta = null, recent_logins = [], ahli_pas_stats = null, pemilih_baru_movement = null, plk_cost_summary = null, dana_summary = null, family_creation_movement = null }) {
     const { auth } = usePage().props;
     const canSendN8nMessage = auth.user?.role?.is_master_admin || auth.user?.allowed_modules?.includes('laporan-hantar-status');
     const [tab, setTab] = useState('udm');
@@ -844,6 +844,18 @@ export default function Laporan({ report, culaan_message = '', pemilih_report = 
                             <StatCard label="Peratus Siap" value={report.summary.coverage_percent} detail={`${fmt(report.summary.total_localities)} lokaliti`} color="cyan" />
                         </div>
 
+
+                        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4" aria-label="Jumlah pemilih mengikut kumpulan">
+                            {pemilih_group_summary.map((group) => (
+                                <StatCard
+                                    key={group.label}
+                                    label={group.label}
+                                    value={group.total}
+                                    detail={`Lelaki: ${fmt(group.male)} · Perempuan: ${fmt(group.female)}`}
+                                    color="slate"
+                                />
+                            ))}
+                        </div>
 
                         <DataTable rows={[...udmTableRows, udmTableTotal]} columns={dmCols} stickyHeader interactiveRows activeUdm={activeUdm} onSelectUdm={selectActiveUdm} />
                         {udm_snapshot_meta?.snapshot_time && (
